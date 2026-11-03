@@ -17,7 +17,7 @@ const STORE = 'mySnookerSettings';
 
 function loadSettings() {
 	const mobile = /Android|iPhone|iPad|Mobile/i.test(navigator.userAgent);
-	const def = { guide: 2, quality: mobile ? 'low' : 'high', volume: 0.8, respot: true, contact: true, camera: 'cue' };
+	const def = { lines: false, quality: mobile ? 'low' : 'high', volume: 0.8, respot: true, contact: true, camera: 'cue' };
 	try {
 		const raw = window.localStorage.getItem(STORE);
 		if (raw) {
@@ -52,7 +52,9 @@ export function start(root, config = {}) {
 		return null;
 	}
 	const settings = loadSettings();
-	settings.guide = parseInt(settings.guide, 10);
+	// pomocné čiary: predvolene vypnuté, zapínať sa budú v hlavnom menu (staré nastavenie „guide“ sa ignoruje)
+	delete settings.guide;
+	settings.lines = settings.lines === true;
 	const high = settings.quality === 'high';
 
 	const renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: 'high-performance' });
@@ -129,7 +131,7 @@ export function start(root, config = {}) {
 		settings: () => ui.toggle(ui.panel),
 		help: () => ui.toggle(ui.help),
 		setting: ({ k, v }) => {
-			settings[k] = k === 'guide' ? parseInt(v, 10) : v;
+			settings[k] = v;
 			if (k === 'volume') {
 				sound.setVolume(v);
 			}
@@ -223,9 +225,9 @@ export function start(root, config = {}) {
 		ui.showPower(controls.power);
 		views.update(dt);
 		cue.place(game.cue, game.dir, pull, spin.side, spin.top, aiming && game.cue.on);
-		const tr = guide.update(game.balls, game.cue, game.dir, aiming && game.cue.on, settings.guide);
+		const tr = guide.update(game.balls, game.cue, game.dir, aiming && game.cue.on, settings.lines ? 2 : 0);
 		const showContact = aiming && game.cue.on && !!settings.contact;
-		ui.drawContact(tr || (showContact ? aimTrace(game.balls, game.cue, game.dir) : null), game.dir, showContact);
+		ui.drawContact(tr || (showContact ? aimTrace(game.balls, game.cue, game.dir) : null), game.dir, showContact, settings.lines);
 		rig.update(dt, game.cue, game.dir, game.state === 'moving');
 		renderer.render(scene, rig.camera);
 		requestAnimationFrame(frame);

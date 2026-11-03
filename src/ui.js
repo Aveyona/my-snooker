@@ -201,12 +201,6 @@ export class UI {
 		const p = h('div', 'mysn-panel mysn-hidden');
 		p.innerHTML = `
 			<h3>Nastavenia</h3>
-			<label>Pomocné čiary
-				<select data-k="guide">
-					<option value="2">Smer a kam pôjdu gule</option>
-					<option value="1">Iba smer</option>
-					<option value="0">Vypnuté</option>
-				</select></label>
 			<label>Kvalita obrazu
 				<select data-k="quality">
 					<option value="high">Vysoká (tiene)</option>
@@ -239,7 +233,7 @@ export class UI {
 			<h3>Ovládanie</h3>
 			<ul>
 				<li><b>Mierenie:</b> za tágom ťahaj myšou alebo prstom doľava a doprava (so Shift jemnejšie), šípky na klávesnici. V pohľade zhora klikni na miesto, kam chceš mieriť, vo voľnej kamere naň krátko ťukni.</li>
-				<li><b>Detail dotyku:</b> kruh dole ukazuje zhora okamih, keď sa biela dotkne gule. Úder ide vždy nahor, žltá šípka je smer objektovej gule, modrá smer bielej, červený bod je miesto dotyku. Tlačidlami ‹ a › mieriš jemne (ťuk 0,05 stupňa, držanie plynulo).</li>
+				<li><b>Detail dotyku:</b> kruh dole ukazuje zhora okamih, keď sa biela dotkne gule. Úder ide vždy nahor, červený bod je miesto dotyku. Pomocné čiary a šípky (kam pôjdu gule) sú vypnuté, zapnúť sa budú dať v hlavnom menu. Tlačidlami ‹ a › mieriš jemne (ťuk 0,05 stupňa, držanie plynulo).</li>
 				<li><b>Sila a úder:</b> ťahaj ukazovateľ sily vpravo nadol a pusť. Alebo drž medzerník a pusť ho pri želanej sile.</li>
 				<li><b>Miesto úderu:</b> klikni na bielu guľu vľavo dole. Hore znamená guľu dopredu, dole guľu späť, do strán bočnú falšu. Dvojklik vráti stred.</li>
 				<li><b>Kamera:</b> Za tágom, Zhora alebo Voľná (otáčanie myšou, priblíženie kolieskom). Klávesy 1, 2, 3.</li>
@@ -261,7 +255,7 @@ export class UI {
 	 * Nakreslí detail dotyku: objektová guľa v strede, biela v mieste dotyku, smer úderu nahor.
 	 * tr = výsledok aimTrace, dir = smer mierenia.
 	 */
-	drawContact(tr, dir, show) {
+	drawContact(tr, dir, show, lines = false) {
 		const on = !!(show && tr && tr.ball);
 		this.contact.classList.toggle('mysn-hidden', !on);
 		if (!on) {
@@ -270,7 +264,7 @@ export class UI {
 		}
 		const O = tr.ball.p;
 		const Gp = tr.ghost;
-		const key = [dir.toFixed(5), O.x.toFixed(4), O.z.toFixed(4), Gp.x.toFixed(4), Gp.z.toFixed(4)].join();
+		const key = [lines ? 1 : 0, dir.toFixed(5), O.x.toFixed(4), O.z.toFixed(4), Gp.x.toFixed(4), Gp.z.toFixed(4)].join();
 		if (key === this._contactKey) {
 			return;
 		}
@@ -337,11 +331,13 @@ export class UI {
 		g.fill();
 		g.save();
 		g.clip();
-		// čiara mierenia (stredom bielej) a jej predĺženie cez objektovú guľu
-		const far = 6 * R;
-		line(P(Gp.x - dx * far, Gp.z - dz * far), P(Gp.x + dx * far, Gp.z + dz * far), 'rgba(255,255,255,0.45)', 1.2, [5 * dpr, 4 * dpr]);
-		// os dotyku (stred bielej, bod dotyku, stred gule)
-		line(P(Gp.x - ux * R, Gp.z - uz * R), P(O.x + ux * 5 * R, O.z + uz * 5 * R), 'rgba(255,226,138,0.35)', 1, [2 * dpr, 3 * dpr]);
+		if (lines) {
+			// čiara mierenia (stredom bielej) a jej predĺženie cez objektovú guľu
+			const far = 6 * R;
+			line(P(Gp.x - dx * far, Gp.z - dz * far), P(Gp.x + dx * far, Gp.z + dz * far), 'rgba(255,255,255,0.45)', 1.2, [5 * dpr, 4 * dpr]);
+			// os dotyku (stred bielej, bod dotyku, stred gule)
+			line(P(Gp.x - ux * R, Gp.z - uz * R), P(O.x + ux * 5 * R, O.z + uz * 5 * R), 'rgba(255,226,138,0.35)', 1, [2 * dpr, 3 * dpr]);
+		}
 		const ball = (p, hex, white) => {
 			const [x, y] = P(p.x, p.z);
 			const rr = R * k;
@@ -362,15 +358,17 @@ export class UI {
 		};
 		ball(O, COLOURS[tr.ball.kind].color, false);
 		ball(Gp, COLOURS.white.color, true);
-		// smery po náraze: objektová guľa po osi dotyku, biela kolmo na ňu (bez falše)
-		arrow(O, ux, uz, R * (1.6 + 2.2 * cosCut), '#ffe28a');
+		// smery po náraze (len so zapnutými pomocnými čiarami): objektová guľa po osi dotyku, biela kolmo na ňu
 		let tx = dx - cosCut * ux;
 		let tz = dz - cosCut * uz;
 		const tl = Math.hypot(tx, tz);
-		if (tl > 1e-3) {
-			tx /= tl;
-			tz /= tl;
-			arrow(Gp, tx, tz, R * (0.9 + 2.4 * (1 - cosCut)), '#9fd3ff');
+		if (lines) {
+			arrow(O, ux, uz, R * (1.6 + 2.2 * cosCut), '#ffe28a');
+			if (tl > 1e-3) {
+				tx /= tl;
+				tz /= tl;
+				arrow(Gp, tx, tz, R * (0.9 + 2.4 * (1 - cosCut)), '#9fd3ff');
+			}
 		}
 		// bod dotyku
 		const cp = P(Gp.x + ux * R, Gp.z + uz * R);
@@ -404,8 +402,10 @@ export class UI {
 		const where = deg < 0.5 ? 'plný zásah' : (side > 0 ? 'guľa ide doprava' : 'guľa ide doľava');
 		this.contactInfo.innerHTML =
 			`<span>Uhol <b>${deg.toFixed(1)}°</b></span><span>Plnosť <b>${Math.round(fullness * 100)} %</b></span>` +
-			`<span class="mysn-contact-where">${where}</span>` +
-			(pocket ? '<span class="mysn-contact-pot">Smer do jamky</span>' : '<span class="mysn-contact-miss">Mimo jamky</span>');
+			(lines
+				? `<span class="mysn-contact-where">${where}</span>` +
+				  (pocket ? '<span class="mysn-contact-pot">Smer do jamky</span>' : '<span class="mysn-contact-miss">Mimo jamky</span>')
+				: '');
 	}
 
 	showPower(p) {
