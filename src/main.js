@@ -87,10 +87,11 @@ export function start(root, config = {}) {
 	root.appendChild(overlay);
 	let spin = { side: 0, top: 0 };
 	let placeCam = false;
+	let started = false;
+	const finePointer = !!(window.matchMedia && window.matchMedia('(pointer: fine)').matches);
 
 	const doShoot = (power) => {
 		if (game.shoot(power, spin.side, spin.top)) {
-			controls.setLock(false);
 			sound.cue(power);
 			ui.sync(game, rig.mode);
 		}
@@ -129,6 +130,13 @@ export function start(root, config = {}) {
 			game.confirmPlace();
 			game.aimAtNearest();
 		},
+		resume: () => {
+			ui.showMenu(false);
+			controls.capture();
+		},
+		home: () => {
+			window.location.href = config.homeUrl || '/';
+		},
 		settings: () => ui.toggle(ui.panel),
 		help: () => ui.toggle(ui.help),
 		setting: ({ k, v }) => {
@@ -161,7 +169,16 @@ export function start(root, config = {}) {
 	const controls = new Controls(renderer.domElement, rig, game, {
 		unlock: () => sound.unlock(),
 		shoot: doShoot,
-		lock: (on) => ui.setLock(on),
+		lock: (on) => {
+			ui.setLock(on);
+			// myš sa uvoľnila (Esc): zobraz hlavné menu
+			if (on) {
+				started = true;
+				ui.showMenu(false);
+			} else if (finePointer) {
+				ui.showMenu(true, started);
+			}
+		},
 		stroke: (on) => ui.setStroke(on),
 		key: (k) => {
 			const map = { 1: 'cue', 2: 'top', 3: 'free' };
@@ -204,6 +221,9 @@ export function start(root, config = {}) {
 	window.addEventListener('resize', resize);
 	resize();
 	ui.sync(game, rig.mode);
+	if (finePointer) {
+		ui.showMenu(true, false);
+	}
 
 	let last = performance.now();
 	let pull = 0;

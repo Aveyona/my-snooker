@@ -77,6 +77,8 @@ export class UI {
 		tools.appendChild(acts);
 		root.appendChild(tools);
 
+		this.menu = this.buildMenu();
+		root.appendChild(this.menu);
 		this.panel = this.buildSettings(opts.settings);
 		root.appendChild(this.panel);
 		// Detail dotyku: 2D pohľad zhora v okamihu, keď sa biela dotkne gule (otočený tak, že úder ide nahor)
@@ -230,13 +232,41 @@ export class UI {
 		return p;
 	}
 
+	/** Hlavné menu: na začiatku a po stlačení Esc (vtedy sa myš uvoľní). */
+	buildMenu() {
+		const m = h('div', 'mysn-menu mysn-hidden');
+		m.innerHTML = `<div class="mysn-menu-box">
+			<h2>My Snooker</h2>
+			<p class="mysn-menu-mode">Tréning</p>
+			<div class="mysn-menu-btns"></div>
+			<p class="mysn-note">V hre sa myš zachytí v okne. Esc ju uvoľní a otvorí toto menu.</p>
+		</div>`;
+		const box = m.querySelector('.mysn-menu-btns');
+		this.btnResume = this.button('Hrať', 'resume');
+		this.btnResume.classList.add('mysn-primary');
+		box.append(this.btnResume, this.button('Nové rozostavenie', 'reset'), this.button('Nastavenia', 'settings'), this.button('Ovládanie', 'help'), this.button('Späť na web', 'home'));
+		return m;
+	}
+
+	showMenu(on, started) {
+		this.menu.classList.toggle('mysn-hidden', !on);
+		if (started) {
+			this.btnResume.textContent = 'Pokračovať';
+		}
+		if (!on) {
+			this.panel.classList.add('mysn-hidden');
+			this.help.classList.add('mysn-hidden');
+		}
+	}
+
 	buildHelp() {
 		const p = h('div', 'mysn-panel mysn-help mysn-hidden');
 		p.innerHTML = `
 			<h3>Ovládanie</h3>
 			<ul>
-				<li><b>Mierenie myšou:</b> stačí hýbať myšou, tlačidlo netreba. Pomalý pohyb mieri veľmi jemne, so Shift ešte jemnejšie. Ľavé tlačidlo smer zamkne (aby si mohol prejsť k tlačidlám), ďalším kliknutím ho odomkneš.</li>
-				<li><b>Úder myšou:</b> drž pravé tlačidlo, ruka chytí tágo. Myš k sebe tágo odtiahne, pohyb dopredu ho posunie a pri dotyku bielej vystrelí. Sila je podľa toho, ako rýchlo pohneš dopredu. Pustením pravého tlačidla alebo klávesom Esc úder zrušíš.</li>
+				<li><b>Mierenie myšou:</b> kliknutím do hry sa myš zachytí v okne (kurzor sa skryje). Potom stačí hýbať myšou, tlačidlo netreba. Pomalý pohyb mieri veľmi jemne, so Shift ešte jemnejšie. Esc myš uvoľní a otvorí menu.</li>
+				<li><b>Biela do ruky myšou:</b> bielu posúvaš pohybom myši, ľavým klikom ju položíš.</li>
+				<li><b>Úder myšou:</b> drž pravé tlačidlo, ruka chytí tágo. Myš k sebe tágo odtiahne, pohyb dopredu ho posunie a pri dotyku bielej vystrelí. Sila je podľa toho, ako rýchlo pohneš dopredu. Pustením pravého tlačidla úder zrušíš.</li>
 				<li><b>Mierenie prstom:</b> za tágom ťahaj doľava a doprava, šípky na klávesnici. V pohľade zhora klikni na miesto, kam chceš mieriť, vo voľnej kamere naň krátko ťukni.</li>
 				<li><b>Detail dotyku:</b> kruh dole ukazuje zhora okamih, keď sa biela dotkne gule. Úder ide vždy nahor, červený bod je miesto dotyku. Pomocné čiary a šípky (kam pôjdu gule) sú vypnuté, zapnúť sa budú dať v hlavnom menu. Tlačidlami ‹ a › mieriš jemne (ťuk 0,05 stupňa, držanie plynulo).</li>
 				<li><b>Sila a úder:</b> ťahaj ukazovateľ sily vpravo nadol a pusť. Alebo drž medzerník a pusť ho pri želanej sile.</li>
@@ -427,10 +457,10 @@ export class UI {
 		const t = this._stroke
 			? 'Ruka drží tágo: myš k sebe odtiahne, dopredu vystrelí. Pustením pravého tlačidla zrušíš.'
 			: this._lock
-				? 'Smer je zamknutý. Klikni ľavým tlačidlom na stôl a mieriš znova.'
-				: 'Mier pohybom myši (Shift jemne). Ľavé tlačidlo zamkne smer, pravé tlačidlo drž a striel pohybom myši.';
+				? 'Mier pohybom myši (Shift jemne), pravé tlačidlo drž a striel pohybom myši. Esc otvorí menu.'
+				: 'Klikni do hry, myš sa zachytí v okne.';
 		this.hint.textContent = t;
-		this.hint.classList.toggle('mysn-hint-on', !!(this._stroke || this._lock));
+		this.hint.classList.toggle('mysn-hint-on', !!this._stroke);
 	}
 
 	showPower(p) {

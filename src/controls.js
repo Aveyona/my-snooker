@@ -28,7 +28,6 @@ export class Controls {
 		this._drag = null;
 		this._keys = new Set();
 		this._spaceT = 0;
-		this.aimLock = false; // ľavým klikom sa smer zamkne (aby sa dalo prejsť myšou k tlačidlám)
 		this.stroking = false; // pravé tlačidlo: ruka drží tágo
 		this.strokePull = 0;
 		this._hist = [];
@@ -38,6 +37,9 @@ export class Controls {
 		document.addEventListener('pointerlockchange', () => {
 			// prehliadač pri zamknutí kurzora pošle jeden veľký falošný skok, ten ignorujeme
 			this._ignoreUntil = performance.now() + 60;
+			if (this.hooks.lock) {
+				this.hooks.lock(this.captured);
+			}
 		});
 
 		dom.addEventListener('pointerdown', (e) => this.down(e));
@@ -67,6 +69,14 @@ export class Controls {
 	down(e) {
 		this.hooks.unlock();
 		const g = this.game;
+		if (g.state === 'place' && this.captured) {
+			// so zachytenou myšou: biela sa posúva pohybom myši, ľavý klik ju položí
+			if (e.button === 0) {
+				g.confirmPlace();
+				g.aimAtNearest();
+			}
+			return;
+		}
 		if (g.state === 'place') {
 			const p = this.tablePoint(e);
 			if (p) {
@@ -83,8 +93,9 @@ export class Controls {
 				this.startStroke();
 				return;
 			}
-			if (e.button === 0 && this.rig.mode === 'cue') {
-				this.setLock(!this.aimLock);
+			if (e.button === 0 && this.rig.mode !== 'free') {
+				// ľavý klik zachytí myš v okne hry (kurzor sa skryje a nemôže ujsť z okna); Esc ju uvoľní
+				this.capture();
 				return;
 			}
 		}
@@ -151,10 +162,28 @@ export class Controls {
 		}
 	}
 
-	setLock(on) {
-		this.aimLock = on;
-		if (this.hooks.lock) {
-			this.hooks.lock(on);
+	/** Je myš zachytená v okne hry? */
+	get captured() {
+		return document.pointerLockElement === this.dom;
+	}
+
+	capture() {
+		if (this.captured || !this.dom.requestPointerLock) {
+			return;
+		}
+		try {
+			const r = this.dom.requestPointerLock();
+			if (r && r.catch) {
+				r.catch(() => {});
+			}
+		} catch (err) {
+			/* prehliadač zachytenie nedovolil */
+		}
+	}
+
+	uncapture() {
+		if (this.captured) {
+			document.exitPointerLock();
 		}
 	}
 
@@ -168,7 +197,12 @@ export class Controls {
 			this.strokeMove(e.movementY || 0);
 			return;
 		}
-		if (e.buttons !== 0 || g.state !== 'aim' || this.aimLock) {
+		if (g.state === 'place' && this.captured) {
+			this.placeMove(e.movementX || 0, e.movementY || 0);
+			return;
+		}
+		// otáča sa len so zachytenou myšou (inak by sa tágo otáčalo aj pri ceste k tlačidlám)
+		if (e.buttons !== 0 || g.state !== 'aim' || !this.captured) {
 			return;
 		}
 		const dx = e.movementX || 0;
@@ -180,6 +214,30 @@ export class Controls {
 		g.dir += dx * base * accel;
 	}
 
+	/** Posun bielej v D podľa pohybu myši (v smere obrazovky). */
+	placeMove(mx, my) {
+		const m = this.rig.camera.matrixWorld.elements;
+		// pravá a horná os kamery premietnuté na stôl
+		let rx = m[0];
+		let rz = m[2];
+		let ux = m[4];
+		let uz = m[6];
+		if (Math.hypot(ux, uz) < 0.2) {
+			// kamera hľadí šikmo: „hore“ na obrazovke = dopredu od kamery
+			ux = -m[8];
+			uz = -m[10];
+		}
+		const rl = Math.hypot(rx, rz) || 1;
+		const ul = Math.hypot(ux, uz) || 1;
+		rx /= rl;
+		rz /= rl;
+		ux /= ul;
+		uz /= ul;
+		const k = 0.0012; // metre na pixel
+		const c = this.game.cue;
+		this.game.movePlace(c.p.x + (mx * rx - my * ux) * k, c.p.z + (mx * rz - my * uz) * k);
+	}
+
 	startStroke() {
 		if (!this.game.canShoot()) {
 			return;
@@ -189,14 +247,7 @@ export class Controls {
 		this.strokePull = 0;
 		this._max = 0;
 		this._hist = [{ t: performance.now(), p: 0 }];
-		try {
-			const r = this.dom.requestPointerLock && this.dom.requestPointerLock();
-			if (r && r.catch) {
-				r.catch(() => {});
-			}
-		} catch (err) {
-			/* bez zamknutia kurzora to funguje tiež, len kurzor môže doraziť na okraj obrazovky */
-		}
+		this.capture();
 		if (this.hooks.stroke) {
 			this.hooks.stroke(true);
 		}
@@ -206,9 +257,6 @@ export class Controls {
 		this.stroking = false;
 		this.strokePull = 0;
 		this.power = 0;
-		if (document.pointerLockElement === this.dom) {
-			document.exitPointerLock();
-		}
 		if (this.hooks.stroke) {
 			this.hooks.stroke(false);
 		}
@@ -285,17 +333,6 @@ export class Controls {
 				this.hooks.unlock();
 				this.charging = true;
 				this._spaceT = 0;
-		this.aimLock = false; // ľavým klikom sa smer zamkne (aby sa dalo prejsť myšou k tlačidlám)
-		this.stroking = false; // pravé tlačidlo: ruka drží tágo
-		this.strokePull = 0;
-		this._hist = [];
-
-		dom.addEventListener('mousemove', (e) => this.mouseMove(e));
-		this._ignoreUntil = 0;
-		document.addEventListener('pointerlockchange', () => {
-			// prehliadač pri zamknutí kurzora pošle jeden veľký falošný skok, ten ignorujeme
-			this._ignoreUntil = performance.now() + 60;
-		});
 			} else if (!isDown && this.charging) {
 				this.release();
 			}
