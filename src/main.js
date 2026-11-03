@@ -11,12 +11,13 @@ import { Controls } from './controls.js';
 import { Sound } from './audio.js';
 import { UI } from './ui.js';
 import { Training } from './training.js';
+import { aimTrace } from './physics.js';
 
 const STORE = 'mySnookerSettings';
 
 function loadSettings() {
 	const mobile = /Android|iPhone|iPad|Mobile/i.test(navigator.userAgent);
-	const def = { guide: 2, quality: mobile ? 'low' : 'high', volume: 0.8, respot: true, camera: 'cue' };
+	const def = { guide: 2, quality: mobile ? 'low' : 'high', volume: 0.8, respot: true, contact: true, camera: 'cue' };
 	try {
 		const raw = window.localStorage.getItem(STORE);
 		if (raw) {
@@ -105,6 +106,11 @@ export function start(root, config = {}) {
 		camera: (m) => setCamera(m),
 		undo: () => game.undo(),
 		hand: () => game.ballInHand(),
+		fine: (d) => {
+			if (game.state === 'aim') {
+				game.dir += (d * 0.05 * Math.PI) / 180;
+			}
+		},
 		skip: () => {
 			for (const e of game.finish()) {
 				if (e.type === 'pot') {
@@ -217,7 +223,9 @@ export function start(root, config = {}) {
 		ui.showPower(controls.power);
 		views.update(dt);
 		cue.place(game.cue, game.dir, pull, spin.side, spin.top, aiming && game.cue.on);
-		guide.update(game.balls, game.cue, game.dir, aiming && game.cue.on, settings.guide);
+		const tr = guide.update(game.balls, game.cue, game.dir, aiming && game.cue.on, settings.guide);
+		const showContact = aiming && game.cue.on && !!settings.contact;
+		ui.drawContact(tr || (showContact ? aimTrace(game.balls, game.cue, game.dir) : null), game.dir, showContact);
 		rig.update(dt, game.cue, game.dir, game.state === 'moving');
 		renderer.render(scene, rig.camera);
 		requestAnimationFrame(frame);

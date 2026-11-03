@@ -1,6 +1,8 @@
 /*
  * My Snooker: rozhranie nad 3D scénou (štatistiky, sila, falše, tlačidlá, nastavenia, pomoc).
  */
+import { R, COLOURS, POCKETS } from './physics.js';
+
 const h = (tag, cls, html) => {
 	const e = document.createElement(tag);
 	if (cls) {
@@ -74,6 +76,37 @@ export class UI {
 
 		this.panel = this.buildSettings(opts.settings);
 		root.appendChild(this.panel);
+		// Detail dotyku: 2D pohľad zhora v okamihu, keď sa biela dotkne gule (otočený tak, že úder ide nahor)
+		this.contact = h('div', 'mysn-contact mysn-hidden', '<div class="mysn-contact-row"><button type="button" class="mysn-btn mysn-fine" data-d="-1" title="Jemne doľava (drž)">&#8249;</button><canvas></canvas><button type="button" class="mysn-btn mysn-fine" data-d="1" title="Jemne doprava (drž)">&#8250;</button></div><div class="mysn-contact-info"></div>');
+		root.appendChild(this.contact);
+		// jemné mierenie: ťuk = 0,05 stupňa, držanie = plynulo
+		for (const b of this.contact.querySelectorAll('.mysn-fine')) {
+			let timer = null;
+			let t0 = 0;
+			const stop = () => {
+				clearInterval(timer);
+				timer = null;
+			};
+			b.addEventListener('pointerdown', (e) => {
+				e.preventDefault();
+				const d = parseFloat(b.dataset.d);
+				t0 = performance.now();
+				this.opts.onAction('fine', d);
+				stop();
+				timer = setInterval(() => {
+					const held = performance.now() - t0;
+					if (held > 300) {
+						this.opts.onAction('fine', d * (held > 1500 ? 6 : 2));
+					}
+				}, 40);
+			});
+			b.addEventListener('pointerup', stop);
+			b.addEventListener('pointerleave', stop);
+			b.addEventListener('pointercancel', stop);
+		}
+		this.contactCanvas = this.contact.querySelector('canvas');
+		this.contactInfo = this.contact.querySelector('.mysn-contact-info');
+		this._contactKey = '';
 		this.help = this.buildHelp();
 		root.appendChild(this.help);
 	}
@@ -180,6 +213,7 @@ export class UI {
 					<option value="low">Nízka (pre slabšie zariadenia)</option>
 				</select></label>
 			<label>Hlasitosť <input type="range" min="0" max="1" step="0.05" data-k="volume"></label>
+			<label class="mysn-check"><input type="checkbox" data-k="contact"> Detail dotyku gúľ pri mierení</label>
 			<label class="mysn-check"><input type="checkbox" data-k="respot"> Vracať farebné gule na spoty</label>
 			<p class="mysn-note">Zmena kvality sa prejaví po obnovení stránky.</p>
 			<button type="button" class="mysn-btn mysn-primary" data-close>Zavrieť</button>`;
@@ -205,6 +239,7 @@ export class UI {
 			<h3>Ovládanie</h3>
 			<ul>
 				<li><b>Mierenie:</b> za tágom ťahaj myšou alebo prstom doľava a doprava (so Shift jemnejšie), šípky na klávesnici. V pohľade zhora klikni na miesto, kam chceš mieriť, vo voľnej kamere naň krátko ťukni.</li>
+				<li><b>Detail dotyku:</b> kruh dole ukazuje zhora okamih, keď sa biela dotkne gule. Úder ide vždy nahor, žltá šípka je smer objektovej gule, modrá smer bielej, červený bod je miesto dotyku. Tlačidlami ‹ a › mieriš jemne (ťuk 0,05 stupňa, držanie plynulo).</li>
 				<li><b>Sila a úder:</b> ťahaj ukazovateľ sily vpravo nadol a pusť. Alebo drž medzerník a pusť ho pri želanej sile.</li>
 				<li><b>Miesto úderu:</b> klikni na bielu guľu vľavo dole. Hore znamená guľu dopredu, dole guľu späť, do strán bočnú falšu. Dvojklik vráti stred.</li>
 				<li><b>Kamera:</b> Za tágom, Zhora alebo Voľná (otáčanie myšou, priblíženie kolieskom). Klávesy 1, 2, 3.</li>
@@ -220,6 +255,157 @@ export class UI {
 		const other = panel === this.panel ? this.help : this.panel;
 		other.classList.add('mysn-hidden');
 		panel.classList.toggle('mysn-hidden');
+	}
+
+	/**
+	 * Nakreslí detail dotyku: objektová guľa v strede, biela v mieste dotyku, smer úderu nahor.
+	 * tr = výsledok aimTrace, dir = smer mierenia.
+	 */
+	drawContact(tr, dir, show) {
+		const on = !!(show && tr && tr.ball);
+		this.contact.classList.toggle('mysn-hidden', !on);
+		if (!on) {
+			this._contactKey = '';
+			return;
+		}
+		const O = tr.ball.p;
+		const Gp = tr.ghost;
+		const key = [dir.toFixed(5), O.x.toFixed(4), O.z.toFixed(4), Gp.x.toFixed(4), Gp.z.toFixed(4)].join();
+		if (key === this._contactKey) {
+			return;
+		}
+		this._contactKey = key;
+		const cv = this.contactCanvas;
+		const css = this.contact.clientWidth || 200;
+		const dpr = Math.min(2, window.devicePixelRatio || 1);
+		if (cv.width !== Math.round(css * dpr)) {
+			cv.width = cv.height = Math.round(css * dpr);
+		}
+		const g = cv.getContext('2d');
+		const S = cv.width;
+		g.setTransform(1, 0, 0, 1, 0, 0);
+		g.clearRect(0, 0, S, S);
+		const dx = Math.cos(dir);
+		const dz = Math.sin(dir);
+		// súradnice: dopredu (smer úderu) = hore, vpravo = vpravo; stred = bod dotyku
+		const cx = (Gp.x + O.x) / 2;
+		const cz = (Gp.z + O.z) / 2;
+		const k = (S * 0.17) / R; // polomer gule = 17 % šírky
+		const P = (x, z) => {
+			const vx = x - cx;
+			const vz = z - cz;
+			const f = vx * dx + vz * dz;
+			const r = vx * -dz + vz * dx;
+			return [S / 2 + r * k, S / 2 - f * k];
+		};
+		const ux0 = O.x - Gp.x;
+		const uz0 = O.z - Gp.z;
+		const ul = Math.hypot(ux0, uz0) || 1;
+		const ux = ux0 / ul;
+		const uz = uz0 / ul;
+		const cosCut = Math.max(-1, Math.min(1, dx * ux + dz * uz));
+		const cut = Math.acos(cosCut);
+		const fullness = Math.max(0, 1 - Math.sin(cut)); // 1 = plný zásah, 0 = len sa obtrie
+		const line = (a, b, color, width, dash) => {
+			g.beginPath();
+			g.setLineDash(dash || []);
+			g.strokeStyle = color;
+			g.lineWidth = width * dpr;
+			g.moveTo(a[0], a[1]);
+			g.lineTo(b[0], b[1]);
+			g.stroke();
+			g.setLineDash([]);
+		};
+		const arrow = (from, ax, az, len, color) => {
+			const a = P(from.x, from.z);
+			const b = P(from.x + ax * len, from.z + az * len);
+			line(a, b, color, 2.2);
+			const ang = Math.atan2(b[1] - a[1], b[0] - a[0]);
+			const hs = 8 * dpr;
+			g.beginPath();
+			g.fillStyle = color;
+			g.moveTo(b[0], b[1]);
+			g.lineTo(b[0] - hs * Math.cos(ang - 0.45), b[1] - hs * Math.sin(ang - 0.45));
+			g.lineTo(b[0] - hs * Math.cos(ang + 0.45), b[1] - hs * Math.sin(ang + 0.45));
+			g.closePath();
+			g.fill();
+		};
+		// súkno
+		g.fillStyle = '#1d6b34';
+		g.beginPath();
+		g.arc(S / 2, S / 2, S / 2 - dpr, 0, Math.PI * 2);
+		g.fill();
+		g.save();
+		g.clip();
+		// čiara mierenia (stredom bielej) a jej predĺženie cez objektovú guľu
+		const far = 6 * R;
+		line(P(Gp.x - dx * far, Gp.z - dz * far), P(Gp.x + dx * far, Gp.z + dz * far), 'rgba(255,255,255,0.45)', 1.2, [5 * dpr, 4 * dpr]);
+		// os dotyku (stred bielej, bod dotyku, stred gule)
+		line(P(Gp.x - ux * R, Gp.z - uz * R), P(O.x + ux * 5 * R, O.z + uz * 5 * R), 'rgba(255,226,138,0.35)', 1, [2 * dpr, 3 * dpr]);
+		const ball = (p, hex, white) => {
+			const [x, y] = P(p.x, p.z);
+			const rr = R * k;
+			const grad = g.createRadialGradient(x - rr * 0.35, y - rr * 0.35, rr * 0.1, x, y, rr);
+			const col = '#' + hex.toString(16).padStart(6, '0');
+			grad.addColorStop(0, white ? '#ffffff' : 'rgba(255,255,255,0.55)');
+			grad.addColorStop(0.25, col);
+			grad.addColorStop(1, col);
+			g.globalAlpha = white ? 0.78 : 1;
+			g.fillStyle = grad;
+			g.beginPath();
+			g.arc(x, y, rr, 0, Math.PI * 2);
+			g.fill();
+			g.globalAlpha = 1;
+			g.lineWidth = 1.5 * dpr;
+			g.strokeStyle = white ? 'rgba(255,255,255,0.95)' : 'rgba(0,0,0,0.55)';
+			g.stroke();
+		};
+		ball(O, COLOURS[tr.ball.kind].color, false);
+		ball(Gp, COLOURS.white.color, true);
+		// smery po náraze: objektová guľa po osi dotyku, biela kolmo na ňu (bez falše)
+		arrow(O, ux, uz, R * (1.6 + 2.2 * cosCut), '#ffe28a');
+		let tx = dx - cosCut * ux;
+		let tz = dz - cosCut * uz;
+		const tl = Math.hypot(tx, tz);
+		if (tl > 1e-3) {
+			tx /= tl;
+			tz /= tl;
+			arrow(Gp, tx, tz, R * (0.9 + 2.4 * (1 - cosCut)), '#9fd3ff');
+		}
+		// bod dotyku
+		const cp = P(Gp.x + ux * R, Gp.z + uz * R);
+		g.fillStyle = '#ff4d4d';
+		g.beginPath();
+		g.arc(cp[0], cp[1], 3.2 * dpr, 0, Math.PI * 2);
+		g.fill();
+		g.restore();
+		g.strokeStyle = 'rgba(255,255,255,0.35)';
+		g.lineWidth = 1.5 * dpr;
+		g.beginPath();
+		g.arc(S / 2, S / 2, S / 2 - dpr, 0, Math.PI * 2);
+		g.stroke();
+
+		// mieri objektová guľa do jamky?
+		let pocket = null;
+		for (const pk of POCKETS) {
+			const vx = pk.x - O.x;
+			const vz = pk.z - O.z;
+			const pr = vx * ux + vz * uz;
+			if (pr <= 0) {
+				continue;
+			}
+			const perp = Math.abs(vx * -uz + vz * ux);
+			if (perp < pk.r * 0.75 && (!pocket || pr < pocket.pr)) {
+				pocket = { pr, perp, pk };
+			}
+		}
+		const side = dx * uz - dz * ux; // ktorou stranou bielej sa trafí
+		const deg = (cut * 180) / Math.PI;
+		const where = deg < 0.5 ? 'plný zásah' : (side > 0 ? 'guľa ide doprava' : 'guľa ide doľava');
+		this.contactInfo.innerHTML =
+			`<span>Uhol <b>${deg.toFixed(1)}°</b></span><span>Plnosť <b>${Math.round(fullness * 100)} %</b></span>` +
+			`<span class="mysn-contact-where">${where}</span>` +
+			(pocket ? '<span class="mysn-contact-pot">Smer do jamky</span>' : '<span class="mysn-contact-miss">Mimo jamky</span>');
 	}
 
 	showPower(p) {
