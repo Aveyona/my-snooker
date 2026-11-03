@@ -169,6 +169,7 @@ export function start(root, config = {}) {
 	const controls = new Controls(renderer.domElement, rig, game, {
 		unlock: () => sound.unlock(),
 		shoot: doShoot,
+		spin: (dx, dy) => ui.setSpin(Math.max(-1, Math.min(1, ui.side + dx)), Math.max(-1, Math.min(1, ui.top + dy))),
 		lock: (on) => {
 			ui.setLock(on);
 			// myš sa uvoľnila (Esc): zobraz hlavné menu

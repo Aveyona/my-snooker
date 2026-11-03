@@ -1,8 +1,9 @@
 /*
  * My Snooker: ovládanie myšou, prstami a klávesnicou.
- *  Myš: pohyb myši bez tlačidla otáča tágo (so Shift veľmi jemne), ľavé tlačidlo zamkne alebo odomkne smer,
- *  pravé tlačidlo drž = ruka chytí tágo: pohyb myši k sebe tágo odtiahne, pohyb dopredu ho posunie a pri náraze
- *  do bielej vystrelí; sila podľa rýchlosti pohybu. Pustenie pravého tlačidla bez úderu = zrušenie.
+ *  Myš (zachytená v okne, Esc ju uvoľní): pohyb bez tlačidla otáča tágo (so Shift veľmi jemne),
+ *  ľavé tlačidlo drž = ruka chytí tágo: pohyb myši k sebe tágo odtiahne, pohyb dopredu ho posunie a pri náraze
+ *  do bielej vystrelí; sila podľa rýchlosti pohybu. Pustenie ľavého tlačidla bez úderu = zrušenie.
+ *  Pravé tlačidlo drž = pohybom myši sa posúva miesto úderu na bielej (falše).
  *  Prst: ťahaj vodorovne = mierenie, koliesko myši = priblíženie.
  *  Zhora: klikni alebo ťahaj na stole = smer úderu.
  *  Voľná kamera: ťahanie otáča pohľad, krátke ťuknutie na stôl alebo šípky = smer.
@@ -28,7 +29,8 @@ export class Controls {
 		this._drag = null;
 		this._keys = new Set();
 		this._spaceT = 0;
-		this.stroking = false; // pravé tlačidlo: ruka drží tágo
+		this.stroking = false; // ľavé tlačidlo: ruka drží tágo
+		this.spinning = false; // pravé tlačidlo: posúvanie miesta úderu
 		this.strokePull = 0;
 		this._hist = [];
 
@@ -89,12 +91,19 @@ export class Controls {
 			return;
 		}
 		if (e.pointerType === 'mouse') {
-			if (e.button === 2) {
-				this.startStroke();
+			if (e.button === 0 && this.rig.mode !== 'free') {
+				if (!this.captured) {
+					// prvý ľavý klik zachytí myš v okne hry (kurzor sa skryje a nemôže ujsť z okna); Esc ju uvoľní
+					this.capture();
+				} else {
+					// ľavé tlačidlo drž = ruka chytí tágo
+					this.startStroke();
+				}
 				return;
 			}
-			if (e.button === 0 && this.rig.mode !== 'free') {
-				// ľavý klik zachytí myš v okne hry (kurzor sa skryje a nemôže ujsť z okna); Esc ju uvoľní
+			if (e.button === 2) {
+				// pravé tlačidlo drž = pohybom myši sa posúva miesto úderu na bielej
+				this.spinning = true;
 				this.capture();
 				return;
 			}
@@ -144,8 +153,11 @@ export class Controls {
 	}
 
 	up(e) {
-		if (e.pointerType === 'mouse' && e.button === 2 && this.stroking) {
+		if (e.pointerType === 'mouse' && e.button === 0 && this.stroking) {
 			this.endStroke();
+		}
+		if (e.pointerType === 'mouse' && e.button === 2) {
+			this.spinning = false;
 		}
 		const t = this._tap;
 		if (t && t.id === e.pointerId) {
@@ -197,12 +209,18 @@ export class Controls {
 			this.strokeMove(e.movementY || 0);
 			return;
 		}
+		if (this.spinning) {
+			if (this.hooks.spin) {
+				this.hooks.spin((e.movementX || 0) / 160, -(e.movementY || 0) / 160);
+			}
+			return;
+		}
 		if (g.state === 'place' && this.captured) {
 			this.placeMove(e.movementX || 0, e.movementY || 0);
 			return;
 		}
 		// otáča sa len so zachytenou myšou (inak by sa tágo otáčalo aj pri ceste k tlačidlám)
-		if (e.buttons !== 0 || g.state !== 'aim' || !this.captured) {
+		if ((e.buttons & 3) !== 0 || g.state !== 'aim' || !this.captured) {
 			return;
 		}
 		const dx = e.movementX || 0;

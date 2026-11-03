@@ -177,7 +177,8 @@ export class UI {
 				x /= l;
 				y /= l;
 			}
-			this.setSpin(x, y);
+			// kliknutie blízko stredu = presne stred
+			this.setSpin(Math.abs(x) < 0.06 ? 0 : x, Math.abs(y) < 0.06 ? 0 : y);
 		};
 		this.spinBall.addEventListener('pointerdown', (e) => {
 			e.preventDefault();
@@ -195,8 +196,13 @@ export class UI {
 	}
 
 	setSpin(side, top) {
-		this.side = Math.abs(side) < 0.06 ? 0 : side;
-		this.top = Math.abs(top) < 0.06 ? 0 : top;
+		const l = Math.hypot(side, top);
+		if (l > 1) {
+			side /= l;
+			top /= l;
+		}
+		this.side = side;
+		this.top = top;
 		this.spinDot.style.left = 50 + this.side * 40 + '%';
 		this.spinDot.style.top = 50 - this.top * 40 + '%';
 		this.opts.onSpin(this.side, this.top);
@@ -266,7 +272,8 @@ export class UI {
 			<ul>
 				<li><b>Mierenie myšou:</b> kliknutím do hry sa myš zachytí v okne (kurzor sa skryje). Potom stačí hýbať myšou, tlačidlo netreba. Pomalý pohyb mieri veľmi jemne, so Shift ešte jemnejšie. Esc myš uvoľní a otvorí menu.</li>
 				<li><b>Biela do ruky myšou:</b> bielu posúvaš pohybom myši, ľavým klikom ju položíš.</li>
-				<li><b>Úder myšou:</b> drž pravé tlačidlo, ruka chytí tágo. Myš k sebe tágo odtiahne, pohyb dopredu ho posunie a pri dotyku bielej vystrelí. Sila je podľa toho, ako rýchlo pohneš dopredu. Pustením pravého tlačidla úder zrušíš.</li>
+				<li><b>Úder myšou:</b> drž ľavé tlačidlo, ruka chytí tágo. Myš k sebe tágo odtiahne, pohyb dopredu ho posunie a pri dotyku bielej vystrelí. Sila je podľa toho, ako rýchlo pohneš dopredu. Pustením ľavého tlačidla úder zrušíš.</li>
+				<li><b>Miesto úderu myšou:</b> drž pravé tlačidlo a pohybom myši posúvaj bod na bielej guli vľavo dole (hore guľa dopredu, dole guľa späť, do strán bočná falša).</li>
 				<li><b>Mierenie prstom:</b> za tágom ťahaj doľava a doprava, šípky na klávesnici. V pohľade zhora klikni na miesto, kam chceš mieriť, vo voľnej kamere naň krátko ťukni.</li>
 				<li><b>Detail dotyku:</b> kruh dole ukazuje zhora okamih, keď sa biela dotkne gule. Úder ide vždy nahor, červený bod je miesto dotyku. Pomocné čiary a šípky (kam pôjdu gule) sú vypnuté, zapnúť sa budú dať v hlavnom menu. Tlačidlami ‹ a › mieriš jemne (ťuk 0,05 stupňa, držanie plynulo).</li>
 				<li><b>Sila a úder:</b> ťahaj ukazovateľ sily vpravo nadol a pusť. Alebo drž medzerník a pusť ho pri želanej sile.</li>
@@ -455,9 +462,9 @@ export class UI {
 
 	_hintText() {
 		const t = this._stroke
-			? 'Ruka drží tágo: myš k sebe odtiahne, dopredu vystrelí. Pustením pravého tlačidla zrušíš.'
+			? 'Ruka drží tágo: myš k sebe odtiahne, dopredu vystrelí. Pustením ľavého tlačidla zrušíš.'
 			: this._lock
-				? 'Mier pohybom myši (Shift jemne), pravé tlačidlo drž a striel pohybom myši. Esc otvorí menu.'
+				? 'Mier pohybom myši (Shift jemne). Ľavé tlačidlo drž a striel, pravé tlačidlo drž a posúvaj miesto úderu. Esc otvorí menu.'
 				: 'Klikni do hry, myš sa zachytí v okne.';
 		this.hint.textContent = t;
 		this.hint.classList.toggle('mysn-hint-on', !!this._stroke);

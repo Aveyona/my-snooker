@@ -21,7 +21,7 @@ function mysn_roadmap() {
 				array( '3D stôl, gule, tágo, miestnosť so svetlami a tieňmi', 1 ),
 				array( 'Kamery: za tágom, zhora, voľná', 1 ),
 				array( 'Ovládanie: myš, prsty, klávesnica, ukazovateľ sily, miesto úderu na guli', 1 ),
-				array( 'Myš ako tágo: mierenie pohybom myši bez tlačidla (presne, so Shift ešte jemnejšie), úder pravým tlačidlom a pohybom myši dozadu a dopredu', 1 ),
+				array( 'Myš ako tágo: mierenie pohybom myši bez tlačidla (presne, so Shift ešte jemnejšie), úder ľavým tlačidlom a pohybom myši dozadu a dopredu, miesto úderu pravým tlačidlom', 1 ),
 				array( 'Pomocné čiary mierenia (smer, kam pôjde objektová a biela guľa), predvolene vypnuté', 1 ),
 				array( 'Hlavné menu hry (na začiatku a po Esc)', 1 ),
 				array( 'Prepínač pomocných čiar v hlavnom menu', 0 ),
@@ -84,6 +84,7 @@ function mysn_roadmap() {
 /** Denník zmien (najnovšie hore). */
 function mysn_changelog() {
 	return array(
+		array( '0.1.5', '3. 11. 2026', 'Ľavé tlačidlo drž = naťahovanie tága a úder, pravé tlačidlo drž = pohybom myši sa posúva miesto úderu na bielej.' ),
 		array( '0.1.4', '3. 11. 2026', 'Myš sa v hre zachytí v okne (nemôže ujsť mimo), uvoľní sa až klávesom Esc, ktorý otvorí hlavné menu. Bielu do ruky posúva pohyb myši, ľavý klik ju položí. Hlavné menu na začiatku hry.' ),
 		array( '0.1.3', '3. 11. 2026', 'Myš ako tágo: mieri sa pohybom myši bez tlačidla, ľavé tlačidlo zamkne smer, pravým tlačidlom ruka chytí tágo a strieľa sa pohybom myši dopredu (sila podľa rýchlosti). Mierenie je asi 8x presnejšie, gule sú hladšie.' ),
 		array( '0.1.2', '3. 11. 2026', 'Pomocné čiary sú predvolene vypnuté (v hre aj v detaile dotyku). Zapínať sa budú v hlavnom menu.' ),
