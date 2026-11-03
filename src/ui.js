@@ -36,6 +36,9 @@ export class UI {
 
 		this.msg = h('div', 'mysn-msg');
 		root.appendChild(this.msg);
+		this.hint = h('div', 'mysn-hint', '');
+		root.appendChild(this.hint);
+		this.setLock(false);
 
 		// Sila
 		this.powerBox = h('div', 'mysn-power', '<div class="mysn-power-label">Sila</div><div class="mysn-power-track"><div class="mysn-power-fill"></div><div class="mysn-power-knob"></div></div><div class="mysn-power-val">0 %</div>');
@@ -232,7 +235,9 @@ export class UI {
 		p.innerHTML = `
 			<h3>Ovládanie</h3>
 			<ul>
-				<li><b>Mierenie:</b> za tágom ťahaj myšou alebo prstom doľava a doprava (so Shift jemnejšie), šípky na klávesnici. V pohľade zhora klikni na miesto, kam chceš mieriť, vo voľnej kamere naň krátko ťukni.</li>
+				<li><b>Mierenie myšou:</b> stačí hýbať myšou, tlačidlo netreba. Pomalý pohyb mieri veľmi jemne, so Shift ešte jemnejšie. Ľavé tlačidlo smer zamkne (aby si mohol prejsť k tlačidlám), ďalším kliknutím ho odomkneš.</li>
+				<li><b>Úder myšou:</b> drž pravé tlačidlo, ruka chytí tágo. Myš k sebe tágo odtiahne, pohyb dopredu ho posunie a pri dotyku bielej vystrelí. Sila je podľa toho, ako rýchlo pohneš dopredu. Pustením pravého tlačidla alebo klávesom Esc úder zrušíš.</li>
+				<li><b>Mierenie prstom:</b> za tágom ťahaj doľava a doprava, šípky na klávesnici. V pohľade zhora klikni na miesto, kam chceš mieriť, vo voľnej kamere naň krátko ťukni.</li>
 				<li><b>Detail dotyku:</b> kruh dole ukazuje zhora okamih, keď sa biela dotkne gule. Úder ide vždy nahor, červený bod je miesto dotyku. Pomocné čiary a šípky (kam pôjdu gule) sú vypnuté, zapnúť sa budú dať v hlavnom menu. Tlačidlami ‹ a › mieriš jemne (ťuk 0,05 stupňa, držanie plynulo).</li>
 				<li><b>Sila a úder:</b> ťahaj ukazovateľ sily vpravo nadol a pusť. Alebo drž medzerník a pusť ho pri želanej sile.</li>
 				<li><b>Miesto úderu:</b> klikni na bielu guľu vľavo dole. Hore znamená guľu dopredu, dole guľu späť, do strán bočnú falšu. Dvojklik vráti stred.</li>
@@ -406,6 +411,26 @@ export class UI {
 				? `<span class="mysn-contact-where">${where}</span>` +
 				  (pocket ? '<span class="mysn-contact-pot">Smer do jamky</span>' : '<span class="mysn-contact-miss">Mimo jamky</span>')
 				: '');
+	}
+
+	setLock(on) {
+		this._lock = on;
+		this._hintText();
+	}
+
+	setStroke(on) {
+		this._stroke = on;
+		this._hintText();
+	}
+
+	_hintText() {
+		const t = this._stroke
+			? 'Ruka drží tágo: myš k sebe odtiahne, dopredu vystrelí. Pustením pravého tlačidla zrušíš.'
+			: this._lock
+				? 'Smer je zamknutý. Klikni ľavým tlačidlom na stôl a mieriš znova.'
+				: 'Mier pohybom myši (Shift jemne). Ľavé tlačidlo zamkne smer, pravé tlačidlo drž a striel pohybom myši.';
+		this.hint.textContent = t;
+		this.hint.classList.toggle('mysn-hint-on', !!(this._stroke || this._lock));
 	}
 
 	showPower(p) {

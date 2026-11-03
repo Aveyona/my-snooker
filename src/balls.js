@@ -29,7 +29,7 @@ export class BallViews {
 	constructor(scene, balls, quality) {
 		this.scene = scene;
 		this.items = [];
-		const seg = quality === 'high' ? 40 : 20;
+		const seg = quality === 'high' ? 64 : 32;
 		const geo = new THREE.SphereGeometry(R, seg, Math.round(seg * 0.75));
 		const mats = {};
 		for (const b of balls) {

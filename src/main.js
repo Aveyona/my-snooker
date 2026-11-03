@@ -90,6 +90,7 @@ export function start(root, config = {}) {
 
 	const doShoot = (power) => {
 		if (game.shoot(power, spin.side, spin.top)) {
+			controls.setLock(false);
 			sound.cue(power);
 			ui.sync(game, rig.mode);
 		}
@@ -160,6 +161,8 @@ export function start(root, config = {}) {
 	const controls = new Controls(renderer.domElement, rig, game, {
 		unlock: () => sound.unlock(),
 		shoot: doShoot,
+		lock: (on) => ui.setLock(on),
+		stroke: (on) => ui.setStroke(on),
 		key: (k) => {
 			const map = { 1: 'cue', 2: 'top', 3: 'free' };
 			if (map[k]) {
@@ -220,8 +223,12 @@ export function start(root, config = {}) {
 			}
 		}
 		const aiming = game.state === 'aim';
-		const target = aiming ? controls.power : 0;
-		pull += (target - pull) * Math.min(1, dt * (controls.charging ? 30 : 12));
+		if (controls.stroking) {
+			pull = Math.max(0, controls.strokePull); // tágo ide presne s rukou
+		} else {
+			const target = aiming ? controls.power : 0;
+			pull += (target - pull) * Math.min(1, dt * (controls.charging ? 30 : 12));
+		}
 		ui.showPower(controls.power);
 		views.update(dt);
 		cue.place(game.cue, game.dir, pull, spin.side, spin.top, aiming && game.cue.on);
@@ -234,7 +241,7 @@ export function start(root, config = {}) {
 	};
 	requestAnimationFrame(frame);
 
-	return { game, rig, renderer, scene, settings };
+	return { game, rig, renderer, scene, settings, controls };
 }
 
 // Automatické spustenie na stránke hry

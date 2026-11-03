@@ -1,6 +1,9 @@
 /*
  * My Snooker: ovládanie myšou, prstami a klávesnicou.
- *  Za tágom: ťahaj vodorovne = mierenie (so Shift jemne), koliesko = priblíženie.
+ *  Myš: pohyb myši bez tlačidla otáča tágo (so Shift veľmi jemne), ľavé tlačidlo zamkne alebo odomkne smer,
+ *  pravé tlačidlo drž = ruka chytí tágo: pohyb myši k sebe tágo odtiahne, pohyb dopredu ho posunie a pri náraze
+ *  do bielej vystrelí; sila podľa rýchlosti pohybu. Pustenie pravého tlačidla bez úderu = zrušenie.
+ *  Prst: ťahaj vodorovne = mierenie, koliesko myši = priblíženie.
  *  Zhora: klikni alebo ťahaj na stole = smer úderu.
  *  Voľná kamera: ťahanie otáča pohľad, krátke ťuknutie na stôl alebo šípky = smer.
  *  Biela do ruky: klikni alebo ťahaj v D.
@@ -25,6 +28,17 @@ export class Controls {
 		this._drag = null;
 		this._keys = new Set();
 		this._spaceT = 0;
+		this.aimLock = false; // ľavým klikom sa smer zamkne (aby sa dalo prejsť myšou k tlačidlám)
+		this.stroking = false; // pravé tlačidlo: ruka drží tágo
+		this.strokePull = 0;
+		this._hist = [];
+
+		dom.addEventListener('mousemove', (e) => this.mouseMove(e));
+		this._ignoreUntil = 0;
+		document.addEventListener('pointerlockchange', () => {
+			// prehliadač pri zamknutí kurzora pošle jeden veľký falošný skok, ten ignorujeme
+			this._ignoreUntil = performance.now() + 60;
+		});
 
 		dom.addEventListener('pointerdown', (e) => this.down(e));
 		window.addEventListener('pointermove', (e) => this.move(e));
@@ -64,6 +78,16 @@ export class Controls {
 		if (g.state !== 'aim') {
 			return;
 		}
+		if (e.pointerType === 'mouse') {
+			if (e.button === 2) {
+				this.startStroke();
+				return;
+			}
+			if (e.button === 0 && this.rig.mode === 'cue') {
+				this.setLock(!this.aimLock);
+				return;
+			}
+		}
 		if (this.rig.mode === 'free') {
 			// vo voľnej kamere ťahanie otáča pohľad; krátke ťuknutie na stôl nastaví smer
 			this._tap = { id: e.pointerId, x: e.clientX, y: e.clientY, t: performance.now() };
@@ -102,13 +126,16 @@ export class Controls {
 				this.aimAt(p);
 			}
 		} else if (d.kind === 'aimCue') {
-			const k = (e.shiftKey || this.fine ? 0.0006 : 0.004) * (e.pointerType === 'touch' ? 1.4 : 1);
+			const k = e.shiftKey || this.fine ? 0.00015 : 0.0016;
 			// ťah doprava otočí mierenie doprava
 			g.dir = d.dir + (e.clientX - d.x) * k;
 		}
 	}
 
 	up(e) {
+		if (e.pointerType === 'mouse' && e.button === 2 && this.stroking) {
+			this.endStroke();
+		}
 		const t = this._tap;
 		if (t && t.id === e.pointerId) {
 			this._tap = null;
@@ -122,6 +149,115 @@ export class Controls {
 		if (this._drag && this._drag.id === e.pointerId) {
 			this._drag = null;
 		}
+	}
+
+	setLock(on) {
+		this.aimLock = on;
+		if (this.hooks.lock) {
+			this.hooks.lock(on);
+		}
+	}
+
+	/** Pohyb myši bez tlačidla: presné otáčanie tága (malý pohyb = veľmi jemne, rýchly pohyb = rýchlejšie). */
+	mouseMove(e) {
+		const g = this.game;
+		if (performance.now() < this._ignoreUntil || Math.abs(e.movementX || 0) > 200 || Math.abs(e.movementY || 0) > 200) {
+			return;
+		}
+		if (this.stroking) {
+			this.strokeMove(e.movementY || 0);
+			return;
+		}
+		if (e.buttons !== 0 || g.state !== 'aim' || this.aimLock) {
+			return;
+		}
+		const dx = e.movementX || 0;
+		if (!dx) {
+			return;
+		}
+		const base = e.shiftKey ? 0.00006 : 0.0005; // radiány na pixel (0,0005 = asi 0,03 stupňa)
+		const accel = e.shiftKey ? 1 : 1 + Math.min(6, Math.abs(dx) / 6);
+		g.dir += dx * base * accel;
+	}
+
+	startStroke() {
+		if (!this.game.canShoot()) {
+			return;
+		}
+		this.stroking = true;
+		this._ignoreUntil = performance.now() + 60;
+		this.strokePull = 0;
+		this._max = 0;
+		this._hist = [{ t: performance.now(), p: 0 }];
+		try {
+			const r = this.dom.requestPointerLock && this.dom.requestPointerLock();
+			if (r && r.catch) {
+				r.catch(() => {});
+			}
+		} catch (err) {
+			/* bez zamknutia kurzora to funguje tiež, len kurzor môže doraziť na okraj obrazovky */
+		}
+		if (this.hooks.stroke) {
+			this.hooks.stroke(true);
+		}
+	}
+
+	endStroke() {
+		this.stroking = false;
+		this.strokePull = 0;
+		this.power = 0;
+		if (document.pointerLockElement === this.dom) {
+			document.exitPointerLock();
+		}
+		if (this.hooks.stroke) {
+			this.hooks.stroke(false);
+		}
+	}
+
+	/** Pohyb ruky s tágom: dy > 0 (myš k sebe) odťahuje, dy < 0 (dopredu) posúva k bielej. */
+	strokeMove(dy) {
+		if (!this.stroking || !this.game.canShoot()) {
+			return;
+		}
+		const now = performance.now();
+		const prev = this.strokePull;
+		this.strokePull = Math.max(-0.02, Math.min(1, prev + dy / 380));
+		this._max = Math.max(this._max, this.strokePull);
+		this._hist.push({ t: now, p: this.strokePull });
+		while (this._hist.length > 2 && now - this._hist[0].t > 80) {
+			this._hist.shift();
+		}
+		const sp = this.strokeSpeed();
+		this.power = Math.max(0, Math.min(1, sp));
+		if (this.strokePull <= 0.004 && prev > 0.004 && this._max > 0.02 && dy < 0) {
+			const p = Math.max(0.03, Math.min(1, sp));
+			this.endStroke();
+			this.hooks.shoot(p);
+		}
+	}
+
+	/** Rýchlosť tága dopredu (z posledných 80 ms) prepočítaná na silu úderu 0..1. */
+	strokeSpeed() {
+		const h = this._hist;
+		if (h.length < 2) {
+			return 0;
+		}
+		// len dopredný pohyb: od posledného bodu, kde bolo tágo najviac vzadu
+		let i0 = 0;
+		for (let i = 1; i < h.length; i++) {
+			if (h[i].p >= h[i0].p) {
+				i0 = i;
+			}
+		}
+		const a = h[i0];
+		const b = h[h.length - 1];
+		if (a === b) {
+			return 0;
+		}
+		const dt = Math.max(0.008, (b.t - a.t) / 1000);
+		const v = (a.p - b.p) / dt; // jednotky odtiahnutia za sekundu (1 = 28 cm)
+		// rýchlosť tága v m/s × 1,3 (biela letí rýchlejšie než tágo) / najvyššia rýchlosť bielej
+		return Math.max(0, (v * 0.28 * 2) / 7);
 	}
 
 	wheel(e) {
@@ -149,6 +285,17 @@ export class Controls {
 				this.hooks.unlock();
 				this.charging = true;
 				this._spaceT = 0;
+		this.aimLock = false; // ľavým klikom sa smer zamkne (aby sa dalo prejsť myšou k tlačidlám)
+		this.stroking = false; // pravé tlačidlo: ruka drží tágo
+		this.strokePull = 0;
+		this._hist = [];
+
+		dom.addEventListener('mousemove', (e) => this.mouseMove(e));
+		this._ignoreUntil = 0;
+		document.addEventListener('pointerlockchange', () => {
+			// prehliadač pri zamknutí kurzora pošle jeden veľký falošný skok, ten ignorujeme
+			this._ignoreUntil = performance.now() + 60;
+		});
 			} else if (!isDown && this.charging) {
 				this.release();
 			}
@@ -159,9 +306,12 @@ export class Controls {
 		}
 		if (k === 'Enter' && g.state === 'place') {
 			g.confirmPlace();
-		} else if (k === 'Escape' && this.charging) {
+		} else if (k === 'Escape' && (this.charging || this.stroking)) {
 			this.charging = false;
 			this.power = 0;
+			if (this.stroking) {
+				this.endStroke();
+			}
 		} else if (this.hooks.key && this.hooks.key(k, e)) {
 			e.preventDefault();
 		}
@@ -187,13 +337,20 @@ export class Controls {
 		const g = this.game;
 		if (g.state === 'aim') {
 			const fine = this._keys.has('Shift');
-			const speed = fine ? 0.05 : 0.6;
+			const speed = fine ? 0.015 : 0.35;
 			if (this._keys.has('ArrowLeft')) {
 				g.dir -= speed * dt;
 			}
 			if (this._keys.has('ArrowRight')) {
 				g.dir += speed * dt;
 			}
+		}
+		if (this.stroking && g.state !== 'aim') {
+			this.endStroke();
+		}
+		// keď ruka stojí, ukazovateľ sily pomaly klesne na nulu
+		if (this.stroking && this._hist.length && performance.now() - this._hist[this._hist.length - 1].t > 120) {
+			this.power *= Math.exp(-dt * 8);
 		}
 		if (this.charging && this._keys.has(' ')) {
 			// sila stúpa a klesá (ping-pong), aby sa dala trafiť presne
