@@ -84,7 +84,7 @@ export class CameraRig {
 			this.orbit.update();
 			this._curLook.copy(this.orbit.target);
 			// nad úrovňou lámp ich nekresli, aby nezakrývali stôl
-			if (this.camera.position.y > 1.1) {
+			if (this.camera.position.y > 1.5) {
 				this.camera.layers.disable(1);
 			} else {
 				this.camera.layers.enable(1);
@@ -141,5 +141,13 @@ export class CameraRig {
 		this.camera.position.lerp(pos, k);
 		this._curLook.lerp(look, k);
 		this.camera.lookAt(this._curLook);
+		// kamera nad lampami (napríklad po údere vysoko) ich nekreslí
+		if (this.mode !== 'top') {
+			if (this.camera.position.y > 1.5) {
+				this.camera.layers.disable(1);
+			} else {
+				this.camera.layers.enable(1);
+			}
+		}
 	}
 }

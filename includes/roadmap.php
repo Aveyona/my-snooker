@@ -19,8 +19,9 @@ function mysn_roadmap() {
 				array( 'Falše: guľa dopredu, guľa späť, zastavenie, bočná falša', 1 ),
 				array( 'Automatické testy fyziky (rovný úder, odraz, falše, jamky, rozbitie)', 1 ),
 				array( '3D stôl, gule, tágo, miestnosť so svetlami a tieňmi', 1 ),
+				array( 'Stôl ako skutočný snooker: zaoblené čeľuste jamiek, zaoblené rohy rámu, kožené lemy jamiek, podlaha z drevených dosiek, vyššie lampy', 1 ),
 				array( 'Kamery: za tágom, zhora, voľná', 1 ),
-				array( 'Posun pohľadu stlačeným kolieskom myši, po údere kamera sleduje bielu a otáča sa pohybom myši', 1 ),
+				array( 'Posun pohľadu pri držaní kolieska myši (po pustení sa vráti), po údere kamera sleduje bielu a otáča sa pohybom myši', 1 ),
 				array( 'Ovládanie: myš, prsty, klávesnica, ukazovateľ sily, miesto úderu na guli', 1 ),
 				array( 'Myš ako tágo: mierenie pohybom myši bez tlačidla (presne, so Shift ešte jemnejšie), úder ľavým tlačidlom a pohybom myši dozadu a dopredu, miesto úderu pravým tlačidlom', 1 ),
 				array( 'Pomocné čiary mierenia (smer, kam pôjde objektová a biela guľa), predvolene vypnuté', 1 ),
@@ -85,6 +86,7 @@ function mysn_roadmap() {
 /** Denník zmien (najnovšie hore). */
 function mysn_changelog() {
 	return array(
+		array( '0.1.8', '3. 11. 2026', 'Nový stôl: mantinely so zaoblenými čeľusťami jamiek, rám so zaoblenými rohmi a výrezmi jamiek, kožené lemy, zaoblené teleso stola. Nekonečná podlaha z drevených dosiek, lampy vyššie nad stolom na lankách. Po pustení kolieska sa pohľad vráti na pôvodné miesto.' ),
 		array( '0.1.7', '3. 11. 2026', 'Stlačené koliesko myši posúva pohľad hore, dole, doľava a doprava. Po údere kamera sleduje bielu guľu a pohybom myši bez tlačidla sa pohľad otáča okolo nej.' ),
 		array( '0.1.6', '3. 11. 2026', 'Krajšie gule: odrazy okolia na lesklom povrchu, spodok gúľ osvetlený odrazom zeleného súkna (už nie je čierny), mäkký tieň v mieste dotyku so súknom.' ),
 		array( '0.1.5', '3. 11. 2026', 'Ľavé tlačidlo drž = naťahovanie tága a úder, pravé tlačidlo drž = pohybom myši sa posúva miesto úderu na bielej.' ),

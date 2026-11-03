@@ -176,7 +176,9 @@ export class Controls {
 			this.spinning = false;
 		}
 		if (e.pointerType === 'mouse' && e.button === 1) {
+			// pustením kolieska sa pohľad vráti na pôvodné miesto
 			this.panning = false;
+			this.rig.resetPan();
 		}
 		const t = this._tap;
 		if (t && t.id === e.pointerId) {
