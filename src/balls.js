@@ -25,13 +25,29 @@ function ballTexture(hex, kind) {
 	return t;
 }
 
+/** Mäkký tieň pod guľou (dotyk so súknom), aby guľa „sedela“ na stole aj bez tieňov svetiel. */
+function blobTexture() {
+	const c = document.createElement('canvas');
+	c.width = c.height = 64;
+	const g = c.getContext('2d');
+	const grad = g.createRadialGradient(32, 32, 2, 32, 32, 32);
+	grad.addColorStop(0, 'rgba(0,0,0,0.75)');
+	grad.addColorStop(0.45, 'rgba(0,0,0,0.35)');
+	grad.addColorStop(1, 'rgba(0,0,0,0)');
+	g.fillStyle = grad;
+	g.fillRect(0, 0, 64, 64);
+	return new THREE.CanvasTexture(c);
+}
+
 export class BallViews {
-	constructor(scene, balls, quality) {
+	constructor(scene, balls, quality, env = null) {
 		this.scene = scene;
 		this.items = [];
 		const seg = quality === 'high' ? 64 : 32;
 		const geo = new THREE.SphereGeometry(R, seg, Math.round(seg * 0.75));
 		const mats = {};
+		const blobGeo = new THREE.PlaneGeometry(R * 2.6, R * 2.6);
+		const blobMat = new THREE.MeshBasicMaterial({ map: blobTexture(), transparent: true, depthWrite: false, opacity: 0.6 });
 		for (const b of balls) {
 			if (!mats[b.kind]) {
 				mats[b.kind] = new THREE.MeshPhysicalMaterial({
@@ -40,16 +56,22 @@ export class BallViews {
 					metalness: 0,
 					clearcoat: 1,
 					clearcoatRoughness: 0.05,
+					envMap: env,
+					envMapIntensity: 0.55,
 				});
 			}
 			const m = new THREE.Mesh(geo, mats[b.kind]);
+			const blob = new THREE.Mesh(blobGeo, blobMat);
+			blob.rotation.x = -Math.PI / 2;
+			blob.renderOrder = 1;
+			scene.add(blob);
 			m.castShadow = true;
 			m.receiveShadow = false;
 			m.userData.ball = b;
 			// náhodné natočenie, aby gule nevyzerali rovnako
 			m.quaternion.setFromEuler(new THREE.Euler(Math.random() * 6, Math.random() * 6, Math.random() * 6));
 			scene.add(m);
-			this.items.push({ ball: b, mesh: m, drop: 0 });
+			this.items.push({ ball: b, mesh: m, blob, drop: 0 });
 		}
 		this._q = new THREE.Quaternion();
 		this._axis = new THREE.Vector3();
@@ -64,6 +86,8 @@ export class BallViews {
 				it.drop = 0;
 				m.visible = true;
 				m.position.set(b.p.x, R, b.p.z);
+				it.blob.visible = true;
+				it.blob.position.set(b.p.x, 0.0006, b.p.z);
 				const wl = Math.hypot(b.w.x, b.w.y, b.w.z);
 				if (wl > 1e-3 && b.moving) {
 					this._axis.set(b.w.x / wl, b.w.y / wl, b.w.z / wl);
@@ -71,6 +95,7 @@ export class BallViews {
 					m.quaternion.premultiply(this._q);
 				}
 			} else if (b.potted) {
+				it.blob.visible = false;
 				// padá do jamky: dokotúľa sa k stredu a klesne
 				it.drop = Math.min(1, it.drop + dt * 3);
 				const k = it.drop;
@@ -80,6 +105,7 @@ export class BallViews {
 				m.visible = k < 1;
 			} else {
 				m.visible = false;
+				it.blob.visible = false;
 			}
 		}
 	}

@@ -3,6 +3,7 @@
  * ovládanie, zvuk a rozhranie. Kreslenie beží cez requestAnimationFrame, fyzika v malých krokoch.
  */
 import * as THREE from 'three';
+import { RoomEnvironment } from 'three/examples/jsm/environments/RoomEnvironment.js';
 import { buildTable, buildRoom } from './table.js';
 import { BallViews } from './balls.js';
 import { Cue, AimGuide } from './cue.js';
@@ -75,7 +76,11 @@ export function start(root, config = {}) {
 	const game = new Training();
 	game.respot = !!settings.respot;
 	game.aimAtNearest();
-	const views = new BallViews(scene, game.balls, settings.quality);
+	// odrazy okolia na guliach (mäkké svetlo zo všetkých strán, spodok gúľ nie je čierny)
+	const pmrem = new THREE.PMREMGenerator(renderer);
+	const env = pmrem.fromScene(new RoomEnvironment(), 0.04).texture;
+	pmrem.dispose();
+	const views = new BallViews(scene, game.balls, settings.quality, env);
 	const cue = new Cue(scene);
 	const guide = new AimGuide(scene);
 	const rig = new CameraRig(renderer);

@@ -179,7 +179,8 @@ export function buildRoom(scene, quality) {
 	floor.receiveShadow = true;
 	scene.add(floor);
 
-	scene.add(new THREE.HemisphereLight(0xdfe8ff, 0x1a120a, 0.35));
+	// zdola sa odráža zelené súkno, preto zelenkavé svetlo zospodu
+	scene.add(new THREE.HemisphereLight(0xdfe8ff, 0x2f6b3c, 0.45));
 	const lampMat = new THREE.MeshStandardMaterial({ color: 0x0d3b1f, emissive: 0xfff2d6, emissiveIntensity: 0.25, roughness: 0.6 });
 	for (const x of [-1.1, 0, 1.1]) {
 		const spot = new THREE.SpotLight(0xfff4e0, 7, 5, Math.PI / 3.2, 0.6, 1.6);
