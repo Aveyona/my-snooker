@@ -86,6 +86,7 @@ function mysn_roadmap() {
 /** Denník zmien (najnovšie hore). */
 function mysn_changelog() {
 	return array(
+		array( '0.1.9', '3. 11. 2026', 'Pri posúvaní pohľadu kolieskom sa kamera zároveň otáča, aby sa stále pozerala na guľu, na ktorú sa mieri.' ),
 		array( '0.1.8', '3. 11. 2026', 'Nový stôl: mantinely so zaoblenými čeľusťami jamiek, rám so zaoblenými rohmi a výrezmi jamiek, kožené lemy, zaoblené teleso stola. Nekonečná podlaha z drevených dosiek, lampy vyššie nad stolom na lankách. Po pustení kolieska sa pohľad vráti na pôvodné miesto.' ),
 		array( '0.1.7', '3. 11. 2026', 'Stlačené koliesko myši posúva pohľad hore, dole, doľava a doprava. Po údere kamera sleduje bielu guľu a pohybom myši bez tlačidla sa pohľad otáča okolo nej.' ),
 		array( '0.1.6', '3. 11. 2026', 'Krajšie gule: odrazy okolia na lesklom povrchu, spodok gúľ osvetlený odrazom zeleného súkna (už nie je čierny), mäkký tieň v mieste dotyku so súknom.' ),

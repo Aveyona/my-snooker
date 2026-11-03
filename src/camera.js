@@ -29,6 +29,7 @@ export class CameraRig {
 		this.followYaw = 0; // po údere: smer pohľadu na bielu (otáča sa pohybom myši)
 		this.followH = 0.55; // po údere: výška kamery
 		this._wasMoving = false;
+		this.aimPoint = null; // guľa (alebo miesto na mantineli), na ktorú sa mieri
 		this.orbit.mouseButtons = { LEFT: THREE.MOUSE.ROTATE, MIDDLE: THREE.MOUSE.PAN, RIGHT: THREE.MOUSE.PAN };
 	}
 
@@ -133,9 +134,17 @@ export class CameraRig {
 			this.resetPan();
 		}
 		this._wasMoving = moving;
-		if (!moving || this.mode === 'top') {
+		if (this.mode === 'top') {
 			pos.add(this.panOffset);
 			look.add(this.panOffset);
+		} else if (!moving && this.panOffset.lengthSq() > 1e-8) {
+			// posun kolieskom za tágom: kamera sa posunie a otočí tak, aby sa stále pozerala na guľu, na ktorú sa mieri
+			pos.add(this.panOffset);
+			if (this.aimPoint) {
+				look.copy(this.aimPoint);
+			} else {
+				look.add(this.panOffset);
+			}
 		}
 		const k = 1 - Math.exp(-dt * (moving ? 4 : 7));
 		this.camera.position.lerp(pos, k);

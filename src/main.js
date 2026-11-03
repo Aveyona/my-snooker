@@ -12,7 +12,7 @@ import { Controls } from './controls.js';
 import { Sound } from './audio.js';
 import { UI } from './ui.js';
 import { Training } from './training.js';
-import { aimTrace } from './physics.js';
+import { aimTrace, R } from './physics.js';
 
 const STORE = 'mySnookerSettings';
 
@@ -231,6 +231,7 @@ export function start(root, config = {}) {
 		ui.showMenu(true, false);
 	}
 
+	const aimPoint = new THREE.Vector3();
 	let last = performance.now();
 	let pull = 0;
 	const frame = (now) => {
@@ -260,7 +261,15 @@ export function start(root, config = {}) {
 		cue.place(game.cue, game.dir, pull, spin.side, spin.top, aiming && game.cue.on);
 		const tr = guide.update(game.balls, game.cue, game.dir, aiming && game.cue.on, settings.lines ? 2 : 0);
 		const showContact = aiming && game.cue.on && !!settings.contact;
-		ui.drawContact(tr || (showContact ? aimTrace(game.balls, game.cue, game.dir) : null), game.dir, showContact, settings.lines);
+		const trace = tr || (aiming && game.cue.on ? aimTrace(game.balls, game.cue, game.dir) : null);
+		ui.drawContact(showContact ? trace : null, game.dir, showContact, settings.lines);
+		if (trace) {
+			const tp = trace.ball ? trace.ball.p : trace.ghost;
+			aimPoint.set(tp.x, R, tp.z);
+			rig.aimPoint = aimPoint;
+		} else {
+			rig.aimPoint = null;
+		}
 		rig.update(dt, game.cue, game.dir, game.state === 'moving');
 		renderer.render(scene, rig.camera);
 		requestAnimationFrame(frame);
