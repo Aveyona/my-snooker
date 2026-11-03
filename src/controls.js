@@ -4,6 +4,8 @@
  *  ľavé tlačidlo drž = ruka chytí tágo: pohyb myši k sebe tágo odtiahne, pohyb dopredu ho posunie a pri náraze
  *  do bielej vystrelí; sila podľa rýchlosti pohybu. Pustenie ľavého tlačidla bez úderu = zrušenie.
  *  Pravé tlačidlo drž = pohybom myši sa posúva miesto úderu na bielej (falše).
+ *  Koliesko stlač a drž = posúvanie pohľadu hore, dole, doľava a doprava. Po údere kamera sleduje bielu
+ *  a pohyb myši bez tlačidla otáča pohľad okolo nej.
  *  Prst: ťahaj vodorovne = mierenie, koliesko myši = priblíženie.
  *  Zhora: klikni alebo ťahaj na stole = smer úderu.
  *  Voľná kamera: ťahanie otáča pohľad, krátke ťuknutie na stôl alebo šípky = smer.
@@ -35,6 +37,12 @@ export class Controls {
 		this._hist = [];
 
 		dom.addEventListener('mousemove', (e) => this.mouseMove(e));
+		this.panning = false; // stlačené koliesko: posúvanie pohľadu
+		dom.addEventListener('mousedown', (e) => {
+			if (e.button === 1) {
+				e.preventDefault(); // bez automatického posúvania stránky
+			}
+		});
 		this._ignoreUntil = 0;
 		document.addEventListener('pointerlockchange', () => {
 			// prehliadač pri zamknutí kurzora pošle jeden veľký falošný skok, ten ignorujeme
@@ -71,6 +79,14 @@ export class Controls {
 	down(e) {
 		this.hooks.unlock();
 		const g = this.game;
+		if (e.pointerType === 'mouse' && e.button === 1) {
+			// bez preventDefault: inak by prehliadač neposielal udalosti mousemove (automatické posúvanie stránky
+			// vypína samostatné počúvanie mousedown)
+			if (this.rig.mode !== 'free') {
+				this.panning = true;
+			}
+			return;
+		}
 		if (g.state === 'place' && this.captured) {
 			// so zachytenou myšou: biela sa posúva pohybom myši, ľavý klik ju položí
 			if (e.button === 0) {
@@ -159,6 +175,9 @@ export class Controls {
 		if (e.pointerType === 'mouse' && e.button === 2) {
 			this.spinning = false;
 		}
+		if (e.pointerType === 'mouse' && e.button === 1) {
+			this.panning = false;
+		}
 		const t = this._tap;
 		if (t && t.id === e.pointerId) {
 			this._tap = null;
@@ -207,6 +226,15 @@ export class Controls {
 		}
 		if (this.stroking) {
 			this.strokeMove(e.movementY || 0);
+			return;
+		}
+		if (this.panning) {
+			this.rig.pan(e.movementX || 0, e.movementY || 0);
+			return;
+		}
+		// po údere: pohyb myši bez tlačidla otáča pohľad okolo bielej
+		if (g.state === 'moving' && this.rig.mode === 'cue' && (e.buttons & 3) === 0) {
+			this.rig.turn(e.movementX || 0, e.movementY || 0);
 			return;
 		}
 		if (this.spinning) {
