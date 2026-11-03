@@ -1,0 +1,65 @@
+/* My Snooker: rozhranie hry (celá obrazovka) */
+html, body.mysn-page { margin: 0; height: 100%; overflow: hidden; background: #0c0f14; }
+body.mysn-page { font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; color: #eef2ea; -webkit-tap-highlight-color: transparent; }
+#mysn-app { position: fixed; inset: 0; overflow: hidden; touch-action: none; user-select: none; -webkit-user-select: none; }
+.mysn-canvas { display: block; width: 100%; height: 100%; }
+.mysn-ui { position: absolute; inset: 0; pointer-events: none; }
+.mysn-ui > * { pointer-events: auto; }
+.mysn-hidden { display: none !important; }
+
+.mysn-bar { position: absolute; top: 0; left: 0; right: 0; display: flex; align-items: center; gap: 16px; padding: 10px 16px; background: linear-gradient(#0c0f14e6, #0c0f1400); }
+.mysn-brand { display: flex; align-items: baseline; gap: 10px; white-space: nowrap; }
+.mysn-home { color: #f2d48a; font-weight: 700; font-size: 18px; text-decoration: none; letter-spacing: .02em; }
+.mysn-brand span { font-size: 13px; opacity: .75; }
+.mysn-stats { display: flex; flex-wrap: wrap; gap: 6px 14px; font-size: 13px; flex: 1; }
+.mysn-stats span { opacity: .8; }
+.mysn-stats b { color: #fff; font-size: 15px; margin-left: 3px; }
+.mysn-barbtns { display: flex; gap: 6px; }
+
+.mysn-btn { font: inherit; font-size: 13px; color: #eef2ea; background: #1a2230d9; border: 1px solid #ffffff26; border-radius: 8px; padding: 7px 12px; cursor: pointer; white-space: nowrap; }
+.mysn-btn:hover { background: #26324599; border-color: #ffffff55; }
+.mysn-btn:disabled { opacity: .4; cursor: default; }
+.mysn-btn.mysn-on { background: #2c5a3a; border-color: #6fcf8f; }
+.mysn-btn.mysn-primary { background: #c9a24a; color: #17130a; border-color: #e7c773; font-weight: 600; }
+
+.mysn-msg { position: absolute; top: 58px; left: 50%; transform: translateX(-50%); background: #0c0f14cc; border: 1px solid #ffffff22; border-radius: 10px; padding: 8px 14px; font-size: 14px; max-width: calc(100% - 32px); text-align: center; pointer-events: none; }
+
+.mysn-power { position: absolute; right: 16px; top: 50%; transform: translateY(-50%); display: flex; flex-direction: column; align-items: center; gap: 6px; font-size: 12px; }
+.mysn-power.mysn-off { opacity: .35; pointer-events: none; }
+.mysn-power-track { position: relative; width: 34px; height: min(46vh, 320px); border-radius: 17px; background: #0c0f14b3; border: 1px solid #ffffff33; cursor: ns-resize; touch-action: none; overflow: hidden; }
+.mysn-power-fill { position: absolute; left: 0; right: 0; top: 0; height: 0; background: linear-gradient(#3fbf6a, #e3c14f 55%, #d9473a); }
+.mysn-power-knob { position: absolute; left: 3px; right: 3px; height: 6px; margin-top: -3px; top: 0; border-radius: 3px; background: #fff; box-shadow: 0 0 6px #000a; }
+.mysn-power-val { font-variant-numeric: tabular-nums; }
+
+.mysn-spin { position: absolute; left: 16px; bottom: 70px; display: flex; flex-direction: column; align-items: center; gap: 6px; font-size: 12px; }
+.mysn-spin-ball { position: relative; width: 84px; height: 84px; border-radius: 50%; background: radial-gradient(circle at 35% 30%, #fff, #e6e2d6 45%, #a9a596); box-shadow: 0 2px 10px #000a; cursor: crosshair; touch-action: none; }
+.mysn-spin-ball::before { content: ""; position: absolute; inset: 20%; border-radius: 50%; border: 1px dashed #0004; }
+.mysn-spin-dot { position: absolute; left: 50%; top: 50%; width: 14px; height: 14px; margin: -7px 0 0 -7px; border-radius: 50%; background: #2f6fd6; border: 2px solid #fff; box-shadow: 0 0 4px #000; pointer-events: none; }
+
+.mysn-tools { position: absolute; left: 0; right: 0; bottom: 0; display: flex; flex-wrap: wrap; justify-content: center; gap: 8px 18px; padding: 12px 16px; background: linear-gradient(#0c0f1400, #0c0f14e6); }
+.mysn-group { display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; }
+
+.mysn-panel { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: min(440px, calc(100% - 32px)); max-height: calc(100% - 120px); overflow: auto; background: #141a24f2; border: 1px solid #ffffff2e; border-radius: 14px; padding: 18px 20px; box-shadow: 0 10px 40px #000c; }
+.mysn-panel h3 { margin: 0 0 12px; color: #f2d48a; font-size: 17px; }
+.mysn-panel label { display: flex; flex-direction: column; gap: 4px; font-size: 13px; margin-bottom: 12px; }
+.mysn-panel label.mysn-check { flex-direction: row; align-items: center; gap: 8px; }
+.mysn-panel select, .mysn-panel input[type=range] { font: inherit; padding: 6px; border-radius: 6px; background: #0c0f14; color: #eef2ea; border: 1px solid #ffffff33; }
+.mysn-note { font-size: 12px; opacity: .65; margin: 0 0 12px; }
+.mysn-help ul { margin: 0 0 14px; padding-left: 18px; font-size: 13px; line-height: 1.5; }
+.mysn-help li { margin-bottom: 6px; }
+.mysn-nogl { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; padding: 24px; text-align: center; font-size: 16px; }
+
+@media (max-width: 720px) {
+	.mysn-bar { flex-wrap: wrap; gap: 6px 10px; padding: 8px 12px; }
+	.mysn-stats { order: 3; flex-basis: 100%; font-size: 12px; }
+	.mysn-msg { top: 84px; font-size: 13px; }
+	.mysn-spin { bottom: 112px; left: 12px; }
+	.mysn-spin-ball { width: 64px; height: 64px; }
+	.mysn-power { right: 10px; }
+	.mysn-power-track { width: 30px; height: 38vh; }
+	.mysn-btn { padding: 7px 10px; font-size: 12px; }
+}
+
+.mysn-gate { position: fixed; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; padding: 24px; text-align: center; }
+.mysn-gate h1 { color: #f2d48a; margin: 0 0 8px; }
+.mysn-gate a.mysn-btn { display: inline-block; text-decoration: none; padding: 10px 18px; font-size: 15px; }
