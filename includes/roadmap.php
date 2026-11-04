@@ -93,6 +93,7 @@ function mysn_roadmap() {
 /** Denník zmien (najnovšie hore). */
 function mysn_changelog() {
 	return array(
+		array( '0.1.19', '4. 11. 2026', 'Šípka smeru gule je jeden kužeľ s medzerou od gule (nedotýka sa jej).' ),
 		array( '0.1.18', '4. 11. 2026', 'Tágo je jeden zúžený kus s textúrou dreva. Stojan má 10 tág. Tab: pohľad na stôl zhora. F3: tabuľa so skóre v herni. F4: kriedovanie špičky, potom sú falše 3 údery 5x silnejšie (bez kriedy len pätina účinku). Priehľadná 3D šípka vo farbe gule ukazuje, kam guľa pôjde; detail dotyku ukazuje, odkiaľ prichádza biela a kam pôjde guľa. Obrazy už neblikajú. Všetko je aj na nástenke (F1).' ),
 		array( '0.1.17', '4. 11. 2026', 'Väčšia herňa s vybavením a otvorenými dverami do chodby. F1: kamera ukáže nástenku s nápovedou. F2: stojan s 5 tágami (Klubové, Krátke, Mäkké, Dlhé, Majstrovské), výber myšou alebo šípkami. Tágo mení silu úderu, citlivosť ťahania a falše; jemné mierenie so Shift majú len pokročilé a majstrovské tágá.' ),
 		array( '0.1.16', '4. 11. 2026', 'Herňa okolo stola: miestnosť 7,5 x 5,5 m so stropom vo výške 3 m, drevené obloženie stien, tmavozelená tapeta, lišty, strop s trámami, 6 nástenných svietidiel. Lampy visia na lankách zo stropu, kamera neprejde cez steny ani strop.' ),
