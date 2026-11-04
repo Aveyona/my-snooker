@@ -857,7 +857,9 @@ export function start(root, config = {}) {
 					return;
 				}
 				if (ray.intersectObject(office.results, false).length) {
-					actions.leagueTables(); // tabuľky líg so zoznamom hráčov a vyzvaním
+					if (officeFocusNow !== 'results') {
+						actions.officeFocus('results'); // klik na tabuľu líg ju priblíži (ako F4)
+					}
 					return;
 				}
 				const hit = ray.intersectObject(office.map, false)[0];
