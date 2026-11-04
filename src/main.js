@@ -6,6 +6,7 @@ import * as THREE from 'three';
 import { RoomEnvironment } from 'three/examples/jsm/environments/RoomEnvironment.js';
 import { buildTable, buildRoom } from './table.js';
 import { buildRoomShell } from './room.js';
+import { buildRadioCorner, RadioPlayer } from './radio.js';
 import { BallViews } from './balls.js';
 import { Cue, AimGuide } from './cue.js';
 import { CameraRig } from './camera.js';
@@ -98,6 +99,27 @@ export function start(root, config = {}) {
 	rig.setMode('cue');
 	const sound = new Sound();
 	sound.setVolume(settings.volume);
+
+	// rádio v herni: stanice z My Player, priestorový zvuk z dvoch reproduktorov, mixpult (F9)
+	const radioCorner = buildRadioCorner(scene);
+	const radio = new RadioPlayer(config.radio, () => {
+		sound.unlock();
+		return sound.ctx;
+	});
+	if (settings.radio && typeof settings.radio === 'object') {
+		Object.assign(radio.params, settings.radio.params || {});
+		radio.index = Math.min(radio.stations.length - 1, settings.radio.index ?? -1);
+	}
+	const radioSync = (kind) => {
+		radioCorner.setControls(radio.params, radio.station ? radio.station.name : '', radio.on);
+		settings.radio = { params: radio.params, index: radio.index };
+		saveSettings(settings);
+		if (view === 'mixer' && kind !== 'param') {
+			ui.showView('mixer', CUES, cueSpec.id, { radio });
+		}
+	};
+	radio.onChange = radioSync;
+	radioCorner.setControls(radio.params, radio.station ? radio.station.name : '', false);
 
 	const overlay = document.createElement('div');
 	root.appendChild(overlay);
@@ -203,7 +225,7 @@ export function start(root, config = {}) {
 			chalkStart = performance.now();
 			chalkMesh.visible = true;
 		} else {
-			const v = room[name];
+			const v = name === 'mixer' ? radioCorner.view : room[name];
 			rig.setView(v.pos, v.look.clone());
 			if (name === 'chair') {
 				// počiatočný smer pohľadu z kresla (otáčanie hlavou myšou)
@@ -215,7 +237,7 @@ export function start(root, config = {}) {
 		if (name === 'trophies') {
 			refreshTrophies();
 		}
-		ui.showView(name, CUES, cueSpec.id, name === 'magazine' ? room.rssItems : name === 'chair' ? { news: room.newsItems, rss: room.rssItems } : room.newsItems);
+		ui.showView(name, CUES, cueSpec.id, name === 'mixer' ? { radio } : name === 'magazine' ? room.rssItems : name === 'chair' ? { news: room.newsItems, rss: room.rssItems } : room.newsItems);
 	};
 	const exitView = () => {
 		if (!view) {
@@ -382,6 +404,10 @@ export function start(root, config = {}) {
 		reader: () => ui.toggleReader(view === 'magazine' ? 'rss' : 'news', view === 'magazine' ? room.rssItems : room.newsItems),
 		readerRss: () => ui.toggleReader('rss', room.rssItems),
 		chalk: () => enterView('chalk'),
+		mixer: () => enterView('mixer'),
+		radioToggle: () => radio.toggle(),
+		radioPick: (i) => radio.play(i),
+		radioSet: ({ k, v }) => radio.set(k, v),
 		top: () => {
 			if (view) {
 				return;
@@ -500,7 +526,7 @@ export function start(root, config = {}) {
 				ui.opts.onAction('leaderboardClose');
 				return true;
 			}
-			const fkeys = { f1: 'board', f2: 'rack', f3: 'chalk', f4: 'score', f7: 'chair', f8: 'trophies' };
+			const fkeys = { f1: 'board', f2: 'rack', f3: 'chalk', f4: 'score', f7: 'chair', f8: 'trophies', f9: 'mixer' };
 			if (fkeys[lk]) {
 				ui.opts.onAction(fkeys[lk]);
 				return true;
@@ -511,6 +537,21 @@ export function start(root, config = {}) {
 			}
 			if (view) {
 				// v pohľade na nástenku alebo stojan: Esc a Enter späť do hry, šípky vyberajú tágo
+				if (view === 'mixer') {
+					// mixpult: šípky stanica a hlasitosť, P zapnúť alebo vypnúť
+					if (lk === 'arrowleft' || lk === 'arrowright') {
+						radio.next(lk === 'arrowleft' ? -1 : 1);
+						return true;
+					}
+					if (lk === 'arrowup' || lk === 'arrowdown') {
+						radio.set('vol', radio.params.vol + (lk === 'arrowup' ? 0.05 : -0.05));
+						return true;
+					}
+					if (lk === 'p') {
+						radio.toggle();
+						return true;
+					}
+				}
 				if (view === 'chair' && lk === 'v') {
 					ui.opts.onAction('readerRss'); // správy z RSS na celú obrazovku
 					return true;
@@ -772,6 +813,8 @@ export function start(root, config = {}) {
 			savePlayTime();
 		}
 		lastReal = now;
+		const lev = radio.update(rig.camera);
+		radioCorner.update(lev[0], lev[1]);
 		room.setClock(game.solo && !game.solo.done ? game.solo.time : playTime); // pri hre o skóre čas framu
 		// čas framu o najlepšie skóre (beží, kým je frame rozohraný a menu je zavreté)
 		const so = game.solo;

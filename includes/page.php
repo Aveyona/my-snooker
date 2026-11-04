@@ -73,6 +73,7 @@ function mysn_render( $preview ) {
 		'news'     => mysn_news(),
 		'rss'      => mysn_rss(),
 		'site'     => 'HEDLAJNER',
+		'radio'    => mysn_radio_stations(),
 		// hrať môžu len prihlásení; neprihlásený vidí herňu a v menu tlačidlo Prihlásiť sa
 		'user'     => $user,
 		'loginUrl' => wp_login_url( $game ),
@@ -109,4 +110,27 @@ function mysn_render( $preview ) {
 </body>
 </html>
 	<?php
+}
+
+/** Rádiá z doplnku My Player pre rádio v herni (len priame prúdy, bez HLS a nefunkčných staníc). */
+function mysn_radio_stations() {
+	if ( ! function_exists( 'mpl_public_list' ) ) {
+		return array();
+	}
+	$out = array();
+	foreach ( mpl_public_list() as $s ) {
+		if ( 'radio' !== $s['type'] || empty( $s['stream'] ) || ! empty( $s['hls'] ) || ! empty( $s['resolve'] ) || ! empty( $s['bad'] ) ) {
+			continue;
+		}
+		$out[] = array(
+			'name'   => $s['name'],
+			'stream' => preg_replace( '#^http://#i', 'https://', $s['stream'] ), // na https stránke prehliadač http prúd zablokuje
+			'city'   => $s['city'],
+			'genre'  => $s['genre'],
+		);
+		if ( count( $out ) >= 60 ) {
+			break;
+		}
+	}
+	return $out;
 }

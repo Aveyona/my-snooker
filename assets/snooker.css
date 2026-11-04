@@ -188,3 +188,12 @@ body.mysn-page { font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans
 .mysn-view.mysn-view-news { overflow: hidden; }
 .mysn-view-news .mysn-news { max-height: none; flex: 1 1 auto; min-height: 0; width: 100%; justify-content: flex-start; }
 .mysn-view-news .mysn-news > * { flex: none; }
+/* Mixpult (F9) */
+.mysn-mixer { display: flex; flex-direction: column; gap: 6px; width: 100%; min-height: 0; flex: 1 1 auto; }
+.mysn-mixer-status { margin: 0; font-size: 12px; opacity: .8; }
+.mysn-mixer-row { display: flex; align-items: center; gap: 8px; font-size: 12.5px; }
+.mysn-mixer-row span { width: 78px; flex: none; }
+.mysn-mixer-row input { flex: 1; accent-color: #FACC15; }
+.mysn-stations { overflow-y: auto; min-height: 0; flex: 1 1 auto; flex-direction: column; flex-wrap: nowrap; justify-content: flex-start; }
+.mysn-stations .mysn-news-item { width: auto; text-align: left; cursor: pointer; font: inherit; font-size: 12.5px; }
+.mysn-stations .mysn-news-item.mysn-on { border-color: #FACC15; background: #FACC1522; }

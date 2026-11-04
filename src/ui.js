@@ -794,6 +794,47 @@ export class UI {
 		this._hintText();
 	}
 
+	/** Panel mixpultu (F9): stanice z My Player, zapnutie, posuvníky. r = RadioPlayer. */
+	renderMixer(box, r) {
+		const wrap = h('div', 'mysn-mixer');
+		const st = r.station;
+		const head = h('div', 'mysn-news-head', `<b>Rádio${st ? ': ' + esc(st.name) : ''}</b>`);
+		const tg = this.button(r.on ? 'Vypnúť (P)' : 'Zapnúť (P)', 'radioToggle');
+		tg.classList.add('mysn-primary');
+		head.appendChild(tg);
+		wrap.appendChild(head);
+		wrap.appendChild(h('p', 'mysn-mixer-status', esc(r.status || (r.stations.length ? 'Vyber stanicu alebo stlač Zapnúť.' : 'V My Player nie sú žiadne rádiá.'))));
+		const names = { vol: 'Hlasitosť', bass: 'Basy', treble: 'Výšky', bal: 'Vyváženie' };
+		for (const k of ['vol', 'bass', 'treble', 'bal']) {
+			const lab = h('label', 'mysn-mixer-row', `<span>${names[k]}</span>`);
+			const inp = document.createElement('input');
+			inp.type = 'range';
+			inp.min = '0';
+			inp.max = '1';
+			inp.step = '0.01';
+			inp.value = String(r.params[k]);
+			inp.addEventListener('input', (e) => {
+				e.stopPropagation();
+				this.opts.onAction('radioSet', { k, v: parseFloat(inp.value) });
+			});
+			lab.appendChild(inp);
+			wrap.appendChild(lab);
+		}
+		const list = h('div', 'mysn-news mysn-stations');
+		r.stations.forEach((s, i) => {
+			const b = h('button', 'mysn-news-item' + (i === r.index && r.on ? ' mysn-on' : ''), `<span>${esc([s.city, s.genre].filter(Boolean).join(', ') || 'Rádio')}</span>${esc(s.name)}`);
+			b.type = 'button';
+			b.addEventListener('click', (e) => {
+				e.stopPropagation();
+				this.opts.onAction('radioPick', i);
+			});
+			list.appendChild(b);
+		});
+		wrap.appendChild(list);
+		box.appendChild(wrap);
+		this._mixerBox = wrap;
+	}
+
 	/** Pohľad na nástenku (board) alebo stojan s tágami (rack); null = späť do hry. */
 	showView(name, cues, selId, news) {
 		if (!this.viewBox) {
@@ -802,7 +843,7 @@ export class UI {
 		}
 		const box = this.viewBox;
 		box.classList.toggle('mysn-hidden', !name);
-		box.classList.toggle('mysn-view-news', name === 'news' || name === 'magazine' || name === 'chair');
+		box.classList.toggle('mysn-view-news', name === 'news' || name === 'magazine' || name === 'chair' || name === 'mixer');
 		this.root.classList.toggle('mysn-viewing', !!name);
 		if (!name) {
 			return;
@@ -837,6 +878,9 @@ export class UI {
 			a.rel = 'noopener';
 			return a;
 		};
+		if (name === 'mixer' && news && news.radio) {
+			this.renderMixer(box, news.radio);
+		}
 		if (name === 'chair' && news) {
 			// v kresle: titulka webu Hedlajner a správy z RSS (klik otvorí článok, C a V na celú obrazovku)
 			const list = h('div', 'mysn-news');
@@ -877,6 +921,7 @@ export class UI {
 			rack: 'Šípky vľavo a vpravo vyberajú tágo. Enter, F2 alebo Esc: späť do hry.',
 			board: 'F1, Enter alebo Esc: späť do hry.',
 			score: 'F4, Enter alebo Esc: späť do hry.',
+			mixer: 'Mixpult: šípky vľavo a vpravo menia stanicu, hore a dole hlasitosť, P zapne alebo vypne rádio. Zvuk ide z reproduktorov v herni. F9, Enter alebo Esc: späť do hry.',
 			trophies: 'Rebríček o najlepšie skóre: poháre pre troch najlepších, vpravo 4. až 10. miesto (body a celkový čas). F8, Enter alebo Esc: späť do hry.',
 			chalk: 'Kriedujem špičku tága. Falše budú 3 údery 5x silnejšie.',
 		};
