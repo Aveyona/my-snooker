@@ -403,11 +403,16 @@ export function buildRoomShell(scene, quality, opts = {}) {
 			rc.spec = spec;
 		});
 	};
+	let rackView = false; // F2: pozerám tágá, vybraté tágo je na stojane (vysunuté dopredu)
+	let lastSel = [null, null];
 	const selectCue = (id, base) => {
-		const hit = rackCues.some((rc) => rc.spec.id === id) ? id : base;
+		lastSel = [id, base];
+		const hit = rackCues.some((rc) => rc.spec.id === id) ? id : null; // vlastné tágo mimo stojana: stojan ostane plný
+		glow.visible = !!hit;
 		for (const rc of rackCues) {
 			const on = rc.spec.id === hit;
-			rc.group.position.z = rc.baseZ + (on ? 0.12 : 0);
+			rc.group.position.z = rc.baseZ + (on && rackView ? 0.12 : 0);
+			rc.group.visible = !on || rackView; // pri hre je tágo v ruke, na stojane len v pohľade F2
 			if (on) {
 				glow.position.set(rc.group.position.x, FY + 0.005, rc.group.position.z);
 			}
@@ -982,6 +987,10 @@ export function buildRoomShell(scene, quality, opts = {}) {
 		magazine: { pos: new THREE.Vector3(MG.x + 0.02, CT.top + 0.5, MG.z + 0.2), look: new THREE.Vector3(MG.x, CT.top, MG.z - 0.01) },
 		rssItems: mag.items,
 		selectCue,
+		setRackView(on) {
+			rackView = !!on;
+			selectCue(lastSel[0], lastSel[1]);
+		},
 		setRackSpecs,
 		updateScore,
 		setClock,

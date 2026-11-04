@@ -429,6 +429,7 @@ export function start(root, config = {}) {
 			ui.openLeague(false);
 		}
 		view = name;
+		room.setRackView(name === 'rack');
 		controls.blocked = true;
 		// pri kriedovaní a v kresle ostáva myš zachytená (v kresle sa ňou rozhliada)
 		if (name !== 'chalk' && !LOOK.has(name)) {
@@ -475,6 +476,7 @@ export function start(root, config = {}) {
 		}
 		const was = view;
 		view = null;
+		room.setRackView(false);
 		controls.blocked = !user && !guestPlay;
 		rig.minViewZoom = 1;
 		rig.setViewZoom(1);

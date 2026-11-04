@@ -118,6 +118,7 @@ function mysn_roadmap() {
 /** Denník zmien (najnovšie hore). */
 function mysn_changelog() {
 	return array(
+		array( '0.5.3', '4. 11. 2026', 'Tágo, s ktorým hráš, nie je pri hre na stojane (je v ruke, jeho miesto je prázdne). Na stojane je len v pohľade F2, keď si prezeráš tágá.' ),
 		array( '0.5.2', '4. 11. 2026', 'Neprihlásený návštevník má v menu aj Tréning: zahrá si voľný tréning bez prihlásenia. Hra o skóre, liga, partie s priateľmi a vlastné tágá ostávajú pre prihlásených.' ),
 		array( '0.5.1', '4. 11. 2026', 'Moje tágá sú v paneli vpravo pod nastaveniami (Vybrať, Na stojan, Zo stojana). Na stojane je vždy 10 tág: vlastné tágo sa dá dať na stojan namiesto svojej šablóny, aj v 3D s jeho farbami.' ),
 		array( '0.5.0', '4. 11. 2026', 'Vlastné tágá: na stojane (F2) je vpravo priehľadný panel so všetkými vlastnosťami vybraného tága. 10 tág hry sú šablóny, z každej si prihlásený hráč vyrobí vlastné tágo (najviac 10): názov a farby dreva a rukoväte voľne, sila, dĺžka a falše o ±10 % od šablóny. Vlastné tágá sú na stojane v skupine Vlastné, dajú sa vybrať aj do ligy (F2 v kancelárii). Nová tabuľka my_snooker_cues.' ),
