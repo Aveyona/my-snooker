@@ -219,7 +219,7 @@ export class UI {
 		const box = m.querySelector('.mysn-menu-btns');
 		this.btnResume = this.button('Hrať', 'resume');
 		this.btnResume.classList.add('mysn-primary');
-		box.append(this.btnResume, this.button('Nové rozostavenie', 'reset'), this.button('Tágá (F2)', 'rack'), this.button('Nápoveda (F1)', 'board'), this.button('Skóre (F3)', 'score'), this.button('Nastavenia', 'settings'), this.button('Späť na web', 'home'));
+		box.append(this.btnResume, this.button('Nové rozostavenie', 'reset'), this.button('Tágá (F2)', 'rack'), this.button('Nápoveda (F1)', 'board'), this.button('Skóre (F4)', 'score'), this.button('Nastavenia', 'settings'), this.button('Späť na web', 'home'));
 		return m;
 	}
 
@@ -452,8 +452,8 @@ export class UI {
 		const t = this._stroke
 			? 'Ruka drží tágo: myš k sebe odtiahne, dopredu vystrelí. Pustením ľavého tlačidla zrušíš.'
 			: this._lock
-				? `${this._cueName}: mier pohybom myši${this._cueFine ? ' (Shift jemne)' : ''}, ľavé tlačidlo drž a striel. F1 nápoveda, F2 tágá, F3 skóre, F4 krieda, Tab zhora, Esc menu.`
-				: 'Klikni do hry, myš sa zachytí v okne. F1 nápoveda, F2 tágá, F3 skóre, F4 krieda, Tab zhora.';
+				? `${this._cueName}: mier pohybom myši${this._cueFine ? ' (Shift jemne)' : ''}, ľavé tlačidlo drž a striel. F1 nápoveda, F2 tágá, F3 krieda, F4 skóre, Tab zhora, Esc menu.`
+				: 'Klikni do hry, myš sa zachytí v okne. F1 nápoveda, F2 tágá, F3 krieda, F4 skóre, Tab zhora.';
 		this.hint.textContent = t;
 		this.hint.classList.toggle('mysn-hint-on', !!this._stroke);
 	}
@@ -511,7 +511,7 @@ export class UI {
 		const texts = {
 			rack: 'Šípky vľavo a vpravo vyberajú tágo. Enter, F2 alebo Esc: späť do hry.',
 			board: 'F1, Enter alebo Esc: späť do hry.',
-			score: 'F3, Enter alebo Esc: späť do hry.',
+			score: 'F4, Enter alebo Esc: späť do hry.',
 			chalk: 'Kriedujem špičku tága. Falše budú 3 údery 5x silnejšie.',
 		};
 		foot.appendChild(h('span', '', texts[name] || ''));
@@ -535,7 +535,7 @@ export class UI {
 		this._lastGame = game;
 		this._lastCam = camMode;
 		const s = game.stats;
-		this.stats.innerHTML = `<span>Údery <b>${s.shots}</b></span><span>Spadnuté <b>${s.points >= 0 ? s.potted : 0}</b></span><span>Body <b>${s.points}</b></span><span>Séria <b>${s.run}</b></span><span>Najlepšia <b>${s.best}</b></span><span class="${this._chalk > 0 ? 'mysn-chalk-on' : 'mysn-chalk-off'}">Krieda <b>${this._chalk > 0 ? this._chalk : 'F4'}</b></span>`;
+		this.stats.innerHTML = `<span>Údery <b>${s.shots}</b></span><span>Spadnuté <b>${s.points >= 0 ? s.potted : 0}</b></span><span>Body <b>${s.points}</b></span><span>Séria <b>${s.run}</b></span><span>Najlepšia <b>${s.best}</b></span><span class="${this._chalk > 0 ? 'mysn-chalk-on' : 'mysn-chalk-off'}">Krieda <b>${this._chalk > 0 ? this._chalk : 'F3'}</b></span>`;
 		this.msg.textContent = game.state === 'place' ? 'Posuň bielu guľu v D a potvrď tlačidlom Hotovo.' : game.message;
 		this.msg.classList.toggle('mysn-hidden', !this.msg.textContent);
 		const st = game.state;

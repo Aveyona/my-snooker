@@ -103,7 +103,7 @@ export function start(root, config = {}) {
 	let started = false;
 	const finePointer = !!(window.matchMedia && window.matchMedia('(pointer: fine)').matches);
 
-	// pohľad na nástenku (F1), stojan s tágami (F2), tabuľu so skóre (F3) alebo kriedovanie tága (F4)
+	// pohľad na nástenku (F1), stojan s tágami (F2), kriedovanie tága (F3) alebo tabuľu so skóre (F4)
 	let view = null;
 	let topView = false; // Tab: pohľad na stôl zhora
 	const CHALK_SHOTS = 3; // nakriedovaná špička vydrží 3 údery
@@ -111,11 +111,36 @@ export function start(root, config = {}) {
 	let chalk = 0;
 	let chalkT = -1; // priebeh kriedovania (sekundy), -1 = nekriedi sa
 	let chalkStart = 0;
-	const chalkMesh = new THREE.Mesh(
-		new THREE.BoxGeometry(0.022, 0.022, 0.022),
-		new THREE.MeshStandardMaterial({ color: 0x2f6fd6, roughness: 0.85 })
-	);
+	const debug = { chalkFreeze: null }; // na testy: zastaví animáciu kriedovania v danom čase
+	// kocka kriedy: zvonku biely obal, na jednej stene štvorcová diera s modrou kriedou na špičku tága
+	const CH = { s: 0.022, h: 0.0115, d: 0.009 };
+	const chalkMesh = new THREE.Group();
+	{
+		const white = new THREE.MeshStandardMaterial({ color: 0xf4f2ea, roughness: 0.8 });
+		const blue = new THREE.MeshStandardMaterial({ color: 0x2f6fd6, roughness: 0.95 });
+		const box = (w, hh, dd, x, y, z, m) => {
+			const b = new THREE.Mesh(new THREE.BoxGeometry(w, hh, dd), m);
+			b.position.set(x, y, z);
+			chalkMesh.add(b);
+		};
+		const { s: S, h: Hh, d: D } = CH;
+		const fx = -S / 2 + D / 2; // predná vrstva s dierou (os x mieri od špičky ku guli)
+		box(S - D, S, S, D / 2, 0, 0, white); // zadná časť
+		box(D, (S - Hh) / 2, S, fx, (S + Hh) / 4, 0, white);
+		box(D, (S - Hh) / 2, S, fx, -(S + Hh) / 4, 0, white);
+		box(D, Hh, (S - Hh) / 2, fx, 0, (S + Hh) / 4, white);
+		box(D, Hh, (S - Hh) / 2, fx, 0, -(S + Hh) / 4, white);
+		// modrá krieda vnútri diery (dno a steny)
+		box(0.0012, Hh, Hh, -S / 2 + D - 0.0006, 0, 0, blue);
+		const t = 0.0008;
+		box(D, t, Hh, fx, Hh / 2 - t / 2, 0, blue);
+		box(D, t, Hh, fx, -Hh / 2 + t / 2, 0, blue);
+		box(D, Hh, t, fx, 0, Hh / 2 - t / 2, blue);
+		box(D, Hh, t, fx, 0, -Hh / 2 + t / 2, blue);
+	}
 	chalkMesh.visible = false;
+	chalkMesh.rotation.order = 'YXZ'; // pootáčanie okolo osi tága
+	const LIFT = { up: 0.1, back: 0.22 }; // pri kriedovaní sa tágo zdvihne nad guľu a odtiahne
 	scene.add(chalkMesh);
 	const updateScore = () => room.updateScore(game.stats, { cue: cueSpec.name, chalk });
 	const enterView = (name) => {
@@ -136,10 +161,10 @@ export function start(root, config = {}) {
 		}
 		ui.showMenu(false);
 		if (name === 'chalk') {
-			// pohľad zboku na špičku tága, krieda sa priblíži a pošúcha špičku
-			const tip = cue.pivot.position.clone();
+			// tágo sa zdvihne nad guľu a odtiahne, pohľad zboku na špičku, krieda sa nasadí a pošúcha špičku
 			const dx = Math.cos(game.dir);
 			const dz = Math.sin(game.dir);
+			const tip = cue.pivot.position.clone().add(new THREE.Vector3(-dx * LIFT.back, LIFT.up, -dz * LIFT.back));
 			const pos = tip.clone().add(new THREE.Vector3(-dz * 0.22 - dx * 0.08, 0.09, dx * 0.22 - dz * 0.08));
 			rig.setView(pos, tip);
 			chalkT = 0;
@@ -292,7 +317,7 @@ export function start(root, config = {}) {
 		stroke: (on) => ui.setStroke(on),
 		key: (k) => {
 			const lk = k.toLowerCase();
-			const fkeys = { f1: 'board', f2: 'rack', f3: 'score', f4: 'chalk' };
+			const fkeys = { f1: 'board', f2: 'rack', f3: 'chalk', f4: 'score' };
 			if (fkeys[lk]) {
 				ui.opts.onAction(fkeys[lk]);
 				return true;
@@ -391,21 +416,30 @@ export function start(root, config = {}) {
 		views.update(dt);
 		cue.place(game.cue, game.dir, pull, spin.side, spin.top, (aiming || view === 'chalk') && game.cue.on);
 		if (chalkT >= 0) {
-			// kriedovanie: krieda príde k špičke, pošúcha ju krúživým pohybom a odíde
-			chalkT = (performance.now() - chalkStart) / 1000; // podľa skutočného času, aj keď je obraz pomalý
-			const tip = cue.pivot.position;
+			// kriedovanie: tágo sa zdvihne a odtiahne, krieda sa nasadí dierou na špičku, pootáča sa a odíde
+			chalkT = debug.chalkFreeze !== null ? debug.chalkFreeze : (performance.now() - chalkStart) / 1000; // podľa skutočného času
 			const dx = Math.cos(game.dir);
 			const dz = Math.sin(game.dir);
-			const T = 2.2;
-			const near = Math.min(1, chalkT / 0.4, Math.max(0, (T - chalkT) / 0.4));
-			const a = chalkT * 14;
-			const r = 0.004 * near;
+			const T = 2.8;
+			const ease = (x) => x * x * (3 - 2 * x);
+			const lift = ease(Math.min(1, chalkT / 0.45, Math.max(0, (T - chalkT) / 0.45)));
+			cue.pivot.position.x -= dx * LIFT.back * lift;
+			cue.pivot.position.z -= dz * LIFT.back * lift;
+			cue.pivot.position.y += LIFT.up * lift;
+			const tip = cue.pivot.position;
+			const near = ease(Math.min(1, Math.max(0, (chalkT - 0.45) / 0.35), Math.max(0, (T - 0.45 - chalkT) / 0.35)));
+			const rub = chalkT > 0.8 && chalkT < T - 0.8 ? 1 : 0;
+			const a = chalkT * 12;
+			const r = 0.0012 * rub;
+			// diera kriedy sedí na špičke: stred kocky je pol kocky mínus hĺbka diery pred špičkou
+			const ahead = CH.s / 2 - CH.d + (1 - near) * 0.1;
 			chalkMesh.position.set(
-				tip.x + dx * (0.012 + (1 - near) * 0.12) - dz * Math.cos(a) * r,
-				tip.y + Math.sin(a) * r + (1 - near) * 0.06,
-				tip.z + dz * (0.012 + (1 - near) * 0.12) + dx * Math.cos(a) * r
+				tip.x + dx * ahead - dz * Math.cos(a) * r,
+				tip.y + Math.sin(a) * r + (1 - near) * 0.05,
+				tip.z + dz * ahead + dx * Math.cos(a) * r
 			);
-			chalkMesh.rotation.set(Math.sin(a) * 0.3, -game.dir, Math.cos(a) * 0.3);
+			// krieda sa pri šúchaní pootáča okolo osi tága
+			chalkMesh.rotation.set(rub * Math.sin(a * 0.5) * 0.5, -game.dir, 0);
 			if (chalkT >= T) {
 				chalk = CHALK_SHOTS;
 				ui.setChalk(chalk);
@@ -435,7 +469,7 @@ export function start(root, config = {}) {
 	};
 	requestAnimationFrame(frame);
 
-	return { game, rig, renderer, scene, settings, controls };
+	return { game, rig, renderer, scene, settings, controls, debug };
 }
 
 // Automatické spustenie na stránke hry

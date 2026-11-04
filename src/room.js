@@ -392,7 +392,7 @@ export function buildRoomShell(scene, quality) {
 		}
 	};
 
-	// Tabuľa na skóre (F3) a komoda na kratšej stene vľavo: zobrazuje body z hry
+	// Tabuľa na skóre (F4) a komoda na kratšej stene vľavo: zobrazuje body z hry
 	const SCORE = { y: FY + 1.62, w: 1.5, h: 0.84 };
 	const scoreCanvas = document.createElement('canvas');
 	scoreCanvas.width = 1024;
@@ -445,7 +445,7 @@ export function buildRoomShell(scene, quality) {
 			g.textAlign = 'center';
 			g.font = '30px Arial, Helvetica, sans-serif';
 			g.fillStyle = '#f2d48a';
-			g.fillText(`${extra.cue}   |   Krieda: ${extra.chalk > 0 ? extra.chalk + ' údery' : 'žiadna (F4)'}`, W / 2, Hh - 40);
+			g.fillText(`${extra.cue}   |   Krieda: ${extra.chalk > 0 ? extra.chalk + ' údery' : 'žiadna (F3)'}`, W / 2, Hh - 40);
 		}
 		scoreTex.needsUpdate = true;
 	};

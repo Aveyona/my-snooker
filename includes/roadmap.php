@@ -22,7 +22,7 @@ function mysn_roadmap() {
 				array( 'Herňa: 4 steny s dreveným obložením a tmavozelenou tapetou, strop s trámami, nástenné svietidlá, kamera neprejde cez steny', 1 ),
 				array( 'Väčšia herňa (10 x 7,5 m) s vybavením: otvorené dvere do chodby, tabuľa na skóre, komoda, barový stolík so stoličkami, kreslá, obrazy, kvetina', 1 ),
 				array( 'Nástenka s nápovedou v herni (F1): ovládanie, klávesy, princíp hry, tágá', 1 ),
-				array( 'Tabuľa so skóre v herni (F3), kriedovanie špičky (F4, falše 5x silnejšie na 3 údery), pohľad zhora (Tab)', 1 ),
+				array( 'Kriedovanie špičky (F3, falše 5x silnejšie na 3 údery), tabuľa so skóre v herni (F4), pohľad zhora (Tab)', 1 ),
 				array( 'Šípka vo farbe trafenej gule (3D) a v detaile dotyku odkiaľ prichádza biela a kam pôjde guľa', 1 ),
 				array( 'Stojan s 10 tágami (F2): tvrdosť špičky mení najväčšiu silu, dĺžka citlivosť ťahania myšou, jemné mierenie so Shift len pokročilé a majstrovské tágá', 1 ),
 				array( 'Stôl ako skutočný snooker: zaoblené čeľuste jamiek, zaoblené rohy rámu, kožené lemy jamiek, podlaha z drevených dosiek, vyššie lampy', 1 ),
@@ -93,6 +93,7 @@ function mysn_roadmap() {
 /** Denník zmien (najnovšie hore). */
 function mysn_changelog() {
 	return array(
+		array( '0.1.20', '4. 11. 2026', 'Vymenené F3 a F4: F3 kriedovanie, F4 tabuľa so skóre. Pri kriedovaní sa tágo zdvihne nad guľu a odtiahne, krieda je kocka s bielym obalom a štvorcovou dierou s modrou kriedou, nasadí sa na špičku a pootáča sa.' ),
 		array( '0.1.19', '4. 11. 2026', 'Šípka smeru gule je jeden kužeľ s medzerou od gule (nedotýka sa jej).' ),
 		array( '0.1.18', '4. 11. 2026', 'Tágo je jeden zúžený kus s textúrou dreva. Stojan má 10 tág. Tab: pohľad na stôl zhora. F3: tabuľa so skóre v herni. F4: kriedovanie špičky, potom sú falše 3 údery 5x silnejšie (bez kriedy len pätina účinku). Priehľadná 3D šípka vo farbe gule ukazuje, kam guľa pôjde; detail dotyku ukazuje, odkiaľ prichádza biela a kam pôjde guľa. Obrazy už neblikajú. Všetko je aj na nástenke (F1).' ),
 		array( '0.1.17', '4. 11. 2026', 'Väčšia herňa s vybavením a otvorenými dverami do chodby. F1: kamera ukáže nástenku s nápovedou. F2: stojan s 5 tágami (Klubové, Krátke, Mäkké, Dlhé, Majstrovské), výber myšou alebo šípkami. Tágo mení silu úderu, citlivosť ťahania a falše; jemné mierenie so Shift majú len pokročilé a majstrovské tágá.' ),
