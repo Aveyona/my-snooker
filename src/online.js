@@ -1,12 +1,15 @@
 /*
- * My Snooker: hra cez internet (klient). Signál „som v hre“ (ping), zoznam živých hráčov, pozvánky,
- * partia: čítanie stavu dookola, odosielanie mierenia, úderu a výsledku. Odosielanie sa pri výpadku
- * internetu opakuje, po obnovení stránky sa rozohraná partia načíta zo servera a pokračuje sa v nej.
+ * My Snooker: hra cez internet (klient). Signál „som v hre“ (ping), zoznam živých hráčov, pozvánky.
+ * Partia aj sledovanie idú priamo medzi prehliadačmi cez WebRTC (src/rtc.js): mierenie, úder a výsledok
+ * dostane súper a divák hneď. Server partiu len ukladá (úder a stav po údere) a vyhodnotí koniec a ligu;
+ * po obnovení stránky sa rozohraná partia načíta zo servera a pokračuje sa v nej.
  */
+import { Rtc } from './rtc.js';
+import { snapshot } from './physics.js';
+
 const PING_MS = 5000;
-const POLL_WATCH = 700; // keď je na rade súper
-const POLL_MINE = 2500; // keď som na rade ja (len signál a kontrola stavu)
-const AIM_MS = 300;
+const AIM_MS = 50; // mierenie cez priame spojenie asi 20-krát za sekundu (len keď sa zmenilo)
+const RETRY_MS = 3000;
 
 export class Net {
 	constructor(cfg) {
@@ -60,13 +63,21 @@ export class Online {
 		this.sending = false;
 		this.played = new Set(); // súperove údery, ktoré sa už prehrali
 		this.pendingInfo = null;
-		this.lastAimv = -1;
 		this.aimTarget = null; // mierenie súpera pre zobrazenie tága
 		this._aimSent = '';
 		this._aimT = 0;
-		this._pollT = 0;
 		this._polling = false;
-		this.oppOnline = true;
+		this.oppOnline = false; // priame spojenie so súperom je otvorené
+		this.opp = 0;
+		this.myId = 0;
+		this.pendingShot = null;
+		this.watching = null;
+		this.rtc = new Rtc(this.net, {
+			accept: (from, tag) => this.rtcAccept(from, tag),
+			open: (p) => this.rtcOpen(p),
+			message: (p, m) => this.rtcMessage(p, m),
+			close: (p) => this.rtcClose(p),
+		});
 		game.onNet = (type, d) => this.send(type, d);
 		this.ping();
 		this._pingTimer = setInterval(() => this.ping(), PING_MS);
@@ -81,6 +92,12 @@ export class Online {
 			const d = await this.net.call('ping', { state: this.inMatch ? 'match' : this.watching ? 'watch' : this.queueing ? 'queue' : this.lobbyOpen ? 'lobby' : 'training' });
 			if (d.nonce) {
 				this.net.nonce = d.nonce;
+			}
+			if (d.signals && d.signals.length) {
+				this.rtc.handle(d.signals);
+			}
+			if (this.inMatch && this.matchId && !d.match) {
+				this.poll(); // partia na serveri už nebeží (prerušená alebo skončená): načítať jej koniec
 			}
 			const prevInv = (this.data.invites || []).map((i) => i.id).join(',');
 			this.data = d;
@@ -151,7 +168,10 @@ export class Online {
 			return;
 		}
 		await this.flush();
-		await this.net.call('leave', { id, mode }).catch(() => null);
+		const r = await this.net.call('leave', { id, mode }).catch(() => null);
+		if (r && r.match) {
+			this.rtcSendOpp({ k: 'info', m: r.match });
+		}
 		this.stopMatch(mode === 'resign' ? 'Partia je vzdaná.' : 'Partia je prerušená. Pokračovať sa dá v ponuke Poslať výzvu.');
 	}
 
@@ -170,34 +190,195 @@ export class Online {
 		}
 	}
 
-	/** Sledovanie: každú sekundu stav otvorenej partie (room) alebo ligového zápasu (match). */
-	watchStart(type, id) {
+	/**
+	 * Sledovanie: divák sa priamo spojí s hráčom otvorenej partie alebo s oboma hráčmi ligového zápasu.
+	 * peers: id hráčov. Správy od hráčov idú do hooks.watch(správa); pri ukončení { k: 'w-end' }.
+	 */
+	watchStart(type, id, peers) {
 		this.watchStop();
-		this.watching = { type, id };
-		const tick = async () => {
-			if (!this.watching || this._watchBusy) {
-				return;
-			}
-			this._watchBusy = true;
-			try {
-				const d = await this.net.call((type === 'match' ? 'watch/' : 'room/') + id, null, 'GET');
-				if (this.watching && this.hooks.watch) {
-					this.hooks.watch(type, d);
-				}
-			} catch (e) {
-				if (this.hooks.watch) {
-					this.hooks.watch(type, { closed: true, error: e.message });
-				}
-			}
-			this._watchBusy = false;
-		};
-		tick();
-		this._watchT = setInterval(tick, 500);
+		this.watching = { type, id, peers: [...(peers || [])], opened: 0, tries: {} };
+		if (!this.rtc.supported) {
+			setTimeout(() => this.hooks.watch && this.hooks.watch({ k: 'w-end', text: 'Prehliadač nepodporuje priame spojenie WebRTC, sledovanie nie je možné.' }), 0);
+			return;
+		}
+		for (const uid of this.watching.peers) {
+			this.rtc.connect(uid, 'watch');
+		}
 	}
 
 	watchStop() {
-		clearInterval(this._watchT);
+		const w = this.watching;
 		this.watching = null;
+		if (w) {
+			for (const uid of w.peers) {
+				this.rtc.close(uid, 'watch');
+			}
+		}
+	}
+
+	/** Moji diváci (spojenia, kde som hráč). */
+	watchers() {
+		return this.rtc.list('watch', (p) => !p.offerer);
+	}
+
+	/** Správa všetkým mojim divákom. */
+	wsend(msg) {
+		return this.rtc.broadcast('watch', msg, (p) => !p.offerer);
+	}
+
+	wsendTo(p, msg) {
+		return this.rtc.send(p, msg);
+	}
+
+	/** Ukončí sledovanie mojej partie všetkým divákom. */
+	closeWatchers(text) {
+		this.wsend({ k: 'w-end', text: text || 'Partia už nie je otvorená.' });
+		setTimeout(() => this.rtc.closeTag('watch', (p) => !p.offerer), 300);
+	}
+
+	/* ---------- priame spojenie (WebRTC) ---------- */
+
+	rtcAccept(from, tag) {
+		if (tag === 'match') {
+			return !!this.matchId && from === this.opp;
+		}
+		if (this.watching) {
+			return false; // kým sledujem, moja partia nie je otvorená
+		}
+		if (this.inMatch) {
+			return !!(this.info && this.info.league); // ligový zápas sa dá sledovať vždy
+		}
+		return !!(this.hooks.acceptWatch && this.hooks.acceptWatch(from));
+	}
+
+	rtcOpen(p) {
+		if (p.tag === 'match') {
+			this.oppOnline = true;
+			this.hooks.status();
+			const g = this.game;
+			this.rtc.send(p, { k: 'hello', seq: g.match ? g.match.seq : -1 });
+			return;
+		}
+		if (p.offerer) {
+			if (this.watching) {
+				this.watching.opened++;
+				this.watching.tries[p.uid] = 0;
+			}
+			return;
+		}
+		// nový divák: hneď dostane stav stola
+		if (this.inMatch) {
+			this.rtc.send(p, this.matchWState());
+			this.hooks.status();
+		} else if (this.hooks.watcherOpen) {
+			this.hooks.watcherOpen(p);
+		}
+	}
+
+	rtcClose(p) {
+		if (p.tag === 'match') {
+			if (this.opp !== p.uid) {
+				return;
+			}
+			this.oppOnline = false;
+			this.hooks.status();
+			if (this.matchId && p.why !== 'local') {
+				// spojenie so súperom sa prerušilo: skúsiť znova (ponuku posiela hráč s menším číslom)
+				clearTimeout(this._retryT);
+				this._retryT = setTimeout(() => this.matchPeer(), RETRY_MS);
+			}
+			return;
+		}
+		const w = this.watching;
+		if (p.offerer && w && w.peers.includes(p.uid) && p.why !== 'local') {
+			// spojenie sa nenadviazalo alebo sa prerušilo: skúsiť ešte dvakrát
+			const n = (w.tries[p.uid] = (w.tries[p.uid] || 0) + 1);
+			if (n <= 2 && p.why !== 'bye') {
+				setTimeout(() => this.watching === w && this.rtc.connect(p.uid, 'watch'), 1000);
+				return;
+			}
+			const left = w.peers.some((u) => u !== p.uid && this.rtc.get(u, 'watch'));
+			if (!left && this.hooks.watch) {
+				this.hooks.watch({ k: 'w-end', text: w.opened ? 'Spojenie s hráčom sa prerušilo.' : 'Priame spojenie (WebRTC) s hráčom sa nepodarilo nadviazať.' });
+			}
+		}
+	}
+
+	rtcMessage(p, m) {
+		if (p.tag === 'watch') {
+			if (p.offerer && this.watching && this.hooks.watch) {
+				this.hooks.watch(m);
+			}
+			return;
+		}
+		if (p.uid !== this.opp || !this.matchId) {
+			return;
+		}
+		const g = this.game;
+		if (!g.match) {
+			return;
+		}
+		if (m.k === 'hello') {
+			if (m.seq > g.match.seq) {
+				this.poll(); // súper je o úder ďalej (napr. po obnovení stránky): načítať uloženú partiu
+			}
+		} else if (m.k === 'aim') {
+			if (m.a && g.state === 'watch' && m.a.seq === g.match.seq) {
+				this.aimTarget = m.a;
+			}
+		} else if (m.k === 'shot') {
+			this.pendingShot = m.shot;
+			this.takeShot();
+		} else if (m.k === 'settle') {
+			this.applyInfo({ ...(this.info || {}), id: this.matchId, status: 'active', seq: m.seq, state: m.state, shot: null, players: g.match.players, me: g.match.me });
+		} else if (m.k === 'info' && m.m) {
+			this.applyInfo({ ...m.m, me: 1 - m.m.me });
+		}
+	}
+
+	/** Súperov úder z priameho spojenia sa prehrá, keď je stôl pripravený. */
+	takeShot() {
+		const g = this.game;
+		const s = this.pendingShot;
+		if (!s || !g.match) {
+			return;
+		}
+		if (s.seq <= g.match.seq || this.played.has(s.seq)) {
+			this.pendingShot = null;
+			return;
+		}
+		if (g.state !== 'watch' || s.seq !== g.match.seq + 1) {
+			return;
+		}
+		this.pendingShot = null;
+		this.played.add(s.seq);
+		this.aimTarget = null;
+		const before = snapshot(g.balls);
+		g.playRemote(s, false);
+		this.wsend({ k: 'w-shot', seq: s.seq, before, shot: s });
+	}
+
+	/** Spojenie so súperom v partii. */
+	matchPeer() {
+		if (!this.matchId || !this.opp) {
+			return;
+		}
+		if (this.rtc.isOpen(this.opp, 'match')) {
+			return;
+		}
+		if (this.myId < this.opp) {
+			this.rtc.connect(this.opp, 'match');
+		} else {
+			this.rtc.expect(this.opp, 'match');
+		}
+	}
+
+	/** Stav ligového zápasu pre divákov. */
+	matchWState() {
+		const g = this.game;
+		const m = g.match;
+		const sc = (m.rules && m.rules.scores) || [0, 0];
+		return { k: 'w-state', seq: m.seq, ver: 0, balls: snapshot(g.balls), place: g.state === 'place' ? 1 : 0, info: `${m.players[0].name} ${sc[0]} : ${sc[1]} ${m.players[1].name}` };
 	}
 
 	async seek(on) {
@@ -253,11 +434,14 @@ export class Online {
 			this.info = m;
 			this.played = new Set();
 			this.queue = [];
-			this.lastAimv = m.aimv;
+			this.pendingShot = null;
+			this.myId = m.players[m.me].id;
+			this.opp = m.players[1 - m.me].id;
+			this.oppOnline = this.rtc.isOpen(this.opp, 'match');
 			this.game.startMatch(m);
 			this.hooks.started(m);
 			this.recover(m);
-			this.oppOnline = m.players[1 - m.me].online;
+			this.matchPeer();
 		} catch (e) {
 			this.hooks.toast(e.message);
 		} finally {
@@ -277,6 +461,15 @@ export class Online {
 	stopMatch(text0) {
 		const text = (text0 || '') + (this.stopMatchText || '');
 		this.stopMatchText = '';
+		if (this.watchers().length) {
+			this.closeWatchers(text || 'Zápas skončil.');
+		}
+		clearTimeout(this._retryT);
+		const opp = this.opp;
+		this.opp = 0;
+		this.oppOnline = false;
+		this.pendingShot = null;
+		setTimeout(() => this.rtc.close(opp, 'match'), 1500); // súper ešte dostane posledný stav
 		this.matchId = 0;
 		this.info = null;
 		this.queue = [];
@@ -285,9 +478,23 @@ export class Online {
 		this.hooks.ended(text);
 	}
 
+	rtcSendOpp(msg) {
+		return this.opp ? this.rtc.send(this.rtc.get(this.opp, 'match'), msg) : false;
+	}
+
+	/** Môj úder a výsledok: hneď súperovi a divákom priamo, na server do záznamu partie. */
 	send(type, d) {
 		if (!this.matchId) {
 			return;
+		}
+		const g = this.game;
+		if (type === 'shot') {
+			const shot = { ...d.shot, seq: d.seq, by: g.match.me };
+			this.rtcSendOpp({ k: 'shot', shot });
+			this.wsend({ k: 'w-shot', seq: d.seq, before: snapshot(g.balls), shot });
+		} else if (type === 'settle') {
+			this.rtcSendOpp({ k: 'settle', seq: d.seq, state: d.state });
+			this.wsend(this.matchWState());
 		}
 		this.queue.push({ type, d: { id: this.matchId, ...d } });
 		this.flush();
@@ -302,8 +509,13 @@ export class Online {
 			while (this.queue.length) {
 				const it = this.queue[0];
 				try {
-					await this.net.call(it.type, it.d);
+					const r = await this.net.call(it.type, it.d);
 					this.queue.shift();
+					if (r && r.match) {
+						// stav uloženej partie (koniec partie, liga): súperovi priamo a sebe
+						this.rtcSendOpp({ k: 'info', m: r.match });
+						this.applyInfo(r.match);
+					}
 				} catch (e) {
 					if (e.net || (e.status && e.status >= 500)) {
 						this.hooks.status();
@@ -319,23 +531,16 @@ export class Online {
 		return this._flushP;
 	}
 
-	/** Volá sa v každom snímku: čítanie partie, odosielanie mierenia. */
+	/** Volá sa v každom snímku: mierenie súperovi a divákom, odložený úder a výsledok súpera. */
 	update(dt, aim) {
 		if (!this.matchId) {
 			return;
 		}
 		const g = this.game;
-		// časovače podľa skutočného času (dt v snímku je obmedzený, pri pomalom kreslení by sa čítanie spomalilo)
 		const now = performance.now();
 		const step = this._lastNow ? now - this._lastNow : 0;
 		this._lastNow = now;
-		this._pollT += step;
-		const watching = g.state === 'watch' || g.state === 'wait' || g.remote;
-		if (!this._polling && this._pollT >= (watching ? POLL_WATCH : POLL_MINE)) {
-			this._pollT = 0;
-			this.poll();
-		}
-		// mierenie posielam, keď som na rade (súper vidí moje tágo)
+		// mierenie posielam, keď som na rade (súper a diváci vidia moje tágo)
 		this._aimT += step;
 		if (aim && g.myTurn && (g.state === 'aim' || g.state === 'place') && this._aimT >= AIM_MS) {
 			const a = { seq: g.match.seq, dir: +aim.dir.toFixed(4), cx: +aim.cx.toFixed(4), cz: +aim.cz.toFixed(4), pull: +aim.pull.toFixed(3), side: +aim.side.toFixed(2), top: +aim.top.toFixed(2), place: g.state === 'place' ? 1 : 0 };
@@ -343,8 +548,12 @@ export class Online {
 			if (key !== this._aimSent) {
 				this._aimT = 0;
 				this._aimSent = key;
-				this.net.call('aim', { id: this.matchId, aim: a }).catch(() => null);
+				this.rtcSendOpp({ k: 'aim', a });
+				this.wsend({ k: 'w-aim', a });
 			}
+		}
+		if (this.pendingShot) {
+			this.takeShot();
 		}
 		// výsledok súperovho úderu prišiel, keď ešte bežala simulácia: použiť po jej skončení
 		if (this.pendingInfo && g.state === 'wait') {
@@ -354,6 +563,7 @@ export class Online {
 		}
 	}
 
+	/** Jedno načítanie uloženej partie zo servera (po obnovení spojenia alebo keď server partiu ukončil). */
 	async poll() {
 		this._polling = true;
 		try {
@@ -405,20 +615,15 @@ export class Online {
 			}
 			this.aimTarget = null;
 			g.applyState(m.state, m.seq);
+			this.wsend(this.matchWState());
 			if (m.status === 'finished') {
 				this.applyInfo(m);
 			}
 			return;
 		}
-		if (m.shot && m.shot.seq === g.match.seq + 1 && m.shot.by !== m.me && !this.played.has(m.shot.seq) && g.state === 'watch') {
-			this.played.add(m.shot.seq);
-			this.aimTarget = null;
-			g.playRemote(m.shot, false);
-			return;
-		}
-		if (m.aim && m.aimv !== this.lastAimv && g.state === 'watch' && m.aim.seq === g.match.seq) {
-			this.lastAimv = m.aimv;
-			this.aimTarget = m.aim;
+		if (m.shot && m.shot.seq === g.match.seq + 1 && m.shot.by !== m.me && !this.played.has(m.shot.seq)) {
+			this.pendingShot = m.shot; // rozohraný súperov úder uložený na serveri
+			this.takeShot();
 		}
 	}
 
@@ -468,8 +673,11 @@ export class Online {
 		if (this.net.down) {
 			return 'Spojenie so serverom sa prerušilo, skúšam znova. Partia je uložená.';
 		}
+		if (this.inMatch && !this.rtc.supported) {
+			return 'Prehliadač nepodporuje priame spojenie WebRTC, partia so súperom nemôže pokračovať.';
+		}
 		if (this.inMatch && !this.oppOnline) {
-			return 'Súper je mimo hry, čakám na jeho návrat. Po 10 minútach sa partia preruší a dá sa v nej pokračovať neskôr.';
+			return 'Nadväzujem priame spojenie so súperom (WebRTC). Ak sa súper nevráti, po 10 minútach sa partia preruší a dá sa v nej pokračovať neskôr.';
 		}
 		return '';
 	}

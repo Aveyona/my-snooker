@@ -1,7 +1,8 @@
 <?php
 /**
- * My Snooker: otvorené partie a sledovanie (Vstúpiť v menu). Hráč s otvorenými dverami herne (F6) pri tréningu
- * alebo pri hre o skóre posiela po každom údere stav stola; ligové zápasy sa dajú sledovať vždy. Divák sa len pozerá.
+ * My Snooker: otvorené partie a sledovanie (Vstúpiť v menu). Server drží len zoznam: kto má otvorené dvere herne
+ * (F6) pri tréningu alebo pri hre o skóre a prebiehajúce ligové zápasy. Stôl, údery a tágo ide divákovi priamo
+ * od hráča cez WebRTC (includes/rtc.php len sprostredkuje nadviazanie spojenia). Divák sa len pozerá.
  */
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -14,8 +15,7 @@ function mysn_rest_room_post( $req ) {
 	$uid  = get_current_user_id();
 	$door = $req->get_param( 'door' ) ? 1 : 0;
 	$kind = 'solo' === $req->get_param( 'kind' ) ? 'solo' : 'training';
-	$data = mysn_json_param( $req, 'data', 30000 );
-	$aim  = mysn_json_param( $req, 'aim', 1000 );
+	$data = mysn_json_param( $req, 'data', 500 ); // len krátky popis do zoznamu, stôl ide divákom cez WebRTC
 	$row  = array(
 		'user_id' => $uid,
 		'door'    => $door,
@@ -28,13 +28,6 @@ function mysn_rest_room_post( $req ) {
 	} else {
 		$old         = $wpdb->get_var( $wpdb->prepare( 'SELECT data FROM ' . mysn_table( 'rooms' ) . ' WHERE user_id = %d', $uid ) ); // phpcs:ignore
 		$row['data'] = $old ? $old : '';
-	}
-	if ( null !== $aim ) {
-		// mierenie hráča (tágo pre divákov) sa pridá k poslednému stavu stola
-		$d           = $row['data'] ? json_decode( $row['data'], true ) : array();
-		$d           = is_array( $d ) ? $d : array();
-		$d['aim']    = json_decode( $aim, true );
-		$row['data'] = wp_json_encode( $d );
 	}
 	$wpdb->replace( mysn_table( 'rooms' ), $row );
 	return array( 'ok' => true );
@@ -56,6 +49,7 @@ function mysn_rest_rooms() {
 			'id'    => (int) $r['user_id'],
 			'kind'  => $r['kind'],
 			'title' => mysn_user( $r['user_id'] )['name'],
+			'peers' => array( (int) $r['user_id'] ),
 			'info'  => isset( $d['info'] ) ? substr( sanitize_text_field( (string) $d['info'] ), 0, 80 ) : '',
 		);
 	}
@@ -66,46 +60,11 @@ function mysn_rest_rooms() {
 			'id'    => (int) $m['id'],
 			'kind'  => 'league',
 			'title' => mysn_user( $m['p1'] )['name'] . ' : ' . mysn_user( $m['p2'] )['name'],
+			'peers' => array( (int) $m['p1'], (int) $m['p2'] ),
 			'info'  => (int) $m['score1'] . ' : ' . (int) $m['score2'],
 		);
 	}
 	return array( 'rooms' => $out );
-}
-
-/** Stav otvorenej partie pre diváka. */
-function mysn_rest_room_get( $req ) {
-	global $wpdb;
-	$id = (int) $req->get_param( 'id' );
-	$r  = $wpdb->get_row( $wpdb->prepare( 'SELECT * FROM ' . mysn_table( 'rooms' ) . ' WHERE user_id = %d', $id ), ARRAY_A ); // phpcs:ignore
-	if ( ! $r || ! (int) $r['door'] || ! mysn_is_live( $id ) ) {
-		return array( 'closed' => true );
-	}
-	return array(
-		'closed' => false,
-		'kind'   => $r['kind'],
-		'seq'    => (int) $r['seq'],
-		'name'   => mysn_user( $id )['name'],
-		'data'   => $r['data'] ? json_decode( $r['data'], true ) : null,
-	);
-}
-
-/** Ligový zápas pre diváka (stav stola, rozohraný úder, skóre). */
-function mysn_rest_watch( $req ) {
-	$m = mysn_get_match( (int) $req->get_param( 'id' ) );
-	if ( ! $m || empty( $m['league'] ) ) {
-		return mysn_err( 'Zápas sa nenašiel.', 404 );
-	}
-	return array(
-		'id'      => (int) $m['id'],
-		'status'  => $m['status'],
-		'players' => array( mysn_user( $m['p1'] ), mysn_user( $m['p2'] ) ),
-		'seq'     => (int) $m['seq'],
-		'state'   => $m['state'] ? json_decode( $m['state'], true ) : null,
-		'shot'    => $m['shot'] ? json_decode( $m['shot'], true ) : null,
-		'aim'     => $m['aim'] ? json_decode( $m['aim'], true ) : null,
-		'scores'  => array( (int) $m['score1'], (int) $m['score2'] ),
-		'winner'  => (int) $m['winner'],
-	);
 }
 
 add_action(
@@ -117,8 +76,6 @@ add_action(
 		foreach ( array(
 			array( '/room', 'POST', 'mysn_rest_room_post' ),
 			array( '/rooms', 'GET', 'mysn_rest_rooms' ),
-			array( '/room/(?P<id>\d+)', 'GET', 'mysn_rest_room_get' ),
-			array( '/watch/(?P<id>\d+)', 'GET', 'mysn_rest_watch' ),
 		) as $r ) {
 			register_rest_route(
 				'my-snooker/v1',

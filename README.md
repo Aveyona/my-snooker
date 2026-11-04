@@ -27,8 +27,9 @@ Hra je napísaná v JavaScripte nad knižnicou [three.js](https://threejs.org/),
 ## Vstúpiť (sledovanie partií)
 
 - V menu je tlačidlo Vstúpiť. Otvorí okno Otvorené partie: tréningy a hry o skóre, ktoré majú otvorené dvere herne (F6), a všetky prebiehajúce ligové zápasy.
-- Dvere herne sú po načítaní zatvorené, partia je súkromná. Keď ich hráč otvorí (F6), jeho partia sa objaví v zozname a po každom údere sa posiela stav stola do tabuľky `my_snooker_rooms`.
-- Hráč s otvorenými dverami posiela stav stola pri každej zmene (aj bez úderu) a mierenie tága asi 3-krát za sekundu, divák sa pýta dvakrát za sekundu a úder si prehrá rovnakou fyzikou.
+- Dvere herne sú po načítaní zatvorené, partia je súkromná. Keď ich hráč otvorí (F6), jeho partia sa objaví v zozname (tabuľka `my_snooker_rooms` drží len otvorené dvere, druh hry a krátky popis).
+- Sledovanie ide priamo medzi prehliadačmi cez WebRTC: divák sa spojí s hráčom (pri ligovom zápase s oboma hráčmi), hráč mu hneď posiela stav stola, každý úder (divák si ho prehrá rovnakou fyzikou) a mierenie tága asi 20-krát za sekundu. Server stôl nečíta ani neposiela.
+- Keď sa priame spojenie nepodarí nadviazať (niektoré firemné siete a mobilní operátori ho blokujú), sledovanie nejde a divák dostane správu.
 - Divák sa len pozerá: vidí tágo hráča pri mierení a úder naživo, myšou sa otáča okolo stola, kolieskom približuje, strieľať ani meniť stôl nemôže. Esc otvorí menu s tlačidlom Prestať sledovať. Keď hráč dvere zavrie alebo ligový zápas skončí, sledovanie sa ukončí samo.
 - Ligový zápas sa sleduje na štadióne pri modrom stole.
 
@@ -54,6 +55,7 @@ Hra je napísaná v JavaScripte nad knižnicou [three.js](https://threejs.org/),
 - V hlavnom menu (Esc) je zoznam hráčov, ktorí sú práve v hre My Snooker. Ostatní používatelia webu sa nezobrazujú.
 - Pozvánka príde súperovi do menu a ako správa navrchu, môže ju prijať alebo odmietnuť.
 - Hrá sa jeden frame podľa pravidiel snookeru: červená, farba, na konci farby od žltej po čiernu; fauly (minutie, nesprávna prvá guľa, nesprávna guľa v jamke, biela v jamke) dávajú súperovi aspoň 4 body, po spadnutej bielej má súper bielu v ruke v D.
+- Partia ide priamo medzi prehliadačmi hráčov cez WebRTC (DataChannel): súper vidí moje tágo pri mierení asi 20-krát za sekundu, úder a výsledok úderu dostane hneď a prehrá ho rovnakou fyzikou. Server len sprostredkuje nadviazanie spojenia (tabuľka `my_snooker_signals`, správa sa po prečítaní zmaže) a ukladá partiu a odohrané ťahy. Bez priameho spojenia sa partia nehrá, hra ukáže, že spojenie so súperom nadväzuje. Priame spojenie znamená, že prehliadače hráčov si navzájom vidia IP adresu.
 - Súper vidí moje tágo pri mierení, úder sa prehrá u oboch hráčov. Na lište je skóre, kto je na rade, na akú guľu sa hrá a séria, na tabuli (F4) aj zostávajúce body.
 - Partia sa ukladá po každom údere do vlastných tabuliek vo WordPresse (`my_snooker_matches`, `my_snooker_moves`, `my_snooker_presence`; rebríček o najlepšie skóre v `my_snooker_scores`). Pri výpadku internetu alebo obnovení stránky sa pokračuje tam, kde sa skončilo.
 - Keď je súper preč dlhšie ako 10 minút, partia sa preruší. Dokončiť sa dá neskôr v ponuke Poslať výzvu, Rozohrané partie. V menu partie je aj Prerušiť partiu a Vzdať partiu.

@@ -83,6 +83,7 @@ function mysn_roadmap() {
 				array( 'Hrať s priateľom: zoznam hráčov, ktorí sú práve v hre (ostatní sa nezobrazujú), pozvánka, prijatie alebo odmietnutie', 1 ),
 				array( 'Vlastné tabuľky vo WordPresse: partie, záznam každého úderu so stavom stola, kto je práve v hre', 1 ),
 				array( 'Prenos úderov cez server webu: súper vidí moje tágo pri mierení, úder sa prehrá u oboch a zosúladí sa so stavom strelca', 1 ),
+				array( 'Priame spojenie prehliadačov cez WebRTC pre partiu aj sledovanie (mierenie, úder a výsledok naživo), server len sprostredkuje spojenie a ukladá partiu', 1 ),
 				array( 'Pokračovanie po výpadku internetu alebo obnovení stránky; partia bez súpera sa po 10 minútach preruší a dá sa dokončiť neskôr (Rozohrané partie)', 1 ),
 				array( 'Prerušenie a vzdanie partie, prehľad partií v administrácii', 1 ),
 				array( 'Časový limit na úder, pozvánka cez odkaz', 0 ),
@@ -118,6 +119,7 @@ function mysn_roadmap() {
 /** Denník zmien (najnovšie hore). */
 function mysn_changelog() {
 	return array(
+		array( '0.6.0', '4. 11. 2026', 'Partia cez internet a sledovanie idú priamo medzi prehliadačmi cez WebRTC: mierenie tága asi 20-krát za sekundu, úder a výsledok hneď, bez čítania servera dookola. Server len sprostredkuje nadviazanie spojenia (nová tabuľka my_snooker_signals) a ukladá partiu a odohrané ťahy. Divák sa spojí s hráčom otvorenej partie alebo s oboma hráčmi ligového zápasu.' ),
 		array( '0.5.3', '4. 11. 2026', 'Tágo, s ktorým hráš, nie je pri hre na stojane (je v ruke, jeho miesto je prázdne). Na stojane je len v pohľade F2, keď si prezeráš tágá.' ),
 		array( '0.5.2', '4. 11. 2026', 'Neprihlásený návštevník má v menu aj Tréning: zahrá si voľný tréning bez prihlásenia. Hra o skóre, liga, partie s priateľmi a vlastné tágá ostávajú pre prihlásených.' ),
 		array( '0.5.1', '4. 11. 2026', 'Moje tágá sú v paneli vpravo pod nastaveniami (Vybrať, Na stojan, Zo stojana). Na stojane je vždy 10 tág: vlastné tágo sa dá dať na stojan namiesto svojej šablóny, aj v 3D s jeho farbami.' ),

@@ -8,8 +8,9 @@
  * {prefix}my_snooker_moves     záznam partie: každý úder s parametrami, stavom po údere, bodmi a faulom
  * {prefix}my_snooker_seasons   sezóny ligy (približne rok): názov, začiatok, koniec, stav, majster sezóny
  * {prefix}my_snooker_league    body ligy hráčov v sezóne, výhry, prehry, najvyššia séria, konečné poradie a liga
- * {prefix}my_snooker_rooms     otvorené partie pre divákov (dvere otvorené F6): posledný úder a stav stola
+ * {prefix}my_snooker_rooms     otvorené partie pre zoznam Vstúpiť (dvere otvorené F6): druh hry a krátky popis
  * {prefix}my_snooker_cues      vlastné tágá hráčov: šablóna, názov, farby a herné úpravy v medziach ±10 %
+ * {prefix}my_snooker_signals   krátke správy na nadviazanie priameho spojenia WebRTC medzi hráčmi (po prečítaní sa mažú)
  * {prefix}my_snooker_scores    jeden hráč o najlepšie skóre: dohrané framy (body, čas, údery, fauly, najvyššia séria)
  *
  * Partia sa ukladá po každom údere, takže pri výpadku internetu sa dá pokračovať tam, kde sa skončila.
@@ -18,7 +19,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-const MYSN_DB_VERSION = '6';
+const MYSN_DB_VERSION = '7';
 
 function mysn_table( $name ) {
 	global $wpdb;
@@ -152,6 +153,20 @@ created int(10) unsigned NOT NULL DEFAULT 0,
 updated int(10) unsigned NOT NULL DEFAULT 0,
 PRIMARY KEY  (id),
 KEY user_id (user_id)
+) $c;"
+	);
+	// signalizácia WebRTC: ponuka a odpoveď spojenia, server ich len odovzdá a hneď zmaže
+	dbDelta(
+		'CREATE TABLE ' . mysn_table( 'signals' ) . " (
+id bigint(20) unsigned NOT NULL AUTO_INCREMENT,
+to_user bigint(20) unsigned NOT NULL,
+from_user bigint(20) unsigned NOT NULL,
+tag varchar(10) NOT NULL DEFAULT '',
+data text NULL,
+created int(10) unsigned NOT NULL DEFAULT 0,
+PRIMARY KEY  (id),
+KEY to_user (to_user),
+KEY created (created)
 ) $c;"
 	);
 	update_option( 'mysn_db', MYSN_DB_VERSION, true );

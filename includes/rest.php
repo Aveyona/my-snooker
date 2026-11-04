@@ -32,7 +32,6 @@ add_action(
 			'invite' => 'mysn_rest_invite',
 			'answer' => 'mysn_rest_answer',
 			'cancel' => 'mysn_rest_cancel',
-			'aim'    => 'mysn_rest_aim',
 			'shot'   => 'mysn_rest_shot',
 			'settle' => 'mysn_rest_settle',
 			'leave'  => 'mysn_rest_leave',
@@ -207,6 +206,11 @@ function mysn_rest_ping( $req ) {
 	$state  = $active ? 'match' : sanitize_key( (string) $req->get_param( 'state' ) );
 	mysn_touch( $uid, $state ? $state : 'lobby', $active ? $active['id'] : 0 );
 	$now  = time();
+	if ( $active ) {
+		// signál hráča v partii (partia ide priamo medzi prehliadačmi, server ju len ukladá)
+		$col = 0 === mysn_side( $active, $uid ) ? 'seen1' : 'seen2';
+		$wpdb->query( $wpdb->prepare( 'UPDATE ' . mysn_table( 'matches' ) . " SET $col = %d WHERE id = %d", $now, $active['id'] ) ); // phpcs:ignore
+	}
 	$pt   = mysn_table( 'presence' );
 	$t    = mysn_table( 'matches' );
 	$rows = $wpdb->get_results( $wpdb->prepare( "SELECT user_id, state FROM $pt WHERE seen >= %d AND user_id <> %d ORDER BY seen DESC LIMIT 50", $now - MYSN_LIVE, $uid ), ARRAY_A ); // phpcs:ignore
@@ -247,6 +251,7 @@ function mysn_rest_ping( $req ) {
 		) : null,
 		'match'    => $active ? (int) $active['id'] : 0,
 		'paused'   => $paused,
+		'signals'  => mysn_rtc_take( $uid ),
 		'nonce'    => wp_create_nonce( 'wp_rest' ),
 	);
 }
@@ -369,24 +374,6 @@ function mysn_rest_match( $req ) {
 	return mysn_match_out( $m, get_current_user_id() );
 }
 
-function mysn_rest_aim( $req ) {
-	global $wpdb;
-	$r = mysn_my_match( $req );
-	if ( is_wp_error( $r ) ) {
-		return $r;
-	}
-	list( $m, $me ) = $r;
-	if ( 'active' !== $m['status'] || (int) $m['turn'] !== $me ) {
-		return array( 'ok' => false );
-	}
-	$aim = mysn_json_param( $req, 'aim', 600 );
-	if ( $aim ) {
-		$col = 0 === $me ? 'seen1' : 'seen2';
-		$wpdb->query( $wpdb->prepare( 'UPDATE ' . mysn_table( 'matches' ) . " SET aim = %s, aimv = aimv + 1, $col = %d WHERE id = %d", $aim, time(), $m['id'] ) ); // phpcs:ignore
-	}
-	return array( 'ok' => true );
-}
-
 function mysn_rest_shot( $req ) {
 	$r = mysn_my_match( $req );
 	if ( is_wp_error( $r ) ) {
@@ -478,7 +465,11 @@ function mysn_rest_settle( $req ) {
 		$best = isset( $st['best'] ) && is_array( $st['best'] ) ? array_map( 'intval', $st['best'] ) : array( 0, 0 );
 		mysn_league_apply( mysn_get_match( $m['id'] ), $data['winner'], (int) $rules['scores'][ $w ], false, $best );
 	}
-	return array( 'ok' => true );
+	// stav partie po uložení (hráč ho pošle súperovi priamo cez WebRTC)
+	return array(
+		'ok'    => true,
+		'match' => mysn_match_out( mysn_get_match( $m['id'] ), get_current_user_id() ),
+	);
 }
 
 function mysn_rest_leave( $req ) {
@@ -510,7 +501,10 @@ function mysn_rest_leave( $req ) {
 	} else {
 		mysn_update_match( $m['id'], array( 'status' => 'paused' ) );
 	}
-	return array( 'ok' => true );
+	return array(
+		'ok'    => true,
+		'match' => mysn_match_out( mysn_get_match( $m['id'] ), get_current_user_id() ),
+	);
 }
 
 function mysn_rest_resume( $req ) {
