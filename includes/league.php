@@ -238,6 +238,15 @@ add_action(
 		);
 		register_rest_route(
 			'my-snooker/v1',
+			'/league/queue',
+			array(
+				'methods'             => 'POST',
+				'callback'            => 'mysn_rest_league_queue',
+				'permission_callback' => $auth,
+			)
+		);
+		register_rest_route(
+			'my-snooker/v1',
 			'/league/archive',
 			array(
 				'methods'             => 'GET',
@@ -382,4 +391,55 @@ function mysn_league_champions() {
 		);
 	}
 	return $out;
+}
+
+/**
+ * Vyhľadanie ligového zápasu (dvere ŠTADIÓN alebo telefón v kancelárii). on = 1 zaradí hráča do fronty a skúsi
+ * nájsť súpera z fronty (kým je hráčov málo, hrá každý s každým), on = 0 ho z fronty vyradí.
+ */
+function mysn_rest_league_queue( $req ) {
+	global $wpdb;
+	$uid = get_current_user_id();
+	if ( ! $req->get_param( 'on' ) ) {
+		mysn_touch( $uid, 'training' );
+		return array( 'queued' => false );
+	}
+	if ( ! mysn_player( $uid ) ) {
+		return mysn_err( 'Najprv sa zaregistruj do ligy (červená vizitka na stole).' );
+	}
+	if ( mysn_active_match( $uid ) ) {
+		return array( 'matched' => true );
+	}
+	mysn_league_join( $uid );
+	mysn_touch( $uid, 'queue' );
+	$pt   = mysn_table( 'presence' );
+	$wait = $wpdb->get_col( $wpdb->prepare( "SELECT user_id FROM $pt WHERE state = 'queue' AND seen >= %d AND user_id <> %d ORDER BY seen ASC LIMIT 10", time() - 15, $uid ) ); // phpcs:ignore
+	foreach ( $wait as $other ) {
+		$other = (int) $other;
+		if ( mysn_active_match( $other ) || mysn_league_can_play( $other, $uid ) ) {
+			continue;
+		}
+		$t   = mysn_table( 'matches' );
+		$now = time();
+		// kto čakal dlhšie, rozbíja
+		$wpdb->insert(
+			$t,
+			array(
+				'p1'        => $other,
+				'p2'        => $uid,
+				'status'    => 'invited',
+				'created'   => $now,
+				'updated'   => $now,
+				'league'    => 1,
+				'kind'      => '',
+				'season_id' => (int) mysn_season_current()['id'],
+			)
+		);
+		mysn_match_begin( mysn_get_match( (int) $wpdb->insert_id ) );
+		mysn_touch( $other, 'match' );
+		mysn_touch( $uid, 'match' );
+		return array( 'matched' => true, 'id' => (int) $wpdb->insert_id );
+	}
+	$n = (int) $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM $pt WHERE state = 'queue' AND seen >= %d", time() - 15 ) ); // phpcs:ignore
+	return array( 'queued' => true, 'waiting' => $n );
 }

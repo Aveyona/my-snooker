@@ -15,6 +15,66 @@ const RXo = 3.2; // polovičná šírka (x)
 const RZo = 2.6; // polovičná hĺbka (z)
 const H = 3.0;
 
+/**
+ * Drevená textúra z dosiek (kreslená na plátno): base a dark = farby dreva, n = počet dosiek, vertical = dosky zvisle.
+ * Kresba je deterministická (bez náhody pri každom načítaní), aby drevo vyzeralo vždy rovnako.
+ */
+const woodTex = (base, dark, n, vertical, seed = 1) => {
+	const S = 1024;
+	const c = document.createElement('canvas');
+	c.width = S;
+	c.height = S;
+	const g = c.getContext('2d');
+	let r = seed * 9301 + 49297;
+	const rnd = () => ((r = (r * 9301 + 49297) % 233280) / 233280);
+	const w = S / n;
+	for (let i = 0; i < n; i++) {
+		// každá doska má trochu iný odtieň
+		const k = 0.85 + rnd() * 0.3;
+		const col = new THREE.Color(base).multiplyScalar(k);
+		g.fillStyle = '#' + col.getHexString();
+		if (vertical) {
+			g.fillRect(i * w, 0, w, S);
+		} else {
+			g.fillRect(0, i * w, S, w);
+		}
+		// letokruhy a vlákna
+		g.strokeStyle = dark;
+		for (let j = 0; j < 26; j++) {
+			g.globalAlpha = 0.06 + rnd() * 0.14;
+			g.lineWidth = 0.6 + rnd() * 2.2;
+			const o = i * w + rnd() * w;
+			const amp = 2 + rnd() * 6;
+			const fr = 0.004 + rnd() * 0.01;
+			g.beginPath();
+			for (let t = 0; t <= S; t += 16) {
+				const d = o + Math.sin(t * fr + j) * amp;
+				if (vertical) {
+					t ? g.lineTo(d, t) : g.moveTo(d, t);
+				} else {
+					t ? g.lineTo(t, d) : g.moveTo(t, d);
+				}
+			}
+			g.stroke();
+		}
+		// hrana dosky a priečne spoje
+		g.globalAlpha = 0.55;
+		g.fillStyle = dark;
+		if (vertical) {
+			g.fillRect(i * w, 0, 2, S);
+		} else {
+			g.fillRect(0, i * w, S, 2);
+			g.fillRect(((i * 0.37) % 1) * S, i * w, 2, w);
+		}
+		g.globalAlpha = 1;
+	}
+	const t = new THREE.CanvasTexture(c);
+	t.colorSpace = THREE.SRGBColorSpace;
+	t.wrapS = t.wrapT = THREE.RepeatWrapping;
+	t.anisotropy = 8;
+	return t;
+};
+
 const tex = (w, h) => {
 	const c = document.createElement('canvas');
 	c.width = w;
@@ -69,7 +129,10 @@ export function buildOffice(scene) {
 	const gold = new THREE.MeshStandardMaterial({ color: 0xf0c040, metalness: 0.6, roughness: 0.28, emissive: 0x3a2800, emissiveIntensity: 0.5 });
 
 	// podlaha s kobercom, strop, steny s dreveným obložením dole
-	const floor = add(new THREE.PlaneGeometry(2 * RXo, 2 * RZo), new THREE.MeshStandardMaterial({ color: 0x4a2c18, roughness: 0.7 }), 0, FY, 0);
+	// drevená podlaha z dosiek (orech), steny obložené svetlejším drevom, dole tmavší panel
+	const floorTex = woodTex('#7a4a26', '#2a160a', 8, false, 3);
+	floorTex.repeat.set(2.2, 3);
+	const floor = add(new THREE.PlaneGeometry(2 * RXo, 2 * RZo), new THREE.MeshStandardMaterial({ map: floorTex, roughness: 0.55 }), 0, FY, 0);
 	floor.rotation.x = -Math.PI / 2;
 	const rug = add(new THREE.PlaneGeometry(3.4, 2.4), new THREE.MeshStandardMaterial({ color: 0x5c1620, roughness: 0.95 }), 0, FY + 0.003, 0.2);
 	rug.rotation.x = -Math.PI / 2;
@@ -86,7 +149,9 @@ export function buildOffice(scene) {
 		g.position.set(x, FY, z);
 		g.rotation.y = rot;
 		root.add(g);
-		add(new THREE.PlaneGeometry(len, H), wall, 0, H / 2, 0, g);
+		const wt = woodTex('#8a5a32', '#3a210f', 10, true, 7 + len);
+		wt.repeat.set(len / 1.6, 1);
+		add(new THREE.PlaneGeometry(len, H), new THREE.MeshStandardMaterial({ map: wt, roughness: 0.6 }), 0, H / 2, 0, g);
 		add(new THREE.BoxGeometry(len, 1.0, 0.03), panel, 0, 0.5, 0.015, g);
 		add(new THREE.BoxGeometry(len, 0.05, 0.05), wood, 0, 1.02, 0.03, g);
 	}
@@ -261,19 +326,74 @@ export function buildOffice(scene) {
 	win.rotation.y = Math.PI;
 	add(new THREE.BoxGeometry(1.5, 1.2, 0.04), wood, -1.6, FY + 1.75, RZo - 0.005);
 	add(new THREE.BoxGeometry(0.03, 1.1, 0.06), wood, -1.6, FY + 1.75, RZo - 0.03);
-	const door = add(new THREE.BoxGeometry(1.0, 2.1, 0.05), wood, 1.9, FY + 1.05, RZo - 0.03);
+	// dvere na štadión (za hráčom vpravo): klik spustí vyhľadávanie ligového zápasu
+	const doorTex = woodTex('#5a3018', '#1e0e05', 4, true, 11);
+	const door = add(new THREE.BoxGeometry(1.0, 2.1, 0.05), new THREE.MeshStandardMaterial({ map: doorTex, roughness: 0.5 }), 1.9, FY + 1.05, RZo - 0.03);
 	door.rotation.y = Math.PI;
+	add(new THREE.BoxGeometry(1.12, 2.18, 0.03), wood, 1.9, FY + 1.09, RZo - 0.012);
+	add(new THREE.SphereGeometry(0.035, 16, 12), brass, 1.55, FY + 1.0, RZo - 0.08);
+	const doorLamp = add(new THREE.SphereGeometry(0.06, 16, 12), new THREE.MeshStandardMaterial({ color: 0x224422, emissive: 0x000000 }), 1.9, FY + 2.32, RZo - 0.06);
 	const doorSign = tex(512, 128);
-	{
+	const drawDoor = (state) => {
 		const g = doorSign.g;
-		g.fillStyle = '#123524';
+		const on = state === 'wait';
+		g.fillStyle = on ? '#6a4a08' : '#123524';
 		g.fillRect(0, 0, 512, 128);
 		g.fillStyle = '#f2d48a';
-		g.font = 'bold 54px Georgia, serif';
 		g.textAlign = 'center';
-		g.fillText('ŠTADIÓN', 256, 84);
+		if (on) {
+			g.font = 'bold 40px Arial, sans-serif';
+			g.fillText('VYHĽADÁVAM ZÁPAS', 256, 80);
+		} else {
+			g.font = 'bold 54px Georgia, serif';
+			g.fillText('ŠTADIÓN', 256, 84);
+		}
 		doorSign.t.needsUpdate = true;
+		doorLamp.material.color.setHex(on ? 0xffc040 : 0x224422);
+		doorLamp.material.emissive.setHex(on ? 0xff9a00 : 0x000000);
+	};
+	drawDoor('');
+
+	// nástenka s klávesmi kancelárie na stene za hráčom (F1)
+	const help = tex(1024, 700);
+	{
+		const g = help.g;
+		g.fillStyle = '#6b4424';
+		g.fillRect(0, 0, 1024, 700);
+		g.fillStyle = '#c9a26a';
+		g.fillRect(24, 24, 976, 652);
+		g.fillStyle = '#0f2a1c';
+		g.fillRect(260, 44, 504, 78);
+		g.fillStyle = '#f2d48a';
+		g.textAlign = 'center';
+		g.font = 'bold 50px Georgia, serif';
+		g.fillText('KANCELÁRIA', 512, 100);
+		const rows = [
+			['F1', 'táto nástenka'],
+			['F2', 'tágá do ligového zápasu (4 kusy)'],
+			['F3', 'pohľad na kalendár sezóny'],
+			['F4', 'tabuľa výsledkov líg'],
+			['F6', 'mapa hráčov ligy'],
+			['F7', 'notebook Moja liga'],
+			['F8', 'vizitka: registrácia, moje údaje'],
+			['F9', 'vyhľadať zápas (aj dvere ŠTADIÓN)'],
+			['Ctrl', 'drž: voľná myš na klikanie'],
+			['Esc', 'späť za stôl, potom do herne'],
+		];
+		g.textAlign = 'left';
+		rows.forEach(([k, t], i) => {
+			const y = 180 + i * 50;
+			g.fillStyle = '#2a1608';
+			g.font = 'bold 34px Arial, sans-serif';
+			g.fillText(k, 90, y);
+			g.font = '32px Arial, sans-serif';
+			g.fillText(t, 230, y);
+		});
+		help.t.needsUpdate = true;
 	}
+	const helpMesh = add(new THREE.PlaneGeometry(1.3, 0.89), new THREE.MeshStandardMaterial({ map: help.t, roughness: 0.8 }), 0.25, FY + 1.62, RZo - 0.07);
+	helpMesh.rotation.y = Math.PI;
+	add(new THREE.BoxGeometry(1.38, 0.97, 0.03), wood, 0.25, FY + 1.62, RZo - 0.05);
 	const sign = add(new THREE.PlaneGeometry(0.5, 0.125), new THREE.MeshBasicMaterial({ map: doorSign.t }), 1.9, FY + 1.75, RZo - 0.06);
 	sign.rotation.y = Math.PI;
 
@@ -413,6 +533,17 @@ export function buildOffice(scene) {
 		seat: { pos: new THREE.Vector3(OX, FY + 1.25, DZ + 0.75), look: new THREE.Vector3(OX, FY + 0.85, -RZo) },
 		card,
 		setCard: drawCard,
+		door,
+		setDoor: drawDoor,
+		/** Pohľady v kancelárii (F1 nástenka, F3 kalendár, F4 tabuľa líg, F6 mapa, F7 notebook), svetové súradnice. */
+		views: {
+			help: { pos: new THREE.Vector3(OX + 0.25, FY + 1.62, RZo - 1.75), look: new THREE.Vector3(OX + 0.25, FY + 1.6, RZo) },
+			calendar: { pos: new THREE.Vector3(OX - 0.45, DT + 0.34, DZ + 0.12), look: new THREE.Vector3(OX - 0.6, DT + 0.07, DZ - 0.25) },
+			results: { pos: new THREE.Vector3(OX, FY + 1.6, -RZo + 3.7), look: new THREE.Vector3(OX, FY + 1.6, -RZo) },
+			map: { pos: new THREE.Vector3(OX - RXo + 2.7, MAP.y, 0), look: new THREE.Vector3(OX - RXo, MAP.y, 0) },
+			notebook: { pos: new THREE.Vector3(OX - 0.15, DT + 0.36, DZ + 0.2), look: new THREE.Vector3(OX - 0.15, DT + 0.12, DZ - 0.2) },
+		},
+		results: resMesh,
 		setBoards: drawBoards,
 		setMap: drawMap,
 		setRack,

@@ -1076,7 +1076,7 @@ export class UI {
 			cw.appendChild(this.button(reg ? 'Zavrieť' : 'Zatiaľ nie', 'officeHome'));
 		} else if (o.mode === 'cues') {
 			// moje tágá: 4 do zápasu a vlastné nastavenia
-			w.appendChild(h('div', 'mysn-news-head', `<b>Moje tágá (do zápasu ${o.myCues.selected.length} zo 4)</b>`));
+			w.appendChild(h('div', 'mysn-news-head', `<b>Tágá do ligového zápasu (vybraté ${o.myCues.selected.length} zo 4)</b>`));
 			w.appendChild(h('p', 'mysn-mixer-status', 'Zaškrtni 4 tágá, ktoré si berieš do ligového zápasu (v zápase sa na F2 prepína len medzi nimi). Klik na názov otvorí nastavenia tága.'));
 			const list = h('div', 'mysn-news mysn-stations');
 			for (const c of o.cues) {
@@ -1125,7 +1125,7 @@ export class UI {
 				}
 			}
 			w.appendChild(list);
-			w.appendChild(this.button('Späť', 'officeHome'));
+			w.appendChild(this.button('Zavrieť (F2)', 'officeHome'));
 		} else {
 			// prehľad hráča v lige
 			const me = d.me;
@@ -1196,6 +1196,7 @@ export class UI {
 		box.classList.toggle('mysn-view-news', name === 'news' || name === 'magazine' || name === 'chair' || name === 'mixer' || name === 'office');
 		this.root.classList.toggle('mysn-viewing', !!name);
 		this.root.classList.toggle('mysn-in-office', name === 'office');
+		box.classList.toggle('mysn-office-float', name === 'office' && !!news && !!news.office && news.office.mode === 'cues');
 		if (name !== 'office' && this.cardBox) {
 			this.cardOverlay(false);
 		}

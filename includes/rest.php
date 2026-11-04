@@ -304,6 +304,12 @@ function mysn_rest_answer( $req ) {
 	if ( mysn_active_match( $uid ) || mysn_active_match( (int) $m['p1'] ) ) {
 		return mysn_err( 'Jeden z hráčov už hrá inú partiu.' );
 	}
+	mysn_match_begin( $m );
+	return array( 'id' => (int) $m['id'] );
+}
+
+/** Spustí partiu: rozbíja p1 s bielou v ruke v D (stav stola si pri prvom údere vytvorí klient). */
+function mysn_match_begin( $m ) {
 	$now = time();
 	// rozbíja ten, kto pozval (biela v ruke v D); stav stola si pri prvom údere vytvorí klient
 	$state = array(
@@ -330,7 +336,6 @@ function mysn_rest_answer( $req ) {
 			'seen2'  => $now,
 		)
 	);
-	return array( 'id' => (int) $m['id'] );
 }
 
 function mysn_rest_cancel( $req ) {

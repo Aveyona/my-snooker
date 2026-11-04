@@ -78,7 +78,7 @@ export class Online {
 
 	async ping() {
 		try {
-			const d = await this.net.call('ping', { state: this.inMatch ? 'match' : this.lobbyOpen ? 'lobby' : 'training' });
+			const d = await this.net.call('ping', { state: this.inMatch ? 'match' : this.queueing ? 'queue' : this.lobbyOpen ? 'lobby' : 'training' });
 			if (d.nonce) {
 				this.net.nonce = d.nonce;
 			}
@@ -156,6 +156,45 @@ export class Online {
 	}
 
 	/** Pripojí sa do partie a načíta jej stav. */
+	/** Vyhľadanie ligového zápasu: on = true zaradí do fronty a každé 3 s skúša nájsť súpera. */
+	async seek(on) {
+		clearInterval(this._queueT);
+		this.queueing = !!on;
+		if (!on) {
+			await this.net.call('league/queue', { on: 0 }).catch(() => null);
+			return null;
+		}
+		const tick = async () => {
+			if (!this.queueing) {
+				return;
+			}
+			try {
+				const r = await this.net.call('league/queue', { on: 1 });
+				if (r.matched) {
+					this.queueing = false;
+					clearInterval(this._queueT);
+					if (this.hooks.queue) {
+						this.hooks.queue('found');
+					}
+					await this.ping(); // ping prinesie rozbehnutú partiu
+				} else if (this.hooks.queue) {
+					this.hooks.queue('wait', r.waiting || 1);
+				}
+			} catch (e) {
+				this.queueing = false;
+				clearInterval(this._queueT);
+				if (this.hooks.queue) {
+					this.hooks.queue('error', e.message);
+				}
+			}
+		};
+		await tick();
+		if (this.queueing) {
+			this._queueT = setInterval(tick, 3000);
+		}
+		return true;
+	}
+
 	async join(id) {
 		if (this._joining) {
 			return;

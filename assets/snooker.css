@@ -240,3 +240,7 @@ body.mysn-page { font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans
 .mysn-card .mysn-form input[type=text], .mysn-card .mysn-form select { background: #fff8ef; color: #3a0a0e; border: 1px solid #e9c46a; border-radius: 6px; }
 .mysn-card .mysn-btn { margin-top: 8px; width: 100%; }
 .mysn-card .mysn-btn.mysn-primary { background: #e9c46a; color: #4a0a10; border-color: #f4d98a; }
+/* kancelária: bez bočného panela; moje tágá (F2) v okne uprostred */
+.mysn-in-office .mysn-view:not(.mysn-office-float) { display: none; }
+.mysn-in-office .mysn-view.mysn-office-float { left: 50%; top: 50%; right: auto; bottom: auto; transform: translate(-50%, -50%); width: min(520px, calc(100vw - 32px)); max-height: calc(100vh - 100px); overflow: auto; border-radius: 12px; background: #0c0f14f2; border: 1px solid #ffffff22; box-shadow: 0 18px 50px #000a; }
+.mysn-in-office .mysn-view.mysn-office-float .mysn-view-foot { display: none; }

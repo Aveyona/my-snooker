@@ -118,6 +118,7 @@ function mysn_roadmap() {
 /** Denník zmien (najnovšie hore). */
 function mysn_changelog() {
 	return array(
+		array( '0.3.4', '4. 11. 2026', 'Kancelária bez bočného panela, s drevenou podlahou a drevenými stenami. Vlastné klávesy: F1 nástenka s klávesmi na stene za hráčom, F2 tágá do ligového zápasu, F3 kalendár, F4 tabuľa výsledkov líg, F6 mapa hráčov, F7 notebook Moja liga, F8 vizitka, F9 vyhľadať zápas. Dvere ŠTADIÓN za hráčom vpravo spustia vyhľadávanie ligového zápasu: kto je práve vo fronte, hrá s kýmkoľvek ďalším, a obaja prejdú na štadión.' ),
 		array( '0.3.3', '4. 11. 2026', 'Pri tréningu (aj spoločnom tréningu s priateľom) ukazujú hodiny na stene skutočný miestny čas. Pri hre o skóre a v partii merajú čas hrania od 11:30.' ),
 		array( '0.3.2', '4. 11. 2026', 'Menu: tlačidlá Rebríček a Nové rozostavenie sú preč (rebríček je na F8, nové rozostavenie na R a na lište dole). Hrať s priateľom sa volá Poslať výzvu: vyzvaný hráč vidí Boli ste vyzvaný a môže prijať alebo odmietnuť. Hráča sa dá vyzvať na partiu alebo pozvať na spoločný tréning (červený stôl, bez faulov, kto potopí, pokračuje, farby sa vracajú, kým sú na stole červené).' ),
 		array( '0.3.1', '4. 11. 2026', 'Tréning je prvá položka menu a hrá sa v tej istej herni na stole s červeným súknom. Hrať (o najlepšie skóre) a Hrať s priateľom ostávajú na zelenom súkne. Tlačidlo Liga je svetlomodré. Registrácia do ligy je červená vizitka na stole v kancelárii (klik ju otvorí, po registrácii je na nej moje meno, krajina a liga). Kým je hráčov málo, hrá každý s každým bez denného limitu.' ),

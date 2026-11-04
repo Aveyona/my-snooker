@@ -191,6 +191,8 @@ export function start(root, config = {}) {
 	let officePlayers = [];
 	// pohľady, v ktorých sa myšou rozhliada (Ctrl drž = voľná myš)
 	const LOOK = new Set(['chair', 'bar', 'office']);
+	let officeFocusNow = '';
+	const OFFICE_KEYS = 'Kancelária: F1 nástenka s klávesmi za tebou, F8 vizitka (registrácia), F9 alebo dvere ŠTADIÓN: vyhľadať zápas. Esc späť do herne.';
 	let venue = 'home';
 	const fadeEl = document.createElement('div');
 	fadeEl.className = 'mysn-fade';
@@ -383,6 +385,7 @@ export function start(root, config = {}) {
 				// kancelária stojí mimo herne: kamera sa presunie hneď (bez letu cez steny)
 				rig.noClamp = true;
 				rig.jump();
+				officeFocusNow = '';
 				rig.minViewZoom = 0.85;
 				rig.setViewZoom(0.85); // širší pohľad: stôl s kalendárom aj celá tabuľa
 			}
@@ -408,6 +411,11 @@ export function start(root, config = {}) {
 		rig.minViewZoom = 1;
 		rig.setViewZoom(1);
 		if (was === 'office') {
+			officeFocusNow = '';
+			if (online && online.queueing) {
+				online.seek(false); // odchod z kancelárie zruší vyhľadávanie zápasu
+				office.setDoor('');
+			}
 			rig.noClamp = false;
 			rig.snapNext = true; // z kancelárie späť do herne hneď
 			ui.openLeague(false);
@@ -512,6 +520,7 @@ export function start(root, config = {}) {
 			setTimeout(() => {
 				enterView('office');
 				controls.capture();
+				ui.toast(OFFICE_KEYS);
 				setTimeout(() => fadeEl.classList.remove('mysn-on'), 80);
 			}, 300);
 			await refreshLeague();
@@ -552,8 +561,43 @@ export function start(root, config = {}) {
 			officeRefresh();
 		},
 		myCues: () => {
-			officeMode = 'cues';
+			officeMode = officeMode === 'cues' ? '' : 'cues';
+			if (officeMode) {
+				freeMouse = true;
+				controls.uncapture();
+			}
 			officeRefresh();
+		},
+		officeKeys: () => ui.toast(OFFICE_KEYS),
+		// pohľad na predmet v kancelárii; druhé stlačenie (alebo Esc) vráti pohľad za stôl
+		officeFocus: (name) => {
+			const v = officeFocusNow === name ? office.seat : office.views[name];
+			officeFocusNow = officeFocusNow === name ? '' : name;
+			rig.setView(v.pos.clone(), v.look.clone());
+			const d = v.look.clone().sub(v.pos);
+			chairLook.yaw = Math.atan2(d.z, d.x);
+			chairLook.pitch = Math.atan2(d.y, Math.hypot(d.x, d.z));
+			rig.setViewZoom(officeFocusNow ? 1 : 0.85);
+		},
+		// dvere ŠTADIÓN (alebo F9): vyhľadanie ligového zápasu, druhý klik ho zruší
+		officeDoor: async () => {
+			if (!online) {
+				return;
+			}
+			if (!leagueData || !leagueData.registered) {
+				ui.toast('Ligu hrajú len registrovaní hráči. Najprv vyplň červenú vizitku na stole (F8).');
+				actions.officeCard();
+				return;
+			}
+			if (online.queueing) {
+				await online.seek(false);
+				office.setDoor('');
+				ui.toast('Vyhľadávanie zápasu je zrušené.');
+				return;
+			}
+			office.setDoor('wait');
+			ui.toast('Vyhľadávam zápas… Hrá každý s každým, kto je práve vo fronte. Druhý klik na dvere (F9) zruší.');
+			await online.seek(true);
 		},
 		officeHome: () => {
 			officeMode = '';
@@ -795,6 +839,14 @@ export function start(root, config = {}) {
 					actions.officeCard();
 					return;
 				}
+				if (ray.intersectObject(office.door, false).length) {
+					actions.officeDoor();
+					return;
+				}
+				if (ray.intersectObject(office.results, false).length) {
+					actions.leagueTables(); // tabuľky líg so zoznamom hráčov a vyzvaním
+					return;
+				}
 				const hit = ray.intersectObject(office.map, false)[0];
 				if (hit) {
 					const ll = office.mapLonLat(hit.point);
@@ -869,6 +921,30 @@ export function start(root, config = {}) {
 			if (lk === 'escape' && ui.leaderboardOpen()) {
 				ui.opts.onAction('leaderboardClose');
 				return true;
+			}
+			if (view === 'office') {
+				// kancelária má vlastné klávesy (bez bočného panela)
+				const okeys = { f1: ['officeFocus', 'help'], f2: ['myCues'], f3: ['officeFocus', 'calendar'], f4: ['officeFocus', 'results'], f6: ['officeFocus', 'map'], f7: ['officeFocus', 'notebook'], f8: ['officeCard'], f9: ['officeDoor'] };
+				if (okeys[lk]) {
+					ui.opts.onAction(okeys[lk][0], okeys[lk][1]);
+					return true;
+				}
+				if (/^f\d+$/.test(lk)) {
+					return true; // ostatné F klávesy v kancelárii nič nerobia
+				}
+				if (lk === 'escape') {
+					if (officeMode) {
+						officeMode = '';
+						officeRefresh();
+					} else if (officeFocusNow) {
+						actions.officeFocus(officeFocusNow);
+					} else if (ui.leagueOpen()) {
+						ui.openLeague(false);
+					} else {
+						actions.officeLeave();
+					}
+					return true;
+				}
 			}
 			const fkeys = { f1: 'board', f2: 'rack', f3: 'chalk', f4: 'score', f7: 'chair', f8: 'trophies', f9: 'mixer', f10: 'bar', f12: 'leagueBoard' };
 			if (fkeys[lk]) {
@@ -1033,6 +1109,14 @@ export function start(root, config = {}) {
 			},
 			invite: (inv) => !ui.menuOpen() && ui.toast(`Boli ste vyzvaný! ${inv.from.name} ťa vyzýva ${inv.training ? 'na spoločný tréning' : inv.league ? 'na ligovú partiu' : 'na partiu'}.${controls.captured ? ' Esc alebo Ctrl uvoľní myš.' : ''}`, inv),
 			toast: (t) => ui.toast(t),
+			queue: (st, info) => {
+				office.setDoor(st === 'wait' ? 'wait' : '');
+				if (st === 'found') {
+					ui.toast('Súper sa našiel! Ideme na štadión.');
+				} else if (st === 'error') {
+					ui.toast(info || 'Vyhľadávanie zápasu sa nepodarilo.');
+				}
+			},
 			started: (m) => {
 				exitView();
 				ui.openLeague(false);
@@ -1289,7 +1373,7 @@ export function start(root, config = {}) {
 	};
 	requestAnimationFrame(frame);
 
-	return { game, rig, renderer, scene, settings, controls, debug, get online() {
+	return { game, rig, renderer, scene, settings, controls, debug, actions, get online() {
 		return online;
 	} };
 }
