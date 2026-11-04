@@ -560,11 +560,18 @@ export function start(root, config = {}) {
 			controls.uncapture();
 			officeRefresh();
 		},
+		// F2 v kancelárii: kamera ku stojanu s tágami, dole pás tág do ligového zápasu (ako stojan v herni)
 		myCues: () => {
 			officeMode = officeMode === 'cues' ? '' : 'cues';
 			if (officeMode) {
+				officeCue = officeCue || myCues.selected[0] || CUES[0].id;
+				if (officeFocusNow !== 'rack') {
+					actions.officeFocus('rack');
+				}
 				freeMouse = true;
 				controls.uncapture();
+			} else if (officeFocusNow === 'rack') {
+				actions.officeFocus('rack');
 			}
 			officeRefresh();
 		},
@@ -932,8 +939,16 @@ export function start(root, config = {}) {
 				if (/^f\d+$/.test(lk)) {
 					return true; // ostatné F klávesy v kancelárii nič nerobia
 				}
+				if (officeMode === 'cues' && (lk === 'arrowleft' || lk === 'arrowright')) {
+					const i = Math.max(0, CUES.findIndex((c) => c.id === officeCue));
+					officeCue = CUES[(i + (lk === 'arrowleft' ? CUES.length - 1 : 1)) % CUES.length].id;
+					officeRefresh();
+					return true;
+				}
 				if (lk === 'escape') {
-					if (officeMode) {
+					if (officeMode === 'cues') {
+						actions.myCues();
+					} else if (officeMode) {
 						officeMode = '';
 						officeRefresh();
 					} else if (officeFocusNow) {

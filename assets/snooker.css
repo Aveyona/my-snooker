@@ -241,6 +241,22 @@ body.mysn-page { font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans
 .mysn-card .mysn-btn { margin-top: 8px; width: 100%; }
 .mysn-card .mysn-btn.mysn-primary { background: #e9c46a; color: #4a0a10; border-color: #f4d98a; }
 /* kancelária: bez bočného panela; moje tágá (F2) v okne uprostred */
-.mysn-in-office .mysn-view:not(.mysn-office-float) { display: none; }
+.mysn-in-office .mysn-view:not(.mysn-office-rack) { display: none; }
 .mysn-in-office .mysn-view.mysn-office-float { left: 50%; top: 50%; right: auto; bottom: auto; transform: translate(-50%, -50%); width: min(520px, calc(100vw - 32px)); max-height: calc(100vh - 100px); overflow: auto; border-radius: 12px; background: #0c0f14f2; border: 1px solid #ffffff22; box-shadow: 0 18px 50px #000a; }
 .mysn-in-office .mysn-view.mysn-office-float .mysn-view-foot { display: none; }
+/* kancelária F2: pás tág dole ako stojan v herni */
+.mysn-in-office .mysn-view.mysn-office-rack { left: 0; right: 0; top: auto; bottom: 0; width: auto; max-height: 62vh; overflow: auto; padding: 12px 16px 16px; align-items: center; background: linear-gradient(#0c0f1400, #0c0f14ee 22%); }
+.mysn-office-rack .mysn-office-btns { display: none; }
+.mysn-cue.mysn-pick { background: #2a2410f0; border-color: #FACC15; }
+.mysn-cue.mysn-pick em { color: #FACC15; opacity: 1; }
+.mysn-cue-edit-row { display: flex; flex-wrap: wrap; gap: 6px 14px; align-items: center; justify-content: center; max-width: 980px; padding: 8px 12px; border-radius: 10px; background: #141a24e6; border: 1px solid #ffffff26; }
+.mysn-cue-edit-row .mysn-form-row { width: auto; gap: 6px; }
+.mysn-cue-edit-t { color: #f2d48a; }
+.mysn-office-rack .mysn-office { width: 100%; max-width: 980px; display: flex; flex-direction: column; align-items: center; gap: 8px; }
+.mysn-office-rack .mysn-view-foot, .mysn-office-rack .mysn-office > .mysn-mixer-status { display: none; }
+.mysn-cue-edit-row .mysn-form-row { flex: 0 0 auto; width: auto; margin: 0; display: flex; align-items: center; gap: 6px; }
+.mysn-cue-edit-row .mysn-form-row span { min-width: 0; }
+.mysn-cue-edit-row input[type=text] { width: 150px; flex: 0 0 auto; }
+.mysn-cue-edit-row input[type=range] { width: 110px; flex: 0 0 auto; }
+.mysn-cue-edit.mysn-cue-edit-row { flex-direction: row; display: flex; border-left: 1px solid #ffffff26; margin: 0; }
+.mysn-cue-edit-row .mysn-cue-edit-t { flex: 1 0 100%; text-align: center; }

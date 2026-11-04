@@ -541,6 +541,7 @@ export function buildOffice(scene) {
 			calendar: { pos: new THREE.Vector3(OX - 0.45, DT + 0.34, DZ + 0.12), look: new THREE.Vector3(OX - 0.6, DT + 0.07, DZ - 0.25) },
 			results: { pos: new THREE.Vector3(OX, FY + 1.6, -RZo + 3.7), look: new THREE.Vector3(OX, FY + 1.6, -RZo) },
 			map: { pos: new THREE.Vector3(OX - RXo + 2.7, MAP.y, 0), look: new THREE.Vector3(OX - RXo, MAP.y, 0) },
+			rack: { pos: new THREE.Vector3(OX + RXo - 3.3, FY + 1.1, -0.2), look: new THREE.Vector3(OX + RXo, FY + 0.62, -0.2) },
 			notebook: { pos: new THREE.Vector3(OX - 0.15, DT + 0.36, DZ + 0.2), look: new THREE.Vector3(OX - 0.15, DT + 0.12, DZ - 0.2) },
 		},
 		results: resMesh,

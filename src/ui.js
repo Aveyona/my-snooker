@@ -1075,57 +1075,56 @@ export class UI {
 			cw.appendChild(f);
 			cw.appendChild(this.button(reg ? 'Zavrieť' : 'Zatiaľ nie', 'officeHome'));
 		} else if (o.mode === 'cues') {
-			// moje tágá: 4 do zápasu a vlastné nastavenia
-			w.appendChild(h('div', 'mysn-news-head', `<b>Tágá do ligového zápasu (vybraté ${o.myCues.selected.length} zo 4)</b>`));
-			w.appendChild(h('p', 'mysn-mixer-status', 'Zaškrtni 4 tágá, ktoré si berieš do ligového zápasu (v zápase sa na F2 prepína len medzi nimi). Klik na názov otvorí nastavenia tága.'));
-			const list = h('div', 'mysn-news mysn-stations');
-			for (const c of o.cues) {
+			// tágá do ligového zápasu: ako stojan v herni (F2), kamera je pri stojane; klik pridá alebo odoberie
+			const n = o.myCues.selected.length;
+			w.appendChild(h('h3', '', `Tágá do ligového zápasu: vybraté ${n} zo 4`));
+			const list = h('div', 'mysn-cues');
+			o.cues.forEach((c, i) => {
 				const on = o.myCues.selected.includes(c.id);
-				const row = h('div', 'mysn-cue-row' + (on ? ' mysn-on' : ''));
-				const chk = document.createElement('input');
-				chk.type = 'checkbox';
-				chk.checked = on;
-				chk.addEventListener('change', (e) => {
+				const card = h(
+					'button',
+					'mysn-cue' + (on ? ' mysn-pick' : '') + (o.cue === c.id ? ' mysn-on' : ''),
+					`<span class="mysn-cue-n">${i + 1}</span><b>${esc(c.name)}</b><span class="mysn-cue-cat">${esc(c.category)}</span>` +
+						`<span>Sila ${Math.round(c.power * 100)} %, dĺžka ${Math.round(c.len * 100)} cm</span>` +
+						`<em>${on ? 'v zápase (klik odoberie)' : 'klik: zobrať do zápasu'}</em>`
+				);
+				card.type = 'button';
+				card.addEventListener('click', (e) => {
 					e.stopPropagation();
 					this.opts.onAction('cueSelect', c.id);
-				});
-				const nm = h('button', 'mysn-cue-name', `<b>${esc(c.name)}</b><span>${esc(c.category)}, sila ${Math.round(c.power * 100)} %</span>`);
-				nm.type = 'button';
-				nm.addEventListener('click', (e) => {
-					e.stopPropagation();
 					this.opts.onAction('cueEdit', c.id);
 				});
-				row.append(chk, nm);
-				list.appendChild(row);
-				if (o.cue === c.id) {
-					const cu = o.myCues.custom[c.id] || {};
-					const ed = h('div', 'mysn-cue-edit');
-					const nmI = input('name', cu.name, 24, c.name);
-					nmI.addEventListener('change', () => this.opts.onAction('cueCustom', { id: c.id, k: 'name', v: nmI.value.trim() }));
-					nmI.addEventListener('keydown', (e) => e.stopPropagation());
-					ed.appendChild(field('Názov', nmI));
-					for (const [k, lab] of [['shaft', 'Drevo'], ['butt', 'Rukoväť']]) {
-						const col = document.createElement('input');
-						col.type = 'color';
-						col.value = cu[k] || c.colors[k];
-						col.addEventListener('input', () => this.opts.onAction('cueCustom', { id: c.id, k, v: col.value }));
-						ed.appendChild(field(lab, col));
-					}
-					for (const [k, lab, max] of [['power', 'Sila ±5 %', 0.05], ['grip', 'Falše ±10 %', 0.1]]) {
-						const r = document.createElement('input');
-						r.type = 'range';
-						r.min = String(-max);
-						r.max = String(max);
-						r.step = '0.01';
-						r.value = String(cu[k] || 0);
-						r.addEventListener('input', () => this.opts.onAction('cueCustom', { id: c.id, k, v: parseFloat(r.value) }));
-						ed.appendChild(field(lab, r));
-					}
-					list.appendChild(ed);
-				}
-			}
+				list.appendChild(card);
+			});
 			w.appendChild(list);
-			w.appendChild(this.button('Zavrieť (F2)', 'officeHome'));
+			// nastavenia vybraného tága (šípky vľavo a vpravo menia tágo)
+			const c = o.cues.find((x) => x.id === o.cue) || o.cues[0];
+			const cu = o.myCues.custom[c.id] || {};
+			const ed = h('div', 'mysn-cue-edit mysn-cue-edit-row');
+			ed.appendChild(h('b', 'mysn-cue-edit-t', `Nastavenia: ${esc(cu.name || c.name)}`));
+			const nmI = input('name', cu.name, 24, c.name);
+			nmI.addEventListener('change', () => this.opts.onAction('cueCustom', { id: c.id, k: 'name', v: nmI.value.trim() }));
+			nmI.addEventListener('keydown', (e) => e.stopPropagation());
+			ed.appendChild(field('Názov', nmI));
+			for (const [k, lab] of [['shaft', 'Drevo'], ['butt', 'Rukoväť']]) {
+				const col = document.createElement('input');
+				col.type = 'color';
+				col.value = cu[k] || c.colors[k];
+				col.addEventListener('input', () => this.opts.onAction('cueCustom', { id: c.id, k, v: col.value }));
+				ed.appendChild(field(lab, col));
+			}
+			for (const [k, lab, max] of [['power', 'Sila ±5 %', 0.05], ['grip', 'Falše ±10 %', 0.1]]) {
+				const r = document.createElement('input');
+				r.type = 'range';
+				r.min = String(-max);
+				r.max = String(max);
+				r.step = '0.01';
+				r.value = String(cu[k] || 0);
+				r.addEventListener('input', () => this.opts.onAction('cueCustom', { id: c.id, k, v: parseFloat(r.value) }));
+				ed.appendChild(field(lab, r));
+			}
+			w.appendChild(ed);
+			w.appendChild(h('p', 'mysn-mixer-status', 'Klik na kartu tágo pridá do zápasu alebo odoberie, šípky vľavo a vpravo vyberajú tágo na nastavenie. F2 alebo Esc: späť za stôl.'));
 		} else {
 			// prehľad hráča v lige
 			const me = d.me;
@@ -1196,7 +1195,7 @@ export class UI {
 		box.classList.toggle('mysn-view-news', name === 'news' || name === 'magazine' || name === 'chair' || name === 'mixer' || name === 'office');
 		this.root.classList.toggle('mysn-viewing', !!name);
 		this.root.classList.toggle('mysn-in-office', name === 'office');
-		box.classList.toggle('mysn-office-float', name === 'office' && !!news && !!news.office && news.office.mode === 'cues');
+		box.classList.toggle('mysn-office-rack', name === 'office' && !!news && !!news.office && news.office.mode === 'cues');
 		if (name !== 'office' && this.cardBox) {
 			this.cardOverlay(false);
 		}
