@@ -920,6 +920,10 @@ export function start(root, config = {}) {
 				ui.setFree(freeMouse);
 				return true;
 			}
+			if (lk === 'f6' && view === 'office') {
+				actions.officeWindow(); // v kancelárii F6 otvorí alebo zatvorí okno
+				return true;
+			}
 			if (lk === 'f6') {
 				// dvere herne: otvoriť alebo zatvoriť (so zvukom)
 				sound.unlock();
