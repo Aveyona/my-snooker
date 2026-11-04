@@ -10,6 +10,7 @@ Hra je napísaná v JavaScripte nad knižnicou [three.js](https://threejs.org/),
 - herňa 10 x 7,5 m: drevené obloženie, tmavozelená tapeta, strop s trámami, nástenné svietidlá, podlaha z dosiek, otvorené dvere do chodby, kreslá, barový stolík, obrazy
 - nástenka s nápovedou (F1), stojan s 10 tágami (F2), kriedovanie tága (F3), tabuľa so skóre (F4), pohľad zhora (Tab)
 - priehľadná 3D šípka vo farbe trafenej gule ukazuje, kam guľa pôjde
+- konferenčný stolík s novinami, v ktorých je titulka webu Hedlajner (F8), pohľad z kresla (F7)
 - fyzika gúľ: kĺzanie, kotúľanie, guľa dopredu, guľa späť, zastavenie a bočná falša
 - ovládanie myšou ako tágo (myš sa zachytí v okne, Esc otvorí hlavné menu), prstom a klávesnicou
 - detail dotyku gúľ zhora (uhol a plnosť zásahu) a zvýraznenie gule, na ktorú sa mieri
@@ -31,6 +32,8 @@ Hra je napísaná v JavaScripte nad knižnicou [three.js](https://threejs.org/),
 | Kriedovanie špičky | F3 (falše 5x silnejšie na 3 údery) |
 | Tabuľa so skóre | F4 |
 | Dvere herne otvoriť alebo zatvoriť | F6 (so zvukom) |
+| Pohľad z kresla | F7 |
+| Čítanie novín (titulka webu Hedlajner) | F8 |
 | Pohľad na stôl zhora | Tab |
 
 ## Tágá
@@ -62,8 +65,8 @@ Podrobný plán je aj priamo v doplnku: administrácia WordPressu, My Snooker, P
 
 ## Štruktúra
 
-- `my-snooker.php`, `includes/`: doplnok pre WordPress (stránka hry, nastavenia, plán vývoja)
-- `src/`: zdrojové moduly hry (physics, table, room, board, cues, balls, cue, camera, controls, audio, ui, training, main)
+- `my-snooker.php`, `includes/`: doplnok pre WordPress (stránka hry, nastavenia, plán vývoja, články do novín)
+- `src/`: zdrojové moduly hry (physics, table, room, board, newspaper, cues, balls, cue, camera, controls, audio, ui, training, main)
 - `assets/`: zostavená hra (`snooker.js`) a štýly (`snooker.css`)
 
 ## Zostavenie a testy

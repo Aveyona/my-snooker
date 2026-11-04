@@ -73,7 +73,7 @@ export function start(root, config = {}) {
 
 	const scene = new THREE.Scene();
 	buildRoom(scene, settings.quality);
-	const room = buildRoomShell(scene, settings.quality);
+	const room = buildRoomShell(scene, settings.quality, { news: config.news, site: config.site });
 	const table = buildTable(renderer);
 	scene.add(table.group);
 
@@ -174,7 +174,7 @@ export function start(root, config = {}) {
 			const v = room[name];
 			rig.setView(v.pos, v.look);
 		}
-		ui.showView(name, CUES, cueSpec.id);
+		ui.showView(name, CUES, cueSpec.id, room.newsItems);
 	};
 	const exitView = () => {
 		if (!view) {
@@ -261,6 +261,8 @@ export function start(root, config = {}) {
 		board: () => enterView('board'),
 		rack: () => enterView('rack'),
 		score: () => enterView('score'),
+		chair: () => enterView('chair'),
+		news: () => enterView('news'),
 		chalk: () => enterView('chalk'),
 		top: () => {
 			if (view) {
@@ -324,7 +326,7 @@ export function start(root, config = {}) {
 				sound.doorCreak();
 				return true;
 			}
-			const fkeys = { f1: 'board', f2: 'rack', f3: 'chalk', f4: 'score' };
+			const fkeys = { f1: 'board', f2: 'rack', f3: 'chalk', f4: 'score', f7: 'chair', f8: 'news' };
 			if (fkeys[lk]) {
 				ui.opts.onAction(fkeys[lk]);
 				return true;

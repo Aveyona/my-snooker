@@ -58,6 +58,8 @@ function mysn_render( $preview ) {
 		'homeUrl' => $main,
 		'version' => MYSN_VERSION,
 		'mode'    => 'training',
+		'news'    => mysn_news(),
+		'site'    => 'HEDLAJNER',
 	);
 	?>
 <!doctype html>

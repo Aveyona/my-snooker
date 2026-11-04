@@ -474,13 +474,14 @@ export class UI {
 	}
 
 	/** Pohľad na nástenku (board) alebo stojan s tágami (rack); null = späť do hry. */
-	showView(name, cues, selId) {
+	showView(name, cues, selId, news) {
 		if (!this.viewBox) {
 			this.viewBox = h('div', 'mysn-view mysn-hidden');
 			this.root.appendChild(this.viewBox);
 		}
 		const box = this.viewBox;
 		box.classList.toggle('mysn-hidden', !name);
+		box.classList.toggle('mysn-view-news', name === 'news');
 		this.root.classList.toggle('mysn-viewing', !!name);
 		if (!name) {
 			return;
@@ -508,7 +509,21 @@ export class UI {
 			box.appendChild(list);
 		}
 		const foot = h('div', 'mysn-view-foot');
+		if (name === 'news' && news && news.length) {
+			// klikateľné titulky (otvoria článok na webe v novom okne)
+			const list = h('div', 'mysn-news');
+			news.slice(0, 9).forEach((n) => {
+				const a = h('a', 'mysn-news-item', `<span>${n.c || ''}</span>${n.t.replace(/[<>&]/g, '')}`);
+				a.href = n.u;
+				a.target = '_blank';
+				a.rel = 'noopener';
+				list.appendChild(a);
+			});
+			box.appendChild(list);
+		}
 		const texts = {
+			chair: 'Pohľad z kresla. F7, Enter alebo Esc: späť do hry, F8: čítať noviny.',
+			news: 'Titulka webu Hedlajner. Klik na titulok otvorí článok. F8, Enter alebo Esc: späť do hry.',
 			rack: 'Šípky vľavo a vpravo vyberajú tágo. Enter, F2 alebo Esc: späť do hry.',
 			board: 'F1, Enter alebo Esc: späť do hry.',
 			score: 'F4, Enter alebo Esc: späť do hry.',

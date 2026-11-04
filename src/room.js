@@ -6,6 +6,7 @@
 import * as THREE from 'three';
 import { boardTexture } from './board.js';
 import { CUES, buildCueMesh } from './cues.js';
+import { buildNewspaper } from './newspaper.js';
 
 export const ROOM = {
 	x: 5, // polovica dĺžky miestnosti (10 m)
@@ -177,7 +178,7 @@ function labelTexture(text, sub) {
  * Postaví herňu. Vráti miesta pre kameru (nástenka, stojan s tágami) a funkciu na zvýraznenie vybraného tága.
  * Strop je vo vrstve 2 (pohľad zhora ho nekreslí).
  */
-export function buildRoomShell(scene, quality) {
+export function buildRoomShell(scene, quality, opts = {}) {
 	const high = quality === 'high';
 	const { x: RX, z: RZ, floor: FY, ceil: CY } = ROOM;
 	const H = CY - FY;
@@ -491,8 +492,28 @@ export function buildRoomShell(scene, quality) {
 	};
 	armchair(-1.0, RZ - 0.7, Math.PI);
 	armchair(1.0, RZ - 0.7, Math.PI);
-	add(new THREE.CylinderGeometry(0.28, 0.28, 0.03, 28), darkWood, 0, FY + 0.55, RZ - 0.7);
-	add(new THREE.CylinderGeometry(0.04, 0.06, 0.53, 12), darkWood, 0, FY + 0.27, RZ - 0.7);
+	// konferenčný stolík pred kreslami a na ňom noviny s titulkou webu Hedlajner (F7 pohľad z kresla, F8 čítanie)
+	const CT = { x: 0, z: RZ - 1.45, top: FY + 0.45 };
+	add(new THREE.BoxGeometry(1.2, 0.04, 0.62), darkWood, CT.x, CT.top - 0.02, CT.z);
+	add(new THREE.BoxGeometry(1.1, 0.06, 0.52), woodMat, CT.x, CT.top - 0.07, CT.z);
+	for (const sx of [-1, 1]) {
+		for (const sz of [-1, 1]) {
+			add(new THREE.BoxGeometry(0.05, CT.top - FY - 0.04, 0.05), darkWood, CT.x + sx * 0.54, FY + (CT.top - FY - 0.04) / 2, CT.z + sz * 0.25);
+		}
+	}
+	const paper = buildNewspaper(opts.news, opts.site);
+	const NP = { x: CT.x + 0.12, z: CT.z + 0.02, w: 0.62, h: 0.44 };
+	const npMesh = new THREE.Mesh(new THREE.PlaneGeometry(NP.w, NP.h), new THREE.MeshStandardMaterial({ map: paper.texture, roughness: 0.92 }));
+	npMesh.rotation.order = 'YXZ';
+	npMesh.rotation.set(-Math.PI / 2, 0.12, 0); // naplocho, mierne pootočené ku kreslu vpravo
+	npMesh.position.set(NP.x, CT.top + 0.002, NP.z);
+	npMesh.receiveShadow = true;
+	scene.add(npMesh);
+	// pod novinami ešte jeden zložený list
+	const under = add(new THREE.PlaneGeometry(0.31, 0.43), new THREE.MeshStandardMaterial({ color: 0xe6dfcf, roughness: 0.95 }), CT.x - 0.28, CT.top + 0.001, CT.z - 0.03);
+	under.rotation.order = 'YXZ';
+	under.rotation.set(-Math.PI / 2, -0.25, 0);
+	under.castShadow = false;
 
 	// Obrazy na prednej stene
 	for (const [x, seed] of [[-2.8, 0], [2.8, 1]]) {
@@ -520,6 +541,11 @@ export function buildRoomShell(scene, quality) {
 		board: { pos: new THREE.Vector3(BOARD.x, BOARD.y, -RZ + 1.62), look: new THREE.Vector3(BOARD.x, BOARD.y, -RZ) },
 		rack: { pos: new THREE.Vector3(RACK.x, FY + 1.15, -RZ + 3.3), look: new THREE.Vector3(RACK.x, FY + 0.6, -RZ) },
 		score: { pos: new THREE.Vector3(-RX + 1.55, SCORE.y, 0), look: new THREE.Vector3(-RX, SCORE.y, 0) },
+		// F7: pohľad z kresla vpravo (sediaci) na stôl, v popredí noviny na stolíku
+		chair: { pos: new THREE.Vector3(1.0, FY + 1.12, RZ - 0.8), look: new THREE.Vector3(-0.2, FY + 0.62, 0.3) },
+		// F8: čítanie novín zhora
+		news: { pos: new THREE.Vector3(NP.x + 0.11, CT.top + 0.6, NP.z + 0.27), look: new THREE.Vector3(NP.x + 0.1, CT.top, NP.z - 0.01) },
+		newsItems: paper.items,
 		selectCue,
 		updateScore,
 		/** Otvorí alebo zatvorí dvere; vráti true = budú otvorené. */
