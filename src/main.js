@@ -20,7 +20,7 @@ import { Game, fmtTime } from './match.js';
 import { Online } from './online.js';
 import { remaining } from './rules.js';
 import { aimTrace, R, snapshot } from './physics.js';
-import { CUES, cueById } from './cues.js';
+import { CUES, cueById, ownCueSpec } from './cues.js';
 
 const STORE = 'mySnookerSettings';
 const AIM_AHEAD = 0.5; // posun pohľadu bez mierenej gule: kamera sa pozerá 50 cm pred bielu
@@ -96,25 +96,43 @@ export function start(root, config = {}) {
 	const views = new BallViews(scene, game.balls, settings.quality, env);
 	// moje tágá (kancelária): 4 vybrané do zápasu a vlastné nastavenia (názov, farby, jemné doladenie)
 	const myCues = Object.assign({ selected: ['club', 'short', 'break', 'soft'], def: 'club', custom: {} }, settings.myCues || {});
+	// vlastné tágá hráča (tabuľka my_snooker_cues), každé zo šablóny; id 'u' + číslo
+	let ownCues = [];
 	const specFor = (id) => {
-		const base = cueById(id);
-		const c = myCues.custom[base.id];
-		if (!c) {
-			return base;
+		if (typeof id === 'string' && id[0] === 'u') {
+			const row = ownCues.find((r) => 'u' + r.id === id);
+			if (row) {
+				return ownCueSpec(row);
+			}
 		}
-		const dp = Math.max(-0.05, Math.min(0.05, c.power || 0));
-		const dg = Math.max(-0.1, Math.min(0.1, c.grip || 0));
-		return {
-			...base,
-			name: c.name ? String(c.name).slice(0, 24) : base.name,
-			power: Math.min(1, base.power * (1 + dp)),
-			grip: base.grip * (1 + dg),
-			colors: { shaft: c.shaft || base.colors.shaft, butt: c.butt || base.colors.butt },
-		};
+		return cueById(id);
+	};
+	const allCues = () => [...CUES, ...ownCues.map(ownCueSpec)];
+	const OWN_MAX = 10;
+	const rackInfo = () => ({ rack: { user: !!user, ownCount: ownCues.length, ownMax: OWN_MAX } });
+	// uloženie vlastného tága (po zmene v paneli s malým oneskorením)
+	const ownSaveT = {};
+	const saveOwn = (row) => {
+		clearTimeout(ownSaveT[row.id]);
+		ownSaveT[row.id] = setTimeout(() => online && online.net.call('cues/save', { id: row.id, name: row.name, data: row.data }).catch((e) => ui.toast(e.message)), 600);
+	};
+	const loadOwn = async () => {
+		if (!online) {
+			return;
+		}
+		const r = await online.net.call('cues', null, 'GET').catch(() => null);
+		if (r && Array.isArray(r.cues)) {
+			ownCues = r.cues;
+			if (settings.cue && settings.cue[0] === 'u' && cueSpec.id !== settings.cue && ownCues.some((x) => 'u' + x.id === settings.cue)) {
+				pickCue(settings.cue); // naposledy vybraté vlastné tágo
+			} else if (view === 'rack') {
+				ui.showView('rack', allCues(), cueSpec.id, rackInfo());
+			}
+		}
 	};
 	let cueSpec = specFor(settings.cue);
 	const cue = new Cue(scene, cueSpec);
-	room.selectCue(cueSpec.id);
+	room.selectCue(cueSpec.base || cueSpec.id);
 	const guide = new AimGuide(scene);
 	const rig = new CameraRig(renderer);
 	// kamera je vždy za tágom (staré uložené nastavenie kamery sa ignoruje)
@@ -137,11 +155,11 @@ export function start(root, config = {}) {
 	const office = buildOffice(scene);
 	let officeMode = ''; // '' prehľad, 'edit' údaje hráča, 'cues' moje tágá
 	let officeCue = null;
-	const officeData = () => ({ office: { league: leagueData, mode: officeMode, countries: COUNTRIES, cues: CUES.map((c) => specFor(c.id)), myCues, cue: officeCue, user } });
+	const officeData = () => ({ office: { league: leagueData, mode: officeMode, countries: COUNTRIES, cues: allCues(), myCues, cue: officeCue, user } });
 	const officeRefresh = () => {
 		office.setRack(CUES.map((c) => specFor(c.id)), myCues.selected, myCues.selected.includes(myCues.def) ? myCues.def : myCues.selected[0]);
 		if (view === 'office') {
-			ui.showView('office', CUES, cueSpec.id, officeData());
+			ui.showView('office', allCues(), cueSpec.id, officeData());
 		}
 	};
 	const saveMyCues = (quiet) => {
@@ -437,7 +455,7 @@ export function start(root, config = {}) {
 		if (name === 'trophies') {
 			refreshTrophies();
 		}
-		ui.showView(name, CUES, cueSpec.id, name === 'office' ? officeData() : name === 'mixer' ? { radio } : name === 'magazine' ? room.rssItems : name === 'chair' ? { news: room.newsItems, rss: room.rssItems } : room.newsItems);
+		ui.showView(name, allCues(), cueSpec.id, name === 'office' ? officeData() : name === 'rack' ? rackInfo() : name === 'mixer' ? { radio } : name === 'magazine' ? room.rssItems : name === 'chair' ? { news: room.newsItems, rss: room.rssItems } : room.newsItems);
 	};
 	const exitView = () => {
 		if (!view) {
@@ -473,8 +491,8 @@ export function start(root, config = {}) {
 		saveSettings(settings);
 		cue.setSpec(cueSpec);
 		controls.setCue(cueSpec);
-		room.selectCue(cueSpec.id);
-		ui.showView(view, CUES, cueSpec.id);
+		room.selectCue(cueSpec.base || cueSpec.id);
+		ui.showView(view, allCues(), cueSpec.id, rackInfo());
 		ui.setCueInfo(cueSpec);
 		updateScore();
 	};
@@ -874,6 +892,60 @@ export function start(root, config = {}) {
 		},
 		back: () => exitView(),
 		cuePick: (id) => pickCue(id),
+		// vlastné tágo zo šablóny (stojan F2): nové, úprava, zmazanie
+		cueNew: async (baseId) => {
+			if (!online) {
+				ui.toast('Vlastné tágá majú len prihlásení hráči.');
+				return;
+			}
+			if (ownCues.length >= OWN_MAX) {
+				ui.toast(`Môžeš mať najviac ${OWN_MAX} vlastných tág. Najprv jedno zmaž.`);
+				return;
+			}
+			const base = cueById(baseId);
+			const r = await online.net.call('cues/save', { base: base.id, name: base.name + ' (moje)', data: {} }).catch((e) => ({ error: e.message }));
+			if (r.error) {
+				ui.toast(r.error);
+				return;
+			}
+			ownCues.push({ id: r.id, base: base.id, name: base.name + ' (moje)', data: { shaft: '', butt: '', power: 0, len: 0, grip: 0 } });
+			pickCue('u' + r.id);
+			ui.toast('Vlastné tágo je vytvorené. Vpravo mu nastav názov, farby a herné vlastnosti.');
+		},
+		cueOwnSet: ({ id, k, v }) => {
+			const row = ownCues.find((x) => x.id === id);
+			if (!row) {
+				return;
+			}
+			if (k === 'name') {
+				row.name = String(v).slice(0, 30);
+			} else {
+				row.data = { ...(row.data || {}), [k]: v };
+			}
+			saveOwn(row);
+			if (cueSpec.id === 'u' + id) {
+				cueSpec = specFor(cueSpec.id);
+				cue.setSpec(cueSpec);
+				controls.setCue(cueSpec);
+				ui.setCueInfo(cueSpec);
+				ui.updateCueCard(cueSpec);
+			}
+		},
+		cueOwnDelete: async (id) => {
+			const row = ownCues.find((x) => x.id === id);
+			if (!row || !online) {
+				return;
+			}
+			await online.net.call('cues/delete', { id }).catch(() => null);
+			ownCues = ownCues.filter((x) => x.id !== id);
+			const sel = myCues.selected.indexOf('u' + id);
+			if (sel >= 0) {
+				myCues.selected.splice(sel, 1);
+				saveMyCues(true);
+			}
+			ui.toast(`Tágo ${row.name} je zmazané.`);
+			pickCue(cueSpec.id === 'u' + id ? row.base : cueSpec.id);
+		},
 		setting: ({ k, v }) => {
 			settings[k] = v;
 			if (k === 'volume') {
@@ -1148,8 +1220,9 @@ export function start(root, config = {}) {
 					return true;
 				}
 				if (view === 'rack' && (lk === 'arrowleft' || lk === 'arrowright')) {
-					const i = CUES.findIndex((c) => c.id === cueSpec.id);
-					pickCue(CUES[(i + (lk === 'arrowleft' ? CUES.length - 1 : 1)) % CUES.length].id);
+					const list = allCues();
+					const i = Math.max(0, list.findIndex((c) => c.id === cueSpec.id));
+					pickCue(list[(i + (lk === 'arrowleft' ? list.length - 1 : 1)) % list.length].id);
 					return true;
 				}
 				return false;
@@ -1360,6 +1433,7 @@ export function start(root, config = {}) {
 		});
 	}
 	loadTrophies();
+	loadOwn();
 
 	controls.setCue(cueSpec);
 	ui.setCueInfo(cueSpec);

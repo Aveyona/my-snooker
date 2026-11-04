@@ -84,6 +84,10 @@ Hra je napísaná v JavaScripte nad knižnicou [three.js](https://threejs.org/),
 
 ## Tágá
 
+- 10 tág hry sú šablóny (nedajú sa meniť). Na stojane (F2) je vpravo priehľadný panel so všetkými vlastnosťami vybraného tága.
+- Prihlásený hráč si zo šablóny vyrobí vlastné tágo (Vytvoriť vlastné tágo, najviac 10): názov a farby dreva a rukoväte voľne, sila, dĺžka a falše o ±10 % od šablóny. Vlastné tágá sú na stojane v skupine Vlastné, dajú sa zmazať a vybrať aj medzi 4 ligové tágá v kancelárii.
+- Vlastné tágá sú v tabuľke `my_snooker_cues` (hráč, šablóna, názov, farby a úpravy).
+
 | Tágo | Kategória | Špička | Najväčšia sila | Dĺžka | Jemné mierenie (Shift) |
 | --- | --- | --- | --- | --- | --- |
 | Klubové (predvolené) | Základné | stredná | 80 % | 145 cm | nie |

@@ -16,6 +16,9 @@ const h = (tag, cls, html) => {
 	return e;
 };
 
+import { cueById } from './cues.js';
+const cueNameOf = (id) => cueById(id).name;
+
 export class UI {
 	constructor(root, opts) {
 		this.root = root;
@@ -1027,6 +1030,112 @@ export class UI {
 	}
 
 	/** Kancelária hráča: registrácia do ligy, prehľad, údaje hráča, moje tágá (4 do zápasu). */
+	/** Text karty tága na stojane (po zmene vlastného tága bez prekreslenia celého stojana). */
+	updateCueCard(c) {
+		const card = this.viewBox && this.viewBox.querySelector(`.mysn-cue[data-cue="${c.id}"]`);
+		if (card) {
+			card.querySelector('b').textContent = c.name;
+			const sp = card.querySelectorAll('span');
+			if (sp[2]) {
+				sp[2].textContent = `Špička ${c.tip}, sila ${Math.round(c.power * 100)} %`;
+			}
+			if (sp[3]) {
+				sp[3].textContent = `Dĺžka ${Math.round(c.len * 100)} cm, Shift ${c.fine > 0 ? 'áno' : 'nie'}`;
+			}
+		}
+		const ttl = this.cuePanel && this.cuePanel.querySelector('h3');
+		if (ttl) {
+			ttl.textContent = c.name;
+		}
+		const st = this.cuePanel && this.cuePanel.querySelector('.mysn-cp-stats');
+		if (st) {
+			st.innerHTML = this.cueStats(c);
+		}
+	}
+
+	cueStats(c) {
+		return `<span>Sila <b>${Math.round(c.power * 100)} %</b></span><span>Dĺžka <b>${Math.round(c.len * 100)} cm</b></span><span>Falše <b>${Math.round(c.grip * 100)} %</b></span><span>Špička <b>${esc(c.tip)}</b></span><span>Shift <b>${c.fine > 0 ? 'áno' : 'nie'}</b></span>`;
+	}
+
+	/**
+	 * Priehľadný panel vpravo na stojane (F2): všetky nastavenia vybraného tága. Šablóna (10 tág hry) sa nemení,
+	 * z nej sa vyrobí vlastné tágo; vlastné tágo: názov a farby voľne, sila, dĺžka a falše ±10 % od šablóny.
+	 */
+	renderCuePanel(c, info) {
+		if (!this.cuePanel) {
+			this.cuePanel = h('div', 'mysn-cue-panel mysn-hidden');
+			this.cuePanel.addEventListener('mousedown', (e) => e.stopPropagation());
+			this.cuePanel.addEventListener('keydown', (e) => e.stopPropagation());
+			this.root.appendChild(this.cuePanel);
+		}
+		const P = this.cuePanel;
+		P.classList.remove('mysn-hidden');
+		P.innerHTML = '';
+		if (!c) {
+			return;
+		}
+		const own = !!c.own;
+		P.appendChild(h('div', 'mysn-cp-kind', own ? `Vlastné tágo, šablóna: ${esc(cueNameOf(c.base))}` : `Šablóna: ${esc(c.category)}`));
+		P.appendChild(h('h3', '', esc(c.name)));
+		P.appendChild(h('div', 'mysn-cp-stats', this.cueStats(c)));
+		P.appendChild(h('p', 'mysn-cp-note', esc(c.note)));
+		const row = (label, el) => {
+			const l = h('label', 'mysn-cp-row', `<span>${label}</span>`);
+			l.appendChild(el);
+			return l;
+		};
+		if (own) {
+			const set = (k, v) => this.opts.onAction('cueOwnSet', { id: c.own, k, v });
+			const nm = document.createElement('input');
+			nm.type = 'text';
+			nm.maxLength = 30;
+			nm.value = c.name;
+			nm.addEventListener('input', () => set('name', nm.value.trim()));
+			P.appendChild(row('Názov', nm));
+			for (const [k, lab] of [['shaft', 'Farba dreva'], ['butt', 'Farba rukoväte']]) {
+				const col = document.createElement('input');
+				col.type = 'color';
+				col.value = c.colors[k];
+				col.addEventListener('input', () => set(k, col.value));
+				P.appendChild(row(lab, col));
+			}
+			for (const [k, lab] of [['power', 'Sila'], ['len', 'Dĺžka'], ['grip', 'Falše']]) {
+				const r = document.createElement('input');
+				r.type = 'range';
+				r.min = '-0.1';
+				r.max = '0.1';
+				r.step = '0.01';
+				r.value = String(c.adj[k] || 0);
+				const val = h('em', 'mysn-cp-val', `${Math.round((c.adj[k] || 0) * 100)} %`);
+				r.addEventListener('input', () => {
+					val.textContent = `${Math.round(parseFloat(r.value) * 100)} %`;
+					set(k, parseFloat(r.value));
+				});
+				const l = row(`${lab} (±10 %)`, r);
+				l.appendChild(val);
+				P.appendChild(l);
+			}
+			const del = this.button('Zmazať tágo', 'cueOwnDelete', 'Zmaže toto vlastné tágo', c.own);
+			del.classList.add('mysn-cp-del');
+			P.appendChild(del);
+		} else {
+			P.appendChild(h('p', 'mysn-cp-note', 'Šablóna sa nemení. Vyrob si z nej vlastné tágo: názov a farby si nastavíš voľne, silu, dĺžku a falše o ±10 %.'));
+			const b = this.button('Vytvoriť vlastné tágo', 'cueNew', 'Nové vlastné tágo z tejto šablóny', c.id);
+			b.classList.add('mysn-primary');
+			if (!info.user) {
+				b.disabled = true;
+				P.appendChild(h('p', 'mysn-cp-note', 'Vlastné tágá majú len prihlásení hráči.'));
+			} else if (info.ownCount >= info.ownMax) {
+				b.disabled = true;
+				P.appendChild(h('p', 'mysn-cp-note', `Máš ${info.ownCount} z ${info.ownMax} vlastných tág. Na nové jedno zmaž.`));
+			}
+			P.appendChild(b);
+		}
+		if (info.user) {
+			P.appendChild(h('p', 'mysn-cp-count', `Vlastné tágá: ${info.ownCount || 0} z ${info.ownMax || 10}`));
+		}
+	}
+
 	cardOpen() {
 		return !!this.cardBox && !this.cardBox.classList.contains('mysn-hidden');
 	}
@@ -1226,6 +1335,10 @@ export class UI {
 		box.classList.toggle('mysn-view-news', name === 'news' || name === 'magazine' || name === 'chair' || name === 'mixer' || name === 'office');
 		this.root.classList.toggle('mysn-viewing', !!name);
 		this.root.classList.toggle('mysn-in-office', name === 'office');
+		box.classList.toggle('mysn-rack-panel', name === 'rack');
+		if (name !== 'rack' && this.cuePanel) {
+			this.cuePanel.classList.add('mysn-hidden');
+		}
 		box.classList.toggle('mysn-office-rack', name === 'office' && !!news && !!news.office && news.office.mode === 'cues');
 		if (name !== 'office' && this.cardBox) {
 			this.cardOverlay(false);
@@ -1250,6 +1363,7 @@ export class UI {
 						`<em>${c.note}</em>`
 				);
 				card.type = 'button';
+				card.dataset.cue = c.id;
 				card.addEventListener('click', (e) => {
 					e.stopPropagation();
 					this.opts.onAction('cuePick', c.id);
@@ -1257,6 +1371,7 @@ export class UI {
 				list.appendChild(card);
 			});
 			box.appendChild(list);
+			this.renderCuePanel(cues.find((c) => c.id === selId) || cues[0], (news && news.rack) || {});
 		}
 		const foot = h('div', 'mysn-view-foot');
 		const link = (n) => {

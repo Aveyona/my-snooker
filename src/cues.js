@@ -23,6 +23,30 @@ export const CUES = [
 	c('touch', 'Citlivé tágo', 'Majstrovské', 'mäkká', 0.72, 1, 1.6, 0.00002, '#f2dcae', '#123524', 'Najjemnejšie dávkovanie sily a mierenie.'),
 ];
 
+/**
+ * Vlastné tágo hráča zo šablóny: vzhľad voľne, sila, dĺžka a falše najviac ±10 % od šablóny.
+ * row = { id, base, name, data: { shaft, butt, power, len, grip } } (z tabuľky my_snooker_cues).
+ */
+export function ownCueSpec(row) {
+	const base = cueById(row.base);
+	const d = row.data || {};
+	const lim = (v) => Math.max(-0.1, Math.min(0.1, +v || 0));
+	return {
+		...base,
+		id: 'u' + row.id,
+		own: row.id,
+		base: base.id,
+		name: (row.name || base.name + ' (moje)').slice(0, 30),
+		category: 'Vlastné',
+		note: `Podľa šablóny ${base.name}.`,
+		power: Math.min(1, base.power * (1 + lim(d.power))),
+		len: +(base.len * (1 + lim(d.len))).toFixed(3),
+		grip: base.grip * (1 + lim(d.grip)),
+		adj: { power: lim(d.power), len: lim(d.len), grip: lim(d.grip) },
+		colors: { shaft: d.shaft || base.colors.shaft, butt: d.butt || base.colors.butt },
+	};
+}
+
 export function cueById(id) {
 	return CUES.find((x) => x.id === id) || CUES[0];
 }

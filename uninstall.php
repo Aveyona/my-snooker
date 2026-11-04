@@ -1,7 +1,7 @@
 <?php
 /**
  * Odinštalovanie My Snooker: zmaže nastavenia hry. Nastavenia hráčov sú len v ich prehliadači.
- * Tabuľky partií (my_snooker_matches, my_snooker_moves, my_snooker_presence, my_snooker_rooms, ligy) ostávajú ako záznam odohraných partií.
+ * Tabuľky partií (my_snooker_matches, my_snooker_moves, my_snooker_presence, my_snooker_rooms, my_snooker_cues, ligy) ostávajú ako záznam odohraných partií.
  */
 if ( ! defined( 'WP_UNINSTALL_PLUGIN' ) ) {
 	exit;
