@@ -292,6 +292,9 @@ export class UI {
 	}
 
 	showMenu(on, started) {
+		if (on && !this.menuOpen()) {
+			this._menuAt = performance.now(); // kedy sa menu otvorilo (Esc hneď potom ho nezavrie)
+		}
 		this.menu.classList.toggle('mysn-hidden', !on);
 		if (!on) {
 			this.panel.classList.add('mysn-hidden');

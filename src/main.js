@@ -545,6 +545,7 @@ export function start(root, config = {}) {
 				leagueData = r;
 				ui.toast(form.edit ? 'Údaje hráča sú uložené.' : 'Vitaj v lige! Začínaš so 147 bodmi.');
 				officeMode = '';
+				actions.officeLook();
 				await refreshLeague(); // tabuľa, mapa, kalendár a nástenka F12 s novým hráčom
 			} else {
 				ui.toast((r && r.error) || 'Registrácia sa nepodarila.');
@@ -573,12 +574,23 @@ export function start(root, config = {}) {
 				}
 				freeMouse = true;
 				controls.uncapture();
-			} else if (officeFocusNow === 'rack') {
-				actions.officeFocus('rack');
+			} else {
+				if (officeFocusNow === 'rack') {
+					actions.officeFocus('rack');
+				}
+				actions.officeLook();
 			}
 			officeRefresh();
 		},
 		officeKeys: () => ui.toast(OFFICE_KEYS),
+		// späť k rozhliadaniu myšou (po zatvorení tág, vizitky alebo registrácii)
+		officeLook: () => {
+			freeMouse = false;
+			ui.setFree(false);
+			if (view === 'office') {
+				controls.capture();
+			}
+		},
 		officeWindow: () => {
 			const open = office.toggleWindow();
 			sound.unlock();
@@ -618,6 +630,7 @@ export function start(root, config = {}) {
 		officeHome: () => {
 			officeMode = '';
 			officeRefresh();
+			actions.officeLook();
 		},
 		cueSelect: (id) => {
 			const sel = myCues.selected;
@@ -941,6 +954,15 @@ export function start(root, config = {}) {
 				sound.doorCreak();
 				return true;
 			}
+			if (lk === 'escape' && ui.menuOpen() && !view && performance.now() - (ui._menuAt || 0) > 300) {
+				// Esc pri otvorenom menu: menu sa zavrie a pokračuje sa v hre (otvorené Poslať výzvu sa zavrie najprv)
+				if (ui.lobbyOpen()) {
+					ui.openLobby(false);
+				} else {
+					actions.resume();
+				}
+				return true;
+			}
 			if ((lk === 'escape' || lk === 'enter') && ui.partyOpen()) {
 				ui.opts.onAction('partyNext');
 				return true;
@@ -965,6 +987,7 @@ export function start(root, config = {}) {
 					} else if (officeMode) {
 						officeMode = '';
 						officeRefresh();
+						actions.officeLook();
 					} else if (officeFocusNow) {
 						actions.officeFocus(officeFocusNow);
 					} else if (ui.leagueOpen()) {

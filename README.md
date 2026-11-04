@@ -59,7 +59,7 @@ Hra je napísaná v JavaScripte nad knižnicou [three.js](https://threejs.org/),
 | Miesto úderu na bielej | drž koliesko a hýb myšou, dvojklik kolieskom = stred |
 | Posun pohľadu | drž pravé tlačidlo a hýb myšou |
 | Priblíženie | otáčanie kolieska |
-| Hlavné menu | Esc |
+| Hlavné menu (ďalšie Esc ho zavrie) | Esc |
 | Voľná myš (kurzor, klikanie), po pustení späť na tágo | drž Ctrl |
 | Nápoveda na nástenke | F1 |
 | Stojan s tágami | F2 (výber myšou alebo šípkami) |
