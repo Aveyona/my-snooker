@@ -27,6 +27,7 @@ Hra je napísaná v JavaScripte nad knižnicou [three.js](https://threejs.org/),
 | Posun pohľadu | drž pravé tlačidlo a hýb myšou |
 | Priblíženie | otáčanie kolieska |
 | Hlavné menu | Esc |
+| Voľná myš (kurzor, klikanie) a späť na tágo | Ctrl |
 | Nápoveda na nástenke | F1 |
 | Stojan s tágami | F2 (výber myšou alebo šípkami) |
 | Kriedovanie špičky | F3 (falše 5x silnejšie na 3 údery) |

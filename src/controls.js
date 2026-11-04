@@ -410,6 +410,21 @@ export class Controls {
 		} else {
 			this._keys.delete(k);
 		}
+		// samotný Ctrl (bez inej klávesy) = uvoľniť myšu alebo ju znova zachytiť na tágo
+		if (k === 'Control') {
+			if (isDown && !e.repeat) {
+				this._ctrlSolo = true;
+			} else if (!isDown && this._ctrlSolo) {
+				this._ctrlSolo = false;
+				if (this.hooks.key) {
+					this.hooks.key('ctrl-toggle', e);
+				}
+			}
+			return;
+		}
+		if (isDown) {
+			this._ctrlSolo = false;
+		}
 		if (k === ' ') {
 			e.preventDefault();
 			if (this.blocked) {

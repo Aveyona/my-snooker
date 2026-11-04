@@ -101,6 +101,7 @@ export function start(root, config = {}) {
 	let spin = { side: 0, top: 0 };
 	let placeCam = false;
 	let started = false;
+	let freeMouse = false; // Ctrl: myš uvoľnená bez menu
 	const finePointer = !!(window.matchMedia && window.matchMedia('(pointer: fine)').matches);
 
 	// pohľad na nástenku (F1), stojan s tágami (F2), kriedovanie tága (F3) alebo tabuľu so skóre (F4)
@@ -311,14 +312,32 @@ export function start(root, config = {}) {
 			// myš sa uvoľnila (Esc): zobraz hlavné menu
 			if (on) {
 				started = true;
+				freeMouse = false;
+				ui.setFree(false);
 				ui.showMenu(false);
-			} else if (finePointer && !view) {
+			} else if (finePointer && !view && !freeMouse) {
 				ui.showMenu(true, started);
 			}
 		},
 		stroke: (on) => ui.setStroke(on),
 		key: (k) => {
 			const lk = k.toLowerCase();
+			if (lk === 'ctrl-toggle') {
+				// Ctrl: voľná myš (kurzor, dá sa klikať), ďalší Ctrl myš znova zachytí na tágo
+				if (view) {
+					return true;
+				}
+				if (controls.captured) {
+					freeMouse = true;
+					controls.uncapture();
+				} else {
+					freeMouse = false;
+					ui.showMenu(false);
+					controls.capture();
+				}
+				ui.setFree(freeMouse);
+				return true;
+			}
 			if (lk === 'f6') {
 				// dvere herne: otvoriť alebo zatvoriť (so zvukom)
 				sound.unlock();
