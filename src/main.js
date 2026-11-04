@@ -266,8 +266,8 @@ export function start(root, config = {}) {
 		ui.drawContact(showContact ? trace : null, game.dir, showContact, settings.lines);
 		views.highlight(trace && aiming ? trace.ball : null, dt);
 		if (trace) {
-			// pri posune pohľadu sa kamera pozerá na mierenú guľu, a keď sa nemieri na žiadnu, na bielu
-			const tp = trace.ball ? trace.ball.p : game.cue.p;
+			// pri posune pohľadu sa kamera pozerá na mierenú guľu, a keď sa nemieri na žiadnu, na stred stola
+			const tp = trace.ball ? trace.ball.p : { x: 0, z: 0 };
 			aimPoint.set(tp.x, R, tp.z);
 			rig.aimPoint = aimPoint;
 		} else {

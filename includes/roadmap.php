@@ -87,6 +87,7 @@ function mysn_roadmap() {
 /** Denník zmien (najnovšie hore). */
 function mysn_changelog() {
 	return array(
+		array( '0.1.12', '4. 11. 2026', 'Pri posune pohľadu pravým tlačidlom, keď sa nemieri na žiadnu guľu, sa kamera pozerá na stred stola.' ),
 		array( '0.1.11', '4. 11. 2026', 'Guľa, na ktorú sa mieri, je zvýraznená pulzujúcim žltým obrysom a krúžkom na súkne.' ),
 		array( '0.1.10', '4. 11. 2026', 'Vymenené tlačidlá: pravé tlačidlo posúva pohľad (kamera sa pozerá na mierenú guľu, a keď sa nemieri na žiadnu, na bielu), koliesko posúva miesto úderu, dvojklik kolieskom ho vráti do stredu. Zrušené šípky pri detaile dotyku.' ),
 		array( '0.1.9', '3. 11. 2026', 'Pri posúvaní pohľadu kolieskom sa kamera zároveň otáča, aby sa stále pozerala na guľu, na ktorú sa mieri.' ),
