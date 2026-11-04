@@ -21,6 +21,7 @@ function mysn_roadmap() {
 				array( '3D stôl, gule, tágo, miestnosť so svetlami a tieňmi', 1 ),
 				array( 'Herňa: 4 steny s dreveným obložením a tmavozelenou tapetou, strop s trámami, nástenné svietidlá, kamera neprejde cez steny', 1 ),
 				array( 'Väčšia herňa (10 x 7,5 m) s vybavením: otvorené dvere do chodby, tabuľa na skóre, komoda, barový stolík so stoličkami, kreslá, obrazy, kvetina', 1 ),
+				array( 'Bar (F10): telefón s Môj účet (klik ho zväčší na stránku účtu) a dva poháre s vodou', 1 ),
 				array( 'Rádio so stanicami z My Player: retro rádio na komode, mixpult a dva reproduktory, priestorový zvuk, F9 mixpult', 1 ),
 				array( 'Nástenné hodiny merajú čas hrania (začínajú na 11:30, skrytá karta prehliadača sa nepočíta)', 1 ),
 				array( 'Nástenka s nápovedou v herni (F1): ovládanie, klávesy, princíp hry, tágá', 1 ),
@@ -104,6 +105,7 @@ function mysn_roadmap() {
 /** Denník zmien (najnovšie hore). */
 function mysn_changelog() {
 	return array(
+		array( '0.2.7', '4. 11. 2026', 'F10: pohľad z baru. Na barovom stolíku leží telefón s obrazovkou Môj účet a dva poháre s vodou. Klik na telefón (alebo M) ho zväčší na obrazovku so stránkou Môj účet z webu. Pri hre o skóre čas pri bare stojí. Tabuľa so skóre na stene ukazuje aktuálny čas framu.' ),
 		array( '0.2.6', '4. 11. 2026', 'V herni pribudlo rádio: retro rádio na komode, pri pravej stene stolík s mixpultom a dva reproduktory na stojanoch. Stanice sú z My Player. Zvuk je priestorový (ľavý a pravý reproduktor, mení sa podľa pohľadu), mixpult mení hlasitosť, basy, výšky a vyváženie, LED stĺpce a membrány idú do rytmu. F9 pošle kameru k mixpultu.' ),
 		array( '0.2.5', '4. 11. 2026', 'Kláves F9 je zrušený. Správy sú v pohľade z kresla (F7): vpravo titulky webu Hedlajner a správy z RSS, klik otvorí článok, C a V ich otvoria na celú obrazovku. Z menu ostali preč tlačidlá Tágá, Nápoveda a Skóre (klávesy F2, F1 a F4 fungujú).' ),
 		array( '0.2.4', '4. 11. 2026', 'Pri hre o najlepšie skóre sa v kresle (F7) zastaví čas framu aj hodiny na stene. V partii s priateľom čas beží ďalej, lebo môže ťahať súper.' ),

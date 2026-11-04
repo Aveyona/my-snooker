@@ -794,6 +794,75 @@ export class UI {
 		this._hintText();
 	}
 
+	/** Telefón z baru (F10) zväčšený na obrazovku: stránka Môj účet webu Hedlajner. */
+	openPhone(on) {
+		if (!this.phone) {
+			if (!on) {
+				return;
+			}
+			this.phone = h('div', 'mysn-phone mysn-hidden');
+			this.phone.innerHTML = `<div class="mysn-phone-dev"><div class="mysn-phone-notch"></div><div class="mysn-phone-scr"></div></div>`;
+			this.phone.addEventListener('click', (e) => {
+				if (e.target === this.phone) {
+					this.openPhone(false);
+				}
+			});
+			this.root.appendChild(this.phone);
+		}
+		const P = this.phone;
+		if (!on) {
+			P.classList.add('mysn-hidden');
+			return;
+		}
+		const scr = P.querySelector('.mysn-phone-scr');
+		const url = this.opts.accountUrl;
+		scr.innerHTML = '';
+		const bar = h('div', 'mysn-phone-bar', '<b>Môj účet</b>');
+		const close = this.button('Zavrieť (Esc)', 'phoneClose');
+		bar.appendChild(close);
+		scr.appendChild(bar);
+		if (!url) {
+			scr.appendChild(h('p', 'mysn-phone-msg', 'Môj účet je len pre prihlásených.'));
+		} else {
+			const fr = document.createElement('iframe');
+			fr.className = 'mysn-phone-frame';
+			fr.src = url;
+			fr.title = 'Môj účet';
+			const fallback = () => {
+				scr.querySelector('.mysn-phone-frame') && fr.remove();
+				const m = h('div', 'mysn-phone-msg', 'Nastavenie účtu sa tu nedá zobraziť. Otvor ho na webe:');
+				const a = h('a', 'mysn-btn mysn-primary', 'Otvoriť Môj účet');
+				a.href = url;
+				a.target = '_blank';
+				a.rel = 'noopener';
+				m.appendChild(a);
+				scr.appendChild(m);
+			};
+			fr.addEventListener('load', () => {
+				try {
+					// administrácia bez bočného menu a hornej lišty, aby sa zmestila do telefónu
+					const d = fr.contentDocument;
+					const st = d.createElement('style');
+					st.textContent = '#adminmenumain,#wpadminbar,#wpfooter,.notice-warning,.update-nag{display:none!important}#wpcontent,#wpbody-content{margin-left:0!important;padding-left:12px!important}html.wp-toolbar{padding-top:0!important}body{min-width:0!important}';
+					d.head.appendChild(st);
+				} catch (e) {
+					fallback(); // iná doména (subdoména hry): stránka sa do okna nedá vložiť
+				}
+			});
+			scr.appendChild(fr);
+			const open = h('a', 'mysn-phone-ext', 'Otvoriť na webe');
+			open.href = url;
+			open.target = '_blank';
+			open.rel = 'noopener';
+			scr.appendChild(open);
+		}
+		P.classList.remove('mysn-hidden');
+	}
+
+	phoneOpen() {
+		return !!(this.phone && !this.phone.classList.contains('mysn-hidden'));
+	}
+
 	/** Panel mixpultu (F9): stanice z My Player, zapnutie, posuvníky. r = RadioPlayer. */
 	renderMixer(box, r) {
 		const wrap = h('div', 'mysn-mixer');
@@ -921,6 +990,7 @@ export class UI {
 			rack: 'Šípky vľavo a vpravo vyberajú tágo. Enter, F2 alebo Esc: späť do hry.',
 			board: 'F1, Enter alebo Esc: späť do hry.',
 			score: 'F4, Enter alebo Esc: späť do hry.',
+			bar: 'Pohľad z baru. Klikni na telefón na stolíku (alebo M): zväčší sa Môj účet. Pri hre o skóre čas stojí. F10, Enter alebo Esc: späť do hry.',
 			mixer: 'Mixpult: šípky vľavo a vpravo menia stanicu, hore a dole hlasitosť, P zapne alebo vypne rádio. Zvuk ide z reproduktorov v herni. F9, Enter alebo Esc: späť do hry.',
 			trophies: 'Rebríček o najlepšie skóre: poháre pre troch najlepších, vpravo 4. až 10. miesto (body a celkový čas). F8, Enter alebo Esc: späť do hry.',
 			chalk: 'Kriedujem špičku tága. Falše budú 3 údery 5x silnejšie.',

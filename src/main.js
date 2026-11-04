@@ -76,7 +76,7 @@ export function start(root, config = {}) {
 
 	const scene = new THREE.Scene();
 	buildRoom(scene, settings.quality);
-	const room = buildRoomShell(scene, settings.quality, { news: config.news, rss: config.rss, site: config.site });
+	const room = buildRoomShell(scene, settings.quality, { news: config.news, rss: config.rss, site: config.site, user: config.user });
 	const table = buildTable(renderer);
 	scene.add(table.group);
 
@@ -247,6 +247,7 @@ export function start(root, config = {}) {
 		controls.blocked = !user;
 		rig.setViewZoom(1);
 		ui.toggleReader(null);
+		ui.openPhone(false);
 		chalkT = -1;
 		chalkMesh.visible = false;
 		rig.setMode(game.state === 'place' || topView ? 'top' : 'cue');
@@ -405,6 +406,9 @@ export function start(root, config = {}) {
 		readerRss: () => ui.toggleReader('rss', room.rssItems),
 		chalk: () => enterView('chalk'),
 		mixer: () => enterView('mixer'),
+		bar: () => enterView('bar'),
+		phone: () => ui.openPhone(true),
+		phoneClose: () => ui.openPhone(false),
 		radioToggle: () => radio.toggle(),
 		radioPick: (i) => radio.play(i),
 		radioSet: ({ k, v }) => radio.set(k, v),
@@ -434,6 +438,7 @@ export function start(root, config = {}) {
 		homeUrl: config.homeUrl,
 		user,
 		loginUrl: config.loginUrl,
+		accountUrl: config.accountUrl,
 		settings,
 		onAction: (name, value) => {
 			sound.unlock();
@@ -488,6 +493,15 @@ export function start(root, config = {}) {
 			if (view === 'chair' && e.button === 0) {
 				controls.capture();
 			}
+			if (view === 'bar' && e.button === 0) {
+				// klik na telefón na barovom stolíku: zväčší Môj účet
+				const r = renderer.domElement.getBoundingClientRect();
+				const ray = new THREE.Raycaster();
+				ray.setFromCamera(new THREE.Vector2(((e.clientX - r.left) / r.width) * 2 - 1, -((e.clientY - r.top) / r.height) * 2 + 1), rig.camera);
+				if (ray.intersectObject(room.phone, false).length) {
+					ui.openPhone(true);
+				}
+			}
 		},
 		key: (k) => {
 			const lk = k.toLowerCase();
@@ -526,7 +540,7 @@ export function start(root, config = {}) {
 				ui.opts.onAction('leaderboardClose');
 				return true;
 			}
-			const fkeys = { f1: 'board', f2: 'rack', f3: 'chalk', f4: 'score', f7: 'chair', f8: 'trophies', f9: 'mixer' };
+			const fkeys = { f1: 'board', f2: 'rack', f3: 'chalk', f4: 'score', f7: 'chair', f8: 'trophies', f9: 'mixer', f10: 'bar' };
 			if (fkeys[lk]) {
 				ui.opts.onAction(fkeys[lk]);
 				return true;
@@ -537,6 +551,14 @@ export function start(root, config = {}) {
 			}
 			if (view) {
 				// v pohľade na nástenku alebo stojan: Esc a Enter späť do hry, šípky vyberajú tágo
+				if (lk === 'escape' && ui.phoneOpen()) {
+					ui.openPhone(false);
+					return true;
+				}
+				if (view === 'bar' && lk === 'm') {
+					ui.openPhone(!ui.phoneOpen());
+					return true;
+				}
 				if (view === 'mixer') {
 					// mixpult: šípky stanica a hlasitosť, P zapnúť alebo vypnúť
 					if (lk === 'arrowleft' || lk === 'arrowright') {
@@ -819,7 +841,7 @@ export function start(root, config = {}) {
 		// čas framu o najlepšie skóre (beží, kým je frame rozohraný a menu je zavreté)
 		const so = game.solo;
 		// v kresle (F7) sa pri hre o skóre čas framu aj hodiny zastavia (v partii s priateľom bežia ďalej, ťahá súper)
-		if (so && !so.done && view !== 'chair' && !ui.menuOpen() && !ui.leaderboardOpen() && !ui.partyOpen()) {
+		if (so && !so.done && view !== 'chair' && view !== 'bar' && !ui.menuOpen() && !ui.leaderboardOpen() && !ui.partyOpen()) {
 			const before = Math.floor(so.time);
 			so.time += Math.min(1, Math.max(0, (now - lastSoloT) / 1000));
 			if (Math.floor(so.time) !== before) {
@@ -827,9 +849,7 @@ export function start(root, config = {}) {
 					game.saveSoloTime(); // čas framu prežije obnovenie stránky (F5)
 				}
 				ui.sync(game, rig.mode);
-				if (view === 'score') {
-					updateScore();
-				}
+				updateScore(); // tabuľa so skóre na stene ukazuje aktuálny čas framu
 			}
 		}
 		lastSoloT = now;

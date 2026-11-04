@@ -11,6 +11,7 @@ Hra je napísaná v JavaScripte nad knižnicou [three.js](https://threejs.org/),
 - nástenka s nápovedou (F1), stojan s 10 tágami (F2), kriedovanie tága (F3), tabuľa so skóre (F4), pohľad zhora (Tab)
 - priehľadná 3D šípka vo farbe trafenej gule ukazuje, kam guľa pôjde
 - rádio so stanicami z My Player: retro rádio na komode, mixpult a dva reproduktory pri pravej stene, priestorový zvuk z reproduktorov, mixpult mení hlasitosť, basy, výšky a vyváženie (F9)
+- barový stolík s telefónom (Môj účet, F10) a dvoma pohármi s vodou
 - konferenčný stolík s novinami a časopisom; v pohľade z kresla (F7) vpravo titulka webu Hedlajner a správy z RSS, C a V ich otvoria na celú obrazovku, koliesko približuje pohľad
 - O najlepšie skóre: jeden hráč hrá celý frame podľa pravidiel (fauly sa odpočítajú), rebríček prihlásených hráčov podľa bodov a pri rovnosti kratšieho celkového času; v herni polica s pohármi troch najlepších a tabuľka 4. až 10. miesta (F8), na konci framu slávnostné ukončenie
 - fyzika gúľ: kĺzanie, kotúľanie, guľa dopredu, guľa späť, zastavenie a bočná falša
@@ -50,6 +51,7 @@ Hra je napísaná v JavaScripte nad knižnicou [three.js](https://threejs.org/),
 | Pohľad z kresla so správami (rozhliadanie myšou, koliesko priblíženie, C noviny Hedlajner, V správy z RSS) | F7 |
 | Rebríček: polica s pohármi a tabuľka 4. až 10. miesta | F8 |
 | Mixpult a rádio (šípky stanica a hlasitosť, P zapnúť alebo vypnúť) | F9 |
+| Pohľad z baru, telefón s Môj účet (klik alebo M ho zväčší) | F10 |
 | Pohľad na stôl zhora | Tab |
 
 ## Tágá

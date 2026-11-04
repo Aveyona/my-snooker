@@ -77,6 +77,8 @@ function mysn_render( $preview ) {
 		// hrať môžu len prihlásení; neprihlásený vidí herňu a v menu tlačidlo Prihlásiť sa
 		'user'     => $user,
 		'loginUrl' => wp_login_url( $game ),
+		// Môj účet (telefón na bare, F10): stránka doplnku My Users, inak profil WordPressu
+		'accountUrl' => $user ? ( function_exists( 'my_users_account_url' ) ? my_users_account_url() : admin_url( 'profile.php' ) ) : '',
 		// REST na tej istej adrese, z ktorej sa hra načítala (hlavný web alebo subdoména)
 		'restUrl'  => (string) wp_parse_url( rest_url( 'my-snooker/v1/' ), PHP_URL_PATH ),
 		'nonce'    => $user ? wp_create_nonce( 'wp_rest' ) : '',

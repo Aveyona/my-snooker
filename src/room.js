@@ -632,6 +632,84 @@ export function buildRoomShell(scene, quality, opts = {}) {
 	const bx = -RX + 1.1;
 	const bz = RZ - 1.1;
 	add(new THREE.CylinderGeometry(0.32, 0.32, 0.04, 32), darkWood, bx, FY + 1.05, bz);
+	// na barovom stolíku telefón s obrazovkou Môj účet (F10, klik ho zväčší) a dva poháre s vodou
+	const BT = FY + 1.07; // vrch stolíka
+	const phone = new THREE.Group();
+	phone.position.set(bx + 0.05, BT, bz - 0.08);
+	phone.rotation.y = -Math.PI / 4; // obrazovka čitateľná od hráča pri bare
+	scene.add(phone);
+	add(new THREE.BoxGeometry(0.078, 0.009, 0.158), new THREE.MeshStandardMaterial({ color: 0x15161a, roughness: 0.35, metalness: 0.6 }), 0, 0.0045, 0, phone);
+	const phoneCanvas = document.createElement('canvas');
+	phoneCanvas.width = 360;
+	phoneCanvas.height = 740;
+	const phoneTex = new THREE.CanvasTexture(phoneCanvas);
+	phoneTex.colorSpace = THREE.SRGBColorSpace;
+	phoneTex.anisotropy = 8;
+	const screen = add(new THREE.PlaneGeometry(0.07, 0.146), new THREE.MeshBasicMaterial({ map: phoneTex }), 0, 0.0092, 0, phone);
+	screen.rotation.x = -Math.PI / 2;
+	screen.castShadow = false;
+	/** Obrazovka telefónu: Môj účet prihláseného hráča. */
+	const setPhone = (user) => {
+		const g = phoneCanvas.getContext('2d');
+		const W2 = 360;
+		const grd = g.createLinearGradient(0, 0, 0, 740);
+		grd.addColorStop(0, '#1d2b45');
+		grd.addColorStop(1, '#0c1220');
+		g.fillStyle = grd;
+		g.fillRect(0, 0, W2, 740);
+		g.fillStyle = '#e8ecf3';
+		g.font = '22px Arial, sans-serif';
+		g.textAlign = 'left';
+		g.fillText('11:30', 24, 40);
+		g.textAlign = 'right';
+		g.fillText('5G  86 %', W2 - 24, 40);
+		g.textAlign = 'center';
+		g.fillStyle = '#FACC15';
+		g.beginPath();
+		g.arc(W2 / 2, 170, 62, 0, Math.PI * 2);
+		g.fill();
+		g.fillStyle = '#111214';
+		g.font = 'bold 64px Arial, sans-serif';
+		g.fillText(user && user.name ? user.name.trim().charAt(0).toUpperCase() : '?', W2 / 2, 193);
+		g.fillStyle = '#ffffff';
+		g.font = 'bold 40px Arial, sans-serif';
+		g.fillText('Môj účet', W2 / 2, 290);
+		g.fillStyle = '#b9c2d3';
+		g.font = '28px Arial, sans-serif';
+		g.fillText(user ? String(user.name).slice(0, 20) : 'Neprihlásený', W2 / 2, 334);
+		const rows = ['Profil', 'Prihlásenie a heslo', 'Súhlasy', 'Nastavenia účtu'];
+		rows.forEach((r, i) => {
+			const y = 400 + i * 66;
+			g.fillStyle = '#ffffff14';
+			g.fillRect(28, y, W2 - 56, 54);
+			g.fillStyle = '#e8ecf3';
+			g.textAlign = 'left';
+			g.font = '26px Arial, sans-serif';
+			g.fillText(r, 48, y + 36);
+			g.textAlign = 'right';
+			g.fillStyle = '#FACC15';
+			g.fillText('›', W2 - 44, y + 37);
+		});
+		g.textAlign = 'center';
+		g.fillStyle = '#FACC15';
+		g.font = 'bold 26px Arial, sans-serif';
+		g.fillText('Ťukni a otvor', W2 / 2, 700);
+		phoneTex.needsUpdate = true;
+	};
+	setPhone(opts.user || null);
+	// dva poháre s vodou
+	const glassMat = new THREE.MeshStandardMaterial({ color: 0xe8f4ff, transparent: true, opacity: 0.22, roughness: 0.05, metalness: 0.1, side: THREE.DoubleSide, depthWrite: false });
+	const waterMat = new THREE.MeshStandardMaterial({ color: 0x9fd4ff, transparent: true, opacity: 0.45, roughness: 0.05, metalness: 0.05, depthWrite: false });
+	for (const [gx, gz] of [[0.2, 0.05], [0.11, 0.17]]) {
+		const gl = add(new THREE.CylinderGeometry(0.036, 0.03, 0.12, 28, 1, true), glassMat, bx + gx, BT + 0.06, bz + gz);
+		gl.castShadow = false;
+		const bottom = add(new THREE.CylinderGeometry(0.03, 0.03, 0.008, 28), glassMat, bx + gx, BT + 0.004, bz + gz);
+		bottom.castShadow = false;
+		const water = add(new THREE.CylinderGeometry(0.033, 0.029, 0.08, 28), waterMat, bx + gx, BT + 0.048, bz + gz);
+		water.castShadow = false;
+		water.renderOrder = 1;
+		gl.renderOrder = 2;
+	}
 	add(new THREE.CylinderGeometry(0.03, 0.03, 1.03, 12), brassMat, bx, FY + 0.53, bz);
 	add(new THREE.CylinderGeometry(0.22, 0.25, 0.03, 24), brassMat, bx, FY + 0.015, bz);
 	for (const a of [0.6, 2.3]) {
@@ -787,6 +865,10 @@ export function buildRoomShell(scene, quality, opts = {}) {
 		board: { pos: new THREE.Vector3(BOARD.x, BOARD.y, -RZ + 1.62), look: new THREE.Vector3(BOARD.x, BOARD.y, -RZ) },
 		rack: { pos: new THREE.Vector3(RACK.x, FY + 1.15, -RZ + 3.3), look: new THREE.Vector3(RACK.x, FY + 0.6, -RZ) },
 		score: { pos: new THREE.Vector3(-RX + 1.55, SCORE.y, 0), look: new THREE.Vector3(-RX, SCORE.y, 0) },
+		// F10: pohľad z baru (sediaci na stoličke), v popredí telefón a poháre s vodou, za nimi herňa
+		bar: { pos: new THREE.Vector3(bx - 0.4, FY + 1.5, bz + 0.38), look: new THREE.Vector3(bx + 0.62, FY + 0.72, bz - 0.6) },
+		phone: screen,
+		setPhone,
 		// F8: polica s pohármi troch najlepších a tabuľka 4. až 10. miesta
 		trophies: { pos: new THREE.Vector3(-0.17, FY + 1.62, -RZ + 2.05), look: new THREE.Vector3(-0.17, FY + 1.6, -RZ) },
 		// F7: pohľad z kresla vpravo (sediaci) na stôl, v popredí noviny na stolíku
