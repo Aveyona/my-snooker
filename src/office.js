@@ -452,6 +452,32 @@ export function buildOffice(scene) {
 	};
 	drawDoor('');
 
+	// dva reproduktory v strope (hrá z nich rádio z herne, keď je hráč v kancelárii)
+	const spkGrill = tex(256, 256);
+	{
+		const g = spkGrill.g;
+		g.fillStyle = '#e8e4dc';
+		g.fillRect(0, 0, 256, 256);
+		g.fillStyle = '#9a958c';
+		for (let y = 20; y < 240; y += 14) {
+			for (let x = 20; x < 240; x += 14) {
+				if (Math.hypot(x - 128, y - 128) < 104) {
+					g.beginPath();
+					g.arc(x, y, 3.2, 0, Math.PI * 2);
+					g.fill();
+				}
+			}
+		}
+		spkGrill.t.needsUpdate = true;
+	}
+	const speakerPts = [];
+	for (const sx of [-1.3, 1.3]) {
+		add(new THREE.CylinderGeometry(0.2, 0.2, 0.02, 32), new THREE.MeshStandardMaterial({ color: 0xd8d4cc, roughness: 0.6 }), sx, FY + H - 0.01, 0.2);
+		const grill = add(new THREE.CircleGeometry(0.17, 32), new THREE.MeshStandardMaterial({ map: spkGrill.t, roughness: 0.8 }), sx, FY + H - 0.022, 0.2);
+		grill.rotation.x = Math.PI / 2;
+		speakerPts.push({ x: OX + sx, y: FY + H - 0.05, z: 0.2 });
+	}
+
 	// nástenka s klávesmi kancelárie na stene za hráčom (F1)
 	const help = tex(1024, 700);
 	{
@@ -636,6 +662,8 @@ export function buildOffice(scene) {
 		setDoor: drawDoor,
 		toggleWindow,
 		updateWindow,
+		/** Reproduktory v strope (svetové súradnice) pre rádio. */
+		speakers: speakerPts,
 		/** Pohľady v kancelárii (F1 nástenka, F3 kalendár, F4 tabuľa líg, F6 mapa, F7 notebook), svetové súradnice. */
 		views: {
 			help: { pos: new THREE.Vector3(OX + 0.25, FY + 1.62, RZo - 1.75), look: new THREE.Vector3(OX + 0.25, FY + 1.6, RZo) },

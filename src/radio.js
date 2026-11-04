@@ -301,9 +301,9 @@ export class RadioPlayer {
 			p.distanceModel = 'inverse';
 			p.refDistance = 1.2;
 			p.rolloffFactor = 0.6;
-			const s = RADIO.speakers[ch];
+			const s = (this._spk && this._spk[ch]) || { x: RADIO.speakers[ch].x, y: FY + 1.2, z: RADIO.speakers[ch].z };
 			p.positionX.value = s.x;
-			p.positionY.value = FY + 1.2;
+			p.positionY.value = s.y;
 			p.positionZ.value = s.z;
 			split.connect(g, ch);
 			g.connect(an);
@@ -447,6 +447,23 @@ export class RadioPlayer {
 
 	next(d) {
 		this.play(this.index + d);
+	}
+
+	/**
+	 * Odkiaľ hrá zvuk: zoznam dvoch bodov {x, y, z} (napríklad reproduktory v strope kancelárie), null = reproduktory v herni.
+	 */
+	setSpeakers(list) {
+		this._spk = list || null;
+		const gr = this._graph;
+		if (!gr) {
+			return;
+		}
+		gr.sides.forEach((sd, ch) => {
+			const s = (list && list[ch]) || { x: RADIO.speakers[ch].x, y: FY + 1.2, z: RADIO.speakers[ch].z };
+			sd.p.positionX.value = s.x;
+			sd.p.positionY.value = s.y;
+			sd.p.positionZ.value = s.z;
+		});
 	}
 
 	/** Poslucháč = kamera; vráti úroveň zvuku [ľavý, pravý] 0..1. */

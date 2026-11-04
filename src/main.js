@@ -354,6 +354,7 @@ export function start(root, config = {}) {
 			return;
 		}
 		if (view === 'office' && name !== 'office') {
+			radio.setSpeakers(null);
 			// z kancelárie rovno do iného pohľadu v herni
 			rig.noClamp = false;
 			rig.snapNext = true;
@@ -386,6 +387,7 @@ export function start(root, config = {}) {
 				rig.noClamp = true;
 				rig.jump();
 				officeFocusNow = '';
+				radio.setSpeakers(office.speakers); // rádio hrá z reproduktorov v strope kancelárie
 				rig.minViewZoom = 0.85;
 				rig.setViewZoom(0.85); // širší pohľad: stôl s kalendárom aj celá tabuľa
 			}
@@ -411,6 +413,7 @@ export function start(root, config = {}) {
 		rig.minViewZoom = 1;
 		rig.setViewZoom(1);
 		if (was === 'office') {
+			radio.setSpeakers(null);
 			officeFocusNow = '';
 			if (online && online.queueing) {
 				online.seek(false); // odchod z kancelárie zruší vyhľadávanie zápasu

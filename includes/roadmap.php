@@ -118,6 +118,7 @@ function mysn_roadmap() {
 /** Denník zmien (najnovšie hore). */
 function mysn_changelog() {
 	return array(
+		array( '0.3.12', '4. 11. 2026', 'V strope kancelárie sú dva reproduktory: keď hrá rádio z herne, v kancelárii je počuť z nich (priestorovo). Po návrate do herne hrá znova z reproduktorov v herni.' ),
 		array( '0.3.11', '4. 11. 2026', 'F2 v kancelárii len vyberá 4 tágá do ligového zápasu a jedno z nich označí ako predvolené (★, modrý krúžok na stojane). Nastavenia tág z kancelárie zmizli, budú na stojane v domácej herni.' ),
 		array( '0.3.10', '4. 11. 2026', 'V kancelárii klik bez Ctrl nerobí nič. S podržaným Ctrl (voľná myš) sa dá kliknúť na vizitku, dvere ŠTADIÓN a ikonky hráčov na mape. Tabuľa líg na klik nereaguje (priblíži ju F4).' ),
 		array( '0.3.9', '4. 11. 2026', 'Klik na tabuľu líg v kancelárii ju priblíži (ako F4), okno s tabuľkami sa už neotvára.' ),
