@@ -802,7 +802,7 @@ export class UI {
 		}
 		const box = this.viewBox;
 		box.classList.toggle('mysn-hidden', !name);
-		box.classList.toggle('mysn-view-news', name === 'news' || name === 'magazine');
+		box.classList.toggle('mysn-view-news', name === 'news' || name === 'magazine' || name === 'chair');
 		this.root.classList.toggle('mysn-viewing', !!name);
 		if (!name) {
 			return;
@@ -830,6 +830,31 @@ export class UI {
 			box.appendChild(list);
 		}
 		const foot = h('div', 'mysn-view-foot');
+		const link = (n) => {
+			const a = h('a', 'mysn-news-item', `<span>${esc(n.s ? n.s + (n.c ? ', ' + n.c : '') : n.c || '')}</span>${esc(n.t)}`);
+			a.href = n.u;
+			a.target = '_blank';
+			a.rel = 'noopener';
+			return a;
+		};
+		if (name === 'chair' && news) {
+			// v kresle: titulka webu Hedlajner a správy z RSS (klik otvorí článok, C a V na celú obrazovku)
+			const list = h('div', 'mysn-news');
+			const sec = (title, items, label, act) => {
+				if (!items || !items.length) {
+					return;
+				}
+				const head = h('div', 'mysn-news-head', `<b>${title}</b>`);
+				const full = this.button(label, act);
+				full.classList.add('mysn-primary');
+				head.appendChild(full);
+				list.appendChild(head);
+				items.slice(0, 9).forEach((n) => list.appendChild(link(n)));
+			};
+			sec('HEDLAJNER', news.news, 'Celé (C)', 'reader');
+			sec('Správy z RSS', news.rss, 'Celé (V)', 'readerRss');
+			box.appendChild(list);
+		}
 		if ((name === 'news' || name === 'magazine') && news && news.length) {
 			// klikateľné titulky (otvoria článok na webe v novom okne) a čítanie na celú obrazovku
 			const full = this.button('Čítať na celú obrazovku (C)', 'reader');
@@ -846,7 +871,7 @@ export class UI {
 			box.appendChild(list);
 		}
 		const texts = {
-			chair: 'Pohľad z kresla: pohybom myši sa rozhliadaš, kolieskom približuješ (klikni, ak sa myš nezachytila). C: noviny na celú obrazovku. Pri hre o skóre čas stojí. F7 alebo Enter: späť do hry.',
+			chair: 'Pohľad z kresla: pohybom myši sa rozhliadaš, kolieskom približuješ (klikni, ak sa myš nezachytila). Vpravo správy: drž Ctrl a klikni na článok, C noviny Hedlajner a V správy z RSS na celú obrazovku. Pri hre o skóre čas stojí. F7 alebo Enter: späť do hry.',
 			news: 'Titulka webu Hedlajner. Klik na titulok otvorí článok. F8, Enter alebo Esc: späť do hry.',
 			magazine: 'Správy z RSS kanálov. Klik na titulok otvorí správu. F9, Enter alebo Esc: späť do hry.',
 			rack: 'Šípky vľavo a vpravo vyberajú tágo. Enter, F2 alebo Esc: späť do hry.',

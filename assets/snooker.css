@@ -183,3 +183,8 @@ body.mysn-page { font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans
 .mysn-party-err { color: #ff9b9b; font-size: 13px; }
 .mysn-party-btns { display: flex; gap: 10px; justify-content: center; margin-top: 16px; flex-wrap: wrap; }
 .mysn-party-btns .mysn-btn { padding: 11px 18px; font-size: 15px; }
+.mysn-news-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin: 6px 0 2px; color: #f2d48a; font-size: 13px; letter-spacing: .06em; }
+.mysn-news-head .mysn-btn { padding: 4px 10px; font-size: 12px; }
+.mysn-view.mysn-view-news { overflow: hidden; }
+.mysn-view-news .mysn-news { max-height: none; flex: 1 1 auto; min-height: 0; width: 100%; justify-content: flex-start; }
+.mysn-view-news .mysn-news > * { flex: none; }

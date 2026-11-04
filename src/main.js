@@ -215,7 +215,7 @@ export function start(root, config = {}) {
 		if (name === 'trophies') {
 			refreshTrophies();
 		}
-		ui.showView(name, CUES, cueSpec.id, name === 'magazine' ? room.rssItems : room.newsItems);
+		ui.showView(name, CUES, cueSpec.id, name === 'magazine' ? room.rssItems : name === 'chair' ? { news: room.newsItems, rss: room.rssItems } : room.newsItems);
 	};
 	const exitView = () => {
 		if (!view) {
@@ -380,6 +380,7 @@ export function start(root, config = {}) {
 		news: () => enterView('news'),
 		magazine: () => enterView('magazine'),
 		reader: () => ui.toggleReader(view === 'magazine' ? 'rss' : 'news', view === 'magazine' ? room.rssItems : room.newsItems),
+		readerRss: () => ui.toggleReader('rss', room.rssItems),
 		chalk: () => enterView('chalk'),
 		top: () => {
 			if (view) {
@@ -443,7 +444,7 @@ export function start(root, config = {}) {
 		},
 		stroke: (on) => ui.setStroke(on),
 		look: (dx, dy) => {
-			if (view !== 'chair') {
+			if (view !== 'chair' || freeMouse) {
 				return;
 			}
 			const k = 0.0025 / (rig.viewZoom || 1); // pri priblížení jemnejšie
@@ -469,7 +470,8 @@ export function start(root, config = {}) {
 			}
 			if (lk === 'ctrl-down' || lk === 'ctrl-up') {
 				// Ctrl drž: voľná myš (kurzor, dá sa klikať); po pustení Ctrl sa myš znova zachytí na tágo
-				if (view) {
+				// v kresle Ctrl uvoľní myš na klikanie na správy, inde v pohľadoch sa nepoužíva
+				if (view && view !== 'chair') {
 					return true;
 				}
 				if (lk === 'ctrl-down' && controls.captured) {
@@ -498,7 +500,7 @@ export function start(root, config = {}) {
 				ui.opts.onAction('leaderboardClose');
 				return true;
 			}
-			const fkeys = { f1: 'board', f2: 'rack', f3: 'chalk', f4: 'score', f7: 'chair', f8: 'trophies', f9: 'magazine' };
+			const fkeys = { f1: 'board', f2: 'rack', f3: 'chalk', f4: 'score', f7: 'chair', f8: 'trophies' };
 			if (fkeys[lk]) {
 				ui.opts.onAction(fkeys[lk]);
 				return true;
@@ -509,6 +511,10 @@ export function start(root, config = {}) {
 			}
 			if (view) {
 				// v pohľade na nástenku alebo stojan: Esc a Enter späť do hry, šípky vyberajú tágo
+				if (view === 'chair' && lk === 'v') {
+					ui.opts.onAction('readerRss'); // správy z RSS na celú obrazovku
+					return true;
+				}
 				if ((view === 'news' || view === 'magazine' || view === 'chair') && lk === 'c') {
 					ui.opts.onAction('reader');
 					return true;

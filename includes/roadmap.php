@@ -24,7 +24,7 @@ function mysn_roadmap() {
 				array( 'Nástenné hodiny merajú čas hrania (začínajú na 11:30, skrytá karta prehliadača sa nepočíta)', 1 ),
 				array( 'Nástenka s nápovedou v herni (F1): ovládanie, klávesy, princíp hry, tágá', 1 ),
 				array( 'Kriedovanie špičky (F3, falše 5x silnejšie na 3 údery), tabuľa so skóre v herni (F4), pohľad zhora (Tab)', 1 ),
-				array( 'Konferenčný stolík s novinami (titulka webu Hedlajner, z kresla F7 klávesom C) a časopisom so správami z RSS (F9), čítanie na celú obrazovku (C), pohľad z kresla s rozhliadaním a priblížením kolieskom (F7), dvere F6', 1 ),
+				array( 'Konferenčný stolík s novinami (titulka webu Hedlajner, z kresla F7 klávesom C) a časopisom so správami z RSS, pohľad z kresla (F7) s rozhliadaním, priblížením kolieskom a správami vpravo (C noviny, V RSS na celú obrazovku), dvere F6', 1 ),
 				array( 'Šípka vo farbe trafenej gule (3D) a v detaile dotyku odkiaľ prichádza biela a kam pôjde guľa', 1 ),
 				array( 'Stojan s 10 tágami (F2): tvrdosť špičky mení najväčšiu silu, dĺžka citlivosť ťahania myšou, jemné mierenie so Shift len pokročilé a majstrovské tágá', 1 ),
 				array( 'Stôl ako skutočný snooker: zaoblené čeľuste jamiek, zaoblené rohy rámu, kožené lemy jamiek, podlaha z drevených dosiek, vyššie lampy', 1 ),
@@ -103,6 +103,7 @@ function mysn_roadmap() {
 /** Denník zmien (najnovšie hore). */
 function mysn_changelog() {
 	return array(
+		array( '0.2.5', '4. 11. 2026', 'Kláves F9 je zrušený. Správy sú v pohľade z kresla (F7): vpravo titulky webu Hedlajner a správy z RSS, klik otvorí článok, C a V ich otvoria na celú obrazovku. Z menu ostali preč tlačidlá Tágá, Nápoveda a Skóre (klávesy F2, F1 a F4 fungujú).' ),
 		array( '0.2.4', '4. 11. 2026', 'Pri hre o najlepšie skóre sa v kresle (F7) zastaví čas framu aj hodiny na stene. V partii s priateľom čas beží ďalej, lebo môže ťahať súper.' ),
 		array( '0.2.3', '4. 11. 2026', 'Čas rozohraného framu a hodiny na stene sa po obnovení stránky (F5) nestratia. Pri hre o najlepšie skóre ukazujú hodiny čas framu (od 11:30), inak celkový čas hrania.' ),
 		array( '0.2.2', '4. 11. 2026', 'Menu: Hrať (o najlepšie skóre), Tréning, Hrať s priateľom, Rebríček, Nastavenia; tágá, nápoveda a skóre ostali na F2, F1 a F4. Rozohraný frame sa pamätá, kým neskončí, potom sa sám začne nový. Na konci framu slávnostné ukončenie s konfetami, skóre za čas a miestom v rebríčku. Na zadnej stene herne polica s pohármi pre troch najlepších hráčov a tabuľka 4. až 10. miesta, F8 na ne pošle kameru.' ),
