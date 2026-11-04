@@ -73,6 +73,21 @@ export class BallViews {
 			scene.add(m);
 			this.items.push({ ball: b, mesh: m, blob, drop: 0 });
 		}
+		// Zvýraznenie gule, na ktorú sa mieri: svietiaci obrys okolo gule a krúžok na súkne
+		const hl = new THREE.Color(0xffd23f);
+		this.outline = new THREE.Mesh(
+			new THREE.SphereGeometry(R * 1.12, 32, 24),
+			new THREE.MeshBasicMaterial({ color: hl, side: THREE.BackSide, transparent: true, opacity: 0.9, depthWrite: false })
+		);
+		this.ring = new THREE.Mesh(
+			new THREE.RingGeometry(R * 1.25, R * 1.55, 48),
+			new THREE.MeshBasicMaterial({ color: hl, transparent: true, opacity: 0.75, depthWrite: false })
+		);
+		this.ring.rotation.x = -Math.PI / 2;
+		this.outline.visible = this.ring.visible = false;
+		this.outline.renderOrder = this.ring.renderOrder = 2;
+		scene.add(this.outline, this.ring);
+		this._hlT = 0;
 		this._q = new THREE.Quaternion();
 		this._axis = new THREE.Vector3();
 	}
@@ -108,6 +123,21 @@ export class BallViews {
 				it.blob.visible = false;
 			}
 		}
+	}
+
+	/** Zvýrazní guľu, na ktorú sa mieri (null = nič). */
+	highlight(ball, dt) {
+		const on = !!(ball && ball.on);
+		this.outline.visible = this.ring.visible = on;
+		if (!on) {
+			return;
+		}
+		this._hlT += dt;
+		const pulse = 0.5 + 0.5 * Math.sin(this._hlT * 5);
+		this.outline.position.set(ball.p.x, R, ball.p.z);
+		this.ring.position.set(ball.p.x, 0.0012, ball.p.z);
+		this.outline.material.opacity = 0.55 + 0.35 * pulse;
+		this.ring.material.opacity = 0.45 + 0.4 * pulse;
 	}
 
 	meshOf(ball) {

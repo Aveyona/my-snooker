@@ -24,6 +24,7 @@ function mysn_roadmap() {
 				array( 'Posun pohľadu pri držaní pravého tlačidla myši (po pustení sa vráti), po údere kamera sleduje bielu a otáča sa pohybom myši', 1 ),
 				array( 'Ovládanie: myš, prsty, klávesnica, ukazovateľ sily, miesto úderu na guli', 1 ),
 				array( 'Myš ako tágo: mierenie pohybom myši bez tlačidla (presne, so Shift ešte jemnejšie), úder ľavým tlačidlom a pohybom myši dozadu a dopredu, miesto úderu kolieskom (dvojklik = stred), posun pohľadu pravým tlačidlom', 1 ),
+				array( 'Zvýraznenie gule, na ktorú sa mieri (žltý obrys a krúžok na súkne)', 1 ),
 				array( 'Pomocné čiary mierenia (smer, kam pôjde objektová a biela guľa), predvolene vypnuté', 1 ),
 				array( 'Hlavné menu hry (na začiatku a po Esc)', 1 ),
 				array( 'Prepínač pomocných čiar v hlavnom menu', 0 ),
@@ -86,6 +87,7 @@ function mysn_roadmap() {
 /** Denník zmien (najnovšie hore). */
 function mysn_changelog() {
 	return array(
+		array( '0.1.11', '4. 11. 2026', 'Guľa, na ktorú sa mieri, je zvýraznená pulzujúcim žltým obrysom a krúžkom na súkne.' ),
 		array( '0.1.10', '4. 11. 2026', 'Vymenené tlačidlá: pravé tlačidlo posúva pohľad (kamera sa pozerá na mierenú guľu, a keď sa nemieri na žiadnu, na bielu), koliesko posúva miesto úderu, dvojklik kolieskom ho vráti do stredu. Zrušené šípky pri detaile dotyku.' ),
 		array( '0.1.9', '3. 11. 2026', 'Pri posúvaní pohľadu kolieskom sa kamera zároveň otáča, aby sa stále pozerala na guľu, na ktorú sa mieri.' ),
 		array( '0.1.8', '3. 11. 2026', 'Nový stôl: mantinely so zaoblenými čeľusťami jamiek, rám so zaoblenými rohmi a výrezmi jamiek, kožené lemy, zaoblené teleso stola. Nekonečná podlaha z drevených dosiek, lampy vyššie nad stolom na lankách. Po pustení kolieska sa pohľad vráti na pôvodné miesto.' ),

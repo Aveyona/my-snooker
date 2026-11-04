@@ -264,6 +264,7 @@ export function start(root, config = {}) {
 		const showContact = aiming && game.cue.on && !!settings.contact;
 		const trace = tr || (aiming && game.cue.on ? aimTrace(game.balls, game.cue, game.dir) : null);
 		ui.drawContact(showContact ? trace : null, game.dir, showContact, settings.lines);
+		views.highlight(trace && aiming ? trace.ball : null, dt);
 		if (trace) {
 			// pri posune pohľadu sa kamera pozerá na mierenú guľu, a keď sa nemieri na žiadnu, na bielu
 			const tp = trace.ball ? trace.ball.p : game.cue.p;
