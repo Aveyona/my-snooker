@@ -397,6 +397,161 @@ export function buildRoomShell(scene, quality, opts = {}) {
 		}
 	};
 
+	// Polica s pohármi pre troch najlepších hráčov (o najlepšie skóre) a vedľa tabuľka 4. až 10. miesta
+	const SHELF = { x: -0.78, y: FY + 1.42, w: 1.5 };
+	add(new THREE.BoxGeometry(SHELF.w, 0.04, 0.26), darkWood, SHELF.x, SHELF.y, -RZ + 0.13);
+	for (const sx of [-1, 1]) {
+		const br = add(new THREE.BoxGeometry(0.03, 0.16, 0.2), darkWood, SHELF.x + sx * (SHELF.w / 2 - 0.03), SHELF.y - 0.1, -RZ + 0.11);
+		br.castShadow = false;
+	}
+	// tabuľka nad policou
+	const signTex = (() => {
+		const c = document.createElement('canvas');
+		c.width = 1024;
+		c.height = 128;
+		const g = c.getContext('2d');
+		g.fillStyle = '#123524';
+		g.fillRect(0, 0, 1024, 128);
+		g.strokeStyle = '#c9a24a';
+		g.lineWidth = 6;
+		g.strokeRect(8, 8, 1008, 112);
+		g.fillStyle = '#f2d48a';
+		g.font = 'bold 60px Georgia, serif';
+		g.textAlign = 'center';
+		g.textBaseline = 'middle';
+		g.fillText('NAJLEPŠÍ HRÁČI', 512, 68);
+		const t = new THREE.CanvasTexture(c);
+		t.colorSpace = THREE.SRGBColorSpace;
+		return t;
+	})();
+	add(new THREE.PlaneGeometry(0.9, 0.11), new THREE.MeshStandardMaterial({ map: signTex, roughness: 0.6 }), SHELF.x, SHELF.y + 0.62, -RZ + 0.035).castShadow = false;
+	const cupMats = [
+		new THREE.MeshStandardMaterial({ color: 0xf0c040, metalness: 0.55, roughness: 0.28, emissive: 0x3a2800, emissiveIntensity: 0.6 }),
+		new THREE.MeshStandardMaterial({ color: 0xdfe3e8, metalness: 0.55, roughness: 0.25, emissive: 0x2a2c30, emissiveIntensity: 0.6 }),
+		new THREE.MeshStandardMaterial({ color: 0xc8804a, metalness: 0.55, roughness: 0.3, emissive: 0x2e1606, emissiveIntensity: 0.6 }),
+	];
+	const cupShape = (k) =>
+		[[0, 0], [0.07, 0], [0.07, 0.025], [0.035, 0.035], [0.016, 0.05], [0.014, 0.12], [0.022, 0.135], [0.06, 0.16], [0.085, 0.22], [0.095, 0.29], [0.09, 0.3], [0.08, 0.235], [0.055, 0.17], [0, 0.155]].map(
+			([x, y]) => new THREE.Vector2(x * k, y * k)
+		);
+	const plaques = [];
+	// poradie na polici: 2. vľavo, 1. v strede (najvyšší), 3. vpravo
+	[[1, -0.5, 0.92], [0, 0, 1.12], [2, 0.5, 0.82]].forEach(([rank, ox, k]) => {
+		const x = SHELF.x + ox * (SHELF.w * 0.62);
+		const z = -RZ + 0.14;
+		const cup = new THREE.Group();
+		cup.position.set(x, SHELF.y + 0.02, z);
+		const body = new THREE.Mesh(new THREE.LatheGeometry(cupShape(k), 40), cupMats[rank]);
+		body.castShadow = true;
+		cup.add(body);
+		for (const sx of [-1, 1]) {
+			const handle = new THREE.Mesh(new THREE.TorusGeometry(0.035 * k, 0.006 * k, 8, 20, Math.PI), cupMats[rank]);
+			handle.position.set(sx * 0.088 * k, 0.24 * k, 0);
+			handle.rotation.z = sx > 0 ? -Math.PI / 2 : Math.PI / 2;
+			cup.add(handle);
+		}
+		// podstavec
+		const base = new THREE.Mesh(new THREE.BoxGeometry(0.17 * k, 0.05, 0.17 * k), darkWood);
+		base.position.y = -0.0;
+		cup.position.y += 0.05;
+		base.position.y = -0.025;
+		cup.add(base);
+		scene.add(cup);
+		// štítok s menom, bodmi a časom pred pohárom
+		const c = document.createElement('canvas');
+		c.width = 512;
+		c.height = 160;
+		const tex = new THREE.CanvasTexture(c);
+		tex.colorSpace = THREE.SRGBColorSpace;
+		tex.anisotropy = 8;
+		const pl = new THREE.Mesh(new THREE.PlaneGeometry(0.4, 0.125), new THREE.MeshStandardMaterial({ map: tex, roughness: 0.45, metalness: 0.2 }));
+		pl.position.set(x, SHELF.y - 0.11, -RZ + 0.03); // štítok pod policou, pod svojím pohárom
+		pl.castShadow = false;
+		scene.add(pl);
+		plaques[rank] = { c, tex };
+	});
+	// svetlo nad policou (poháre sa lesknú)
+	const shelfLight = new THREE.PointLight(0xffe2b0, high ? 1.6 : 1.2, 2.2, 1.6);
+	shelfLight.position.set(SHELF.x, SHELF.y + 0.75, -RZ + 0.55);
+	scene.add(shelfLight);
+	// tabuľka 4. až 10. miesta (ako nástenka)
+	const LIST = { x: 0.72, y: FY + 1.68, w: 0.95, h: 1.0 };
+	const listCanvas = document.createElement('canvas');
+	listCanvas.width = 760;
+	listCanvas.height = 800;
+	const listTex = new THREE.CanvasTexture(listCanvas);
+	listTex.colorSpace = THREE.SRGBColorSpace;
+	listTex.anisotropy = 8;
+	add(new THREE.PlaneGeometry(LIST.w, LIST.h), new THREE.MeshStandardMaterial({ map: listTex, roughness: 0.85 }), LIST.x, LIST.y, -RZ + 0.045).castShadow = false;
+	add(new THREE.BoxGeometry(LIST.w + 0.08, LIST.h + 0.08, 0.03), darkWood, LIST.x, LIST.y, -RZ + 0.02);
+	const fmt = (sec) => {
+		const t = Math.max(0, Math.round(sec || 0));
+		return `${Math.floor(t / 60)}:${String(t % 60).padStart(2, '0')}`;
+	};
+	const cut = (g, text, max) => {
+		let t = String(text || '');
+		while (t.length > 1 && g.measureText(t).width > max) {
+			t = t.slice(0, -1);
+		}
+		return t === String(text || '') ? t : t.slice(0, -1) + '…';
+	};
+	/** Rebríček o najlepšie skóre na stene: poháre pre 1. až 3. miesto, tabuľka 4. až 10. */
+	const setTrophies = (top) => {
+		const rows = top || [];
+		const medal = ['#e8b830', '#c9cdd3', '#b8733a'];
+		for (let r = 0; r < 3; r++) {
+			const { c, tex } = plaques[r];
+			const g = c.getContext('2d');
+			const p = rows[r];
+			g.fillStyle = '#20150c';
+			g.fillRect(0, 0, 512, 160);
+			g.strokeStyle = medal[r];
+			g.lineWidth = 8;
+			g.strokeRect(6, 6, 500, 148);
+			g.textAlign = 'center';
+			g.fillStyle = medal[r];
+			g.font = 'bold 54px Georgia, serif';
+			g.fillText(p ? cut(g, `${r + 1}. ${p.user.name}`, 480) : `${r + 1}. miesto`, 256, 66);
+			g.fillStyle = '#f4ecd8';
+			g.font = 'bold 42px Arial, Helvetica, sans-serif';
+			g.fillText(p ? `${p.points} b.  za ${fmt(p.seconds)}` : 'voľné', 256, 128);
+			tex.needsUpdate = true;
+		}
+		const g = listCanvas.getContext('2d');
+		const W2 = listCanvas.width;
+		g.fillStyle = '#a5754a';
+		g.fillRect(0, 0, W2, listCanvas.height);
+		g.fillStyle = '#fbf7ec';
+		g.fillRect(30, 30, W2 - 60, listCanvas.height - 60);
+		g.fillStyle = '#c0392b';
+		g.beginPath();
+		g.arc(W2 / 2, 52, 12, 0, Math.PI * 2);
+		g.fill();
+		g.fillStyle = '#123524';
+		g.textAlign = 'center';
+		g.font = 'bold 46px Georgia, serif';
+		g.fillText('Rebríček 4. až 10.', W2 / 2, 120);
+		g.fillStyle = '#c9a24a';
+		g.fillRect(60, 142, W2 - 120, 4);
+		for (let i = 3; i < 10; i++) {
+			const p = rows[i];
+			const y = 210 + (i - 3) * 80;
+			g.textAlign = 'left';
+			g.fillStyle = '#123524';
+			g.font = 'bold 36px Arial, Helvetica, sans-serif';
+			g.fillText(`${i + 1}.`, 64, y);
+			g.fillStyle = p ? '#222' : '#999';
+			g.font = '34px Arial, Helvetica, sans-serif';
+			g.fillText(p ? cut(g, p.user.name, 330) : '...', 130, y);
+			g.textAlign = 'right';
+			g.fillText(p ? `${p.points} b.  ${fmt(p.seconds)}` : '', W2 - 64, y);
+			g.fillStyle = 'rgba(201,162,74,0.35)';
+			g.fillRect(64, y + 22, W2 - 128, 2);
+		}
+		listTex.needsUpdate = true;
+	};
+	setTrophies([]);
+
 	// Tabuľa na skóre (F4) a komoda na kratšej stene vľavo: zobrazuje body z hry
 	const SCORE = { y: FY + 1.62, w: 1.5, h: 0.84 };
 	const scoreCanvas = document.createElement('canvas');
@@ -632,6 +787,8 @@ export function buildRoomShell(scene, quality, opts = {}) {
 		board: { pos: new THREE.Vector3(BOARD.x, BOARD.y, -RZ + 1.62), look: new THREE.Vector3(BOARD.x, BOARD.y, -RZ) },
 		rack: { pos: new THREE.Vector3(RACK.x, FY + 1.15, -RZ + 3.3), look: new THREE.Vector3(RACK.x, FY + 0.6, -RZ) },
 		score: { pos: new THREE.Vector3(-RX + 1.55, SCORE.y, 0), look: new THREE.Vector3(-RX, SCORE.y, 0) },
+		// F8: polica s pohármi troch najlepších a tabuľka 4. až 10. miesta
+		trophies: { pos: new THREE.Vector3(-0.17, FY + 1.62, -RZ + 2.05), look: new THREE.Vector3(-0.17, FY + 1.6, -RZ) },
 		// F7: pohľad z kresla vpravo (sediaci) na stôl, v popredí noviny na stolíku
 		chair: { pos: new THREE.Vector3(1.0, FY + 1.12, RZ - 0.8), look: new THREE.Vector3(-0.2, FY + 0.62, 0.3) },
 		// F8: čítanie novín zhora
@@ -643,6 +800,9 @@ export function buildRoomShell(scene, quality, opts = {}) {
 		selectCue,
 		updateScore,
 		setClock,
+		setTrophies,
+		// F8: pohľad na policu s pohármi a tabuľku rebríčka
+		trophies: { pos: new THREE.Vector3(-0.05, FY + 1.6, -RZ + 2.3), look: new THREE.Vector3(-0.05, FY + 1.62, -RZ) },
 		/** Otvorí alebo zatvorí dvere; vráti true = budú otvorené. */
 		toggleDoor() {
 			doorState.open = !doorState.open;

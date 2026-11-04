@@ -852,6 +852,7 @@ export class UI {
 			rack: 'Šípky vľavo a vpravo vyberajú tágo. Enter, F2 alebo Esc: späť do hry.',
 			board: 'F1, Enter alebo Esc: späť do hry.',
 			score: 'F4, Enter alebo Esc: späť do hry.',
+			trophies: 'Rebríček o najlepšie skóre: poháre pre troch najlepších, vpravo 4. až 10. miesto (body a celkový čas). F8, Enter alebo Esc: späť do hry.',
 			chalk: 'Kriedujem špičku tága. Falše budú 3 údery 5x silnejšie.',
 		};
 		foot.appendChild(h('span', '', texts[name] || ''));

@@ -212,6 +212,9 @@ export function start(root, config = {}) {
 				chairLook.pitch = Math.atan2(d.y, Math.hypot(d.x, d.z));
 			}
 		}
+		if (name === 'trophies') {
+			refreshTrophies();
+		}
 		ui.showView(name, CUES, cueSpec.id, name === 'magazine' ? room.rssItems : room.newsItems);
 	};
 	const exitView = () => {
@@ -307,7 +310,19 @@ export function start(root, config = {}) {
 			ui.showMenu(false);
 			controls.capture();
 		},
-		leaderboard: () => openBoard(null),
+		// rebríček: F8 pošle kameru k polici s pohármi a tabuľke 4. až 10. miesta
+		leaderboard: () => {
+			ui.showMenu(false);
+			if (view !== 'trophies') {
+				enterView('trophies');
+			}
+		},
+		trophies: () => enterView('trophies'),
+		trophies: () => {
+			ui.showLeaderboard(null);
+			enterView('trophies');
+			loadTrophies();
+		},
 		partyNext: () => {
 			ui.celebrate(null);
 			ui.showMenu(false);
@@ -315,7 +330,7 @@ export function start(root, config = {}) {
 		},
 		partyBoard: () => {
 			ui.celebrate(null);
-			openBoard(null);
+			actions.leaderboard();
 		},
 		leaderboardClose: () => {
 			ui.showLeaderboard(null);
@@ -475,18 +490,6 @@ export function start(root, config = {}) {
 				sound.doorCreak();
 				return true;
 			}
-			if (lk === 'f8') {
-				// F8: rebríček o najlepšie skóre (bez pohybu kamery); druhé F8 ho zavrie
-				if (ui.leaderboardOpen()) {
-					ui.opts.onAction('leaderboardClose');
-				} else {
-					if (view) {
-						exitView();
-					}
-					ui.opts.onAction('leaderboard');
-				}
-				return true;
-			}
 			if ((lk === 'escape' || lk === 'enter') && ui.partyOpen()) {
 				ui.opts.onAction('partyNext');
 				return true;
@@ -495,7 +498,7 @@ export function start(root, config = {}) {
 				ui.opts.onAction('leaderboardClose');
 				return true;
 			}
-			const fkeys = { f1: 'board', f2: 'rack', f3: 'chalk', f4: 'score', f7: 'chair', f9: 'magazine' };
+			const fkeys = { f1: 'board', f2: 'rack', f3: 'chalk', f4: 'score', f7: 'chair', f8: 'trophies', f9: 'magazine' };
 			if (fkeys[lk]) {
 				ui.opts.onAction(fkeys[lk]);
 				return true;
@@ -564,22 +567,45 @@ export function start(root, config = {}) {
 		ui.sync(game, rig.mode);
 		updateScore();
 	};
+	// rebríček aj na stene herne (poháre a tabuľka)
+	const loadTrophies = async (d) => {
+		const data = d || (online ? await online.scores() : null);
+		if (data && data.top) {
+			room.setTrophies(data.top);
+		}
+		return data;
+	};
 	const openBoard = async (result) => {
 		controls.uncapture();
 		ui.showLeaderboard(undefined, result); // hneď prázdny rebríček, údaje dočítame
 		const d = online ? await online.scores() : null;
+		loadTrophies(d);
 		if (ui.leaderboardOpen()) {
 			ui.showLeaderboard(d, result);
 		}
 	};
+	// poháre a tabuľka rebríčka v herni (po načítaní, pri F8 a po každom dohranom frame)
+	const refreshTrophies = async (d) => {
+		const data = d || (online ? await online.scores() : null);
+		if (data && data.top) {
+			room.setTrophies(data.top);
+		}
+	};
+	refreshTrophies();
 	game.onSolo = async (r) => {
 		// slávnostné ukončenie: skóre za čas, zápis do rebríčka, potom sa hneď začne nový frame
 		const res = online ? await online.saveScore(r) : { error: 'Skóre sa zapisuje len prihláseným.' };
 		const ok = res && !res.error;
+		if (ok) {
+			loadTrophies(res);
+		}
 		const best = ok && res.mine && res.mine.points === r.points && res.mine.seconds === r.seconds;
 		controls.uncapture();
 		ui.showLeaderboard(null);
 		ui.showMenu(false);
+		if (ok) {
+			refreshTrophies(res);
+		}
 		ui.celebrate({ ...r, rank: ok ? res.rank : 0, players: ok ? res.players : 0, best, error: ok ? '' : res && res.error });
 		sound.unlock();
 		if (sound.pot) {
@@ -626,6 +652,7 @@ export function start(root, config = {}) {
 			status: () => ui.setNet(online ? online.statusText() : ''),
 		});
 	}
+	loadTrophies();
 
 	controls.setCue(cueSpec);
 	ui.setCueInfo(cueSpec);

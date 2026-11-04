@@ -11,7 +11,7 @@ Hra je napísaná v JavaScripte nad knižnicou [three.js](https://threejs.org/),
 - nástenka s nápovedou (F1), stojan s 10 tágami (F2), kriedovanie tága (F3), tabuľa so skóre (F4), pohľad zhora (Tab)
 - priehľadná 3D šípka vo farbe trafenej gule ukazuje, kam guľa pôjde
 - konferenčný stolík s novinami (titulka webu Hedlajner) a časopisom so správami z RSS (F9), čítanie na celú obrazovku (C), pohľad z kresla s priblížením kolieskom (F7)
-- O najlepšie skóre: jeden hráč hrá celý frame podľa pravidiel (fauly sa odpočítajú), rebríček prihlásených hráčov podľa bodov a pri rovnosti kratšieho celkového času (F8)
+- O najlepšie skóre: jeden hráč hrá celý frame podľa pravidiel (fauly sa odpočítajú), rebríček prihlásených hráčov podľa bodov a pri rovnosti kratšieho celkového času; v herni polica s pohármi troch najlepších a tabuľka 4. až 10. miesta (F8), na konci framu slávnostné ukončenie
 - fyzika gúľ: kĺzanie, kotúľanie, guľa dopredu, guľa späť, zastavenie a bočná falša
 - ovládanie myšou ako tágo (myš sa zachytí v okne, Esc otvorí hlavné menu), prstom a klávesnicou
 - detail dotyku gúľ zhora (uhol a plnosť zásahu) a zvýraznenie gule, na ktorú sa mieri
@@ -47,7 +47,7 @@ Hra je napísaná v JavaScripte nad knižnicou [three.js](https://threejs.org/),
 | Tabuľa so skóre | F4 |
 | Dvere herne otvoriť alebo zatvoriť | F6 (so zvukom) |
 | Pohľad z kresla (rozhliadanie myšou, koliesko priblíženie, C noviny) | F7 |
-| Rebríček o najlepšie skóre | F8 |
+| Rebríček: polica s pohármi a tabuľka 4. až 10. miesta | F8 |
 | Časopis so správami z RSS | F9 |
 | Čítanie na celú obrazovku (noviny v F7, časopis v F9) | C |
 | Pohľad na stôl zhora | Tab |

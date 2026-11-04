@@ -35,7 +35,8 @@ function mysn_roadmap() {
 				array( 'Zvýraznenie gule, na ktorú sa mieri (žltý obrys a krúžok na súkne)', 1 ),
 				array( 'Pomocné čiary mierenia (smer, kam pôjde objektová a biela guľa), predvolene vypnuté', 1 ),
 				array( 'Hlavné menu hry (na začiatku a po Esc)', 1 ),
-				array( 'O najlepšie skóre (prvá položka menu): jeden hráč, celý frame podľa pravidiel, rebríček podľa bodov a celkového času (F8), vlastná tabuľka my_snooker_scores', 1 ),
+				array( 'Polica s pohármi troch najlepších hráčov a tabuľka 4. až 10. miesta na zadnej stene (F8), slávnostné ukončenie framu', 1 ),
+				array( 'O najlepšie skóre (prvá položka menu Hrať): jeden hráč, celý frame podľa pravidiel, rebríček podľa bodov a celkového času (F8), vlastná tabuľka my_snooker_scores', 1 ),
 				array( 'Hrať môžu len prihlásení: neprihlásený vidí herňu a v menu žlté tlačidlo Prihlásiť sa; prihlásený Tréning, Hrať s priateľom a Nastavenia', 1 ),
 				array( 'Prepínač pomocných čiar v hlavnom menu', 0 ),
 				array( 'Detail dotyku: 2D pohľad zhora v okamihu, keď sa biela dotkne gule (uhol, plnosť zásahu)', 1 ),
@@ -102,6 +103,7 @@ function mysn_roadmap() {
 /** Denník zmien (najnovšie hore). */
 function mysn_changelog() {
 	return array(
+		array( '0.2.2', '4. 11. 2026', 'Menu: Hrať (o najlepšie skóre), Tréning, Hrať s priateľom, Rebríček, Nastavenia; tágá, nápoveda a skóre ostali na F2, F1 a F4. Rozohraný frame sa pamätá, kým neskončí, potom sa sám začne nový. Na konci framu slávnostné ukončenie s konfetami, skóre za čas a miestom v rebríčku. Na zadnej stene herne polica s pohármi pre troch najlepších hráčov a tabuľka 4. až 10. miesta, F8 na ne pošle kameru.' ),
 		array( '0.2.1', '4. 11. 2026', 'Prvá položka menu je O najlepšie skóre: jeden hráč hrá celý frame podľa pravidiel, fauly sa odpočítajú, rebríček prihlásených hráčov podľa bodov a pri rovnosti kratšieho celkového času. Rozohraný frame sa pamätá v prehliadači. F8 ukáže rebríček (pohľad na noviny je zrušený, noviny sa čítajú z kresla F7 klávesom C). V pohľade z kresla (F7) koliesko približuje pohľad.' ),
 		array( '0.2.0', '4. 11. 2026', 'Hrať môžu len prihlásení: neprihlásený vidí v menu žlté tlačidlo Prihlásiť sa. Nová ponuka Hrať s priateľom: zoznam hráčov, ktorí sú práve v hre, pozvánka a partia cez internet podľa pravidiel snookeru (poradie gúľ, fauly, body, séria, koniec framu). Súper vidí tágo pri mierení, úder sa prehrá u oboch. Partie majú vo WordPresse vlastné tabuľky so záznamom každého úderu, po výpadku internetu sa pokračuje tam, kde sa skončilo, prerušenú partiu možno dokončiť neskôr. Na stene s dverami visia hodiny, ktoré merajú čas hrania od 11:30.' ),
 		array( '0.1.26', '4. 11. 2026', 'Na stolíku pribudol časopis so správami z RSS kanálov (My RSS), F9 ho ukáže. Noviny (F8) aj časopis (F9) sa dajú čítať na celú obrazovku (tlačidlo alebo C): karty s fotkami, zdrojom, dátumom a úvodom, klik otvorí článok.' ),
