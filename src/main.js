@@ -946,8 +946,8 @@ export function start(root, config = {}) {
 					ui.opts.onAction(okeys[lk][0], okeys[lk][1]);
 					return true;
 				}
-				if (/^f\d+$/.test(lk)) {
-					return true; // ostatné F klávesy v kancelárii nič nerobia
+				if (/^f\d+$/.test(lk) && lk !== 'f5' && lk !== 'f11') {
+					return true; // ostatné F klávesy v kancelárii nič nerobia (F5 obnoví stránku, F11 celá obrazovka)
 				}
 				if (officeMode === 'cues' && (lk === 'arrowleft' || lk === 'arrowright')) {
 					const i = Math.max(0, CUES.findIndex((c) => c.id === officeCue));

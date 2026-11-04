@@ -118,6 +118,7 @@ function mysn_roadmap() {
 /** Denník zmien (najnovšie hore). */
 function mysn_changelog() {
 	return array(
+		array( '0.3.8', '4. 11. 2026', 'Oprava: v kancelárii znova funguje F5 (obnovenie stránky) a F11 (celá obrazovka).' ),
 		array( '0.3.7', '4. 11. 2026', 'Oprava: F6 v kancelárii otvára okno (predtým otváralo dvere herne).' ),
 		array( '0.3.6', '4. 11. 2026', 'Za hráčom v kancelárii je vysoké okno s výhľadom na večerné mesto a osvetlený štadión. F6 okno otvorí alebo zatvorí (krídla sa otvoria dovnútra). Mapa hráčov je teraz na F10.' ),
 		array( '0.3.5', '4. 11. 2026', 'F2 v kancelárii funguje ako stojan v herni: kamera sa priblíži ku stojanu s tágami, dole sú karty tág (klik tágo zoberie do ligového zápasu alebo odoberie, najviac 4) a pod nimi nastavenia vybraného tága (šípky menia tágo).' ),
