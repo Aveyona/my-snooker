@@ -20,7 +20,7 @@ function mysn_roadmap() {
 				array( 'Automatické testy fyziky (rovný úder, odraz, falše, jamky, rozbitie)', 1 ),
 				array( '3D stôl, gule, tágo, miestnosť so svetlami a tieňmi', 1 ),
 				array( 'Stôl ako skutočný snooker: zaoblené čeľuste jamiek, zaoblené rohy rámu, kožené lemy jamiek, podlaha z drevených dosiek, vyššie lampy', 1 ),
-				array( 'Kamery: za tágom, zhora, voľná', 1 ),
+				array( 'Kamera za tágom (pri kladení bielej dočasne zhora), prepínanie kamier zrušené', 1 ),
 				array( 'Posun pohľadu pri držaní pravého tlačidla myši (po pustení sa vráti), po údere kamera sleduje bielu a otáča sa pohybom myši', 1 ),
 				array( 'Ovládanie: myš, prsty, klávesnica, ukazovateľ sily, miesto úderu na guli', 1 ),
 				array( 'Myš ako tágo: mierenie pohybom myši bez tlačidla (presne, so Shift ešte jemnejšie), úder ľavým tlačidlom a pohybom myši dozadu a dopredu, miesto úderu kolieskom (dvojklik = stred), posun pohľadu pravým tlačidlom', 1 ),
@@ -87,6 +87,7 @@ function mysn_roadmap() {
 /** Denník zmien (najnovšie hore). */
 function mysn_changelog() {
 	return array(
+		array( '0.1.13', '4. 11. 2026', 'Zrušené prepínanie kamier (Za tágom, Zhora, Voľná a klávesy 1, 2, 3). Hrá sa vždy za tágom, aj keď bola predtým uložená iná kamera.' ),
 		array( '0.1.12', '4. 11. 2026', 'Pri posune pohľadu pravým tlačidlom, keď sa nemieri na žiadnu guľu, sa kamera pozerá na stred stola.' ),
 		array( '0.1.11', '4. 11. 2026', 'Guľa, na ktorú sa mieri, je zvýraznená pulzujúcim žltým obrysom a krúžkom na súkne.' ),
 		array( '0.1.10', '4. 11. 2026', 'Vymenené tlačidlá: pravé tlačidlo posúva pohľad (kamera sa pozerá na mierenú guľu, a keď sa nemieri na žiadnu, na bielu), koliesko posúva miesto úderu, dvojklik kolieskom ho vráti do stredu. Zrušené šípky pri detaile dotyku.' ),

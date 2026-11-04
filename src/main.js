@@ -84,7 +84,9 @@ export function start(root, config = {}) {
 	const cue = new Cue(scene);
 	const guide = new AimGuide(scene);
 	const rig = new CameraRig(renderer);
-	rig.setMode(settings.camera || 'cue');
+	// kamera je vždy za tágom (staré uložené nastavenie kamery sa ignoruje)
+	settings.camera = 'cue';
+	rig.setMode('cue');
 	const sound = new Sound();
 	sound.setVolume(settings.volume);
 
@@ -188,11 +190,6 @@ export function start(root, config = {}) {
 		},
 		stroke: (on) => ui.setStroke(on),
 		key: (k) => {
-			const map = { 1: 'cue', 2: 'top', 3: 'free' };
-			if (map[k]) {
-				setCamera(map[k]);
-				return true;
-			}
 			const lk = k.toLowerCase();
 			const act = { z: 'undo', backspace: 'undo', b: 'hand', r: 'reset', s: 'skip', h: 'help' }[lk];
 			if (act) {

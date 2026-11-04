@@ -58,14 +58,8 @@ export class UI {
 
 		// Spodné tlačidlá
 		const tools = h('div', 'mysn-tools');
+		// prepínanie kamier je zrušené: hrá sa vždy za tágom (pri kladení bielej sa kamera sama dočasne prepne zhora)
 		this.camBtns = {};
-		const cams = h('div', 'mysn-group');
-		for (const [m, label] of [['cue', 'Za tágom'], ['top', 'Zhora'], ['free', 'Voľná']]) {
-			const b = this.button(label, 'camera', null, m);
-			this.camBtns[m] = b;
-			cams.appendChild(b);
-		}
-		tools.appendChild(cams);
 		const acts = h('div', 'mysn-group');
 		this.btnUndo = this.button('Späť', 'undo', 'Vrátiť posledný úder (Z)');
 		this.btnHand = this.button('Biela do ruky', 'hand', 'Položiť bielu kamkoľvek v D (B)');
@@ -255,7 +249,7 @@ export class UI {
 				<li><b>Detail dotyku:</b> kruh dole ukazuje zhora okamih, keď sa biela dotkne gule. Úder ide vždy nahor, červený bod je miesto dotyku. Pomocné čiary a šípky (kam pôjdu gule) sú vypnuté, zapnúť sa budú dať v hlavnom menu.</li>
 				<li><b>Sila a úder:</b> ťahaj ukazovateľ sily vpravo nadol a pusť. Alebo drž medzerník a pusť ho pri želanej sile.</li>
 				<li><b>Miesto úderu:</b> klikni na bielu guľu vľavo dole. Hore znamená guľu dopredu, dole guľu späť, do strán bočnú falšu. Dvojklik vráti stred.</li>
-				<li><b>Kamera:</b> Za tágom, Zhora alebo Voľná (otáčanie myšou, priblíženie kolieskom). Klávesy 1, 2, 3.</li>
+				<li><b>Kamera:</b> vždy za tágom, otáčaním kolieska priblížiš alebo vzdiališ. Pri kladení bielej do D sa kamera sama prepne zhora.</li>
 				<li><b>Biela do ruky:</b> posuň bielu v D a potvrď tlačidlom Hotovo alebo klávesom Enter.</li>
 				<li><b>Klávesy:</b> Z späť, B biela do ruky, R nové rozostavenie, S preskočiť, H pomoc.</li>
 			</ul>
