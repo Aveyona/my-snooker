@@ -198,7 +198,7 @@ export function start(root, config = {}) {
 	// farba súkna podľa režimu: liga modrá, tréning červená, Hrať a partia zelená
 	let feltNow = '';
 	const updateFelt = () => {
-		const want = venue === 'league' ? 'blue' : !game.match && !game.solo ? 'red' : 'green';
+		const want = venue === 'league' ? 'blue' : (!game.match && !game.solo) || (game.match && game.match.training) ? 'red' : 'green';
 		if (want !== feltNow) {
 			feltNow = want;
 			table.setFelt(want);
@@ -650,6 +650,7 @@ export function start(root, config = {}) {
 			ui.openLobby(false);
 		},
 		invite: (id) => online && online.invite(id),
+		inviteTraining: (id) => online && online.invite(id, false, true),
 		cancelInvite: () => online && online.cancelInvite(),
 		accept: (id) => {
 			ui.hideToast();
@@ -1030,7 +1031,7 @@ export function start(root, config = {}) {
 				}
 				ui.showInvites(game.match ? [] : d.invites);
 			},
-			invite: (inv) => !ui.menuOpen() && ui.toast(`${inv.from.name} ťa pozýva na ${inv.league ? 'ligovú ' : ''}partiu.${controls.captured ? ' Esc alebo Ctrl uvoľní myš.' : ''}`, inv),
+			invite: (inv) => !ui.menuOpen() && ui.toast(`Boli ste vyzvaný! ${inv.from.name} ťa vyzýva ${inv.training ? 'na spoločný tréning' : inv.league ? 'na ligovú partiu' : 'na partiu'}.${controls.captured ? ' Esc alebo Ctrl uvoľní myš.' : ''}`, inv),
 			toast: (t) => ui.toast(t),
 			started: (m) => {
 				exitView();

@@ -102,9 +102,9 @@ export class Online {
 		}
 	}
 
-	async invite(uid, league = false) {
+	async invite(uid, league = false, training = false) {
 		try {
-			const r = await this.net.call('invite', { user: uid, league: league ? 1 : 0 });
+			const r = await this.net.call('invite', { user: uid, league: league ? 1 : 0, training: training ? 1 : 0 });
 			this._waitFor = r.id;
 			await this.ping();
 		} catch (e) {
@@ -152,7 +152,7 @@ export class Online {
 		}
 		await this.flush();
 		await this.net.call('leave', { id, mode }).catch(() => null);
-		this.stopMatch(mode === 'resign' ? 'Partia je vzdaná.' : 'Partia je prerušená. Pokračovať sa dá v ponuke Hrať s priateľom.');
+		this.stopMatch(mode === 'resign' ? 'Partia je vzdaná.' : 'Partia je prerušená. Pokračovať sa dá v ponuke Poslať výzvu.');
 	}
 
 	/** Pripojí sa do partie a načíta jej stav. */
@@ -309,7 +309,7 @@ export class Online {
 			return;
 		}
 		if (m.status === 'paused') {
-			this.stopMatch(`Partia je prerušená (${this.oppOnline ? 'súper ju prerušil' : 'súper dlho neodpovedal'}). Dokončiť sa dá v ponuke Hrať s priateľom, Rozohrané partie.`);
+			this.stopMatch(`Partia je prerušená (${this.oppOnline ? 'súper ju prerušil' : 'súper dlho neodpovedal'}). Dokončiť sa dá v ponuke Poslať výzvu, Rozohrané partie.`);
 			return;
 		}
 		if (m.seq > g.match.seq) {

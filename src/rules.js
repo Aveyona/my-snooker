@@ -25,6 +25,9 @@ export function onLabel(on) {
 	if (on === 'done') {
 		return 'koniec framu';
 	}
+	if (on === 'any') {
+		return 'ľubovoľná guľa';
+	}
 	return NAME[on] || on;
 }
 

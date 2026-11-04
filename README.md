@@ -20,7 +20,7 @@ Hra je napísaná v JavaScripte nad knižnicou [three.js](https://threejs.org/),
 - zvuky nárazov, mantinelov a jamiek
 - tréning (prvá položka menu, stôl s červeným súknom v tej istej herni): farby sa vracajú na spoty, biela do ruky, vrátenie úderu, body a série
 - hrať môžu len prihlásení používatelia webu, neprihlásený vidí v menu tlačidlo Prihlásiť sa
-- Hrať s priateľom: partia cez internet s hráčom, ktorý je práve v hre (pozri nižšie)
+- Poslať výzvu: partia alebo spoločný tréning cez internet s hráčom, ktorý je práve v hre (pozri nižšie)
 - Liga: kancelária hráča (Liga v menu) a nástenka Liga v herni (F12), pozri nižšie
 
 ## Liga
@@ -33,14 +33,17 @@ Hra je napísaná v JavaScripte nad knižnicou [three.js](https://threejs.org/),
 - Ligu ukladajú tabuľky `my_snooker_seasons` a `my_snooker_league`, údaje hráča sú v používateľskom poli `mysn_player`.
 - Ligové zápasy na štadióne (modrý stôl, traja diváci) prídu v ďalšej verzii.
 
-## Hrať s priateľom (partia cez internet)
+## Poslať výzvu (partia alebo tréning cez internet)
+
+- V menu je tlačidlo Poslať výzvu. Hráča sa dá vyzvať na partiu alebo pozvať na spoločný tréning, vyzvaný hráč vidí Boli ste vyzvaný a môže prijať alebo odmietnuť.
+- Spoločný tréning sa hrá na stole s červeným súknom: bez faulov, kto potopí, pokračuje, inak je na rade druhý, farby sa vracajú na spoty, kým sú na stole červené, tréning skončí pri prázdnom stole.
 
 - V hlavnom menu (Esc) je zoznam hráčov, ktorí sú práve v hre My Snooker. Ostatní používatelia webu sa nezobrazujú.
 - Pozvánka príde súperovi do menu a ako správa navrchu, môže ju prijať alebo odmietnuť.
 - Hrá sa jeden frame podľa pravidiel snookeru: červená, farba, na konci farby od žltej po čiernu; fauly (minutie, nesprávna prvá guľa, nesprávna guľa v jamke, biela v jamke) dávajú súperovi aspoň 4 body, po spadnutej bielej má súper bielu v ruke v D.
 - Súper vidí moje tágo pri mierení, úder sa prehrá u oboch hráčov. Na lište je skóre, kto je na rade, na akú guľu sa hrá a séria, na tabuli (F4) aj zostávajúce body.
 - Partia sa ukladá po každom údere do vlastných tabuliek vo WordPresse (`my_snooker_matches`, `my_snooker_moves`, `my_snooker_presence`; rebríček o najlepšie skóre v `my_snooker_scores`). Pri výpadku internetu alebo obnovení stránky sa pokračuje tam, kde sa skončilo.
-- Keď je súper preč dlhšie ako 10 minút, partia sa preruší. Dokončiť sa dá neskôr v ponuke Hrať s priateľom, Rozohrané partie. V menu partie je aj Prerušiť partiu a Vzdať partiu.
+- Keď je súper preč dlhšie ako 10 minút, partia sa preruší. Dokončiť sa dá neskôr v ponuke Poslať výzvu, Rozohrané partie. V menu partie je aj Prerušiť partiu a Vzdať partiu.
 - Prehľad partií je v administrácii (My Snooker, Hra).
 
 ## Ovládanie myšou

@@ -179,6 +179,7 @@ function mysn_match_out( $m, $uid ) {
 		'result'  => $m['result'],
 		'updated' => (int) $m['updated'],
 		'league'  => (int) ( $m['league'] ?? 0 ),
+		'training' => 'training' === ( $m['kind'] ?? '' ),
 		'delta'   => (int) ( $m['delta'] ?? 0 ),
 	);
 }
@@ -216,11 +217,12 @@ function mysn_rest_ping( $req ) {
 		$live[]    = $u;
 	}
 	$invites = array();
-	foreach ( $wpdb->get_results( $wpdb->prepare( "SELECT id, p1, league FROM $t WHERE p2 = %d AND status = 'invited' ORDER BY created DESC LIMIT 5", $uid ), ARRAY_A ) as $r ) { // phpcs:ignore
+	foreach ( $wpdb->get_results( $wpdb->prepare( "SELECT id, p1, league, kind FROM $t WHERE p2 = %d AND status = 'invited' ORDER BY created DESC LIMIT 5", $uid ), ARRAY_A ) as $r ) { // phpcs:ignore
 		$invites[] = array(
 			'id'   => (int) $r['id'],
 			'from' => mysn_user( $r['p1'] ),
 			'league' => (int) $r['league'],
+			'training' => 'training' === $r['kind'],
 		);
 	}
 	$out = $wpdb->get_row( $wpdb->prepare( "SELECT id, p2, status FROM $t WHERE p1 = %d AND status IN ('invited','declined') AND updated >= %d ORDER BY id DESC LIMIT 1", $uid, $now - MYSN_INVITE ), ARRAY_A ); // phpcs:ignore
@@ -262,7 +264,8 @@ function mysn_rest_invite( $req ) {
 	if ( mysn_active_match( $uid ) || mysn_active_match( $to ) ) {
 		return mysn_err( 'Ty alebo súper už hráte partiu.' );
 	}
-	$league = $req->get_param( 'league' ) ? 1 : 0;
+	$training = $req->get_param( 'training' ) ? 1 : 0; // spoločný tréning (bez pravidiel a bez ligy)
+	$league   = ! $training && $req->get_param( 'league' ) ? 1 : 0;
 	if ( $league ) {
 		$why = mysn_league_can_play( $uid, $to );
 		if ( $why ) {
@@ -281,6 +284,7 @@ function mysn_rest_invite( $req ) {
 			'created'   => $now,
 			'updated'   => $now,
 			'league'    => $league,
+			'kind'      => $training ? 'training' : '',
 			'season_id' => $league ? (int) mysn_season_current()['id'] : 0,
 		)
 	);
@@ -307,13 +311,13 @@ function mysn_rest_answer( $req ) {
 		'rules'  => array(
 			'scores' => array( 0, 0 ),
 			'turn'   => 0,
-			'on'     => 'red',
+			'on'     => 'training' === $m['kind'] ? 'any' : 'red',
 			'brk'    => 0,
 			'over'   => false,
 			'winner' => null,
 		),
 		'inHand' => true,
-		'msg'    => 'Partia začína, rozbíja ' . mysn_user( $m['p1'] )['name'] . '.',
+		'msg'    => ( 'training' === $m['kind'] ? 'Spoločný tréning začína, rozbíja ' : 'Partia začína, rozbíja ' ) . mysn_user( $m['p1'] )['name'] . '.',
 	);
 	mysn_update_match(
 		$m['id'],

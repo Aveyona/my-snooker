@@ -70,8 +70,8 @@ const PAPERS = [
 			'Pokročilé a majstrovské tágá',
 			'   majú jemné mierenie so Shift.',
 			'Výber: klik na kartu alebo šípky.',
-			'Hrať s priateľom (menu po Esc):',
-			'   partia cez internet podľa pravidiel.',
+			'Poslať výzvu (menu po Esc):',
+			'   partia alebo tréning cez internet.',
 		],
 	},
 ];

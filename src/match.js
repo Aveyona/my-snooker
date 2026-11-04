@@ -8,7 +8,7 @@
  */
 import { Training } from './training.js';
 import { createRack, snapshot, restore, strike } from './physics.js';
-import { evaluate, onLabel, newFrame } from './rules.js';
+import { evaluate, onLabel, newFrame, VALUE } from './rules.js';
 
 const SOLO_KEY = 'mySnookerSolo';
 
@@ -176,7 +176,7 @@ export class Game extends Training {
 		if (this.solo) {
 			this.stopSolo();
 		}
-		this.match = { id: info.id, me: info.me, seq: -1, turn: 0, rules: null, inHand: false, players: info.players, status: info.status, league: !!info.league, best: [0, 0] };
+		this.match = { id: info.id, me: info.me, seq: -1, turn: 0, rules: null, inHand: false, players: info.players, status: info.status, league: !!info.league, training: !!info.training, best: [0, 0] };
 		this.history = [];
 		this.remote = false;
 		this.applyState(info.state, info.seq);
@@ -288,7 +288,7 @@ export class Game extends Training {
 		const pots = this.lastPots.map((b) => b.kind);
 		const reds = this.balls.filter((b) => b.kind === 'red' && b.on).length;
 		const fc = this.physics.firstContact;
-		const res = evaluate(m.rules, { first: fc ? fc.kind : null, pots, reds });
+		const res = m.training ? this.judgeTraining(m, pots, reds) : evaluate(m.rules, { first: fc ? fc.kind : null, pots, reds });
 		for (const k of res.respot) {
 			const b = this.balls.find((x) => x.kind === k);
 			if (b) {
@@ -318,6 +318,30 @@ export class Game extends Training {
 		if (this.onNet) {
 			this.onNet('settle', { seq, state: st, points: res.points, foul: res.foul });
 		}
+	}
+
+	/**
+	 * Spoločný tréning s priateľom: bez faulov, kto potopí, pokračuje, inak je na rade druhý. Farby sa vracajú
+	 * na spoty, kým sú na stole červené; tréning skončí, keď je stôl prázdny (víťaz má viac bodov).
+	 */
+	judgeTraining(m, pots, reds) {
+		const r = m.rules;
+		const white = pots.includes('white');
+		let points = 0;
+		for (const k of pots) {
+			if (k !== 'white') {
+				points += VALUE[k] || 0;
+			}
+		}
+		const respot = reds > 0 ? pots.filter((k) => k !== 'white' && k !== 'red') : [];
+		const scores = [...r.scores];
+		scores[m.me] += points;
+		const keep = points > 0 && !white;
+		const left = this.balls.filter((b) => b.kind !== 'white' && b.on).length + respot.length;
+		const over = left === 0;
+		const state = { ...r, scores, on: 'any', brk: keep ? r.brk + points : 0, turn: keep || over ? m.me : 1 - m.me, over, winner: over ? (scores[1] > scores[0] ? 1 : 0) : null };
+		const msg = (points ? `${points} ${points === 1 ? 'bod' : points < 5 ? 'body' : 'bodov'}.` : 'Nič nespadlo.') + (white ? ' Biela spadla, súper ju položí do D.' : '');
+		return { state, points, foul: false, penalty: 0, respot, inHand: white, msg };
 	}
 
 	/** Text o tom, na čo sa hrá (pre tabuľu a lištu). */

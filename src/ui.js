@@ -253,18 +253,19 @@ export class UI {
 			return;
 		}
 		const fr = () => {
-			const b = this.button('Hrať s priateľom', 'lobby', 'Partia cez internet s hráčom, ktorý je práve v hre');
+			const b = this.button('Poslať výzvu', 'lobby', 'Vyzvi hráča, ktorý je práve v hre, na partiu alebo na spoločný tréning');
 			b.classList.add('mysn-friend');
 			return b;
 		};
 		// tágá, nápoveda a skóre sú na klávesoch F2, F1 a F4 (v menu nie sú)
 		const common = () => [this.button('Nastavenia', 'settings')];
 		if (kind === 'match') {
-			this.btnResume = this.button('Pokračovať v partii', 'resume');
+			const trn = !!(this._lastGame && this._lastGame.match && this._lastGame.match.training);
+			this.btnResume = this.button(trn ? 'Pokračovať v tréningu' : 'Pokračovať v partii', 'resume');
 			this.btnResume.classList.add('mysn-primary');
-			this.menuMode.textContent = `Partia s hráčom ${label}`;
+			this.menuMode.textContent = `${trn ? 'Tréning' : 'Partia'} s hráčom ${label}`;
 			box.append(this.btnResume, ...common());
-			box.append(this.button('Prerušiť partiu', 'pauseMatch', 'Partia sa uloží, pokračovať sa dá neskôr'), this.button('Vzdať partiu', 'resign'));
+			box.append(this.button(trn ? 'Prerušiť tréning' : 'Prerušiť partiu', 'pauseMatch', 'Uloží sa, pokračovať sa dá neskôr'), this.button(trn ? 'Ukončiť tréning' : 'Vzdať partiu', 'resign'));
 		} else {
 			// Hrať = o najlepšie skóre: rozohraný frame sa pamätá, kým neskončí, potom sa začne nový
 			this.menuMode.textContent = kind === 'solo' ? 'Hrá sa o najlepšie skóre' : user ? `Prihlásený: ${user.name}` : 'Tréning';
@@ -274,12 +275,9 @@ export class UI {
 			const lg = this.button('Liga', 'league', 'Kancelária ligy: registrácia, 4 ligy, body a sezóna na rok');
 			lg.classList.add('mysn-league-btn');
 			const tr = this.button('Tréning', kind === 'solo' ? 'training' : 'resume', 'Voľný tréning na stole s červeným súknom');
-			box.append(tr, play, lg, fr(), this.button('Rebríček', 'leaderboard'));
+			box.append(tr, play, lg, fr()); // rebríček je na F8
 			if (this.opts.venue && this.opts.venue() === 'league') {
 				box.appendChild(this.button('Späť do herne', 'leagueHome'));
-			}
-			if (kind !== 'solo') {
-				box.appendChild(this.button('Nové rozostavenie', 'reset'));
 			}
 			box.append(...common());
 		}
@@ -373,10 +371,10 @@ export class UI {
 			return;
 		}
 		const L = this.lobby;
-		L.innerHTML = '<h3>Hrať s priateľom</h3>';
+		L.innerHTML = '<h3>Poslať výzvu</h3>';
 		const av = (u) => (u.avatar ? `<img src="${esc(u.avatar)}" alt="">` : '<i></i>');
 		for (const i of d.invites || []) {
-			const row = h('div', 'mysn-inv', `${av(i.from)}<span><b>${esc(i.from.name)}</b> ťa pozýva na partiu</span>`);
+			const row = h('div', 'mysn-inv', `${av(i.from)}<span><b>Boli ste vyzvaný!</b> ${esc(i.from.name)} ťa vyzýva ${i.training ? 'na spoločný tréning' : i.league ? 'na ligovú partiu' : 'na partiu'}</span>`);
 			const yes = this.button('Prijať', 'accept', '', i.id);
 			yes.classList.add('mysn-primary');
 			row.append(yes, this.button('Odmietnuť', 'decline', '', i.id));
@@ -384,7 +382,7 @@ export class UI {
 		}
 		const o = d.outgoing;
 		if (o && o.status === 'invited') {
-			const row = h('div', 'mysn-inv mysn-wait', `${av(o.to)}<span>Čakám, kým <b>${esc(o.to.name)}</b> prijme pozvánku…</span>`);
+			const row = h('div', 'mysn-inv mysn-wait', `${av(o.to)}<span>Výzva odoslaná. Čakám, kým <b>${esc(o.to.name)}</b> prijme…</span>`);
 			row.appendChild(this.button('Zrušiť', 'cancelInvite'));
 			L.appendChild(row);
 		}
@@ -396,9 +394,10 @@ export class UI {
 		const list = h('div', 'mysn-live');
 		for (const u of live) {
 			const row = h('div', 'mysn-live-row', `${av(u)}<span><b>${esc(u.name)}</b>${u.busy ? '<em>hrá partiu</em>' : '<em class="mysn-live-on">v hre</em>'}</span>`);
-			const b = this.button('Pozvať', 'invite', '', u.id);
-			b.disabled = !!u.busy || !!(o && o.status === 'invited');
-			row.appendChild(b);
+			const b = this.button('Vyzvať na partiu', 'invite', 'Jeden frame podľa pravidiel snookeru', u.id);
+			const bt = this.button('Pozvať na tréning', 'inviteTraining', 'Spoločný tréning: striedate sa pri stole, bez faulov, farby sa vracajú na spoty', u.id);
+			b.disabled = bt.disabled = !!u.busy || !!(o && o.status === 'invited');
+			row.append(b, bt);
 			list.appendChild(row);
 		}
 		L.appendChild(list);
@@ -1311,7 +1310,7 @@ export class UI {
 		const s = game.stats;
 		const mt = game.match;
 		this.root.classList.toggle('mysn-online', !!mt);
-		this.modeLabel.textContent = this.root.classList.contains('mysn-in-office') ? 'Liga: kancelária' : mt ? (mt.league ? 'Ligová partia' : 'Partia') : game.solo ? 'O najlepšie skóre' : 'Tréning';
+		this.modeLabel.textContent = this.root.classList.contains('mysn-in-office') ? 'Liga: kancelária' : mt ? (mt.league ? 'Ligová partia' : mt.training ? 'Tréning s priateľom' : 'Partia') : game.solo ? 'O najlepšie skóre' : 'Tréning';
 		const so = game.solo;
 		if (so && !mt) {
 			const t = Math.max(0, Math.round(so.time));

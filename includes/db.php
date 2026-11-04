@@ -16,7 +16,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-const MYSN_DB_VERSION = '3';
+const MYSN_DB_VERSION = '4';
 
 function mysn_table( $name ) {
 	global $wpdb;
@@ -58,6 +58,7 @@ score2 int(10) unsigned NOT NULL DEFAULT 0,
 winner bigint(20) unsigned NOT NULL DEFAULT 0,
 result varchar(20) NOT NULL DEFAULT '',
 league tinyint(1) unsigned NOT NULL DEFAULT 0,
+kind varchar(10) NOT NULL DEFAULT '',
 season_id bigint(20) unsigned NOT NULL DEFAULT 0,
 delta int(10) NOT NULL DEFAULT 0,
 PRIMARY KEY  (id),
