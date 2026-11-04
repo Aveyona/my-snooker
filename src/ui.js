@@ -271,8 +271,8 @@ export class UI {
 			const play = this.button('Hrať', kind === 'solo' ? 'resume' : 'solo', 'O najlepšie skóre: celý frame podľa pravidiel, rebríček podľa bodov, pri rovnosti rozhoduje kratší čas');
 			play.classList.add('mysn-primary');
 			this.btnResume = play;
-			const lg = this.button('Liga', 'league', 'Ligové partie na štadióne: 4 ligy, body a sezóna na rok');
-			lg.classList.add('mysn-friend');
+			const lg = this.button('Liga', 'league', 'Kancelária ligy: registrácia, 4 ligy, body a sezóna na rok');
+			lg.classList.add('mysn-league-btn');
 			box.append(play, lg, this.button('Tréning', kind === 'solo' ? 'training' : 'resume'), fr(), this.button('Rebríček', 'leaderboard'));
 			if (this.opts.venue && this.opts.venue() === 'league') {
 				box.appendChild(this.button('Späť do herne', 'leagueHome'));

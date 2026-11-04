@@ -229,3 +229,5 @@ body.mysn-page { font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans
 
 /* kancelária: horná lišta bez štatistík tréningu */
 .mysn-in-office .mysn-stats { visibility: hidden; }
+.mysn-btn.mysn-league-btn { background: #7cc4f2; color: #0b2235; border-color: #a9dafa; font-weight: 600; }
+.mysn-btn.mysn-league-btn:hover { background: #95d1f7; }
