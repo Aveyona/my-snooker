@@ -169,6 +169,8 @@ export function start(root, config = {}) {
 			leagueData = d;
 			room.setLeague(d);
 			office.setBoards(d, []);
+			const pc = d.player && countryByCode(d.player.country);
+			office.setCard(d, user && user.name, pc ? pc.name : '');
 			const pts = [];
 			for (const n of [1, 2, 3, 4]) {
 				for (const r of (d.leagues && d.leagues[n]) || []) {
@@ -193,6 +195,15 @@ export function start(root, config = {}) {
 	const fadeEl = document.createElement('div');
 	fadeEl.className = 'mysn-fade';
 	root.appendChild(fadeEl);
+	// farba súkna podľa režimu: liga modrá, tréning červená, Hrať a partia zelená
+	let feltNow = '';
+	const updateFelt = () => {
+		const want = venue === 'league' ? 'blue' : !game.match && !game.solo ? 'red' : 'green';
+		if (want !== feltNow) {
+			feltNow = want;
+			table.setFelt(want);
+		}
+	};
 	const setVenue = (v) => {
 		if (v === venue) {
 			return;
@@ -205,7 +216,7 @@ export function start(root, config = {}) {
 				o.visible = !lg;
 			}
 			stadium.root.visible = lg;
-			table.setFelt(lg ? 'blue' : 'green');
+			updateFelt();
 			scene.background.setHex(lg ? 0x020306 : 0x0c0f14);
 			if (lg && view) {
 				exitView();
@@ -529,6 +540,15 @@ export function start(root, config = {}) {
 		},
 		officeEdit: () => {
 			officeMode = 'edit';
+			freeMouse = true;
+			controls.uncapture();
+			officeRefresh();
+		},
+		// červená vizitka na stole: registrácia do ligy (registrovaný hráč: moje údaje)
+		officeCard: () => {
+			officeMode = leagueData && leagueData.registered ? 'edit' : 'card';
+			freeMouse = true;
+			controls.uncapture();
 			officeRefresh();
 		},
 		myCues: () => {
@@ -770,6 +790,10 @@ export function start(root, config = {}) {
 				const ray = new THREE.Raycaster();
 				const at = controls.captured ? new THREE.Vector2(0, 0) : new THREE.Vector2(((e.clientX - r.left) / r.width) * 2 - 1, -((e.clientY - r.top) / r.height) * 2 + 1);
 				ray.setFromCamera(at, rig.camera);
+				if (ray.intersectObject(office.card, false).length) {
+					actions.officeCard();
+					return;
+				}
 				const hit = ray.intersectObject(office.map, false)[0];
 				if (hit) {
 					const ll = office.mapLonLat(hit.point);
@@ -818,7 +842,7 @@ export function start(root, config = {}) {
 				if (lk === 'ctrl-down' && controls.captured) {
 					freeMouse = true;
 					controls.uncapture();
-				} else if (lk === 'ctrl-up' && freeMouse && ui.phoneOpen()) {
+				} else if (lk === 'ctrl-up' && freeMouse && (ui.phoneOpen() || ui.cardOpen())) {
 					freeMouse = false; // nad telefónom ostáva myš voľná
 				} else if (lk === 'ctrl-up' && freeMouse && document.activeElement && /input|select|textarea/i.test(document.activeElement.tagName)) {
 					freeMouse = false; // píše sa do formulára: myš ostáva voľná
@@ -1250,6 +1274,7 @@ export function start(root, config = {}) {
 		} else {
 			rig.aimPoint = null;
 		}
+		updateFelt();
 		rig.cueTilt = cue.pivot.visible ? cue.tilt || 0 : 0;
 		rig.update(dt, game.cue, game.dir, game.state === 'moving');
 		renderer.render(scene, rig.camera);

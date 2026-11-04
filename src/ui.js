@@ -273,7 +273,8 @@ export class UI {
 			this.btnResume = play;
 			const lg = this.button('Liga', 'league', 'Kancelária ligy: registrácia, 4 ligy, body a sezóna na rok');
 			lg.classList.add('mysn-league-btn');
-			box.append(play, lg, this.button('Tréning', kind === 'solo' ? 'training' : 'resume'), fr(), this.button('Rebríček', 'leaderboard'));
+			const tr = this.button('Tréning', kind === 'solo' ? 'training' : 'resume', 'Voľný tréning na stole s červeným súknom');
+			box.append(tr, play, lg, fr(), this.button('Rebríček', 'leaderboard'));
 			if (this.opts.venue && this.opts.venue() === 'league') {
 				box.appendChild(this.button('Späť do herne', 'leagueHome'));
 			}
@@ -976,7 +977,29 @@ export class UI {
 	}
 
 	/** Kancelária hráča: registrácia do ligy, prehľad, údaje hráča, moje tágá (4 do zápasu). */
+	cardOpen() {
+		return !!this.cardBox && !this.cardBox.classList.contains('mysn-hidden');
+	}
+
+	/** Červená vizitka (registrácia do ligy, moje údaje) uprostred obrazovky. */
+	cardOverlay(on) {
+		if (!this.cardBox) {
+			this.cardBox = h('div', 'mysn-card mysn-hidden');
+			this.cardBox.addEventListener('mousedown', (e) => e.stopPropagation());
+			this.root.appendChild(this.cardBox);
+		}
+		this.cardBox.classList.toggle('mysn-hidden', !on);
+		this.cardBox.innerHTML = '';
+		if (on) {
+			this.cardBox.appendChild(h('div', 'mysn-card-brand', 'MY SNOOKER · LIGA'));
+		}
+		return this.cardBox;
+	}
+
 	renderOffice(box, o) {
+		if (o.mode !== 'card' && o.mode !== 'edit') {
+			this.cardOverlay(false);
+		}
 		const w = h('div', 'mysn-mixer mysn-office');
 		const d = o.league;
 		const reg = d && d.registered;
@@ -998,11 +1021,22 @@ export class UI {
 		if (!d) {
 			w.appendChild(h('div', 'mysn-news-head', '<b>Kancelária</b>'));
 			w.appendChild(h('p', 'mysn-mixer-status', 'Načítavam ligu…'));
-		} else if (!reg || o.mode === 'edit') {
+		} else if (!reg && o.mode !== 'card') {
+			// neregistrovaný: na stole leží červená vizitka, klik na ňu otvorí registráciu
+			w.appendChild(h('div', 'mysn-news-head', '<b>Registrácia do ligy</b>'));
+			w.appendChild(h('p', 'mysn-mixer-status', `Na stole leží červená vizitka. Klikni na ňu (drž Ctrl, alebo sa na ňu pozri a klikni) a vyplň svoje údaje. ${esc(d.season.name)}, do konca ${d.season.daysLeft} dní. Ligu hrajú len registrovaní hráči.`));
+			const oc = this.button('Otvoriť vizitku', 'officeCard');
+			oc.classList.add('mysn-league-btn');
+			w.appendChild(oc);
+		} else if (o.mode === 'card' || o.mode === 'edit') {
+			// registrácia alebo úprava údajov ako veľká červená vizitka uprostred obrazovky
+			const cw = this.cardOverlay(true);
+			w.appendChild(h('div', 'mysn-news-head', `<b>${reg ? 'Moje údaje' : 'Registrácia do ligy'}</b>`));
+			w.appendChild(h('p', 'mysn-mixer-status', 'Vyplň vizitku uprostred obrazovky.'));
 			// registrácia do ligy (alebo úprava údajov hráča)
-			w.appendChild(h('div', 'mysn-news-head', `<b>${reg ? 'Údaje hráča' : 'Registrácia do ligy'}</b>`));
+			cw.appendChild(h('div', 'mysn-news-head', `<b>${reg ? 'Údaje hráča' : 'Registrácia do ligy'}</b>`));
 			if (!reg) {
-				w.appendChild(h('p', 'mysn-mixer-status', `${esc(d.season.name)}, do konca ${d.season.daysLeft} dní. Po registrácii začínaš so 147 bodmi v 4. lige (alebo podľa poradia) a môžeš vyzývať hráčov.`));
+				cw.appendChild(h('p', 'mysn-mixer-status', `${esc(d.season.name)}, do konca ${d.season.daysLeft} dní. Po registrácii začínaš so 147 bodmi v 4. lige (alebo podľa poradia) a môžeš vyzývať hráčov.`));
 			}
 			const f = document.createElement('form');
 			f.className = 'mysn-form';
@@ -1039,10 +1073,8 @@ export class UI {
 				this.opts.onAction('register', data);
 			});
 			f.addEventListener('keydown', (e) => e.stopPropagation());
-			w.appendChild(f);
-			if (reg) {
-				w.appendChild(this.button('Späť', 'officeHome'));
-			}
+			cw.appendChild(f);
+			cw.appendChild(this.button(reg ? 'Zavrieť' : 'Zatiaľ nie', 'officeHome'));
 		} else if (o.mode === 'cues') {
 			// moje tágá: 4 do zápasu a vlastné nastavenia
 			w.appendChild(h('div', 'mysn-news-head', `<b>Moje tágá (do zápasu ${o.myCues.selected.length} zo 4)</b>`));
@@ -1165,6 +1197,9 @@ export class UI {
 		box.classList.toggle('mysn-view-news', name === 'news' || name === 'magazine' || name === 'chair' || name === 'mixer' || name === 'office');
 		this.root.classList.toggle('mysn-viewing', !!name);
 		this.root.classList.toggle('mysn-in-office', name === 'office');
+		if (name !== 'office' && this.cardBox) {
+			this.cardOverlay(false);
+		}
 		if (this._lastGame) {
 			this.sync(this._lastGame, this._lastCam);
 		}

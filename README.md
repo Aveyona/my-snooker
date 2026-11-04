@@ -18,7 +18,7 @@ Hra je napísaná v JavaScripte nad knižnicou [three.js](https://threejs.org/),
 - ovládanie myšou ako tágo (myš sa zachytí v okne, Esc otvorí hlavné menu), prstom a klávesnicou
 - detail dotyku gúľ zhora (uhol a plnosť zásahu) a zvýraznenie gule, na ktorú sa mieri
 - zvuky nárazov, mantinelov a jamiek
-- tréning: farby sa vracajú na spoty, biela do ruky, vrátenie úderu, body a série
+- tréning (prvá položka menu, stôl s červeným súknom v tej istej herni): farby sa vracajú na spoty, biela do ruky, vrátenie úderu, body a série
 - hrať môžu len prihlásení používatelia webu, neprihlásený vidí v menu tlačidlo Prihlásiť sa
 - Hrať s priateľom: partia cez internet s hráčom, ktorý je práve v hre (pozri nižšie)
 - Liga: kancelária hráča (Liga v menu) a nástenka Liga v herni (F12), pozri nižšie
@@ -26,9 +26,9 @@ Hra je napísaná v JavaScripte nad knižnicou [three.js](https://threejs.org/),
 ## Liga
 
 - Sezóna trvá rok. Každý registrovaný hráč začína so 147 bodmi, víťaz ligovej partie získa toľko bodov, koľko nahral, a presne toľko stratí porazený (neklesne pod 0).
-- Štyri ligy podľa poradia: 1. liga top 10, 2. liga 11. až 30. miesto, 3. liga 31. až 70. miesto, 4. liga ostatní. Výhra nad hráčom z vyššej ligy sa ráta 1,5-krát, pri vzdaní má víťaz najmenej 30 bodov, s tým istým súperom sa rátajú najviac 3 partie za deň.
+- Štyri ligy podľa poradia: 1. liga top 10, 2. liga 11. až 30. miesto, 3. liga 31. až 70. miesto, 4. liga ostatní. Výhra nad hráčom z vyššej ligy sa ráta 1,5-krát, pri vzdaní má víťaz najmenej 30 bodov. Kým je hráčov málo, môže hrať každý registrovaný hráč s každým a počet partií za deň nie je obmedzený.
 - Klik na Liga v menu otvorí kanceláriu: sedíš za stolom a myšou sa rozhliadaš (koliesko približuje, Ctrl drž: voľná myš, Esc späť do herne).
-- Za stolom je registrácia do ligy (krajina povinná, mesto, prezývka, ruka, obľúbené tágo, o mne). Neregistrovaný hráč ligu nehrá.
+- Registrácia do ligy je červená vizitka na stole, klik ju otvorí (krajina povinná, mesto, prezývka, ruka, obľúbené tágo, o mne). Neregistrovaný hráč ligu nehrá.
 - V kancelárii: kalendár sezóny a notebook na stole, výsledková tabuľa štyroch líg na zadnej stene, mapa sveta s hráčmi na ľavej stene (klik na ikonku ukáže hráča), stojan s mojimi tágami na pravej stene. Do zápasu si vyberieš 4 tágá a každé si môžeš upraviť (názov, farby, sila a falše).
 - Ligu ukladajú tabuľky `my_snooker_seasons` a `my_snooker_league`, údaje hráča sú v používateľskom poli `mysn_player`.
 - Ligové zápasy na štadióne (modrý stôl, traja diváci) prídu v ďalšej verzii.

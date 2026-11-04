@@ -331,7 +331,7 @@ export function buildOffice(scene) {
 		g.fillText('MOJA LIGA', 256, 60);
 		g.fillStyle = '#fff';
 		g.font = 'bold 64px Arial, sans-serif';
-		g.fillText(d && d.me ? `${d.me.league}. liga` : '...', 256, 150);
+		g.fillText(d && d.me ? `${d.me.league}. liga` : 'bez registrácie', 256, 150);
 		g.font = '32px Arial, sans-serif';
 		g.fillText(d && d.me ? `${d.me.rank}. miesto · ${d.me.points} b.` : '', 256, 210);
 		g.fillStyle = '#9fb3d9';
@@ -357,6 +357,51 @@ export function buildOffice(scene) {
 		cal.t.needsUpdate = true;
 		setChampions(champions);
 	};
+	// červená vizitka na stole: pred registráciou pozvánka do ligy, potom moje údaje (klik ju otvorí)
+	const cardT = tex(720, 400);
+	const card = add(new THREE.PlaneGeometry(0.16, 0.089), new THREE.MeshStandardMaterial({ map: cardT.t, roughness: 0.55, emissive: 0xffffff, emissiveMap: cardT.t, emissiveIntensity: 0.12 }), 0.16, DT + 0.045, DZ - 0.1);
+	card.rotation.x = -0.95; // opretá v stojančeku, natočená k hráčovi
+	card.rotation.y = -0.15;
+	add(new THREE.BoxGeometry(0.12, 0.012, 0.035), brass, 0.16, DT + 0.006, DZ - 0.085).rotation.y = -0.15;
+	const drawCard = (d, name, country) => {
+		const g = cardT.g;
+		const W = 720;
+		const Hc = 400;
+		const gr = g.createLinearGradient(0, 0, W, Hc);
+		gr.addColorStop(0, '#b3121f');
+		gr.addColorStop(1, '#6e0912');
+		g.fillStyle = gr;
+		g.fillRect(0, 0, W, Hc);
+		g.strokeStyle = '#e9c46a';
+		g.lineWidth = 6;
+		g.strokeRect(18, 18, W - 36, Hc - 36);
+		g.textAlign = 'center';
+		g.fillStyle = '#f4d98a';
+		g.font = 'bold 34px Georgia, serif';
+		g.fillText('MY SNOOKER · LIGA', W / 2, 82);
+		const reg = d && d.registered;
+		const p = (d && d.player) || {};
+		g.fillStyle = '#fff4e6';
+		if (!reg) {
+			g.font = 'bold 58px Georgia, serif';
+			g.fillText('Registrácia', W / 2, 190);
+			g.fillText('do ligy', W / 2, 256);
+			g.font = '28px Arial, sans-serif';
+			g.fillStyle = '#f4d98a';
+			g.fillText(d && d.season ? d.season.name + ' · klikni a vyplň' : 'klikni a vyplň', W / 2, 330);
+		} else {
+			const me = d.me || {};
+			g.font = 'bold 56px Georgia, serif';
+			g.fillText(String(p.nick || name || '').slice(0, 20), W / 2, 190);
+			g.font = '32px Arial, sans-serif';
+			g.fillText([country, p.city].filter(Boolean).join(', '), W / 2, 248);
+			g.fillStyle = '#f4d98a';
+			g.font = 'bold 34px Arial, sans-serif';
+			g.fillText(me.league ? `${me.league}. liga · ${me.rank}. miesto · ${me.points} b.` : '', W / 2, 320);
+		}
+		cardT.t.needsUpdate = true;
+	};
+	drawCard(null, '', '');
 	drawBoards(null, []);
 	drawMap([], 0);
 
@@ -366,6 +411,8 @@ export function buildOffice(scene) {
 		MAP,
 		/** Sedím za stolom a pozerám do kancelárie (na výsledkovú tabuľu). */
 		seat: { pos: new THREE.Vector3(OX, FY + 1.25, DZ + 0.75), look: new THREE.Vector3(OX, FY + 0.85, -RZo) },
+		card,
+		setCard: drawCard,
 		setBoards: drawBoards,
 		setMap: drawMap,
 		setRack,

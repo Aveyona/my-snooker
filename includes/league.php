@@ -15,7 +15,8 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 const MYSN_LEAGUE_START = 147;
 const MYSN_LEAGUE_BONUS = 1.5;
-const MYSN_LEAGUE_DAILY = 3;
+const MYSN_LEAGUE_DAILY = 0; // 0 = bez limitu (kým je hráčov málo)
+const MYSN_LEAGUE_OPEN = true; // true = každý registrovaný hráč môže hrať s každým (bez ohľadu na ligu)
 const MYSN_LEAGUE_RESIGN_MIN = 30;
 
 /** Liga podľa poradia (1 = najlepšia). */
@@ -158,13 +159,13 @@ function mysn_league_can_play( $a, $b ) {
 	if ( ! $ra || ! $rb || ! mysn_player( $a ) || ! mysn_player( $b ) ) {
 		return 'Ligovo môžu hrať len hráči registrovaní v lige (registrácia je v kancelárii).';
 	}
-	if ( abs( (int) $ra['league'] - (int) $rb['league'] ) > 1 ) {
+	if ( ! MYSN_LEAGUE_OPEN && abs( (int) $ra['league'] - (int) $rb['league'] ) > 1 ) {
 		return 'Ligovo sa dá hrať len s hráčmi z tvojej alebo susednej ligy.';
 	}
 	$t     = mysn_table( 'matches' );
 	$today = strtotime( 'today', time() );
 	$n     = (int) $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM $t WHERE league = 1 AND status = 'finished' AND updated >= %d AND ((p1 = %d AND p2 = %d) OR (p1 = %d AND p2 = %d))", $today, $a, $b, $b, $a ) ); // phpcs:ignore
-	if ( $n >= MYSN_LEAGUE_DAILY ) {
+	if ( MYSN_LEAGUE_DAILY > 0 && $n >= MYSN_LEAGUE_DAILY ) {
 		return 'S týmto hráčom ste dnes už odohrali 3 ligové partie. Zajtra znova.';
 	}
 	return '';
@@ -300,7 +301,7 @@ function mysn_rest_league( $req ) {
 	mysn_league_join( $uid );
 	$s      = mysn_season_current();
 	$ranked = mysn_league_ranked( $s['id'] );
-	$me     = mysn_league_me( $uid, $ranked );
+	$me     = mysn_player( $uid ) ? mysn_league_me( $uid, $ranked ) : null; // neregistrovaný v lige nie je
 	$leagues = array( 1 => array(), 2 => array(), 3 => array(), 4 => array() );
 	foreach ( $ranked as $r ) {
 		if ( count( $leagues[ $r['league'] ] ) < 50 || (int) $r['user_id'] === $uid ) {
@@ -317,7 +318,7 @@ function mysn_rest_league( $req ) {
 	foreach ( $wpdb->get_results( $wpdb->prepare( "SELECT user_id, state FROM $pt WHERE seen >= %d AND user_id <> %d ORDER BY seen DESC LIMIT 50", time() - MYSN_LIVE, $uid ), ARRAY_A ) as $p ) { // phpcs:ignore
 		$u  = (int) $p['user_id'];
 		$lg = isset( $byid[ $u ] ) ? (int) $byid[ $u ]['league'] : 4;
-		if ( ! $me || abs( $lg - (int) $me['league'] ) > 1 ) {
+		if ( ! $me || ( ! MYSN_LEAGUE_OPEN && abs( $lg - (int) $me['league'] ) > 1 ) ) {
 			continue;
 		}
 		if ( ! isset( $byid[ $u ] ) ) {
@@ -328,7 +329,7 @@ function mysn_rest_league( $req ) {
 		$live[]      = $row;
 	}
 	return array(
-		'registered' => $me && mysn_player( $uid ),
+		'registered' => (bool) $me,
 		'player'     => mysn_player( $uid ),
 		'season'  => array(
 			'id'       => (int) $s['id'],

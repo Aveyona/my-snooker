@@ -417,8 +417,8 @@ export function buildTable(renderer) {
 		}
 	}
 
-	// súkno: zelené v herni, modré na štadióne (liga)
-	const felts = { green: { cloth: null, rail: 0x17602f, base: '#1d6b34' }, blue: { cloth: null, rail: 0x1b4a96, base: '#1f56b0' } };
+	// súkno: zelené v herni (Hrať, partia), červené pri tréningu, modré na štadióne (liga)
+	const felts = { green: { cloth: null, rail: 0x17602f, base: '#1d6b34' }, red: { cloth: null, rail: 0x5a1016, base: '#6a121a' }, blue: { cloth: null, rail: 0x1b4a96, base: '#1f56b0' } };
 	felts.green.cloth = cloth.material.map;
 	const setFelt = (name) => {
 		const f = felts[name] || felts.green;
