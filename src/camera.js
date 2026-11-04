@@ -76,6 +76,13 @@ export class CameraRig {
 		}
 	}
 
+	/** Pohľad na miesto v herni (nástenka, stojan s tágami). */
+	setView(pos, look) {
+		this.setMode('view');
+		this.viewPos = pos;
+		this.viewLook = look;
+	}
+
 	resize(w, h) {
 		this.camera.aspect = w / h;
 		// na úzkej obrazovke (mobil na výšku) širší záber
@@ -99,7 +106,11 @@ export class CameraRig {
 		}
 		const pos = this._pos;
 		const look = this._look;
-		if (this.mode === 'top') {
+		if (this.mode === 'view') {
+			this.camera.up.set(0, 1, 0);
+			pos.copy(this.viewPos);
+			look.copy(this.viewLook);
+		} else if (this.mode === 'top') {
 			const aspect = this.camera.aspect;
 			// výška tak, aby bol vidieť celý stôl (na šírku aj na výšku obrazovky)
 			const fov = THREE.MathUtils.degToRad(this.camera.fov);
@@ -116,7 +127,7 @@ export class CameraRig {
 				this.camera.up.set(1, 0, 0);
 			}
 			look.set(0, 0, 0);
-		} else if (moving) {
+		} else if (moving && this.mode !== 'view') {
 			// po údere kamera sleduje bielu; pohybom myši sa otáča okolo nej
 			this.camera.up.set(0, 1, 0);
 			const fx = Math.cos(this.followYaw);
@@ -132,7 +143,7 @@ export class CameraRig {
 			pos.set(cue.p.x - dx * back, this.height / this.zoom + 0.06, cue.p.z - dz * back);
 			look.set(cue.p.x + dx * 0.55, 0, cue.p.z + dz * 0.55);
 		}
-		if (moving && !this._wasMoving) {
+		if (moving && !this._wasMoving && this.mode !== 'view') {
 			// začiatok úderu: pohľad zo smeru úderu, posun pohľadu sa zruší
 			this.followYaw = dir;
 			this.followH = 0.55;
@@ -142,7 +153,7 @@ export class CameraRig {
 		if (this.mode === 'top') {
 			pos.add(this.panOffset);
 			look.add(this.panOffset);
-		} else if (!moving && this.panOffset.lengthSq() > 1e-8) {
+		} else if (!moving && this.mode !== 'view' && this.panOffset.lengthSq() > 1e-8) {
 			// posun kolieskom za tágom: kamera sa posunie a otočí tak, aby sa stále pozerala na guľu, na ktorú sa mieri
 			pos.add(this.panOffset);
 			if (this.aimPoint) {
@@ -155,7 +166,7 @@ export class CameraRig {
 			// kamera nesmie prejsť cez steny, strop ani podlahu herne
 			clampToRoom(pos);
 		}
-		const k = 1 - Math.exp(-dt * (moving ? 4 : 7));
+		const k = 1 - Math.exp(-dt * (this.mode === 'view' ? 4 : moving ? 4 : 7));
 		this.camera.position.lerp(pos, k);
 		this._curLook.lerp(look, k);
 		this.camera.lookAt(this._curLook);

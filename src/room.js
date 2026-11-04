@@ -1,12 +1,15 @@
 /*
  * My Snooker: herňa okolo stola. Klasická snookerová miestnosť: drevené obloženie stien, tmavozelená tapeta,
- * lišty, tmavý strop s trámami a nástenné svietidlá s teplým svetlom.
+ * lišty, tmavý strop s trámami, nástenné svietidlá, otvorené dvere do chodby a vybavenie: nástenka s nápovedou
+ * (F1), stojan s tágami (F2), tabuľa na skóre, komoda, barový stolík so stoličkami, kreslá, obrazy a kvetina.
  */
 import * as THREE from 'three';
+import { boardTexture } from './board.js';
+import { CUES, buildCueMesh } from './cues.js';
 
 export const ROOM = {
-	x: 3.75, // polovica dĺžky miestnosti (7,5 m)
-	z: 2.75, // polovica šírky (5,5 m)
+	x: 5, // polovica dĺžky miestnosti (10 m)
+	z: 3.75, // polovica šírky (7,5 m)
 	floor: -0.86, // podlaha (súkno je vo výške 0)
 	ceil: -0.86 + 3, // strop 3 m nad podlahou
 };
@@ -102,7 +105,78 @@ function wallpaperTexture() {
 	return t;
 }
 
-/** Postaví steny, strop a nástenné svietidlá. Strop je vo vrstve 2 (pohľad zhora ho nekreslí). */
+/** Obraz do rámu: vymyslená krajina (kopce, jazero, nebo). */
+function paintingTexture(seed) {
+	const c = document.createElement('canvas');
+	c.width = 512;
+	c.height = 370;
+	const g = c.getContext('2d');
+	const sky = g.createLinearGradient(0, 0, 0, 220);
+	const palettes = [
+		['#f3c98b', '#d9825b', '#4a6a4d', '#2c4a3a', '#7aa6b8'],
+		['#9fc3d8', '#e8d3a8', '#5d7b4f', '#33502f', '#6d93a8'],
+	];
+	const pal = palettes[seed % palettes.length];
+	sky.addColorStop(0, pal[0]);
+	sky.addColorStop(1, pal[1]);
+	g.fillStyle = sky;
+	g.fillRect(0, 0, 512, 370);
+	g.fillStyle = 'rgba(255,240,200,0.8)';
+	g.beginPath();
+	g.arc(150 + seed * 180, 90, 34, 0, Math.PI * 2);
+	g.fill();
+	for (const [y, col, amp] of [[200, pal[2], 40], [250, pal[3], 30]]) {
+		g.fillStyle = col;
+		g.beginPath();
+		g.moveTo(0, 370);
+		for (let x = 0; x <= 512; x += 16) {
+			g.lineTo(x, y - Math.sin(x / (70 + seed * 20) + seed) * amp - Math.sin(x / 23) * 6);
+		}
+		g.lineTo(512, 370);
+		g.fill();
+	}
+	g.fillStyle = pal[4];
+	g.fillRect(0, 300, 512, 70);
+	g.fillStyle = 'rgba(255,255,255,0.25)';
+	for (let i = 0; i < 12; i++) {
+		g.fillRect(Math.random() * 512, 305 + Math.random() * 60, 40 + Math.random() * 60, 2);
+	}
+	// ťahy štetca
+	for (let i = 0; i < 1500; i++) {
+		g.fillStyle = `rgba(${Math.random() * 255},${Math.random() * 255},${Math.random() * 255},0.03)`;
+		g.fillRect(Math.random() * 512, Math.random() * 370, 6, 2);
+	}
+	const t = new THREE.CanvasTexture(c);
+	t.colorSpace = THREE.SRGBColorSpace;
+	return t;
+}
+
+/** Malý štítok s textom (pod tágami na stojane). */
+function labelTexture(text, sub) {
+	const c = document.createElement('canvas');
+	c.width = 256;
+	c.height = 96;
+	const g = c.getContext('2d');
+	g.fillStyle = '#c9a24a';
+	g.fillRect(0, 0, 256, 96);
+	g.strokeStyle = '#7a5a1c';
+	g.lineWidth = 6;
+	g.strokeRect(3, 3, 250, 90);
+	g.fillStyle = '#1b1206';
+	g.textAlign = 'center';
+	g.font = 'bold 30px Georgia, serif';
+	g.fillText(text, 128, 42);
+	g.font = '22px Arial, sans-serif';
+	g.fillText(sub, 128, 76);
+	const t = new THREE.CanvasTexture(c);
+	t.colorSpace = THREE.SRGBColorSpace;
+	return t;
+}
+
+/**
+ * Postaví herňu. Vráti miesta pre kameru (nástenka, stojan s tágami) a funkciu na zvýraznenie vybraného tága.
+ * Strop je vo vrstve 2 (pohľad zhora ho nekreslí).
+ */
 export function buildRoomShell(scene, quality) {
 	const high = quality === 'high';
 	const { x: RX, z: RZ, floor: FY, ceil: CY } = ROOM;
@@ -110,44 +184,118 @@ export function buildRoomShell(scene, quality) {
 	const panelTex = panelTexture();
 	const paperTex = wallpaperTexture();
 	const woodMat = new THREE.MeshStandardMaterial({ color: 0x4a2612, roughness: 0.45, metalness: 0.05 });
+	const darkWood = new THREE.MeshStandardMaterial({ color: 0x2e170a, roughness: 0.4, metalness: 0.05 });
+	const brassMat = new THREE.MeshStandardMaterial({ color: 0xb08a3c, metalness: 0.85, roughness: 0.35 });
+	const leather = new THREE.MeshStandardMaterial({ color: 0x5a1a12, roughness: 0.55, metalness: 0.05 });
+	const add = (geo, mat, x, y, z, parent = scene) => {
+		const m = new THREE.Mesh(geo, mat);
+		m.position.set(x, y, z);
+		m.castShadow = high;
+		m.receiveShadow = true;
+		parent.add(m);
+		return m;
+	};
 
-	// štyri steny: [stred x, stred z, otočenie, dĺžka]
+	// Dvere na kratšej stene (x = +RX), otvorené do herne
+	const DOOR = { at: 1.9, w: 1.0, h: 2.15 };
+
+	// Steny: [stred x, stred z, otočenie, dĺžka, dvere]
 	const walls = [
-		[0, -RZ, 0, 2 * RX],
-		[0, RZ, Math.PI, 2 * RX],
-		[-RX, 0, Math.PI / 2, 2 * RZ],
-		[RX, 0, -Math.PI / 2, 2 * RZ],
+		[0, -RZ, 0, 2 * RX, null],
+		[0, RZ, Math.PI, 2 * RX, null],
+		[-RX, 0, Math.PI / 2, 2 * RZ, null],
+		[RX, 0, -Math.PI / 2, 2 * RZ, DOOR],
 	];
-	for (const [cx, cz, rot, len] of walls) {
+	for (const [cx, cz, rot, len, door] of walls) {
 		const wall = new THREE.Group();
 		wall.position.set(cx, FY, cz);
 		wall.rotation.y = rot;
-		// tapeta (horná časť steny)
-		const pt = paperTex.clone();
-		pt.needsUpdate = true;
-		pt.repeat.set(len / 0.6, (H - PANEL_H) / 0.6);
-		const paper = new THREE.Mesh(new THREE.PlaneGeometry(len, H - PANEL_H), new THREE.MeshStandardMaterial({ map: pt, roughness: 0.9 }));
-		paper.position.set(0, PANEL_H + (H - PANEL_H) / 2, 0);
-		paper.receiveShadow = true;
-		wall.add(paper);
-		// drevené obloženie (dolná časť), mierne vystúpené
-		const tt = panelTex.clone();
-		tt.needsUpdate = true;
-		tt.repeat.set(len / 1.2, 1);
-		const panel = new THREE.Mesh(new THREE.BoxGeometry(len, PANEL_H, 0.03), new THREE.MeshStandardMaterial({ map: tt, roughness: 0.5 }));
-		panel.position.set(0, PANEL_H / 2, 0.015);
-		panel.receiveShadow = true;
-		wall.add(panel);
-		// lišty: soklová, nad obložením a pod stropom
-		for (const [y, h, d] of [[0.06, 0.12, 0.045], [PANEL_H, 0.05, 0.06], [H - 0.09, 0.18, 0.08]]) {
-			const m = new THREE.Mesh(new THREE.BoxGeometry(len, h, d), woodMat);
-			m.position.set(0, y, d / 2);
-			wall.add(m);
+		// úseky steny vedľa dverí (alebo celá stena)
+		const spans = door ? [[-len / 2, door.at - door.w / 2], [door.at + door.w / 2, len / 2]] : [[-len / 2, len / 2]];
+		for (const [x0, x1] of spans) {
+			const w = x1 - x0;
+			const mid = (x0 + x1) / 2;
+			const pt = paperTex.clone();
+			pt.needsUpdate = true;
+			pt.repeat.set(w / 0.6, (H - PANEL_H) / 0.6);
+			pt.offset.set(x0 / 0.6, 0);
+			const paper = new THREE.Mesh(new THREE.PlaneGeometry(w, H - PANEL_H), new THREE.MeshStandardMaterial({ map: pt, roughness: 0.9 }));
+			paper.position.set(mid, PANEL_H + (H - PANEL_H) / 2, 0);
+			paper.receiveShadow = true;
+			wall.add(paper);
+			const tt = panelTex.clone();
+			tt.needsUpdate = true;
+			tt.repeat.set(w / 1.2, 1);
+			const panel = new THREE.Mesh(new THREE.BoxGeometry(w, PANEL_H, 0.03), new THREE.MeshStandardMaterial({ map: tt, roughness: 0.5 }));
+			panel.position.set(mid, PANEL_H / 2, 0.015);
+			panel.receiveShadow = true;
+			wall.add(panel);
+			for (const [y, h, d] of [[0.06, 0.12, 0.045], [PANEL_H, 0.05, 0.06]]) {
+				const m = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), woodMat);
+				m.position.set(mid, y, d / 2);
+				wall.add(m);
+			}
+		}
+		// lišta pod stropom cez celú stenu
+		const crown = new THREE.Mesh(new THREE.BoxGeometry(len, 0.18, 0.08), woodMat);
+		crown.position.set(0, H - 0.09, 0.04);
+		wall.add(crown);
+		if (door) {
+			// nadpražie (stena nad dverami)
+			const top = H - door.h;
+			const pt = paperTex.clone();
+			pt.needsUpdate = true;
+			pt.repeat.set(door.w / 0.6, top / 0.6);
+			const over = new THREE.Mesh(new THREE.PlaneGeometry(door.w, top), new THREE.MeshStandardMaterial({ map: pt, roughness: 0.9 }));
+			over.position.set(door.at, door.h + top / 2, 0);
+			wall.add(over);
+			// zárubňa
+			const jambs = [
+				[door.at - door.w / 2 - 0.04, door.h / 2, 0.08, door.h + 0.08],
+				[door.at + door.w / 2 + 0.04, door.h / 2, 0.08, door.h + 0.08],
+				[door.at, door.h + 0.04, door.w + 0.16, 0.08],
+			];
+			for (const [x, y, w, h] of jambs) {
+				add(new THREE.BoxGeometry(w, h, 0.1), darkWood, x, y, 0.03, wall);
+			}
+			// ostenie (hrúbka steny v otvore)
+			for (const sx of [-1, 1]) {
+				add(new THREE.BoxGeometry(0.02, door.h, 0.2), darkWood, door.at + (sx * door.w) / 2, door.h / 2, -0.1, wall);
+			}
+			add(new THREE.BoxGeometry(door.w, 0.02, 0.2), darkWood, door.at, door.h, -0.1, wall);
+			// krídlo dverí otvorené do herne (pánt pri vzdialenejšej strane otvoru)
+			const hinge = new THREE.Group();
+			hinge.position.set(door.at + door.w / 2 - 0.02, 0, 0.02);
+			hinge.rotation.y = THREE.MathUtils.degToRad(72);
+			wall.add(hinge);
+			const leafMat = new THREE.MeshStandardMaterial({ color: 0x5a2f16, roughness: 0.45 });
+			add(new THREE.BoxGeometry(door.w - 0.04, door.h - 0.02, 0.045), leafMat, -(door.w - 0.04) / 2, door.h / 2, 0, hinge);
+			// výplne na krídle
+			for (const y of [0.55, 1.5]) {
+				for (const side of [-1, 1]) {
+					add(new THREE.BoxGeometry(door.w - 0.26, 0.7, 0.012), darkWood, -(door.w - 0.04) / 2, y, side * 0.026, hinge);
+				}
+			}
+			const knob = add(new THREE.SphereGeometry(0.03, 16, 12), brassMat, -(door.w - 0.04) + 0.08, 1.0, 0.05, hinge);
+			knob.castShadow = false;
+			// chodba za dverami (tlmené svetlo)
+			const corr = new THREE.Group();
+			corr.position.set(door.at, 0, -1.2);
+			wall.add(corr);
+			const corrMat = new THREE.MeshStandardMaterial({ color: 0x6b5a45, roughness: 0.9, side: THREE.BackSide });
+			add(new THREE.BoxGeometry(2.4, 2.6, 2.2), corrMat, 0, 1.3, -0.05, corr);
+			const corrFloor = add(new THREE.PlaneGeometry(2.4, 2.2), new THREE.MeshStandardMaterial({ color: 0x3b2a1c, roughness: 0.8 }), 0, 0.005, -0.05, corr);
+			corrFloor.rotation.x = -Math.PI / 2;
+			const corrLight = new THREE.PointLight(0xffd8a0, high ? 2.2 : 1.4, 4, 1.6);
+			corrLight.position.set(0, 2.2, -0.4);
+			corr.add(corrLight);
+			const bulb = add(new THREE.SphereGeometry(0.05, 12, 8), new THREE.MeshBasicMaterial({ color: 0xfff0d0 }), 0, 2.45, -0.4, corr);
+			bulb.castShadow = false;
 		}
 		scene.add(wall);
 	}
 
-	// strop s trámami
+	// Strop s trámami
 	const ceilMat = new THREE.MeshStandardMaterial({ color: 0x1d130c, roughness: 0.9 });
 	const ceiling = new THREE.Mesh(new THREE.PlaneGeometry(2 * RX, 2 * RZ), ceilMat);
 	ceiling.rotation.x = Math.PI / 2;
@@ -162,19 +310,17 @@ export function buildRoomShell(scene, quality) {
 		scene.add(beam);
 	}
 
-	// nástenné svietidlá: 2 na dlhých stenách, 1 na krátkych
+	// Nástenné svietidlá
 	const shadeMat = new THREE.MeshStandardMaterial({ color: 0xffe2b0, emissive: 0xffc070, emissiveIntensity: 1.2, roughness: 0.6 });
-	const brassMat = new THREE.MeshStandardMaterial({ color: 0xb08a3c, metalness: 0.85, roughness: 0.35 });
+	const SY = FY + 2.35;
 	const sconces = [
-		[-1.6, -RZ, 0],
-		[1.6, -RZ, 0],
-		[-1.6, RZ, Math.PI],
-		[1.6, RZ, Math.PI],
+		[-2.6, -RZ, 0],
+		[2.6, -RZ, 0],
+		[-2.8, RZ, Math.PI],
+		[2.8, RZ, Math.PI],
 		[-RX, 0, Math.PI / 2],
-		[RX, 0, -Math.PI / 2],
+		[RX, -1.5, -Math.PI / 2],
 	];
-	const SY = FY + 1.95;
-	// slabé rozptýlené svetlo v herni (steny nie sú úplne čierne); bez nástenných svetiel o niečo silnejšie
 	scene.add(new THREE.AmbientLight(0xffe6c8, high ? 0.22 : 0.4));
 	for (const [sx, sz, rot] of sconces) {
 		const g = new THREE.Group();
@@ -194,13 +340,131 @@ export function buildRoomShell(scene, quality) {
 		scene.add(g);
 		if (high) {
 			const light = new THREE.PointLight(0xffb866, 5, 4.5, 1.5);
-			// svetlo kúsok pred stenou, aby osvetlilo tapetu okolo svietidla
-			const dx = Math.sin(rot) * 0.25;
-			const dz = Math.cos(rot) * 0.25;
-			light.position.set(sx + dx, SY + 0.05, sz + dz);
+			light.position.set(sx + Math.sin(rot) * 0.3, SY + 0.05, sz + Math.cos(rot) * 0.3);
 			scene.add(light);
 		}
 	}
+
+	// Nástenka s nápovedou (F1) na zadnej stene vľavo
+	const BOARD = { x: -2.6, y: FY + 1.5, w: 1.6, h: 1.1 };
+	const boardMesh = add(new THREE.PlaneGeometry(BOARD.w, BOARD.h), new THREE.MeshStandardMaterial({ map: boardTexture(), roughness: 0.85 }), BOARD.x, BOARD.y, -RZ + 0.045);
+	boardMesh.castShadow = false;
+	for (const [x, y, w, h] of [
+		[BOARD.x, BOARD.y + BOARD.h / 2 + 0.03, BOARD.w + 0.12, 0.06],
+		[BOARD.x, BOARD.y - BOARD.h / 2 - 0.03, BOARD.w + 0.12, 0.06],
+		[BOARD.x - BOARD.w / 2 - 0.03, BOARD.y, 0.06, BOARD.h],
+		[BOARD.x + BOARD.w / 2 + 0.03, BOARD.y, 0.06, BOARD.h],
+	]) {
+		add(new THREE.BoxGeometry(w, h, 0.06), darkWood, x, y, -RZ + 0.04);
+	}
+	add(new THREE.BoxGeometry(BOARD.w, BOARD.h, 0.02), darkWood, BOARD.x, BOARD.y, -RZ + 0.02);
+
+	// Stojan s tágami (F2) na zadnej stene vpravo
+	const RACK = { x: 2.6, base: FY };
+	add(new THREE.BoxGeometry(1.25, 1.85, 0.03), darkWood, RACK.x, FY + 0.15 + 0.925, -RZ + 0.05);
+	add(new THREE.BoxGeometry(1.3, 0.06, 0.16), woodMat, RACK.x, FY + 0.12, -RZ + 0.11); // spodná lišta s miskami
+	add(new THREE.BoxGeometry(1.3, 0.05, 0.12), woodMat, RACK.x, FY + 1.35, -RZ + 0.1); // horný držiak
+	const rackCues = [];
+	const spacing = 0.22;
+	CUES.forEach((spec, i) => {
+		const x = RACK.x + (i - 2) * spacing;
+		const g = new THREE.Group();
+		g.position.set(x, FY + 0.16 + spec.len, -RZ + 0.12);
+		g.rotation.x = Math.PI; // špička hore, rukoväť v miske
+		g.add(buildCueMesh(spec, high));
+		scene.add(g);
+		const label = new THREE.Mesh(new THREE.PlaneGeometry(0.2, 0.075), new THREE.MeshStandardMaterial({ map: labelTexture(String(i + 1), spec.category), roughness: 0.4, metalness: 0.3 }));
+		label.position.set(x, FY + 0.3, -RZ + 0.07);
+		scene.add(label);
+		rackCues.push({ group: g, baseZ: -RZ + 0.12, spec });
+	});
+	const glow = new THREE.Mesh(new THREE.RingGeometry(0.035, 0.06, 32), new THREE.MeshBasicMaterial({ color: 0xffd23f, transparent: true, opacity: 0.9 }));
+	glow.rotation.x = -Math.PI / 2;
+	scene.add(glow);
+	const selectCue = (id) => {
+		for (const rc of rackCues) {
+			const on = rc.spec.id === id;
+			rc.group.position.z = rc.baseZ + (on ? 0.12 : 0);
+			if (on) {
+				glow.position.set(rc.group.position.x, FY + 0.005, rc.group.position.z);
+			}
+		}
+	};
+
+	// Tabuľa na skóre a komoda na kratšej stene vľavo
+	add(new THREE.BoxGeometry(0.04, 0.62, 1.3), darkWood, -RX + 0.03, FY + 1.6, 0);
+	for (const z of [-0.36, 0.36]) {
+		for (let r = 0; r < 3; r++) {
+			add(new THREE.BoxGeometry(0.02, 0.012, 0.5), brassMat, -RX + 0.06, FY + 1.42 + r * 0.14, z);
+			add(new THREE.BoxGeometry(0.03, 0.05, 0.03), new THREE.MeshStandardMaterial({ color: 0xf2efe6, roughness: 0.4 }), -RX + 0.07, FY + 1.42 + r * 0.14, z - 0.2 + r * 0.12);
+		}
+	}
+	add(new THREE.BoxGeometry(0.45, 0.8, 1.7), darkWood, -RX + 0.25, FY + 0.4, 0);
+	add(new THREE.BoxGeometry(0.47, 0.03, 1.74), woodMat, -RX + 0.25, FY + 0.815, 0);
+	for (const z of [-0.42, 0.42]) {
+		add(new THREE.BoxGeometry(0.012, 0.5, 0.75), woodMat, -RX + 0.48, FY + 0.42, z);
+		add(new THREE.SphereGeometry(0.015, 10, 8), brassMat, -RX + 0.49, FY + 0.55, z * 0.2);
+	}
+
+	// Barový stolík a dve vysoké stoličky v rohu
+	const bx = -RX + 1.1;
+	const bz = RZ - 1.1;
+	add(new THREE.CylinderGeometry(0.32, 0.32, 0.04, 32), darkWood, bx, FY + 1.05, bz);
+	add(new THREE.CylinderGeometry(0.03, 0.03, 1.03, 12), brassMat, bx, FY + 0.53, bz);
+	add(new THREE.CylinderGeometry(0.22, 0.25, 0.03, 24), brassMat, bx, FY + 0.015, bz);
+	for (const a of [0.6, 2.3]) {
+		const sx = bx + Math.cos(a) * 0.55;
+		const sz = bz - Math.sin(a) * 0.55;
+		add(new THREE.CylinderGeometry(0.18, 0.18, 0.08, 24), leather, sx, FY + 0.76, sz);
+		add(new THREE.CylinderGeometry(0.022, 0.022, 0.72, 10), brassMat, sx, FY + 0.36, sz);
+		add(new THREE.TorusGeometry(0.15, 0.01, 8, 24), brassMat, sx, FY + 0.3, sz).rotation.x = Math.PI / 2;
+		add(new THREE.CylinderGeometry(0.17, 0.2, 0.02, 20), brassMat, sx, FY + 0.01, sz);
+	}
+
+	// Dve kreslá a stolík pri prednej stene (otočené k stolu)
+	const armchair = (x, z, rot) => {
+		const g = new THREE.Group();
+		g.position.set(x, FY, z);
+		g.rotation.y = rot;
+		add(new THREE.BoxGeometry(0.8, 0.42, 0.8), leather, 0, 0.21, 0, g);
+		add(new THREE.BoxGeometry(0.8, 0.5, 0.18), leather, 0, 0.66, -0.31, g);
+		for (const sx of [-1, 1]) {
+			add(new THREE.BoxGeometry(0.16, 0.24, 0.8), leather, sx * 0.4, 0.54, 0, g);
+		}
+		add(new THREE.BoxGeometry(0.56, 0.08, 0.6), new THREE.MeshStandardMaterial({ color: 0x6e2a1c, roughness: 0.6 }), 0, 0.46, 0.04, g);
+		scene.add(g);
+	};
+	armchair(-1.0, RZ - 0.7, Math.PI);
+	armchair(1.0, RZ - 0.7, Math.PI);
+	add(new THREE.CylinderGeometry(0.28, 0.28, 0.03, 28), darkWood, 0, FY + 0.55, RZ - 0.7);
+	add(new THREE.CylinderGeometry(0.04, 0.06, 0.53, 12), darkWood, 0, FY + 0.27, RZ - 0.7);
+
+	// Obrazy na prednej stene
+	for (const [x, seed] of [[-2.8, 0], [2.8, 1]]) {
+		const pic = add(new THREE.PlaneGeometry(0.86, 0.62), new THREE.MeshStandardMaterial({ map: paintingTexture(seed), roughness: 0.7 }), x, FY + 1.75, RZ - 0.04);
+		pic.rotation.y = Math.PI;
+		pic.castShadow = false;
+		add(new THREE.BoxGeometry(1.0, 0.76, 0.04), new THREE.MeshStandardMaterial({ color: 0x8a6a2a, metalness: 0.6, roughness: 0.4 }), x, FY + 1.75, RZ - 0.02);
+	}
+
+	// Kvetina v rohu pri dverách
+	const px = RX - 0.5;
+	const pz = -RZ + 0.5;
+	add(new THREE.CylinderGeometry(0.2, 0.15, 0.4, 20), new THREE.MeshStandardMaterial({ color: 0x7a3b22, roughness: 0.7 }), px, FY + 0.2, pz);
+	const leafMat = new THREE.MeshStandardMaterial({ color: 0x2f6b2f, roughness: 0.7 });
+	for (let i = 0; i < 14; i++) {
+		const a = (i / 14) * Math.PI * 2;
+		const r = 0.08 + (i % 3) * 0.06;
+		const leaf = add(new THREE.SphereGeometry(0.11 + (i % 2) * 0.04, 10, 8), leafMat, px + Math.cos(a) * r, FY + 0.55 + (i % 4) * 0.18, pz + Math.sin(a) * r);
+		leaf.scale.set(1, 1.6, 0.5);
+		leaf.rotation.y = a;
+	}
+
+	return {
+		board: { pos: new THREE.Vector3(BOARD.x, BOARD.y, -RZ + 1.62), look: new THREE.Vector3(BOARD.x, BOARD.y, -RZ) },
+		rack: { pos: new THREE.Vector3(RACK.x, FY + 1.15, -RZ + 2.9), look: new THREE.Vector3(RACK.x, FY + 0.72, -RZ) },
+		selectCue,
+	};
 }
 
 /** Udrží kameru v miestnosti (nie cez steny, strop ani podlahu). */

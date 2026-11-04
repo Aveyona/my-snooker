@@ -3,37 +3,33 @@
  */
 import * as THREE from 'three';
 import { R, aimTrace } from './physics.js';
+import { buildCueMesh } from './cues.js';
 
-const CUE_LEN = 1.45;
 const TILT = THREE.MathUtils.degToRad(4); // tágo je mierne zdvihnuté nad mantinel
 
 export class Cue {
-	constructor(scene) {
-		this.group = new THREE.Group();
-		// tágo: svetlý javor vpredu, tmavá rukoväť, biela objímka a modrá špička (krieda)
-		const parts = [
-			{ len: 0.02, r1: 0.0046, r2: 0.0046, color: 0x2f6fd6 },
-			{ len: 0.025, r1: 0.0046, r2: 0.0048, color: 0xf2efe6 },
-			{ len: 0.85, r1: 0.0048, r2: 0.0105, color: 0xd9b37c },
-			{ len: 0.55, r1: 0.0105, r2: 0.0145, color: 0x2b1408 },
-			{ len: 0.005, r1: 0.0145, r2: 0.0145, color: 0x111111 },
-		];
-		let off = 0;
-		for (const p of parts) {
-			const m = new THREE.Mesh(
-				new THREE.CylinderGeometry(p.r1, p.r2, p.len, 20),
-				new THREE.MeshStandardMaterial({ color: p.color, roughness: 0.35, metalness: 0.05 })
-			);
-			// valec ide pozdĺž osi y; tágo vedieme od špičky (y = 0) dozadu (+y)
-			m.position.y = off + p.len / 2;
-			m.castShadow = true;
-			off += p.len;
-			this.group.add(m);
-		}
+	constructor(scene, spec) {
 		this.pivot = new THREE.Group();
-		this.pivot.add(this.group);
-		this.group.rotation.x = 0;
 		scene.add(this.pivot);
+		this.setSpec(spec);
+	}
+
+	/** Vymení model tága (iné tágo zo stojana). */
+	setSpec(spec) {
+		if (this.group) {
+			this.pivot.remove(this.group);
+			this.group.traverse((o) => {
+				if (o.geometry) {
+					o.geometry.dispose();
+				}
+				if (o.material) {
+					o.material.dispose();
+				}
+			});
+		}
+		this.spec = spec;
+		this.group = buildCueMesh(spec);
+		this.pivot.add(this.group);
 	}
 
 	/** Umiestni tágo za bielu: smer dir, odtiahnutie podľa sily, miesto úderu (side, top). */

@@ -14,6 +14,7 @@
  */
 import * as THREE from 'three';
 import { R } from './physics.js';
+import { strokePx } from './cues.js';
 
 export class Controls {
 	constructor(dom, rig, game, hooks) {
@@ -33,6 +34,9 @@ export class Controls {
 		this._spaceT = 0;
 		this.stroking = false; // ľavé tlačidlo: ruka drží tágo
 		this.spinning = false; // koliesko: posúvanie miesta úderu
+		this.blocked = false; // pohľad na nástenku alebo stojan: hra sa neovláda
+		this.cueSpec = { fine: 0, len: 1.45 };
+		this.strokePx = 380;
 		this.strokePull = 0;
 		this._hist = [];
 
@@ -79,6 +83,9 @@ export class Controls {
 	down(e) {
 		this.hooks.unlock();
 		const g = this.game;
+		if (this.blocked) {
+			return;
+		}
 		if (e.pointerType === 'mouse' && e.button === 2) {
 			// pravé tlačidlo drž = posúvanie pohľadu (kamera sa pozerá na mierenú guľu, inak na bod pol metra pred bielou)
 			if (this.rig.mode !== 'free') {
@@ -210,6 +217,12 @@ export class Controls {
 		}
 	}
 
+	/** Vlastnosti tága: jemné mierenie so Shift a citlivosť ťahania myšou. */
+	setCue(spec) {
+		this.cueSpec = spec;
+		this.strokePx = strokePx(spec);
+	}
+
 	/** Je myš zachytená v okne hry? */
 	get captured() {
 		return document.pointerLockElement === this.dom;
@@ -238,6 +251,9 @@ export class Controls {
 	/** Pohyb myši bez tlačidla: presné otáčanie tága (malý pohyb = veľmi jemne, rýchly pohyb = rýchlejšie). */
 	mouseMove(e) {
 		const g = this.game;
+		if (this.blocked) {
+			return;
+		}
 		if (performance.now() < this._ignoreUntil || Math.abs(e.movementX || 0) > 200 || Math.abs(e.movementY || 0) > 200) {
 			return;
 		}
@@ -272,8 +288,10 @@ export class Controls {
 		if (!dx) {
 			return;
 		}
-		const base = e.shiftKey ? 0.00006 : 0.0005; // radiány na pixel (0,0005 = asi 0,03 stupňa)
-		const accel = e.shiftKey ? 1 : 1 + Math.min(6, Math.abs(dx) / 6);
+		// jemné mierenie so Shift majú len tágá vyššej kategórie (cueSpec.fine = radiány na pixel)
+		const fine = e.shiftKey && this.cueSpec.fine > 0;
+		const base = fine ? this.cueSpec.fine : 0.0005; // radiány na pixel (0,0005 = asi 0,03 stupňa)
+		const accel = fine ? 1 : 1 + Math.min(6, Math.abs(dx) / 6);
 		g.dir += dx * base * accel;
 	}
 
@@ -332,7 +350,7 @@ export class Controls {
 		}
 		const now = performance.now();
 		const prev = this.strokePull;
-		this.strokePull = Math.max(-0.02, Math.min(1, prev + dy / 380));
+		this.strokePull = Math.max(-0.02, Math.min(1, prev + dy / this.strokePx));
 		this._max = Math.max(this._max, this.strokePull);
 		this._hist.push({ t: now, p: this.strokePull });
 		while (this._hist.length > 2 && now - this._hist[0].t > 80) {
@@ -394,6 +412,9 @@ export class Controls {
 		}
 		if (k === ' ') {
 			e.preventDefault();
+			if (this.blocked) {
+				return;
+			}
 			if (isDown && !this.charging && g.canShoot()) {
 				this.hooks.unlock();
 				this.charging = true;
@@ -437,8 +458,8 @@ export class Controls {
 	/** Šípky (plynulé mierenie) a medzerník (nabíjanie). */
 	update(dt) {
 		const g = this.game;
-		if (g.state === 'aim') {
-			const fine = this._keys.has('Shift');
+		if (g.state === 'aim' && !this.blocked) {
+			const fine = this._keys.has('Shift') && this.cueSpec.fine > 0;
 			const speed = fine ? 0.015 : 0.35;
 			if (this._keys.has('ArrowLeft')) {
 				g.dir -= speed * dt;

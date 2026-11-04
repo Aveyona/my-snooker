@@ -214,12 +214,12 @@ export class UI {
 			<h2>My Snooker</h2>
 			<p class="mysn-menu-mode">Tréning</p>
 			<div class="mysn-menu-btns"></div>
-			<p class="mysn-note">V hre sa myš zachytí v okne. Esc ju uvoľní a otvorí toto menu.</p>
+			<p class="mysn-note">V hre sa myš zachytí v okne. Esc ju uvoľní a otvorí toto menu. F1 nápoveda na nástenke, F2 stojan s tágami.</p>
 		</div>`;
 		const box = m.querySelector('.mysn-menu-btns');
 		this.btnResume = this.button('Hrať', 'resume');
 		this.btnResume.classList.add('mysn-primary');
-		box.append(this.btnResume, this.button('Nové rozostavenie', 'reset'), this.button('Nastavenia', 'settings'), this.button('Ovládanie', 'help'), this.button('Späť na web', 'home'));
+		box.append(this.btnResume, this.button('Nové rozostavenie', 'reset'), this.button('Tágá (F2)', 'rack'), this.button('Nápoveda (F1)', 'board'), this.button('Nastavenia', 'settings'), this.button('Späť na web', 'home'));
 		return m;
 	}
 
@@ -435,10 +435,59 @@ export class UI {
 		const t = this._stroke
 			? 'Ruka drží tágo: myš k sebe odtiahne, dopredu vystrelí. Pustením ľavého tlačidla zrušíš.'
 			: this._lock
-				? 'Mier pohybom myši (Shift jemne). Ľavé tlačidlo drž a striel, koliesko drž a posúvaj miesto úderu, pravé tlačidlo drž a posúvaj pohľad. Esc otvorí menu.'
-				: 'Klikni do hry, myš sa zachytí v okne.';
+				? `${this._cueName}: mier pohybom myši${this._cueFine ? ' (Shift jemne)' : ''}, ľavé tlačidlo drž a striel. F1 nápoveda, F2 tágá, Esc menu.`
+				: 'Klikni do hry, myš sa zachytí v okne. F1 nápoveda, F2 tágá.';
 		this.hint.textContent = t;
 		this.hint.classList.toggle('mysn-hint-on', !!this._stroke);
+	}
+
+	/** Názov tága a či má jemné mierenie (pre nápovedu hore). */
+	setCueInfo(spec) {
+		this._cueName = spec.name;
+		this._cueFine = spec.fine > 0;
+		this._hintText();
+	}
+
+	/** Pohľad na nástenku (board) alebo stojan s tágami (rack); null = späť do hry. */
+	showView(name, cues, selId) {
+		if (!this.viewBox) {
+			this.viewBox = h('div', 'mysn-view mysn-hidden');
+			this.root.appendChild(this.viewBox);
+		}
+		const box = this.viewBox;
+		box.classList.toggle('mysn-hidden', !name);
+		this.root.classList.toggle('mysn-viewing', !!name);
+		if (!name) {
+			return;
+		}
+		box.innerHTML = '';
+		if (name === 'rack') {
+			box.appendChild(h('h3', '', 'Stojan s tágami'));
+			const list = h('div', 'mysn-cues');
+			cues.forEach((c, i) => {
+				const card = h(
+					'button',
+					'mysn-cue' + (c.id === selId ? ' mysn-on' : ''),
+					`<span class="mysn-cue-n">${i + 1}</span><b>${c.name}</b><span class="mysn-cue-cat">${c.category}</span>` +
+						`<span>Špička: ${c.tip}</span><span>Najväčšia sila: ${Math.round(c.power * 100)} %</span>` +
+						`<span>Dĺžka: ${Math.round(c.len * 100)} cm</span><span>Jemné mierenie (Shift): ${c.fine > 0 ? 'áno' : 'nie'}</span>` +
+						`<em>${c.note}</em>`
+				);
+				card.type = 'button';
+				card.addEventListener('click', (e) => {
+					e.stopPropagation();
+					this.opts.onAction('cuePick', c.id);
+				});
+				list.appendChild(card);
+			});
+			box.appendChild(list);
+		}
+		const foot = h('div', 'mysn-view-foot');
+		foot.appendChild(h('span', '', name === 'rack' ? 'Šípky vľavo a vpravo vyberajú tágo. Enter, F2 alebo Esc: späť do hry.' : 'F1, Enter alebo Esc: späť do hry.'));
+		const back = this.button('Späť do hry', 'back');
+		back.classList.add('mysn-primary');
+		foot.appendChild(back);
+		box.appendChild(foot);
 	}
 
 	showPower(p) {

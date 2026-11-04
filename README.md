@@ -7,7 +7,8 @@ Hra je napísaná v JavaScripte nad knižnicou [three.js](https://threejs.org/),
 ## Čo už funguje (1. etapa: tréning)
 
 - 3D stôl so zaoblenými čeľusťami jamiek, mantinely so šikmým prierezom, drevený rám a lampy nad stolom
-- herňa: drevené obloženie, tmavozelená tapeta, strop s trámami, nástenné svietidlá a podlaha z dosiek
+- herňa 10 x 7,5 m: drevené obloženie, tmavozelená tapeta, strop s trámami, nástenné svietidlá, podlaha z dosiek, otvorené dvere do chodby, kreslá, barový stolík, obrazy
+- nástenka s nápovedou (F1) a stojan s 5 tágami (F2)
 - fyzika gúľ: kĺzanie, kotúľanie, guľa dopredu, guľa späť, zastavenie a bočná falša
 - ovládanie myšou ako tágo (myš sa zachytí v okne, Esc otvorí hlavné menu), prstom a klávesnicou
 - detail dotyku gúľ zhora (uhol a plnosť zásahu) a zvýraznenie gule, na ktorú sa mieri
@@ -18,12 +19,26 @@ Hra je napísaná v JavaScripte nad knižnicou [three.js](https://threejs.org/),
 
 | Akcia | Ovládanie |
 | --- | --- |
-| Mierenie | pohyb myši bez tlačidla (so Shift jemnejšie) |
+| Mierenie | pohyb myši bez tlačidla (so Shift jemnejšie, len pokročilé a majstrovské tágá) |
 | Úder | drž ľavé tlačidlo, myš k sebe tágo odtiahne, pohyb dopredu vystrelí |
 | Miesto úderu na bielej | drž koliesko a hýb myšou, dvojklik kolieskom = stred |
 | Posun pohľadu | drž pravé tlačidlo a hýb myšou |
 | Priblíženie | otáčanie kolieska |
 | Hlavné menu | Esc |
+| Nápoveda na nástenke | F1 |
+| Stojan s tágami | F2 (výber myšou alebo šípkami) |
+
+## Tágá
+
+| Tágo | Kategória | Špička | Najväčšia sila | Dĺžka | Jemné mierenie (Shift) |
+| --- | --- | --- | --- | --- | --- |
+| Klubové (predvolené) | Základné | stredná | 80 % | 145 cm | nie |
+| Krátke | Základné | tvrdá | 90 % | 137 cm | nie |
+| Mäkké | Pokročilé | mäkká | 65 % | 147 cm | áno |
+| Dlhé | Pokročilé | stredná | 85 % | 158 cm | áno |
+| Majstrovské | Majstrovské | stredne tvrdá | 100 % | 150 cm | áno, najjemnejšie |
+
+Dlhšie tágo treba ťahať myšou viac, sila sa tak dávkuje jemnejšie. Tvrdá špička horšie drží falše.
 
 ## Plán vývoja
 
@@ -38,7 +53,7 @@ Podrobný plán je aj priamo v doplnku: administrácia WordPressu, My Snooker, P
 ## Štruktúra
 
 - `my-snooker.php`, `includes/`: doplnok pre WordPress (stránka hry, nastavenia, plán vývoja)
-- `src/`: zdrojové moduly hry (physics, table, room, balls, cue, camera, controls, audio, ui, training, main)
+- `src/`: zdrojové moduly hry (physics, table, room, board, cues, balls, cue, camera, controls, audio, ui, training, main)
 - `assets/`: zostavená hra (`snooker.js`) a štýly (`snooker.css`)
 
 ## Zostavenie a testy

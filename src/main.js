@@ -14,13 +14,14 @@ import { Sound } from './audio.js';
 import { UI } from './ui.js';
 import { Training } from './training.js';
 import { aimTrace, R } from './physics.js';
+import { CUES, cueById } from './cues.js';
 
 const STORE = 'mySnookerSettings';
 const AIM_AHEAD = 0.5; // posun pohľadu bez mierenej gule: kamera sa pozerá 50 cm pred bielu
 
 function loadSettings() {
 	const mobile = /Android|iPhone|iPad|Mobile/i.test(navigator.userAgent);
-	const def = { lines: false, quality: mobile ? 'low' : 'high', volume: 0.8, respot: true, contact: true, camera: 'cue' };
+	const def = { lines: false, quality: mobile ? 'low' : 'high', volume: 0.8, respot: true, contact: true, camera: 'cue', cue: 'club' };
 	try {
 		const raw = window.localStorage.getItem(STORE);
 		if (raw) {
@@ -72,7 +73,7 @@ export function start(root, config = {}) {
 
 	const scene = new THREE.Scene();
 	buildRoom(scene, settings.quality);
-	buildRoomShell(scene, settings.quality);
+	const room = buildRoomShell(scene, settings.quality);
 	const table = buildTable(renderer);
 	scene.add(table.group);
 
@@ -84,7 +85,9 @@ export function start(root, config = {}) {
 	const env = pmrem.fromScene(new RoomEnvironment(), 0.04).texture;
 	pmrem.dispose();
 	const views = new BallViews(scene, game.balls, settings.quality, env);
-	const cue = new Cue(scene);
+	let cueSpec = cueById(settings.cue);
+	const cue = new Cue(scene, cueSpec);
+	room.selectCue(cueSpec.id);
 	const guide = new AimGuide(scene);
 	const rig = new CameraRig(renderer);
 	// kamera je vždy za tágom (staré uložené nastavenie kamery sa ignoruje)
@@ -100,8 +103,49 @@ export function start(root, config = {}) {
 	let started = false;
 	const finePointer = !!(window.matchMedia && window.matchMedia('(pointer: fine)').matches);
 
-	const doShoot = (power) => {
-		if (game.shoot(power, spin.side, spin.top)) {
+	// pohľad na nástenku (F1) alebo stojan s tágami (F2)
+	let view = null;
+	const enterView = (name) => {
+		if (view === name) {
+			exitView();
+			return;
+		}
+		if (game.state === 'moving') {
+			return;
+		}
+		view = name;
+		controls.blocked = true;
+		controls.uncapture();
+		ui.showMenu(false);
+		const v = room[name];
+		rig.setView(v.pos, v.look);
+		ui.showView(name, CUES, cueSpec.id);
+	};
+	const exitView = () => {
+		if (!view) {
+			return;
+		}
+		view = null;
+		controls.blocked = false;
+		rig.setMode(game.state === 'place' ? 'top' : 'cue');
+		ui.showView(null);
+		controls.capture();
+	};
+	const pickCue = (id) => {
+		cueSpec = cueById(id);
+		settings.cue = cueSpec.id;
+		saveSettings(settings);
+		cue.setSpec(cueSpec);
+		controls.setCue(cueSpec);
+		room.selectCue(cueSpec.id);
+		ui.showView(view, CUES, cueSpec.id);
+		ui.setCueInfo(cueSpec);
+	};
+
+	const doShoot = (rawPower) => {
+		// tvrdosť špičky: najväčšia sila tága; mäkká špička lepšie drží falše
+		const power = rawPower * cueSpec.power;
+		if (game.shoot(power, spin.side * cueSpec.grip, spin.top * cueSpec.grip)) {
 			sound.cue(power);
 			ui.sync(game, rig.mode);
 		}
@@ -148,7 +192,11 @@ export function start(root, config = {}) {
 			window.location.href = config.homeUrl || '/';
 		},
 		settings: () => ui.toggle(ui.panel),
-		help: () => ui.toggle(ui.help),
+		help: () => enterView('board'),
+		board: () => enterView('board'),
+		rack: () => enterView('rack'),
+		back: () => exitView(),
+		cuePick: (id) => pickCue(id),
 		setting: ({ k, v }) => {
 			settings[k] = v;
 			if (k === 'volume') {
@@ -187,13 +235,30 @@ export function start(root, config = {}) {
 			if (on) {
 				started = true;
 				ui.showMenu(false);
-			} else if (finePointer) {
+			} else if (finePointer && !view) {
 				ui.showMenu(true, started);
 			}
 		},
 		stroke: (on) => ui.setStroke(on),
 		key: (k) => {
 			const lk = k.toLowerCase();
+			if (lk === 'f1' || lk === 'f2') {
+				ui.opts.onAction(lk === 'f1' ? 'board' : 'rack');
+				return true;
+			}
+			if (view) {
+				// v pohľade na nástenku alebo stojan: Esc a Enter späť do hry, šípky vyberajú tágo
+				if (lk === 'escape' || lk === 'enter') {
+					exitView();
+					return true;
+				}
+				if (view === 'rack' && (lk === 'arrowleft' || lk === 'arrowright')) {
+					const i = CUES.findIndex((c) => c.id === cueSpec.id);
+					pickCue(CUES[(i + (lk === 'arrowleft' ? CUES.length - 1 : 1)) % CUES.length].id);
+					return true;
+				}
+				return false;
+			}
 			const act = { z: 'undo', backspace: 'undo', b: 'hand', r: 'reset', s: 'skip', h: 'help' }[lk];
 			if (act) {
 				ui.opts.onAction(act);
@@ -203,9 +268,14 @@ export function start(root, config = {}) {
 		},
 	});
 
+	controls.setCue(cueSpec);
+	ui.setCueInfo(cueSpec);
+
 	// pri kladení bielej do D sa kamera za tágom dočasne prepne zhora (bielu je tak lepšie vidieť)
 	game.on((type) => {
-		if (game.state === 'place' && rig.mode === 'cue') {
+		if (view) {
+			// v pohľade na nástenku alebo stojan kameru nemeníme
+		} else if (game.state === 'place' && rig.mode === 'cue') {
 			rig.setMode('top');
 			placeCam = true;
 		} else if (game.state !== 'place' && placeCam) {
@@ -250,7 +320,7 @@ export function start(root, config = {}) {
 				}
 			}
 		}
-		const aiming = game.state === 'aim';
+		const aiming = game.state === 'aim' && !view;
 		if (controls.stroking) {
 			pull = Math.max(0, controls.strokePull); // tágo ide presne s rukou
 		} else {

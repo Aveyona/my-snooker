@@ -20,7 +20,9 @@ function mysn_roadmap() {
 				array( 'Automatické testy fyziky (rovný úder, odraz, falše, jamky, rozbitie)', 1 ),
 				array( '3D stôl, gule, tágo, miestnosť so svetlami a tieňmi', 1 ),
 				array( 'Herňa: 4 steny s dreveným obložením a tmavozelenou tapetou, strop s trámami, nástenné svietidlá, kamera neprejde cez steny', 1 ),
-				array( 'Výzdoba herne (stojan na tága, tabuľa na skóre, obrazy, dvere, barový stolík)', 0 ),
+				array( 'Väčšia herňa (10 x 7,5 m) s vybavením: otvorené dvere do chodby, tabuľa na skóre, komoda, barový stolík so stoličkami, kreslá, obrazy, kvetina', 1 ),
+				array( 'Nástenka s nápovedou v herni (F1): ovládanie, klávesy, princíp hry, tágá', 1 ),
+				array( 'Stojan s 5 tágami (F2): tvrdosť špičky mení najväčšiu silu, dĺžka citlivosť ťahania myšou, jemné mierenie so Shift len pokročilé a majstrovské tágá', 1 ),
 				array( 'Stôl ako skutočný snooker: zaoblené čeľuste jamiek, zaoblené rohy rámu, kožené lemy jamiek, podlaha z drevených dosiek, vyššie lampy', 1 ),
 				array( 'Kamera za tágom (pri kladení bielej dočasne zhora), prepínanie kamier zrušené', 1 ),
 				array( 'Posun pohľadu pri držaní pravého tlačidla myši (po pustení sa vráti), po údere kamera sleduje bielu a otáča sa pohybom myši', 1 ),
@@ -89,6 +91,7 @@ function mysn_roadmap() {
 /** Denník zmien (najnovšie hore). */
 function mysn_changelog() {
 	return array(
+		array( '0.1.17', '4. 11. 2026', 'Väčšia herňa s vybavením a otvorenými dverami do chodby. F1: kamera ukáže nástenku s nápovedou. F2: stojan s 5 tágami (Klubové, Krátke, Mäkké, Dlhé, Majstrovské), výber myšou alebo šípkami. Tágo mení silu úderu, citlivosť ťahania a falše; jemné mierenie so Shift majú len pokročilé a majstrovské tágá.' ),
 		array( '0.1.16', '4. 11. 2026', 'Herňa okolo stola: miestnosť 7,5 x 5,5 m so stropom vo výške 3 m, drevené obloženie stien, tmavozelená tapeta, lišty, strop s trámami, 6 nástenných svietidiel. Lampy visia na lankách zo stropu, kamera neprejde cez steny ani strop.' ),
 		array( '0.1.15', '4. 11. 2026', 'Posun pohľadu pravým tlačidlom bez mierenej gule sa pozerá na bod pol metra pred bielou v smere mierenia (nie na stred stola).' ),
 		array( '0.1.14', '4. 11. 2026', 'Priblíženie kolieskom je rýchlejšie (asi o 20 % na jeden krok) a má väčší rozsah, od pohľadu na celý stôl až tesne k bielej. Mantinely majú prierez ako skutočný stôl: podrezaný spodok, nos vo výške gule a šikmý vrch, žiadna kolmá stena.' ),
