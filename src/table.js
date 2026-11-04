@@ -150,7 +150,7 @@ export function buildTable(renderer) {
 	const outZ = hz + RAIL + FRAME;
 
 	// Mantinely: guma v tvare skutočných mantinelov, konce zaoblené a zrezané do jamiek (ako čeľuste)
-	const railMat = new THREE.MeshStandardMaterial({ color: 0x17602f, roughness: 0.88 });
+	const railMat = new THREE.MeshStandardMaterial({ color: 0x17602f, roughness: 0.88, side: THREE.DoubleSide });
 	const jawEnd = (nx, nz, ox, oz) => ({ x: nx + ox * RAIL, z: nz + oz * RAIL }); // bod na zadnej strane mantinelu
 	const cushions = [];
 	for (const sz of [-1, 1]) {
@@ -173,8 +173,20 @@ export function buildTable(renderer) {
 		cushions.push({ long: false, a, b, ab: jawEnd(a.x, a.z, sx * 1, -1), bb: jawEnd(b.x, b.z, sx * 1, 1) });
 	}
 	const ROUND = 0.016; // polomer zaoblenia nosa mantinelu pri jamke
+	// Prierez mantinelu ako na skutočnom stole (d = vzdialenosť od nosa dozadu, y = výška): spodok je
+	// podrezaný, nos v 2/3 výšky gule, vrch sa zošikmí a plynulo prejde k drevenému rámu. Žiadna kolmá stena.
+	const PROFILE = [
+		[0.012, 0],
+		[0.006, 0.016],
+		[0.001, 0.029],
+		[0, 0.034],
+		[0.003, 0.0395],
+		[0.01, 0.0435],
+		[0.024, 0.0465],
+		[0.045, 0.048],
+		[0.075, 0.048],
+	];
 	for (const c of cushions) {
-		const shape = new THREE.Shape();
 		const towards = (p, q, d) => {
 			const l = Math.hypot(q.x - p.x, q.z - p.z) || 1;
 			return { x: p.x + ((q.x - p.x) / l) * d, z: p.z + ((q.z - p.z) / l) * d };
@@ -183,30 +195,62 @@ export function buildTable(renderer) {
 		const a2 = towards(c.a, c.b, ROUND);
 		const b1 = towards(c.b, c.a, ROUND);
 		const b2 = towards(c.b, c.bb, ROUND);
-		shape.moveTo(a1.x, a1.z);
-		shape.quadraticCurveTo(c.a.x, c.a.z, a2.x, a2.z);
-		shape.lineTo(b1.x, b1.z);
-		shape.quadraticCurveTo(c.b.x, c.b.z, b2.x, b2.z);
-		shape.lineTo(c.bb.x, c.bb.z);
-		// zadná strana mantinelu (pod drevom)
-		const back = (p) => (c.long ? { x: p.x, z: Math.sign(p.z) * (hz + RAIL + 0.01) } : { x: Math.sign(p.x) * (hx + RAIL + 0.01), z: p.z });
-		const bbk = back(c.bb);
-		const abk = back(c.ab);
-		shape.lineTo(bbk.x, bbk.z);
-		shape.lineTo(abk.x, abk.z);
-		shape.lineTo(c.ab.x, c.ab.z);
-		shape.lineTo(a1.x, a1.z);
-		const geo = new THREE.ExtrudeGeometry(shape, {
-			depth: CUSHION_H - 0.006,
-			bevelEnabled: true,
-			bevelThickness: 0.006,
-			bevelSize: 0.004,
-			bevelSegments: 3,
-			curveSegments: 10,
-		});
+		// línia nosa: od konca čeľuste cez zaoblenie, pozdĺž mantinelu a cez druhé zaoblenie k druhej čeľusti
+		const path = [];
+		const quad = (p0, p1, p2, n) => {
+			for (let i = 1; i <= n; i++) {
+				const t = i / n;
+				const u = 1 - t;
+				path.push({ x: u * u * p0.x + 2 * u * t * p1.x + t * t * p2.x, z: u * u * p0.z + 2 * u * t * p1.z + t * t * p2.z });
+			}
+		};
+		path.push({ ...c.ab }, { ...towards(c.ab, a1, Math.hypot(a1.x - c.ab.x, a1.z - c.ab.z) * 0.5) }, { ...a1 });
+		quad(a1, c.a, a2, 10);
+		const seg = 24;
+		for (let i = 1; i < seg; i++) {
+			path.push({ x: a2.x + ((b1.x - a2.x) * i) / seg, z: a2.z + ((b1.z - a2.z) * i) / seg });
+		}
+		path.push({ ...b1 });
+		quad(b1, c.b, b2, 10);
+		path.push({ ...towards(b2, c.bb, Math.hypot(c.bb.x - b2.x, c.bb.z - b2.z) * 0.5) }, { ...c.bb });
+		// strana „dozadu“ (od stola): podľa hlavnej časti mantinelu
+		const tx = c.b.x - c.a.x;
+		const tz = c.b.z - c.a.z;
+		const mid = { x: (c.a.x + c.b.x) / 2, z: (c.a.z + c.b.z) / 2 };
+		const sgn = -tz * mid.x + tx * mid.z > 0 ? 1 : -1;
+		const pos = [];
+		for (let i = 0; i < path.length; i++) {
+			const p0 = path[Math.max(0, i - 1)];
+			const p1 = path[Math.min(path.length - 1, i + 1)];
+			let dx = p1.x - p0.x;
+			let dz = p1.z - p0.z;
+			const l = Math.hypot(dx, dz) || 1;
+			dx /= l;
+			dz /= l;
+			const nx = -dz * sgn;
+			const nz = dx * sgn;
+			for (const [d, y] of PROFILE) {
+				pos.push(path[i].x + nx * d, y, path[i].z + nz * d);
+			}
+		}
+		const P = PROFILE.length;
+		const idx = [];
+		for (let i = 0; i < path.length - 1; i++) {
+			for (let j = 0; j < P - 1; j++) {
+				const v0 = i * P + j;
+				const v1 = (i + 1) * P + j;
+				if (sgn > 0) {
+					idx.push(v0, v1, v0 + 1, v1, v1 + 1, v0 + 1);
+				} else {
+					idx.push(v0, v0 + 1, v1, v1, v0 + 1, v1 + 1);
+				}
+			}
+		}
+		const geo = new THREE.BufferGeometry();
+		geo.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
+		geo.setIndex(idx);
+		geo.computeVertexNormals();
 		const m = new THREE.Mesh(geo, railMat);
-		m.rotation.x = Math.PI / 2; // tvar v rovine xz, vytlačenie smerom dole
-		m.position.y = CUSHION_H - 0.006;
 		m.castShadow = true;
 		m.receiveShadow = true;
 		group.add(m);

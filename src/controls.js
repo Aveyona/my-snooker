@@ -376,7 +376,9 @@ export class Controls {
 			return;
 		}
 		e.preventDefault();
-		this.rig.zoom = Math.min(3.2, Math.max(0.55, this.rig.zoom * (e.deltaY > 0 ? 0.92 : 1.08)));
+		// rýchlejšie a vo väčšom rozsahu: jeden krok kolieska asi o 20 %, od celkového pohľadu až tesne k bielej
+		const steps = Math.max(-4, Math.min(4, e.deltaY / (e.deltaMode === 1 ? 3 : 100)));
+		this.rig.zoom = Math.min(6, Math.max(0.3, this.rig.zoom * Math.pow(0.82, steps)));
 	}
 
 	key(e, isDown) {
