@@ -2,10 +2,23 @@
  * My Snooker: tágo a pomocné čiary mierenia (smer, „duch“ gule, kam pôjde objektová a biela guľa).
  */
 import * as THREE from 'three';
-import { R, aimTrace } from './physics.js';
+import { R, L, W, aimTrace } from './physics.js';
 import { buildCueMesh } from './cues.js';
 
 const TILT = THREE.MathUtils.degToRad(4); // tágo je mierne zdvihnuté nad mantinel
+const MAX_TILT = THREE.MathUtils.degToRad(40);
+const EDGE_H = 0.049 + 0.004; // vrch dreveného rámu nad súknom a malá rezerva
+const OUTER = 0.17; // mantinel a rám za hranou hracej plochy
+
+/** Vzdialenosť od bodu (x, z) v smere (ux, uz) po obdĺžnik s polovičnými rozmermi hx, hz. */
+function toEdge(x, z, ux, uz, hx, hz) {
+	let d = Infinity;
+	if (ux > 1e-6) d = Math.min(d, (hx - x) / ux);
+	if (ux < -1e-6) d = Math.min(d, (-hx - x) / ux);
+	if (uz > 1e-6) d = Math.min(d, (hz - z) / uz);
+	if (uz < -1e-6) d = Math.min(d, (-hz - z) / uz);
+	return Math.max(0, d);
+}
 
 export class Cue {
 	constructor(scene, spec) {
@@ -45,10 +58,25 @@ export class Cue {
 		const gap = 0.012 + pull * 0.28;
 		const tipX = cue.p.x - dx * (R + gap) + rx * side * 0.5 * R;
 		const tipZ = cue.p.z - dz * (R + gap) + rz * side * 0.5 * R;
-		const tipY = R + top * 0.5 * R + gap * Math.tan(TILT);
+		// pri mantineli sa tágo zdvihne strmšie, aby neprechádzalo cez mantinel a rám stola
+		const base = R + top * 0.5 * R;
+		const d1 = toEdge(tipX, tipZ, -dx, -dz, L / 2, W / 2);
+		const d2 = toEdge(tipX, tipZ, -dx, -dz, L / 2 + OUTER, W / 2 + OUTER);
+		const len = this.spec.len || 1.45;
+		const rad = (sd) => 0.0048 + ((0.0145 - 0.0048) * Math.min(sd, len)) / len;
+		let want = TILT;
+		for (; want < MAX_TILT; want += 0.005) {
+			const ok = [d1, d2].every((sd) => sd > len || base + sd * Math.sin(want) >= EDGE_H + rad(sd) / Math.cos(want));
+			if (ok) {
+				break;
+			}
+		}
+		this.tilt = this.tilt === undefined ? want : this.tilt + (want - this.tilt) * 0.25;
+		const tilt = this.tilt;
+		const tipY = base + gap * Math.tan(tilt);
 		this.pivot.position.set(tipX, tipY, tipZ);
-		// os tága (+y skupiny) má smerovať dozadu a mierne hore
-		const back = new THREE.Vector3(-dx * Math.cos(TILT), Math.sin(TILT), -dz * Math.cos(TILT));
+		// os tága (+y skupiny) má smerovať dozadu a hore
+		const back = new THREE.Vector3(-dx * Math.cos(tilt), Math.sin(tilt), -dz * Math.cos(tilt));
 		this.pivot.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), back);
 	}
 }

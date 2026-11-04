@@ -105,6 +105,7 @@ function mysn_roadmap() {
 /** Denník zmien (najnovšie hore). */
 function mysn_changelog() {
 	return array(
+		array( '0.2.9', '4. 11. 2026', 'Keď je biela pri mantineli, tágo sa zdvihne strmšie (až do 40 stupňov), aby neprechádzalo cez mantinel a rám stola. Kamera za tágom sa vtedy zdvihne nad tágo.' ),
 		array( '0.2.8', '4. 11. 2026', 'Pri bare (F10) sa dá myšou rozhliadať a kolieskom približovať. Drž Ctrl: myš sa uvoľní a dá sa kliknúť na telefón; so zachytenou myšou stačí pozrieť na telefón a kliknúť. Hra beží aj na vlastnej adrese snooker.hedlajner.sk.' ),
 		array( '0.2.7', '4. 11. 2026', 'F10: pohľad z baru. Na barovom stolíku leží telefón s obrazovkou Môj účet a dva poháre s vodou. Klik na telefón (alebo M) ho zväčší na obrazovku so stránkou Môj účet z webu. Pri hre o skóre čas pri bare stojí. Tabuľa so skóre na stene ukazuje aktuálny čas framu.' ),
 		array( '0.2.6', '4. 11. 2026', 'V herni pribudlo rádio: retro rádio na komode, pri pravej stene stolík s mixpultom a dva reproduktory na stojanoch. Stanice sú z My Player. Zvuk je priestorový (ľavý a pravý reproduktor, mení sa podľa pohľadu), mixpult mení hlasitosť, basy, výšky a vyváženie, LED stĺpce a membrány idú do rytmu. F9 pošle kameru k mixpultu.' ),

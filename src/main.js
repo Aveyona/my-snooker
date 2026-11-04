@@ -924,6 +924,7 @@ export function start(root, config = {}) {
 		} else {
 			rig.aimPoint = null;
 		}
+		rig.cueTilt = cue.pivot.visible ? cue.tilt || 0 : 0;
 		rig.update(dt, game.cue, game.dir, game.state === 'moving');
 		renderer.render(scene, rig.camera);
 		requestAnimationFrame(frame);

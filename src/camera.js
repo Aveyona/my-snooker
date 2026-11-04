@@ -148,7 +148,10 @@ export class CameraRig {
 			const dx = Math.cos(dir);
 			const dz = Math.sin(dir);
 			const back = 0.62 / this.zoom;
-			pos.set(cue.p.x - dx * back, this.height / this.zoom + 0.06, cue.p.z - dz * back);
+			// keď je tágo pri mantineli strmšie, kamera ide vyššie nad tágo (nie cez neho)
+			const y0 = this.height / this.zoom + 0.06;
+			const overCue = Math.tan(this.cueTilt || 0) * back + 0.15;
+			pos.set(cue.p.x - dx * back, Math.max(y0, overCue), cue.p.z - dz * back);
 			look.set(cue.p.x + dx * 0.55, 0, cue.p.z + dz * 0.55);
 		}
 		if (moving && !this._wasMoving && this.mode !== 'view') {
