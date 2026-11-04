@@ -687,6 +687,13 @@ export function start(root, config = {}) {
 		rig.resize(w, hh);
 	};
 	window.addEventListener('resize', resize);
+	// pri obnovení alebo zatvorení stránky uložiť čas rozohraného framu
+	window.addEventListener('pagehide', () => game.saveSoloTime());
+	document.addEventListener('visibilitychange', () => {
+		if (document.visibilityState === 'hidden') {
+			game.saveSoloTime();
+		}
+	});
 	resize();
 	ui.sync(game, rig.mode);
 	if (finePointer || !user) {
@@ -696,7 +703,21 @@ export function start(root, config = {}) {
 	const aimPoint = new THREE.Vector3();
 	let last = performance.now();
 	let lastReal = last;
+	// čas hrania pre hodiny na stene: pamätá sa v prehliadači, po obnovení stránky pokračuje
 	let playTime = 0;
+	try {
+		playTime = parseFloat(window.localStorage.getItem('mySnookerPlayTime') || '0') || 0;
+	} catch (e) {
+		playTime = 0;
+	}
+	const savePlayTime = () => {
+		try {
+			window.localStorage.setItem('mySnookerPlayTime', String(Math.round(playTime)));
+		} catch (e) {
+			/* úložisko nemusí byť dostupné */
+		}
+	};
+	window.addEventListener('pagehide', savePlayTime);
 	let lastSoloT = last;
 	let pull = 0;
 	const frame = (now) => {
@@ -739,15 +760,22 @@ export function start(root, config = {}) {
 		ui.showPower(controls.power);
 		views.update(dt);
 		// hodiny na stene: čas hrania od otvorenia hry (skrytá karta prehliadača sa nepočíta)
+		const before = Math.floor(playTime);
 		playTime += Math.min(1, Math.max(0, (now - lastReal) / 1000));
+		if (Math.floor(playTime) !== before && Math.floor(playTime) % 2 === 0) {
+			savePlayTime();
+		}
 		lastReal = now;
-		room.setClock(playTime);
+		room.setClock(game.solo && !game.solo.done ? game.solo.time : playTime); // pri hre o skóre čas framu
 		// čas framu o najlepšie skóre (beží, kým je frame rozohraný a menu je zavreté)
 		const so = game.solo;
 		if (so && !so.done && !ui.menuOpen() && !ui.leaderboardOpen() && !ui.partyOpen()) {
 			const before = Math.floor(so.time);
 			so.time += Math.min(1, Math.max(0, (now - lastSoloT) / 1000));
 			if (Math.floor(so.time) !== before) {
+				if (Math.floor(so.time) % 2 === 0) {
+					game.saveSoloTime(); // čas framu prežije obnovenie stránky (F5)
+				}
 				ui.sync(game, rig.mode);
 				if (view === 'score') {
 					updateScore();

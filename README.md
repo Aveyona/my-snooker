@@ -7,7 +7,7 @@ Hra je napísaná v JavaScripte nad knižnicou [three.js](https://threejs.org/),
 ## Čo už funguje
 
 - 3D stôl so zaoblenými čeľusťami jamiek, mantinely so šikmým prierezom, drevený rám a lampy nad stolom
-- herňa 10 x 7,5 m: drevené obloženie, tmavozelená tapeta, strop s trámami, nástenné svietidlá, podlaha z dosiek, otvorené dvere do chodby, kreslá, barový stolík, obrazy, nástenné hodiny merajúce čas hrania (začínajú na 11:30)
+- herňa 10 x 7,5 m: drevené obloženie, tmavozelená tapeta, strop s trámami, nástenné svietidlá, podlaha z dosiek, otvorené dvere do chodby, kreslá, barový stolík, obrazy, nástenné hodiny merajúce čas hrania od 11:30 (pri hre o skóre čas framu, po obnovení stránky pokračujú)
 - nástenka s nápovedou (F1), stojan s 10 tágami (F2), kriedovanie tága (F3), tabuľa so skóre (F4), pohľad zhora (Tab)
 - priehľadná 3D šípka vo farbe trafenej gule ukazuje, kam guľa pôjde
 - konferenčný stolík s novinami (titulka webu Hedlajner) a časopisom so správami z RSS (F9), čítanie na celú obrazovku (C), pohľad z kresla s priblížením kolieskom (F7)

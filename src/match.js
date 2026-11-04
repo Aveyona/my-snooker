@@ -82,6 +82,23 @@ export class Game extends Training {
 		}
 	}
 
+	/** Uloží len čas rozohraného framu (každých pár sekúnd a pri zatvorení stránky; stôl sa ukladá po údere). */
+	saveSoloTime() {
+		const so = this.solo;
+		if (!so || so.done) {
+			return;
+		}
+		try {
+			const saved = JSON.parse(window.localStorage.getItem(SOLO_KEY) || 'null');
+			if (saved && !saved.done) {
+				saved.time = Math.round(so.time);
+				window.localStorage.setItem(SOLO_KEY, JSON.stringify(saved));
+			}
+		} catch (e) {
+			/* úložisko nemusí byť dostupné */
+		}
+	}
+
 	/** Späť do tréningu (rozohraný frame ostáva uložený). */
 	stopSolo() {
 		if (this.solo) {
