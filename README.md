@@ -7,7 +7,7 @@ Hra je napísaná v JavaScripte nad knižnicou [three.js](https://threejs.org/),
 ## Čo už funguje
 
 - 3D stôl so zaoblenými čeľusťami jamiek, mantinely so šikmým prierezom, drevený rám a lampy nad stolom
-- herňa 10 x 7,5 m: drevené obloženie, tmavozelená tapeta, strop s trámami, nástenné svietidlá, podlaha z dosiek, otvorené dvere do chodby, kreslá, barový stolík, obrazy, nástenné hodiny merajúce čas hrania od 11:30 (pri hre o skóre čas framu, po obnovení stránky pokračujú)
+- herňa 10 x 7,5 m: drevené obloženie, tmavozelená tapeta, strop s trámami, nástenné svietidlá, podlaha z dosiek, otvorené dvere do chodby, kreslá, barový stolík, obrazy, nástenné hodiny: pri tréningu skutočný miestny čas, inak merajú čas hrania od 11:30 (pri hre o skóre čas framu, po obnovení stránky pokračujú)
 - nástenka s nápovedou (F1), stojan s 10 tágami (F2), kriedovanie tága (F3), tabuľa so skóre (F4), pohľad zhora (Tab)
 - priehľadná 3D šípka vo farbe trafenej gule ukazuje, kam guľa pôjde
 - rádio so stanicami z My Player: retro rádio na komode, mixpult a dva reproduktory pri pravej stene, priestorový zvuk z reproduktorov, mixpult mení hlasitosť, basy, výšky a vyváženie (F9)

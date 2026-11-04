@@ -918,8 +918,9 @@ export function buildRoomShell(scene, quality, opts = {}) {
 	clock.add(cap);
 	const CLOCK_START = 11 * 3600 + 30 * 60; // 11:30:00
 	/** Nastaví ručičky: sekundy hrania od začiatku (hodiny začínajú na 11:30). */
-	const setClock = (played) => {
-		const t = CLOCK_START + played;
+	// played = odohraný čas (od 11:30); abs = true: played je skutočný miestny čas v sekundách od polnoci
+	const setClock = (played, abs = false) => {
+		const t = abs ? played : CLOCK_START + played;
 		const s = t % 60;
 		const m = (t / 60) % 60;
 		const h = (t / 3600) % 12;

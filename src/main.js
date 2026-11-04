@@ -1204,7 +1204,13 @@ export function start(root, config = {}) {
 		lastReal = now;
 		const lev = radio.update(rig.camera);
 		radioCorner.update(lev[0], lev[1]);
-		room.setClock(game.solo && !game.solo.done ? game.solo.time : playTime); // pri hre o skóre čas framu
+		if ((!game.match && !game.solo) || (game.match && game.match.training)) {
+			// tréning: hodiny na stene ukazujú skutočný miestny čas
+			const d = new Date();
+			room.setClock(d.getHours() * 3600 + d.getMinutes() * 60 + d.getSeconds(), true);
+		} else {
+			room.setClock(game.solo && !game.solo.done ? game.solo.time : playTime); // pri hre o skóre čas framu
+		}
 		// čas framu o najlepšie skóre (beží, kým je frame rozohraný a menu je zavreté)
 		const so = game.solo;
 		// v kresle (F7) sa pri hre o skóre čas framu aj hodiny zastavia (v partii s priateľom bežia ďalej, ťahá súper)
