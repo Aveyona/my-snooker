@@ -174,6 +174,7 @@ export function start(root, config = {}) {
 	const controls = new Controls(renderer.domElement, rig, game, {
 		unlock: () => sound.unlock(),
 		shoot: doShoot,
+		spinReset: () => ui.setSpin(0, 0),
 		spin: (dx, dy) => ui.setSpin(Math.max(-1, Math.min(1, ui.side + dx)), Math.max(-1, Math.min(1, ui.top + dy))),
 		lock: (on) => {
 			ui.setLock(on);
@@ -264,7 +265,8 @@ export function start(root, config = {}) {
 		const trace = tr || (aiming && game.cue.on ? aimTrace(game.balls, game.cue, game.dir) : null);
 		ui.drawContact(showContact ? trace : null, game.dir, showContact, settings.lines);
 		if (trace) {
-			const tp = trace.ball ? trace.ball.p : trace.ghost;
+			// pri posune pohľadu sa kamera pozerá na mierenú guľu, a keď sa nemieri na žiadnu, na bielu
+			const tp = trace.ball ? trace.ball.p : game.cue.p;
 			aimPoint.set(tp.x, R, tp.z);
 			rig.aimPoint = aimPoint;
 		} else {

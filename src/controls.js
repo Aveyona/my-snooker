@@ -3,9 +3,9 @@
  *  Myš (zachytená v okne, Esc ju uvoľní): pohyb bez tlačidla otáča tágo (so Shift veľmi jemne),
  *  ľavé tlačidlo drž = ruka chytí tágo: pohyb myši k sebe tágo odtiahne, pohyb dopredu ho posunie a pri náraze
  *  do bielej vystrelí; sila podľa rýchlosti pohybu. Pustenie ľavého tlačidla bez úderu = zrušenie.
- *  Pravé tlačidlo drž = pohybom myši sa posúva miesto úderu na bielej (falše).
- *  Koliesko stlač a drž = posúvanie pohľadu hore, dole, doľava a doprava. Po údere kamera sleduje bielu
- *  a pohyb myši bez tlačidla otáča pohľad okolo nej.
+ *  Koliesko stlač a drž = pohybom myši sa posúva miesto úderu na bielej (falše), dvojklik kolieskom = stred.
+ *  Pravé tlačidlo drž = posúvanie pohľadu hore, dole, doľava a doprava (kamera sa pozerá na mierenú guľu,
+ *  ak sa nemieri na guľu, tak na bielu). Po údere kamera sleduje bielu a pohyb myši bez tlačidla otáča pohľad.
  *  Prst: ťahaj vodorovne = mierenie, koliesko myši = priblíženie.
  *  Zhora: klikni alebo ťahaj na stole = smer úderu.
  *  Voľná kamera: ťahanie otáča pohľad, krátke ťuknutie na stôl alebo šípky = smer.
@@ -32,12 +32,12 @@ export class Controls {
 		this._keys = new Set();
 		this._spaceT = 0;
 		this.stroking = false; // ľavé tlačidlo: ruka drží tágo
-		this.spinning = false; // pravé tlačidlo: posúvanie miesta úderu
+		this.spinning = false; // koliesko: posúvanie miesta úderu
 		this.strokePull = 0;
 		this._hist = [];
 
 		dom.addEventListener('mousemove', (e) => this.mouseMove(e));
-		this.panning = false; // stlačené koliesko: posúvanie pohľadu
+		this.panning = false; // pravé tlačidlo: posúvanie pohľadu
 		dom.addEventListener('mousedown', (e) => {
 			if (e.button === 1) {
 				e.preventDefault(); // bez automatického posúvania stránky
@@ -79,13 +79,26 @@ export class Controls {
 	down(e) {
 		this.hooks.unlock();
 		const g = this.game;
-		if (e.pointerType === 'mouse' && e.button === 1) {
-			// bez preventDefault: inak by prehliadač neposielal udalosti mousemove (automatické posúvanie stránky
-			// vypína samostatné počúvanie mousedown)
+		if (e.pointerType === 'mouse' && e.button === 2) {
+			// pravé tlačidlo drž = posúvanie pohľadu (kamera sa pozerá na mierenú guľu, inak na bielu)
 			if (this.rig.mode !== 'free') {
 				this.panning = true;
+				this.capture();
 			}
 			return;
+		}
+		if (e.pointerType === 'mouse' && e.button === 1) {
+			// dvojklik kolieskom = miesto úderu späť do stredu bielej
+			const now = performance.now();
+			if (now - (this._midT || 0) < 350) {
+				this._midT = 0;
+				this.spinning = false;
+				if (this.hooks.spinReset) {
+					this.hooks.spinReset();
+				}
+				return;
+			}
+			this._midT = now;
 		}
 		if (g.state === 'place' && this.captured) {
 			// so zachytenou myšou: biela sa posúva pohybom myši, ľavý klik ju položí
@@ -117,8 +130,10 @@ export class Controls {
 				}
 				return;
 			}
-			if (e.button === 2) {
-				// pravé tlačidlo drž = pohybom myši sa posúva miesto úderu na bielej
+			if (e.button === 1) {
+				// koliesko drž = pohybom myši sa posúva miesto úderu na bielej
+				// (bez preventDefault: inak by prehliadač neposielal udalosti mousemove; automatické posúvanie
+				// stránky vypína samostatné počúvanie mousedown)
 				this.spinning = true;
 				this.capture();
 				return;
@@ -172,11 +187,11 @@ export class Controls {
 		if (e.pointerType === 'mouse' && e.button === 0 && this.stroking) {
 			this.endStroke();
 		}
-		if (e.pointerType === 'mouse' && e.button === 2) {
+		if (e.pointerType === 'mouse' && e.button === 1) {
 			this.spinning = false;
 		}
-		if (e.pointerType === 'mouse' && e.button === 1) {
-			// pustením kolieska sa pohľad vráti na pôvodné miesto
+		if (e.pointerType === 'mouse' && e.button === 2) {
+			// pustením pravého tlačidla sa pohľad vráti na pôvodné miesto
 			this.panning = false;
 			this.rig.resetPan();
 		}
