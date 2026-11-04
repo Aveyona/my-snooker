@@ -196,8 +196,11 @@ export function buildRoomShell(scene, quality) {
 		return m;
 	};
 
-	// Dvere na kratšej stene (x = +RX), otvorené do herne
+	// Dvere na kratšej stene (x = +RX), otvorené do herne; F6 ich otvorí alebo zatvorí
 	const DOOR = { at: 1.9, w: 1.0, h: 2.15 };
+	let doorHinge = null;
+	const DOOR_OPEN = THREE.MathUtils.degToRad(72);
+	const doorState = { open: true, angle: DOOR_OPEN };
 
 	// Steny: [stred x, stred z, otočenie, dĺžka, dvere]
 	const walls = [
@@ -268,6 +271,7 @@ export function buildRoomShell(scene, quality) {
 			hinge.position.set(door.at + door.w / 2 - 0.02, 0, 0.02);
 			hinge.rotation.y = THREE.MathUtils.degToRad(72);
 			wall.add(hinge);
+			doorHinge = hinge;
 			const leafMat = new THREE.MeshStandardMaterial({ color: 0x5a2f16, roughness: 0.45 });
 			add(new THREE.BoxGeometry(door.w - 0.04, door.h - 0.02, 0.045), leafMat, -(door.w - 0.04) / 2, door.h / 2, 0, hinge);
 			// výplne na krídle
@@ -518,6 +522,23 @@ export function buildRoomShell(scene, quality) {
 		score: { pos: new THREE.Vector3(-RX + 1.55, SCORE.y, 0), look: new THREE.Vector3(-RX, SCORE.y, 0) },
 		selectCue,
 		updateScore,
+		/** Otvorí alebo zatvorí dvere; vráti true = budú otvorené. */
+		toggleDoor() {
+			doorState.open = !doorState.open;
+			return doorState.open;
+		},
+		/** Plynulý pohyb krídla dverí (volá sa každý snímok); vráti true v okamihu, keď dvere dosadnú do zárubne. */
+		update(dt) {
+			if (!doorHinge) {
+				return false;
+			}
+			const target = doorState.open ? DOOR_OPEN : 0;
+			const before = doorState.angle;
+			const step = dt * 1.4; // asi 0,9 s na celé otvorenie
+			doorState.angle = before + Math.max(-step, Math.min(step, target - before));
+			doorHinge.rotation.y = doorState.angle;
+			return before > 0 && doorState.angle === 0;
+		},
 	};
 }
 

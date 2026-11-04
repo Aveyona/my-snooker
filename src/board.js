@@ -29,6 +29,7 @@ const PAPERS = [
 			'F2   stojan s tágami',
 			'F3   nakriedovať špičku tága',
 			'F4   tabuľa so skóre',
+			'F6   otvoriť alebo zatvoriť dvere',
 			'Tab  pohľad na stôl zhora',
 			'Esc  hlavné menu',
 			'Z späť, B biela do ruky,',

@@ -115,6 +115,42 @@ export class Sound {
 		setTimeout(() => this._ok() && this._click(900, 3, 0.18, 0.5), 170);
 	}
 
+	/** Dvere: vŕzganie pántov pri pohybe, pri zatvorení buchnutie. */
+	doorCreak() {
+		if (!this._ok()) {
+			return;
+		}
+		const t = this.ctx.currentTime;
+		const o = this.ctx.createOscillator();
+		const f = this.ctx.createBiquadFilter();
+		const g = this.ctx.createGain();
+		o.type = 'sawtooth';
+		// kolísavá výška ako vŕzganie pántu
+		o.frequency.setValueAtTime(420, t);
+		for (let i = 1; i <= 8; i++) {
+			o.frequency.linearRampToValueAtTime(380 + Math.random() * 260, t + i * 0.1);
+		}
+		f.type = 'bandpass';
+		f.frequency.value = 900;
+		f.Q.value = 6;
+		g.gain.setValueAtTime(0.0001, t);
+		g.gain.exponentialRampToValueAtTime(0.12, t + 0.08);
+		g.gain.setValueAtTime(0.12, t + 0.6);
+		g.gain.exponentialRampToValueAtTime(0.0001, t + 0.85);
+		o.connect(f).connect(g).connect(this.master);
+		o.start(t);
+		o.stop(t + 0.9);
+	}
+
+	doorShut() {
+		if (!this._ok()) {
+			return;
+		}
+		this._tone(70, 0.35, 0.9, 'sine', 0.5);
+		this._click(500, 1.5, 0.8, 0.5);
+		setTimeout(() => this._ok() && this._click(2500, 4, 0.25, 1), 40); // cvaknutie zámku
+	}
+
 	cue(power) {
 		if (!this._ok()) {
 			return;

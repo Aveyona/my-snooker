@@ -30,6 +30,7 @@ Hra je napísaná v JavaScripte nad knižnicou [three.js](https://threejs.org/),
 | Stojan s tágami | F2 (výber myšou alebo šípkami) |
 | Kriedovanie špičky | F3 (falše 5x silnejšie na 3 údery) |
 | Tabuľa so skóre | F4 |
+| Dvere herne otvoriť alebo zatvoriť | F6 (so zvukom) |
 | Pohľad na stôl zhora | Tab |
 
 ## Tágá

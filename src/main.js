@@ -317,6 +317,13 @@ export function start(root, config = {}) {
 		stroke: (on) => ui.setStroke(on),
 		key: (k) => {
 			const lk = k.toLowerCase();
+			if (lk === 'f6') {
+				// dvere herne: otvoriť alebo zatvoriť (so zvukom)
+				sound.unlock();
+				room.toggleDoor();
+				sound.doorCreak();
+				return true;
+			}
 			const fkeys = { f1: 'board', f2: 'rack', f3: 'chalk', f4: 'score' };
 			if (fkeys[lk]) {
 				ui.opts.onAction(fkeys[lk]);
@@ -414,6 +421,9 @@ export function start(root, config = {}) {
 		}
 		ui.showPower(controls.power);
 		views.update(dt);
+		if (room.update(dt)) {
+			sound.doorShut();
+		}
 		cue.place(game.cue, game.dir, pull, spin.side, spin.top, (aiming || view === 'chalk') && game.cue.on);
 		if (chalkT >= 0) {
 			// kriedovanie: tágo sa zdvihne a odtiahne, krieda sa nasadí dierou na špičku, pootáča sa a odíde

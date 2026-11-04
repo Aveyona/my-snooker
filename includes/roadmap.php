@@ -93,6 +93,7 @@ function mysn_roadmap() {
 /** Denník zmien (najnovšie hore). */
 function mysn_changelog() {
 	return array(
+		array( '0.1.21', '4. 11. 2026', 'F6 otvorí alebo zatvorí dvere herne: krídlo sa plynulo pohne, pánty vŕzgajú a pri zatvorení dvere buchnú a cvakne zámok.' ),
 		array( '0.1.20', '4. 11. 2026', 'Vymenené F3 a F4: F3 kriedovanie, F4 tabuľa so skóre. Pri kriedovaní sa tágo zdvihne nad guľu a odtiahne, krieda je kocka s bielym obalom a štvorcovou dierou s modrou kriedou, nasadí sa na špičku a pootáča sa.' ),
 		array( '0.1.19', '4. 11. 2026', 'Šípka smeru gule je jeden kužeľ s medzerou od gule (nedotýka sa jej).' ),
 		array( '0.1.18', '4. 11. 2026', 'Tágo je jeden zúžený kus s textúrou dreva. Stojan má 10 tág. Tab: pohľad na stôl zhora. F3: tabuľa so skóre v herni. F4: kriedovanie špičky, potom sú falše 3 údery 5x silnejšie (bez kriedy len pätina účinku). Priehľadná 3D šípka vo farbe gule ukazuje, kam guľa pôjde; detail dotyku ukazuje, odkiaľ prichádza biela a kam pôjde guľa. Obrazy už neblikajú. Všetko je aj na nástenke (F1).' ),
