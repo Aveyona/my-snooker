@@ -55,7 +55,7 @@ const PAPERS = [
 		],
 	},
 	{
-		title: 'Tágá (F2)',
+		title: 'Tágá (F2) a partie',
 		lines: [
 			'Desať tág v troch kategóriách.',
 			'Tvrdá špička: silnejší úder,',
@@ -66,6 +66,8 @@ const PAPERS = [
 			'Pokročilé a majstrovské tágá',
 			'   majú jemné mierenie so Shift.',
 			'Výber: klik na kartu alebo šípky.',
+			'Hrať s priateľom (menu po Esc):',
+			'   partia cez internet podľa pravidiel.',
 		],
 	},
 ];

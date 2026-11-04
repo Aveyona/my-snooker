@@ -12,7 +12,9 @@ import { CameraRig } from './camera.js';
 import { Controls } from './controls.js';
 import { Sound } from './audio.js';
 import { UI } from './ui.js';
-import { Training } from './training.js';
+import { Game } from './match.js';
+import { Online } from './online.js';
+import { remaining } from './rules.js';
 import { aimTrace, R } from './physics.js';
 import { CUES, cueById } from './cues.js';
 
@@ -77,7 +79,8 @@ export function start(root, config = {}) {
 	const table = buildTable(renderer);
 	scene.add(table.group);
 
-	const game = new Training();
+	const game = new Game();
+	const user = config.user || null; // hrať môžu len prihlásení
 	game.respot = !!settings.respot;
 	game.aimAtNearest();
 	// odrazy okolia na guliach (mäkké svetlo zo všetkých strán, spodok gúľ nie je čierny)
@@ -144,7 +147,21 @@ export function start(root, config = {}) {
 	chalkMesh.rotation.order = 'YXZ'; // pootáčanie okolo osi tága
 	const LIFT = { up: 0.1, back: 0.22 }; // pri kriedovaní sa tágo zdvihne nad guľu a odtiahne
 	scene.add(chalkMesh);
-	const updateScore = () => room.updateScore(game.stats, { cue: cueSpec.name, chalk });
+	const updateScore = () => {
+		const m = game.match;
+		const match =
+			m && m.rules
+				? {
+						names: m.players.map((p) => String(p.name).slice(0, 18)),
+						scores: m.rules.scores,
+						turn: m.rules.over ? -1 : m.rules.turn,
+						brk: m.rules.brk,
+						on: game.onText(),
+						left: remaining(m.rules, game.balls.filter((b) => b.kind === 'red' && b.on).length),
+					}
+				: null;
+		room.updateScore(game.stats, { cue: cueSpec.name, chalk, mode: match ? 'Partia cez internet' : 'Tréning', match });
+	};
 	const enterView = (name) => {
 		if (view === name) {
 			exitView();
@@ -261,8 +278,39 @@ export function start(root, config = {}) {
 		},
 		resume: () => {
 			ui.showMenu(false);
+			ui.openLobby(false);
 			controls.capture();
 		},
+		lobby: () => {
+			if (online) {
+				online.lobbyOpen = true;
+				ui.openLobby(true);
+				online.ping();
+			}
+		},
+		lobbyClose: () => {
+			if (online) {
+				online.lobbyOpen = false;
+			}
+			ui.openLobby(false);
+		},
+		invite: (id) => online && online.invite(id),
+		cancelInvite: () => online && online.cancelInvite(),
+		accept: (id) => {
+			ui.hideToast();
+			if (online) {
+				online.answer(id, true);
+			}
+		},
+		decline: (id) => {
+			ui.hideToast();
+			if (online) {
+				online.answer(id, false);
+			}
+		},
+		resumeMatch: (id) => online && online.resume(id),
+		pauseMatch: () => online && online.leave('pause'),
+		resign: () => online && online.leave('resign'),
 		home: () => {
 			window.location.href = config.homeUrl || '/';
 		},
@@ -300,6 +348,8 @@ export function start(root, config = {}) {
 
 	const ui = new UI(overlay, {
 		homeUrl: config.homeUrl,
+		user,
+		loginUrl: config.loginUrl,
 		settings,
 		onAction: (name, value) => {
 			sound.unlock();
@@ -321,6 +371,10 @@ export function start(root, config = {}) {
 		lock: (on) => {
 			ui.setLock(on);
 			// myš sa uvoľnila (Esc): zobraz hlavné menu
+			if (on && !user) {
+				controls.uncapture();
+				return;
+			}
 			if (on) {
 				started = true;
 				freeMouse = false;
@@ -347,6 +401,9 @@ export function start(root, config = {}) {
 		},
 		key: (k) => {
 			const lk = k.toLowerCase();
+			if (!user) {
+				return true; // neprihlásený: len menu s tlačidlom Prihlásiť sa
+			}
 			if (lk === 'ctrl-down' || lk === 'ctrl-up') {
 				// Ctrl drž: voľná myš (kurzor, dá sa klikať); po pustení Ctrl sa myš znova zachytí na tágo
 				if (view) {
@@ -409,6 +466,56 @@ export function start(root, config = {}) {
 		},
 	});
 
+	if (!user) {
+		controls.blocked = true;
+	}
+
+	// hra cez internet (len prihlásení): živí hráči, pozvánky, partia
+	let online = null;
+	const menuKind = () => {
+		if (!user) {
+			return ['guest'];
+		}
+		const m = game.match;
+		return m ? ['match', m.players[1 - m.me].name] : ['training'];
+	};
+	const refreshMenu = () => ui.setMenu(...menuKind());
+	if (user && config.restUrl) {
+		online = new Online(config, game, {
+			lobby: (d) => {
+				ui.renderLobby(d);
+				ui.showInvites(game.match ? [] : d.invites);
+			},
+			invite: (inv) => !ui.menuOpen() && ui.toast(`${inv.from.name} ťa pozýva na partiu.${controls.captured ? ' Esc alebo Ctrl uvoľní myš.' : ''}`, inv),
+			toast: (t) => ui.toast(t),
+			started: (m) => {
+				exitView();
+				ui.openLobby(false);
+				online.lobbyOpen = false;
+				ui.hideToast();
+				ui.showInvites([]);
+				topView = false;
+				rig.setMode(game.state === 'place' ? 'top' : 'cue');
+				refreshMenu();
+				ui.showMenu(false);
+				ui.toast(`Partia s hráčom ${m.players[1 - m.me].name}. ${m.turn === m.me ? 'Si na rade.' : 'Na rade je súper.'}`);
+				ui.sync(game, rig.mode);
+				updateScore();
+			},
+			ended: (text) => {
+				exitView();
+				refreshMenu();
+				ui.showMenu(true, true);
+				ui.menuNote(text);
+				controls.uncapture();
+				game.aimAtNearest();
+				ui.sync(game, rig.mode);
+				updateScore();
+			},
+			status: () => ui.setNet(online ? online.statusText() : ''),
+		});
+	}
+
 	controls.setCue(cueSpec);
 	ui.setCueInfo(cueSpec);
 	ui.setChalk(chalk);
@@ -444,12 +551,14 @@ export function start(root, config = {}) {
 	window.addEventListener('resize', resize);
 	resize();
 	ui.sync(game, rig.mode);
-	if (finePointer) {
+	if (finePointer || !user) {
 		ui.showMenu(true, false);
 	}
 
 	const aimPoint = new THREE.Vector3();
 	let last = performance.now();
+	let lastReal = last;
+	let playTime = 0;
 	let pull = 0;
 	const frame = (now) => {
 		const dt = Math.min(0.05, (now - last) / 1000);
@@ -467,6 +576,21 @@ export function start(root, config = {}) {
 			}
 		}
 		const aiming = game.state === 'aim' && !view;
+		// súper je na rade: jeho tágo podľa mierenia zo servera (plynulo)
+		const watchAim = game.state === 'watch' && online && online.aimTarget;
+		if (watchAim) {
+			const a = online.aimTarget;
+			let d = a.dir - game.dir;
+			d = Math.atan2(Math.sin(d), Math.cos(d));
+			game.dir += d * Math.min(1, dt * 8);
+			if (game.cue.on) {
+				game.cue.p.x += (a.cx - game.cue.p.x) * Math.min(1, dt * 8);
+				game.cue.p.z += (a.cz - game.cue.p.z) * Math.min(1, dt * 8);
+			}
+		}
+		if (online) {
+			online.update(dt, game.myTurn ? { dir: game.dir, cx: game.cue.p.x, cz: game.cue.p.z, pull: controls.stroking ? Math.max(0, controls.strokePull) : 0, side: spin.side, top: spin.top } : null);
+		}
 		if (controls.stroking) {
 			pull = Math.max(0, controls.strokePull); // tágo ide presne s rukou
 		} else {
@@ -475,10 +599,17 @@ export function start(root, config = {}) {
 		}
 		ui.showPower(controls.power);
 		views.update(dt);
+		// hodiny na stene: čas hrania od otvorenia hry (skrytá karta prehliadača sa nepočíta)
+		playTime += Math.min(1, Math.max(0, (now - lastReal) / 1000));
+		lastReal = now;
+		room.setClock(playTime);
 		if (room.update(dt)) {
 			sound.doorShut();
 		}
-		cue.place(game.cue, game.dir, pull, spin.side, spin.top, (aiming || view === 'chalk') && game.cue.on);
+		if (watchAim) {
+			pull += ((online.aimTarget.pull || 0) - pull) * Math.min(1, dt * 10);
+		}
+		cue.place(game.cue, game.dir, pull, watchAim ? online.aimTarget.side || 0 : spin.side, watchAim ? online.aimTarget.top || 0 : spin.top, (aiming || view === 'chalk' || (watchAim && !online.aimTarget.place)) && game.cue.on);
 		if (chalkT >= 0) {
 			// kriedovanie: tágo sa zdvihne a odtiahne, krieda sa nasadí dierou na špičku, pootáča sa a odíde
 			chalkT = debug.chalkFreeze !== null ? debug.chalkFreeze : (performance.now() - chalkStart) / 1000; // podľa skutočného času
@@ -533,7 +664,9 @@ export function start(root, config = {}) {
 	};
 	requestAnimationFrame(frame);
 
-	return { game, rig, renderer, scene, settings, controls, debug };
+	return { game, rig, renderer, scene, settings, controls, debug, get online() {
+		return online;
+	} };
 }
 
 // Automatické spustenie na stránke hry

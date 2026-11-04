@@ -425,13 +425,22 @@ export function buildRoomShell(scene, quality, opts = {}) {
 		g.font = '34px Georgia, serif';
 		g.fillStyle = '#e8e2cf';
 		g.fillText((extra && extra.mode) || 'Tréning', W / 2, 140);
-		const rows = [
+		const mt = extra && extra.match;
+		const rows = mt
+			? [
+					[mt.names[0] + (mt.turn === 0 ? '  ●' : ''), mt.scores[0]],
+					[mt.names[1] + (mt.turn === 1 ? '  ●' : ''), mt.scores[1]],
+					['Séria', mt.brk],
+					['Hrá sa na', mt.on],
+					['Zostáva na stole', mt.left],
+				]
+			: [
 			['Údery', st.shots],
 			['Spadnuté gule', st.potted],
 			['Body', st.points],
 			['Séria', st.run],
 			['Najlepšia séria', st.best],
-		];
+				];
 		g.font = '40px Arial, Helvetica, sans-serif';
 		rows.forEach(([k, v], i) => {
 			const yy = 210 + i * 62;
@@ -528,6 +537,82 @@ export function buildRoomShell(scene, quality, opts = {}) {
 		add(new THREE.BoxGeometry(1.0, 0.76, 0.04), new THREE.MeshStandardMaterial({ color: 0x8a6a2a, metalness: 0.6, roughness: 0.4 }), x, FY + 1.75, RZ - 0.02);
 	}
 
+	// Nástenné hodiny na stene s dverami (medzi svietidlom a dverami): merajú čas hrania, začínajú na 11:30
+	const clock = new THREE.Group();
+	clock.position.set(RX - 0.02, FY + 2.0, 0.35);
+	clock.rotation.y = -Math.PI / 2; // ciferník sa pozerá do herne
+	scene.add(clock);
+	{
+		const CR = 0.2;
+		const c = document.createElement('canvas');
+		c.width = c.height = 512;
+		const g = c.getContext('2d');
+		g.fillStyle = '#f4eedc';
+		g.fillRect(0, 0, 512, 512);
+		g.translate(256, 256);
+		g.strokeStyle = '#2a2218';
+		for (let i = 0; i < 60; i++) {
+			const a = (i / 60) * Math.PI * 2;
+			const big = i % 5 === 0;
+			g.lineWidth = big ? 9 : 3;
+			g.beginPath();
+			g.moveTo(Math.sin(a) * (big ? 200 : 214), -Math.cos(a) * (big ? 200 : 214));
+			g.lineTo(Math.sin(a) * 236, -Math.cos(a) * 236);
+			g.stroke();
+		}
+		g.fillStyle = '#2a2218';
+		g.font = 'bold 56px Georgia, serif';
+		g.textAlign = 'center';
+		g.textBaseline = 'middle';
+		for (let n = 1; n <= 12; n++) {
+			const a = (n / 12) * Math.PI * 2;
+			g.fillText(String(n), Math.sin(a) * 160, -Math.cos(a) * 160 + 3);
+		}
+		g.font = '22px Georgia, serif';
+		g.fillText('MY SNOOKER', 0, 78);
+		const tex = new THREE.CanvasTexture(c);
+		tex.colorSpace = THREE.SRGBColorSpace;
+		tex.anisotropy = 8;
+		const face = new THREE.Mesh(new THREE.CircleGeometry(CR, 64), new THREE.MeshStandardMaterial({ map: tex, roughness: 0.6 }));
+		face.position.z = 0.012;
+		clock.add(face);
+		const ring = new THREE.Mesh(new THREE.TorusGeometry(CR + 0.012, 0.018, 12, 64), darkWood);
+		ring.position.z = 0.014;
+		clock.add(ring);
+		const back = new THREE.Mesh(new THREE.CylinderGeometry(CR + 0.02, CR + 0.02, 0.02, 48), darkWood);
+		back.rotation.x = Math.PI / 2;
+		clock.add(back);
+	}
+	const handMat = new THREE.MeshStandardMaterial({ color: 0x1a1510, roughness: 0.5, metalness: 0.3 });
+	const hand = (len, w, z, mat) => {
+		const pivot = new THREE.Group();
+		pivot.position.z = z;
+		const m = new THREE.Mesh(new THREE.BoxGeometry(w, len, 0.004), mat);
+		m.position.y = len / 2 - len * 0.15; // ručička presahuje kúsok za stred
+		pivot.add(m);
+		clock.add(pivot);
+		return pivot;
+	};
+	const hourHand = hand(0.11, 0.012, 0.018, handMat);
+	const minHand = hand(0.16, 0.008, 0.022, handMat);
+	const secHand = hand(0.17, 0.003, 0.026, new THREE.MeshStandardMaterial({ color: 0xb3121f, roughness: 0.5 }));
+	const cap = new THREE.Mesh(new THREE.CylinderGeometry(0.009, 0.009, 0.012, 16), brassMat);
+	cap.rotation.x = Math.PI / 2;
+	cap.position.z = 0.028;
+	clock.add(cap);
+	const CLOCK_START = 11 * 3600 + 30 * 60; // 11:30:00
+	/** Nastaví ručičky: sekundy hrania od začiatku (hodiny začínajú na 11:30). */
+	const setClock = (played) => {
+		const t = CLOCK_START + played;
+		const s = t % 60;
+		const m = (t / 60) % 60;
+		const h = (t / 3600) % 12;
+		secHand.rotation.z = -(Math.floor(s) / 60) * Math.PI * 2; // sekundová ručička skáče po sekundách
+		minHand.rotation.z = -(m / 60) * Math.PI * 2;
+		hourHand.rotation.z = -(h / 12) * Math.PI * 2;
+	};
+	setClock(0);
+
 	// Kvetina v rohu pri dverách
 	const px = RX - 0.5;
 	const pz = -RZ + 0.5;
@@ -555,6 +640,7 @@ export function buildRoomShell(scene, quality, opts = {}) {
 		rssItems: mag.items,
 		selectCue,
 		updateScore,
+		setClock,
 		/** Otvorí alebo zatvorí dvere; vráti true = budú otvorené. */
 		toggleDoor() {
 			doorState.open = !doorState.open;

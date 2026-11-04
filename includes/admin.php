@@ -61,7 +61,7 @@ function mysn_admin_page() {
 				<p>Tréning: <b style="color:#008a20">hotové</b></p>
 				<p>2 hráči na jednom zariadení: <span style="color:#8c8f94">2. etapa</span></p>
 				<p>Proti počítaču: <span style="color:#8c8f94">3. etapa</span></p>
-				<p>2 hráči cez internet: <span style="color:#8c8f94">4. etapa</span></p>
+				<p>2 hráči cez internet: <b style="color:#008a20">prvá verzia</b> (Hrať s priateľom)</p>
 				<p><a href="<?php echo esc_url( admin_url( 'admin.php?page=my-snooker-plan' ) ); ?>">Plán vývoja</a></p>
 			</div>
 		</div>
@@ -74,12 +74,46 @@ function mysn_admin_page() {
 					<input id="mysn-host" type="text" name="host" class="regular-text" value="<?php echo esc_attr( $s['host'] ); ?>" placeholder="<?php echo esc_attr( mysn_host() ); ?>">
 					<p class="description">Prázdne znamená snooker. pred hlavnou doménou webu.</p></td></tr>
 				<tr><th scope="row">Prístup</th><td>
-					<label><input type="checkbox" name="login" value="1" <?php checked( ! empty( $s['login'] ) ); ?>> Hrať môžu len prihlásení používatelia</label>
-					<p class="description">Hra cez internet (4. etapa) bude vždy len pre prihlásených.</p></td></tr>
+					<p>Hrať môžu len prihlásení používatelia webu. Neprihlásený návštevník vidí herňu a v menu tlačidlo Prihlásiť sa.</p></td></tr>
 			</table>
 			<?php submit_button( 'Uložiť' ); ?>
 		</form>
+		<?php mysn_admin_matches(); ?>
 	</div>
+	<?php
+}
+
+/** Prehľad partií cez internet (tabuľka my_snooker_matches, záznam úderov v my_snooker_moves). */
+function mysn_admin_matches() {
+	$rows  = mysn_recent_matches( 30 );
+	$names = array(
+		'active'   => 'rozohraná',
+		'paused'   => 'prerušená',
+		'finished' => 'skončená',
+	);
+	?>
+	<h2>Partie cez internet</h2>
+	<p class="description">Každý úder sa ukladá so stavom stola, takže pri výpadku internetu hráči pokračujú tam, kde skončili. Prerušená partia sa dá dokončiť v hre (Hrať s priateľom, Rozohrané partie).</p>
+	<?php if ( ! $rows ) : ?>
+		<p>Zatiaľ žiadne partie.</p>
+	<?php else : ?>
+		<table class="widefat striped" style="max-width:900px">
+			<thead><tr><th>Partia</th><th>Hráči</th><th>Skóre</th><th>Údery</th><th>Stav</th><th>Víťaz</th><th>Naposledy</th></tr></thead>
+			<tbody>
+			<?php foreach ( $rows as $m ) : ?>
+				<tr>
+					<td>#<?php echo (int) $m['id']; ?></td>
+					<td><?php echo esc_html( mysn_user( $m['p1'] )['name'] . ' a ' . mysn_user( $m['p2'] )['name'] ); ?></td>
+					<td><?php echo (int) $m['score1'] . ' : ' . (int) $m['score2']; ?></td>
+					<td><?php echo (int) $m['moves']; ?></td>
+					<td><?php echo esc_html( ( $names[ $m['status'] ] ?? $m['status'] ) . ( 'resign' === $m['result'] ? ', vzdaná' : '' ) ); ?></td>
+					<td><?php echo $m['winner'] ? esc_html( mysn_user( $m['winner'] )['name'] ) : ''; ?></td>
+					<td><?php echo esc_html( wp_date( 'j. n. Y H:i', (int) $m['updated'] ) ); ?></td>
+				</tr>
+			<?php endforeach; ?>
+			</tbody>
+		</table>
+	<?php endif; ?>
 	<?php
 }
 

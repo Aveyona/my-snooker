@@ -21,6 +21,10 @@ add_action( 'wp_loaded', function () {
 		}
 		return;
 	}
+	// REST rozhranie hry cez internet beží aj na subdoméne (prihlasovacie cookie platí pre celú doménu)
+	if ( 0 === strpos( $path, '/wp-json/' ) ) {
+		return;
+	}
 	if ( in_array( $path, array( '', '/', '/index.php' ), true ) ) {
 		mysn_render( false );
 		exit;
@@ -48,19 +52,33 @@ function mysn_render( $preview ) {
 	nocache_headers();
 	status_header( 200 );
 	header( 'Content-Type: text/html; charset=utf-8' );
-	$s     = mysn_settings();
 	$title = 'My Snooker: 3D snooker v prehliadači';
 	$desc  = 'Zahraj si snooker v 3D priamo v prehliadači, na počítači aj na mobile. Skutočné rozmery stola, falše, odrazy od mantinelov a tréning úderov.';
 	$icon  = get_site_icon_url( 192 );
 	$main  = mysn_main_url() . '/';
-	$need  = ! empty( $s['login'] ) && ! is_user_logged_in();
-	$cfg   = array(
-		'homeUrl' => $main,
-		'version' => MYSN_VERSION,
-		'mode'    => 'training',
-		'news'    => mysn_news(),
-		'rss'     => mysn_rss(),
-		'site'    => 'HEDLAJNER',
+	$game  = $preview ? $main . ltrim( mysn_preview_path(), '/' ) : mysn_url();
+	$user  = null;
+	if ( is_user_logged_in() ) {
+		$u    = wp_get_current_user();
+		$user = array(
+			'id'     => (int) $u->ID,
+			'name'   => $u->display_name,
+			'avatar' => get_avatar_url( $u->ID, array( 'size' => 64 ) ),
+		);
+	}
+	$cfg = array(
+		'homeUrl'  => $main,
+		'version'  => MYSN_VERSION,
+		'mode'     => 'training',
+		'news'     => mysn_news(),
+		'rss'      => mysn_rss(),
+		'site'     => 'HEDLAJNER',
+		// hrať môžu len prihlásení; neprihlásený vidí herňu a v menu tlačidlo Prihlásiť sa
+		'user'     => $user,
+		'loginUrl' => wp_login_url( $game ),
+		// REST na tej istej adrese, z ktorej sa hra načítala (hlavný web alebo subdoména)
+		'restUrl'  => (string) wp_parse_url( rest_url( 'my-snooker/v1/' ), PHP_URL_PATH ),
+		'nonce'    => $user ? wp_create_nonce( 'wp_rest' ) : '',
 	);
 	?>
 <!doctype html>
@@ -85,13 +103,9 @@ function mysn_render( $preview ) {
 <link rel="stylesheet" href="<?php echo esc_url( MYSN_URL . 'assets/snooker.css?ver=' . mysn_asset_ver( 'snooker.css' ) ); ?>">
 </head>
 <body class="mysn-page">
-<?php if ( $need ) : ?>
-<div class="mysn-gate"><h1>My Snooker</h1><p>Hrať môžu len prihlásení používatelia webu Hedlajner.</p><p><a class="mysn-btn mysn-primary" href="<?php echo esc_url( wp_login_url( $preview ? $main . ltrim( mysn_preview_path(), '/' ) : mysn_url() ) ); ?>">Prihlásiť sa</a></p></div>
-<?php else : ?>
 <div id="mysn-app"><noscript><div class="mysn-nogl">Hra potrebuje zapnutý JavaScript.</div></noscript></div>
 <script>window.MYSN_CONFIG = <?php echo wp_json_encode( $cfg ); ?>;</script>
 <script src="<?php echo esc_url( MYSN_URL . 'assets/snooker.js?ver=' . mysn_asset_ver( 'snooker.js' ) ); ?>"></script>
-<?php endif; ?>
 </body>
 </html>
 	<?php

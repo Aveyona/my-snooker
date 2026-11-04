@@ -1,0 +1,88 @@
+<?php
+/**
+ * My Snooker: vlastné tabuľky vo WordPresse pre hru dvoch hráčov cez internet.
+ *
+ * {prefix}my_snooker_presence  kto je práve v hre (posledný signál), v akom stave a v ktorej partii
+ * {prefix}my_snooker_matches   partie: hráči, stav, kto je na rade, poradie úderu, uložený stav stola a skóre,
+ *                              rozohraný úder, mierenie hráča na rade, posledný signál každého hráča, výsledok
+ * {prefix}my_snooker_moves     záznam partie: každý úder s parametrami, stavom po údere, bodmi a faulom
+ *
+ * Partia sa ukladá po každom údere, takže pri výpadku internetu sa dá pokračovať tam, kde sa skončila.
+ */
+if ( ! defined( 'ABSPATH' ) ) {
+	exit;
+}
+
+const MYSN_DB_VERSION = '1';
+
+function mysn_table( $name ) {
+	global $wpdb;
+	return $wpdb->prefix . 'my_snooker_' . $name;
+}
+
+function mysn_db_install() {
+	global $wpdb;
+	require_once ABSPATH . 'wp-admin/includes/upgrade.php';
+	$c = $wpdb->get_charset_collate();
+	dbDelta(
+		'CREATE TABLE ' . mysn_table( 'presence' ) . " (
+user_id bigint(20) unsigned NOT NULL,
+seen int(10) unsigned NOT NULL DEFAULT 0,
+state varchar(20) NOT NULL DEFAULT '',
+match_id bigint(20) unsigned NOT NULL DEFAULT 0,
+PRIMARY KEY  (user_id),
+KEY seen (seen)
+) $c;"
+	);
+	dbDelta(
+		'CREATE TABLE ' . mysn_table( 'matches' ) . " (
+id bigint(20) unsigned NOT NULL AUTO_INCREMENT,
+p1 bigint(20) unsigned NOT NULL,
+p2 bigint(20) unsigned NOT NULL,
+status varchar(12) NOT NULL DEFAULT 'invited',
+created int(10) unsigned NOT NULL DEFAULT 0,
+updated int(10) unsigned NOT NULL DEFAULT 0,
+turn tinyint(1) unsigned NOT NULL DEFAULT 0,
+seq int(10) unsigned NOT NULL DEFAULT 0,
+state longtext NULL,
+shot text NULL,
+aim text NULL,
+aimv int(10) unsigned NOT NULL DEFAULT 0,
+seen1 int(10) unsigned NOT NULL DEFAULT 0,
+seen2 int(10) unsigned NOT NULL DEFAULT 0,
+score1 int(10) unsigned NOT NULL DEFAULT 0,
+score2 int(10) unsigned NOT NULL DEFAULT 0,
+winner bigint(20) unsigned NOT NULL DEFAULT 0,
+result varchar(20) NOT NULL DEFAULT '',
+PRIMARY KEY  (id),
+KEY p1 (p1,status),
+KEY p2 (p2,status),
+KEY status (status)
+) $c;"
+	);
+	dbDelta(
+		'CREATE TABLE ' . mysn_table( 'moves' ) . " (
+id bigint(20) unsigned NOT NULL AUTO_INCREMENT,
+match_id bigint(20) unsigned NOT NULL,
+seq int(10) unsigned NOT NULL,
+user_id bigint(20) unsigned NOT NULL,
+shot text NULL,
+after longtext NULL,
+points int(10) unsigned NOT NULL DEFAULT 0,
+foul tinyint(1) unsigned NOT NULL DEFAULT 0,
+created int(10) unsigned NOT NULL DEFAULT 0,
+PRIMARY KEY  (id),
+UNIQUE KEY match_seq (match_id,seq)
+) $c;"
+	);
+	update_option( 'mysn_db', MYSN_DB_VERSION, true );
+}
+
+add_action(
+	'plugins_loaded',
+	function () {
+		if ( get_option( 'mysn_db' ) !== MYSN_DB_VERSION ) {
+			mysn_db_install();
+		}
+	}
+);

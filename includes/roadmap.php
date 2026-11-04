@@ -21,6 +21,7 @@ function mysn_roadmap() {
 				array( '3D stôl, gule, tágo, miestnosť so svetlami a tieňmi', 1 ),
 				array( 'Herňa: 4 steny s dreveným obložením a tmavozelenou tapetou, strop s trámami, nástenné svietidlá, kamera neprejde cez steny', 1 ),
 				array( 'Väčšia herňa (10 x 7,5 m) s vybavením: otvorené dvere do chodby, tabuľa na skóre, komoda, barový stolík so stoličkami, kreslá, obrazy, kvetina', 1 ),
+				array( 'Nástenné hodiny merajú čas hrania (začínajú na 11:30, skrytá karta prehliadača sa nepočíta)', 1 ),
 				array( 'Nástenka s nápovedou v herni (F1): ovládanie, klávesy, princíp hry, tágá', 1 ),
 				array( 'Kriedovanie špičky (F3, falše 5x silnejšie na 3 údery), tabuľa so skóre v herni (F4), pohľad zhora (Tab)', 1 ),
 				array( 'Konferenčný stolík s novinami (titulka webu Hedlajner, F8) a časopisom so správami z RSS (F9), čítanie na celú obrazovku (C), pohľad z kresla s rozhliadaním (F7), dvere F6', 1 ),
@@ -34,6 +35,7 @@ function mysn_roadmap() {
 				array( 'Zvýraznenie gule, na ktorú sa mieri (žltý obrys a krúžok na súkne)', 1 ),
 				array( 'Pomocné čiary mierenia (smer, kam pôjde objektová a biela guľa), predvolene vypnuté', 1 ),
 				array( 'Hlavné menu hry (na začiatku a po Esc)', 1 ),
+				array( 'Hrať môžu len prihlásení: neprihlásený vidí herňu a v menu žlté tlačidlo Prihlásiť sa; prihlásený Tréning, Hrať s priateľom a Nastavenia', 1 ),
 				array( 'Prepínač pomocných čiar v hlavnom menu', 0 ),
 				array( 'Detail dotyku: 2D pohľad zhora v okamihu, keď sa biela dotkne gule (uhol, plnosť zásahu)', 1 ),
 				array( 'Zvuky nárazov, mantinelov a jamiek', 1 ),
@@ -45,13 +47,15 @@ function mysn_roadmap() {
 		array(
 			'n'      => 2,
 			'title'  => 'Pravidlá snookeru a 2 hráči na jednom zariadení',
-			'status' => 'next',
+			'status' => 'now',
 			'goal'   => 'Skutočný frame podľa pravidiel, dvaja hráči sa striedajú na jednom počítači alebo mobile.',
 			'items'  => array(
-				array( 'Poradie gúľ: červená, farba, na konci farby od žltej po čiernu', 0 ),
-				array( 'Fauly a trestné body (minimálne 4), voľná guľa, opakovanie úderu na žiadosť súpera', 0 ),
-				array( 'Ukazovateľ, na akú guľu sa hrá, skóre, náboj, zostávajúce body na stole', 0 ),
-				array( 'Koniec framu, opätovné položenie čiernej pri rovnosti', 0 ),
+				array( 'Poradie gúľ: červená, farba, na konci farby od žltej po čiernu (modul pravidiel s testami, zatiaľ v partii cez internet)', 1 ),
+				array( 'Fauly a trestné body (minimálne 4): minutie, prvá trafená nesprávna guľa, nesprávna guľa v jamke, biela v jamke (biela do ruky v D)', 1 ),
+				array( 'Voľná guľa, opakovanie úderu na žiadosť súpera, pravidlo miss', 0 ),
+				array( 'Ukazovateľ, na akú guľu sa hrá, skóre, náboj, zostávajúce body na stole', 1 ),
+				array( 'Koniec framu, opätovné položenie čiernej pri rovnosti', 1 ),
+				array( '2 hráči na jednom zariadení', 0 ),
 				array( 'Zápas na viac framov (napríklad na 3 alebo 5)', 0 ),
 			),
 		),
@@ -69,12 +73,15 @@ function mysn_roadmap() {
 		array(
 			'n'      => 4,
 			'title'  => '2 hráči cez internet',
-			'status' => 'next',
+			'status' => 'now',
 			'goal'   => 'Dvaja prihlásení hráči hrajú proti sebe každý na svojom zariadení.',
 			'items'  => array(
-				array( 'Pozvánka cez odkaz alebo čakáreň so súpermi', 0 ),
-				array( 'Prenos úderov cez server webu, rovnaká simulácia u oboch hráčov', 0 ),
-				array( 'Opätovné pripojenie po výpadku, časový limit na úder', 0 ),
+				array( 'Hrať s priateľom: zoznam hráčov, ktorí sú práve v hre (ostatní sa nezobrazujú), pozvánka, prijatie alebo odmietnutie', 1 ),
+				array( 'Vlastné tabuľky vo WordPresse: partie, záznam každého úderu so stavom stola, kto je práve v hre', 1 ),
+				array( 'Prenos úderov cez server webu: súper vidí moje tágo pri mierení, úder sa prehrá u oboch a zosúladí sa so stavom strelca', 1 ),
+				array( 'Pokračovanie po výpadku internetu alebo obnovení stránky; partia bez súpera sa po 10 minútach preruší a dá sa dokončiť neskôr (Rozohrané partie)', 1 ),
+				array( 'Prerušenie a vzdanie partie, prehľad partií v administrácii', 1 ),
+				array( 'Časový limit na úder, pozvánka cez odkaz', 0 ),
 			),
 		),
 		array(
@@ -94,6 +101,7 @@ function mysn_roadmap() {
 /** Denník zmien (najnovšie hore). */
 function mysn_changelog() {
 	return array(
+		array( '0.2.0', '4. 11. 2026', 'Hrať môžu len prihlásení: neprihlásený vidí v menu žlté tlačidlo Prihlásiť sa. Nová ponuka Hrať s priateľom: zoznam hráčov, ktorí sú práve v hre, pozvánka a partia cez internet podľa pravidiel snookeru (poradie gúľ, fauly, body, séria, koniec framu). Súper vidí tágo pri mierení, úder sa prehrá u oboch. Partie majú vo WordPresse vlastné tabuľky so záznamom každého úderu, po výpadku internetu sa pokračuje tam, kde sa skončilo, prerušenú partiu možno dokončiť neskôr. Na stene s dverami visia hodiny, ktoré merajú čas hrania od 11:30.' ),
 		array( '0.1.26', '4. 11. 2026', 'Na stolíku pribudol časopis so správami z RSS kanálov (My RSS), F9 ho ukáže. Noviny (F8) aj časopis (F9) sa dajú čítať na celú obrazovku (tlačidlo alebo C): karty s fotkami, zdrojom, dátumom a úvodom, klik otvorí článok.' ),
 		array( '0.1.25', '4. 11. 2026', 'V pohľade z kresla (F7) sa dá pohybom myši rozhliadať po herni.' ),
 		array( '0.1.24', '4. 11. 2026', 'Ctrl sa drží: kým je stlačený, myš je voľná (kurzor, dá sa klikať), po pustení sa znova zachytí na tágo.' ),

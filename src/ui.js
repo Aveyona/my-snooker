@@ -27,6 +27,7 @@ export class UI {
 		// Horná lišta
 		const bar = h('div', 'mysn-bar');
 		bar.appendChild(h('div', 'mysn-brand', `<a href="${opts.homeUrl || '/'}" class="mysn-home" title="Späť na web">My Snooker</a><span>Tréning</span>`));
+		this.modeLabel = bar.querySelector('.mysn-brand span');
 		this.stats = h('div', 'mysn-stats');
 		bar.appendChild(this.stats);
 		const right = h('div', 'mysn-barbtns');
@@ -74,6 +75,7 @@ export class UI {
 		root.appendChild(tools);
 
 		this.menu = this.buildMenu();
+		this.setMenu(opts.user ? 'training' : 'guest');
 		root.appendChild(this.menu);
 		this.panel = this.buildSettings(opts.settings);
 		root.appendChild(this.panel);
@@ -209,30 +211,202 @@ export class UI {
 		return p;
 	}
 
-	/** Hlavné menu: na začiatku a po stlačení Esc (vtedy sa myš uvoľní). */
+	/**
+	 * Hlavné menu: na začiatku a po stlačení Esc (vtedy sa myš uvoľní). Neprihlásený vidí len tlačidlo
+	 * Prihlásiť sa, prihlásený tréning a hru s priateľom, v partii pokračovanie, prerušenie a vzdanie.
+	 */
 	buildMenu() {
 		const m = h('div', 'mysn-menu mysn-hidden');
 		m.innerHTML = `<div class="mysn-menu-box">
 			<h2>My Snooker</h2>
-			<p class="mysn-menu-mode">Tréning</p>
+			<p class="mysn-menu-mode"></p>
+			<div class="mysn-menu-note mysn-hidden"></div>
+			<div class="mysn-menu-inv"></div>
 			<div class="mysn-menu-btns"></div>
-			<p class="mysn-note">V hre sa myš zachytí v okne. Esc ju uvoľní a otvorí toto menu. F1 nápoveda na nástenke, F2 stojan s tágami.</p>
+			<p class="mysn-note"></p>
 		</div>`;
-		const box = m.querySelector('.mysn-menu-btns');
-		this.btnResume = this.button('Hrať', 'resume');
-		this.btnResume.classList.add('mysn-primary');
-		box.append(this.btnResume, this.button('Nové rozostavenie', 'reset'), this.button('Tágá (F2)', 'rack'), this.button('Nápoveda (F1)', 'board'), this.button('Skóre (F4)', 'score'), this.button('Nastavenia', 'settings'), this.button('Späť na web', 'home'));
+		this.menuMode = m.querySelector('.mysn-menu-mode');
+		this.menuNoteEl = m.querySelector('.mysn-menu-note');
+		this.menuInv = m.querySelector('.mysn-menu-inv');
+		this.menuBtns = m.querySelector('.mysn-menu-btns');
+		this.menuFoot = m.querySelector('.mysn-note');
+		this._menuKind = '';
 		return m;
+	}
+
+	/** Obsah menu: 'guest' (neprihlásený), 'training' alebo 'match' (label = meno súpera). */
+	setMenu(kind, label) {
+		const key = kind + '|' + (label || '');
+		if (this._menuKind === key) {
+			return;
+		}
+		this._menuKind = key;
+		const box = this.menuBtns;
+		box.innerHTML = '';
+		const user = this.opts.user;
+		if (kind === 'guest') {
+			this.menuMode.textContent = '3D snooker v prehliadači';
+			const a = h('a', 'mysn-btn mysn-login', 'Prihlásiť sa');
+			a.href = this.opts.loginUrl || '/wp-login.php';
+			box.appendChild(a);
+			this.menuFoot.textContent = 'Hrať môžu prihlásení používatelia webu Hedlajner: tréning aj partie s priateľmi cez internet.';
+			return;
+		}
+		this.btnResume = this.button(kind === 'match' ? 'Pokračovať v partii' : 'Tréning', 'resume');
+		this.btnResume.classList.add('mysn-primary');
+		box.appendChild(this.btnResume);
+		if (kind === 'match') {
+			this.menuMode.textContent = `Partia s hráčom ${label}`;
+			box.append(this.button('Tágá (F2)', 'rack'), this.button('Nápoveda (F1)', 'board'), this.button('Skóre (F4)', 'score'), this.button('Nastavenia', 'settings'));
+			box.append(this.button('Prerušiť partiu', 'pauseMatch', 'Partia sa uloží, pokračovať sa dá neskôr'), this.button('Vzdať partiu', 'resign'));
+		} else {
+			this.menuMode.textContent = user ? `Prihlásený: ${user.name}` : 'Tréning';
+			const fr = this.button('Hrať s priateľom', 'lobby', 'Partia cez internet s hráčom, ktorý je práve v hre');
+			fr.classList.add('mysn-friend');
+			box.append(fr, this.button('Nové rozostavenie', 'reset'), this.button('Tágá (F2)', 'rack'), this.button('Nápoveda (F1)', 'board'), this.button('Skóre (F4)', 'score'), this.button('Nastavenia', 'settings'));
+		}
+		box.appendChild(this.button('Späť na web', 'home'));
+		this.menuFoot.textContent = 'V hre sa myš zachytí v okne. Esc ju uvoľní a otvorí toto menu. F1 nápoveda na nástenke, F2 stojan s tágami.';
+	}
+
+	/** Správa v menu (napríklad výsledok partie); prázdna skryje. */
+	menuNote(text) {
+		this.menuNoteEl.textContent = text || '';
+		this.menuNoteEl.classList.toggle('mysn-hidden', !text);
 	}
 
 	showMenu(on, started) {
 		this.menu.classList.toggle('mysn-hidden', !on);
-		if (started) {
-			this.btnResume.textContent = 'Pokračovať';
+		if (started && this.btnResume && this._menuKind.startsWith('training')) {
+			this.btnResume.textContent = 'Pokračovať v tréningu';
 		}
 		if (!on) {
 			this.panel.classList.add('mysn-hidden');
 			this.help.classList.add('mysn-hidden');
+			this.menuNote('');
+		}
+	}
+
+	menuOpen() {
+		return !this.menu.classList.contains('mysn-hidden');
+	}
+
+	/** Pozvánky do partie: v menu a ako krátka správa navrchu (aj počas tréningu). */
+	showInvites(list) {
+		const inv = list || [];
+		this.menuInv.innerHTML = '';
+		for (const i of inv) {
+			const row = h('div', 'mysn-inv', `${i.from.avatar ? `<img src="${esc(i.from.avatar)}" alt="">` : ''}<span><b>${esc(i.from.name)}</b> ťa pozýva na partiu</span>`);
+			const yes = this.button('Prijať', 'accept', '', i.id);
+			yes.classList.add('mysn-primary');
+			row.append(yes, this.button('Odmietnuť', 'decline', '', i.id));
+			this.menuInv.appendChild(row);
+		}
+		if (!this.toastBox) {
+			this.toastBox = h('div', 'mysn-toast mysn-hidden');
+			this.root.appendChild(this.toastBox);
+		}
+		if (this.lobby && !this.lobby.classList.contains('mysn-hidden') && this._lobbyData) {
+			this.renderLobby(this._lobbyData);
+		}
+	}
+
+	/** Krátka správa navrchu (pozvánka, odmietnutie, chyba). Pri pozvánke s tlačidlami. */
+	toast(text, invite) {
+		if (!this.toastBox) {
+			this.toastBox = h('div', 'mysn-toast mysn-hidden');
+			this.root.appendChild(this.toastBox);
+		}
+		const t = this.toastBox;
+		t.innerHTML = '';
+		t.appendChild(h('span', '', esc(text)));
+		if (invite) {
+			const yes = this.button('Prijať', 'accept', '', invite.id);
+			yes.classList.add('mysn-primary');
+			t.append(yes, this.button('Odmietnuť', 'decline', '', invite.id));
+		}
+		t.classList.remove('mysn-hidden');
+		clearTimeout(this._toastT);
+		this._toastT = setTimeout(() => t.classList.add('mysn-hidden'), invite ? 30000 : 6000);
+	}
+
+	hideToast() {
+		if (this.toastBox) {
+			this.toastBox.classList.add('mysn-hidden');
+		}
+	}
+
+	/** Hrať s priateľom: živí hráči v hre, pozvánky a rozohrané partie. */
+	openLobby(on) {
+		if (!this.lobby) {
+			this.lobby = h('div', 'mysn-panel mysn-lobby mysn-hidden');
+			this.root.appendChild(this.lobby);
+		}
+		this.lobby.classList.toggle('mysn-hidden', !on);
+		if (on && this._lobbyData) {
+			this.renderLobby(this._lobbyData);
+		}
+	}
+
+	lobbyOpen() {
+		return !!(this.lobby && !this.lobby.classList.contains('mysn-hidden'));
+	}
+
+	renderLobby(d) {
+		this._lobbyData = d;
+		if (!this.lobby || this.lobby.classList.contains('mysn-hidden')) {
+			return;
+		}
+		const L = this.lobby;
+		L.innerHTML = '<h3>Hrať s priateľom</h3>';
+		const av = (u) => (u.avatar ? `<img src="${esc(u.avatar)}" alt="">` : '<i></i>');
+		for (const i of d.invites || []) {
+			const row = h('div', 'mysn-inv', `${av(i.from)}<span><b>${esc(i.from.name)}</b> ťa pozýva na partiu</span>`);
+			const yes = this.button('Prijať', 'accept', '', i.id);
+			yes.classList.add('mysn-primary');
+			row.append(yes, this.button('Odmietnuť', 'decline', '', i.id));
+			L.appendChild(row);
+		}
+		const o = d.outgoing;
+		if (o && o.status === 'invited') {
+			const row = h('div', 'mysn-inv mysn-wait', `${av(o.to)}<span>Čakám, kým <b>${esc(o.to.name)}</b> prijme pozvánku…</span>`);
+			row.appendChild(this.button('Zrušiť', 'cancelInvite'));
+			L.appendChild(row);
+		}
+		L.appendChild(h('p', 'mysn-lobby-sub', 'Hráči práve v hre My Snooker'));
+		const live = d.live || [];
+		if (!live.length) {
+			L.appendChild(h('p', 'mysn-note', 'Teraz nie je v hre nikto iný. Zoznam sa obnovuje sám, keď niekto príde, objaví sa tu.'));
+		}
+		const list = h('div', 'mysn-live');
+		for (const u of live) {
+			const row = h('div', 'mysn-live-row', `${av(u)}<span><b>${esc(u.name)}</b>${u.busy ? '<em>hrá partiu</em>' : '<em class="mysn-live-on">v hre</em>'}</span>`);
+			const b = this.button('Pozvať', 'invite', '', u.id);
+			b.disabled = !!u.busy || !!(o && o.status === 'invited');
+			row.appendChild(b);
+			list.appendChild(row);
+		}
+		L.appendChild(list);
+		if ((d.paused || []).length) {
+			L.appendChild(h('p', 'mysn-lobby-sub', 'Rozohrané partie'));
+			for (const p of d.paused) {
+				const when = new Date(p.updated * 1000).toLocaleString('sk-SK', { day: 'numeric', month: 'numeric', hour: '2-digit', minute: '2-digit' });
+				const row = h('div', 'mysn-live-row', `${av(p.opp)}<span><b>${esc(p.opp.name)}</b><em>${p.scores[0]} : ${p.scores[1]}, ${esc(when)}</em></span>`);
+				row.appendChild(this.button('Pokračovať', 'resumeMatch', 'Pokračovať v partii (súper sa pripojí, keď príde do hry)', p.id));
+				L.appendChild(row);
+			}
+		}
+		const foot = h('div', 'mysn-lobby-foot');
+		foot.appendChild(h('span', 'mysn-note', 'Partia sa ukladá po každom údere. Pri výpadku internetu sa po návrate pokračuje tam, kde sa skončila.'));
+		foot.appendChild(this.button('Zavrieť', 'lobbyClose'));
+		L.appendChild(foot);
+	}
+
+	/** Stav spojenia a súpera v partii (zobrazí sa pod lištou). */
+	setNet(text) {
+		this._net = text || '';
+		if (this._lastGame) {
+			this.sync(this._lastGame, this._lastCam);
 		}
 	}
 
@@ -596,14 +770,34 @@ export class UI {
 		this._lastGame = game;
 		this._lastCam = camMode;
 		const s = game.stats;
+		const mt = game.match;
+		this.root.classList.toggle('mysn-online', !!mt);
+		this.modeLabel.textContent = mt ? 'Partia' : 'Tréning';
+		if (mt && mt.rules) {
+			const nm = (i) => esc(String(mt.players[i].name).slice(0, 16));
+			const r = mt.rules;
+			const turn = (i) => (r.turn === i && !r.over ? ' mysn-turn' : '');
+			this.stats.innerHTML = `<span class="mysn-sc${turn(mt.me)}">${nm(mt.me)} <b>${r.scores[mt.me]}</b></span><span class="mysn-sc${turn(1 - mt.me)}">${nm(1 - mt.me)} <b>${r.scores[1 - mt.me]}</b>${mt.players[1 - mt.me].online === false ? ' <i>mimo</i>' : ''}</span><span>Na rade <b>${r.turn === mt.me ? 'ty' : nm(r.turn)}</b></span><span>Hrá sa na <b>${esc(game.onText())}</b></span><span>Séria <b>${r.brk}</b></span><span class="${this._chalk > 0 ? 'mysn-chalk-on' : 'mysn-chalk-off'}">Krieda <b>${this._chalk > 0 ? this._chalk : 'F3'}</b></span>`;
+		} else {
 		this.stats.innerHTML = `<span>Údery <b>${s.shots}</b></span><span>Spadnuté <b>${s.points >= 0 ? s.potted : 0}</b></span><span>Body <b>${s.points}</b></span><span>Séria <b>${s.run}</b></span><span>Najlepšia <b>${s.best}</b></span><span class="${this._chalk > 0 ? 'mysn-chalk-on' : 'mysn-chalk-off'}">Krieda <b>${this._chalk > 0 ? this._chalk : 'F3'}</b></span>`;
-		this.msg.textContent = game.state === 'place' ? 'Posuň bielu guľu v D a potvrď tlačidlom Hotovo.' : game.message;
+		}
+		const st0 = game.state;
+		const base =
+			st0 === 'place'
+				? 'Posuň bielu guľu v D a potvrď tlačidlom Hotovo.'
+				: st0 === 'watch' && !game.message
+					? 'Na rade je súper.'
+					: st0 === 'wait'
+						? 'Čakám na výsledok súperovho úderu…'
+						: game.message;
+		this.msg.textContent = [this._net, base].filter(Boolean).join('  ');
 		this.msg.classList.toggle('mysn-hidden', !this.msg.textContent);
 		const st = game.state;
 		this.btnPlace.classList.toggle('mysn-hidden', st !== 'place');
 		this.btnSkip.classList.toggle('mysn-hidden', st !== 'moving');
-		this.btnUndo.disabled = st === 'moving' || !game.history.length;
-		this.btnHand.disabled = st !== 'aim';
+		this.btnUndo.disabled = st === 'moving' || !game.history.length || !!mt;
+		this.btnHand.disabled = st !== 'aim' || !!mt;
+		this.btnReset.disabled = !!mt;
 		this.powerBox.classList.toggle('mysn-off', st !== 'aim');
 		for (const m of Object.keys(this.camBtns)) {
 			this.camBtns[m].classList.toggle('mysn-on', m === camMode);
