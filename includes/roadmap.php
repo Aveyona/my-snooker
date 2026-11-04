@@ -44,7 +44,7 @@ function mysn_roadmap() {
 				array( 'Detail dotyku: 2D pohľad zhora v okamihu, keď sa biela dotkne gule (uhol, plnosť zásahu)', 1 ),
 				array( 'Zvuky nárazov, mantinelov a jamiek', 1 ),
 				array( 'Tréning: vracanie farieb na spoty, biela do ruky, vrátenie úderu, nové rozostavenie, body a série', 1 ),
-				array( 'Vlastná adresa snooker.hedlajner.sk', 0 ),
+				array( 'Vlastná adresa snooker.hedlajner.sk (služba na WebSupporte pridaná 4. 11. 2026)', 1 ),
 				array( 'Doladenie podľa skúšania (svetlá, citlivosť ovládania, rýchlosť súkna)', 0 ),
 			),
 		),
@@ -105,6 +105,7 @@ function mysn_roadmap() {
 /** Denník zmien (najnovšie hore). */
 function mysn_changelog() {
 	return array(
+		array( '0.2.8', '4. 11. 2026', 'Pri bare (F10) sa dá myšou rozhliadať a kolieskom približovať. Drž Ctrl: myš sa uvoľní a dá sa kliknúť na telefón; so zachytenou myšou stačí pozrieť na telefón a kliknúť. Hra beží aj na vlastnej adrese snooker.hedlajner.sk.' ),
 		array( '0.2.7', '4. 11. 2026', 'F10: pohľad z baru. Na barovom stolíku leží telefón s obrazovkou Môj účet a dva poháre s vodou. Klik na telefón (alebo M) ho zväčší na obrazovku so stránkou Môj účet z webu. Pri hre o skóre čas pri bare stojí. Tabuľa so skóre na stene ukazuje aktuálny čas framu.' ),
 		array( '0.2.6', '4. 11. 2026', 'V herni pribudlo rádio: retro rádio na komode, pri pravej stene stolík s mixpultom a dva reproduktory na stojanoch. Stanice sú z My Player. Zvuk je priestorový (ľavý a pravý reproduktor, mení sa podľa pohľadu), mixpult mení hlasitosť, basy, výšky a vyváženie, LED stĺpce a membrány idú do rytmu. F9 pošle kameru k mixpultu.' ),
 		array( '0.2.5', '4. 11. 2026', 'Kláves F9 je zrušený. Správy sú v pohľade z kresla (F7): vpravo titulky webu Hedlajner a správy z RSS, klik otvorí článok, C a V ich otvoria na celú obrazovku. Z menu ostali preč tlačidlá Tágá, Nápoveda a Skóre (klávesy F2, F1 a F4 fungujú).' ),

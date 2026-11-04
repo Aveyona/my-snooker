@@ -990,7 +990,7 @@ export class UI {
 			rack: 'Šípky vľavo a vpravo vyberajú tágo. Enter, F2 alebo Esc: späť do hry.',
 			board: 'F1, Enter alebo Esc: späť do hry.',
 			score: 'F4, Enter alebo Esc: späť do hry.',
-			bar: 'Pohľad z baru. Klikni na telefón na stolíku (alebo M): zväčší sa Môj účet. Pri hre o skóre čas stojí. F10, Enter alebo Esc: späť do hry.',
+			bar: 'Pohľad z baru: myšou sa rozhliadaš, kolieskom približuješ. Drž Ctrl a klikni na telefón (alebo M): zväčší sa Môj účet. Pri hre o skóre čas stojí. F10 alebo Enter: späť do hry.',
 			mixer: 'Mixpult: šípky vľavo a vpravo menia stanicu, hore a dole hlasitosť, P zapne alebo vypne rádio. Zvuk ide z reproduktorov v herni. F9, Enter alebo Esc: späť do hry.',
 			trophies: 'Rebríček o najlepšie skóre: poháre pre troch najlepších, vpravo 4. až 10. miesto (body a celkový čas). F8, Enter alebo Esc: späť do hry.',
 			chalk: 'Kriedujem špičku tága. Falše budú 3 údery 5x silnejšie.',

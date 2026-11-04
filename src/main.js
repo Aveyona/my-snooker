@@ -210,7 +210,7 @@ export function start(root, config = {}) {
 		view = name;
 		controls.blocked = true;
 		// pri kriedovaní a v kresle ostáva myš zachytená (v kresle sa ňou rozhliada)
-		if (name !== 'chalk' && name !== 'chair') {
+		if (name !== 'chalk' && name !== 'chair' && name !== 'bar') {
 			controls.uncapture();
 		}
 		ui.showMenu(false);
@@ -227,8 +227,8 @@ export function start(root, config = {}) {
 		} else {
 			const v = name === 'mixer' ? radioCorner.view : room[name];
 			rig.setView(v.pos, v.look.clone());
-			if (name === 'chair') {
-				// počiatočný smer pohľadu z kresla (otáčanie hlavou myšou)
+			if (name === 'chair' || name === 'bar') {
+				// počiatočný smer pohľadu z kresla alebo z baru (otáčanie hlavou myšou)
 				const d = v.look.clone().sub(v.pos);
 				chairLook.yaw = Math.atan2(d.z, d.x);
 				chairLook.pitch = Math.atan2(d.y, Math.hypot(d.x, d.z));
@@ -408,7 +408,12 @@ export function start(root, config = {}) {
 		mixer: () => enterView('mixer'),
 		bar: () => enterView('bar'),
 		phone: () => ui.openPhone(true),
-		phoneClose: () => ui.openPhone(false),
+		phoneClose: () => {
+			ui.openPhone(false);
+			if (view === 'bar') {
+				controls.capture(); // späť na rozhliadanie myšou
+			}
+		},
 		radioToggle: () => radio.toggle(),
 		radioPick: (i) => radio.play(i),
 		radioSet: ({ k, v }) => radio.set(k, v),
@@ -475,7 +480,7 @@ export function start(root, config = {}) {
 		},
 		stroke: (on) => ui.setStroke(on),
 		look: (dx, dy) => {
-			if (view !== 'chair' || freeMouse) {
+			if ((view !== 'chair' && view !== 'bar') || freeMouse) {
 				return;
 			}
 			const k = 0.0025 / (rig.viewZoom || 1); // pri priblížení jemnejšie
@@ -485,7 +490,7 @@ export function start(root, config = {}) {
 			rig.viewLook.copy(rig.viewPos).add(new THREE.Vector3(Math.cos(chairLook.yaw) * c, Math.sin(chairLook.pitch), Math.sin(chairLook.yaw) * c));
 		},
 		viewWheel: (steps) => {
-			if (view === 'chair') {
+			if (view === 'chair' || view === 'bar') {
 				rig.setViewZoom((rig.viewZoom || 1) * Math.pow(0.85, steps));
 			}
 		},
@@ -494,12 +499,16 @@ export function start(root, config = {}) {
 				controls.capture();
 			}
 			if (view === 'bar' && e.button === 0) {
-				// klik na telefón na barovom stolíku: zväčší Môj účet
+				// klik na telefón na barovom stolíku zväčší Môj účet; so zachytenou myšou sa mieri stredom obrazovky
 				const r = renderer.domElement.getBoundingClientRect();
 				const ray = new THREE.Raycaster();
-				ray.setFromCamera(new THREE.Vector2(((e.clientX - r.left) / r.width) * 2 - 1, -((e.clientY - r.top) / r.height) * 2 + 1), rig.camera);
+				const at = controls.captured ? new THREE.Vector2(0, 0) : new THREE.Vector2(((e.clientX - r.left) / r.width) * 2 - 1, -((e.clientY - r.top) / r.height) * 2 + 1);
+				ray.setFromCamera(at, rig.camera);
 				if (ray.intersectObject(room.phone, false).length) {
+					controls.uncapture();
 					ui.openPhone(true);
+				} else if (!controls.captured) {
+					controls.capture();
 				}
 			}
 		},
@@ -511,12 +520,14 @@ export function start(root, config = {}) {
 			if (lk === 'ctrl-down' || lk === 'ctrl-up') {
 				// Ctrl drž: voľná myš (kurzor, dá sa klikať); po pustení Ctrl sa myš znova zachytí na tágo
 				// v kresle Ctrl uvoľní myš na klikanie na správy, inde v pohľadoch sa nepoužíva
-				if (view && view !== 'chair') {
+				if (view && view !== 'chair' && view !== 'bar') {
 					return true;
 				}
 				if (lk === 'ctrl-down' && controls.captured) {
 					freeMouse = true;
 					controls.uncapture();
+				} else if (lk === 'ctrl-up' && freeMouse && ui.phoneOpen()) {
+					freeMouse = false; // nad telefónom ostáva myš voľná
 				} else if (lk === 'ctrl-up' && freeMouse) {
 					freeMouse = false;
 					ui.showMenu(false);
@@ -552,11 +563,16 @@ export function start(root, config = {}) {
 			if (view) {
 				// v pohľade na nástenku alebo stojan: Esc a Enter späť do hry, šípky vyberajú tágo
 				if (lk === 'escape' && ui.phoneOpen()) {
-					ui.openPhone(false);
+					actions.phoneClose();
 					return true;
 				}
 				if (view === 'bar' && lk === 'm') {
-					ui.openPhone(!ui.phoneOpen());
+					if (ui.phoneOpen()) {
+						actions.phoneClose();
+					} else {
+						controls.uncapture();
+						ui.openPhone(true);
+					}
 					return true;
 				}
 				if (view === 'mixer') {

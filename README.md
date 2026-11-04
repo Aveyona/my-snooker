@@ -51,7 +51,7 @@ Hra je napísaná v JavaScripte nad knižnicou [three.js](https://threejs.org/),
 | Pohľad z kresla so správami (rozhliadanie myšou, koliesko priblíženie, C noviny Hedlajner, V správy z RSS) | F7 |
 | Rebríček: polica s pohármi a tabuľka 4. až 10. miesta | F8 |
 | Mixpult a rádio (šípky stanica a hlasitosť, P zapnúť alebo vypnúť) | F9 |
-| Pohľad z baru, telefón s Môj účet (klik alebo M ho zväčší) | F10 |
+| Pohľad z baru (rozhliadanie myšou, koliesko priblíženie; Ctrl drž a klik na telefón alebo M: Môj účet) | F10 |
 | Pohľad na stôl zhora | Tab |
 
 ## Tágá
