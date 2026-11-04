@@ -259,6 +259,15 @@ export class UI {
 		};
 		// tágá, nápoveda a skóre sú na klávesoch F2, F1 a F4 (v menu nie sú)
 		const common = () => [this.button('Nastavenia', 'settings')];
+		if (kind === 'watch') {
+			// divák sleduje cudziu partiu
+			this.menuMode.textContent = `Sledujem: ${label}`;
+			const stop = this.button('Prestať sledovať', 'watchStop');
+			stop.classList.add('mysn-primary');
+			box.append(stop, this.button('Iná otvorená partia', 'rooms'), this.button('Nastavenia', 'settings'), this.button('Späť na web', 'home'));
+			this.menuFoot.textContent = 'Divák sa len pozerá: myšou sa otáčaš okolo stola, kolieskom približuješ.';
+			return;
+		}
 		if (kind === 'match') {
 			const trn = !!(this._lastGame && this._lastGame.match && this._lastGame.match.training);
 			this.btnResume = this.button(trn ? 'Pokračovať v tréningu' : 'Pokračovať v partii', 'resume');
@@ -275,7 +284,8 @@ export class UI {
 			const lg = this.button('Liga', 'league', 'Kancelária ligy: registrácia, 4 ligy, body a sezóna na rok');
 			lg.classList.add('mysn-league-btn');
 			const tr = this.button('Tréning', kind === 'solo' ? 'training' : 'resume', 'Voľný tréning na stole s červeným súknom');
-			box.append(tr, play, lg, fr()); // rebríček je na F8
+			const enter = this.button('Vstúpiť', 'rooms', 'Otvorené partie: tréningy a hry s otvorenými dverami a ligové zápasy, dá sa ich sledovať');
+			box.append(tr, play, lg, fr(), enter); // rebríček je na F8
 			if (this.opts.venue && this.opts.venue() === 'league') {
 				box.appendChild(this.button('Späť do herne', 'leagueHome'));
 			}
@@ -353,6 +363,44 @@ export class UI {
 	}
 
 	/** Hrať s priateľom: živí hráči v hre, pozvánky a rozohrané partie. */
+	/** Vstúpiť: zoznam otvorených partií (tréning a Hrať s otvorenými dverami, ligové zápasy). list = null: načítava sa. */
+	openRooms(on, list) {
+		if (!this.roomsBox) {
+			this.roomsBox = h('div', 'mysn-panel mysn-lobby mysn-hidden');
+			this.root.appendChild(this.roomsBox);
+		}
+		const L = this.roomsBox;
+		L.classList.toggle('mysn-hidden', !on);
+		if (!on) {
+			return;
+		}
+		L.innerHTML = '<h3>Otvorené partie</h3>';
+		L.appendChild(h('p', 'mysn-lobby-sub', 'Prebiehajúce partie s otvorenými dverami a ligové zápasy'));
+		if (!list) {
+			L.appendChild(h('p', 'mysn-note', 'Načítavam…'));
+		} else if (!list.length) {
+			L.appendChild(h('p', 'mysn-note', 'Teraz nie je otvorená žiadna partia. Hráč otvorí svoju herňu pre divákov dverami (F6), ligové zápasy sa dajú sledovať vždy.'));
+		}
+		const kinds = { training: 'Tréning', solo: 'O najlepšie skóre', league: 'Ligový zápas' };
+		const box = h('div', 'mysn-live');
+		for (const r of list || []) {
+			const row = h('div', 'mysn-live-row', `<i></i><span><b>${esc(r.title)}</b><em>${esc(kinds[r.kind] || '')}${r.info ? ', ' + esc(r.info) : ''}</em></span>`);
+			const b = this.button('Sledovať', 'watchStart', 'Pozerať sa na partiu', r);
+			b.classList.add('mysn-primary');
+			row.appendChild(b);
+			box.appendChild(row);
+		}
+		L.appendChild(box);
+		const foot = h('div', 'mysn-lobby-foot');
+		foot.appendChild(this.button('Obnoviť', 'rooms'));
+		foot.appendChild(this.button('Zavrieť', 'roomsClose'));
+		L.appendChild(foot);
+	}
+
+	roomsOpen() {
+		return !!(this.roomsBox && !this.roomsBox.classList.contains('mysn-hidden'));
+	}
+
 	openLobby(on) {
 		if (!this.lobby) {
 			this.lobby = h('div', 'mysn-panel mysn-lobby mysn-hidden');
@@ -1293,6 +1341,14 @@ export class UI {
 		const s = game.stats;
 		const mt = game.match;
 		this.root.classList.toggle('mysn-online', !!mt);
+		this.root.classList.toggle('mysn-watching', !!game.spectating);
+		if (game.spectating) {
+			// divák: kto hrá a stav partie
+			const sp = game.spectating;
+			this.modeLabel.textContent = `Sledujem: ${sp.title}`;
+			this.stats.innerHTML = `<span>${esc(sp.kind === 'league' ? 'Ligový zápas' : sp.kind === 'solo' ? 'O najlepšie skóre' : 'Tréning')}</span>${sp.info ? `<span><b>${esc(sp.info)}</b></span>` : ''}<span>Esc: menu, Prestať sledovať</span>`;
+			return;
+		}
 		this.modeLabel.textContent = this.root.classList.contains('mysn-in-office') ? 'Liga: kancelária' : mt ? (mt.league ? 'Ligová partia' : mt.training ? 'Tréning s priateľom' : 'Partia') : game.solo ? 'O najlepšie skóre' : 'Tréning';
 		const so = game.solo;
 		if (so && !mt) {

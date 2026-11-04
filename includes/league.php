@@ -435,10 +435,11 @@ function mysn_rest_league_queue( $req ) {
 				'season_id' => (int) mysn_season_current()['id'],
 			)
 		);
-		mysn_match_begin( mysn_get_match( (int) $wpdb->insert_id ) );
+		$mid = (int) $wpdb->insert_id;
+		mysn_match_begin( mysn_get_match( $mid ) );
 		mysn_touch( $other, 'match' );
 		mysn_touch( $uid, 'match' );
-		return array( 'matched' => true, 'id' => (int) $wpdb->insert_id );
+		return array( 'matched' => true, 'id' => $mid );
 	}
 	$n = (int) $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM $pt WHERE state = 'queue' AND seen >= %d", time() - 15 ) ); // phpcs:ignore
 	return array( 'queued' => true, 'waiting' => $n );

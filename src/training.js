@@ -61,11 +61,12 @@ export class Training {
 		this.physics.events = [];
 		this.physics.firstContact = null;
 		this.lastPots = [];
+		const shot = { dir: this.dir, power, side, top, cx: this.cue.p.x, cz: this.cue.p.z };
 		strike(this.cue, this.dir, power, side, top);
 		this.stats.shots++;
 		this.state = 'moving';
 		this.message = '';
-		this.emit('shot', { power });
+		this.emit('shot', { power, shot, before: this.history[this.history.length - 1].snap });
 		return true;
 	}
 

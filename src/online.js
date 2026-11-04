@@ -78,7 +78,7 @@ export class Online {
 
 	async ping() {
 		try {
-			const d = await this.net.call('ping', { state: this.inMatch ? 'match' : this.queueing ? 'queue' : this.lobbyOpen ? 'lobby' : 'training' });
+			const d = await this.net.call('ping', { state: this.inMatch ? 'match' : this.watching ? 'watch' : this.queueing ? 'queue' : this.lobbyOpen ? 'lobby' : 'training' });
 			if (d.nonce) {
 				this.net.nonce = d.nonce;
 			}
@@ -157,6 +157,49 @@ export class Online {
 
 	/** Pripojí sa do partie a načíta jej stav. */
 	/** Vyhľadanie ligového zápasu: on = true zaradí do fronty a každé 3 s skúša nájsť súpera. */
+	/** Otvorená partia (dvere otvorené): stav stola pre divákov. */
+	roomPost(d) {
+		return this.net.call('room', d).catch(() => null);
+	}
+
+	async rooms() {
+		try {
+			return (await this.net.call('rooms', null, 'GET')).rooms || [];
+		} catch (e) {
+			return [];
+		}
+	}
+
+	/** Sledovanie: každú sekundu stav otvorenej partie (room) alebo ligového zápasu (match). */
+	watchStart(type, id) {
+		this.watchStop();
+		this.watching = { type, id };
+		const tick = async () => {
+			if (!this.watching || this._watchBusy) {
+				return;
+			}
+			this._watchBusy = true;
+			try {
+				const d = await this.net.call((type === 'match' ? 'watch/' : 'room/') + id, null, 'GET');
+				if (this.watching && this.hooks.watch) {
+					this.hooks.watch(type, d);
+				}
+			} catch (e) {
+				if (this.hooks.watch) {
+					this.hooks.watch(type, { closed: true, error: e.message });
+				}
+			}
+			this._watchBusy = false;
+		};
+		tick();
+		this._watchT = setInterval(tick, 1000);
+	}
+
+	watchStop() {
+		clearInterval(this._watchT);
+		this.watching = null;
+	}
+
 	async seek(on) {
 		clearInterval(this._queueT);
 		this.queueing = !!on;

@@ -272,6 +272,11 @@ export class Controls {
 			this.rig.pan(e.movementX || 0, e.movementY || 0);
 			return;
 		}
+		// divák (Vstúpiť): pohyb myši bez tlačidla vždy otáča pohľad okolo stola
+		if (g.spectating && this.rig.mode === 'cue' && (e.buttons & 3) === 0) {
+			this.rig.turn(e.movementX || 0, e.movementY || 0);
+			return;
+		}
 		// po údere: pohyb myši bez tlačidla otáča pohľad okolo bielej
 		if (g.state === 'moving' && this.rig.mode === 'cue' && (e.buttons & 3) === 0) {
 			this.rig.turn(e.movementX || 0, e.movementY || 0);

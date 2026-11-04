@@ -8,6 +8,7 @@
  * {prefix}my_snooker_moves     záznam partie: každý úder s parametrami, stavom po údere, bodmi a faulom
  * {prefix}my_snooker_seasons   sezóny ligy (približne rok): názov, začiatok, koniec, stav, majster sezóny
  * {prefix}my_snooker_league    body ligy hráčov v sezóne, výhry, prehry, najvyššia séria, konečné poradie a liga
+ * {prefix}my_snooker_rooms     otvorené partie pre divákov (dvere otvorené F6): posledný úder a stav stola
  * {prefix}my_snooker_scores    jeden hráč o najlepšie skóre: dohrané framy (body, čas, údery, fauly, najvyššia séria)
  *
  * Partia sa ukladá po každom údere, takže pri výpadku internetu sa dá pokračovať tam, kde sa skončila.
@@ -16,7 +17,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-const MYSN_DB_VERSION = '4';
+const MYSN_DB_VERSION = '5';
 
 function mysn_table( $name ) {
 	global $wpdb;
@@ -123,6 +124,19 @@ final_league tinyint(1) unsigned NOT NULL DEFAULT 0,
 updated int(10) unsigned NOT NULL DEFAULT 0,
 PRIMARY KEY  (season_id,user_id),
 KEY ranking (season_id,points)
+) $c;"
+	);
+	// otvorené partie (tréning alebo Hrať s otvorenými dverami): posledný úder a stav stola pre divákov
+	dbDelta(
+		'CREATE TABLE ' . mysn_table( 'rooms' ) . " (
+user_id bigint(20) unsigned NOT NULL,
+door tinyint(1) unsigned NOT NULL DEFAULT 0,
+kind varchar(10) NOT NULL DEFAULT '',
+seq int(10) unsigned NOT NULL DEFAULT 0,
+data longtext NULL,
+updated int(10) unsigned NOT NULL DEFAULT 0,
+PRIMARY KEY  (user_id),
+KEY door (door,updated)
 ) $c;"
 	);
 	update_option( 'mysn_db', MYSN_DB_VERSION, true );

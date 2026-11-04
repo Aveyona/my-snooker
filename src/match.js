@@ -168,7 +168,7 @@ export class Game extends Training {
 	}
 
 	canShoot() {
-		return super.canShoot() && (!this.match || (this.myTurn && !this.remote && this.match.status === 'active'));
+		return !this.spectating && super.canShoot() && (!this.match || (this.myTurn && !this.remote && this.match.status === 'active'));
 	}
 
 	/** Spustí partiu zo stavu zo servera (nová partia aj pokračovanie po výpadku). */
@@ -268,7 +268,55 @@ export class Game extends Training {
 		this.emit('shot', { power: shot.power });
 	}
 
+	/** Sledovanie cudzej partie (Vstúpiť): uloží moju rozohranú hru, divák sa len pozerá. info = { type, id, title, kind } */
+	spectateBegin(info) {
+		this._saved = { snap: snapshot(this.balls), state: this.state === 'moving' ? 'aim' : this.state, solo: this.solo };
+		this.solo = null;
+		this.spectating = info;
+		this.state = 'watch';
+		this.message = '';
+		this.emit('change');
+	}
+
+	spectateEnd() {
+		const s = this._saved;
+		this.spectating = null;
+		if (s) {
+			restore(this.balls, s.snap);
+			for (const b of this.balls) {
+				b.moving = false;
+			}
+			this.solo = s.solo;
+			this.state = s.state === 'watch' ? 'aim' : s.state;
+		}
+		this._saved = null;
+		this.message = '';
+		this.emit('change');
+	}
+
+	/** Divák: stav stola (null = nové rozostavenie). */
+	spectateSet(snap) {
+		if (snap) {
+			restore(this.balls, snap);
+		} else {
+			const fresh = createRack();
+			for (let i = 0; i < fresh.length; i++) {
+				Object.assign(this.balls[i], fresh[i]);
+			}
+		}
+		for (const b of this.balls) {
+			b.moving = false;
+		}
+		this.state = 'watch';
+		this.emit('change');
+	}
+
 	settle() {
+		if (this.spectating) {
+			this.state = 'watch'; // divák: výsledok úderu príde zo servera
+			this.emit('change');
+			return;
+		}
 		if (this.solo && !this.match) {
 			this.settleSolo();
 			return;

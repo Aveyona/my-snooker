@@ -201,7 +201,7 @@ export function buildRoomShell(scene, quality, opts = {}) {
 	const DOOR = { at: 1.9, w: 1.0, h: 2.15 };
 	let doorHinge = null;
 	const DOOR_OPEN = THREE.MathUtils.degToRad(72);
-	const doorState = { open: true, angle: DOOR_OPEN };
+	const doorState = { open: false, angle: 0 }; // po načítaní zatvorené: partia je súkromná, kým hráč neotvorí dvere (F6)
 
 	// Steny: [stred x, stred z, otočenie, dĺžka, dvere]
 	const walls = [

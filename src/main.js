@@ -19,7 +19,7 @@ import { UI } from './ui.js';
 import { Game, fmtTime } from './match.js';
 import { Online } from './online.js';
 import { remaining } from './rules.js';
-import { aimTrace, R } from './physics.js';
+import { aimTrace, R, snapshot } from './physics.js';
 import { CUES, cueById } from './cues.js';
 
 const STORE = 'mySnookerSettings';
@@ -197,10 +197,37 @@ export function start(root, config = {}) {
 	const fadeEl = document.createElement('div');
 	fadeEl.className = 'mysn-fade';
 	root.appendChild(fadeEl);
+	// otvorená partia (dvere herne otvorené): stav stola po každom údere pre divákov
+	let homeDoorOpen = false;
+	let roomSeq = 0;
+	let roomLast = null;
+	let watchInfo = null;
+	const roomInfo = () => (game.solo ? `${game.soloScore} b., séria ${game.solo.rules.brk}` : `body ${game.stats.points}, séria ${game.stats.run}`);
+	const roomBroadcast = (what, d) => {
+		if (!online || !user) {
+			return;
+		}
+		const open = homeDoorOpen && !game.match && !game.spectating && what !== 'close';
+		const kind = game.solo ? 'solo' : 'training';
+		if (!open) {
+			online.roomPost({ door: 0, kind, seq: roomSeq });
+			return;
+		}
+		if (what === 'shot') {
+			roomSeq++;
+			roomLast = { before: d.before, shot: d.shot };
+		}
+		const data = { ...(roomLast || {}), info: roomInfo() };
+		if (what === 'settle' || what === 'door') {
+			data.after = snapshot(game.balls);
+		}
+		online.roomPost({ door: 1, kind, seq: roomSeq, data });
+	};
 	// farba súkna podľa režimu: liga modrá, tréning červená, Hrať a partia zelená
 	let feltNow = '';
 	const updateFelt = () => {
-		const want = venue === 'league' ? 'blue' : (!game.match && !game.solo) || (game.match && game.match.training) ? 'red' : 'green';
+		const sp = game.spectating;
+		const want = venue === 'league' ? 'blue' : sp ? (sp.kind === 'solo' ? 'green' : 'red') : (!game.match && !game.solo) || (game.match && game.match.training) ? 'red' : 'green';
 		if (want !== feltNow) {
 			feltNow = want;
 			table.setFelt(want);
@@ -583,6 +610,49 @@ export function start(root, config = {}) {
 			officeRefresh();
 		},
 		officeKeys: () => ui.toast(OFFICE_KEYS),
+		// Vstúpiť: otvorené partie (tréning a Hrať s otvorenými dverami, ligové zápasy)
+		rooms: async () => {
+			if (!online) {
+				return;
+			}
+			ui.openLobby(false);
+			ui.openRooms(true, null);
+			ui.openRooms(true, await online.rooms());
+		},
+		roomsClose: () => ui.openRooms(false),
+		watchStart: (r) => {
+			if (!online || game.match) {
+				return;
+			}
+			ui.openRooms(false);
+			ui.showMenu(false);
+			exitView();
+			if (game.spectating) {
+				online.watchStop();
+				game.spectateEnd();
+			}
+			roomBroadcast('close'); // kým sledujem, moja partia nie je otvorená
+			watchInfo = { seq: -1, done: false, played: -1 };
+			game.spectateBegin({ type: r.type, id: r.id, title: r.title, kind: r.kind, info: r.info || '' });
+			setVenue(r.type === 'match' ? 'league' : 'home');
+			rig.setMode('cue');
+			online.watchStart(r.type, r.id);
+			refreshMenu();
+			controls.capture();
+			ui.toast(`Sleduješ: ${r.title}. Myšou sa otáčaš okolo stola, Esc: menu.`);
+		},
+		watchStop: () => {
+			if (!game.spectating) {
+				return;
+			}
+			online.watchStop();
+			game.spectateEnd();
+			setVenue('home');
+			refreshMenu();
+			ui.showMenu(false);
+			controls.capture();
+			roomBroadcast('door');
+		},
 		// späť k rozhliadaniu myšou (po zatvorení tág, vizitky alebo registrácii)
 		officeLook: () => {
 			freeMouse = false;
@@ -948,9 +1018,13 @@ export function start(root, config = {}) {
 				return true;
 			}
 			if (lk === 'f6') {
-				// dvere herne: otvoriť alebo zatvoriť (so zvukom)
+				// dvere herne: otvoriť alebo zatvoriť (so zvukom); otvorené dvere = partiu môžu sledovať iní (Vstúpiť)
 				sound.unlock();
-				room.toggleDoor();
+				homeDoorOpen = room.toggleDoor();
+				roomBroadcast('door');
+				if (online && !game.match && !game.spectating) {
+					ui.toast(homeDoorOpen ? 'Dvere sú otvorené: tvoju partiu môžu sledovať iní hráči (Vstúpiť v menu).' : 'Dvere sú zatvorené: tvoja partia nie je v zozname otvorených partií.');
+				}
 				sound.doorCreak();
 				return true;
 			}
@@ -958,6 +1032,8 @@ export function start(root, config = {}) {
 				// Esc pri otvorenom menu: menu sa zavrie a pokračuje sa v hre (otvorené Poslať výzvu sa zavrie najprv)
 				if (ui.lobbyOpen()) {
 					ui.openLobby(false);
+				} else if (ui.roomsOpen()) {
+					ui.openRooms(false);
 				} else {
 					actions.resume();
 				}
@@ -1061,6 +1137,9 @@ export function start(root, config = {}) {
 				return false;
 			}
 			const act = { z: 'undo', backspace: 'undo', b: 'hand', r: 'reset', s: 'skip', h: 'help' }[lk];
+			if (act && game.spectating && act !== 'help') {
+				return true; // divák nemení stôl
+			}
 			if (act) {
 				ui.opts.onAction(act);
 				return true;
@@ -1078,6 +1157,9 @@ export function start(root, config = {}) {
 	const menuKind = () => {
 		if (!user) {
 			return ['guest'];
+		}
+		if (game.spectating) {
+			return ['watch', game.spectating.title];
 		}
 		const m = game.match;
 		return m ? ['match', m.players[1 - m.me].name] : game.solo && !game.solo.done ? ['solo'] : ['training'];
@@ -1161,6 +1243,52 @@ export function start(root, config = {}) {
 			},
 			invite: (inv) => !ui.menuOpen() && ui.toast(`Boli ste vyzvaný! ${inv.from.name} ťa vyzýva ${inv.training ? 'na spoločný tréning' : inv.league ? 'na ligovú partiu' : 'na partiu'}.${controls.captured ? ' Esc alebo Ctrl uvoľní myš.' : ''}`, inv),
 			toast: (t) => ui.toast(t),
+			// divák: nový stav sledovanej partie
+			watch: (type, d) => {
+				const sp = game.spectating;
+				if (!sp || !watchInfo) {
+					return;
+				}
+				if (d.closed || (type === 'match' && d.status && d.status !== 'active')) {
+					const txt = type === 'match' && d.status === 'finished' ? `Zápas skončil ${d.scores ? d.scores.join(' : ') : ''}.` : 'Partia už nie je otvorená.';
+					actions.watchStop();
+					ui.toast(txt);
+					return;
+				}
+				const moving = game.state === 'moving';
+				if (type === 'room') {
+					const dd = d.data || {};
+					sp.info = dd.info || sp.info;
+					if (watchInfo.seq < 0) {
+						game.spectateSet(dd.after || dd.before || null);
+						watchInfo.seq = d.seq;
+						watchInfo.done = true;
+					} else if (d.seq > watchInfo.seq && dd.shot && dd.before && !moving) {
+						game.spectateSet(dd.before);
+						game.playRemote(dd.shot, false);
+						watchInfo.seq = d.seq;
+						watchInfo.done = false;
+					} else if (d.seq === watchInfo.seq && dd.after && !watchInfo.done && !moving) {
+						game.spectateSet(dd.after); // zosúladenie so stavom hráča po údere
+						watchInfo.done = true;
+					}
+				} else {
+					sp.info = d.scores ? `${d.players[0].name} ${d.scores[0]} : ${d.scores[1]} ${d.players[1].name}` : sp.info;
+					const balls = d.state && d.state.balls;
+					if (watchInfo.seq < 0) {
+						game.spectateSet(balls || null);
+						watchInfo.seq = d.seq;
+					} else if (d.shot && d.shot.seq === d.seq + 1 && watchInfo.played !== d.shot.seq && !moving) {
+						game.spectateSet(balls || null);
+						game.playRemote(d.shot, false);
+						watchInfo.played = d.shot.seq;
+					} else if (d.seq > watchInfo.seq && !moving) {
+						game.spectateSet(balls || null);
+						watchInfo.seq = d.seq;
+					}
+				}
+				ui.sync(game, rig.mode);
+			},
 			queue: (st, info) => {
 				office.setDoor(st === 'wait' ? 'wait' : '');
 				if (st === 'found') {
@@ -1213,7 +1341,10 @@ export function start(root, config = {}) {
 	updateScore();
 
 	// pri kladení bielej do D sa kamera za tágom dočasne prepne zhora (bielu je tak lepšie vidieť)
-	game.on((type) => {
+	game.on((type, d) => {
+		if (!game.spectating && !game.match && homeDoorOpen && (type === 'shot' || type === 'settle')) {
+			roomBroadcast(type, d);
+		}
 		if (view) {
 			// v pohľade na nástenku alebo stojan kameru nemeníme
 		} else if (topView) {
