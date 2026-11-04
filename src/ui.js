@@ -721,7 +721,7 @@ export class UI {
 		}
 		const O = tr.ball.p;
 		const Gp = tr.ghost;
-		const key = [lines ? 1 : 0, dir.toFixed(5), O.x.toFixed(4), O.z.toFixed(4), Gp.x.toFixed(4), Gp.z.toFixed(4)].join();
+		const key = [this.feltColor || "", lines ? 1 : 0, dir.toFixed(5), O.x.toFixed(4), O.z.toFixed(4), Gp.x.toFixed(4), Gp.z.toFixed(4)].join();
 		if (key === this._contactKey) {
 			return;
 		}
@@ -782,7 +782,7 @@ export class UI {
 			g.fill();
 		};
 		// súkno
-		g.fillStyle = '#1d6b34';
+		g.fillStyle = this.feltColor || '#1d6b34'; // farba súkna stola (zelená, pri tréningu červená, v lige modrá)
 		g.beginPath();
 		g.arc(S / 2, S / 2, S / 2 - dpr, 0, Math.PI * 2);
 		g.fill();

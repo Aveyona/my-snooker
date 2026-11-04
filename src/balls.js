@@ -140,7 +140,8 @@ export class BallViews {
 	/** Zvýrazní guľu, na ktorú sa mieri (null = nič). */
 	highlight(ball, dt, ghost = null) {
 		const on = !!(ball && ball.on);
-		this.outline.visible = this.ring.visible = on;
+		this.outline.visible = false; // guľa sa nezvýrazňuje, označenie je len krúžok na súkne
+		this.ring.visible = on;
 		this.arrow.visible = on && !!ghost;
 		if (!on) {
 			return;

@@ -238,6 +238,7 @@ export function start(root, config = {}) {
 		if (want !== feltNow) {
 			feltNow = want;
 			table.setFelt(want);
+			ui.feltColor = { green: '#1d6b34', red: '#a1303a', blue: '#2a64bc' }[want];
 		}
 	};
 	const setVenue = (v) => {
