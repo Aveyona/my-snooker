@@ -103,22 +103,52 @@ export function start(root, config = {}) {
 	let started = false;
 	const finePointer = !!(window.matchMedia && window.matchMedia('(pointer: fine)').matches);
 
-	// pohľad na nástenku (F1) alebo stojan s tágami (F2)
+	// pohľad na nástenku (F1), stojan s tágami (F2), tabuľu so skóre (F3) alebo kriedovanie tága (F4)
 	let view = null;
+	let topView = false; // Tab: pohľad na stôl zhora
+	const CHALK_SHOTS = 3; // nakriedovaná špička vydrží 3 údery
+	const CHALK_SPIN = 0.2; // bez kriedy má miesto úderu len pätinu účinku (s kriedou 5x viac)
+	let chalk = 0;
+	let chalkT = -1; // priebeh kriedovania (sekundy), -1 = nekriedi sa
+	let chalkStart = 0;
+	const chalkMesh = new THREE.Mesh(
+		new THREE.BoxGeometry(0.022, 0.022, 0.022),
+		new THREE.MeshStandardMaterial({ color: 0x2f6fd6, roughness: 0.85 })
+	);
+	chalkMesh.visible = false;
+	scene.add(chalkMesh);
+	const updateScore = () => room.updateScore(game.stats, { cue: cueSpec.name, chalk });
 	const enterView = (name) => {
 		if (view === name) {
 			exitView();
 			return;
 		}
-		if (game.state === 'moving') {
+		if (game.state === 'moving' || chalkT >= 0) {
+			return;
+		}
+		if (name === 'chalk' && game.state !== 'aim') {
 			return;
 		}
 		view = name;
 		controls.blocked = true;
-		controls.uncapture();
+		if (name !== 'chalk') {
+			controls.uncapture();
+		}
 		ui.showMenu(false);
-		const v = room[name];
-		rig.setView(v.pos, v.look);
+		if (name === 'chalk') {
+			// pohľad zboku na špičku tága, krieda sa priblíži a pošúcha špičku
+			const tip = cue.pivot.position.clone();
+			const dx = Math.cos(game.dir);
+			const dz = Math.sin(game.dir);
+			const pos = tip.clone().add(new THREE.Vector3(-dz * 0.22 - dx * 0.08, 0.09, dx * 0.22 - dz * 0.08));
+			rig.setView(pos, tip);
+			chalkT = 0;
+			chalkStart = performance.now();
+			chalkMesh.visible = true;
+		} else {
+			const v = room[name];
+			rig.setView(v.pos, v.look);
+		}
 		ui.showView(name, CUES, cueSpec.id);
 	};
 	const exitView = () => {
@@ -127,7 +157,9 @@ export function start(root, config = {}) {
 		}
 		view = null;
 		controls.blocked = false;
-		rig.setMode(game.state === 'place' ? 'top' : 'cue');
+		chalkT = -1;
+		chalkMesh.visible = false;
+		rig.setMode(game.state === 'place' || topView ? 'top' : 'cue');
 		ui.showView(null);
 		controls.capture();
 	};
@@ -140,12 +172,20 @@ export function start(root, config = {}) {
 		room.selectCue(cueSpec.id);
 		ui.showView(view, CUES, cueSpec.id);
 		ui.setCueInfo(cueSpec);
+		updateScore();
 	};
 
 	const doShoot = (rawPower) => {
 		// tvrdosť špičky: najväčšia sila tága; mäkká špička lepšie drží falše
 		const power = rawPower * cueSpec.power;
-		if (game.shoot(power, spin.side * cueSpec.grip, spin.top * cueSpec.grip)) {
+		// krieda: nakriedovaná špička prenesie miesto úderu (falšu) naplno, bez kriedy len pätinu
+		const k = cueSpec.grip * (chalk > 0 ? 1 : CHALK_SPIN);
+		if (game.shoot(power, spin.side * k, spin.top * k)) {
+			if (chalk > 0) {
+				chalk--;
+			}
+			ui.setChalk(chalk);
+			updateScore();
 			sound.cue(power);
 			ui.sync(game, rig.mode);
 		}
@@ -195,6 +235,16 @@ export function start(root, config = {}) {
 		help: () => enterView('board'),
 		board: () => enterView('board'),
 		rack: () => enterView('rack'),
+		score: () => enterView('score'),
+		chalk: () => enterView('chalk'),
+		top: () => {
+			if (view) {
+				return;
+			}
+			topView = !topView;
+			placeCam = false;
+			rig.setMode(topView || game.state === 'place' ? 'top' : 'cue');
+		},
 		back: () => exitView(),
 		cuePick: (id) => pickCue(id),
 		setting: ({ k, v }) => {
@@ -242,13 +292,18 @@ export function start(root, config = {}) {
 		stroke: (on) => ui.setStroke(on),
 		key: (k) => {
 			const lk = k.toLowerCase();
-			if (lk === 'f1' || lk === 'f2') {
-				ui.opts.onAction(lk === 'f1' ? 'board' : 'rack');
+			const fkeys = { f1: 'board', f2: 'rack', f3: 'score', f4: 'chalk' };
+			if (fkeys[lk]) {
+				ui.opts.onAction(fkeys[lk]);
+				return true;
+			}
+			if (lk === 'tab') {
+				ui.opts.onAction('top');
 				return true;
 			}
 			if (view) {
 				// v pohľade na nástenku alebo stojan: Esc a Enter späť do hry, šípky vyberajú tágo
-				if (lk === 'escape' || lk === 'enter') {
+				if ((lk === 'escape' || lk === 'enter') && view !== 'chalk') {
 					exitView();
 					return true;
 				}
@@ -270,11 +325,15 @@ export function start(root, config = {}) {
 
 	controls.setCue(cueSpec);
 	ui.setCueInfo(cueSpec);
+	ui.setChalk(chalk);
+	updateScore();
 
 	// pri kladení bielej do D sa kamera za tágom dočasne prepne zhora (bielu je tak lepšie vidieť)
 	game.on((type) => {
 		if (view) {
 			// v pohľade na nástenku alebo stojan kameru nemeníme
+		} else if (topView) {
+			// Tab: pohľad zhora ostáva
 		} else if (game.state === 'place' && rig.mode === 'cue') {
 			rig.setMode('top');
 			placeCam = true;
@@ -286,6 +345,7 @@ export function start(root, config = {}) {
 		}
 		if (type === 'change' || type === 'settle') {
 			ui.sync(game, rig.mode);
+			updateScore();
 		}
 	});
 
@@ -329,12 +389,35 @@ export function start(root, config = {}) {
 		}
 		ui.showPower(controls.power);
 		views.update(dt);
-		cue.place(game.cue, game.dir, pull, spin.side, spin.top, aiming && game.cue.on);
+		cue.place(game.cue, game.dir, pull, spin.side, spin.top, (aiming || view === 'chalk') && game.cue.on);
+		if (chalkT >= 0) {
+			// kriedovanie: krieda príde k špičke, pošúcha ju krúživým pohybom a odíde
+			chalkT = (performance.now() - chalkStart) / 1000; // podľa skutočného času, aj keď je obraz pomalý
+			const tip = cue.pivot.position;
+			const dx = Math.cos(game.dir);
+			const dz = Math.sin(game.dir);
+			const T = 2.2;
+			const near = Math.min(1, chalkT / 0.4, Math.max(0, (T - chalkT) / 0.4));
+			const a = chalkT * 14;
+			const r = 0.004 * near;
+			chalkMesh.position.set(
+				tip.x + dx * (0.012 + (1 - near) * 0.12) - dz * Math.cos(a) * r,
+				tip.y + Math.sin(a) * r + (1 - near) * 0.06,
+				tip.z + dz * (0.012 + (1 - near) * 0.12) + dx * Math.cos(a) * r
+			);
+			chalkMesh.rotation.set(Math.sin(a) * 0.3, -game.dir, Math.cos(a) * 0.3);
+			if (chalkT >= T) {
+				chalk = CHALK_SHOTS;
+				ui.setChalk(chalk);
+				updateScore();
+				exitView();
+			}
+		}
 		const tr = guide.update(game.balls, game.cue, game.dir, aiming && game.cue.on, settings.lines ? 2 : 0);
 		const showContact = aiming && game.cue.on && !!settings.contact;
 		const trace = tr || (aiming && game.cue.on ? aimTrace(game.balls, game.cue, game.dir) : null);
 		ui.drawContact(showContact ? trace : null, game.dir, showContact, settings.lines);
-		views.highlight(trace && aiming ? trace.ball : null, dt);
+		views.highlight(trace && aiming ? trace.ball : null, dt, trace ? trace.ghost : null);
 		if (trace) {
 			// pri posune pohľadu sa kamera pozerá na mierenú guľu, a keď sa nemieri na žiadnu, na bod pred bielou
 			// v smere mierenia (AIM_AHEAD metrov)

@@ -85,6 +85,20 @@ export class BallViews {
 		);
 		this.ring.rotation.x = -Math.PI / 2;
 		this.outline.visible = this.ring.visible = false;
+		// krátka priehľadná 3D šípka vo farbe gule: smer, ktorým guľa po náraze pôjde
+		this.arrow = new THREE.Group();
+		const arrowMat = new THREE.MeshStandardMaterial({ color: 0xffffff, transparent: true, opacity: 0.55, depthWrite: false, roughness: 0.4 });
+		const shaft = new THREE.Mesh(new THREE.CylinderGeometry(R * 0.16, R * 0.16, R * 2.6, 16), arrowMat);
+		shaft.rotation.z = -Math.PI / 2;
+		shaft.position.x = R * 1.3;
+		const head = new THREE.Mesh(new THREE.ConeGeometry(R * 0.42, R * 1.1, 20), arrowMat);
+		head.rotation.z = -Math.PI / 2;
+		head.position.x = R * 3.15;
+		this.arrow.add(shaft, head);
+		this.arrow.visible = false;
+		this.arrow.renderOrder = 3;
+		this.arrowMat = arrowMat;
+		scene.add(this.arrow);
 		this.outline.renderOrder = this.ring.renderOrder = 2;
 		scene.add(this.outline, this.ring);
 		this._hlT = 0;
@@ -126,11 +140,19 @@ export class BallViews {
 	}
 
 	/** Zvýrazní guľu, na ktorú sa mieri (null = nič). */
-	highlight(ball, dt) {
+	highlight(ball, dt, ghost = null) {
 		const on = !!(ball && ball.on);
 		this.outline.visible = this.ring.visible = on;
+		this.arrow.visible = on && !!ghost;
 		if (!on) {
 			return;
+		}
+		if (ghost) {
+			// guľa pôjde po spojnici stredov v okamihu dotyku (biela v mieste dotyku → stred gule)
+			const ang = Math.atan2(ball.p.z - ghost.z, ball.p.x - ghost.x);
+			this.arrow.position.set(ball.p.x + Math.cos(ang) * R * 1.05, R, ball.p.z + Math.sin(ang) * R * 1.05);
+			this.arrow.rotation.set(0, -ang, 0);
+			this.arrowMat.color.setHex(ball.kind === 'black' ? 0x555555 : COLOURS[ball.kind].color);
 		}
 		this._hlT += dt;
 		const pulse = 0.5 + 0.5 * Math.sin(this._hlT * 5);

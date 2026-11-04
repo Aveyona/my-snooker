@@ -219,7 +219,7 @@ export class UI {
 		const box = m.querySelector('.mysn-menu-btns');
 		this.btnResume = this.button('Hrať', 'resume');
 		this.btnResume.classList.add('mysn-primary');
-		box.append(this.btnResume, this.button('Nové rozostavenie', 'reset'), this.button('Tágá (F2)', 'rack'), this.button('Nápoveda (F1)', 'board'), this.button('Nastavenia', 'settings'), this.button('Späť na web', 'home'));
+		box.append(this.btnResume, this.button('Nové rozostavenie', 'reset'), this.button('Tágá (F2)', 'rack'), this.button('Nápoveda (F1)', 'board'), this.button('Skóre (F3)', 'score'), this.button('Nastavenia', 'settings'), this.button('Späť na web', 'home'));
 		return m;
 	}
 
@@ -375,8 +375,25 @@ export class UI {
 		let tx = dx - cosCut * ux;
 		let tz = dz - cosCut * uz;
 		const tl = Math.hypot(tx, tz);
+		// vždy: odkiaľ biela prichádza (stopa zdola k bielej) a kam pôjde trafená guľa (šípka v jej farbe)
+		{
+			const from = P(Gp.x - dx * 4.2 * R, Gp.z - dz * 4.2 * R);
+			const to = P(Gp.x - dx * 1.05 * R, Gp.z - dz * 1.05 * R);
+			line(from, to, 'rgba(255,255,255,0.7)', 2.4, [6 * dpr, 4 * dpr]);
+			const ang = Math.atan2(to[1] - from[1], to[0] - from[0]);
+			const hs = 7 * dpr;
+			g.beginPath();
+			g.fillStyle = 'rgba(255,255,255,0.8)';
+			g.moveTo(to[0], to[1]);
+			g.lineTo(to[0] - hs * Math.cos(ang - 0.5), to[1] - hs * Math.sin(ang - 0.5));
+			g.lineTo(to[0] - hs * Math.cos(ang + 0.5), to[1] - hs * Math.sin(ang + 0.5));
+			g.closePath();
+			g.fill();
+			const kind = tr.ball.kind;
+			const hex = kind === 'black' ? 0x777777 : COLOURS[kind].color;
+			arrow({ x: O.x + ux * R * 1.05, z: O.z + uz * R * 1.05 }, ux, uz, R * 2.4, '#' + hex.toString(16).padStart(6, '0'));
+		}
 		if (lines) {
-			arrow(O, ux, uz, R * (1.6 + 2.2 * cosCut), '#ffe28a');
 			if (tl > 1e-3) {
 				tx /= tl;
 				tz /= tl;
@@ -435,10 +452,18 @@ export class UI {
 		const t = this._stroke
 			? 'Ruka drží tágo: myš k sebe odtiahne, dopredu vystrelí. Pustením ľavého tlačidla zrušíš.'
 			: this._lock
-				? `${this._cueName}: mier pohybom myši${this._cueFine ? ' (Shift jemne)' : ''}, ľavé tlačidlo drž a striel. F1 nápoveda, F2 tágá, Esc menu.`
-				: 'Klikni do hry, myš sa zachytí v okne. F1 nápoveda, F2 tágá.';
+				? `${this._cueName}: mier pohybom myši${this._cueFine ? ' (Shift jemne)' : ''}, ľavé tlačidlo drž a striel. F1 nápoveda, F2 tágá, F3 skóre, F4 krieda, Tab zhora, Esc menu.`
+				: 'Klikni do hry, myš sa zachytí v okne. F1 nápoveda, F2 tágá, F3 skóre, F4 krieda, Tab zhora.';
 		this.hint.textContent = t;
 		this.hint.classList.toggle('mysn-hint-on', !!this._stroke);
+	}
+
+	/** Koľko úderov ešte vydrží krieda na špičke. */
+	setChalk(n) {
+		this._chalk = n;
+		if (this._lastGame) {
+			this.sync(this._lastGame, this._lastCam);
+		}
 	}
 
 	/** Názov tága a či má jemné mierenie (pre nápovedu hore). */
@@ -469,8 +494,8 @@ export class UI {
 					'button',
 					'mysn-cue' + (c.id === selId ? ' mysn-on' : ''),
 					`<span class="mysn-cue-n">${i + 1}</span><b>${c.name}</b><span class="mysn-cue-cat">${c.category}</span>` +
-						`<span>Špička: ${c.tip}</span><span>Najväčšia sila: ${Math.round(c.power * 100)} %</span>` +
-						`<span>Dĺžka: ${Math.round(c.len * 100)} cm</span><span>Jemné mierenie (Shift): ${c.fine > 0 ? 'áno' : 'nie'}</span>` +
+						`<span>Špička ${c.tip}, sila ${Math.round(c.power * 100)} %</span>` +
+						`<span>Dĺžka ${Math.round(c.len * 100)} cm, Shift ${c.fine > 0 ? 'áno' : 'nie'}</span>` +
 						`<em>${c.note}</em>`
 				);
 				card.type = 'button';
@@ -483,10 +508,18 @@ export class UI {
 			box.appendChild(list);
 		}
 		const foot = h('div', 'mysn-view-foot');
-		foot.appendChild(h('span', '', name === 'rack' ? 'Šípky vľavo a vpravo vyberajú tágo. Enter, F2 alebo Esc: späť do hry.' : 'F1, Enter alebo Esc: späť do hry.'));
-		const back = this.button('Späť do hry', 'back');
-		back.classList.add('mysn-primary');
-		foot.appendChild(back);
+		const texts = {
+			rack: 'Šípky vľavo a vpravo vyberajú tágo. Enter, F2 alebo Esc: späť do hry.',
+			board: 'F1, Enter alebo Esc: späť do hry.',
+			score: 'F3, Enter alebo Esc: späť do hry.',
+			chalk: 'Kriedujem špičku tága. Falše budú 3 údery 5x silnejšie.',
+		};
+		foot.appendChild(h('span', '', texts[name] || ''));
+		if (name !== 'chalk') {
+			const back = this.button('Späť do hry', 'back');
+			back.classList.add('mysn-primary');
+			foot.appendChild(back);
+		}
 		box.appendChild(foot);
 	}
 
@@ -499,8 +532,10 @@ export class UI {
 
 	/** Prekreslí stav podľa hry. */
 	sync(game, camMode) {
+		this._lastGame = game;
+		this._lastCam = camMode;
 		const s = game.stats;
-		this.stats.innerHTML = `<span>Údery <b>${s.shots}</b></span><span>Spadnuté <b>${s.potted}</b></span><span>Body <b>${s.points}</b></span><span>Séria <b>${s.run}</b></span><span>Najlepšia <b>${s.best}</b></span>`;
+		this.stats.innerHTML = `<span>Údery <b>${s.shots}</b></span><span>Spadnuté <b>${s.points >= 0 ? s.potted : 0}</b></span><span>Body <b>${s.points}</b></span><span>Séria <b>${s.run}</b></span><span>Najlepšia <b>${s.best}</b></span><span class="${this._chalk > 0 ? 'mysn-chalk-on' : 'mysn-chalk-off'}">Krieda <b>${this._chalk > 0 ? this._chalk : 'F4'}</b></span>`;
 		this.msg.textContent = game.state === 'place' ? 'Posuň bielu guľu v D a potvrď tlačidlom Hotovo.' : game.message;
 		this.msg.classList.toggle('mysn-hidden', !this.msg.textContent);
 		const st = game.state;

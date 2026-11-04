@@ -361,19 +361,20 @@ export function buildRoomShell(scene, quality) {
 
 	// Stojan s tágami (F2) na zadnej stene vpravo
 	const RACK = { x: 2.6, base: FY };
-	add(new THREE.BoxGeometry(1.25, 1.85, 0.03), darkWood, RACK.x, FY + 0.15 + 0.925, -RZ + 0.05);
-	add(new THREE.BoxGeometry(1.3, 0.06, 0.16), woodMat, RACK.x, FY + 0.12, -RZ + 0.11); // spodná lišta s miskami
-	add(new THREE.BoxGeometry(1.3, 0.05, 0.12), woodMat, RACK.x, FY + 1.35, -RZ + 0.1); // horný držiak
+	const spacing = 0.21;
+	const rackW = CUES.length * spacing + 0.2;
+	add(new THREE.BoxGeometry(rackW, 1.85, 0.03), darkWood, RACK.x, FY + 0.15 + 0.925, -RZ + 0.05);
+	add(new THREE.BoxGeometry(rackW + 0.05, 0.06, 0.16), woodMat, RACK.x, FY + 0.12, -RZ + 0.11); // spodná lišta s miskami
+	add(new THREE.BoxGeometry(rackW + 0.05, 0.05, 0.12), woodMat, RACK.x, FY + 1.35, -RZ + 0.1); // horný držiak
 	const rackCues = [];
-	const spacing = 0.22;
 	CUES.forEach((spec, i) => {
-		const x = RACK.x + (i - 2) * spacing;
+		const x = RACK.x + (i - (CUES.length - 1) / 2) * spacing;
 		const g = new THREE.Group();
 		g.position.set(x, FY + 0.16 + spec.len, -RZ + 0.12);
 		g.rotation.x = Math.PI; // špička hore, rukoväť v miske
 		g.add(buildCueMesh(spec, high));
 		scene.add(g);
-		const label = new THREE.Mesh(new THREE.PlaneGeometry(0.2, 0.075), new THREE.MeshStandardMaterial({ map: labelTexture(String(i + 1), spec.category), roughness: 0.4, metalness: 0.3 }));
+		const label = new THREE.Mesh(new THREE.PlaneGeometry(0.18, 0.068), new THREE.MeshStandardMaterial({ map: labelTexture(String(i + 1), spec.category), roughness: 0.4, metalness: 0.3 }));
 		label.position.set(x, FY + 0.3, -RZ + 0.07);
 		scene.add(label);
 		rackCues.push({ group: g, baseZ: -RZ + 0.12, spec });
@@ -391,14 +392,64 @@ export function buildRoomShell(scene, quality) {
 		}
 	};
 
-	// Tabuľa na skóre a komoda na kratšej stene vľavo
-	add(new THREE.BoxGeometry(0.04, 0.62, 1.3), darkWood, -RX + 0.03, FY + 1.6, 0);
-	for (const z of [-0.36, 0.36]) {
-		for (let r = 0; r < 3; r++) {
-			add(new THREE.BoxGeometry(0.02, 0.012, 0.5), brassMat, -RX + 0.06, FY + 1.42 + r * 0.14, z);
-			add(new THREE.BoxGeometry(0.03, 0.05, 0.03), new THREE.MeshStandardMaterial({ color: 0xf2efe6, roughness: 0.4 }), -RX + 0.07, FY + 1.42 + r * 0.14, z - 0.2 + r * 0.12);
+	// Tabuľa na skóre (F3) a komoda na kratšej stene vľavo: zobrazuje body z hry
+	const SCORE = { y: FY + 1.62, w: 1.5, h: 0.84 };
+	const scoreCanvas = document.createElement('canvas');
+	scoreCanvas.width = 1024;
+	scoreCanvas.height = 574;
+	const scoreTex = new THREE.CanvasTexture(scoreCanvas);
+	scoreTex.colorSpace = THREE.SRGBColorSpace;
+	scoreTex.anisotropy = 8;
+	add(new THREE.BoxGeometry(0.05, SCORE.h + 0.12, SCORE.w + 0.12), darkWood, -RX + 0.03, SCORE.y, 0);
+	const scorePlane = add(new THREE.PlaneGeometry(SCORE.w, SCORE.h), new THREE.MeshStandardMaterial({ map: scoreTex, roughness: 0.7, emissive: 0xffffff, emissiveMap: scoreTex, emissiveIntensity: 0.12 }), -RX + 0.064, SCORE.y, 0);
+	scorePlane.rotation.y = Math.PI / 2;
+	scorePlane.castShadow = false;
+	const updateScore = (st, extra) => {
+		const g = scoreCanvas.getContext('2d');
+		const W = scoreCanvas.width;
+		const Hh = scoreCanvas.height;
+		g.fillStyle = '#123524';
+		g.fillRect(0, 0, W, Hh);
+		g.strokeStyle = '#c9a24a';
+		g.lineWidth = 8;
+		g.strokeRect(14, 14, W - 28, Hh - 28);
+		g.fillStyle = '#f2d48a';
+		g.textAlign = 'center';
+		g.font = 'bold 62px Georgia, serif';
+		g.fillText('MY SNOOKER', W / 2, 92);
+		g.font = '34px Georgia, serif';
+		g.fillStyle = '#e8e2cf';
+		g.fillText((extra && extra.mode) || 'Tréning', W / 2, 140);
+		const rows = [
+			['Údery', st.shots],
+			['Spadnuté gule', st.potted],
+			['Body', st.points],
+			['Séria', st.run],
+			['Najlepšia séria', st.best],
+		];
+		g.font = '40px Arial, Helvetica, sans-serif';
+		rows.forEach(([k, v], i) => {
+			const yy = 210 + i * 62;
+			g.textAlign = 'left';
+			g.fillStyle = '#e8e2cf';
+			g.fillText(k, 90, yy);
+			g.textAlign = 'right';
+			g.fillStyle = '#ffffff';
+			g.font = 'bold 44px Arial, Helvetica, sans-serif';
+			g.fillText(String(v), W - 90, yy);
+			g.font = '40px Arial, Helvetica, sans-serif';
+			g.fillStyle = 'rgba(201,162,74,0.35)';
+			g.fillRect(90, yy + 16, W - 180, 2);
+		});
+		if (extra) {
+			g.textAlign = 'center';
+			g.font = '30px Arial, Helvetica, sans-serif';
+			g.fillStyle = '#f2d48a';
+			g.fillText(`${extra.cue}   |   Krieda: ${extra.chalk > 0 ? extra.chalk + ' údery' : 'žiadna (F4)'}`, W / 2, Hh - 40);
 		}
-	}
+		scoreTex.needsUpdate = true;
+	};
+	updateScore({ shots: 0, potted: 0, points: 0, run: 0, best: 0 }, null);
 	add(new THREE.BoxGeometry(0.45, 0.8, 1.7), darkWood, -RX + 0.25, FY + 0.4, 0);
 	add(new THREE.BoxGeometry(0.47, 0.03, 1.74), woodMat, -RX + 0.25, FY + 0.815, 0);
 	for (const z of [-0.42, 0.42]) {
@@ -441,7 +492,8 @@ export function buildRoomShell(scene, quality) {
 
 	// Obrazy na prednej stene
 	for (const [x, seed] of [[-2.8, 0], [2.8, 1]]) {
-		const pic = add(new THREE.PlaneGeometry(0.86, 0.62), new THREE.MeshStandardMaterial({ map: paintingTexture(seed), roughness: 0.7 }), x, FY + 1.75, RZ - 0.04);
+		// obraz pred prednou plochou rámu (inak by sa s rámom „bili“ a blikali)
+		const pic = add(new THREE.PlaneGeometry(0.86, 0.62), new THREE.MeshStandardMaterial({ map: paintingTexture(seed), roughness: 0.7 }), x, FY + 1.75, RZ - 0.046);
 		pic.rotation.y = Math.PI;
 		pic.castShadow = false;
 		add(new THREE.BoxGeometry(1.0, 0.76, 0.04), new THREE.MeshStandardMaterial({ color: 0x8a6a2a, metalness: 0.6, roughness: 0.4 }), x, FY + 1.75, RZ - 0.02);
@@ -462,8 +514,10 @@ export function buildRoomShell(scene, quality) {
 
 	return {
 		board: { pos: new THREE.Vector3(BOARD.x, BOARD.y, -RZ + 1.62), look: new THREE.Vector3(BOARD.x, BOARD.y, -RZ) },
-		rack: { pos: new THREE.Vector3(RACK.x, FY + 1.15, -RZ + 2.9), look: new THREE.Vector3(RACK.x, FY + 0.72, -RZ) },
+		rack: { pos: new THREE.Vector3(RACK.x, FY + 1.15, -RZ + 3.3), look: new THREE.Vector3(RACK.x, FY + 0.6, -RZ) },
+		score: { pos: new THREE.Vector3(-RX + 1.55, SCORE.y, 0), look: new THREE.Vector3(-RX, SCORE.y, 0) },
 		selectCue,
+		updateScore,
 	};
 }
 

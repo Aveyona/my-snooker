@@ -10,8 +10,8 @@ const PAPERS = [
 		lines: [
 			'Klikni do hry: myš sa zachytí v okne.',
 			'Pohyb myši bez tlačidla: mierenie.',
-			'Shift: jemné mierenie (len tágá',
-			'   vyššej kategórie, pozri F2).',
+			'Shift: jemné mierenie (len pokročilé',
+			'   a majstrovské tágá, pozri F2).',
 			'Ľavé tlačidlo drž: ruka chytí tágo.',
 			'   Myš k sebe tágo odtiahne,',
 			'   pohyb dopredu vystrelí.',
@@ -27,13 +27,13 @@ const PAPERS = [
 		lines: [
 			'F1   táto nástenka',
 			'F2   stojan s tágami',
+			'F3   tabuľa so skóre',
+			'F4   nakriedovať špičku tága',
+			'Tab  pohľad na stôl zhora',
 			'Esc  hlavné menu',
-			'Z    vrátiť úder',
-			'B    biela do ruky',
-			'R    nové rozostavenie',
-			'S    preskočiť úder',
-			'Medzerník drž: sila úderu',
-			'Šípky: mierenie',
+			'Z späť, B biela do ruky,',
+			'R nové rozostavenie, S preskočiť',
+			'Medzerník drž: sila, šípky: mierenie',
 		],
 	},
 	{
@@ -41,26 +41,29 @@ const PAPERS = [
 		lines: [
 			'Bielou guľou potápaj ostatné gule.',
 			'Body: červená 1, žltá 2, zelená 3,',
-			'hnedá 4, modrá 5, ružová 6,',
-			'čierna 7.',
-			'V tréningu sa farby vracajú',
-			'na svoje spoty.',
+			'hnedá 4, modrá 5, ružová 6, čierna 7.',
+			'V tréningu sa farby vracajú na spoty.',
 			'Séria: body bez prerušenia.',
 			'Keď spadne biela, polož ju do D.',
-			'Kruh dole ukazuje dotyk gúľ',
-			'zhora: uhol a plnosť zásahu.',
+			'Kruh dole ukazuje dotyk gúľ zhora:',
+			'   uhol a plnosť zásahu.',
+			'Krieda (F4): falše sú 5x silnejšie,',
+			'   nakriedovaná špička vydrží 3 údery.',
+			'   Bez kriedy majú falše len pätinu účinku.',
 		],
 	},
 	{
 		title: 'Tágá (F2)',
 		lines: [
-			'Tvrdá špička: silnejší úder.',
-			'Mäkká špička: jemnejšie údery,',
-			'   lepšie drží falše.',
+			'Desať tág v troch kategóriách.',
+			'Tvrdá špička: silnejší úder,',
+			'   horšie drží falše.',
+			'Mäkká špička: jemnejšie údery.',
 			'Dlhé tágo: dlhšie ťahanie myšou,',
 			'   jemnejšie dávkovanie sily.',
 			'Pokročilé a majstrovské tágá',
 			'   majú jemné mierenie so Shift.',
+			'Výber: klik na kartu alebo šípky.',
 		],
 	},
 ];
@@ -120,8 +123,8 @@ export function boardTexture() {
 		g.fillStyle = '#c9a24a';
 		g.fillRect(-w / 2 + 40, -h / 2 + 110, w - 80, 4);
 		g.fillStyle = '#222';
-		g.font = '36px Arial, Helvetica, sans-serif';
 		const lh = Math.min(42, (h - 150) / p.lines.length);
+		g.font = `${Math.min(36, Math.floor(lh * 0.86))}px Arial, Helvetica, sans-serif`;
 		p.lines.forEach((ln, j) => {
 			g.fillText(ln, -w / 2 + 44, -h / 2 + 132 + j * lh);
 		});

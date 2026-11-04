@@ -8,7 +8,8 @@ Hra je napísaná v JavaScripte nad knižnicou [three.js](https://threejs.org/),
 
 - 3D stôl so zaoblenými čeľusťami jamiek, mantinely so šikmým prierezom, drevený rám a lampy nad stolom
 - herňa 10 x 7,5 m: drevené obloženie, tmavozelená tapeta, strop s trámami, nástenné svietidlá, podlaha z dosiek, otvorené dvere do chodby, kreslá, barový stolík, obrazy
-- nástenka s nápovedou (F1) a stojan s 5 tágami (F2)
+- nástenka s nápovedou (F1), stojan s 10 tágami (F2), tabuľa so skóre (F3), kriedovanie tága (F4), pohľad zhora (Tab)
+- priehľadná 3D šípka vo farbe trafenej gule ukazuje, kam guľa pôjde
 - fyzika gúľ: kĺzanie, kotúľanie, guľa dopredu, guľa späť, zastavenie a bočná falša
 - ovládanie myšou ako tágo (myš sa zachytí v okne, Esc otvorí hlavné menu), prstom a klávesnicou
 - detail dotyku gúľ zhora (uhol a plnosť zásahu) a zvýraznenie gule, na ktorú sa mieri
@@ -27,6 +28,9 @@ Hra je napísaná v JavaScripte nad knižnicou [three.js](https://threejs.org/),
 | Hlavné menu | Esc |
 | Nápoveda na nástenke | F1 |
 | Stojan s tágami | F2 (výber myšou alebo šípkami) |
+| Tabuľa so skóre | F3 |
+| Kriedovanie špičky | F4 (falše 5x silnejšie na 3 údery) |
+| Pohľad na stôl zhora | Tab |
 
 ## Tágá
 
@@ -34,11 +38,16 @@ Hra je napísaná v JavaScripte nad knižnicou [three.js](https://threejs.org/),
 | --- | --- | --- | --- | --- | --- |
 | Klubové (predvolené) | Základné | stredná | 80 % | 145 cm | nie |
 | Krátke | Základné | tvrdá | 90 % | 137 cm | nie |
+| Kompaktné | Základné | stredná | 75 % | 130 cm | nie |
+| Prerážacie | Základné | veľmi tvrdá | 100 % | 145 cm | nie |
 | Mäkké | Pokročilé | mäkká | 65 % | 147 cm | áno |
 | Dlhé | Pokročilé | stredná | 85 % | 158 cm | áno |
-| Majstrovské | Majstrovské | stredne tvrdá | 100 % | 150 cm | áno, najjemnejšie |
+| Ebenové | Pokročilé | stredne tvrdá | 90 % | 149 cm | áno |
+| Majstrovské | Majstrovské | stredne tvrdá | 100 % | 150 cm | áno |
+| Turnajové | Majstrovské | tvrdá | 100 % | 147 cm | áno |
+| Citlivé | Majstrovské | mäkká | 72 % | 160 cm | áno, najjemnejšie |
 
-Dlhšie tágo treba ťahať myšou viac, sila sa tak dávkuje jemnejšie. Tvrdá špička horšie drží falše.
+Dlhšie tágo treba ťahať myšou viac, sila sa tak dávkuje jemnejšie. Tvrdá špička horšie drží falše. Bez kriedy majú falše len pätinu účinku, kriedovanie (F4) vydrží 3 údery.
 
 ## Plán vývoja
 

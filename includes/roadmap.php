@@ -22,7 +22,9 @@ function mysn_roadmap() {
 				array( 'Herňa: 4 steny s dreveným obložením a tmavozelenou tapetou, strop s trámami, nástenné svietidlá, kamera neprejde cez steny', 1 ),
 				array( 'Väčšia herňa (10 x 7,5 m) s vybavením: otvorené dvere do chodby, tabuľa na skóre, komoda, barový stolík so stoličkami, kreslá, obrazy, kvetina', 1 ),
 				array( 'Nástenka s nápovedou v herni (F1): ovládanie, klávesy, princíp hry, tágá', 1 ),
-				array( 'Stojan s 5 tágami (F2): tvrdosť špičky mení najväčšiu silu, dĺžka citlivosť ťahania myšou, jemné mierenie so Shift len pokročilé a majstrovské tágá', 1 ),
+				array( 'Tabuľa so skóre v herni (F3), kriedovanie špičky (F4, falše 5x silnejšie na 3 údery), pohľad zhora (Tab)', 1 ),
+				array( 'Šípka vo farbe trafenej gule (3D) a v detaile dotyku odkiaľ prichádza biela a kam pôjde guľa', 1 ),
+				array( 'Stojan s 10 tágami (F2): tvrdosť špičky mení najväčšiu silu, dĺžka citlivosť ťahania myšou, jemné mierenie so Shift len pokročilé a majstrovské tágá', 1 ),
 				array( 'Stôl ako skutočný snooker: zaoblené čeľuste jamiek, zaoblené rohy rámu, kožené lemy jamiek, podlaha z drevených dosiek, vyššie lampy', 1 ),
 				array( 'Kamera za tágom (pri kladení bielej dočasne zhora), prepínanie kamier zrušené', 1 ),
 				array( 'Posun pohľadu pri držaní pravého tlačidla myši (po pustení sa vráti), po údere kamera sleduje bielu a otáča sa pohybom myši', 1 ),
@@ -91,6 +93,7 @@ function mysn_roadmap() {
 /** Denník zmien (najnovšie hore). */
 function mysn_changelog() {
 	return array(
+		array( '0.1.18', '4. 11. 2026', 'Tágo je jeden zúžený kus s textúrou dreva. Stojan má 10 tág. Tab: pohľad na stôl zhora. F3: tabuľa so skóre v herni. F4: kriedovanie špičky, potom sú falše 3 údery 5x silnejšie (bez kriedy len pätina účinku). Priehľadná 3D šípka vo farbe gule ukazuje, kam guľa pôjde; detail dotyku ukazuje, odkiaľ prichádza biela a kam pôjde guľa. Obrazy už neblikajú. Všetko je aj na nástenke (F1).' ),
 		array( '0.1.17', '4. 11. 2026', 'Väčšia herňa s vybavením a otvorenými dverami do chodby. F1: kamera ukáže nástenku s nápovedou. F2: stojan s 5 tágami (Klubové, Krátke, Mäkké, Dlhé, Majstrovské), výber myšou alebo šípkami. Tágo mení silu úderu, citlivosť ťahania a falše; jemné mierenie so Shift majú len pokročilé a majstrovské tágá.' ),
 		array( '0.1.16', '4. 11. 2026', 'Herňa okolo stola: miestnosť 7,5 x 5,5 m so stropom vo výške 3 m, drevené obloženie stien, tmavozelená tapeta, lišty, strop s trámami, 6 nástenných svietidiel. Lampy visia na lankách zo stropu, kamera neprejde cez steny ani strop.' ),
 		array( '0.1.15', '4. 11. 2026', 'Posun pohľadu pravým tlačidlom bez mierenej gule sa pozerá na bod pol metra pred bielou v smere mierenia (nie na stred stola).' ),
