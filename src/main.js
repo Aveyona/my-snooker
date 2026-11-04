@@ -299,6 +299,7 @@ export function start(root, config = {}) {
 	let spin = { side: 0, top: 0 };
 	let placeCam = false;
 	let started = false;
+	let escClosedAt = -1e9; // kedy Esc zavrelo menu (vtedy sa menu samo znova neotvorí)
 	let freeMouse = false; // Ctrl: myš uvoľnená bez menu
 	const finePointer = !!(window.matchMedia && window.matchMedia('(pointer: fine)').matches);
 
@@ -911,7 +912,7 @@ export function start(root, config = {}) {
 				freeMouse = false;
 				ui.setFree(false);
 				ui.showMenu(false);
-			} else if (finePointer && !view && !freeMouse && !ui.partyOpen()) {
+			} else if (finePointer && !view && !freeMouse && !ui.partyOpen() && performance.now() - escClosedAt > 1500) {
 				ui.showMenu(true, started);
 			}
 		},
@@ -1035,7 +1036,14 @@ export function start(root, config = {}) {
 				} else if (ui.roomsOpen()) {
 					ui.openRooms(false);
 				} else {
-					actions.resume();
+					// menu sa len zavrie; myš sa zachytí prvým klikom do hry (prehliadač hneď po Esc zachytenie odmietne)
+					if (game.solo && game.solo.done) {
+						actions.training();
+					}
+					escClosedAt = performance.now();
+					ui.showMenu(false);
+					ui.openLobby(false);
+					ui.toast('Klikni do hry, myš sa zachytí.');
 				}
 				return true;
 			}

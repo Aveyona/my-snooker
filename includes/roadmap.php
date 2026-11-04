@@ -118,6 +118,7 @@ function mysn_roadmap() {
 /** Denník zmien (najnovšie hore). */
 function mysn_changelog() {
 	return array(
+		array( '0.4.1', '4. 11. 2026', 'Oprava: Esc zavrie hlavné menu a to sa už samo znova neotvorí. Myš sa zachytí prvým klikom do hry.' ),
 		array( '0.4.0', '4. 11. 2026', 'Vstúpiť v menu: okno Otvorené partie so zoznamom tréningov a hier o skóre s otvorenými dverami (F6) a všetkých prebiehajúcich ligových zápasov. Divák sa len pozerá: vidí každý úder naživo, myšou sa otáča okolo stola, Esc otvorí menu s tlačidlom Prestať sledovať. Dvere herne sú po načítaní zatvorené, partia je súkromná, kým ich hráč neotvorí. Nová tabuľka my_snooker_rooms.' ),
 		array( '0.3.13', '4. 11. 2026', 'Esc pri otvorenom hlavnom menu ho zavrie a pokračuje sa v hre. Tágá v kancelárii (F2) sú v dvoch riadkoch po 5. Po návrate od tág, zatvorení vizitky alebo registrácii sa v kancelárii znova dá rozhliadať myšou.' ),
 		array( '0.3.12', '4. 11. 2026', 'V strope kancelárie sú dva reproduktory: keď hrá rádio z herne, v kancelárii je počuť z nich (priestorovo). Po návrate do herne hrá znova z reproduktorov v herni.' ),
