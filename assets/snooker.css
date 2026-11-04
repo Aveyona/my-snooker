@@ -288,3 +288,12 @@ body.mysn-page { font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans
 .mysn-cp-del { align-self: flex-start; }
 @media (min-width: 900px) { .mysn-view.mysn-rack-panel { padding-right: 350px; } }
 @media (max-width: 899px) { .mysn-cue-panel { top: auto; bottom: 0; right: 0; left: 0; width: auto; max-height: 45vh; border-radius: 12px 12px 0 0; } }
+.mysn-cue-panel { bottom: 70px; max-height: none; }
+.mysn-cp-head { margin-top: 8px; padding-top: 10px; border-top: 1px solid #ffffff22; color: #f2d48a; font-weight: 700; display: flex; justify-content: space-between; }
+.mysn-cp-head em { font-style: normal; font-weight: 400; opacity: .7; font-size: 12px; }
+.mysn-cp-own { display: flex; align-items: center; gap: 8px; padding: 6px 8px; border-radius: 8px; background: #141a24cc; border: 1px solid #ffffff1c; font-size: 12px; }
+.mysn-cp-own.mysn-on { border-color: #e7c773; }
+.mysn-cp-own > span:nth-child(2) { flex: 1; display: flex; flex-direction: column; min-width: 0; }
+.mysn-cp-own em { font-style: normal; opacity: .7; font-size: 11px; }
+.mysn-cp-own .mysn-btn { padding: 4px 8px; font-size: 11px; }
+.mysn-cp-sw { width: 26px; height: 10px; border-radius: 5px; flex: none; }

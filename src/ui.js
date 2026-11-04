@@ -18,6 +18,7 @@ const h = (tag, cls, html) => {
 
 import { cueById } from './cues.js';
 const cueNameOf = (id) => cueById(id).name;
+const cueStateId = (c) => c.id;
 
 export class UI {
 	constructor(root, opts) {
@@ -1131,8 +1132,22 @@ export class UI {
 			}
 			P.appendChild(b);
 		}
+		// moje uložené tágá: výber a stojan (na stojane je vždy 10 tág, vlastné tágo nahradí svoju šablónu)
 		if (info.user) {
-			P.appendChild(h('p', 'mysn-cp-count', `Vlastné tágá: ${info.ownCount || 0} z ${info.ownMax || 10}`));
+			P.appendChild(h('div', 'mysn-cp-head', `Moje tágá <em>${info.ownCount || 0} z ${info.ownMax || 10}</em>`));
+			const own = info.own || [];
+			if (!own.length) {
+				P.appendChild(h('p', 'mysn-cp-note', 'Zatiaľ nemáš vlastné tágo. Vyber šablónu na stojane a daj Vytvoriť vlastné tágo.'));
+			}
+			for (const o of own) {
+				const onRack = !!o.rackOn;
+				const r = h('div', 'mysn-cp-own' + (o.id === c.id ? ' mysn-on' : ''), `<span class="mysn-cp-sw" style="background:linear-gradient(90deg, ${esc(o.colors.shaft)} 50%, ${esc(o.colors.butt)} 50%)"></span><span><b>${esc(o.name)}</b><em>${esc(cueNameOf(o.base))}${onRack ? ', na stojane' : ''}</em></span>`);
+				const pick = this.button(o.id === cueStateId(c) ? 'Vybraté' : 'Vybrať', 'cuePick', 'Hrať s týmto tágom', o.id);
+				pick.disabled = o.id === c.id;
+				const rk = this.button(onRack ? 'Zo stojana' : 'Na stojan', 'cueOwnRack', onRack ? 'Na stojan vráti šablónu' : `Dať na stojan namiesto šablóny ${cueNameOf(o.base)}`, o.own);
+				r.append(pick, rk);
+				P.appendChild(r);
+			}
 		}
 	}
 
@@ -1371,7 +1386,7 @@ export class UI {
 				list.appendChild(card);
 			});
 			box.appendChild(list);
-			this.renderCuePanel(cues.find((c) => c.id === selId) || cues[0], (news && news.rack) || {});
+			this.renderCuePanel((news && news.rack && news.rack.sel) || cues.find((c) => c.id === selId) || cues[0], (news && news.rack) || {});
 		}
 		const foot = h('div', 'mysn-view-foot');
 		const link = (n) => {

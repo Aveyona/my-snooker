@@ -43,6 +43,7 @@ export function ownCueSpec(row) {
 		len: +(base.len * (1 + lim(d.len))).toFixed(3),
 		grip: base.grip * (1 + lim(d.grip)),
 		adj: { power: lim(d.power), len: lim(d.len), grip: lim(d.grip) },
+		rackOn: !!d.rack,
 		colors: { shaft: d.shaft || base.colors.shaft, butt: d.butt || base.colors.butt },
 	};
 }

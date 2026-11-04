@@ -118,6 +118,7 @@ function mysn_roadmap() {
 /** Denník zmien (najnovšie hore). */
 function mysn_changelog() {
 	return array(
+		array( '0.5.1', '4. 11. 2026', 'Moje tágá sú v paneli vpravo pod nastaveniami (Vybrať, Na stojan, Zo stojana). Na stojane je vždy 10 tág: vlastné tágo sa dá dať na stojan namiesto svojej šablóny, aj v 3D s jeho farbami.' ),
 		array( '0.5.0', '4. 11. 2026', 'Vlastné tágá: na stojane (F2) je vpravo priehľadný panel so všetkými vlastnosťami vybraného tága. 10 tág hry sú šablóny, z každej si prihlásený hráč vyrobí vlastné tágo (najviac 10): názov a farby dreva a rukoväte voľne, sila, dĺžka a falše o ±10 % od šablóny. Vlastné tágá sú na stojane v skupine Vlastné, dajú sa vybrať aj do ligy (F2 v kancelárii). Nová tabuľka my_snooker_cues.' ),
 		array( '0.4.3', '4. 11. 2026', 'Kruh s detailom dotyku má farbu súkna stola (zelená, pri tréningu červená, v lige modrá). Guľa, na ktorú sa mieri, už nesvieti, označuje ju len krúžok na súkne.' ),
 		array( '0.4.2', '4. 11. 2026', 'Sledovanie: divák vidí tágo hráča pri mierení (aj v ligovom zápase) a stôl sa zosúladí aj pri zmenách bez úderu (biela do D, krok späť, nové rozostavenie). Divák sa pýta na stav dvakrát za sekundu.' ),

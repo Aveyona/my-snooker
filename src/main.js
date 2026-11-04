@@ -108,8 +108,18 @@ export function start(root, config = {}) {
 		return cueById(id);
 	};
 	const allCues = () => [...CUES, ...ownCues.map(ownCueSpec)];
+	// stojan: vždy 10 miest, na mieste šablóny môže byť moje vlastné tágo (data.rack)
+	const rackList = () =>
+		CUES.map((t) => {
+			const row = ownCues.find((r) => r.base === t.id && r.data && r.data.rack);
+			return row ? ownCueSpec(row) : t;
+		});
 	const OWN_MAX = 10;
-	const rackInfo = () => ({ rack: { user: !!user, ownCount: ownCues.length, ownMax: OWN_MAX } });
+	const rackInfo = () => ({ rack: { user: !!user, ownCount: ownCues.length, ownMax: OWN_MAX, own: ownCues.map(ownCueSpec), sel: cueSpec } });
+	const rackRefresh = () => {
+		room.setRackSpecs(rackList());
+		room.selectCue(cueSpec.id, cueSpec.base);
+	};
 	// uloženie vlastného tága (po zmene v paneli s malým oneskorením)
 	const ownSaveT = {};
 	const saveOwn = (row) => {
@@ -126,13 +136,14 @@ export function start(root, config = {}) {
 			if (settings.cue && settings.cue[0] === 'u' && cueSpec.id !== settings.cue && ownCues.some((x) => 'u' + x.id === settings.cue)) {
 				pickCue(settings.cue); // naposledy vybraté vlastné tágo
 			} else if (view === 'rack') {
-				ui.showView('rack', allCues(), cueSpec.id, rackInfo());
+				ui.showView('rack', rackList(), cueSpec.id, rackInfo());
 			}
+			rackRefresh();
 		}
 	};
 	let cueSpec = specFor(settings.cue);
 	const cue = new Cue(scene, cueSpec);
-	room.selectCue(cueSpec.base || cueSpec.id);
+	room.selectCue(cueSpec.id, cueSpec.base);
 	const guide = new AimGuide(scene);
 	const rig = new CameraRig(renderer);
 	// kamera je vždy za tágom (staré uložené nastavenie kamery sa ignoruje)
@@ -455,7 +466,7 @@ export function start(root, config = {}) {
 		if (name === 'trophies') {
 			refreshTrophies();
 		}
-		ui.showView(name, allCues(), cueSpec.id, name === 'office' ? officeData() : name === 'rack' ? rackInfo() : name === 'mixer' ? { radio } : name === 'magazine' ? room.rssItems : name === 'chair' ? { news: room.newsItems, rss: room.rssItems } : room.newsItems);
+		ui.showView(name, name === 'rack' ? rackList() : allCues(), cueSpec.id, name === 'office' ? officeData() : name === 'rack' ? rackInfo() : name === 'mixer' ? { radio } : name === 'magazine' ? room.rssItems : name === 'chair' ? { news: room.newsItems, rss: room.rssItems } : room.newsItems);
 	};
 	const exitView = () => {
 		if (!view) {
@@ -491,8 +502,8 @@ export function start(root, config = {}) {
 		saveSettings(settings);
 		cue.setSpec(cueSpec);
 		controls.setCue(cueSpec);
-		room.selectCue(cueSpec.base || cueSpec.id);
-		ui.showView(view, allCues(), cueSpec.id, rackInfo());
+		room.selectCue(cueSpec.id, cueSpec.base);
+		ui.showView(view, rackList(), cueSpec.id, rackInfo());
 		ui.setCueInfo(cueSpec);
 		updateScore();
 	};
@@ -910,6 +921,7 @@ export function start(root, config = {}) {
 			}
 			ownCues.push({ id: r.id, base: base.id, name: base.name + ' (moje)', data: { shaft: '', butt: '', power: 0, len: 0, grip: 0 } });
 			pickCue('u' + r.id);
+			rackRefresh();
 			ui.toast('Vlastné tágo je vytvorené. Vpravo mu nastav názov, farby a herné vlastnosti.');
 		},
 		cueOwnSet: ({ id, k, v }) => {
@@ -930,6 +942,28 @@ export function start(root, config = {}) {
 				ui.setCueInfo(cueSpec);
 				ui.updateCueCard(cueSpec);
 			}
+			if (row.data && row.data.rack && k !== 'name') {
+				room.setRackSpecs(rackList()); // farby a dĺžka aj na 3D stojane
+			}
+		},
+		// vlastné tágo na stojan namiesto jeho šablóny (na jednom mieste len jedno), druhý klik ho vráti do zoznamu
+		cueOwnRack: (id) => {
+			const row = ownCues.find((x) => x.id === id);
+			if (!row) {
+				return;
+			}
+			const on = !(row.data && row.data.rack);
+			for (const o of ownCues) {
+				if (o.base === row.base && o.data && o.data.rack && o !== row) {
+					o.data = { ...o.data, rack: 0 };
+					saveOwn(o);
+				}
+			}
+			row.data = { ...(row.data || {}), rack: on ? 1 : 0 };
+			saveOwn(row);
+			rackRefresh();
+			ui.toast(on ? `${row.name} je na stojane namiesto šablóny ${cueById(row.base).name}.` : `${row.name} je späť len v zozname Moje tágá, na stojane je znova ${cueById(row.base).name}.`);
+			ui.showView('rack', rackList(), cueSpec.id, rackInfo());
 		},
 		cueOwnDelete: async (id) => {
 			const row = ownCues.find((x) => x.id === id);
@@ -943,6 +977,7 @@ export function start(root, config = {}) {
 				myCues.selected.splice(sel, 1);
 				saveMyCues(true);
 			}
+			rackRefresh();
 			ui.toast(`Tágo ${row.name} je zmazané.`);
 			pickCue(cueSpec.id === 'u' + id ? row.base : cueSpec.id);
 		},
@@ -1220,8 +1255,8 @@ export function start(root, config = {}) {
 					return true;
 				}
 				if (view === 'rack' && (lk === 'arrowleft' || lk === 'arrowright')) {
-					const list = allCues();
-					const i = Math.max(0, list.findIndex((c) => c.id === cueSpec.id));
+					const list = rackList();
+					const i = Math.max(0, list.findIndex((c) => c.id === cueSpec.id || c.id === cueSpec.base));
 					pickCue(list[(i + (lk === 'arrowleft' ? list.length - 1 : 1)) % list.length].id);
 					return true;
 				}

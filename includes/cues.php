@@ -27,6 +27,7 @@ function mysn_cue_clean( $d ) {
 		'power' => $lim( $d['power'] ?? 0 ),
 		'len'   => $lim( $d['len'] ?? 0 ),
 		'grip'  => $lim( $d['grip'] ?? 0 ),
+		'rack'  => empty( $d['rack'] ) ? 0 : 1, // tágo je na stojane namiesto svojej šablóny
 	);
 }
 

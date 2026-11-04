@@ -387,9 +387,26 @@ export function buildRoomShell(scene, quality, opts = {}) {
 	const glow = new THREE.Mesh(new THREE.RingGeometry(0.035, 0.06, 32), new THREE.MeshBasicMaterial({ color: 0xffd23f, transparent: true, opacity: 0.9 }));
 	glow.rotation.x = -Math.PI / 2;
 	scene.add(glow);
-	const selectCue = (id) => {
+	/** Stojan má vždy 10 miest: na mieste šablóny môže byť vlastné tágo hráča (rovnaká pozícia, jeho farby). */
+	const setRackSpecs = (specs) => {
+		specs.forEach((spec, i) => {
+			const rc = rackCues[i];
+			if (!rc || rc.spec === spec || (rc.spec.id === spec.id && JSON.stringify(rc.spec.colors) === JSON.stringify(spec.colors) && rc.spec.len === spec.len)) {
+				if (rc) {
+					rc.spec = spec;
+				}
+				return;
+			}
+			rc.group.clear();
+			rc.group.position.y = FY + 0.16 + spec.len;
+			rc.group.add(buildCueMesh(spec, high));
+			rc.spec = spec;
+		});
+	};
+	const selectCue = (id, base) => {
+		const hit = rackCues.some((rc) => rc.spec.id === id) ? id : base;
 		for (const rc of rackCues) {
-			const on = rc.spec.id === id;
+			const on = rc.spec.id === hit;
 			rc.group.position.z = rc.baseZ + (on ? 0.12 : 0);
 			if (on) {
 				glow.position.set(rc.group.position.x, FY + 0.005, rc.group.position.z);
@@ -965,6 +982,7 @@ export function buildRoomShell(scene, quality, opts = {}) {
 		magazine: { pos: new THREE.Vector3(MG.x + 0.02, CT.top + 0.5, MG.z + 0.2), look: new THREE.Vector3(MG.x, CT.top, MG.z - 0.01) },
 		rssItems: mag.items,
 		selectCue,
+		setRackSpecs,
 		updateScore,
 		setClock,
 		setTrophies,
