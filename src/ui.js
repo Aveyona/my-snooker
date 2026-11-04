@@ -257,25 +257,25 @@ export class UI {
 			b.classList.add('mysn-friend');
 			return b;
 		};
-		const common = () => [this.button('Tágá (F2)', 'rack'), this.button('Nápoveda (F1)', 'board'), this.button('Skóre (F4)', 'score'), this.button('Nastavenia', 'settings')];
+		// tágá, nápoveda a skóre sú na klávesoch F2, F1 a F4 (v menu nie sú)
+		const common = () => [this.button('Nastavenia', 'settings')];
 		if (kind === 'match') {
 			this.btnResume = this.button('Pokračovať v partii', 'resume');
 			this.btnResume.classList.add('mysn-primary');
 			this.menuMode.textContent = `Partia s hráčom ${label}`;
 			box.append(this.btnResume, ...common());
 			box.append(this.button('Prerušiť partiu', 'pauseMatch', 'Partia sa uloží, pokračovať sa dá neskôr'), this.button('Vzdať partiu', 'resign'));
-		} else if (kind === 'solo') {
-			// frame o najlepšie skóre práve beží
-			this.btnResume = this.button('Pokračovať vo frame', 'resume');
-			this.btnResume.classList.add('mysn-primary');
-			this.menuMode.textContent = 'O najlepšie skóre: jeden hráč, celý frame';
-			box.append(this.btnResume, this.button('Nový frame', 'soloNew', 'Začať frame odznova (rozohraný sa nezapíše)'), this.button('Rebríček', 'leaderboard'), this.button('Tréning', 'training'), fr(), ...common());
 		} else {
-			this.menuMode.textContent = user ? `Prihlásený: ${user.name}` : 'Tréning';
-			const solo = this.button('O najlepšie skóre', 'solo', 'Jeden hráč, celý frame podľa pravidiel. Rebríček podľa bodov, pri rovnosti rozhoduje kratší čas.');
-			solo.classList.add('mysn-primary');
-			this.btnResume = this.button('Tréning', 'resume');
-			box.append(solo, this.btnResume, fr(), this.button('Rebríček', 'leaderboard'), this.button('Nové rozostavenie', 'reset'), ...common());
+			// Hrať = o najlepšie skóre: rozohraný frame sa pamätá, kým neskončí, potom sa začne nový
+			this.menuMode.textContent = kind === 'solo' ? 'Hrá sa o najlepšie skóre' : user ? `Prihlásený: ${user.name}` : 'Tréning';
+			const play = this.button('Hrať', kind === 'solo' ? 'resume' : 'solo', 'O najlepšie skóre: celý frame podľa pravidiel, rebríček podľa bodov, pri rovnosti rozhoduje kratší čas');
+			play.classList.add('mysn-primary');
+			this.btnResume = play;
+			box.append(play, this.button('Tréning', kind === 'solo' ? 'training' : 'resume'), fr(), this.button('Rebríček', 'leaderboard'));
+			if (kind !== 'solo') {
+				box.appendChild(this.button('Nové rozostavenie', 'reset'));
+			}
+			box.append(...common());
 		}
 		box.appendChild(this.button('Späť na web', 'home'));
 		this.menuFoot.textContent = 'V hre sa myš zachytí v okne. Esc ju uvoľní a otvorí toto menu. F1 nápoveda na nástenke, F2 stojan s tágami.';
@@ -289,9 +289,6 @@ export class UI {
 
 	showMenu(on, started) {
 		this.menu.classList.toggle('mysn-hidden', !on);
-		if (started && this.btnResume && this._menuKind.startsWith('training') && this._trained) {
-			this.btnResume.textContent = 'Pokračovať v tréningu';
-		}
 		if (!on) {
 			this.panel.classList.add('mysn-hidden');
 			this.help.classList.add('mysn-hidden');
@@ -414,6 +411,47 @@ export class UI {
 		L.appendChild(foot);
 	}
 
+	/** Slávnostné ukončenie framu: dosiahnuté skóre za čas, miesto v rebríčku, konfety. null zavrie. */
+	celebrate(r) {
+		if (!this.party) {
+			this.party = h('div', 'mysn-party mysn-hidden');
+			this.root.appendChild(this.party);
+		}
+		const P = this.party;
+		if (!r) {
+			P.classList.add('mysn-hidden');
+			P.innerHTML = '';
+			return;
+		}
+		const t = Math.max(0, Math.round(r.seconds));
+		const time = `${Math.floor(t / 60)}:${String(t % 60).padStart(2, '0')}`;
+		const word = r.points === 1 ? 'bod' : r.points > 1 && r.points < 5 ? 'body' : 'bodov';
+		const colors = ['#FACC15', '#b3121f', '#0f7a3a', '#1747b5', '#f08aa8', '#6b3a1e', '#f4f1e8'];
+		let conf = '';
+		for (let i = 0; i < 70; i++) {
+			conf += `<i style="left:${(Math.random() * 100).toFixed(1)}%;background:${colors[i % colors.length]};animation-delay:${(Math.random() * 2.5).toFixed(2)}s;animation-duration:${(2.8 + Math.random() * 2.4).toFixed(2)}s;width:${6 + Math.round(Math.random() * 8)}px;height:${6 + Math.round(Math.random() * 8)}px;border-radius:${i % 3 ? '50%' : '2px'}"></i>`;
+		}
+		const rank = r.rank ? `<p class="mysn-party-rank">${r.rank}. miesto v rebríčku z ${r.players}${r.best ? ', tvoj najlepší frame!' : ''}</p>` : '';
+		P.innerHTML = `<div class="mysn-party-conf">${conf}</div><div class="mysn-party-box">
+			<p class="mysn-party-kick">Frame dohraný</p>
+			<h2>Gratulujem!</h2>
+			<div class="mysn-party-score"><b>${r.points}</b><span>${word}</span></div>
+			<p class="mysn-party-time">za <b>${time}</b></p>
+			<p class="mysn-party-meta">Najvyššia séria ${r.brk}, údery ${r.shots}, fauly ${r.fouls}</p>
+			${rank}${r.error ? `<p class="mysn-party-err">${esc(r.error)}</p>` : ''}
+			<div class="mysn-party-btns"></div>
+		</div>`;
+		const btns = P.querySelector('.mysn-party-btns');
+		const next = this.button('Hrať ďalší frame', 'partyNext');
+		next.classList.add('mysn-primary');
+		btns.append(next, this.button('Rebríček', 'partyBoard'));
+		P.classList.remove('mysn-hidden');
+	}
+
+	partyOpen() {
+		return !!(this.party && !this.party.classList.contains('mysn-hidden'));
+	}
+
 	leaderboardOpen() {
 		return !!(this.board && !this.board.classList.contains('mysn-hidden'));
 	}
@@ -462,7 +500,7 @@ export class UI {
 			B.appendChild(h('p', 'mysn-note', d.mine ? `Tvoje miesto: ${d.rank}. z ${d.players}, dohraných framov: ${d.frames}.` : `Hráčov v rebríčku: ${d.players}. Zatiaľ nemáš dohraný žiadny frame.`));
 		}
 		const foot = h('div', 'mysn-lobby-foot');
-		const play = this.button('Hrať nový frame', 'soloNew');
+		const play = this.button('Hrať', 'solo');
 		play.classList.add('mysn-primary');
 		foot.append(play, this.button('Zavrieť', 'leaderboardClose'));
 		B.appendChild(foot);

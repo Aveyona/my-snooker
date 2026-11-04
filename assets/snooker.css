@@ -165,3 +165,21 @@ body.mysn-page { font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans
 .mysn-lb td { padding: 6px; border-top: 1px solid #ffffff14; }
 .mysn-lb tr.mysn-lb-me td { color: #FACC15; }
 .mysn-lb tr.mysn-lb-gap td { text-align: center; opacity: .5; }
+/* Slávnostné ukončenie framu */
+.mysn-party { position: absolute; inset: 0; z-index: 7; display: flex; align-items: center; justify-content: center; background: radial-gradient(circle at 50% 40%, #2c5a3aee, #05070af2 70%); overflow: hidden; }
+.mysn-party-conf i { position: absolute; top: -20px; opacity: .95; animation-name: mysn-fall; animation-timing-function: linear; animation-iteration-count: infinite; }
+@keyframes mysn-fall { 0% { transform: translateY(0) rotate(0deg); } 100% { transform: translateY(110vh) rotate(720deg); } }
+.mysn-party-box { position: relative; text-align: center; background: #141a24f2; border: 2px solid #FACC15; border-radius: 20px; padding: 28px 34px; width: min(420px, calc(100% - 32px)); box-shadow: 0 0 60px #FACC1555, 0 12px 50px #000c; animation: mysn-pop .5s cubic-bezier(.2,1.4,.4,1) both; }
+@keyframes mysn-pop { 0% { transform: scale(.6); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
+.mysn-party-kick { margin: 0; text-transform: uppercase; letter-spacing: .14em; font-size: 12px; opacity: .7; }
+.mysn-party-box h2 { margin: 4px 0 10px; color: #FACC15; font-size: 34px; }
+.mysn-party-score { display: flex; align-items: baseline; justify-content: center; gap: 10px; }
+.mysn-party-score b { font-size: 84px; line-height: 1; color: #fff; text-shadow: 0 0 24px #FACC1588; }
+.mysn-party-score span { font-size: 22px; opacity: .8; }
+.mysn-party-time { margin: 6px 0 4px; font-size: 20px; }
+.mysn-party-time b { color: #f2d48a; }
+.mysn-party-meta { margin: 0 0 8px; font-size: 13px; opacity: .7; }
+.mysn-party-rank { margin: 8px 0; font-weight: 600; color: #6fcf8f; }
+.mysn-party-err { color: #ff9b9b; font-size: 13px; }
+.mysn-party-btns { display: flex; gap: 10px; justify-content: center; margin-top: 16px; flex-wrap: wrap; }
+.mysn-party-btns .mysn-btn { padding: 11px 18px; font-size: 15px; }

@@ -294,9 +294,6 @@ export function start(root, config = {}) {
 				actions.training();
 				return;
 			}
-			if (!game.solo && !game.match) {
-				ui._trained = true;
-			}
 			ui.showMenu(false);
 			ui.openLobby(false);
 			controls.capture();
@@ -311,6 +308,15 @@ export function start(root, config = {}) {
 			controls.capture();
 		},
 		leaderboard: () => openBoard(null),
+		partyNext: () => {
+			ui.celebrate(null);
+			ui.showMenu(false);
+			controls.capture();
+		},
+		partyBoard: () => {
+			ui.celebrate(null);
+			openBoard(null);
+		},
 		leaderboardClose: () => {
 			ui.showLeaderboard(null);
 			if (!ui.menuOpen()) {
@@ -416,7 +422,7 @@ export function start(root, config = {}) {
 				freeMouse = false;
 				ui.setFree(false);
 				ui.showMenu(false);
-			} else if (finePointer && !view && !freeMouse) {
+			} else if (finePointer && !view && !freeMouse && !ui.partyOpen()) {
 				ui.showMenu(true, started);
 			}
 		},
@@ -479,6 +485,10 @@ export function start(root, config = {}) {
 					}
 					ui.opts.onAction('leaderboard');
 				}
+				return true;
+			}
+			if ((lk === 'escape' || lk === 'enter') && ui.partyOpen()) {
+				ui.opts.onAction('partyNext');
 				return true;
 			}
 			if (lk === 'escape' && ui.leaderboardOpen()) {
@@ -563,14 +573,23 @@ export function start(root, config = {}) {
 		}
 	};
 	game.onSolo = async (r) => {
-		const text = `Frame dohraný: ${r.points} bodov za ${fmtTime(r.seconds)}, najvyššia séria ${r.brk}.`;
-		refreshMenu();
-		if (!online) {
-			return;
-		}
-		const res = await online.saveScore(r);
+		// slávnostné ukončenie: skóre za čas, zápis do rebríčka, potom sa hneď začne nový frame
+		const res = online ? await online.saveScore(r) : { error: 'Skóre sa zapisuje len prihláseným.' };
+		const ok = res && !res.error;
+		const best = ok && res.mine && res.mine.points === r.points && res.mine.seconds === r.seconds;
 		controls.uncapture();
-		ui.showLeaderboard(res && !res.error ? res : await online.scores(), res && res.error ? `${text} ${res.error}` : `${text} Zapísané do rebríčka${res && res.rank ? `, si ${res.rank}. z ${res.players}` : ''}.`);
+		ui.showLeaderboard(null);
+		ui.showMenu(false);
+		ui.celebrate({ ...r, rank: ok ? res.rank : 0, players: ok ? res.players : 0, best, error: ok ? '' : res && res.error });
+		sound.unlock();
+		if (sound.pot) {
+			sound.pot();
+		}
+		game.startSolo(true);
+		rig.setMode(game.state === 'place' ? 'top' : 'cue');
+		refreshMenu();
+		ui.sync(game, rig.mode);
+		updateScore();
 	};
 	if (user && config.restUrl) {
 		online = new Online(config, game, {
@@ -698,7 +717,7 @@ export function start(root, config = {}) {
 		room.setClock(playTime);
 		// čas framu o najlepšie skóre (beží, kým je frame rozohraný a menu je zavreté)
 		const so = game.solo;
-		if (so && !so.done && !ui.menuOpen() && !ui.leaderboardOpen()) {
+		if (so && !so.done && !ui.menuOpen() && !ui.leaderboardOpen() && !ui.partyOpen()) {
 			const before = Math.floor(so.time);
 			so.time += Math.min(1, Math.max(0, (now - lastSoloT) / 1000));
 			if (Math.floor(so.time) !== before) {
