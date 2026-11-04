@@ -103,6 +103,7 @@ function mysn_roadmap() {
 /** Denník zmien (najnovšie hore). */
 function mysn_changelog() {
 	return array(
+		array( '0.2.4', '4. 11. 2026', 'Pri hre o najlepšie skóre sa v kresle (F7) zastaví čas framu aj hodiny na stene. V partii s priateľom čas beží ďalej, lebo môže ťahať súper.' ),
 		array( '0.2.3', '4. 11. 2026', 'Čas rozohraného framu a hodiny na stene sa po obnovení stránky (F5) nestratia. Pri hre o najlepšie skóre ukazujú hodiny čas framu (od 11:30), inak celkový čas hrania.' ),
 		array( '0.2.2', '4. 11. 2026', 'Menu: Hrať (o najlepšie skóre), Tréning, Hrať s priateľom, Rebríček, Nastavenia; tágá, nápoveda a skóre ostali na F2, F1 a F4. Rozohraný frame sa pamätá, kým neskončí, potom sa sám začne nový. Na konci framu slávnostné ukončenie s konfetami, skóre za čas a miestom v rebríčku. Na zadnej stene herne polica s pohármi pre troch najlepších hráčov a tabuľka 4. až 10. miesta, F8 na ne pošle kameru.' ),
 		array( '0.2.1', '4. 11. 2026', 'Prvá položka menu je O najlepšie skóre: jeden hráč hrá celý frame podľa pravidiel, fauly sa odpočítajú, rebríček prihlásených hráčov podľa bodov a pri rovnosti kratšieho celkového času. Rozohraný frame sa pamätá v prehliadači. F8 ukáže rebríček (pohľad na noviny je zrušený, noviny sa čítajú z kresla F7 klávesom C). V pohľade z kresla (F7) koliesko približuje pohľad.' ),

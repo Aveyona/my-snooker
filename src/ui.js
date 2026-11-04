@@ -846,7 +846,7 @@ export class UI {
 			box.appendChild(list);
 		}
 		const texts = {
-			chair: 'Pohľad z kresla: pohybom myši sa rozhliadaš, kolieskom približuješ (klikni, ak sa myš nezachytila). C: noviny na celú obrazovku. F7 alebo Enter: späť do hry.',
+			chair: 'Pohľad z kresla: pohybom myši sa rozhliadaš, kolieskom približuješ (klikni, ak sa myš nezachytila). C: noviny na celú obrazovku. Pri hre o skóre čas stojí. F7 alebo Enter: späť do hry.',
 			news: 'Titulka webu Hedlajner. Klik na titulok otvorí článok. F8, Enter alebo Esc: späť do hry.',
 			magazine: 'Správy z RSS kanálov. Klik na titulok otvorí správu. F9, Enter alebo Esc: späť do hry.',
 			rack: 'Šípky vľavo a vpravo vyberajú tágo. Enter, F2 alebo Esc: späť do hry.',

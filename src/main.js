@@ -769,7 +769,8 @@ export function start(root, config = {}) {
 		room.setClock(game.solo && !game.solo.done ? game.solo.time : playTime); // pri hre o skóre čas framu
 		// čas framu o najlepšie skóre (beží, kým je frame rozohraný a menu je zavreté)
 		const so = game.solo;
-		if (so && !so.done && !ui.menuOpen() && !ui.leaderboardOpen() && !ui.partyOpen()) {
+		// v kresle (F7) sa pri hre o skóre čas framu aj hodiny zastavia (v partii s priateľom bežia ďalej, ťahá súper)
+		if (so && !so.done && view !== 'chair' && !ui.menuOpen() && !ui.leaderboardOpen() && !ui.partyOpen()) {
 			const before = Math.floor(so.time);
 			so.time += Math.min(1, Math.max(0, (now - lastSoloT) / 1000));
 			if (Math.floor(so.time) !== before) {
