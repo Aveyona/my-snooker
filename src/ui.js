@@ -252,18 +252,30 @@ export class UI {
 			this.menuFoot.textContent = 'Hrať môžu prihlásení používatelia webu Hedlajner: tréning aj partie s priateľmi cez internet.';
 			return;
 		}
-		this.btnResume = this.button(kind === 'match' ? 'Pokračovať v partii' : 'Tréning', 'resume');
-		this.btnResume.classList.add('mysn-primary');
-		box.appendChild(this.btnResume);
+		const fr = () => {
+			const b = this.button('Hrať s priateľom', 'lobby', 'Partia cez internet s hráčom, ktorý je práve v hre');
+			b.classList.add('mysn-friend');
+			return b;
+		};
+		const common = () => [this.button('Tágá (F2)', 'rack'), this.button('Nápoveda (F1)', 'board'), this.button('Skóre (F4)', 'score'), this.button('Nastavenia', 'settings')];
 		if (kind === 'match') {
+			this.btnResume = this.button('Pokračovať v partii', 'resume');
+			this.btnResume.classList.add('mysn-primary');
 			this.menuMode.textContent = `Partia s hráčom ${label}`;
-			box.append(this.button('Tágá (F2)', 'rack'), this.button('Nápoveda (F1)', 'board'), this.button('Skóre (F4)', 'score'), this.button('Nastavenia', 'settings'));
+			box.append(this.btnResume, ...common());
 			box.append(this.button('Prerušiť partiu', 'pauseMatch', 'Partia sa uloží, pokračovať sa dá neskôr'), this.button('Vzdať partiu', 'resign'));
+		} else if (kind === 'solo') {
+			// frame o najlepšie skóre práve beží
+			this.btnResume = this.button('Pokračovať vo frame', 'resume');
+			this.btnResume.classList.add('mysn-primary');
+			this.menuMode.textContent = 'O najlepšie skóre: jeden hráč, celý frame';
+			box.append(this.btnResume, this.button('Nový frame', 'soloNew', 'Začať frame odznova (rozohraný sa nezapíše)'), this.button('Rebríček', 'leaderboard'), this.button('Tréning', 'training'), fr(), ...common());
 		} else {
 			this.menuMode.textContent = user ? `Prihlásený: ${user.name}` : 'Tréning';
-			const fr = this.button('Hrať s priateľom', 'lobby', 'Partia cez internet s hráčom, ktorý je práve v hre');
-			fr.classList.add('mysn-friend');
-			box.append(fr, this.button('Nové rozostavenie', 'reset'), this.button('Tágá (F2)', 'rack'), this.button('Nápoveda (F1)', 'board'), this.button('Skóre (F4)', 'score'), this.button('Nastavenia', 'settings'));
+			const solo = this.button('O najlepšie skóre', 'solo', 'Jeden hráč, celý frame podľa pravidiel. Rebríček podľa bodov, pri rovnosti rozhoduje kratší čas.');
+			solo.classList.add('mysn-primary');
+			this.btnResume = this.button('Tréning', 'resume');
+			box.append(solo, this.btnResume, fr(), this.button('Rebríček', 'leaderboard'), this.button('Nové rozostavenie', 'reset'), ...common());
 		}
 		box.appendChild(this.button('Späť na web', 'home'));
 		this.menuFoot.textContent = 'V hre sa myš zachytí v okne. Esc ju uvoľní a otvorí toto menu. F1 nápoveda na nástenke, F2 stojan s tágami.';
@@ -277,7 +289,7 @@ export class UI {
 
 	showMenu(on, started) {
 		this.menu.classList.toggle('mysn-hidden', !on);
-		if (started && this.btnResume && this._menuKind.startsWith('training')) {
+		if (started && this.btnResume && this._menuKind.startsWith('training') && this._trained) {
 			this.btnResume.textContent = 'Pokračovať v tréningu';
 		}
 		if (!on) {
@@ -400,6 +412,61 @@ export class UI {
 		foot.appendChild(h('span', 'mysn-note', 'Partia sa ukladá po každom údere. Pri výpadku internetu sa po návrate pokračuje tam, kde sa skončila.'));
 		foot.appendChild(this.button('Zavrieť', 'lobbyClose'));
 		L.appendChild(foot);
+	}
+
+	leaderboardOpen() {
+		return !!(this.board && !this.board.classList.contains('mysn-hidden'));
+	}
+
+	/** Rebríček o najlepšie skóre: najlepší frame každého hráča, moje poradie. result = práve dohraný frame. */
+	showLeaderboard(d, result) {
+		if (!this.board) {
+			this.board = h('div', 'mysn-panel mysn-lobby mysn-hidden');
+			this.root.appendChild(this.board);
+		}
+		const B = this.board;
+		if (d === null) {
+			B.classList.add('mysn-hidden');
+			return;
+		}
+		const t = (sec) => {
+			const x = Math.max(0, Math.round(sec));
+			return `${Math.floor(x / 60)}:${String(x % 60).padStart(2, '0')}`;
+		};
+		B.innerHTML = '<h3>Rebríček: o najlepšie skóre (F8)</h3>';
+		if (result) {
+			B.appendChild(h('div', 'mysn-menu-note', esc(result)));
+		}
+		B.appendChild(h('p', 'mysn-note', 'Jeden hráč hrá celý frame podľa pravidiel. Rozhodujú body (fauly sa odpočítajú), pri rovnosti kratší čas. V rebríčku je najlepší frame každého hráča.'));
+		if (d === undefined) {
+			B.appendChild(h('p', 'mysn-note', 'Načítavam rebríček…'));
+		} else if (!d) {
+			B.appendChild(h('p', 'mysn-note', 'Rebríček sa nepodarilo načítať.'));
+		} else if (!d.top.length) {
+			B.appendChild(h('p', 'mysn-note', 'Zatiaľ nikto nedohral frame. Buď prvý.'));
+		} else {
+			const tb = h('table', 'mysn-lb');
+			tb.innerHTML = '<thead><tr><th>#</th><th>Hráč</th><th>Body</th><th>Celkový čas</th><th>Séria</th></tr></thead>';
+			const body = h('tbody');
+			const row = (r) => {
+				const tr = h('tr', r.me ? 'mysn-lb-me' : '', `<td>${r.rank}.</td><td>${esc(r.user.name)}</td><td><b>${r.points}</b></td><td>${t(r.seconds)}</td><td>${r.brk}</td>`);
+				body.appendChild(tr);
+			};
+			d.top.forEach(row);
+			if (d.mine && d.rank > 10) {
+				body.appendChild(h('tr', 'mysn-lb-gap', '<td colspan="5">…</td>'));
+				row(d.mine);
+			}
+			tb.appendChild(body);
+			B.appendChild(tb);
+			B.appendChild(h('p', 'mysn-note', d.mine ? `Tvoje miesto: ${d.rank}. z ${d.players}, dohraných framov: ${d.frames}.` : `Hráčov v rebríčku: ${d.players}. Zatiaľ nemáš dohraný žiadny frame.`));
+		}
+		const foot = h('div', 'mysn-lobby-foot');
+		const play = this.button('Hrať nový frame', 'soloNew');
+		play.classList.add('mysn-primary');
+		foot.append(play, this.button('Zavrieť', 'leaderboardClose'));
+		B.appendChild(foot);
+		B.classList.remove('mysn-hidden');
 	}
 
 	/** Stav spojenia a súpera v partii (zobrazí sa pod lištou). */
@@ -741,7 +808,7 @@ export class UI {
 			box.appendChild(list);
 		}
 		const texts = {
-			chair: 'Pohľad z kresla: pohybom myši sa rozhliadaš (klikni, ak sa myš nezachytila). F7 alebo Enter: späť do hry, F8: noviny.',
+			chair: 'Pohľad z kresla: pohybom myši sa rozhliadaš, kolieskom približuješ (klikni, ak sa myš nezachytila). C: noviny na celú obrazovku. F7 alebo Enter: späť do hry.',
 			news: 'Titulka webu Hedlajner. Klik na titulok otvorí článok. F8, Enter alebo Esc: späť do hry.',
 			magazine: 'Správy z RSS kanálov. Klik na titulok otvorí správu. F9, Enter alebo Esc: späť do hry.',
 			rack: 'Šípky vľavo a vpravo vyberajú tágo. Enter, F2 alebo Esc: späť do hry.',
@@ -772,8 +839,12 @@ export class UI {
 		const s = game.stats;
 		const mt = game.match;
 		this.root.classList.toggle('mysn-online', !!mt);
-		this.modeLabel.textContent = mt ? 'Partia' : 'Tréning';
-		if (mt && mt.rules) {
+		this.modeLabel.textContent = mt ? 'Partia' : game.solo ? 'O najlepšie skóre' : 'Tréning';
+		const so = game.solo;
+		if (so && !mt) {
+			const t = Math.max(0, Math.round(so.time));
+			this.stats.innerHTML = `<span>Body <b>${game.soloScore}</b></span><span>Séria <b>${so.rules.brk}</b></span><span>Najvyššia <b>${so.best}</b></span><span>Čas <b>${Math.floor(t / 60)}:${String(t % 60).padStart(2, '0')}</b></span><span>Hrá sa na <b>${esc(game.onText())}</b></span><span>Fauly <b>${so.fouls}</b></span><span class="${this._chalk > 0 ? 'mysn-chalk-on' : 'mysn-chalk-off'}">Krieda <b>${this._chalk > 0 ? this._chalk : 'F3'}</b></span>`;
+		} else if (mt && mt.rules) {
 			const nm = (i) => esc(String(mt.players[i].name).slice(0, 16));
 			const r = mt.rules;
 			const turn = (i) => (r.turn === i && !r.over ? ' mysn-turn' : '');
@@ -795,9 +866,9 @@ export class UI {
 		const st = game.state;
 		this.btnPlace.classList.toggle('mysn-hidden', st !== 'place');
 		this.btnSkip.classList.toggle('mysn-hidden', st !== 'moving');
-		this.btnUndo.disabled = st === 'moving' || !game.history.length || !!mt;
-		this.btnHand.disabled = st !== 'aim' || !!mt;
-		this.btnReset.disabled = !!mt;
+		this.btnUndo.disabled = st === 'moving' || !game.history.length || !!mt || !!so;
+		this.btnHand.disabled = st !== 'aim' || !!mt || !!so;
+		this.btnReset.disabled = !!mt || !!so;
 		this.powerBox.classList.toggle('mysn-off', st !== 'aim');
 		for (const m of Object.keys(this.camBtns)) {
 			this.camBtns[m].classList.toggle('mysn-on', m === camMode);

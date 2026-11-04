@@ -86,7 +86,15 @@ export class CameraRig {
 	resize(w, h) {
 		this.camera.aspect = w / h;
 		// na úzkej obrazovke (mobil na výšku) širší záber
-		this.camera.fov = w / h < 1 ? 62 : 45;
+		this.baseFov = w / h < 1 ? 62 : 45;
+		this.camera.fov = this.baseFov / (this.viewZoom || 1);
+		this.camera.updateProjectionMatrix();
+	}
+
+	/** Priblíženie v pohľade (F7 z kresla): 1 = normálne, viac = bližšie (užší záber). */
+	setViewZoom(z) {
+		this.viewZoom = Math.min(5, Math.max(1, z));
+		this.camera.fov = (this.baseFov || 45) / this.viewZoom;
 		this.camera.updateProjectionMatrix();
 	}
 

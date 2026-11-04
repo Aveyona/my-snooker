@@ -37,6 +37,7 @@ add_action(
 			'settle' => 'mysn_rest_settle',
 			'leave'  => 'mysn_rest_leave',
 			'resume' => 'mysn_rest_resume',
+			'score'  => 'mysn_rest_score',
 		);
 		foreach ( $post as $route => $cb ) {
 			register_rest_route(
@@ -49,6 +50,15 @@ add_action(
 				)
 			);
 		}
+		register_rest_route(
+			$ns,
+			'/scores',
+			array(
+				'methods'             => 'GET',
+				'callback'            => 'mysn_rest_scores',
+				'permission_callback' => $auth,
+			)
+		);
 		register_rest_route(
 			$ns,
 			'/match/(?P<id>\d+)',
@@ -503,4 +513,88 @@ function mysn_recent_matches( $limit = 30 ) {
 	global $wpdb;
 	$t = mysn_table( 'matches' );
 	return $wpdb->get_results( $wpdb->prepare( "SELECT m.*, (SELECT COUNT(*) FROM " . mysn_table( 'moves' ) . " v WHERE v.match_id = m.id) AS moves FROM $t m WHERE status IN ('active','paused','finished') ORDER BY updated DESC LIMIT %d", $limit ), ARRAY_A ); // phpcs:ignore
+}
+
+/* ---------- jeden hráč o najlepšie skóre ---------- */
+
+/** Uloží dohraný frame (body, čas, údery, fauly, najvyššia séria). */
+function mysn_rest_score( $req ) {
+	global $wpdb;
+	$uid     = get_current_user_id();
+	$points  = (int) $req->get_param( 'points' );
+	$seconds = (int) $req->get_param( 'seconds' );
+	$shots   = (int) $req->get_param( 'shots' );
+	$brk     = (int) $req->get_param( 'brk' );
+	// rozumné hranice: najviac 147 bodov (bez voľnej gule), frame aspoň 30 s a aspoň 6 úderov
+	if ( $points < 0 || $points > 147 || $seconds < 30 || $seconds > 86400 || $shots < 6 || $brk < 0 || $brk > 147 ) {
+		return mysn_err( 'Skóre sa nedá uložiť.' );
+	}
+	$t    = mysn_table( 'scores' );
+	$last = (int) $wpdb->get_var( $wpdb->prepare( "SELECT MAX(created) FROM $t WHERE user_id = %d", $uid ) ); // phpcs:ignore
+	if ( $last > time() - 20 ) {
+		return mysn_err( 'Skóre už je uložené.' );
+	}
+	$wpdb->insert(
+		$t,
+		array(
+			'user_id' => $uid,
+			'points'  => $points,
+			'seconds' => $seconds,
+			'shots'   => $shots,
+			'fouls'   => max( 0, (int) $req->get_param( 'fouls' ) ),
+			'brk'     => $brk,
+			'created' => time(),
+		)
+	);
+	$id = (int) $wpdb->insert_id;
+	return array_merge( mysn_scores_out( $uid ), array( 'saved' => $id ) );
+}
+
+function mysn_rest_scores( $req ) {
+	return mysn_scores_out( get_current_user_id() );
+}
+
+/** Rebríček: najlepší frame každého hráča (body, pri rovnosti kratší čas), moje poradie a môj najlepší. */
+function mysn_scores_out( $uid ) {
+	global $wpdb;
+	$t    = mysn_table( 'scores' );
+	$rows = $wpdb->get_results( "SELECT user_id, points, seconds, brk, created FROM $t ORDER BY points DESC, seconds ASC, id ASC LIMIT 2000", ARRAY_A ); // phpcs:ignore
+	$best = array();
+	foreach ( $rows as $r ) {
+		$u = (int) $r['user_id'];
+		if ( ! isset( $best[ $u ] ) ) {
+			$best[ $u ] = $r;
+		}
+	}
+	$list = array();
+	$rank = 0;
+	$mine = null;
+	$i    = 0;
+	foreach ( $best as $u => $r ) {
+		$i++;
+		$row = array(
+			'rank'    => $i,
+			'user'    => mysn_user( $u ),
+			'points'  => (int) $r['points'],
+			'seconds' => (int) $r['seconds'],
+			'brk'     => (int) $r['brk'],
+			'created' => (int) $r['created'],
+			'me'      => $u === (int) $uid,
+		);
+		if ( $u === (int) $uid ) {
+			$rank = $i;
+			$mine = $row;
+		}
+		if ( $i <= 10 ) {
+			$list[] = $row;
+		}
+	}
+	$frames = (int) $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM $t WHERE user_id = %d", $uid ) ); // phpcs:ignore
+	return array(
+		'top'     => $list,
+		'mine'    => $mine,
+		'rank'    => $rank,
+		'players' => count( $best ),
+		'frames'  => $frames,
+	);
 }

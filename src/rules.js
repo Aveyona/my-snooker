@@ -22,6 +22,9 @@ export function onLabel(on) {
 	if (on === 'colour') {
 		return 'ľubovoľná farba';
 	}
+	if (on === 'done') {
+		return 'koniec framu';
+	}
 	return NAME[on] || on;
 }
 

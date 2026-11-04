@@ -159,3 +159,9 @@ body.mysn-page { font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans
 .mysn-sc.mysn-turn b { color: #FACC15; }
 .mysn-sc i { font-style: normal; font-size: 11px; color: #ff9b9b; }
 .mysn-menu-box { max-height: calc(100% - 24px); overflow: auto; }
+/* Rebríček o najlepšie skóre */
+.mysn-lb { width: 100%; border-collapse: collapse; font-size: 14px; margin: 6px 0; }
+.mysn-lb th { text-align: left; font-size: 11px; text-transform: uppercase; letter-spacing: .05em; opacity: .6; padding: 4px 6px; }
+.mysn-lb td { padding: 6px; border-top: 1px solid #ffffff14; }
+.mysn-lb tr.mysn-lb-me td { color: #FACC15; }
+.mysn-lb tr.mysn-lb-gap td { text-align: center; opacity: .5; }

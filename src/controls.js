@@ -397,6 +397,12 @@ export class Controls {
 	}
 
 	wheel(e) {
+		if (this.blocked && this.hooks.viewWheel) {
+			// v pohľade (F7 z kresla) koliesko približuje pohľad
+			e.preventDefault();
+			this.hooks.viewWheel(Math.max(-4, Math.min(4, e.deltaY / (e.deltaMode === 1 ? 3 : 100))));
+			return;
+		}
 		if (this.rig.mode !== 'cue') {
 			return;
 		}

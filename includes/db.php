@@ -6,6 +6,7 @@
  * {prefix}my_snooker_matches   partie: hráči, stav, kto je na rade, poradie úderu, uložený stav stola a skóre,
  *                              rozohraný úder, mierenie hráča na rade, posledný signál každého hráča, výsledok
  * {prefix}my_snooker_moves     záznam partie: každý úder s parametrami, stavom po údere, bodmi a faulom
+ * {prefix}my_snooker_scores    jeden hráč o najlepšie skóre: dohrané framy (body, čas, údery, fauly, najvyššia séria)
  *
  * Partia sa ukladá po každom údere, takže pri výpadku internetu sa dá pokračovať tam, kde sa skončila.
  */
@@ -13,7 +14,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-const MYSN_DB_VERSION = '1';
+const MYSN_DB_VERSION = '2';
 
 function mysn_table( $name ) {
 	global $wpdb;
@@ -73,6 +74,21 @@ foul tinyint(1) unsigned NOT NULL DEFAULT 0,
 created int(10) unsigned NOT NULL DEFAULT 0,
 PRIMARY KEY  (id),
 UNIQUE KEY match_seq (match_id,seq)
+) $c;"
+	);
+	dbDelta(
+		'CREATE TABLE ' . mysn_table( 'scores' ) . " (
+id bigint(20) unsigned NOT NULL AUTO_INCREMENT,
+user_id bigint(20) unsigned NOT NULL,
+points int(10) unsigned NOT NULL DEFAULT 0,
+seconds int(10) unsigned NOT NULL DEFAULT 0,
+shots int(10) unsigned NOT NULL DEFAULT 0,
+fouls int(10) unsigned NOT NULL DEFAULT 0,
+brk int(10) unsigned NOT NULL DEFAULT 0,
+created int(10) unsigned NOT NULL DEFAULT 0,
+PRIMARY KEY  (id),
+KEY best (points,seconds),
+KEY user_id (user_id)
 ) $c;"
 	);
 	update_option( 'mysn_db', MYSN_DB_VERSION, true );

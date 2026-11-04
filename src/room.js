@@ -426,7 +426,9 @@ export function buildRoomShell(scene, quality, opts = {}) {
 		g.fillStyle = '#e8e2cf';
 		g.fillText((extra && extra.mode) || 'Tréning', W / 2, 140);
 		const mt = extra && extra.match;
-		const rows = mt
+		const rows = extra && extra.rows
+			? extra.rows
+			: mt
 			? [
 					[mt.names[0] + (mt.turn === 0 ? '  ●' : ''), mt.scores[0]],
 					[mt.names[1] + (mt.turn === 1 ? '  ●' : ''), mt.scores[1]],

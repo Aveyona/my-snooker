@@ -12,7 +12,7 @@ import { CameraRig } from './camera.js';
 import { Controls } from './controls.js';
 import { Sound } from './audio.js';
 import { UI } from './ui.js';
-import { Game } from './match.js';
+import { Game, fmtTime } from './match.js';
 import { Online } from './online.js';
 import { remaining } from './rules.js';
 import { aimTrace, R } from './physics.js';
@@ -160,7 +160,19 @@ export function start(root, config = {}) {
 						left: remaining(m.rules, game.balls.filter((b) => b.kind === 'red' && b.on).length),
 					}
 				: null;
-		room.updateScore(game.stats, { cue: cueSpec.name, chalk, mode: match ? 'Partia cez internet' : 'Tréning', match });
+		const so = game.solo;
+		const reds = game.balls.filter((b) => b.kind === 'red' && b.on).length;
+		const rows =
+			so && !m
+				? [
+						['Body', game.soloScore],
+						['Séria / najvyššia', `${so.rules.brk} / ${so.best}`],
+						['Čas', fmtTime(so.time)],
+						['Hrá sa na', game.onText()],
+						['Zostáva na stole', remaining(so.rules, reds)],
+					]
+				: null;
+		room.updateScore(game.stats, { cue: cueSpec.name, chalk, mode: match ? 'Partia cez internet' : so ? 'O najlepšie skóre' : 'Tréning', match, rows });
 	};
 	const enterView = (name) => {
 		if (view === name) {
@@ -207,7 +219,8 @@ export function start(root, config = {}) {
 			return;
 		}
 		view = null;
-		controls.blocked = false;
+		controls.blocked = !user;
+		rig.setViewZoom(1);
 		ui.toggleReader(null);
 		chalkT = -1;
 		chalkMesh.visible = false;
@@ -277,9 +290,32 @@ export function start(root, config = {}) {
 			game.aimAtNearest();
 		},
 		resume: () => {
+			if (game.solo && game.solo.done) {
+				actions.training();
+				return;
+			}
+			if (!game.solo && !game.match) {
+				ui._trained = true;
+			}
 			ui.showMenu(false);
 			ui.openLobby(false);
 			controls.capture();
+		},
+		solo: () => startSolo(false),
+		soloNew: () => startSolo(true),
+		training: () => {
+			game.stopSolo();
+			game.aimAtNearest();
+			refreshMenu();
+			ui.showMenu(false);
+			controls.capture();
+		},
+		leaderboard: () => openBoard(null),
+		leaderboardClose: () => {
+			ui.showLeaderboard(null);
+			if (!ui.menuOpen()) {
+				controls.capture();
+			}
 		},
 		lobby: () => {
 			if (online) {
@@ -389,10 +425,16 @@ export function start(root, config = {}) {
 			if (view !== 'chair') {
 				return;
 			}
-			chairLook.yaw += dx * 0.0025;
-			chairLook.pitch = Math.max(-1.2, Math.min(0.9, chairLook.pitch - dy * 0.0025));
+			const k = 0.0025 / (rig.viewZoom || 1); // pri priblížení jemnejšie
+			chairLook.yaw += dx * k;
+			chairLook.pitch = Math.max(-1.2, Math.min(0.9, chairLook.pitch - dy * k));
 			const c = Math.cos(chairLook.pitch);
 			rig.viewLook.copy(rig.viewPos).add(new THREE.Vector3(Math.cos(chairLook.yaw) * c, Math.sin(chairLook.pitch), Math.sin(chairLook.yaw) * c));
+		},
+		viewWheel: (steps) => {
+			if (view === 'chair') {
+				rig.setViewZoom((rig.viewZoom || 1) * Math.pow(0.85, steps));
+			}
 		},
 		viewDown: (e) => {
 			if (view === 'chair' && e.button === 0) {
@@ -427,7 +469,23 @@ export function start(root, config = {}) {
 				sound.doorCreak();
 				return true;
 			}
-			const fkeys = { f1: 'board', f2: 'rack', f3: 'chalk', f4: 'score', f7: 'chair', f8: 'news', f9: 'magazine' };
+			if (lk === 'f8') {
+				// F8: rebríček o najlepšie skóre (bez pohybu kamery); druhé F8 ho zavrie
+				if (ui.leaderboardOpen()) {
+					ui.opts.onAction('leaderboardClose');
+				} else {
+					if (view) {
+						exitView();
+					}
+					ui.opts.onAction('leaderboard');
+				}
+				return true;
+			}
+			if (lk === 'escape' && ui.leaderboardOpen()) {
+				ui.opts.onAction('leaderboardClose');
+				return true;
+			}
+			const fkeys = { f1: 'board', f2: 'rack', f3: 'chalk', f4: 'score', f7: 'chair', f9: 'magazine' };
 			if (fkeys[lk]) {
 				ui.opts.onAction(fkeys[lk]);
 				return true;
@@ -438,7 +496,7 @@ export function start(root, config = {}) {
 			}
 			if (view) {
 				// v pohľade na nástenku alebo stojan: Esc a Enter späť do hry, šípky vyberajú tágo
-				if ((view === 'news' || view === 'magazine') && lk === 'c') {
+				if ((view === 'news' || view === 'magazine' || view === 'chair') && lk === 'c') {
 					ui.opts.onAction('reader');
 					return true;
 				}
@@ -477,9 +535,43 @@ export function start(root, config = {}) {
 			return ['guest'];
 		}
 		const m = game.match;
-		return m ? ['match', m.players[1 - m.me].name] : ['training'];
+		return m ? ['match', m.players[1 - m.me].name] : game.solo && !game.solo.done ? ['solo'] : ['training'];
 	};
 	const refreshMenu = () => ui.setMenu(...menuKind());
+	// jeden hráč o najlepšie skóre
+	const startSolo = (fresh) => {
+		if (game.match) {
+			return;
+		}
+		exitView();
+		ui.showLeaderboard(null);
+		topView = false;
+		game.startSolo(fresh);
+		rig.setMode(game.state === 'place' ? 'top' : 'cue');
+		refreshMenu();
+		ui.showMenu(false);
+		controls.capture();
+		ui.sync(game, rig.mode);
+		updateScore();
+	};
+	const openBoard = async (result) => {
+		controls.uncapture();
+		ui.showLeaderboard(undefined, result); // hneď prázdny rebríček, údaje dočítame
+		const d = online ? await online.scores() : null;
+		if (ui.leaderboardOpen()) {
+			ui.showLeaderboard(d, result);
+		}
+	};
+	game.onSolo = async (r) => {
+		const text = `Frame dohraný: ${r.points} bodov za ${fmtTime(r.seconds)}, najvyššia séria ${r.brk}.`;
+		refreshMenu();
+		if (!online) {
+			return;
+		}
+		const res = await online.saveScore(r);
+		controls.uncapture();
+		ui.showLeaderboard(res && !res.error ? res : await online.scores(), res && res.error ? `${text} ${res.error}` : `${text} Zapísané do rebríčka${res && res.rank ? `, si ${res.rank}. z ${res.players}` : ''}.`);
+	};
 	if (user && config.restUrl) {
 		online = new Online(config, game, {
 			lobby: (d) => {
@@ -559,6 +651,7 @@ export function start(root, config = {}) {
 	let last = performance.now();
 	let lastReal = last;
 	let playTime = 0;
+	let lastSoloT = last;
 	let pull = 0;
 	const frame = (now) => {
 		const dt = Math.min(0.05, (now - last) / 1000);
@@ -603,6 +696,19 @@ export function start(root, config = {}) {
 		playTime += Math.min(1, Math.max(0, (now - lastReal) / 1000));
 		lastReal = now;
 		room.setClock(playTime);
+		// čas framu o najlepšie skóre (beží, kým je frame rozohraný a menu je zavreté)
+		const so = game.solo;
+		if (so && !so.done && !ui.menuOpen() && !ui.leaderboardOpen()) {
+			const before = Math.floor(so.time);
+			so.time += Math.min(1, Math.max(0, (now - lastSoloT) / 1000));
+			if (Math.floor(so.time) !== before) {
+				ui.sync(game, rig.mode);
+				if (view === 'score') {
+					updateScore();
+				}
+			}
+		}
+		lastSoloT = now;
 		if (room.update(dt)) {
 			sound.doorShut();
 		}

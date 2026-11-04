@@ -10,7 +10,8 @@ Hra je napísaná v JavaScripte nad knižnicou [three.js](https://threejs.org/),
 - herňa 10 x 7,5 m: drevené obloženie, tmavozelená tapeta, strop s trámami, nástenné svietidlá, podlaha z dosiek, otvorené dvere do chodby, kreslá, barový stolík, obrazy, nástenné hodiny merajúce čas hrania (začínajú na 11:30)
 - nástenka s nápovedou (F1), stojan s 10 tágami (F2), kriedovanie tága (F3), tabuľa so skóre (F4), pohľad zhora (Tab)
 - priehľadná 3D šípka vo farbe trafenej gule ukazuje, kam guľa pôjde
-- konferenčný stolík s novinami (titulka webu Hedlajner, F8) a časopisom so správami z RSS (F9), čítanie na celú obrazovku, pohľad z kresla (F7)
+- konferenčný stolík s novinami (titulka webu Hedlajner) a časopisom so správami z RSS (F9), čítanie na celú obrazovku (C), pohľad z kresla s priblížením kolieskom (F7)
+- O najlepšie skóre: jeden hráč hrá celý frame podľa pravidiel (fauly sa odpočítajú), rebríček prihlásených hráčov podľa bodov a pri rovnosti kratšieho celkového času (F8)
 - fyzika gúľ: kĺzanie, kotúľanie, guľa dopredu, guľa späť, zastavenie a bočná falša
 - ovládanie myšou ako tágo (myš sa zachytí v okne, Esc otvorí hlavné menu), prstom a klávesnicou
 - detail dotyku gúľ zhora (uhol a plnosť zásahu) a zvýraznenie gule, na ktorú sa mieri
@@ -25,7 +26,7 @@ Hra je napísaná v JavaScripte nad knižnicou [three.js](https://threejs.org/),
 - Pozvánka príde súperovi do menu a ako správa navrchu, môže ju prijať alebo odmietnuť.
 - Hrá sa jeden frame podľa pravidiel snookeru: červená, farba, na konci farby od žltej po čiernu; fauly (minutie, nesprávna prvá guľa, nesprávna guľa v jamke, biela v jamke) dávajú súperovi aspoň 4 body, po spadnutej bielej má súper bielu v ruke v D.
 - Súper vidí moje tágo pri mierení, úder sa prehrá u oboch hráčov. Na lište je skóre, kto je na rade, na akú guľu sa hrá a séria, na tabuli (F4) aj zostávajúce body.
-- Partia sa ukladá po každom údere do vlastných tabuliek vo WordPresse (`my_snooker_matches`, `my_snooker_moves`, `my_snooker_presence`). Pri výpadku internetu alebo obnovení stránky sa pokračuje tam, kde sa skončilo.
+- Partia sa ukladá po každom údere do vlastných tabuliek vo WordPresse (`my_snooker_matches`, `my_snooker_moves`, `my_snooker_presence`; rebríček o najlepšie skóre v `my_snooker_scores`). Pri výpadku internetu alebo obnovení stránky sa pokračuje tam, kde sa skončilo.
 - Keď je súper preč dlhšie ako 10 minút, partia sa preruší. Dokončiť sa dá neskôr v ponuke Hrať s priateľom, Rozohrané partie. V menu partie je aj Prerušiť partiu a Vzdať partiu.
 - Prehľad partií je v administrácii (My Snooker, Hra).
 
@@ -45,10 +46,10 @@ Hra je napísaná v JavaScripte nad knižnicou [three.js](https://threejs.org/),
 | Kriedovanie špičky | F3 (falše 5x silnejšie na 3 údery) |
 | Tabuľa so skóre | F4 |
 | Dvere herne otvoriť alebo zatvoriť | F6 (so zvukom) |
-| Pohľad z kresla (rozhliadanie myšou) | F7 |
-| Čítanie novín (titulka webu Hedlajner) | F8 |
+| Pohľad z kresla (rozhliadanie myšou, koliesko priblíženie, C noviny) | F7 |
+| Rebríček o najlepšie skóre | F8 |
 | Časopis so správami z RSS | F9 |
-| Čítanie na celú obrazovku (v F8 a F9) | C |
+| Čítanie na celú obrazovku (noviny v F7, časopis v F9) | C |
 | Pohľad na stôl zhora | Tab |
 
 ## Tágá

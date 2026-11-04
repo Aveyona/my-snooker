@@ -24,7 +24,7 @@ function mysn_roadmap() {
 				array( 'Nástenné hodiny merajú čas hrania (začínajú na 11:30, skrytá karta prehliadača sa nepočíta)', 1 ),
 				array( 'Nástenka s nápovedou v herni (F1): ovládanie, klávesy, princíp hry, tágá', 1 ),
 				array( 'Kriedovanie špičky (F3, falše 5x silnejšie na 3 údery), tabuľa so skóre v herni (F4), pohľad zhora (Tab)', 1 ),
-				array( 'Konferenčný stolík s novinami (titulka webu Hedlajner, F8) a časopisom so správami z RSS (F9), čítanie na celú obrazovku (C), pohľad z kresla s rozhliadaním (F7), dvere F6', 1 ),
+				array( 'Konferenčný stolík s novinami (titulka webu Hedlajner, z kresla F7 klávesom C) a časopisom so správami z RSS (F9), čítanie na celú obrazovku (C), pohľad z kresla s rozhliadaním a priblížením kolieskom (F7), dvere F6', 1 ),
 				array( 'Šípka vo farbe trafenej gule (3D) a v detaile dotyku odkiaľ prichádza biela a kam pôjde guľa', 1 ),
 				array( 'Stojan s 10 tágami (F2): tvrdosť špičky mení najväčšiu silu, dĺžka citlivosť ťahania myšou, jemné mierenie so Shift len pokročilé a majstrovské tágá', 1 ),
 				array( 'Stôl ako skutočný snooker: zaoblené čeľuste jamiek, zaoblené rohy rámu, kožené lemy jamiek, podlaha z drevených dosiek, vyššie lampy', 1 ),
@@ -35,6 +35,7 @@ function mysn_roadmap() {
 				array( 'Zvýraznenie gule, na ktorú sa mieri (žltý obrys a krúžok na súkne)', 1 ),
 				array( 'Pomocné čiary mierenia (smer, kam pôjde objektová a biela guľa), predvolene vypnuté', 1 ),
 				array( 'Hlavné menu hry (na začiatku a po Esc)', 1 ),
+				array( 'O najlepšie skóre (prvá položka menu): jeden hráč, celý frame podľa pravidiel, rebríček podľa bodov a celkového času (F8), vlastná tabuľka my_snooker_scores', 1 ),
 				array( 'Hrať môžu len prihlásení: neprihlásený vidí herňu a v menu žlté tlačidlo Prihlásiť sa; prihlásený Tréning, Hrať s priateľom a Nastavenia', 1 ),
 				array( 'Prepínač pomocných čiar v hlavnom menu', 0 ),
 				array( 'Detail dotyku: 2D pohľad zhora v okamihu, keď sa biela dotkne gule (uhol, plnosť zásahu)', 1 ),
@@ -101,6 +102,7 @@ function mysn_roadmap() {
 /** Denník zmien (najnovšie hore). */
 function mysn_changelog() {
 	return array(
+		array( '0.2.1', '4. 11. 2026', 'Prvá položka menu je O najlepšie skóre: jeden hráč hrá celý frame podľa pravidiel, fauly sa odpočítajú, rebríček prihlásených hráčov podľa bodov a pri rovnosti kratšieho celkového času. Rozohraný frame sa pamätá v prehliadači. F8 ukáže rebríček (pohľad na noviny je zrušený, noviny sa čítajú z kresla F7 klávesom C). V pohľade z kresla (F7) koliesko približuje pohľad.' ),
 		array( '0.2.0', '4. 11. 2026', 'Hrať môžu len prihlásení: neprihlásený vidí v menu žlté tlačidlo Prihlásiť sa. Nová ponuka Hrať s priateľom: zoznam hráčov, ktorí sú práve v hre, pozvánka a partia cez internet podľa pravidiel snookeru (poradie gúľ, fauly, body, séria, koniec framu). Súper vidí tágo pri mierení, úder sa prehrá u oboch. Partie majú vo WordPresse vlastné tabuľky so záznamom každého úderu, po výpadku internetu sa pokračuje tam, kde sa skončilo, prerušenú partiu možno dokončiť neskôr. Na stene s dverami visia hodiny, ktoré merajú čas hrania od 11:30.' ),
 		array( '0.1.26', '4. 11. 2026', 'Na stolíku pribudol časopis so správami z RSS kanálov (My RSS), F9 ho ukáže. Noviny (F8) aj časopis (F9) sa dajú čítať na celú obrazovku (tlačidlo alebo C): karty s fotkami, zdrojom, dátumom a úvodom, klik otvorí článok.' ),
 		array( '0.1.25', '4. 11. 2026', 'V pohľade z kresla (F7) sa dá pohybom myši rozhliadať po herni.' ),

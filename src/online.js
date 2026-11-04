@@ -335,6 +335,30 @@ export class Online {
 		}
 	}
 
+	/** Rebríček o najlepšie skóre. */
+	async scores() {
+		try {
+			return await this.net.call('scores?t=' + Date.now(), null, 'GET');
+		} catch (e) {
+			return null;
+		}
+	}
+
+	/** Uloží dohraný frame; pri výpadku skúsi znova. */
+	async saveScore(r) {
+		for (let i = 0; i < 5; i++) {
+			try {
+				return await this.net.call('score', r);
+			} catch (e) {
+				if (!e.net) {
+					return { error: e.message };
+				}
+				await new Promise((res) => setTimeout(res, 3000));
+			}
+		}
+		return { error: 'Skóre sa nepodarilo uložiť, spojenie so serverom nefunguje.' };
+	}
+
 	/** Text o stave spojenia a súpera pre lištu (prázdny, keď je všetko v poriadku). */
 	statusText() {
 		if (this.net.down) {
