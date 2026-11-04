@@ -322,15 +322,15 @@ export function start(root, config = {}) {
 		stroke: (on) => ui.setStroke(on),
 		key: (k) => {
 			const lk = k.toLowerCase();
-			if (lk === 'ctrl-toggle') {
-				// Ctrl: voľná myš (kurzor, dá sa klikať), ďalší Ctrl myš znova zachytí na tágo
+			if (lk === 'ctrl-down' || lk === 'ctrl-up') {
+				// Ctrl drž: voľná myš (kurzor, dá sa klikať); po pustení Ctrl sa myš znova zachytí na tágo
 				if (view) {
 					return true;
 				}
-				if (controls.captured) {
+				if (lk === 'ctrl-down' && controls.captured) {
 					freeMouse = true;
 					controls.uncapture();
-				} else {
+				} else if (lk === 'ctrl-up' && freeMouse) {
 					freeMouse = false;
 					ui.showMenu(false);
 					controls.capture();

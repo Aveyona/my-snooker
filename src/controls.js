@@ -410,20 +410,14 @@ export class Controls {
 		} else {
 			this._keys.delete(k);
 		}
-		// samotný Ctrl (bez inej klávesy) = uvoľniť myšu alebo ju znova zachytiť na tágo
+		// Ctrl drž = voľná myš (kurzor, dá sa klikať), pustenie Ctrl = myš sa znova zachytí na tágo
 		if (k === 'Control') {
 			if (isDown && !e.repeat) {
-				this._ctrlSolo = true;
-			} else if (!isDown && this._ctrlSolo) {
-				this._ctrlSolo = false;
-				if (this.hooks.key) {
-					this.hooks.key('ctrl-toggle', e);
-				}
+				this.hooks.key && this.hooks.key('ctrl-down', e);
+			} else if (!isDown) {
+				this.hooks.key && this.hooks.key('ctrl-up', e);
 			}
 			return;
-		}
-		if (isDown) {
-			this._ctrlSolo = false;
 		}
 		if (k === ' ') {
 			e.preventDefault();

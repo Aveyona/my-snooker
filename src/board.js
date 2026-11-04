@@ -32,7 +32,7 @@ const PAPERS = [
 			'F6   otvoriť alebo zatvoriť dvere',
 			'F7   pohľad z kresla, F8 noviny',
 			'Tab  pohľad na stôl zhora',
-			'Esc  hlavné menu, Ctrl voľná myš',
+			'Esc  hlavné menu, Ctrl drž: voľná myš',
 			'Z späť, B biela do ruky,',
 			'R nové rozostavenie, S preskočiť',
 			'Medzerník drž: sila, šípky: mierenie',

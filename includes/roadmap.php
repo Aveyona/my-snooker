@@ -94,6 +94,7 @@ function mysn_roadmap() {
 /** Denník zmien (najnovšie hore). */
 function mysn_changelog() {
 	return array(
+		array( '0.1.24', '4. 11. 2026', 'Ctrl sa drží: kým je stlačený, myš je voľná (kurzor, dá sa klikať), po pustení sa znova zachytí na tágo.' ),
 		array( '0.1.23', '4. 11. 2026', 'Ctrl uvoľní myš (zobrazí sa kurzor, dá sa klikať na obrazovke, menu sa neotvorí), ďalší Ctrl ju znova zachytí na tágo.' ),
 		array( '0.1.22', '4. 11. 2026', 'Konferenčný stolík pred kreslami a na ňom noviny s titulkou webu Hedlajner (rovnaké rubriky ako hlavná stránka, obrázky, dátumy). F7: pohľad z kresla na stôl. F8: čítanie novín, vpravo klikateľné titulky otvoria článok na webe.' ),
 		array( '0.1.21', '4. 11. 2026', 'F6 otvorí alebo zatvorí dvere herne: krídlo sa plynulo pohne, pánty vŕzgajú a pri zatvorení dvere buchnú a cvakne zámok.' ),

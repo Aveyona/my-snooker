@@ -450,7 +450,7 @@ export class UI {
 
 	_hintText() {
 		const t = this._free
-			? 'Myš je voľná, môžeš klikať. Ctrl vráti myš na tágo.'
+			? 'Myš je voľná, kým držíš Ctrl. Po pustení sa vráti na tágo.'
 			: this._stroke
 			? 'Ruka drží tágo: myš k sebe odtiahne, dopredu vystrelí. Pustením ľavého tlačidla zrušíš.'
 			: this._lock
