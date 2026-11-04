@@ -843,10 +843,16 @@ export function start(root, config = {}) {
 				controls.capture();
 			}
 			if (view === 'office' && e.button === 0) {
-				// klik na mapu sveta: hráč na mape (meno, liga, body)
+				// v kancelárii klik bez Ctrl nerobí nič; s podržaným Ctrl (voľná myš) vizitka, dvere a mapa hráčov
+				if (!freeMouse) {
+					if (!controls.captured) {
+						controls.capture(); // myš uvoľnená inak (Esc): klik ju znova zachytí na rozhliadanie
+					}
+					return;
+				}
 				const r = renderer.domElement.getBoundingClientRect();
 				const ray = new THREE.Raycaster();
-				const at = controls.captured ? new THREE.Vector2(0, 0) : new THREE.Vector2(((e.clientX - r.left) / r.width) * 2 - 1, -((e.clientY - r.top) / r.height) * 2 + 1);
+				const at = new THREE.Vector2(((e.clientX - r.left) / r.width) * 2 - 1, -((e.clientY - r.top) / r.height) * 2 + 1);
 				ray.setFromCamera(at, rig.camera);
 				if (ray.intersectObject(office.card, false).length) {
 					actions.officeCard();
@@ -854,12 +860,6 @@ export function start(root, config = {}) {
 				}
 				if (ray.intersectObject(office.door, false).length) {
 					actions.officeDoor();
-					return;
-				}
-				if (ray.intersectObject(office.results, false).length) {
-					if (officeFocusNow !== 'results') {
-						actions.officeFocus('results'); // klik na tabuľu líg ju priblíži (ako F4)
-					}
 					return;
 				}
 				const hit = ray.intersectObject(office.map, false)[0];
@@ -878,8 +878,6 @@ export function start(root, config = {}) {
 						const c = countryByCode(best.code);
 						ui.toast(`${best.name} (${c ? c.name : ''}): ${best.rank}. miesto, ${best.league}. liga, ${best.points} bodov.`);
 					}
-				} else if (!controls.captured) {
-					controls.capture();
 				}
 			}
 			if (view === 'bar' && e.button === 0) {

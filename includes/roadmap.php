@@ -118,6 +118,7 @@ function mysn_roadmap() {
 /** Denník zmien (najnovšie hore). */
 function mysn_changelog() {
 	return array(
+		array( '0.3.10', '4. 11. 2026', 'V kancelárii klik bez Ctrl nerobí nič. S podržaným Ctrl (voľná myš) sa dá kliknúť na vizitku, dvere ŠTADIÓN a ikonky hráčov na mape. Tabuľa líg na klik nereaguje (priblíži ju F4).' ),
 		array( '0.3.9', '4. 11. 2026', 'Klik na tabuľu líg v kancelárii ju priblíži (ako F4), okno s tabuľkami sa už neotvára.' ),
 		array( '0.3.8', '4. 11. 2026', 'Oprava: v kancelárii znova funguje F5 (obnovenie stránky) a F11 (celá obrazovka).' ),
 		array( '0.3.7', '4. 11. 2026', 'Oprava: F6 v kancelárii otvára okno (predtým otváralo dvere herne).' ),

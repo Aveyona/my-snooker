@@ -1023,7 +1023,7 @@ export class UI {
 		} else if (!reg && o.mode !== 'card') {
 			// neregistrovaný: na stole leží červená vizitka, klik na ňu otvorí registráciu
 			w.appendChild(h('div', 'mysn-news-head', '<b>Registrácia do ligy</b>'));
-			w.appendChild(h('p', 'mysn-mixer-status', `Na stole leží červená vizitka. Klikni na ňu (drž Ctrl, alebo sa na ňu pozri a klikni) a vyplň svoje údaje. ${esc(d.season.name)}, do konca ${d.season.daysLeft} dní. Ligu hrajú len registrovaní hráči.`));
+			w.appendChild(h('p', 'mysn-mixer-status', `Na stole leží červená vizitka. Drž Ctrl a klikni na ňu (alebo F8) a vyplň svoje údaje. ${esc(d.season.name)}, do konca ${d.season.daysLeft} dní. Ligu hrajú len registrovaní hráči.`));
 			const oc = this.button('Otvoriť vizitku', 'officeCard');
 			oc.classList.add('mysn-league-btn');
 			w.appendChild(oc);
