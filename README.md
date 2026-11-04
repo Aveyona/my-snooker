@@ -28,7 +28,8 @@ Hra je napísaná v JavaScripte nad knižnicou [three.js](https://threejs.org/),
 
 - V menu je tlačidlo Vstúpiť. Otvorí okno Otvorené partie: tréningy a hry o skóre, ktoré majú otvorené dvere herne (F6), a všetky prebiehajúce ligové zápasy.
 - Dvere herne sú po načítaní zatvorené, partia je súkromná. Keď ich hráč otvorí (F6), jeho partia sa objaví v zozname a po každom údere sa posiela stav stola do tabuľky `my_snooker_rooms`.
-- Divák sa len pozerá: vidí úder naživo, myšou sa otáča okolo stola, kolieskom približuje, strieľať ani meniť stôl nemôže. Esc otvorí menu s tlačidlom Prestať sledovať. Keď hráč dvere zavrie alebo ligový zápas skončí, sledovanie sa ukončí samo.
+- Hráč s otvorenými dverami posiela stav stola pri každej zmene (aj bez úderu) a mierenie tága asi 3-krát za sekundu, divák sa pýta dvakrát za sekundu a úder si prehrá rovnakou fyzikou.
+- Divák sa len pozerá: vidí tágo hráča pri mierení a úder naživo, myšou sa otáča okolo stola, kolieskom približuje, strieľať ani meniť stôl nemôže. Esc otvorí menu s tlačidlom Prestať sledovať. Keď hráč dvere zavrie alebo ligový zápas skončí, sledovanie sa ukončí samo.
 - Ligový zápas sa sleduje na štadióne pri modrom stole.
 
 ## Liga

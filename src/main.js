@@ -200,7 +200,11 @@ export function start(root, config = {}) {
 	// otvorená partia (dvere herne otvorené): stav stola po každom údere pre divákov
 	let homeDoorOpen = false;
 	let roomSeq = 0;
+	let roomVer = 0; // každá zmena stola (aj bez úderu: biela do D, späť, nové rozostavenie)
 	let roomLast = null;
+	let roomChangeT = 0;
+	let roomAimT = 0;
+	let roomAimKey = '';
 	let watchInfo = null;
 	const roomInfo = () => (game.solo ? `${game.soloScore} b., séria ${game.solo.rules.brk}` : `body ${game.stats.points}, séria ${game.stats.run}`);
 	const roomBroadcast = (what, d) => {
@@ -218,8 +222,11 @@ export function start(root, config = {}) {
 			roomLast = { before: d.before, shot: d.shot };
 		}
 		const data = { ...(roomLast || {}), info: roomInfo() };
-		if (what === 'settle' || what === 'door') {
+		if (what === 'settle' || what === 'door' || what === 'change') {
+			roomVer++;
 			data.after = snapshot(game.balls);
+			data.ver = roomVer;
+			data.place = game.state === 'place' ? 1 : 0;
 		}
 		online.roomPost({ door: 1, kind, seq: roomSeq, data });
 	};
@@ -633,7 +640,8 @@ export function start(root, config = {}) {
 				game.spectateEnd();
 			}
 			roomBroadcast('close'); // kým sledujem, moja partia nie je otvorená
-			watchInfo = { seq: -1, done: false, played: -1 };
+			watchInfo = { seq: -1, ver: -1, played: -1 };
+			online.aimTarget = null;
 			game.spectateBegin({ type: r.type, id: r.id, title: r.title, kind: r.kind, info: r.info || '' });
 			setVenue(r.type === 'match' ? 'league' : 'home');
 			rig.setMode('cue');
@@ -647,6 +655,7 @@ export function start(root, config = {}) {
 				return;
 			}
 			online.watchStop();
+			online.aimTarget = null;
 			game.spectateEnd();
 			setVenue('home');
 			refreshMenu();
@@ -1270,15 +1279,19 @@ export function start(root, config = {}) {
 					if (watchInfo.seq < 0) {
 						game.spectateSet(dd.after || dd.before || null);
 						watchInfo.seq = d.seq;
-						watchInfo.done = true;
+						watchInfo.ver = dd.ver || 0;
 					} else if (d.seq > watchInfo.seq && dd.shot && dd.before && !moving) {
+						online.aimTarget = null;
 						game.spectateSet(dd.before);
 						game.playRemote(dd.shot, false);
 						watchInfo.seq = d.seq;
-						watchInfo.done = false;
-					} else if (d.seq === watchInfo.seq && dd.after && !watchInfo.done && !moving) {
-						game.spectateSet(dd.after); // zosúladenie so stavom hráča po údere
-						watchInfo.done = true;
+					} else if (!moving && dd.after && (dd.ver || 0) !== watchInfo.ver && d.seq === watchInfo.seq) {
+						game.spectateSet(dd.after); // stav stola hráča: po údere aj po zmene bez úderu (biela do D, späť, nové rozostavenie)
+						watchInfo.ver = dd.ver || 0;
+					}
+					// tágo hráča pri mierení
+					if (!moving && dd.aim && dd.aim.seq === watchInfo.seq) {
+						online.aimTarget = dd.aim;
 					}
 				} else {
 					sp.info = d.scores ? `${d.players[0].name} ${d.scores[0]} : ${d.scores[1]} ${d.players[1].name}` : sp.info;
@@ -1291,8 +1304,12 @@ export function start(root, config = {}) {
 						game.playRemote(d.shot, false);
 						watchInfo.played = d.shot.seq;
 					} else if (d.seq > watchInfo.seq && !moving) {
+						online.aimTarget = null;
 						game.spectateSet(balls || null);
 						watchInfo.seq = d.seq;
+					}
+					if (!moving && d.aim && d.aim.seq === watchInfo.seq && !(d.shot && d.shot.seq === d.seq + 1)) {
+						online.aimTarget = d.aim;
 					}
 				}
 				ui.sync(game, rig.mode);
@@ -1352,6 +1369,14 @@ export function start(root, config = {}) {
 	game.on((type, d) => {
 		if (!game.spectating && !game.match && homeDoorOpen && (type === 'shot' || type === 'settle')) {
 			roomBroadcast(type, d);
+		} else if (!game.spectating && !game.match && homeDoorOpen && type === 'change' && game.state !== 'moving') {
+			// zmena stola bez úderu: odošle sa o chvíľu (viac zmien naraz = jedno odoslanie)
+			clearTimeout(roomChangeT);
+			roomChangeT = setTimeout(() => {
+				if (game.state !== 'moving') {
+					roomBroadcast('change');
+				}
+			}, 400);
 		}
 		if (view) {
 			// v pohľade na nástenku alebo stojan kameru nemeníme
@@ -1457,6 +1482,19 @@ export function start(root, config = {}) {
 			if (game.cue.on) {
 				game.cue.p.x += (a.cx - game.cue.p.x) * Math.min(1, dt * 8);
 				game.cue.p.z += (a.cz - game.cue.p.z) * Math.min(1, dt * 8);
+			}
+		}
+		if (online && homeDoorOpen && !game.match && !game.spectating && (game.state === 'aim' || game.state === 'place')) {
+			// otvorená partia: mierenie tága pre divákov asi 3-krát za sekundu (len keď sa zmenilo)
+			roomAimT += dt;
+			if (roomAimT >= 0.33) {
+				const a = { seq: roomSeq, dir: +game.dir.toFixed(4), cx: +game.cue.p.x.toFixed(4), cz: +game.cue.p.z.toFixed(4), pull: +(controls.stroking ? Math.max(0, controls.strokePull) : controls.power || 0).toFixed(3), side: +spin.side.toFixed(2), top: +spin.top.toFixed(2), place: game.state === 'place' ? 1 : 0 };
+				const key = JSON.stringify(a);
+				if (key !== roomAimKey) {
+					roomAimT = 0;
+					roomAimKey = key;
+					online.roomPost({ door: 1, kind: game.solo ? 'solo' : 'training', seq: roomSeq, aim: a });
+				}
 			}
 		}
 		if (online) {

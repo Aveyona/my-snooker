@@ -15,6 +15,7 @@ function mysn_rest_room_post( $req ) {
 	$door = $req->get_param( 'door' ) ? 1 : 0;
 	$kind = 'solo' === $req->get_param( 'kind' ) ? 'solo' : 'training';
 	$data = mysn_json_param( $req, 'data', 30000 );
+	$aim  = mysn_json_param( $req, 'aim', 1000 );
 	$row  = array(
 		'user_id' => $uid,
 		'door'    => $door,
@@ -27,6 +28,13 @@ function mysn_rest_room_post( $req ) {
 	} else {
 		$old         = $wpdb->get_var( $wpdb->prepare( 'SELECT data FROM ' . mysn_table( 'rooms' ) . ' WHERE user_id = %d', $uid ) ); // phpcs:ignore
 		$row['data'] = $old ? $old : '';
+	}
+	if ( null !== $aim ) {
+		// mierenie hráča (tágo pre divákov) sa pridá k poslednému stavu stola
+		$d           = $row['data'] ? json_decode( $row['data'], true ) : array();
+		$d           = is_array( $d ) ? $d : array();
+		$d['aim']    = json_decode( $aim, true );
+		$row['data'] = wp_json_encode( $d );
 	}
 	$wpdb->replace( mysn_table( 'rooms' ), $row );
 	return array( 'ok' => true );
@@ -94,6 +102,7 @@ function mysn_rest_watch( $req ) {
 		'seq'     => (int) $m['seq'],
 		'state'   => $m['state'] ? json_decode( $m['state'], true ) : null,
 		'shot'    => $m['shot'] ? json_decode( $m['shot'], true ) : null,
+		'aim'     => $m['aim'] ? json_decode( $m['aim'], true ) : null,
 		'scores'  => array( (int) $m['score1'], (int) $m['score2'] ),
 		'winner'  => (int) $m['winner'],
 	);

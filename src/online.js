@@ -192,7 +192,7 @@ export class Online {
 			this._watchBusy = false;
 		};
 		tick();
-		this._watchT = setInterval(tick, 1000);
+		this._watchT = setInterval(tick, 500);
 	}
 
 	watchStop() {
