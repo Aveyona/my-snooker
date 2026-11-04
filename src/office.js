@@ -283,7 +283,8 @@ export function buildOffice(scene) {
 	add(new THREE.BoxGeometry(2.35, 0.06, 0.16), wood, 0, 0.12, 0.06, rack);
 	add(new THREE.BoxGeometry(2.35, 0.05, 0.12), wood, 0, 1.35, 0.06, rack);
 	let rackCues = [];
-	const setRack = (cues, selected) => {
+	const defRing = new THREE.MeshStandardMaterial({ color: 0x7cc4f2, emissive: 0x1b5a86, emissiveIntensity: 0.8, metalness: 0.4, roughness: 0.3 });
+	const setRack = (cues, selected, def) => {
 		for (const r of rackCues) {
 			rack.remove(r);
 		}
@@ -298,7 +299,8 @@ export function buildOffice(scene) {
 			rack.add(g);
 			rackCues.push(g);
 			if (sel) {
-				const ring = new THREE.Mesh(new THREE.TorusGeometry(0.04, 0.008, 8, 20), gold);
+				// zlatý krúžok = v zápase, väčší modrý = predvolené tágo
+				const ring = new THREE.Mesh(new THREE.TorusGeometry(spec.id === def ? 0.055 : 0.04, 0.008, 8, 20), spec.id === def ? defRing : gold);
 				ring.position.set(x, 0.3, 0.22);
 				rack.add(ring);
 				rackCues.push(ring);

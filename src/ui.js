@@ -1075,56 +1075,36 @@ export class UI {
 			cw.appendChild(f);
 			cw.appendChild(this.button(reg ? 'Zavrieť' : 'Zatiaľ nie', 'officeHome'));
 		} else if (o.mode === 'cues') {
-			// tágá do ligového zápasu: ako stojan v herni (F2), kamera je pri stojane; klik pridá alebo odoberie
+			// tágá do ligového zápasu: ako stojan v herni (F2), kamera je pri stojane; klik pridá alebo odoberie,
+			// jedno z vybratých je predvolené (s ním sa začína ligový zápas); nastavenia tág budú v herni
 			const n = o.myCues.selected.length;
+			const def = o.myCues.selected.includes(o.myCues.def) ? o.myCues.def : o.myCues.selected[0];
 			w.appendChild(h('h3', '', `Tágá do ligového zápasu: vybraté ${n} zo 4`));
 			const list = h('div', 'mysn-cues');
 			o.cues.forEach((c, i) => {
 				const on = o.myCues.selected.includes(c.id);
+				const isDef = on && c.id === def;
 				const card = h(
-					'button',
-					'mysn-cue' + (on ? ' mysn-pick' : '') + (o.cue === c.id ? ' mysn-on' : ''),
+					'div',
+					'mysn-cue' + (on ? ' mysn-pick' : '') + (isDef ? ' mysn-def' : ''),
 					`<span class="mysn-cue-n">${i + 1}</span><b>${esc(c.name)}</b><span class="mysn-cue-cat">${esc(c.category)}</span>` +
 						`<span>Sila ${Math.round(c.power * 100)} %, dĺžka ${Math.round(c.len * 100)} cm</span>` +
-						`<em>${on ? 'v zápase (klik odoberie)' : 'klik: zobrať do zápasu'}</em>`
+						`<em>${isDef ? '★ predvolené v zápase' : on ? 'v zápase (klik odoberie)' : 'klik: zobrať do zápasu'}</em>`
 				);
-				card.type = 'button';
+				card.setAttribute('role', 'button');
 				card.addEventListener('click', (e) => {
 					e.stopPropagation();
 					this.opts.onAction('cueSelect', c.id);
-					this.opts.onAction('cueEdit', c.id);
 				});
+				if (on && !isDef) {
+					const d = this.button('★ predvolené', 'cueDefault', 'S týmto tágom začneš ligový zápas', c.id);
+					d.classList.add('mysn-cue-defbtn');
+					card.appendChild(d);
+				}
 				list.appendChild(card);
 			});
 			w.appendChild(list);
-			// nastavenia vybraného tága (šípky vľavo a vpravo menia tágo)
-			const c = o.cues.find((x) => x.id === o.cue) || o.cues[0];
-			const cu = o.myCues.custom[c.id] || {};
-			const ed = h('div', 'mysn-cue-edit mysn-cue-edit-row');
-			ed.appendChild(h('b', 'mysn-cue-edit-t', `Nastavenia: ${esc(cu.name || c.name)}`));
-			const nmI = input('name', cu.name, 24, c.name);
-			nmI.addEventListener('change', () => this.opts.onAction('cueCustom', { id: c.id, k: 'name', v: nmI.value.trim() }));
-			nmI.addEventListener('keydown', (e) => e.stopPropagation());
-			ed.appendChild(field('Názov', nmI));
-			for (const [k, lab] of [['shaft', 'Drevo'], ['butt', 'Rukoväť']]) {
-				const col = document.createElement('input');
-				col.type = 'color';
-				col.value = cu[k] || c.colors[k];
-				col.addEventListener('input', () => this.opts.onAction('cueCustom', { id: c.id, k, v: col.value }));
-				ed.appendChild(field(lab, col));
-			}
-			for (const [k, lab, max] of [['power', 'Sila ±5 %', 0.05], ['grip', 'Falše ±10 %', 0.1]]) {
-				const r = document.createElement('input');
-				r.type = 'range';
-				r.min = String(-max);
-				r.max = String(max);
-				r.step = '0.01';
-				r.value = String(cu[k] || 0);
-				r.addEventListener('input', () => this.opts.onAction('cueCustom', { id: c.id, k, v: parseFloat(r.value) }));
-				ed.appendChild(field(lab, r));
-			}
-			w.appendChild(ed);
-			w.appendChild(h('p', 'mysn-mixer-status', 'Klik na kartu tágo pridá do zápasu alebo odoberie, šípky vľavo a vpravo vyberajú tágo na nastavenie. F2 alebo Esc: späť za stôl.'));
+			w.appendChild(h('p', 'mysn-mixer-status mysn-cue-hint', 'Klik na kartu tágo zoberie do ligového zápasu alebo odoberie. ★ predvolené: s ním začneš zápas, v zápase sa prepína len medzi týmito 4 tágami. F2 alebo Esc: späť za stôl.'));
 		} else {
 			// prehľad hráča v lige
 			const me = d.me;

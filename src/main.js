@@ -95,7 +95,7 @@ export function start(root, config = {}) {
 	pmrem.dispose();
 	const views = new BallViews(scene, game.balls, settings.quality, env);
 	// moje tágá (kancelária): 4 vybrané do zápasu a vlastné nastavenia (názov, farby, jemné doladenie)
-	const myCues = Object.assign({ selected: ['club', 'short', 'break', 'soft'], custom: {} }, settings.myCues || {});
+	const myCues = Object.assign({ selected: ['club', 'short', 'break', 'soft'], def: 'club', custom: {} }, settings.myCues || {});
 	const specFor = (id) => {
 		const base = cueById(id);
 		const c = myCues.custom[base.id];
@@ -139,7 +139,7 @@ export function start(root, config = {}) {
 	let officeCue = null;
 	const officeData = () => ({ office: { league: leagueData, mode: officeMode, countries: COUNTRIES, cues: CUES.map((c) => specFor(c.id)), myCues, cue: officeCue, user } });
 	const officeRefresh = () => {
-		office.setRack(CUES.map((c) => specFor(c.id)), myCues.selected);
+		office.setRack(CUES.map((c) => specFor(c.id)), myCues.selected, myCues.selected.includes(myCues.def) ? myCues.def : myCues.selected[0]);
 		if (view === 'office') {
 			ui.showView('office', CUES, cueSpec.id, officeData());
 		}
@@ -156,7 +156,7 @@ export function start(root, config = {}) {
 		if (!quiet) {
 			officeRefresh();
 		} else {
-			office.setRack(CUES.map((c) => specFor(c.id)), myCues.selected);
+			office.setRack(CUES.map((c) => specFor(c.id)), myCues.selected, myCues.selected.includes(myCues.def) ? myCues.def : myCues.selected[0]);
 		}
 	};
 	/** Liga: tabuľky, mapa a kalendár v kancelárii, nástenka v herni. */
@@ -628,6 +628,13 @@ export function start(root, config = {}) {
 			}
 			saveMyCues();
 		},
+		// predvolené tágo z vybratých 4 (s ním sa začína ligový zápas)
+		cueDefault: (id) => {
+			if (myCues.selected.includes(id)) {
+				myCues.def = id;
+				saveMyCues();
+			}
+		},
 		cueEdit: (id) => {
 			officeCue = id;
 			officeRefresh();
@@ -948,12 +955,6 @@ export function start(root, config = {}) {
 				}
 				if (/^f\d+$/.test(lk) && lk !== 'f5' && lk !== 'f11') {
 					return true; // ostatné F klávesy v kancelárii nič nerobia (F5 obnoví stránku, F11 celá obrazovka)
-				}
-				if (officeMode === 'cues' && (lk === 'arrowleft' || lk === 'arrowright')) {
-					const i = Math.max(0, CUES.findIndex((c) => c.id === officeCue));
-					officeCue = CUES[(i + (lk === 'arrowleft' ? CUES.length - 1 : 1)) % CUES.length].id;
-					officeRefresh();
-					return true;
 				}
 				if (lk === 'escape') {
 					if (officeMode === 'cues') {
