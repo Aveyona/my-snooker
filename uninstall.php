@@ -8,3 +8,4 @@ if ( ! defined( 'WP_UNINSTALL_PLUGIN' ) ) {
 
 delete_option( 'mysn_settings' );
 delete_transient( 'mysn_news' );
+delete_transient( 'mysn_rss' );

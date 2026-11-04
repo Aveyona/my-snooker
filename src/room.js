@@ -6,7 +6,7 @@
 import * as THREE from 'three';
 import { boardTexture } from './board.js';
 import { CUES, buildCueMesh } from './cues.js';
-import { buildNewspaper } from './newspaper.js';
+import { buildNewspaper, buildMagazine } from './newspaper.js';
 
 export const ROOM = {
 	x: 5, // polovica dĺžky miestnosti (10 m)
@@ -509,11 +509,15 @@ export function buildRoomShell(scene, quality, opts = {}) {
 	npMesh.position.set(NP.x, CT.top + 0.002, NP.z);
 	npMesh.receiveShadow = true;
 	scene.add(npMesh);
-	// pod novinami ešte jeden zložený list
-	const under = add(new THREE.PlaneGeometry(0.31, 0.43), new THREE.MeshStandardMaterial({ color: 0xe6dfcf, roughness: 0.95 }), CT.x - 0.28, CT.top + 0.001, CT.z - 0.03);
-	under.rotation.order = 'YXZ';
-	under.rotation.set(-Math.PI / 2, -0.25, 0);
-	under.castShadow = false;
+	// vedľa novín časopis so správami z RSS (F9)
+	const mag = buildMagazine(opts.rss);
+	const MG = { x: CT.x - 0.36, z: CT.z - 0.02, w: 0.3, h: 0.41 };
+	const magMesh = new THREE.Mesh(new THREE.PlaneGeometry(MG.w, MG.h), new THREE.MeshStandardMaterial({ map: mag.texture, roughness: 0.35, metalness: 0.05 }));
+	magMesh.rotation.order = 'YXZ';
+	magMesh.rotation.set(-Math.PI / 2, -0.18, 0);
+	magMesh.position.set(MG.x, CT.top + 0.003, MG.z);
+	magMesh.receiveShadow = true;
+	scene.add(magMesh);
 
 	// Obrazy na prednej stene
 	for (const [x, seed] of [[-2.8, 0], [2.8, 1]]) {
@@ -546,6 +550,9 @@ export function buildRoomShell(scene, quality, opts = {}) {
 		// F8: čítanie novín zhora
 		news: { pos: new THREE.Vector3(NP.x + 0.11, CT.top + 0.6, NP.z + 0.27), look: new THREE.Vector3(NP.x + 0.1, CT.top, NP.z - 0.01) },
 		newsItems: paper.items,
+		// F9: čítanie časopisu so správami z RSS
+		magazine: { pos: new THREE.Vector3(MG.x + 0.02, CT.top + 0.5, MG.z + 0.2), look: new THREE.Vector3(MG.x, CT.top, MG.z - 0.01) },
+		rssItems: mag.items,
 		selectCue,
 		updateScore,
 		/** Otvorí alebo zatvorí dvere; vráti true = budú otvorené. */

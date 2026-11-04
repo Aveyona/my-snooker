@@ -199,3 +199,86 @@ export function buildNewspaper(news, site) {
 	});
 	return { texture: tex, items };
 }
+
+/**
+ * Časopis vedľa novín: obálka so správami z RSS kanálov (My RSS). Hlavná správa veľkým písmom,
+ * pod ňou zoznam ďalších správ so zdrojom. Obrázky z cudzích webov sa do 3D kresliť nedajú (bezpečnosť
+ * prehliadača), preto má obálka farebné pozadie; fotky sú v čítaní na celú obrazovku.
+ */
+export function buildMagazine(rss) {
+	const MW = 1024;
+	const MH = 1400;
+	const c = document.createElement('canvas');
+	c.width = MW;
+	c.height = MH;
+	const g = c.getContext('2d');
+	const tex = new THREE.CanvasTexture(c);
+	tex.colorSpace = THREE.SRGBColorSpace;
+	tex.anisotropy = 8;
+	const items = (rss || []).slice(0, 12);
+	const sans = 'Arial, Helvetica, sans-serif';
+	// lesklá obálka
+	const bg = g.createLinearGradient(0, 0, MW, MH);
+	bg.addColorStop(0, '#0f2a4a');
+	bg.addColorStop(1, '#1d5a7a');
+	g.fillStyle = bg;
+	g.fillRect(0, 0, MW, MH);
+	g.fillStyle = 'rgba(255,255,255,0.06)';
+	for (let i = 0; i < 14; i++) {
+		g.beginPath();
+		g.arc(Math.random() * MW, Math.random() * MH, 60 + Math.random() * 160, 0, Math.PI * 2);
+		g.fill();
+	}
+	// hlavička časopisu
+	g.fillStyle = '#ffffff';
+	g.font = `900 120px ${sans}`;
+	g.fillText('SPRÁVY', 50, 150);
+	g.fillStyle = '#ffcf4a';
+	g.font = `bold 44px ${sans}`;
+	g.fillText('RSS', 560, 150);
+	g.fillStyle = '#d6e6f5';
+	g.font = `30px ${sans}`;
+	g.fillText('Hedlajner  |  správy z médií doma aj vo svete', 54, 200);
+	const today = new Date();
+	g.textAlign = 'right';
+	g.fillText(`${today.getDate()}. ${today.getMonth() + 1}. ${today.getFullYear()}`, MW - 50, 70);
+	g.textAlign = 'left';
+	g.fillStyle = '#ffcf4a';
+	g.fillRect(50, 226, MW - 100, 6);
+	if (!items.length) {
+		g.fillStyle = '#fff';
+		g.font = `44px ${sans}`;
+		g.fillText('Správy z RSS nie sú k dispozícii.', 60, 330);
+		tex.needsUpdate = true;
+		return { texture: tex, items };
+	}
+	// hlavná správa
+	const L = items[0];
+	g.fillStyle = '#ffcf4a';
+	g.font = `bold 30px ${sans}`;
+	g.fillText(`${(L.c || '').toUpperCase()}  ${L.s || ''}`, 50, 300);
+	g.fillStyle = '#ffffff';
+	g.font = `bold 66px ${sans}`;
+	let y = wrap(g, L.t, 50, 380, MW - 100, 74, 4);
+	g.fillStyle = '#d6e6f5';
+	g.font = `32px ${sans}`;
+	y = wrap(g, L.e, 50, y + 6, MW - 100, 42, 3);
+	// ďalšie správy
+	y += 30;
+	g.fillStyle = 'rgba(0,0,0,0.25)';
+	g.fillRect(36, y - 10, MW - 72, MH - y - 40);
+	y += 40;
+	items.slice(1).forEach((it) => {
+		if (y > MH - 90) {
+			return;
+		}
+		g.fillStyle = '#ffcf4a';
+		g.font = `bold 22px ${sans}`;
+		g.fillText(`${it.s || ''}${it.n ? '  +' + it.n + ' médiá' : ''}`, 60, y);
+		g.fillStyle = '#ffffff';
+		g.font = `bold 32px ${sans}`;
+		y = wrap(g, it.t, 60, y + 38, MW - 130, 38, 2) + 18;
+	});
+	tex.needsUpdate = true;
+	return { texture: tex, items };
+}

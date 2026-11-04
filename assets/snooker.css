@@ -118,3 +118,21 @@ body.mysn-page { font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans
 .mysn-view-news .mysn-news { flex-direction: column; flex-wrap: nowrap; overflow-y: auto; max-height: calc(100vh - 200px); }
 .mysn-view-news .mysn-news-item { width: auto; }
 @media (max-width: 720px) { .mysn-view.mysn-view-news { width: 100%; top: auto; background: #0c0f14ee; } .mysn-view-news .mysn-news { max-height: 30vh; } }
+
+/* Čítanie novín a časopisu na celú obrazovku */
+.mysn-reader { position: absolute; inset: 0; z-index: 5; overflow-y: auto; background: #f3eee3; color: #1d1a16; padding: 22px max(16px, calc((100% - 1180px) / 2)) 40px; }
+.mysn-rd-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; border-bottom: 4px double #1d1a16; padding-bottom: 10px; margin-bottom: 18px; }
+.mysn-rd-head h2 { margin: 0; font: 900 40px Georgia, serif; letter-spacing: .02em; }
+.mysn-rd-head span { font: italic 15px Georgia, serif; color: #5a5246; }
+.mysn-rd-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 18px; }
+.mysn-rd-card { display: flex; flex-direction: column; gap: 6px; text-decoration: none; color: inherit; background: #fbf8f1; border: 1px solid #ddd3c0; border-radius: 10px; padding: 12px; }
+.mysn-rd-card:hover { border-color: #c0392b; }
+.mysn-rd-card img { width: 100%; aspect-ratio: 16 / 9; object-fit: cover; border-radius: 6px; background: #e4dccb; }
+.mysn-rd-card b { font: bold 19px/1.25 Georgia, serif; }
+.mysn-rd-card p { margin: 0; font: 14px/1.45 Georgia, serif; color: #3a342c; }
+.mysn-rd-meta { font: bold 11px Arial, sans-serif; color: #c0392b; text-transform: uppercase; letter-spacing: .04em; }
+.mysn-rd-lead { grid-column: 1 / -1; display: grid; grid-template-columns: 1.3fr 1fr; gap: 6px 18px; align-items: start; }
+.mysn-rd-lead img { grid-row: span 3; aspect-ratio: 16 / 10; }
+.mysn-rd-lead b { font-size: 30px; }
+.mysn-rd-lead p { font-size: 16px; }
+@media (max-width: 720px) { .mysn-rd-lead { display: flex; } .mysn-rd-lead b { font-size: 22px; } }

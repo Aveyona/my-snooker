@@ -23,7 +23,7 @@ function mysn_roadmap() {
 				array( 'Väčšia herňa (10 x 7,5 m) s vybavením: otvorené dvere do chodby, tabuľa na skóre, komoda, barový stolík so stoličkami, kreslá, obrazy, kvetina', 1 ),
 				array( 'Nástenka s nápovedou v herni (F1): ovládanie, klávesy, princíp hry, tágá', 1 ),
 				array( 'Kriedovanie špičky (F3, falše 5x silnejšie na 3 údery), tabuľa so skóre v herni (F4), pohľad zhora (Tab)', 1 ),
-				array( 'Konferenčný stolík s novinami: titulka webu Hedlajner (F8 čítanie, klik otvorí článok), pohľad z kresla (F7), dvere F6', 1 ),
+				array( 'Konferenčný stolík s novinami (titulka webu Hedlajner, F8) a časopisom so správami z RSS (F9), čítanie na celú obrazovku (C), pohľad z kresla s rozhliadaním (F7), dvere F6', 1 ),
 				array( 'Šípka vo farbe trafenej gule (3D) a v detaile dotyku odkiaľ prichádza biela a kam pôjde guľa', 1 ),
 				array( 'Stojan s 10 tágami (F2): tvrdosť špičky mení najväčšiu silu, dĺžka citlivosť ťahania myšou, jemné mierenie so Shift len pokročilé a majstrovské tágá', 1 ),
 				array( 'Stôl ako skutočný snooker: zaoblené čeľuste jamiek, zaoblené rohy rámu, kožené lemy jamiek, podlaha z drevených dosiek, vyššie lampy', 1 ),
@@ -94,6 +94,8 @@ function mysn_roadmap() {
 /** Denník zmien (najnovšie hore). */
 function mysn_changelog() {
 	return array(
+		array( '0.1.26', '4. 11. 2026', 'Na stolíku pribudol časopis so správami z RSS kanálov (My RSS), F9 ho ukáže. Noviny (F8) aj časopis (F9) sa dajú čítať na celú obrazovku (tlačidlo alebo C): karty s fotkami, zdrojom, dátumom a úvodom, klik otvorí článok.' ),
+		array( '0.1.25', '4. 11. 2026', 'V pohľade z kresla (F7) sa dá pohybom myši rozhliadať po herni.' ),
 		array( '0.1.24', '4. 11. 2026', 'Ctrl sa drží: kým je stlačený, myš je voľná (kurzor, dá sa klikať), po pustení sa znova zachytí na tágo.' ),
 		array( '0.1.23', '4. 11. 2026', 'Ctrl uvoľní myš (zobrazí sa kurzor, dá sa klikať na obrazovke, menu sa neotvorí), ďalší Ctrl ju znova zachytí na tágo.' ),
 		array( '0.1.22', '4. 11. 2026', 'Konferenčný stolík pred kreslami a na ňom noviny s titulkou webu Hedlajner (rovnaké rubriky ako hlavná stránka, obrázky, dátumy). F7: pohľad z kresla na stôl. F8: čítanie novín, vpravo klikateľné titulky otvoria článok na webe.' ),

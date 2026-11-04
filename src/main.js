@@ -73,7 +73,7 @@ export function start(root, config = {}) {
 
 	const scene = new THREE.Scene();
 	buildRoom(scene, settings.quality);
-	const room = buildRoomShell(scene, settings.quality, { news: config.news, site: config.site });
+	const room = buildRoomShell(scene, settings.quality, { news: config.news, rss: config.rss, site: config.site });
 	const table = buildTable(renderer);
 	scene.add(table.group);
 
@@ -106,6 +106,7 @@ export function start(root, config = {}) {
 
 	// pohľad na nástenku (F1), stojan s tágami (F2), kriedovanie tága (F3) alebo tabuľu so skóre (F4)
 	let view = null;
+	const chairLook = { yaw: 0, pitch: 0 };
 	let topView = false; // Tab: pohľad na stôl zhora
 	const CHALK_SHOTS = 3; // nakriedovaná špička vydrží 3 údery
 	const CHALK_SPIN = 0.2; // bez kriedy má miesto úderu len pätinu účinku (s kriedou 5x viac)
@@ -157,7 +158,8 @@ export function start(root, config = {}) {
 		}
 		view = name;
 		controls.blocked = true;
-		if (name !== 'chalk') {
+		// pri kriedovaní a v kresle ostáva myš zachytená (v kresle sa ňou rozhliada)
+		if (name !== 'chalk' && name !== 'chair') {
 			controls.uncapture();
 		}
 		ui.showMenu(false);
@@ -173,9 +175,15 @@ export function start(root, config = {}) {
 			chalkMesh.visible = true;
 		} else {
 			const v = room[name];
-			rig.setView(v.pos, v.look);
+			rig.setView(v.pos, v.look.clone());
+			if (name === 'chair') {
+				// počiatočný smer pohľadu z kresla (otáčanie hlavou myšou)
+				const d = v.look.clone().sub(v.pos);
+				chairLook.yaw = Math.atan2(d.z, d.x);
+				chairLook.pitch = Math.atan2(d.y, Math.hypot(d.x, d.z));
+			}
 		}
-		ui.showView(name, CUES, cueSpec.id, room.newsItems);
+		ui.showView(name, CUES, cueSpec.id, name === 'magazine' ? room.rssItems : room.newsItems);
 	};
 	const exitView = () => {
 		if (!view) {
@@ -183,6 +191,7 @@ export function start(root, config = {}) {
 		}
 		view = null;
 		controls.blocked = false;
+		ui.toggleReader(null);
 		chalkT = -1;
 		chalkMesh.visible = false;
 		rig.setMode(game.state === 'place' || topView ? 'top' : 'cue');
@@ -264,6 +273,8 @@ export function start(root, config = {}) {
 		score: () => enterView('score'),
 		chair: () => enterView('chair'),
 		news: () => enterView('news'),
+		magazine: () => enterView('magazine'),
+		reader: () => ui.toggleReader(view === 'magazine' ? 'rss' : 'news', view === 'magazine' ? room.rssItems : room.newsItems),
 		chalk: () => enterView('chalk'),
 		top: () => {
 			if (view) {
@@ -320,6 +331,20 @@ export function start(root, config = {}) {
 			}
 		},
 		stroke: (on) => ui.setStroke(on),
+		look: (dx, dy) => {
+			if (view !== 'chair') {
+				return;
+			}
+			chairLook.yaw += dx * 0.0025;
+			chairLook.pitch = Math.max(-1.2, Math.min(0.9, chairLook.pitch - dy * 0.0025));
+			const c = Math.cos(chairLook.pitch);
+			rig.viewLook.copy(rig.viewPos).add(new THREE.Vector3(Math.cos(chairLook.yaw) * c, Math.sin(chairLook.pitch), Math.sin(chairLook.yaw) * c));
+		},
+		viewDown: (e) => {
+			if (view === 'chair' && e.button === 0) {
+				controls.capture();
+			}
+		},
 		key: (k) => {
 			const lk = k.toLowerCase();
 			if (lk === 'ctrl-down' || lk === 'ctrl-up') {
@@ -345,7 +370,7 @@ export function start(root, config = {}) {
 				sound.doorCreak();
 				return true;
 			}
-			const fkeys = { f1: 'board', f2: 'rack', f3: 'chalk', f4: 'score', f7: 'chair', f8: 'news' };
+			const fkeys = { f1: 'board', f2: 'rack', f3: 'chalk', f4: 'score', f7: 'chair', f8: 'news', f9: 'magazine' };
 			if (fkeys[lk]) {
 				ui.opts.onAction(fkeys[lk]);
 				return true;
@@ -356,6 +381,14 @@ export function start(root, config = {}) {
 			}
 			if (view) {
 				// v pohľade na nástenku alebo stojan: Esc a Enter späť do hry, šípky vyberajú tágo
+				if ((view === 'news' || view === 'magazine') && lk === 'c') {
+					ui.opts.onAction('reader');
+					return true;
+				}
+				if (lk === 'escape' && ui.readerOpen()) {
+					ui.toggleReader(null);
+					return true;
+				}
 				if ((lk === 'escape' || lk === 'enter') && view !== 'chalk') {
 					exitView();
 					return true;

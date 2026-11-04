@@ -54,3 +54,35 @@ function mysn_news() {
 add_action( 'save_post_post', function () {
 	delete_transient( 'mysn_news' );
 } );
+
+/** Časopis na stolíku: najnovšie správy z RSS kanálov (doplnok My RSS), rovnaké ako na stránke Správy RSS. */
+function mysn_rss() {
+	if ( ! function_exists( 'myrss_query' ) ) {
+		return array();
+	}
+	$cached = get_transient( 'mysn_rss' );
+	if ( is_array( $cached ) ) {
+		return $cached;
+	}
+	$res  = myrss_query( array( 'cat' => '', 'feed' => 0, 'kraj' => '', 'q' => '', 'page' => 1 ) );
+	$cats = function_exists( 'myrss_categories' ) ? myrss_categories() : array();
+	$out  = array();
+	foreach ( (array) $res['groups'] as $g ) {
+		$m = $g['main'];
+		if ( count( $out ) >= 12 ) {
+			break;
+		}
+		$out[] = array(
+			't' => html_entity_decode( wp_strip_all_tags( (string) $m['title'] ), ENT_QUOTES, 'UTF-8' ),
+			'u' => (string) $m['url'],
+			'd' => wp_date( 'j. n. Y H:i', strtotime( $m['published'] . ' UTC' ) ),
+			'c' => isset( $cats[ $m['category'] ] ) ? $cats[ $m['category'] ] : '',
+			's' => function_exists( 'myrss_short_name' ) ? myrss_short_name( $m['feed_name'] ) : (string) $m['feed_name'],
+			'e' => html_entity_decode( wp_trim_words( wp_strip_all_tags( (string) $m['summary'] ), 30, '…' ), ENT_QUOTES, 'UTF-8' ),
+			'i' => (string) $m['image'],
+			'n' => count( $g['others'] ), // koľko ďalších médií píše o tom istom
+		);
+	}
+	set_transient( 'mysn_rss', $out, 10 * MINUTE_IN_SECONDS );
+	return $out;
+}

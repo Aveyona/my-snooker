@@ -59,6 +59,7 @@ function mysn_render( $preview ) {
 		'version' => MYSN_VERSION,
 		'mode'    => 'training',
 		'news'    => mysn_news(),
+		'rss'     => mysn_rss(),
 		'site'    => 'HEDLAJNER',
 	);
 	?>

@@ -3,6 +3,8 @@
  */
 import { R, COLOURS, POCKETS } from './physics.js';
 
+const esc = (t) => String(t || '').replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
+
 const h = (tag, cls, html) => {
 	const e = document.createElement(tag);
 	if (cls) {
@@ -460,6 +462,38 @@ export class UI {
 		this.hint.classList.toggle('mysn-hint-on', !!(this._stroke || this._free));
 	}
 
+	readerOpen() {
+		return !!(this.reader && !this.reader.classList.contains('mysn-hidden'));
+	}
+
+	/** Čítanie na celú obrazovku: kind = 'news' (titulka Hedlajner) alebo 'rss' (časopis); null zavrie. */
+	toggleReader(kind, items) {
+		if (!this.reader) {
+			this.reader = h('div', 'mysn-reader mysn-hidden');
+			this.root.appendChild(this.reader);
+		}
+		const r = this.reader;
+		if (!kind || this.readerOpen()) {
+			r.classList.add('mysn-hidden');
+			return;
+		}
+		const title = kind === 'rss' ? 'Správy z RSS' : 'HEDLAJNER';
+		const sub = kind === 'rss' ? 'Najnovšie správy z médií doma aj vo svete' : 'Hlavné správy z domova a zo sveta';
+		const cards = (items || [])
+			.map((n, i) => {
+				const img = n.i ? `<img src="${esc(n.i)}" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.remove()">` : '';
+				const meta = [n.s, n.c, n.d].filter(Boolean).map(esc).join('  |  ');
+				return `<a class="mysn-rd-card${i === 0 && n.i ? ' mysn-rd-lead' : ''}" href="${esc(n.u)}" target="_blank" rel="noopener">${img}<span class="mysn-rd-meta">${meta}${n.n ? '  |  +' + n.n + ' médiá' : ''}</span><b>${esc(n.t)}</b><p>${esc(n.e)}</p></a>`;
+			})
+			.join('');
+		r.innerHTML = `<div class="mysn-rd-head"><div><h2>${title}</h2><span>${sub}</span></div></div><div class="mysn-rd-grid">${cards || '<p>Žiadne správy.</p>'}</div>`;
+		const close = this.button('Zavrieť (C alebo Esc)', 'reader');
+		close.classList.add('mysn-primary');
+		r.querySelector('.mysn-rd-head').appendChild(close);
+		r.classList.remove('mysn-hidden');
+		r.scrollTop = 0;
+	}
+
 	/** Voľná myš (Ctrl): kurzor je vidieť, dá sa klikať. */
 	setFree(on) {
 		this._free = on;
@@ -489,7 +523,7 @@ export class UI {
 		}
 		const box = this.viewBox;
 		box.classList.toggle('mysn-hidden', !name);
-		box.classList.toggle('mysn-view-news', name === 'news');
+		box.classList.toggle('mysn-view-news', name === 'news' || name === 'magazine');
 		this.root.classList.toggle('mysn-viewing', !!name);
 		if (!name) {
 			return;
@@ -517,11 +551,14 @@ export class UI {
 			box.appendChild(list);
 		}
 		const foot = h('div', 'mysn-view-foot');
-		if (name === 'news' && news && news.length) {
-			// klikateľné titulky (otvoria článok na webe v novom okne)
+		if ((name === 'news' || name === 'magazine') && news && news.length) {
+			// klikateľné titulky (otvoria článok na webe v novom okne) a čítanie na celú obrazovku
+			const full = this.button('Čítať na celú obrazovku (C)', 'reader');
+			full.classList.add('mysn-primary');
+			box.appendChild(full);
 			const list = h('div', 'mysn-news');
-			news.slice(0, 9).forEach((n) => {
-				const a = h('a', 'mysn-news-item', `<span>${n.c || ''}</span>${n.t.replace(/[<>&]/g, '')}`);
+			news.slice(0, 12).forEach((n) => {
+				const a = h('a', 'mysn-news-item', `<span>${esc(n.s ? n.s + (n.c ? ', ' + n.c : '') : n.c || '')}</span>${esc(n.t)}`);
 				a.href = n.u;
 				a.target = '_blank';
 				a.rel = 'noopener';
@@ -530,8 +567,9 @@ export class UI {
 			box.appendChild(list);
 		}
 		const texts = {
-			chair: 'Pohľad z kresla. F7, Enter alebo Esc: späť do hry, F8: čítať noviny.',
+			chair: 'Pohľad z kresla: pohybom myši sa rozhliadaš (klikni, ak sa myš nezachytila). F7 alebo Enter: späť do hry, F8: noviny.',
 			news: 'Titulka webu Hedlajner. Klik na titulok otvorí článok. F8, Enter alebo Esc: späť do hry.',
+			magazine: 'Správy z RSS kanálov. Klik na titulok otvorí správu. F9, Enter alebo Esc: späť do hry.',
 			rack: 'Šípky vľavo a vpravo vyberajú tágo. Enter, F2 alebo Esc: späť do hry.',
 			board: 'F1, Enter alebo Esc: späť do hry.',
 			score: 'F4, Enter alebo Esc: späť do hry.',

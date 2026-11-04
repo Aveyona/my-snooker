@@ -84,6 +84,9 @@ export class Controls {
 		this.hooks.unlock();
 		const g = this.game;
 		if (this.blocked) {
+			if (this.hooks.viewDown) {
+				this.hooks.viewDown(e);
+			}
 			return;
 		}
 		if (e.pointerType === 'mouse' && e.button === 2) {
@@ -252,6 +255,10 @@ export class Controls {
 	mouseMove(e) {
 		const g = this.game;
 		if (this.blocked) {
+			// pohľad z kresla: pohyb myši otáča hlavou
+			if (this.hooks.look && performance.now() >= this._ignoreUntil && Math.abs(e.movementX || 0) < 200 && Math.abs(e.movementY || 0) < 200) {
+				this.hooks.look(e.movementX || 0, e.movementY || 0);
+			}
 			return;
 		}
 		if (performance.now() < this._ignoreUntil || Math.abs(e.movementX || 0) > 200 || Math.abs(e.movementY || 0) > 200) {
