@@ -5,6 +5,7 @@
 import * as THREE from 'three';
 import { RoomEnvironment } from 'three/examples/jsm/environments/RoomEnvironment.js';
 import { buildTable, buildRoom } from './table.js';
+import { buildRoomShell } from './room.js';
 import { BallViews } from './balls.js';
 import { Cue, AimGuide } from './cue.js';
 import { CameraRig } from './camera.js';
@@ -71,6 +72,7 @@ export function start(root, config = {}) {
 
 	const scene = new THREE.Scene();
 	buildRoom(scene, settings.quality);
+	buildRoomShell(scene, settings.quality);
 	const table = buildTable(renderer);
 	scene.add(table.group);
 

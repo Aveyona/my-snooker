@@ -3,6 +3,7 @@
  */
 import * as THREE from 'three';
 import { L, W, R, BAULK_X, D_R, SPOTS, POCKETS } from './physics.js';
+import { ROOM } from './room.js';
 
 const CG = 0.062; // ako vo fyzike: medzera mantinelu pri rohovej jamke
 const MG = 0.052; // polovica medzery pri strednej jamke
@@ -422,12 +423,11 @@ export function buildTable(renderer) {
 /** Miestnosť: tmavá podlaha a tri lampy nad stolom. */
 export function buildRoom(scene, quality) {
 	scene.background = new THREE.Color(0x0c0f14);
-	scene.fog = new THREE.Fog(0x0c0f14, 7, 26);
-	// Nekonečná podlaha z drevených dosiek (veľká plocha s opakovanou textúrou, v diaľke sa stráca v hmle)
+	// Podlaha z drevených dosiek po steny herne (textúra = 4 x 4 m)
 	const floorTex = plankTexture();
-	floorTex.repeat.set(60, 60);
+	floorTex.repeat.set((2 * ROOM.x) / 4, (2 * ROOM.z) / 4);
 	floorTex.anisotropy = 8;
-	const floor = new THREE.Mesh(new THREE.PlaneGeometry(240, 240), new THREE.MeshStandardMaterial({ map: floorTex, roughness: 0.72, metalness: 0 }));
+	const floor = new THREE.Mesh(new THREE.PlaneGeometry(2 * ROOM.x, 2 * ROOM.z), new THREE.MeshStandardMaterial({ map: floorTex, roughness: 0.72, metalness: 0 }));
 	floor.rotation.x = -Math.PI / 2;
 	floor.position.y = -0.86;
 	floor.receiveShadow = true;
@@ -467,8 +467,10 @@ export function buildRoom(scene, quality) {
 		glow.rotation.x = Math.PI / 2;
 		glow.position.set(x, LAMP_Y + 0.03, 0);
 		for (const cx of [-0.35, 0.35]) {
-			const cord = addLampPart(new THREE.Mesh(new THREE.CylinderGeometry(0.003, 0.003, 4, 6), cordMat));
-			cord.position.set(x + cx, LAMP_Y + 2.05, 0);
+			// lanko od tienidla až po strop
+			const top = LAMP_Y + 0.046;
+			const cord = addLampPart(new THREE.Mesh(new THREE.CylinderGeometry(0.003, 0.003, ROOM.ceil - top, 6), cordMat));
+			cord.position.set(x + cx, (top + ROOM.ceil) / 2, 0);
 		}
 	}
 	if (quality === 'high') {

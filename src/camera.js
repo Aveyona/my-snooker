@@ -5,6 +5,7 @@
 import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import { L, W } from './physics.js';
+import { ROOM, clampToRoom } from './room.js';
 
 export const CAMERA_MODES = ['cue', 'top', 'free'];
 
@@ -16,7 +17,7 @@ export class CameraRig {
 		this.orbit.enableDamping = true;
 		this.orbit.maxPolarAngle = Math.PI / 2 - 0.05;
 		this.orbit.minDistance = 0.3;
-		this.orbit.maxDistance = 6;
+		this.orbit.maxDistance = 4;
 		this.orbit.target.set(0, 0, 0);
 		this.orbit.enabled = false;
 		this.mode = 'cue';
@@ -61,10 +62,13 @@ export class CameraRig {
 	setMode(mode) {
 		this.mode = mode;
 		this.resetPan();
+		// vrstva 1 = lampy, vrstva 2 = strop: pohľad zhora ich nekreslí
 		if (mode === 'top') {
 			this.camera.layers.disable(1);
+			this.camera.layers.disable(2);
 		} else {
 			this.camera.layers.enable(1);
+			this.camera.layers.enable(2);
 		}
 		this.orbit.enabled = mode === 'free';
 		if (mode === 'free') {
@@ -83,6 +87,7 @@ export class CameraRig {
 	update(dt, cue, dir, moving) {
 		if (this.mode === 'free') {
 			this.orbit.update();
+			clampToRoom(this.camera.position);
 			this._curLook.copy(this.orbit.target);
 			// nad úrovňou lámp ich nekresli, aby nezakrývali stôl
 			if (this.camera.position.y > 1.5) {
@@ -146,11 +151,20 @@ export class CameraRig {
 				look.add(this.panOffset);
 			}
 		}
+		if (this.mode !== 'top') {
+			// kamera nesmie prejsť cez steny, strop ani podlahu herne
+			clampToRoom(pos);
+		}
 		const k = 1 - Math.exp(-dt * (moving ? 4 : 7));
 		this.camera.position.lerp(pos, k);
 		this._curLook.lerp(look, k);
 		this.camera.lookAt(this._curLook);
-		// kamera nad lampami (napríklad po údere vysoko) ich nekreslí
+		// kamera nad lampami (napríklad po údere vysoko) ich nekreslí; nad stropom (pohľad zhora) nekreslí strop
+		if (this.camera.position.y > ROOM.ceil - 0.05) {
+			this.camera.layers.disable(2);
+		} else if (this.mode !== 'top') {
+			this.camera.layers.enable(2);
+		}
 		if (this.mode !== 'top') {
 			if (this.camera.position.y > 1.5) {
 				this.camera.layers.disable(1);

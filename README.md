@@ -6,7 +6,8 @@ Hra je napísaná v JavaScripte nad knižnicou [three.js](https://threejs.org/),
 
 ## Čo už funguje (1. etapa: tréning)
 
-- 3D stôl so zaoblenými čeľusťami jamiek, mantinely so šikmým prierezom, drevený rám, podlaha z dosiek a lampy nad stolom
+- 3D stôl so zaoblenými čeľusťami jamiek, mantinely so šikmým prierezom, drevený rám a lampy nad stolom
+- herňa: drevené obloženie, tmavozelená tapeta, strop s trámami, nástenné svietidlá a podlaha z dosiek
 - fyzika gúľ: kĺzanie, kotúľanie, guľa dopredu, guľa späť, zastavenie a bočná falša
 - ovládanie myšou ako tágo (myš sa zachytí v okne, Esc otvorí hlavné menu), prstom a klávesnicou
 - detail dotyku gúľ zhora (uhol a plnosť zásahu) a zvýraznenie gule, na ktorú sa mieri
@@ -37,7 +38,7 @@ Podrobný plán je aj priamo v doplnku: administrácia WordPressu, My Snooker, P
 ## Štruktúra
 
 - `my-snooker.php`, `includes/`: doplnok pre WordPress (stránka hry, nastavenia, plán vývoja)
-- `src/`: zdrojové moduly hry (physics, table, balls, cue, camera, controls, audio, ui, training, main)
+- `src/`: zdrojové moduly hry (physics, table, room, balls, cue, camera, controls, audio, ui, training, main)
 - `assets/`: zostavená hra (`snooker.js`) a štýly (`snooker.css`)
 
 ## Zostavenie a testy
