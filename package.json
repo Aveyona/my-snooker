@@ -10,5 +10,6 @@
     "esbuild": "0.25.0",
     "three": "0.170.0"
   },
-  "type": "module"
+  "type": "module",
+  "license": "GPL-2.0-or-later"
 }
