@@ -236,7 +236,7 @@ export class UI {
 
 	/** Obsah menu: 'guest' (neprihlásený), 'training' alebo 'match' (label = meno súpera). */
 	setMenu(kind, label) {
-		const key = kind + '|' + (label || '');
+		const key = kind + '|' + (label || '') + '|' + (this.opts.venue ? this.opts.venue() : '');
 		if (this._menuKind === key) {
 			return;
 		}
@@ -271,7 +271,12 @@ export class UI {
 			const play = this.button('Hrať', kind === 'solo' ? 'resume' : 'solo', 'O najlepšie skóre: celý frame podľa pravidiel, rebríček podľa bodov, pri rovnosti rozhoduje kratší čas');
 			play.classList.add('mysn-primary');
 			this.btnResume = play;
-			box.append(play, this.button('Tréning', kind === 'solo' ? 'training' : 'resume'), fr(), this.button('Rebríček', 'leaderboard'));
+			const lg = this.button('Liga', 'league', 'Ligové partie na štadióne: 4 ligy, body a sezóna na rok');
+			lg.classList.add('mysn-friend');
+			box.append(play, lg, this.button('Tréning', kind === 'solo' ? 'training' : 'resume'), fr(), this.button('Rebríček', 'leaderboard'));
+			if (this.opts.venue && this.opts.venue() === 'league') {
+				box.appendChild(this.button('Späť do herne', 'leagueHome'));
+			}
 			if (kind !== 'solo') {
 				box.appendChild(this.button('Nové rozostavenie', 'reset'));
 			}
@@ -305,7 +310,7 @@ export class UI {
 		const inv = list || [];
 		this.menuInv.innerHTML = '';
 		for (const i of inv) {
-			const row = h('div', 'mysn-inv', `${i.from.avatar ? `<img src="${esc(i.from.avatar)}" alt="">` : ''}<span><b>${esc(i.from.name)}</b> ťa pozýva na partiu</span>`);
+			const row = h('div', 'mysn-inv', `${i.from.avatar ? `<img src="${esc(i.from.avatar)}" alt="">` : ''}<span><b>${esc(i.from.name)}</b> ťa pozýva na ${i.league ? 'ligovú ' : ''}partiu</span>`);
 			const yes = this.button('Prijať', 'accept', '', i.id);
 			yes.classList.add('mysn-primary');
 			row.append(yes, this.button('Odmietnuť', 'decline', '', i.id));
@@ -454,6 +459,113 @@ export class UI {
 
 	leaderboardOpen() {
 		return !!(this.board && !this.board.classList.contains('mysn-hidden'));
+	}
+
+	/** Liga: sezóna, moje miesto, tabuľky štyroch líg (záložky), živí hráči na vyzvanie, minulé sezóny. */
+	openLeague(on) {
+		if (!this.leagueBox) {
+			this.leagueBox = h('div', 'mysn-panel mysn-lobby mysn-league mysn-hidden');
+			this.root.appendChild(this.leagueBox);
+			this._leagueTab = 0;
+		}
+		this.leagueBox.classList.toggle('mysn-hidden', !on);
+	}
+
+	leagueOpen() {
+		return !!(this.leagueBox && !this.leagueBox.classList.contains('mysn-hidden'));
+	}
+
+	renderLeague(d, archive) {
+		this._leagueData = d;
+		if (!this.leagueOpen()) {
+			return;
+		}
+		const B = this.leagueBox;
+		B.innerHTML = '';
+		const tm = (sec) => new Date(sec * 1000).toLocaleDateString('sk-SK');
+		if (archive) {
+			B.appendChild(h('h3', '', 'Minulé sezóny'));
+			if (!archive.seasons || !archive.seasons.length) {
+				B.appendChild(h('p', 'mysn-note', 'Zatiaľ sa neskončila žiadna sezóna. Prvá sa skončí po roku hrania.'));
+			}
+			for (const s of archive.seasons || []) {
+				B.appendChild(h('p', 'mysn-lobby-sub', `${esc(s.name)} (${tm(s.started)} až ${tm(s.ends)})`));
+				if (s.champion) {
+					B.appendChild(h('div', 'mysn-menu-note', `Majster sezóny: <b>${esc(s.champion.name)}</b>`));
+				}
+				for (const n of [1, 2, 3, 4]) {
+					const rows = (s.leagues && s.leagues[n]) || [];
+					if (rows.length) {
+						B.appendChild(h('p', 'mysn-note', `<b>${n}. liga:</b> ` + rows.map((r) => `${r.rank}. ${esc(r.user.name)} (${r.points})`).join(', ')));
+					}
+				}
+			}
+			const f = h('div', 'mysn-lobby-foot');
+			f.append(this.button('Späť na ligu', 'league'), this.button('Zavrieť', 'leagueClose'));
+			B.appendChild(f);
+			return;
+		}
+		if (!d) {
+			B.appendChild(h('h3', '', 'Liga'));
+			B.appendChild(h('p', 'mysn-note', 'Ligu sa nepodarilo načítať.'));
+			const f = h('div', 'mysn-lobby-foot');
+			f.appendChild(this.button('Zavrieť', 'leagueClose'));
+			B.appendChild(f);
+			return;
+		}
+		B.appendChild(h('h3', '', `Liga: ${esc(d.season.name)}`));
+		B.appendChild(h('p', 'mysn-note', `Do konca sezóny ostáva ${d.season.daysLeft} dní (${tm(d.season.ends)}). Hráčov v lige: ${d.players}.`));
+		if (d.me) {
+			B.appendChild(h('div', 'mysn-menu-note', `Si <b>${d.me.rank}.</b> v <b>${d.me.league}. lige</b>, máš <b>${d.me.points}</b> bodov (výhry ${d.me.wins}, prehry ${d.me.losses}).`));
+			if (this._leagueTab === 0) {
+				this._leagueTab = d.me.league;
+			}
+		}
+		// živí hráči z mojej a susedných líg
+		B.appendChild(h('p', 'mysn-lobby-sub', 'Vyzvi hráča (tvoja a susedné ligy, práve v hre)'));
+		const live = d.live || [];
+		if (!live.length) {
+			B.appendChild(h('p', 'mysn-note', 'Teraz nie je v hre nikto z tvojej ani susedných líg. Zoznam sa obnovuje sám.'));
+		}
+		const o = this._lobbyData && this._lobbyData.outgoing;
+		const lst = h('div', 'mysn-live');
+		for (const u of live) {
+			const row = h('div', 'mysn-live-row', `${u.user.avatar ? `<img src="${esc(u.user.avatar)}" alt="">` : '<i></i>'}<span><b>${esc(u.user.name)}</b><em>${u.league}. liga, ${u.points} bodov${u.busy ? ', hrá partiu' : ''}</em></span>`);
+			const b = this.button('Vyzvať', 'leagueInvite', 'Ligová partia: víťaz získa body, ktoré nahral, porazený ich stratí', u.user.id);
+			b.disabled = !!u.busy || !!(o && o.status === 'invited');
+			row.appendChild(b);
+			lst.appendChild(row);
+		}
+		B.appendChild(lst);
+		if (o && o.status === 'invited') {
+			const row = h('div', 'mysn-inv mysn-wait', `<span>Čakám, kým <b>${esc(o.to.name)}</b> prijme výzvu…</span>`);
+			row.appendChild(this.button('Zrušiť', 'cancelInvite'));
+			B.appendChild(row);
+		}
+		// tabuľky líg na záložkách
+		const tabs = h('div', 'mysn-league-tabs');
+		for (const n of [1, 2, 3, 4]) {
+			const t = this.button(`${n}. liga`, 'leagueTab', '', n);
+			t.classList.toggle('mysn-on', this._leagueTab === n);
+			tabs.appendChild(t);
+		}
+		B.appendChild(tabs);
+		const rows = (d.leagues && d.leagues[this._leagueTab || 1]) || [];
+		const tb = h('table', 'mysn-lb');
+		tb.innerHTML = '<thead><tr><th>#</th><th>Hráč</th><th>Body</th><th>V / P</th><th>Séria</th></tr></thead>';
+		const body = h('tbody');
+		if (!rows.length) {
+			body.appendChild(h('tr', 'mysn-lb-gap', '<td colspan="5">V tejto lige zatiaľ nikto nie je.</td>'));
+		}
+		for (const r of rows) {
+			body.appendChild(h('tr', r.me ? 'mysn-lb-me' : '', `<td>${r.rank}.</td><td>${esc(r.user.name)}</td><td><b>${r.points}</b></td><td>${r.wins} / ${r.losses}</td><td>${r.best}</td>`));
+		}
+		tb.appendChild(body);
+		B.appendChild(tb);
+		B.appendChild(h('p', 'mysn-note', 'Každý začína so 147 bodmi. Víťaz získa toľko bodov, koľko nahral, porazený ich stratí (najviac všetky svoje). Výhra nad hráčom z vyššej ligy sa ráta 1,5-krát. 1. liga: top 10, 2. liga: 11. až 30., 3. liga: 31. až 70., 4. liga: ostatní. Sezóna trvá rok.'));
+		const f = h('div', 'mysn-lobby-foot');
+		f.append(this.button('Minulé sezóny', 'leagueArchive'), this.button('Späť do herne', 'leagueHome'), this.button('Zavrieť', 'leagueClose'));
+		B.appendChild(f);
 	}
 
 	/** Rebríček o najlepšie skóre: najlepší frame každého hráča, moje poradie. result = práve dohraný frame. */
@@ -863,6 +975,144 @@ export class UI {
 		return !!(this.phone && !this.phone.classList.contains('mysn-hidden'));
 	}
 
+	/** Kancelária hráča: registrácia do ligy, prehľad, údaje hráča, moje tágá (4 do zápasu). */
+	renderOffice(box, o) {
+		const w = h('div', 'mysn-mixer mysn-office');
+		const d = o.league;
+		const reg = d && d.registered;
+		const p = (d && d.player) || {};
+		const field = (label, el) => {
+			const l = h('label', 'mysn-mixer-row mysn-form-row', `<span>${label}</span>`);
+			l.appendChild(el);
+			return l;
+		};
+		const input = (name, val, max, ph) => {
+			const i = document.createElement('input');
+			i.type = 'text';
+			i.name = name;
+			i.maxLength = max;
+			i.value = val || '';
+			i.placeholder = ph || '';
+			return i;
+		};
+		if (!d) {
+			w.appendChild(h('div', 'mysn-news-head', '<b>Kancelária</b>'));
+			w.appendChild(h('p', 'mysn-mixer-status', 'Načítavam ligu…'));
+		} else if (!reg || o.mode === 'edit') {
+			// registrácia do ligy (alebo úprava údajov hráča)
+			w.appendChild(h('div', 'mysn-news-head', `<b>${reg ? 'Údaje hráča' : 'Registrácia do ligy'}</b>`));
+			if (!reg) {
+				w.appendChild(h('p', 'mysn-mixer-status', `Sezóna ${esc(d.season.name)}, do konca ${d.season.daysLeft} dní. Po registrácii začínaš so 147 bodmi v 4. lige (alebo podľa poradia) a môžeš vyzývať hráčov.`));
+			}
+			const f = document.createElement('form');
+			f.className = 'mysn-form';
+			const sel = document.createElement('select');
+			sel.name = 'country';
+			sel.innerHTML = '<option value="">Vyber krajinu…</option>' + o.countries.map(([c, n]) => `<option value="${c}"${(p.country || '') === c ? ' selected' : ''}>${esc(n)}</option>`).join('');
+			f.append(
+				field('Krajina *', sel),
+				field('Mesto', input('city', p.city, 40, 'napríklad Ružomberok')),
+				field('Prezývka v lige', input('nick', p.nick, 24, (o.user && o.user.name) || '')),
+				(() => {
+					const s2 = document.createElement('select');
+					s2.name = 'hand';
+					s2.innerHTML = `<option value="right"${p.hand !== 'left' ? ' selected' : ''}>pravák</option><option value="left"${p.hand === 'left' ? ' selected' : ''}>ľavák</option>`;
+					return field('Hrám rukou', s2);
+				})(),
+				field('Obľúbené tágo', input('cue', p.cue, 30, 'napríklad Majstrovské')),
+				field('O mne', input('about', p.about, 160, 'krátko o sebe (najviac 160 znakov)'))
+			);
+			const ok = document.createElement('button');
+			ok.type = 'submit';
+			ok.className = 'mysn-btn mysn-primary';
+			ok.textContent = reg ? 'Uložiť údaje' : 'Registrovať sa do ligy';
+			f.appendChild(ok);
+			f.addEventListener('submit', (e) => {
+				e.preventDefault();
+				const fd = new FormData(f);
+				const data = Object.fromEntries(fd.entries());
+				if (!data.country) {
+					this.toast('Vyber krajinu.');
+					return;
+				}
+				data.edit = reg ? 1 : 0;
+				this.opts.onAction('register', data);
+			});
+			f.addEventListener('keydown', (e) => e.stopPropagation());
+			w.appendChild(f);
+			if (reg) {
+				w.appendChild(this.button('Späť', 'officeHome'));
+			}
+		} else if (o.mode === 'cues') {
+			// moje tágá: 4 do zápasu a vlastné nastavenia
+			w.appendChild(h('div', 'mysn-news-head', `<b>Moje tágá (do zápasu ${o.myCues.selected.length} zo 4)</b>`));
+			w.appendChild(h('p', 'mysn-mixer-status', 'Zaškrtni 4 tágá, ktoré si berieš do ligového zápasu (v zápase sa na F2 prepína len medzi nimi). Klik na názov otvorí nastavenia tága.'));
+			const list = h('div', 'mysn-news mysn-stations');
+			for (const c of o.cues) {
+				const on = o.myCues.selected.includes(c.id);
+				const row = h('div', 'mysn-cue-row' + (on ? ' mysn-on' : ''));
+				const chk = document.createElement('input');
+				chk.type = 'checkbox';
+				chk.checked = on;
+				chk.addEventListener('change', (e) => {
+					e.stopPropagation();
+					this.opts.onAction('cueSelect', c.id);
+				});
+				const nm = h('button', 'mysn-cue-name', `<b>${esc(c.name)}</b><span>${esc(c.category)}, sila ${Math.round(c.power * 100)} %</span>`);
+				nm.type = 'button';
+				nm.addEventListener('click', (e) => {
+					e.stopPropagation();
+					this.opts.onAction('cueEdit', c.id);
+				});
+				row.append(chk, nm);
+				list.appendChild(row);
+				if (o.cue === c.id) {
+					const cu = o.myCues.custom[c.id] || {};
+					const ed = h('div', 'mysn-cue-edit');
+					const nmI = input('name', cu.name, 24, c.name);
+					nmI.addEventListener('change', () => this.opts.onAction('cueCustom', { id: c.id, k: 'name', v: nmI.value.trim() }));
+					nmI.addEventListener('keydown', (e) => e.stopPropagation());
+					ed.appendChild(field('Názov', nmI));
+					for (const [k, lab] of [['shaft', 'Drevo'], ['butt', 'Rukoväť']]) {
+						const col = document.createElement('input');
+						col.type = 'color';
+						col.value = cu[k] || c.colors[k];
+						col.addEventListener('input', () => this.opts.onAction('cueCustom', { id: c.id, k, v: col.value }));
+						ed.appendChild(field(lab, col));
+					}
+					for (const [k, lab, max] of [['power', 'Sila ±5 %', 0.05], ['grip', 'Falše ±10 %', 0.1]]) {
+						const r = document.createElement('input');
+						r.type = 'range';
+						r.min = String(-max);
+						r.max = String(max);
+						r.step = '0.01';
+						r.value = String(cu[k] || 0);
+						r.addEventListener('input', () => this.opts.onAction('cueCustom', { id: c.id, k, v: parseFloat(r.value) }));
+						ed.appendChild(field(lab, r));
+					}
+					list.appendChild(ed);
+				}
+			}
+			w.appendChild(list);
+			w.appendChild(this.button('Späť', 'officeHome'));
+		} else {
+			// prehľad hráča v lige
+			const me = d.me;
+			w.appendChild(h('div', 'mysn-news-head', `<b>Kancelária: ${esc((p.nick || (o.user && o.user.name)) || '')}</b>`));
+			w.appendChild(h('div', 'mysn-menu-note', `<b>${me.rank}.</b> miesto v <b>${me.league}. lige</b>, <b>${me.points}</b> bodov<br>Výhry ${me.wins}, prehry ${me.losses}, najvyššia séria ${me.best}`));
+			w.appendChild(h('p', 'mysn-mixer-status', `${esc(d.season.name)}: do konca sezóny ${d.season.daysLeft} dní. Hráčov v lige: ${d.players}.`));
+			const btns = h('div', 'mysn-office-btns');
+			const t = this.button('Tabuľky líg a vyzvanie hráča', 'leagueTables');
+			t.classList.add('mysn-primary');
+			btns.append(t, this.button('Moje tágá (4 do zápasu)', 'myCues'), this.button('Moje údaje', 'officeEdit'), this.button('Minulé sezóny', 'leagueArchive'));
+			w.appendChild(btns);
+		}
+		const foot = h('div', 'mysn-office-btns');
+		foot.appendChild(this.button('Späť do herne', 'officeLeave'));
+		w.appendChild(foot);
+		box.appendChild(w);
+	}
+
 	/** Panel mixpultu (F9): stanice z My Player, zapnutie, posuvníky. r = RadioPlayer. */
 	renderMixer(box, r) {
 		const wrap = h('div', 'mysn-mixer');
@@ -912,7 +1162,7 @@ export class UI {
 		}
 		const box = this.viewBox;
 		box.classList.toggle('mysn-hidden', !name);
-		box.classList.toggle('mysn-view-news', name === 'news' || name === 'magazine' || name === 'chair' || name === 'mixer');
+		box.classList.toggle('mysn-view-news', name === 'news' || name === 'magazine' || name === 'chair' || name === 'mixer' || name === 'office');
 		this.root.classList.toggle('mysn-viewing', !!name);
 		if (!name) {
 			return;
@@ -947,6 +1197,9 @@ export class UI {
 			a.rel = 'noopener';
 			return a;
 		};
+		if (name === 'office' && news && news.office) {
+			this.renderOffice(box, news.office);
+		}
 		if (name === 'mixer' && news && news.radio) {
 			this.renderMixer(box, news.radio);
 		}
@@ -990,6 +1243,7 @@ export class UI {
 			rack: 'Šípky vľavo a vpravo vyberajú tágo. Enter, F2 alebo Esc: späť do hry.',
 			board: 'F1, Enter alebo Esc: späť do hry.',
 			score: 'F4, Enter alebo Esc: späť do hry.',
+			office: 'Kancelária: myšou sa rozhliadaš, kolieskom približuješ. Drž Ctrl: voľná myš na klikanie (aj na mapu hráčov). Esc: späť do herne.',
 			bar: 'Pohľad z baru: myšou sa rozhliadaš, kolieskom približuješ. Drž Ctrl a klikni na telefón (alebo M): zväčší sa Môj účet. Pri hre o skóre čas stojí. F10 alebo Enter: späť do hry.',
 			mixer: 'Mixpult: šípky vľavo a vpravo menia stanicu, hore a dole hlasitosť, P zapne alebo vypne rádio. Zvuk ide z reproduktorov v herni. F9, Enter alebo Esc: späť do hry.',
 			trophies: 'Rebríček o najlepšie skóre: poháre pre troch najlepších, vpravo 4. až 10. miesto (body a celkový čas). F8, Enter alebo Esc: späť do hry.',
@@ -1018,7 +1272,7 @@ export class UI {
 		const s = game.stats;
 		const mt = game.match;
 		this.root.classList.toggle('mysn-online', !!mt);
-		this.modeLabel.textContent = mt ? 'Partia' : game.solo ? 'O najlepšie skóre' : 'Tréning';
+		this.modeLabel.textContent = mt ? (mt.league ? 'Ligová partia' : 'Partia') : game.solo ? 'O najlepšie skóre' : 'Tréning';
 		const so = game.solo;
 		if (so && !mt) {
 			const t = Math.max(0, Math.round(so.time));

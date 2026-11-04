@@ -1,0 +1,311 @@
+/*
+ * My Snooker: štadión pre ligové zápasy. Tmavá aréna s lesklou podlahou, nízke mantinely s reklamami okolo
+ * stola, tribúny s červenými sedadlami na oboch dlhých stranách, reflektory, veľká obrazovka so skóre,
+ * stolík rozhodcu a traja diváci v prvom rade, ktorí sledujú bielu guľu, tlieskajú a reagujú na fauly.
+ * Všetko je postavené z 3D tvarov, prepína sa s herňou (visible).
+ */
+import * as THREE from 'three';
+
+const FY = -0.86; // podlaha (rovnako ako v herni)
+
+const canvasTex = (w, h, draw) => {
+	const c = document.createElement('canvas');
+	c.width = w;
+	c.height = h;
+	const g = c.getContext('2d');
+	draw && draw(g, w, h);
+	const t = new THREE.CanvasTexture(c);
+	t.colorSpace = THREE.SRGBColorSpace;
+	t.anisotropy = 8;
+	return { c, g, t };
+};
+
+export function buildStadium(scene, quality) {
+	const root = new THREE.Group();
+	root.visible = false;
+	scene.add(root);
+	const high = quality === 'high';
+	const add = (geo, mat, x, y, z, parent = root) => {
+		const m = new THREE.Mesh(geo, mat);
+		m.position.set(x, y, z);
+		m.castShadow = high;
+		m.receiveShadow = true;
+		parent.add(m);
+		return m;
+	};
+	const dark = new THREE.MeshStandardMaterial({ color: 0x0b0d12, roughness: 0.35, metalness: 0.4 });
+	const seatMat = new THREE.MeshStandardMaterial({ color: 0x8a1622, roughness: 0.6 });
+	const stepMat = new THREE.MeshStandardMaterial({ color: 0x15181f, roughness: 0.8 });
+	const metal = new THREE.MeshStandardMaterial({ color: 0x8a9099, metalness: 0.8, roughness: 0.35 });
+
+	// lesklá čierna podlaha s modrým kobercom pod stolom
+	const floor = add(new THREE.PlaneGeometry(40, 30), new THREE.MeshStandardMaterial({ color: 0x07080b, roughness: 0.25, metalness: 0.5 }), 0, FY, 0);
+	floor.rotation.x = -Math.PI / 2;
+	floor.castShadow = false;
+	const carpet = add(new THREE.PlaneGeometry(7.4, 5.2), new THREE.MeshStandardMaterial({ color: 0x14244a, roughness: 0.9 }), 0, FY + 0.002, 0);
+	carpet.rotation.x = -Math.PI / 2;
+	carpet.castShadow = false;
+
+	// nízke mantinely s reklamami okolo hracieho priestoru
+	const ads = ['MY SNOOKER', 'HEDLAJNER', 'LIGA', 'MY SNOOKER', 'HEDLAJNER.SK', 'LIGA'];
+	const adTex = (text, i) =>
+		canvasTex(1024, 128, (g, w, h) => {
+			const grd = g.createLinearGradient(0, 0, w, 0);
+			grd.addColorStop(0, i % 2 ? '#0d2a6b' : '#111');
+			grd.addColorStop(1, i % 2 ? '#1747b5' : '#2a2a2a');
+			g.fillStyle = grd;
+			g.fillRect(0, 0, w, h);
+			g.fillStyle = i % 2 ? '#ffffff' : '#FACC15';
+			g.font = 'bold 78px Arial, sans-serif';
+			g.textAlign = 'center';
+			g.textBaseline = 'middle';
+			g.fillText(text, w / 2, h / 2 + 4);
+		}).t;
+	const BX = 4.2;
+	const BZ = 3.1;
+	const boards = [
+		[0, BZ, 0, 2 * BX],
+		[0, -BZ, Math.PI, 2 * BX],
+		[BX, 0, Math.PI / 2, 2 * BZ],
+		[-BX, 0, -Math.PI / 2, 2 * BZ],
+	];
+	boards.forEach(([x, z, rot, len], i) => {
+		const g = new THREE.Group();
+		g.position.set(x, FY, z);
+		g.rotation.y = rot;
+		root.add(g);
+		add(new THREE.BoxGeometry(len, 0.42, 0.06), dark, 0, 0.21, 0, g);
+		const panel = add(new THREE.PlaneGeometry(len - 0.1, 0.3), new THREE.MeshBasicMaterial({ map: adTex(ads[i], i) }), 0, 0.22, -0.032, g);
+		panel.rotation.y = Math.PI; // reklama otočená k stolu
+		panel.castShadow = false;
+	});
+
+	// tribúny na dlhých stranách (rady stupňov so sedadlami, stúpajú dozadu do tmy)
+	for (const side of [-1, 1]) {
+		for (let row = 0; row < 7; row++) {
+			const z = side * (BZ + 0.9 + row * 0.75);
+			const y = FY + 0.25 + row * 0.42;
+			add(new THREE.BoxGeometry(10, 0.42 + row * 0.42, 0.75), stepMat, 0, FY + (0.42 + row * 0.42) / 2, z);
+			for (let s = -12; s <= 12; s++) {
+				const seat = add(new THREE.BoxGeometry(0.34, 0.07, 0.32), seatMat, s * 0.4, y + 0.24, z);
+				const back = add(new THREE.BoxGeometry(0.34, 0.32, 0.05), seatMat, s * 0.4, y + 0.42, z + side * 0.16);
+				seat.castShadow = back.castShadow = false;
+			}
+		}
+	}
+	// tribúny vzadu za kratšími stranami (nižšie, bez sedadiel, len tmavé stupne)
+	for (const side of [-1, 1]) {
+		for (let row = 0; row < 4; row++) {
+			add(new THREE.BoxGeometry(0.75, 0.42 + row * 0.42, 7), stepMat, side * (BX + 1.0 + row * 0.75), FY + (0.42 + row * 0.42) / 2, 0);
+		}
+	}
+
+	// reflektory na konštrukcii pod stropom (kužele svetla do arény)
+	const trussY = FY + 5.2;
+	for (const z of [-2.4, 2.4]) {
+		add(new THREE.BoxGeometry(9, 0.12, 0.12), metal, 0, trussY, z);
+		for (const x of [-3.5, -1.2, 1.2, 3.5]) {
+			add(new THREE.CylinderGeometry(0.12, 0.16, 0.3, 16), metal, x, trussY - 0.18, z);
+			const beam = new THREE.Mesh(
+				new THREE.ConeGeometry(1.1, 4.6, 24, 1, true),
+				new THREE.MeshBasicMaterial({ color: 0xbfd4ff, transparent: true, opacity: 0.035, depthWrite: false, side: THREE.DoubleSide })
+			);
+			beam.position.set(x * 0.8, trussY - 2.45, z * 0.6);
+			beam.lookAt(x * 0.8, trussY + 1, z * 0.6);
+			beam.rotation.x += Math.PI / 2;
+			beam.castShadow = false;
+			root.add(beam);
+		}
+	}
+	const fill = new THREE.HemisphereLight(0x6c7aa8, 0x07080b, 0.35);
+	root.add(fill);
+	for (const z of [-4.5, 4.5]) {
+		const s = new THREE.SpotLight(0xdfe8ff, 9, 14, Math.PI / 5, 0.7, 1.4);
+		s.position.set(0, trussY, z);
+		s.target.position.set(0, FY + 1.5, z * 1.3);
+		root.add(s, s.target);
+	}
+
+	// veľká obrazovka nad tribúnou za kratšou stranou
+	const screen = canvasTex(1024, 512);
+	const scr = add(new THREE.PlaneGeometry(3.2, 1.6), new THREE.MeshBasicMaterial({ map: screen.t }), -(BX + 3.6), FY + 3.6, 0);
+	scr.rotation.y = Math.PI / 2;
+	scr.castShadow = false;
+	add(new THREE.BoxGeometry(0.12, 1.75, 3.35), dark, -(BX + 3.68), FY + 3.6, 0);
+	const screen2 = canvasTex(1024, 512);
+	const scr2 = add(new THREE.PlaneGeometry(3.2, 1.6), new THREE.MeshBasicMaterial({ map: screen2.t }), BX + 3.6, FY + 3.6, 0);
+	scr2.rotation.y = -Math.PI / 2;
+	scr2.castShadow = false;
+	add(new THREE.BoxGeometry(0.12, 1.75, 3.35), dark, BX + 3.68, FY + 3.6, 0);
+
+	// stolík rozhodcu a stoličky hráčov
+	const wood = new THREE.MeshStandardMaterial({ color: 0x2a1508, roughness: 0.4 });
+	add(new THREE.BoxGeometry(0.9, 0.04, 0.45), wood, 2.6, FY + 0.74, BZ - 0.55);
+	for (const sx of [-1, 1]) {
+		add(new THREE.BoxGeometry(0.04, 0.72, 0.4), wood, 2.6 + sx * 0.42, FY + 0.36, BZ - 0.55);
+	}
+	const glass = new THREE.MeshStandardMaterial({ color: 0xe8f4ff, transparent: true, opacity: 0.25, roughness: 0.05, depthWrite: false });
+	for (const gx of [2.4, 2.8]) {
+		add(new THREE.CylinderGeometry(0.035, 0.03, 0.12, 20, 1, true), glass, gx, FY + 0.82, BZ - 0.55).castShadow = false;
+	}
+	const chairMat = new THREE.MeshStandardMaterial({ color: 0x1a1a1f, roughness: 0.5 });
+	for (const cx of [-2.6, 3.3]) {
+		add(new THREE.BoxGeometry(0.5, 0.08, 0.5), chairMat, cx, FY + 0.48, BZ - 0.55);
+		add(new THREE.BoxGeometry(0.5, 0.6, 0.06), chairMat, cx, FY + 0.82, BZ - 0.3);
+		for (const lx of [-0.2, 0.2]) {
+			add(new THREE.CylinderGeometry(0.02, 0.02, 0.46, 8), metal, cx + lx, FY + 0.23, BZ - 0.55);
+		}
+	}
+
+	// traja diváci v prvom rade za dlhou stranou (+z), otočení k stolu
+	const fans = [];
+	const skin = [0xe0b48e, 0xc78e66, 0x8d5b3e];
+	const shirts = [0x2f6fd6, 0xc0392b, 0x2a9d8f];
+	const hair = [0x3a2414, 0x111111, 0x9a6a2a];
+	[-1.6, 0.2, 1.9].forEach((x, i) => {
+		const z = BZ + 0.9;
+		const y = FY + 0.25 + 0.24;
+		const f = new THREE.Group();
+		f.position.set(x, y, z);
+		f.rotation.y = Math.PI; // tvárou k stolu (-z)
+		root.add(f);
+		const shirt = new THREE.MeshStandardMaterial({ color: shirts[i], roughness: 0.75 });
+		const skinM = new THREE.MeshStandardMaterial({ color: skin[i], roughness: 0.7 });
+		const pants = new THREE.MeshStandardMaterial({ color: 0x23262e, roughness: 0.8 });
+		const body = new THREE.Group();
+		f.add(body);
+		add(new THREE.CapsuleGeometry(0.15, 0.32, 6, 14), shirt, 0, 0.42, 0, body); // trup
+		add(new THREE.BoxGeometry(0.3, 0.12, 0.36), pants, 0, 0.08, 0.12, body); // stehná na sedadle
+		for (const sx of [-0.08, 0.08]) {
+			add(new THREE.CylinderGeometry(0.05, 0.05, 0.42, 10), pants, sx, -0.12, 0.3, body); // lýtka
+		}
+		const head = new THREE.Group();
+		head.position.set(0, 0.84, 0);
+		body.add(head);
+		add(new THREE.SphereGeometry(0.11, 20, 16), skinM, 0, 0, 0, head);
+		const hr = add(new THREE.SphereGeometry(0.115, 20, 12, 0, Math.PI * 2, 0, Math.PI / 2), new THREE.MeshStandardMaterial({ color: hair[i], roughness: 0.9 }), 0, 0.01, -0.01, head);
+		hr.rotation.x = -0.25;
+		for (const ex of [-0.04, 0.04]) {
+			add(new THREE.SphereGeometry(0.014, 8, 8), new THREE.MeshBasicMaterial({ color: 0x111111 }), ex, 0.02, 0.1, head).castShadow = false;
+		}
+		// ruky: rameno -> predlaktie (otáča sa pri tlieskaní)
+		const arms = [-1, 1].map((sx) => {
+			const sh = new THREE.Group();
+			sh.position.set(sx * 0.19, 0.66, 0);
+			body.add(sh);
+			add(new THREE.CapsuleGeometry(0.045, 0.22, 4, 10), shirt, 0, -0.14, 0, sh);
+			const el = new THREE.Group();
+			el.position.set(0, -0.28, 0);
+			sh.add(el);
+			add(new THREE.CapsuleGeometry(0.04, 0.2, 4, 10), skinM, 0, -0.12, 0, el);
+			sh.rotation.x = -0.35;
+			el.rotation.x = -0.9;
+			return { sh, el, sx };
+		});
+		fans.push({ f, body, head, arms, baseY: y, act: '', t: 0, phase: i * 1.7 });
+	});
+
+	// obrazovka: mená, skóre, liga, séria, sezóna
+	const drawScreen = (d) => {
+		for (const s of [screen, screen2]) {
+			const g = s.g;
+			const W2 = 1024;
+			g.fillStyle = '#050a1a';
+			g.fillRect(0, 0, W2, 512);
+			g.fillStyle = '#1747b5';
+			g.fillRect(0, 0, W2, 70);
+			g.fillStyle = '#fff';
+			g.font = 'bold 40px Arial, sans-serif';
+			g.textAlign = 'center';
+			g.fillText((d && d.title) || 'MY SNOOKER LIGA', W2 / 2, 50);
+			if (d && d.names) {
+				g.font = 'bold 52px Arial, sans-serif';
+				g.textAlign = 'left';
+				d.names.forEach((n, i) => {
+					const y = 170 + i * 110;
+					g.fillStyle = d.turn === i ? '#FACC15' : '#e8ecf3';
+					g.fillText((d.turn === i ? '▶ ' : '   ') + String(n).slice(0, 18), 40, y);
+					g.textAlign = 'right';
+					g.font = 'bold 84px Arial, sans-serif';
+					g.fillText(String(d.scores[i]), W2 - 40, y + 10);
+					g.font = 'bold 52px Arial, sans-serif';
+					g.textAlign = 'left';
+				});
+				g.fillStyle = '#9fb3d9';
+				g.font = '34px Arial, sans-serif';
+				g.fillText(`Séria ${d.brk}   ·   Hrá sa na ${d.on}`, 40, 420);
+			} else {
+				g.fillStyle = '#e8ecf3';
+				g.font = 'bold 48px Arial, sans-serif';
+				g.textAlign = 'center';
+				g.fillText((d && d.idle) || 'Vyzvi hráča z ligy', W2 / 2, 260);
+			}
+			g.fillStyle = '#6f84b3';
+			g.font = '28px Arial, sans-serif';
+			g.textAlign = 'center';
+			g.fillText((d && d.footer) || '', W2 / 2, 490);
+			s.t.needsUpdate = true;
+		}
+	};
+	drawScreen(null);
+
+	const look = new THREE.Vector3();
+	return {
+		root,
+		/** Reakcia divákov: 'clap' (potopená guľa), 'facepalm' (faul), 'stand' (veľká séria). */
+		react(kind) {
+			fans.forEach((fan, i) => {
+				if (kind === 'stand' && i !== 1) {
+					fan.act = 'clap';
+				} else {
+					fan.act = kind;
+				}
+				fan.t = kind === 'stand' ? 3.2 : 1.8;
+			});
+		},
+		setScreen: drawScreen,
+		/** Každý snímok: hlavy sledujú bielu, animácie tlieskania, faulu a vstávania. */
+		update(dt, cueBall) {
+			const now = performance.now() / 1000;
+			for (const fan of fans) {
+				fan.t = Math.max(0, fan.t - dt);
+				if (fan.t === 0) {
+					fan.act = '';
+				}
+				// hlava sa otáča za bielou guľou
+				if (cueBall && cueBall.on) {
+					fan.f.getWorldPosition(look);
+					const yaw = Math.atan2(cueBall.p.x - look.x, -(cueBall.p.z - look.z));
+					fan.head.rotation.y += (Math.max(-1, Math.min(1, -yaw)) - fan.head.rotation.y) * Math.min(1, dt * 4);
+				}
+				const [l, r] = fan.arms;
+				let shX = -0.35;
+				let elX = -0.9;
+				let shZ = 0;
+				let up = 0;
+				if (fan.act === 'clap' || fan.act === 'stand') {
+					const c = Math.sin((now + fan.phase) * 18) * 0.5 + 0.5;
+					shX = -1.25;
+					elX = -0.4;
+					shZ = 0.35 - c * 0.3;
+					if (fan.act === 'stand') {
+						up = Math.min(1, (3.2 - fan.t) * 3) * Math.min(1, fan.t * 2);
+					}
+				} else if (fan.act === 'facepalm') {
+					shX = -2.4;
+					elX = -1.9;
+					shZ = 0.25;
+				} else {
+					// pokojné sedenie s jemným pohybom
+					shX = -0.35 + Math.sin(now * 0.7 + fan.phase) * 0.03;
+				}
+				for (const a of [l, r]) {
+					a.sh.rotation.x += (shX - a.sh.rotation.x) * Math.min(1, dt * 10);
+					a.el.rotation.x += (elX - a.el.rotation.x) * Math.min(1, dt * 10);
+					a.sh.rotation.z += (a.sx * shZ - a.sh.rotation.z) * Math.min(1, dt * 10);
+				}
+				fan.body.position.y = up * 0.25;
+			}
+		},
+	};
+}

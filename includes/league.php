@@ -1,0 +1,384 @@
+<?php
+/**
+ * My Snooker: liga. Sezóna trvá približne rok, potom sa uložia konečné výsledky a začne nová sezóna.
+ *
+ * Body ligy: každý hráč začína so 147 bodmi (najviac, čo sa dá nahrať v jednom frame). Víťaz ligovej partie
+ * získa toľko bodov, koľko nahral, a presne toľko stratí porazený (body sa len presúvajú). Porazený neklesne
+ * pod 0. Výhra nad hráčom z vyššej ligy a prehra so slabším sa rátajú 1,5-krát. Pri vzdaní dostane víťaz
+ * najmenej 30 bodov. S tým istým súperom sa rátajú najviac 3 ligové partie za deň.
+ *
+ * Ligy podľa poradia: 1. liga top 10, 2. liga 11. až 30., 3. liga 31. až 70., 4. liga ostatní.
+ */
+if ( ! defined( 'ABSPATH' ) ) {
+	exit;
+}
+
+const MYSN_LEAGUE_START = 147;
+const MYSN_LEAGUE_BONUS = 1.5;
+const MYSN_LEAGUE_DAILY = 3;
+const MYSN_LEAGUE_RESIGN_MIN = 30;
+
+/** Liga podľa poradia (1 = najlepšia). */
+function mysn_league_of_rank( $rank ) {
+	if ( $rank <= 10 ) {
+		return 1;
+	}
+	if ( $rank <= 30 ) {
+		return 2;
+	}
+	if ( $rank <= 70 ) {
+		return 3;
+	}
+	return 4;
+}
+
+/** Názov sezóny podľa rokov začiatku a konca (Sezóna 2026/27). */
+function mysn_season_name( $start, $end ) {
+	return 'Sezóna ' . wp_date( 'Y', $start ) . '/' . wp_date( 'y', $end );
+}
+
+/** Aktuálna sezóna; po uplynutí sa uzavrie (konečné výsledky) a založí nová. */
+function mysn_season_current() {
+	global $wpdb;
+	static $cur = null;
+	if ( $cur ) {
+		return $cur;
+	}
+	$t   = mysn_table( 'seasons' );
+	$row = $wpdb->get_row( "SELECT * FROM $t WHERE status = 'active' ORDER BY id DESC LIMIT 1", ARRAY_A ); // phpcs:ignore
+	$now = time();
+	if ( $row && (int) $row['ends'] <= $now ) {
+		mysn_season_finish( $row );
+		$prev = (int) $row['id'];
+		$row  = null;
+	}
+	if ( ! $row ) {
+		$start = $now;
+		$end   = strtotime( '+1 year', $start );
+		$wpdb->insert(
+			$t,
+			array(
+				'name'    => mysn_season_name( $start, $end ),
+				'started' => $start,
+				'ends'    => $end,
+				'status'  => 'active',
+			)
+		);
+		$id = (int) $wpdb->insert_id;
+		if ( ! empty( $prev ) ) {
+			// nová sezóna: všetci zo 147 bodov, poradie medzi nimi podľa konečného poradia minulej sezóny
+			$lt = mysn_table( 'league' );
+			$wpdb->query( $wpdb->prepare( "INSERT INTO $lt (season_id, user_id, points, seed, updated) SELECT %d, user_id, %d, final_rank, %d FROM $lt WHERE season_id = %d", $id, MYSN_LEAGUE_START, $now, $prev ) ); // phpcs:ignore
+		}
+		$row = $wpdb->get_row( $wpdb->prepare( "SELECT * FROM $t WHERE id = %d", $id ), ARRAY_A ); // phpcs:ignore
+	}
+	$cur = $row;
+	return $cur;
+}
+
+/** Uzavrie sezónu: konečné poradie, liga každého hráča a majster sezóny. */
+function mysn_season_finish( $season ) {
+	global $wpdb;
+	$sid  = (int) $season['id'];
+	$rows = mysn_league_ranked( $sid );
+	$lt   = mysn_table( 'league' );
+	foreach ( $rows as $r ) {
+		$wpdb->update(
+			$lt,
+			array(
+				'final_rank'   => $r['rank'],
+				'final_league' => $r['league'],
+			),
+			array(
+				'season_id' => $sid,
+				'user_id'   => $r['user_id'],
+			)
+		);
+	}
+	$wpdb->update(
+		mysn_table( 'seasons' ),
+		array(
+			'status'   => 'finished',
+			'champion' => $rows ? (int) $rows[0]['user_id'] : 0,
+		),
+		array( 'id' => $sid )
+	);
+}
+
+/** Všetci hráči sezóny zoradení (body, poradie z minulej sezóny, výhry) s poradím a ligou. */
+function mysn_league_ranked( $sid ) {
+	global $wpdb;
+	$lt   = mysn_table( 'league' );
+	$rows = $wpdb->get_results( $wpdb->prepare( "SELECT * FROM $lt WHERE season_id = %d ORDER BY points DESC, seed ASC, wins DESC, user_id ASC", $sid ), ARRAY_A ); // phpcs:ignore
+	foreach ( $rows as $i => &$r ) {
+		$r['rank']   = $i + 1;
+		$r['league'] = mysn_league_of_rank( $i + 1 );
+	}
+	return $rows;
+}
+
+/** Profil hráča ligy (registrácia v kancelárii): krajina, mesto, prezývka, ruka, obľúbené tágo, o mne. */
+function mysn_player( $uid ) {
+	$p = get_user_meta( (int) $uid, 'mysn_player', true );
+	return is_array( $p ) ? $p : null;
+}
+
+/** Riadok hráča v aktuálnej sezóne (registrovaný hráč sa zapíše so 147 bodmi). */
+function mysn_league_join( $uid ) {
+	if ( ! mysn_player( $uid ) ) {
+		return; // do ligy sa vstupuje registráciou v kancelárii
+	}
+	global $wpdb;
+	$s  = mysn_season_current();
+	$lt = mysn_table( 'league' );
+	$wpdb->query( $wpdb->prepare( "INSERT IGNORE INTO $lt (season_id, user_id, points, updated) VALUES (%d, %d, %d, %d)", $s['id'], $uid, MYSN_LEAGUE_START, time() ) ); // phpcs:ignore
+}
+
+/** Poradie a liga hráča v aktuálnej sezóne (null, ak v lige nie je). */
+function mysn_league_me( $uid, $ranked = null ) {
+	$s      = mysn_season_current();
+	$ranked = $ranked ? $ranked : mysn_league_ranked( $s['id'] );
+	foreach ( $ranked as $r ) {
+		if ( (int) $r['user_id'] === (int) $uid ) {
+			return $r;
+		}
+	}
+	return null;
+}
+
+/** Môžu spolu hrať ligovú partiu? Vráti text chyby alebo prázdny reťazec. */
+function mysn_league_can_play( $a, $b ) {
+	global $wpdb;
+	mysn_league_join( $a );
+	mysn_league_join( $b );
+	$s      = mysn_season_current();
+	$ranked = mysn_league_ranked( $s['id'] );
+	$ra     = mysn_league_me( $a, $ranked );
+	$rb     = mysn_league_me( $b, $ranked );
+	if ( ! $ra || ! $rb ) {
+		return 'Ligovo môžu hrať len hráči registrovaní v lige (registrácia je v kancelárii).';
+	}
+	if ( abs( (int) $ra['league'] - (int) $rb['league'] ) > 1 ) {
+		return 'Ligovo sa dá hrať len s hráčmi z tvojej alebo susednej ligy.';
+	}
+	$t     = mysn_table( 'matches' );
+	$today = strtotime( 'today', time() );
+	$n     = (int) $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM $t WHERE league = 1 AND status = 'finished' AND updated >= %d AND ((p1 = %d AND p2 = %d) OR (p1 = %d AND p2 = %d))", $today, $a, $b, $b, $a ) ); // phpcs:ignore
+	if ( $n >= MYSN_LEAGUE_DAILY ) {
+		return 'S týmto hráčom ste dnes už odohrali 3 ligové partie. Zajtra znova.';
+	}
+	return '';
+}
+
+/**
+ * Výsledok ligovej partie: presun bodov od porazeného k víťazovi. $points = body víťaza vo frame,
+ * $best = najvyššie série [p1, p2]. Vráti presunuté body.
+ */
+function mysn_league_apply( $m, $winner, $points, $resign = false, $best = array( 0, 0 ) ) {
+	global $wpdb;
+	if ( empty( $m['league'] ) || (int) $m['delta'] > 0 ) {
+		return 0;
+	}
+	$loser = (int) $winner === (int) $m['p1'] ? (int) $m['p2'] : (int) $m['p1'];
+	$sid   = (int) $m['season_id'];
+	$lt    = mysn_table( 'league' );
+	$s     = mysn_season_current();
+	if ( $sid !== (int) $s['id'] ) {
+		return 0; // partia z uzavretej sezóny sa už nepočíta
+	}
+	$ranked = mysn_league_ranked( $sid );
+	$rw     = mysn_league_me( $winner, $ranked );
+	$rl     = mysn_league_me( $loser, $ranked );
+	if ( ! $rw || ! $rl ) {
+		return 0;
+	}
+	$pts = max( 0, (int) $points );
+	if ( $resign ) {
+		$pts = max( $pts, MYSN_LEAGUE_RESIGN_MIN );
+	}
+	// víťaz z nižšej ligy (väčšie číslo) porazil silnejšieho
+	if ( (int) $rw['league'] > (int) $rl['league'] ) {
+		$pts = (int) round( $pts * MYSN_LEAGUE_BONUS );
+	}
+	$pts = min( $pts, (int) $rl['points'] );
+	$now = time();
+	$wi  = (int) $winner === (int) $m['p1'] ? 0 : 1;
+	$wpdb->query( $wpdb->prepare( "UPDATE $lt SET points = points + %d, wins = wins + 1, best = GREATEST(best, %d), updated = %d WHERE season_id = %d AND user_id = %d", $pts, (int) ( $best[ $wi ] ?? 0 ), $now, $sid, $winner ) ); // phpcs:ignore
+	$wpdb->query( $wpdb->prepare( "UPDATE $lt SET points = points - %d, losses = losses + 1, best = GREATEST(best, %d), updated = %d WHERE season_id = %d AND user_id = %d", $pts, (int) ( $best[ 1 - $wi ] ?? 0 ), $now, $sid, $loser ) ); // phpcs:ignore
+	$wpdb->update( mysn_table( 'matches' ), array( 'delta' => max( 1, $pts ) ), array( 'id' => (int) $m['id'] ) );
+	return $pts;
+}
+
+/* ---------- REST ---------- */
+
+add_action(
+	'rest_api_init',
+	function () {
+		$auth = function () {
+			return is_user_logged_in();
+		};
+		register_rest_route(
+			'my-snooker/v1',
+			'/league',
+			array(
+				'methods'             => 'GET',
+				'callback'            => 'mysn_rest_league',
+				'permission_callback' => $auth,
+			)
+		);
+		register_rest_route(
+			'my-snooker/v1',
+			'/league/register',
+			array(
+				'methods'             => 'POST',
+				'callback'            => 'mysn_rest_league_register',
+				'permission_callback' => $auth,
+			)
+		);
+		register_rest_route(
+			'my-snooker/v1',
+			'/league/archive',
+			array(
+				'methods'             => 'GET',
+				'callback'            => 'mysn_rest_league_archive',
+				'permission_callback' => $auth,
+			)
+		);
+	}
+);
+
+/** Registrácia do ligy alebo úprava údajov hráča. */
+function mysn_rest_league_register( $req ) {
+	$uid     = get_current_user_id();
+	$country = strtoupper( preg_replace( '/[^A-Za-z]/', '', (string) $req->get_param( 'country' ) ) );
+	if ( 2 !== strlen( $country ) ) {
+		return mysn_err( 'Vyber krajinu.' );
+	}
+	$clean = function ( $k, $max ) use ( $req ) {
+		return mb_substr( trim( sanitize_text_field( (string) $req->get_param( $k ) ) ), 0, $max );
+	};
+	$hand  = $req->get_param( 'hand' ) === 'left' ? 'left' : 'right';
+	$old   = mysn_player( $uid );
+	$p     = array(
+		'country' => $country,
+		'city'    => $clean( 'city', 40 ),
+		'nick'    => $clean( 'nick', 24 ),
+		'hand'    => $hand,
+		'cue'     => $clean( 'cue', 30 ),
+		'about'   => $clean( 'about', 160 ),
+		'since'   => $old && ! empty( $old['since'] ) ? (int) $old['since'] : time(),
+	);
+	update_user_meta( $uid, 'mysn_player', $p );
+	mysn_league_join( $uid );
+	return mysn_rest_league( $req );
+}
+
+/** Riadok tabuľky pre klienta. */
+function mysn_league_row( $r, $uid ) {
+	$p    = mysn_player( $r['user_id'] );
+	$user = mysn_user( $r['user_id'] );
+	if ( $p && ! empty( $p['nick'] ) ) {
+		$user['name'] = $p['nick'];
+	}
+	return array(
+		'country' => $p ? $p['country'] : '',
+		'rank'   => (int) $r['rank'],
+		'league' => (int) $r['league'],
+		'user'   => $user,
+		'points' => (int) $r['points'],
+		'wins'   => (int) $r['wins'],
+		'losses' => (int) $r['losses'],
+		'best'   => (int) $r['best'],
+		'me'     => (int) $r['user_id'] === (int) $uid,
+	);
+}
+
+/** Aktuálna sezóna: moje miesto, tabuľky všetkých štyroch líg, živí hráči, s ktorými môžem hrať ligu. */
+function mysn_rest_league( $req ) {
+	global $wpdb;
+	$uid = get_current_user_id();
+	mysn_league_join( $uid );
+	$s      = mysn_season_current();
+	$ranked = mysn_league_ranked( $s['id'] );
+	$me     = mysn_league_me( $uid, $ranked );
+	$leagues = array( 1 => array(), 2 => array(), 3 => array(), 4 => array() );
+	foreach ( $ranked as $r ) {
+		if ( count( $leagues[ $r['league'] ] ) < 50 || (int) $r['user_id'] === $uid ) {
+			$leagues[ $r['league'] ][] = mysn_league_row( $r, $uid );
+		}
+	}
+	// živí hráči z mojej a susedných líg
+	$pt   = mysn_table( 'presence' );
+	$live = array();
+	$byid = array();
+	foreach ( $ranked as $r ) {
+		$byid[ (int) $r['user_id'] ] = $r;
+	}
+	foreach ( $wpdb->get_results( $wpdb->prepare( "SELECT user_id, state FROM $pt WHERE seen >= %d AND user_id <> %d ORDER BY seen DESC LIMIT 50", time() - MYSN_LIVE, $uid ), ARRAY_A ) as $p ) { // phpcs:ignore
+		$u  = (int) $p['user_id'];
+		$lg = isset( $byid[ $u ] ) ? (int) $byid[ $u ]['league'] : 4;
+		if ( ! $me || abs( $lg - (int) $me['league'] ) > 1 ) {
+			continue;
+		}
+		if ( ! isset( $byid[ $u ] ) ) {
+			continue; // neregistrovaní hráči ligu hrať nemôžu
+		}
+		$row         = mysn_league_row( $byid[ $u ], $uid );
+		$row['busy'] = 'match' === $p['state'];
+		$live[]      = $row;
+	}
+	return array(
+		'registered' => (bool) $me,
+		'player'     => mysn_player( $uid ),
+		'season'  => array(
+			'id'       => (int) $s['id'],
+			'name'     => $s['name'],
+			'started'  => (int) $s['started'],
+			'ends'     => (int) $s['ends'],
+			'daysLeft' => max( 0, (int) ceil( ( (int) $s['ends'] - time() ) / DAY_IN_SECONDS ) ),
+		),
+		'me'      => $me ? mysn_league_row( $me, $uid ) : null,
+		'players' => count( $ranked ),
+		'leagues' => $leagues,
+		'live'    => $live,
+	);
+}
+
+/** Minulé sezóny: majster a konečné top 10 každej ligy. */
+function mysn_rest_league_archive( $req ) {
+	global $wpdb;
+	$uid = get_current_user_id();
+	$out = array();
+	foreach ( $wpdb->get_results( 'SELECT * FROM ' . mysn_table( 'seasons' ) . " WHERE status = 'finished' ORDER BY id DESC LIMIT 10", ARRAY_A ) as $s ) { // phpcs:ignore
+		$rows = $wpdb->get_results( $wpdb->prepare( 'SELECT * FROM ' . mysn_table( 'league' ) . ' WHERE season_id = %d AND final_rank > 0 ORDER BY final_rank ASC LIMIT 200', $s['id'] ), ARRAY_A ); // phpcs:ignore
+		$lg   = array( 1 => array(), 2 => array(), 3 => array(), 4 => array() );
+		foreach ( $rows as $r ) {
+			$r['rank']   = (int) $r['final_rank'];
+			$r['league'] = (int) $r['final_league'];
+			if ( count( $lg[ $r['league'] ] ) < 10 ) {
+				$lg[ $r['league'] ][] = mysn_league_row( $r, $uid );
+			}
+		}
+		$out[] = array(
+			'name'     => $s['name'],
+			'started'  => (int) $s['started'],
+			'ends'     => (int) $s['ends'],
+			'champion' => $s['champion'] ? mysn_user( $s['champion'] ) : null,
+			'leagues'  => $lg,
+		);
+	}
+	return array( 'seasons' => $out );
+}
+
+/** Majstri minulých sezón (pre poháre v herni). */
+function mysn_league_champions() {
+	global $wpdb;
+	$out = array();
+	foreach ( $wpdb->get_results( 'SELECT name, champion FROM ' . mysn_table( 'seasons' ) . " WHERE status = 'finished' AND champion > 0 ORDER BY id DESC LIMIT 5", ARRAY_A ) as $s ) { // phpcs:ignore
+		$out[] = array(
+			'season' => $s['name'],
+			'user'   => mysn_user( $s['champion'] ),
+		);
+	}
+	return $out;
+}

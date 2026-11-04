@@ -7,6 +7,9 @@ import { RoomEnvironment } from 'three/examples/jsm/environments/RoomEnvironment
 import { buildTable, buildRoom } from './table.js';
 import { buildRoomShell } from './room.js';
 import { buildRadioCorner, RadioPlayer } from './radio.js';
+import { buildStadium } from './stadium.js';
+import { buildOffice } from './office.js';
+import { COUNTRIES, countryByCode } from './countries.js';
 import { BallViews } from './balls.js';
 import { Cue, AimGuide } from './cue.js';
 import { CameraRig } from './camera.js';
@@ -76,7 +79,9 @@ export function start(root, config = {}) {
 
 	const scene = new THREE.Scene();
 	buildRoom(scene, settings.quality);
+	const preShell = new Set(scene.children);
 	const room = buildRoomShell(scene, settings.quality, { news: config.news, rss: config.rss, site: config.site, user: config.user });
+	const shellObjs = scene.children.filter((o) => !preShell.has(o)); // herňa (steny, nábytok, svetlá)
 	const table = buildTable(renderer);
 	scene.add(table.group);
 
@@ -89,7 +94,25 @@ export function start(root, config = {}) {
 	const env = pmrem.fromScene(new RoomEnvironment(), 0.04).texture;
 	pmrem.dispose();
 	const views = new BallViews(scene, game.balls, settings.quality, env);
-	let cueSpec = cueById(settings.cue);
+	// moje tágá (kancelária): 4 vybrané do zápasu a vlastné nastavenia (názov, farby, jemné doladenie)
+	const myCues = Object.assign({ selected: ['club', 'short', 'break', 'soft'], custom: {} }, settings.myCues || {});
+	const specFor = (id) => {
+		const base = cueById(id);
+		const c = myCues.custom[base.id];
+		if (!c) {
+			return base;
+		}
+		const dp = Math.max(-0.05, Math.min(0.05, c.power || 0));
+		const dg = Math.max(-0.1, Math.min(0.1, c.grip || 0));
+		return {
+			...base,
+			name: c.name ? String(c.name).slice(0, 24) : base.name,
+			power: Math.min(1, base.power * (1 + dp)),
+			grip: base.grip * (1 + dg),
+			colors: { shaft: c.shaft || base.colors.shaft, butt: c.butt || base.colors.butt },
+		};
+	};
+	let cueSpec = specFor(settings.cue);
 	const cue = new Cue(scene, cueSpec);
 	room.selectCue(cueSpec.id);
 	const guide = new AimGuide(scene);
@@ -101,7 +124,117 @@ export function start(root, config = {}) {
 	sound.setVolume(settings.volume);
 
 	// rádio v herni: stanice z My Player, priestorový zvuk z dvoch reproduktorov, mixpult (F9)
+	const preRadio = new Set(scene.children);
 	const radioCorner = buildRadioCorner(scene);
+	// herňa (všetko z buildRoomShell, rádio a podlaha) a štadión pre ligu: prepína sa viditeľnosť
+	const homeObjs = [...shellObjs, ...scene.children.filter((o) => !preRadio.has(o))];
+	for (const o of preShell) {
+		if (o.isMesh && o.geometry && o.geometry.type === 'PlaneGeometry' && o.rotation.x < -1) {
+			homeObjs.push(o); // podlaha herne
+		}
+	}
+	const stadium = buildStadium(scene, settings.quality);
+	const office = buildOffice(scene);
+	let officeMode = ''; // '' prehľad, 'edit' údaje hráča, 'cues' moje tágá
+	let officeCue = null;
+	const officeData = () => ({ office: { league: leagueData, mode: officeMode, countries: COUNTRIES, cues: CUES.map((c) => specFor(c.id)), myCues, cue: officeCue, user } });
+	const officeRefresh = () => {
+		office.setRack(CUES.map((c) => specFor(c.id)), myCues.selected);
+		if (view === 'office') {
+			ui.showView('office', CUES, cueSpec.id, officeData());
+		}
+	};
+	const saveMyCues = (quiet) => {
+		settings.myCues = myCues;
+		saveSettings(settings);
+		if (cueSpec && myCues.custom[cueSpec.id]) {
+			cueSpec = specFor(cueSpec.id);
+			cue.setSpec(cueSpec);
+			controls.setCue(cueSpec);
+			ui.setCueInfo(cueSpec);
+		}
+		if (!quiet) {
+			officeRefresh();
+		} else {
+			office.setRack(CUES.map((c) => specFor(c.id)), myCues.selected);
+		}
+	};
+	/** Liga: tabuľky, mapa a kalendár v kancelárii, nástenka v herni. */
+	const refreshLeague = async () => {
+		if (!online) {
+			return null;
+		}
+		const d = await online.league();
+		if (d) {
+			leagueData = d;
+			room.setLeague(d);
+			office.setBoards(d, []);
+			const pts = [];
+			for (const n of [1, 2, 3, 4]) {
+				for (const r of (d.leagues && d.leagues[n]) || []) {
+					const c = countryByCode(r.country);
+					if (c) {
+						// hráči z tej istej krajiny sa trochu rozostúpia
+						const k = pts.filter((p) => p.code === c.code).length;
+						pts.push({ id: r.user.id, name: r.user.name, league: r.league, points: r.points, rank: r.rank, code: c.code, lat: c.lat + (k % 3) * 1.6, lon: c.lon + Math.floor(k / 3) * 2.2 + (k % 3) * 1.2 });
+					}
+				}
+			}
+			officePlayers = pts;
+			office.setMap(pts, user && user.id);
+			officeRefresh();
+		}
+		return d;
+	};
+	let officePlayers = [];
+	// pohľady, v ktorých sa myšou rozhliada (Ctrl drž = voľná myš)
+	const LOOK = new Set(['chair', 'bar', 'office']);
+	let venue = 'home';
+	const fadeEl = document.createElement('div');
+	fadeEl.className = 'mysn-fade';
+	root.appendChild(fadeEl);
+	const setVenue = (v) => {
+		if (v === venue) {
+			return;
+		}
+		fadeEl.classList.add('mysn-on');
+		setTimeout(() => {
+			venue = v;
+			const lg = v === 'league';
+			for (const o of homeObjs) {
+				o.visible = !lg;
+			}
+			stadium.root.visible = lg;
+			table.setFelt(lg ? 'blue' : 'green');
+			scene.background.setHex(lg ? 0x020306 : 0x0c0f14);
+			if (lg && view) {
+				exitView();
+			}
+			refreshMenu();
+			updateStadiumScreen();
+			setTimeout(() => fadeEl.classList.remove('mysn-on'), 60);
+		}, 350);
+	};
+	const updateStadiumScreen = () => {
+		const m = game.match;
+		const ld = leagueData;
+		const footer = ld && ld.season ? `${ld.season.name} · do konca ${ld.season.daysLeft} dní` : 'My Snooker liga';
+		if (m && m.rules) {
+			stadium.setScreen({
+				title: m.league ? 'LIGOVÁ PARTIA' : 'PARTIA',
+				names: m.players.map((p) => p.name),
+				scores: m.rules.scores,
+				turn: m.rules.over ? -1 : m.rules.turn,
+				brk: m.rules.brk,
+				on: game.onText(),
+				footer,
+			});
+		} else {
+			stadium.setScreen({ title: 'MY SNOOKER LIGA', idle: ld && ld.me ? `${ld.me.league}. liga · ${ld.me.rank}. miesto · ${ld.me.points} bodov` : 'Vyzvi hráča z ligy', footer });
+		}
+	};
+	let leagueData = null;
+	let lastSeqSeen = -1;
 	const radio = new RadioPlayer(config.radio, () => {
 		sound.unlock();
 		return sound.ctx;
@@ -210,7 +343,7 @@ export function start(root, config = {}) {
 		view = name;
 		controls.blocked = true;
 		// pri kriedovaní a v kresle ostáva myš zachytená (v kresle sa ňou rozhliada)
-		if (name !== 'chalk' && name !== 'chair' && name !== 'bar') {
+		if (name !== 'chalk' && !LOOK.has(name)) {
 			controls.uncapture();
 		}
 		ui.showMenu(false);
@@ -225,9 +358,14 @@ export function start(root, config = {}) {
 			chalkStart = performance.now();
 			chalkMesh.visible = true;
 		} else {
-			const v = name === 'mixer' ? radioCorner.view : room[name];
+			const v = name === 'mixer' ? radioCorner.view : name === 'office' ? office.seat : room[name];
 			rig.setView(v.pos, v.look.clone());
-			if (name === 'chair' || name === 'bar') {
+			if (name === 'office') {
+				// kancelária stojí mimo herne: kamera sa presunie hneď (bez letu cez steny)
+				rig.noClamp = true;
+				rig.jump();
+			}
+			if (LOOK.has(name)) {
 				// počiatočný smer pohľadu z kresla alebo z baru (otáčanie hlavou myšou)
 				const d = v.look.clone().sub(v.pos);
 				chairLook.yaw = Math.atan2(d.z, d.x);
@@ -237,15 +375,21 @@ export function start(root, config = {}) {
 		if (name === 'trophies') {
 			refreshTrophies();
 		}
-		ui.showView(name, CUES, cueSpec.id, name === 'mixer' ? { radio } : name === 'magazine' ? room.rssItems : name === 'chair' ? { news: room.newsItems, rss: room.rssItems } : room.newsItems);
+		ui.showView(name, CUES, cueSpec.id, name === 'office' ? officeData() : name === 'mixer' ? { radio } : name === 'magazine' ? room.rssItems : name === 'chair' ? { news: room.newsItems, rss: room.rssItems } : room.newsItems);
 	};
 	const exitView = () => {
 		if (!view) {
 			return;
 		}
+		const was = view;
 		view = null;
 		controls.blocked = !user;
 		rig.setViewZoom(1);
+		if (was === 'office') {
+			rig.noClamp = false;
+			rig.snapNext = true; // z kancelárie späť do herne hneď
+			ui.openLeague(false);
+		}
 		ui.toggleReader(null);
 		ui.openPhone(false);
 		chalkT = -1;
@@ -255,7 +399,7 @@ export function start(root, config = {}) {
 		controls.capture();
 	};
 	const pickCue = (id) => {
-		cueSpec = cueById(id);
+		cueSpec = specFor(id);
 		settings.cue = cueSpec.id;
 		saveSettings(settings);
 		cue.setSpec(cueSpec);
@@ -334,13 +478,112 @@ export function start(root, config = {}) {
 			controls.capture();
 		},
 		// rebríček: F8 pošle kameru k polici s pohármi a tabuľke 4. až 10. miesta
+		// Liga v menu: kancelária hráča (registrácia, tabuľky líg, mapa hráčov, moje tágá); zápasy z kancelárie
+		league: async () => {
+			if (!online) {
+				return;
+			}
+			ui.showMenu(false);
+			ui.openLobby(false);
+			ui.openLeague(false);
+			fadeEl.classList.add('mysn-on');
+			setTimeout(() => {
+				enterView('office');
+				controls.capture();
+				setTimeout(() => fadeEl.classList.remove('mysn-on'), 80);
+			}, 300);
+			await refreshLeague();
+		},
+		leagueTables: () => {
+			ui.openLeague(true);
+			ui.renderLeague(leagueData);
+		},
+		officeLeave: () => {
+			fadeEl.classList.add('mysn-on');
+			setTimeout(() => {
+				exitView();
+				setTimeout(() => fadeEl.classList.remove('mysn-on'), 80);
+			}, 300);
+		},
+		register: async (form) => {
+			const r = await online.net.call('league/register', form).catch((e) => ({ error: e.message }));
+			if (r && !r.error) {
+				leagueData = r;
+				ui.toast(form.edit ? 'Údaje hráča sú uložené.' : 'Vitaj v lige! Začínaš so 147 bodmi.');
+				officeRefresh();
+			} else {
+				ui.toast((r && r.error) || 'Registrácia sa nepodarila.');
+			}
+		},
+		officeEdit: () => {
+			officeMode = 'edit';
+			officeRefresh();
+		},
+		myCues: () => {
+			officeMode = 'cues';
+			officeRefresh();
+		},
+		officeHome: () => {
+			officeMode = '';
+			officeRefresh();
+		},
+		cueSelect: (id) => {
+			const sel = myCues.selected;
+			const i = sel.indexOf(id);
+			if (i >= 0) {
+				sel.splice(i, 1);
+			} else if (sel.length < 4) {
+				sel.push(id);
+			} else {
+				ui.toast('Do zápasu si môžeš zobrať najviac 4 tágá. Najprv jedno odober.');
+			}
+			saveMyCues();
+		},
+		cueEdit: (id) => {
+			officeCue = id;
+			officeRefresh();
+		},
+		cueCustom: ({ id, k, v }) => {
+			const c = (myCues.custom[id] = myCues.custom[id] || {});
+			c[k] = v;
+			saveMyCues(true);
+		},
+		leagueTab: (n) => {
+			ui._leagueTab = n;
+			ui.renderLeague(leagueData);
+		},
+		leagueInvite: async (id) => {
+			await online.invite(id, true);
+			ui.renderLeague(leagueData);
+		},
+		leagueArchive: async () => {
+			ui.openLeague(true);
+			const a = await online.leagueArchive();
+			ui.renderLeague(leagueData, a || { seasons: [] });
+		},
+		leagueClose: () => {
+			ui.openLeague(false);
+			if (view !== 'office') {
+				ui.showMenu(true, true);
+			}
+		},
+		leagueHome: () => {
+			ui.openLeague(false);
+			if (view === 'office') {
+				return; // z kancelárie sa do herne ide tlačidlom Späť do herne
+			}
+			if (!game.match) {
+				setVenue('home');
+			}
+			ui.showMenu(false);
+			controls.capture();
+		},
 		leaderboard: () => {
 			ui.showMenu(false);
 			if (view !== 'trophies') {
 				enterView('trophies');
 			}
 		},
-		trophies: () => enterView('trophies'),
 		trophies: () => {
 			ui.showLeaderboard(null);
 			enterView('trophies');
@@ -407,6 +650,16 @@ export function start(root, config = {}) {
 		chalk: () => enterView('chalk'),
 		mixer: () => enterView('mixer'),
 		bar: () => enterView('bar'),
+		leagueBoard: async () => {
+			if (venue === 'league') {
+				return; // nástenka Liga je v domácej herni
+			}
+			enterView('leagueBoard');
+			if (online) {
+				leagueData = (await online.league()) || leagueData;
+				room.setLeague(leagueData);
+			}
+		},
 		phone: () => ui.openPhone(true),
 		phoneClose: () => {
 			ui.openPhone(false);
@@ -444,6 +697,7 @@ export function start(root, config = {}) {
 		user,
 		loginUrl: config.loginUrl,
 		accountUrl: config.accountUrl,
+		venue: () => venue,
 		settings,
 		onAction: (name, value) => {
 			sound.unlock();
@@ -480,7 +734,7 @@ export function start(root, config = {}) {
 		},
 		stroke: (on) => ui.setStroke(on),
 		look: (dx, dy) => {
-			if ((view !== 'chair' && view !== 'bar') || freeMouse) {
+			if (!LOOK.has(view) || freeMouse) {
 				return;
 			}
 			const k = 0.0025 / (rig.viewZoom || 1); // pri priblížení jemnejšie
@@ -490,13 +744,39 @@ export function start(root, config = {}) {
 			rig.viewLook.copy(rig.viewPos).add(new THREE.Vector3(Math.cos(chairLook.yaw) * c, Math.sin(chairLook.pitch), Math.sin(chairLook.yaw) * c));
 		},
 		viewWheel: (steps) => {
-			if (view === 'chair' || view === 'bar') {
+			if (LOOK.has(view)) {
 				rig.setViewZoom((rig.viewZoom || 1) * Math.pow(0.85, steps));
 			}
 		},
 		viewDown: (e) => {
 			if (view === 'chair' && e.button === 0) {
 				controls.capture();
+			}
+			if (view === 'office' && e.button === 0) {
+				// klik na mapu sveta: hráč na mape (meno, liga, body)
+				const r = renderer.domElement.getBoundingClientRect();
+				const ray = new THREE.Raycaster();
+				const at = controls.captured ? new THREE.Vector2(0, 0) : new THREE.Vector2(((e.clientX - r.left) / r.width) * 2 - 1, -((e.clientY - r.top) / r.height) * 2 + 1);
+				ray.setFromCamera(at, rig.camera);
+				const hit = ray.intersectObject(office.map, false)[0];
+				if (hit) {
+					const ll = office.mapLonLat(hit.point);
+					let best = null;
+					let bd = 7;
+					for (const p of officePlayers) {
+						const dd = Math.hypot(p.lon - ll.lon, p.lat - ll.lat);
+						if (dd < bd) {
+							bd = dd;
+							best = p;
+						}
+					}
+					if (best) {
+						const c = countryByCode(best.code);
+						ui.toast(`${best.name} (${c ? c.name : ''}): ${best.rank}. miesto, ${best.league}. liga, ${best.points} bodov.`);
+					}
+				} else if (!controls.captured) {
+					controls.capture();
+				}
 			}
 			if (view === 'bar' && e.button === 0) {
 				// klik na telefón na barovom stolíku zväčší Môj účet; so zachytenou myšou sa mieri stredom obrazovky
@@ -520,7 +800,7 @@ export function start(root, config = {}) {
 			if (lk === 'ctrl-down' || lk === 'ctrl-up') {
 				// Ctrl drž: voľná myš (kurzor, dá sa klikať); po pustení Ctrl sa myš znova zachytí na tágo
 				// v kresle Ctrl uvoľní myš na klikanie na správy, inde v pohľadoch sa nepoužíva
-				if (view && view !== 'chair' && view !== 'bar') {
+				if (view && !LOOK.has(view)) {
 					return true;
 				}
 				if (lk === 'ctrl-down' && controls.captured) {
@@ -528,6 +808,8 @@ export function start(root, config = {}) {
 					controls.uncapture();
 				} else if (lk === 'ctrl-up' && freeMouse && ui.phoneOpen()) {
 					freeMouse = false; // nad telefónom ostáva myš voľná
+				} else if (lk === 'ctrl-up' && freeMouse && document.activeElement && /input|select|textarea/i.test(document.activeElement.tagName)) {
+					freeMouse = false; // píše sa do formulára: myš ostáva voľná
 				} else if (lk === 'ctrl-up' && freeMouse) {
 					freeMouse = false;
 					ui.showMenu(false);
@@ -551,7 +833,7 @@ export function start(root, config = {}) {
 				ui.opts.onAction('leaderboardClose');
 				return true;
 			}
-			const fkeys = { f1: 'board', f2: 'rack', f3: 'chalk', f4: 'score', f7: 'chair', f8: 'trophies', f9: 'mixer', f10: 'bar' };
+			const fkeys = { f1: 'board', f2: 'rack', f3: 'chalk', f4: 'score', f7: 'chair', f8: 'trophies', f9: 'mixer', f10: 'bar', f12: 'leagueBoard' };
 			if (fkeys[lk]) {
 				ui.opts.onAction(fkeys[lk]);
 				return true;
@@ -704,14 +986,21 @@ export function start(root, config = {}) {
 	};
 	if (user && config.restUrl) {
 		online = new Online(config, game, {
-			lobby: (d) => {
+			lobby: async (d) => {
 				ui.renderLobby(d);
+				if (ui.leagueOpen()) {
+					leagueData = (await online.league()) || leagueData;
+					ui.renderLeague(leagueData);
+				}
 				ui.showInvites(game.match ? [] : d.invites);
 			},
-			invite: (inv) => !ui.menuOpen() && ui.toast(`${inv.from.name} ťa pozýva na partiu.${controls.captured ? ' Esc alebo Ctrl uvoľní myš.' : ''}`, inv),
+			invite: (inv) => !ui.menuOpen() && ui.toast(`${inv.from.name} ťa pozýva na ${inv.league ? 'ligovú ' : ''}partiu.${controls.captured ? ' Esc alebo Ctrl uvoľní myš.' : ''}`, inv),
 			toast: (t) => ui.toast(t),
 			started: (m) => {
 				exitView();
+				ui.openLeague(false);
+				setVenue(m.league ? 'league' : 'home');
+				lastSeqSeen = -1;
 				ui.openLobby(false);
 				online.lobbyOpen = false;
 				ui.hideToast();
@@ -724,8 +1013,14 @@ export function start(root, config = {}) {
 				ui.sync(game, rig.mode);
 				updateScore();
 			},
-			ended: (text) => {
+			ended: async (text) => {
 				exitView();
+				if (online && online.lastLeague) {
+					online.lastLeague = false;
+					leagueData = (await online.league()) || leagueData;
+					room.setLeague(leagueData);
+					updateStadiumScreen();
+				}
 				refreshMenu();
 				ui.showMenu(true, true);
 				ui.menuNote(text);
@@ -817,8 +1112,27 @@ export function start(root, config = {}) {
 					sound.cushion(e.speed);
 				} else if (e.type === 'pot') {
 					sound.pot();
+					if (venue === 'league' && game.balls[e.a] && game.balls[e.a].kind !== 'white') {
+						stadium.react('clap'); // diváci tlieskajú pri potopenej guli
+					}
 				}
 			}
+		}
+		if (venue === 'league') {
+			const m = game.match;
+			if (m && m.seq !== lastSeqSeen) {
+				// nový stav partie: faul = chytia sa za hlavu, veľká séria = jeden divák vstane
+				if (lastSeqSeen >= 0 && m.last) {
+					if (m.last.foul) {
+						stadium.react('facepalm');
+					} else if ((m.last.brk || 0) >= 30 && m.last.points > 0) {
+						stadium.react('stand');
+					}
+				}
+				lastSeqSeen = m.seq;
+				updateStadiumScreen();
+			}
+			stadium.update(dt, game.cue);
 		}
 		const aiming = game.state === 'aim' && !view;
 		// súper je na rade: jeho tágo podľa mierenia zo servera (plynulo)
@@ -857,7 +1171,7 @@ export function start(root, config = {}) {
 		// čas framu o najlepšie skóre (beží, kým je frame rozohraný a menu je zavreté)
 		const so = game.solo;
 		// v kresle (F7) sa pri hre o skóre čas framu aj hodiny zastavia (v partii s priateľom bežia ďalej, ťahá súper)
-		if (so && !so.done && view !== 'chair' && view !== 'bar' && !ui.menuOpen() && !ui.leaderboardOpen() && !ui.partyOpen()) {
+		if (so && !so.done && !LOOK.has(view) && view !== 'leagueBoard' && !ui.menuOpen() && !ui.leaderboardOpen() && !ui.partyOpen()) {
 			const before = Math.floor(so.time);
 			so.time += Math.min(1, Math.max(0, (now - lastSoloT) / 1000));
 			if (Math.floor(so.time) !== before) {

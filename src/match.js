@@ -176,7 +176,7 @@ export class Game extends Training {
 		if (this.solo) {
 			this.stopSolo();
 		}
-		this.match = { id: info.id, me: info.me, seq: -1, turn: 0, rules: null, inHand: false, players: info.players, status: info.status };
+		this.match = { id: info.id, me: info.me, seq: -1, turn: 0, rules: null, inHand: false, players: info.players, status: info.status, league: !!info.league, best: [0, 0] };
 		this.history = [];
 		this.remote = false;
 		this.applyState(info.state, info.seq);
@@ -210,6 +210,8 @@ export class Game extends Training {
 		m.rules = { ...st.rules, scores: [...st.rules.scores] };
 		m.turn = m.rules.turn;
 		m.inHand = !!st.inHand;
+		m.best = Array.isArray(st.best) ? [...st.best] : [0, 0];
+		m.last = st.last || null; // posledný úder (pre divákov na štadióne)
 		this.remote = false;
 		this.message = st.msg || '';
 		if (m.rules.over) {
@@ -302,7 +304,13 @@ export class Game extends Training {
 			rules: res.state,
 			inHand: res.inHand,
 			msg: `${names[m.me]}: ${res.msg}` + (res.state.over ? ` Koniec partie, víťaz: ${names[res.state.winner]}.` : res.state.turn !== m.me ? ` Na rade je ${names[res.state.turn]}.` : ''),
-			last: { by: m.me, points: res.points, foul: res.foul, penalty: res.penalty },
+			last: { by: m.me, points: res.points, foul: res.foul, penalty: res.penalty, brk: res.state.brk },
+			// najvyššia séria každého hráča v partii (do ligy)
+			best: (() => {
+				const b = [...(m.best || [0, 0])];
+				b[m.me] = Math.max(b[m.me] || 0, res.state.turn === m.me ? res.state.brk : m.rules.brk + res.points);
+				return b;
+			})(),
 		};
 		const seq = m.seq + 1;
 		this.applyState(st, seq);

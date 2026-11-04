@@ -13,14 +13,14 @@ const FRAME = 0.12; // šírka dreveného rámu
 const CUSHION_H = 0.037; // výška nosa mantinelu nad súknom
 
 /** Textúra súkna: zelená s jemnou štruktúrou, čiara baulk, D a spoty. */
-function clothTexture(maxAniso) {
+function clothTexture(maxAniso, base = '#1d6b34') {
 	const w = 2048;
 	const h = Math.round((w * (W + 2 * RAIL)) / (L + 2 * RAIL));
 	const c = document.createElement('canvas');
 	c.width = w;
 	c.height = h;
 	const g = c.getContext('2d');
-	g.fillStyle = '#1d6b34';
+	g.fillStyle = base;
 	g.fillRect(0, 0, w, h);
 	// jemná štruktúra súkna
 	const img = g.getImageData(0, 0, w, h);
@@ -417,7 +417,19 @@ export function buildTable(renderer) {
 		}
 	}
 
-	return { group, cloth, surfaceY: 0, ballY: R };
+	// súkno: zelené v herni, modré na štadióne (liga)
+	const felts = { green: { cloth: null, rail: 0x17602f, base: '#1d6b34' }, blue: { cloth: null, rail: 0x1b4a96, base: '#1f56b0' } };
+	felts.green.cloth = cloth.material.map;
+	const setFelt = (name) => {
+		const f = felts[name] || felts.green;
+		if (!f.cloth) {
+			f.cloth = clothTexture(aniso, f.base);
+		}
+		cloth.material.map = f.cloth;
+		cloth.material.needsUpdate = true;
+		railMat.color.setHex(f.rail);
+	};
+	return { group, cloth, surfaceY: 0, ballY: R, setFelt };
 }
 
 /** Miestnosť: tmavá podlaha a tri lampy nad stolom. */

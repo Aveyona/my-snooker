@@ -178,6 +178,8 @@ function mysn_match_out( $m, $uid ) {
 		'winner'  => (int) $m['winner'],
 		'result'  => $m['result'],
 		'updated' => (int) $m['updated'],
+		'league'  => (int) ( $m['league'] ?? 0 ),
+		'delta'   => (int) ( $m['delta'] ?? 0 ),
 	);
 }
 
@@ -214,10 +216,11 @@ function mysn_rest_ping( $req ) {
 		$live[]    = $u;
 	}
 	$invites = array();
-	foreach ( $wpdb->get_results( $wpdb->prepare( "SELECT id, p1 FROM $t WHERE p2 = %d AND status = 'invited' ORDER BY created DESC LIMIT 5", $uid ), ARRAY_A ) as $r ) { // phpcs:ignore
+	foreach ( $wpdb->get_results( $wpdb->prepare( "SELECT id, p1, league FROM $t WHERE p2 = %d AND status = 'invited' ORDER BY created DESC LIMIT 5", $uid ), ARRAY_A ) as $r ) { // phpcs:ignore
 		$invites[] = array(
 			'id'   => (int) $r['id'],
 			'from' => mysn_user( $r['p1'] ),
+			'league' => (int) $r['league'],
 		);
 	}
 	$out = $wpdb->get_row( $wpdb->prepare( "SELECT id, p2, status FROM $t WHERE p1 = %d AND status IN ('invited','declined') AND updated >= %d ORDER BY id DESC LIMIT 1", $uid, $now - MYSN_INVITE ), ARRAY_A ); // phpcs:ignore
@@ -259,6 +262,13 @@ function mysn_rest_invite( $req ) {
 	if ( mysn_active_match( $uid ) || mysn_active_match( $to ) ) {
 		return mysn_err( 'Ty alebo súper už hráte partiu.' );
 	}
+	$league = $req->get_param( 'league' ) ? 1 : 0;
+	if ( $league ) {
+		$why = mysn_league_can_play( $uid, $to );
+		if ( $why ) {
+			return mysn_err( $why );
+		}
+	}
 	$t   = mysn_table( 'matches' );
 	$now = time();
 	$wpdb->query( $wpdb->prepare( "UPDATE $t SET status = 'cancelled', updated = %d WHERE p1 = %d AND status = 'invited'", $now, $uid ) ); // phpcs:ignore
@@ -266,10 +276,12 @@ function mysn_rest_invite( $req ) {
 		$t,
 		array(
 			'p1'      => $uid,
-			'p2'      => $to,
-			'status'  => 'invited',
-			'created' => $now,
-			'updated' => $now,
+			'p2'        => $to,
+			'status'    => 'invited',
+			'created'   => $now,
+			'updated'   => $now,
+			'league'    => $league,
+			'season_id' => $league ? (int) mysn_season_current()['id'] : 0,
 		)
 	);
 	return array( 'id' => (int) $wpdb->insert_id );
@@ -451,6 +463,12 @@ function mysn_rest_settle( $req ) {
 		$data['result'] = 'frame';
 	}
 	mysn_update_match( $m['id'], $data );
+	if ( $over && ! empty( $m['league'] ) ) {
+		// ligová partia: víťaz získa body, ktoré nahral, porazený ich stratí
+		$w    = 1 === (int) $rules['winner'] ? 1 : 0;
+		$best = isset( $st['best'] ) && is_array( $st['best'] ) ? array_map( 'intval', $st['best'] ) : array( 0, 0 );
+		mysn_league_apply( mysn_get_match( $m['id'] ), $data['winner'], (int) $rules['scores'][ $w ], false, $best );
+	}
 	return array( 'ok' => true );
 }
 
@@ -472,6 +490,14 @@ function mysn_rest_leave( $req ) {
 				'winner' => 0 === $me ? (int) $m['p2'] : (int) $m['p1'],
 			)
 		);
+		if ( ! empty( $m['league'] ) ) {
+			// vzdaná ligová partia: víťaz dostane nahrané body, najmenej 30
+			$st   = $m['state'] ? json_decode( $m['state'], true ) : array();
+			$wi   = 0 === $me ? 1 : 0;
+			$sc   = isset( $st['rules']['scores'][ $wi ] ) ? (int) $st['rules']['scores'][ $wi ] : 0;
+			$best = isset( $st['best'] ) && is_array( $st['best'] ) ? array_map( 'intval', $st['best'] ) : array( 0, 0 );
+			mysn_league_apply( mysn_get_match( $m['id'] ), 0 === $me ? (int) $m['p2'] : (int) $m['p1'], $sc, true, $best );
+		}
 	} else {
 		mysn_update_match( $m['id'], array( 'status' => 'paused' ) );
 	}

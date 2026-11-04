@@ -208,3 +208,21 @@ body.mysn-page { font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans
 .mysn-phone-msg { padding: 24px 18px; color: #1d2327; font-size: 14px; display: flex; flex-direction: column; gap: 12px; align-items: flex-start; }
 .mysn-phone-msg a.mysn-btn { text-decoration: none; display: inline-block; }
 .mysn-phone-ext { display: block; text-align: center; padding: 8px; font-size: 12px; color: #1d2b45; background: #e2e4e8; text-decoration: none; }
+/* Liga */
+.mysn-league { width: min(560px, calc(100% - 32px)); }
+.mysn-league-tabs { display: flex; gap: 6px; margin: 14px 0 4px; flex-wrap: wrap; }
+.mysn-league-tabs .mysn-btn.mysn-on { background: #1747b5; border-color: #6f9bff; }
+.mysn-fade { position: absolute; inset: 0; z-index: 9; background: #000; opacity: 0; pointer-events: none; transition: opacity .35s ease; }
+.mysn-fade.mysn-on { opacity: 1; }
+/* Kancelária (Liga) */
+.mysn-office .mysn-office-btns { display: flex; flex-direction: column; gap: 6px; margin-top: 8px; }
+.mysn-form { display: flex; flex-direction: column; gap: 6px; }
+.mysn-form-row span { width: 110px; }
+.mysn-form input[type=text], .mysn-form select, .mysn-cue-edit input[type=text] { flex: 1; min-width: 0; font: inherit; font-size: 13px; padding: 6px 8px; border-radius: 6px; background: #0c0f14; color: #eef2ea; border: 1px solid #ffffff33; }
+.mysn-cue-row { display: flex; align-items: center; gap: 8px; padding: 4px 6px; border-radius: 8px; background: #141a24e6; border: 1px solid #ffffff22; }
+.mysn-cue-row.mysn-on { border-color: #FACC15; }
+.mysn-cue-row input { accent-color: #FACC15; width: 18px; height: 18px; }
+.mysn-cue-name { flex: 1; text-align: left; background: none; border: 0; color: #eef2ea; font: inherit; cursor: pointer; display: flex; flex-direction: column; padding: 2px; }
+.mysn-cue-name span { font-size: 11px; opacity: .7; }
+.mysn-cue-edit { padding: 6px 8px 10px; border-left: 2px solid #FACC15; margin-left: 10px; display: flex; flex-direction: column; gap: 4px; }
+.mysn-cue-edit input[type=color] { width: 60px; height: 26px; border: 0; background: none; }

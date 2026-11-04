@@ -102,9 +102,9 @@ export class Online {
 		}
 	}
 
-	async invite(uid) {
+	async invite(uid, league = false) {
 		try {
-			const r = await this.net.call('invite', { user: uid });
+			const r = await this.net.call('invite', { user: uid, league: league ? 1 : 0 });
 			this._waitFor = r.id;
 			await this.ping();
 		} catch (e) {
@@ -192,7 +192,9 @@ export class Online {
 		}
 	}
 
-	stopMatch(text) {
+	stopMatch(text0) {
+		const text = (text0 || '') + (this.stopMatchText || '');
+		this.stopMatchText = '';
 		this.matchId = 0;
 		this.info = null;
 		this.queue = [];
@@ -300,6 +302,9 @@ export class Online {
 		g.match.status = m.status;
 		if (m.status === 'finished' && !(m.seq > g.match.seq)) {
 			const won = m.winner === m.players[m.me].id;
+			const lg = m.league ? ` Liga: ${won ? '+' : '-'}${Math.max(0, m.delta)} bodov.` : '';
+			this.lastLeague = !!m.league;
+			this.stopMatchText = lg;
 			this.stopMatch(m.result === 'resign' ? (won ? `${opp.name} sa vzdáva partie. Víťazstvo je tvoje!` : 'Partia je vzdaná.') : won ? `Víťazstvo je tvoje! Skóre ${m.scores[m.me]} : ${m.scores[1 - m.me]}.` : `Víťaz partie: ${opp.name}, skóre ${m.scores[1 - m.me]} : ${m.scores[m.me]}.`);
 			return;
 		}
@@ -332,6 +337,23 @@ export class Online {
 		if (m.aim && m.aimv !== this.lastAimv && g.state === 'watch' && m.aim.seq === g.match.seq) {
 			this.lastAimv = m.aimv;
 			this.aimTarget = m.aim;
+		}
+	}
+
+	/** Liga: aktuálna sezóna, moje miesto, tabuľky štyroch líg, živí hráči z mojej a susedných líg. */
+	async league() {
+		try {
+			return await this.net.call('league?t=' + Date.now(), null, 'GET');
+		} catch (e) {
+			return null;
+		}
+	}
+
+	async leagueArchive() {
+		try {
+			return await this.net.call('league/archive?t=' + Date.now(), null, 'GET');
+		} catch (e) {
+			return null;
 		}
 	}
 

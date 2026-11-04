@@ -554,6 +554,87 @@ export function buildRoomShell(scene, quality, opts = {}) {
 
 	// Tabuľa na skóre (F4) a komoda na kratšej stene vľavo: zobrazuje body z hry
 	const SCORE = { y: FY + 1.62, w: 1.5, h: 0.84 };
+	// Nástenka Liga (F12) na ľavej stene vedľa tabule so skóre: štyri ligy s top 5, sezóna a moje miesto
+	const LB = { z: -2.0, y: SCORE.y, w: 1.55, h: 0.98 };
+	const lbCanvas = document.createElement('canvas');
+	lbCanvas.width = 1280;
+	lbCanvas.height = 810;
+	const lbTex = new THREE.CanvasTexture(lbCanvas);
+	lbTex.colorSpace = THREE.SRGBColorSpace;
+	lbTex.anisotropy = 8;
+	add(new THREE.BoxGeometry(0.05, LB.h + 0.1, LB.w + 0.1), darkWood, -RX + 0.03, LB.y, LB.z);
+	const lbPlane = add(new THREE.PlaneGeometry(LB.w, LB.h), new THREE.MeshStandardMaterial({ map: lbTex, roughness: 0.85 }), -RX + 0.058, LB.y, LB.z);
+	lbPlane.rotation.y = Math.PI / 2;
+	lbPlane.castShadow = false;
+	const setLeague = (d) => {
+		const g = lbCanvas.getContext('2d');
+		const W2 = 1280;
+		const H2 = 810;
+		g.fillStyle = '#a5754a';
+		g.fillRect(0, 0, W2, H2);
+		for (let i = 0; i < 4000; i++) {
+			g.fillStyle = `rgba(${60 + Math.random() * 80},${35 + Math.random() * 40},${15 + Math.random() * 20},0.25)`;
+			g.fillRect(Math.random() * W2, Math.random() * H2, 3, 3);
+		}
+		// hlavička
+		g.fillStyle = '#123524';
+		g.fillRect(380, 18, 520, 92);
+		g.fillStyle = '#f2d48a';
+		g.font = 'bold 56px Georgia, serif';
+		g.textAlign = 'center';
+		g.fillText('LIGA', 640, 82);
+		g.fillStyle = '#fbf7ec';
+		g.font = '26px Arial, sans-serif';
+		g.fillText(d && d.season ? `${d.season.name}  ·  do konca ${d.season.daysLeft} dní` : 'Liga: prihlás sa a hraj ligové partie', 640, 145);
+		const cols = [[30, 170], [345, 170], [660, 170], [975, 170]];
+		for (let n = 1; n <= 4; n++) {
+			const [x, y] = cols[n - 1];
+			const w = 275;
+			const h = 520;
+			g.save();
+			g.translate(x + w / 2, y + h / 2);
+			g.rotate((n % 2 ? -1 : 1) * 0.01);
+			g.fillStyle = 'rgba(0,0,0,0.35)';
+			g.fillRect(-w / 2 + 6, -h / 2 + 8, w, h);
+			g.fillStyle = '#fbf7ec';
+			g.fillRect(-w / 2, -h / 2, w, h);
+			g.fillStyle = ['#c9a24a', '#9aa0a8', '#b8733a', '#2a9d8f'][n - 1];
+			g.beginPath();
+			g.arc(0, -h / 2 + 18, 11, 0, Math.PI * 2);
+			g.fill();
+			g.fillStyle = '#123524';
+			g.font = 'bold 40px Georgia, serif';
+			g.textAlign = 'center';
+			g.fillText(`${n}. liga`, 0, -h / 2 + 78);
+			g.fillStyle = '#c9a24a';
+			g.fillRect(-w / 2 + 20, -h / 2 + 96, w - 40, 3);
+			const rows = (d && d.leagues && d.leagues[n]) || [];
+			g.textAlign = 'left';
+			for (let i = 0; i < 5; i++) {
+				const r = rows[i];
+				const yy = -h / 2 + 150 + i * 72;
+				g.fillStyle = r ? '#222' : '#aaa';
+				g.font = 'bold 26px Arial, sans-serif';
+				let nm = r ? `${r.rank}. ${r.user.name}` : `${i + 1}. ...`;
+				while (nm.length > 2 && g.measureText(nm).width > w - 40) {
+					nm = nm.slice(0, -1);
+				}
+				g.fillText(nm, -w / 2 + 20, yy);
+				g.font = '22px Arial, sans-serif';
+				g.fillStyle = '#555';
+				g.fillText(r ? `${r.points} b.  V ${r.wins} / P ${r.losses}` : '', -w / 2 + 20, yy + 28);
+			}
+			g.restore();
+		}
+		g.fillStyle = '#123524';
+		g.fillRect(30, 718, W2 - 60, 66);
+		g.fillStyle = '#FACC15';
+		g.font = 'bold 30px Arial, sans-serif';
+		g.textAlign = 'center';
+		g.fillText(d && d.me ? `Ty: ${d.me.rank}. miesto v ${d.me.league}. lige, ${d.me.points} bodov` : 'Liga: v menu (Esc) tlačidlo Liga', W2 / 2, 762);
+		lbTex.needsUpdate = true;
+	};
+	setLeague(null);
 	const scoreCanvas = document.createElement('canvas');
 	scoreCanvas.width = 1024;
 	scoreCanvas.height = 574;
@@ -869,6 +950,9 @@ export function buildRoomShell(scene, quality, opts = {}) {
 		bar: { pos: new THREE.Vector3(bx - 0.4, FY + 1.5, bz + 0.38), look: new THREE.Vector3(bx + 0.62, FY + 0.72, bz - 0.6) },
 		phone: screen,
 		setPhone,
+		// F12: nástenka Liga na ľavej stene
+		leagueBoard: { pos: new THREE.Vector3(-RX + 1.55, LB.y, LB.z), look: new THREE.Vector3(-RX, LB.y, LB.z) },
+		setLeague,
 		// F8: polica s pohármi troch najlepších a tabuľka 4. až 10. miesta
 		trophies: { pos: new THREE.Vector3(-0.17, FY + 1.62, -RZ + 2.05), look: new THREE.Vector3(-0.17, FY + 1.6, -RZ) },
 		// F7: pohľad z kresla vpravo (sediaci) na stôl, v popredí noviny na stolíku
@@ -883,8 +967,6 @@ export function buildRoomShell(scene, quality, opts = {}) {
 		updateScore,
 		setClock,
 		setTrophies,
-		// F8: pohľad na policu s pohármi a tabuľku rebríčka
-		trophies: { pos: new THREE.Vector3(-0.05, FY + 1.6, -RZ + 2.3), look: new THREE.Vector3(-0.05, FY + 1.62, -RZ) },
 		/** Otvorí alebo zatvorí dvere; vráti true = budú otvorené. */
 		toggleDoor() {
 			doorState.open = !doorState.open;

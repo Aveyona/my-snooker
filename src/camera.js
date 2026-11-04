@@ -91,6 +91,13 @@ export class CameraRig {
 		this.camera.updateProjectionMatrix();
 	}
 
+	/** Okamžitý presun kamery do pohľadu (prechod do inej miestnosti, bez letu cez steny). */
+	jump() {
+		this.camera.position.copy(this.viewPos);
+		this._curLook.copy(this.viewLook);
+		this.camera.lookAt(this._curLook);
+	}
+
 	/** Priblíženie v pohľade (F7 z kresla): 1 = normálne, viac = bližšie (užší záber). */
 	setViewZoom(z) {
 		this.viewZoom = Math.min(5, Math.max(1, z));
@@ -173,11 +180,12 @@ export class CameraRig {
 				look.add(this.panOffset);
 			}
 		}
-		if (this.mode !== 'top') {
-			// kamera nesmie prejsť cez steny, strop ani podlahu herne
+		if (this.mode !== 'top' && !this.noClamp) {
+			// kamera nesmie prejsť cez steny, strop ani podlahu herne (kancelária stojí mimo herne)
 			clampToRoom(pos);
 		}
-		const k = 1 - Math.exp(-dt * (this.mode === 'view' ? 4 : moving ? 4 : 7));
+		const k = this.snapNext ? 1 : 1 - Math.exp(-dt * (this.mode === 'view' ? 4 : moving ? 4 : 7));
+		this.snapNext = false;
 		this.camera.position.lerp(pos, k);
 		this._curLook.lerp(look, k);
 		this.camera.lookAt(this._curLook);

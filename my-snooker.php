@@ -22,5 +22,6 @@ require_once MYSN_DIR . 'includes/roadmap.php';
 require_once MYSN_DIR . 'includes/news.php';
 require_once MYSN_DIR . 'includes/db.php';
 require_once MYSN_DIR . 'includes/rest.php';
+require_once MYSN_DIR . 'includes/league.php';
 require_once MYSN_DIR . 'includes/page.php';
 require_once MYSN_DIR . 'includes/admin.php';

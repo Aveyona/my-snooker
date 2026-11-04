@@ -6,6 +6,8 @@
  * {prefix}my_snooker_matches   partie: hráči, stav, kto je na rade, poradie úderu, uložený stav stola a skóre,
  *                              rozohraný úder, mierenie hráča na rade, posledný signál každého hráča, výsledok
  * {prefix}my_snooker_moves     záznam partie: každý úder s parametrami, stavom po údere, bodmi a faulom
+ * {prefix}my_snooker_seasons   sezóny ligy (približne rok): názov, začiatok, koniec, stav, majster sezóny
+ * {prefix}my_snooker_league    body ligy hráčov v sezóne, výhry, prehry, najvyššia séria, konečné poradie a liga
  * {prefix}my_snooker_scores    jeden hráč o najlepšie skóre: dohrané framy (body, čas, údery, fauly, najvyššia séria)
  *
  * Partia sa ukladá po každom údere, takže pri výpadku internetu sa dá pokračovať tam, kde sa skončila.
@@ -14,7 +16,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-const MYSN_DB_VERSION = '2';
+const MYSN_DB_VERSION = '3';
 
 function mysn_table( $name ) {
 	global $wpdb;
@@ -55,6 +57,9 @@ score1 int(10) unsigned NOT NULL DEFAULT 0,
 score2 int(10) unsigned NOT NULL DEFAULT 0,
 winner bigint(20) unsigned NOT NULL DEFAULT 0,
 result varchar(20) NOT NULL DEFAULT '',
+league tinyint(1) unsigned NOT NULL DEFAULT 0,
+season_id bigint(20) unsigned NOT NULL DEFAULT 0,
+delta int(10) NOT NULL DEFAULT 0,
 PRIMARY KEY  (id),
 KEY p1 (p1,status),
 KEY p2 (p2,status),
@@ -89,6 +94,34 @@ created int(10) unsigned NOT NULL DEFAULT 0,
 PRIMARY KEY  (id),
 KEY best (points,seconds),
 KEY user_id (user_id)
+) $c;"
+	);
+	dbDelta(
+		'CREATE TABLE ' . mysn_table( 'seasons' ) . " (
+id bigint(20) unsigned NOT NULL AUTO_INCREMENT,
+name varchar(40) NOT NULL DEFAULT '',
+started int(10) unsigned NOT NULL DEFAULT 0,
+ends int(10) unsigned NOT NULL DEFAULT 0,
+status varchar(12) NOT NULL DEFAULT 'active',
+champion bigint(20) unsigned NOT NULL DEFAULT 0,
+PRIMARY KEY  (id),
+KEY status (status)
+) $c;"
+	);
+	dbDelta(
+		'CREATE TABLE ' . mysn_table( 'league' ) . " (
+season_id bigint(20) unsigned NOT NULL,
+user_id bigint(20) unsigned NOT NULL,
+points int(10) unsigned NOT NULL DEFAULT 147,
+wins int(10) unsigned NOT NULL DEFAULT 0,
+losses int(10) unsigned NOT NULL DEFAULT 0,
+best int(10) unsigned NOT NULL DEFAULT 0,
+seed int(10) unsigned NOT NULL DEFAULT 999999,
+final_rank int(10) unsigned NOT NULL DEFAULT 0,
+final_league tinyint(1) unsigned NOT NULL DEFAULT 0,
+updated int(10) unsigned NOT NULL DEFAULT 0,
+PRIMARY KEY  (season_id,user_id),
+KEY ranking (season_id,points)
 ) $c;"
 	);
 	update_option( 'mysn_db', MYSN_DB_VERSION, true );
