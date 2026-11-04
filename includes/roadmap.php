@@ -87,6 +87,7 @@ function mysn_roadmap() {
 /** Denník zmien (najnovšie hore). */
 function mysn_changelog() {
 	return array(
+		array( '0.1.15', '4. 11. 2026', 'Posun pohľadu pravým tlačidlom bez mierenej gule sa pozerá na bod pol metra pred bielou v smere mierenia (nie na stred stola).' ),
 		array( '0.1.14', '4. 11. 2026', 'Priblíženie kolieskom je rýchlejšie (asi o 20 % na jeden krok) a má väčší rozsah, od pohľadu na celý stôl až tesne k bielej. Mantinely majú prierez ako skutočný stôl: podrezaný spodok, nos vo výške gule a šikmý vrch, žiadna kolmá stena.' ),
 		array( '0.1.13', '4. 11. 2026', 'Zrušené prepínanie kamier (Za tágom, Zhora, Voľná a klávesy 1, 2, 3). Hrá sa vždy za tágom, aj keď bola predtým uložená iná kamera.' ),
 		array( '0.1.12', '4. 11. 2026', 'Pri posune pohľadu pravým tlačidlom, keď sa nemieri na žiadnu guľu, sa kamera pozerá na stred stola.' ),

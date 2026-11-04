@@ -5,7 +5,7 @@
  *  do bielej vystrelí; sila podľa rýchlosti pohybu. Pustenie ľavého tlačidla bez úderu = zrušenie.
  *  Koliesko stlač a drž = pohybom myši sa posúva miesto úderu na bielej (falše), dvojklik kolieskom = stred.
  *  Pravé tlačidlo drž = posúvanie pohľadu hore, dole, doľava a doprava (kamera sa pozerá na mierenú guľu,
- *  ak sa nemieri na guľu, tak na stred stola). Po údere kamera sleduje bielu a pohyb myši bez tlačidla otáča pohľad.
+ *  ak sa nemieri na guľu, tak na bod pol metra pred bielou). Po údere kamera sleduje bielu a pohyb myši bez tlačidla otáča pohľad.
  *  Prst: ťahaj vodorovne = mierenie, koliesko myši = priblíženie.
  *  Zhora: klikni alebo ťahaj na stole = smer úderu.
  *  Voľná kamera: ťahanie otáča pohľad, krátke ťuknutie na stôl alebo šípky = smer.
@@ -80,7 +80,7 @@ export class Controls {
 		this.hooks.unlock();
 		const g = this.game;
 		if (e.pointerType === 'mouse' && e.button === 2) {
-			// pravé tlačidlo drž = posúvanie pohľadu (kamera sa pozerá na mierenú guľu, inak na stred stola)
+			// pravé tlačidlo drž = posúvanie pohľadu (kamera sa pozerá na mierenú guľu, inak na bod pol metra pred bielou)
 			if (this.rig.mode !== 'free') {
 				this.panning = true;
 				this.capture();

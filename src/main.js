@@ -15,6 +15,7 @@ import { Training } from './training.js';
 import { aimTrace, R } from './physics.js';
 
 const STORE = 'mySnookerSettings';
+const AIM_AHEAD = 0.5; // posun pohľadu bez mierenej gule: kamera sa pozerá 50 cm pred bielu
 
 function loadSettings() {
 	const mobile = /Android|iPhone|iPad|Mobile/i.test(navigator.userAgent);
@@ -263,8 +264,11 @@ export function start(root, config = {}) {
 		ui.drawContact(showContact ? trace : null, game.dir, showContact, settings.lines);
 		views.highlight(trace && aiming ? trace.ball : null, dt);
 		if (trace) {
-			// pri posune pohľadu sa kamera pozerá na mierenú guľu, a keď sa nemieri na žiadnu, na stred stola
-			const tp = trace.ball ? trace.ball.p : { x: 0, z: 0 };
+			// pri posune pohľadu sa kamera pozerá na mierenú guľu, a keď sa nemieri na žiadnu, na bod pred bielou
+			// v smere mierenia (AIM_AHEAD metrov)
+			const tp = trace.ball
+				? trace.ball.p
+				: { x: game.cue.p.x + Math.cos(game.dir) * AIM_AHEAD, z: game.cue.p.z + Math.sin(game.dir) * AIM_AHEAD };
 			aimPoint.set(tp.x, R, tp.z);
 			rig.aimPoint = aimPoint;
 		} else {
