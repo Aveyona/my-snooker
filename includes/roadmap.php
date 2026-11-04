@@ -118,6 +118,7 @@ function mysn_roadmap() {
 /** Denník zmien (najnovšie hore). */
 function mysn_changelog() {
 	return array(
+		array( '0.3.6', '4. 11. 2026', 'Za hráčom v kancelárii je vysoké okno s výhľadom na večerné mesto a osvetlený štadión. F6 okno otvorí alebo zatvorí (krídla sa otvoria dovnútra). Mapa hráčov je teraz na F10.' ),
 		array( '0.3.5', '4. 11. 2026', 'F2 v kancelárii funguje ako stojan v herni: kamera sa priblíži ku stojanu s tágami, dole sú karty tág (klik tágo zoberie do ligového zápasu alebo odoberie, najviac 4) a pod nimi nastavenia vybraného tága (šípky menia tágo).' ),
 		array( '0.3.4', '4. 11. 2026', 'Kancelária bez bočného panela, s drevenou podlahou a drevenými stenami. Vlastné klávesy: F1 nástenka s klávesmi na stene za hráčom, F2 tágá do ligového zápasu, F3 kalendár, F4 tabuľa výsledkov líg, F6 mapa hráčov, F7 notebook Moja liga, F8 vizitka, F9 vyhľadať zápas. Dvere ŠTADIÓN za hráčom vpravo spustia vyhľadávanie ligového zápasu: kto je práve vo fronte, hrá s kýmkoľvek ďalším, a obaja prejdú na štadión.' ),
 		array( '0.3.3', '4. 11. 2026', 'Pri tréningu (aj spoločnom tréningu s priateľom) ukazujú hodiny na stene skutočný miestny čas. Pri hre o skóre a v partii merajú čas hrania od 11:30.' ),

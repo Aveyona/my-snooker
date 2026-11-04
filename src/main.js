@@ -576,6 +576,12 @@ export function start(root, config = {}) {
 			officeRefresh();
 		},
 		officeKeys: () => ui.toast(OFFICE_KEYS),
+		officeWindow: () => {
+			const open = office.toggleWindow();
+			sound.unlock();
+			sound.doorCreak();
+			ui.toast(open ? 'Okno je otvorené.' : 'Okno je zatvorené.');
+		},
 		// pohľad na predmet v kancelárii; druhé stlačenie (alebo Esc) vráti pohľad za stôl
 		officeFocus: (name) => {
 			const v = officeFocusNow === name ? office.seat : office.views[name];
@@ -931,7 +937,7 @@ export function start(root, config = {}) {
 			}
 			if (view === 'office') {
 				// kancelária má vlastné klávesy (bez bočného panela)
-				const okeys = { f1: ['officeFocus', 'help'], f2: ['myCues'], f3: ['officeFocus', 'calendar'], f4: ['officeFocus', 'results'], f6: ['officeFocus', 'map'], f7: ['officeFocus', 'notebook'], f8: ['officeCard'], f9: ['officeDoor'] };
+				const okeys = { f1: ['officeFocus', 'help'], f2: ['myCues'], f3: ['officeFocus', 'calendar'], f4: ['officeFocus', 'results'], f6: ['officeWindow'], f10: ['officeFocus', 'map'], f7: ['officeFocus', 'notebook'], f8: ['officeCard'], f9: ['officeDoor'] };
 				if (okeys[lk]) {
 					ui.opts.onAction(okeys[lk][0], okeys[lk][1]);
 					return true;
@@ -1381,6 +1387,7 @@ export function start(root, config = {}) {
 			rig.aimPoint = null;
 		}
 		updateFelt();
+		office.updateWindow(dt);
 		rig.cueTilt = cue.pivot.visible ? cue.tilt || 0 : 0;
 		rig.update(dt, game.cue, game.dir, game.state === 'moving');
 		renderer.render(scene, rig.camera);

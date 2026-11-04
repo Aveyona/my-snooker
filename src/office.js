@@ -322,10 +322,106 @@ export function buildOffice(scene) {
 			trophyGroup.add(m);
 		});
 	};
-	const win = add(new THREE.PlaneGeometry(1.4, 1.1), new THREE.MeshBasicMaterial({ color: 0x8fb6e0 }), -1.6, FY + 1.75, RZo - 0.02);
-	win.rotation.y = Math.PI;
-	add(new THREE.BoxGeometry(1.5, 1.2, 0.04), wood, -1.6, FY + 1.75, RZo - 0.005);
-	add(new THREE.BoxGeometry(0.03, 1.1, 0.06), wood, -1.6, FY + 1.75, RZo - 0.03);
+	// vysoké okno za hráčom (F6 ho otvorí): večerné mesto a osvetlený štadión, dve krídla sa otvárajú dovnútra
+	const WX = -1.7;
+	const WW = 1.5;
+	const WH = 2.0;
+	const WY = FY + 0.55 + WH / 2;
+	const view = tex(1024, 1365);
+	{
+		const g = view.g;
+		const W = 1024;
+		const Hh = 1365;
+		const sky = g.createLinearGradient(0, 0, 0, Hh);
+		sky.addColorStop(0, '#0b1a3a');
+		sky.addColorStop(0.55, '#3a4f86');
+		sky.addColorStop(0.72, '#e48a4a');
+		sky.addColorStop(0.8, '#2a2030');
+		sky.addColorStop(1, '#141018');
+		g.fillStyle = sky;
+		g.fillRect(0, 0, W, Hh);
+		// hviezdy
+		g.fillStyle = '#ffffff';
+		for (let i = 0; i < 90; i++) {
+			g.globalAlpha = 0.3 + ((i * 37) % 70) / 100;
+			g.fillRect((i * 263) % W, (i * 151) % 600, 2, 2);
+		}
+		g.globalAlpha = 1;
+		// mesto: siluety domov s oknami
+		for (let i = 0; i < 26; i++) {
+			const bw = 40 + ((i * 53) % 70);
+			const bh = 90 + ((i * 97) % 260);
+			const x = (i * 41) % W;
+			const y = 1060 - bh;
+			g.fillStyle = '#120e18';
+			g.fillRect(x, y, bw, bh + 300);
+			g.fillStyle = '#f6d58a';
+			for (let wy = y + 12; wy < 1060; wy += 22) {
+				for (let wx = x + 8; wx < x + bw - 8; wx += 16) {
+					if (((wx * 7 + wy * 3 + i) % 5) < 2) {
+						g.globalAlpha = 0.5 + ((wx + wy) % 5) / 10;
+						g.fillRect(wx, wy, 6, 9);
+					}
+				}
+			}
+			g.globalAlpha = 1;
+		}
+		// štadión so svetlami
+		g.fillStyle = '#1d1a26';
+		g.beginPath();
+		g.ellipse(640, 1010, 260, 70, 0, Math.PI, 0);
+		g.fill();
+		for (const sx of [420, 860]) {
+			g.fillStyle = '#2a2630';
+			g.fillRect(sx - 4, 760, 8, 240);
+			const glow = g.createRadialGradient(sx, 760, 4, sx, 760, 120);
+			glow.addColorStop(0, '#ffffffee');
+			glow.addColorStop(0.2, '#fff2c099');
+			glow.addColorStop(1, '#fff2c000');
+			g.fillStyle = glow;
+			g.fillRect(sx - 120, 640, 240, 240);
+		}
+		g.fillStyle = '#7cc4f2';
+		g.font = 'bold 34px Arial, sans-serif';
+		g.textAlign = 'center';
+		g.fillText('MY SNOOKER ARÉNA', 640, 990);
+		view.t.needsUpdate = true;
+	}
+	const outside = add(new THREE.PlaneGeometry(WW, WH), new THREE.MeshBasicMaterial({ map: view.t }), WX, WY, RZo - 0.06);
+	outside.rotation.y = Math.PI;
+	// rám okna a parapet
+	for (const [w, h, x, y] of [[WW + 0.16, 0.08, WX, WY + WH / 2 + 0.04], [WW + 0.16, 0.08, WX, WY - WH / 2 - 0.04], [0.08, WH, WX - WW / 2 - 0.04, WY], [0.08, WH, WX + WW / 2 + 0.04, WY]]) {
+		add(new THREE.BoxGeometry(w, h, 0.12), wood, x, y, RZo - 0.06);
+	}
+	add(new THREE.BoxGeometry(WW + 0.3, 0.04, 0.26), wood, WX, WY - WH / 2 - 0.09, RZo - 0.13);
+	// dve krídla so sklom a priečkami, pánty na krajoch (otvárajú sa do kancelárie)
+	const glass = new THREE.MeshStandardMaterial({ color: 0xbfd8ff, transparent: true, opacity: 0.18, roughness: 0.05, metalness: 0.2, depthWrite: false });
+	const sashes = [];
+	for (const side of [-1, 1]) {
+		const hinge = new THREE.Group();
+		hinge.position.set(WX + side * (WW / 2), WY, RZo - 0.09);
+		root.add(hinge);
+		const sw = WW / 2;
+		const cx = -side * (sw / 2);
+		add(new THREE.PlaneGeometry(sw - 0.06, WH - 0.06), glass, cx, 0, 0, hinge).rotation.y = Math.PI;
+		for (const [w, h, x, y] of [[sw, 0.05, cx, WH / 2 - 0.025], [sw, 0.05, cx, -WH / 2 + 0.025], [0.05, WH, -side * 0.025, 0], [0.05, WH, -side * (sw - 0.025), 0], [sw, 0.03, cx, 0.2]]) {
+			add(new THREE.BoxGeometry(w, h, 0.04), wood, x, y, 0, hinge);
+		}
+		add(new THREE.BoxGeometry(0.02, 0.12, 0.04), brass, -side * (sw - 0.06), 0, -0.04, hinge);
+		sashes.push({ hinge, side });
+	}
+	let winOpen = 0;
+	let winTarget = 0;
+	const toggleWindow = () => {
+		winTarget = winTarget ? 0 : 1;
+		return !!winTarget;
+	};
+	const updateWindow = (dt) => {
+		winOpen += (winTarget - winOpen) * Math.min(1, dt * 3);
+		for (const s of sashes) {
+			s.hinge.rotation.y = s.side * winOpen * 1.25; // krídla sa otočia do miestnosti
+		}
+	};
 	// dvere na štadión (za hráčom vpravo): klik spustí vyhľadávanie ligového zápasu
 	const doorTex = woodTex('#5a3018', '#1e0e05', 4, true, 11);
 	const door = add(new THREE.BoxGeometry(1.0, 2.1, 0.05), new THREE.MeshStandardMaterial({ map: doorTex, roughness: 0.5 }), 1.9, FY + 1.05, RZo - 0.03);
@@ -373,16 +469,17 @@ export function buildOffice(scene) {
 			['F2', 'tágá do ligového zápasu (4 kusy)'],
 			['F3', 'pohľad na kalendár sezóny'],
 			['F4', 'tabuľa výsledkov líg'],
-			['F6', 'mapa hráčov ligy'],
+			['F6', 'otvoriť alebo zatvoriť okno'],
 			['F7', 'notebook Moja liga'],
 			['F8', 'vizitka: registrácia, moje údaje'],
 			['F9', 'vyhľadať zápas (aj dvere ŠTADIÓN)'],
+			['F10', 'mapa hráčov ligy'],
 			['Ctrl', 'drž: voľná myš na klikanie'],
 			['Esc', 'späť za stôl, potom do herne'],
 		];
 		g.textAlign = 'left';
 		rows.forEach(([k, t], i) => {
-			const y = 180 + i * 50;
+			const y = 172 + i * 46;
 			g.fillStyle = '#2a1608';
 			g.font = 'bold 34px Arial, sans-serif';
 			g.fillText(k, 90, y);
@@ -535,6 +632,8 @@ export function buildOffice(scene) {
 		setCard: drawCard,
 		door,
 		setDoor: drawDoor,
+		toggleWindow,
+		updateWindow,
 		/** Pohľady v kancelárii (F1 nástenka, F3 kalendár, F4 tabuľa líg, F6 mapa, F7 notebook), svetové súradnice. */
 		views: {
 			help: { pos: new THREE.Vector3(OX + 0.25, FY + 1.62, RZo - 1.75), look: new THREE.Vector3(OX + 0.25, FY + 1.6, RZo) },
