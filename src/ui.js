@@ -250,10 +250,11 @@ export class UI {
 		const user = this.opts.user;
 		if (kind === 'guest') {
 			this.menuMode.textContent = '3D snooker v prehliadači';
+			const tr = this.button('Tréning', 'guestTraining', 'Voľný tréning na stole bez prihlásenia');
 			const a = h('a', 'mysn-btn mysn-login', 'Prihlásiť sa');
 			a.href = this.opts.loginUrl || '/wp-login.php';
-			box.appendChild(a);
-			this.menuFoot.textContent = 'Hrať môžu prihlásení používatelia webu Hedlajner: tréning aj partie s priateľmi cez internet.';
+			box.append(tr, a);
+			this.menuFoot.textContent = 'Tréning si môžeš zahrať aj bez prihlásenia. Hru o skóre, ligu, partie s priateľmi a vlastné tágá majú prihlásení používatelia webu Hedlajner.';
 			return;
 		}
 		const fr = () => {

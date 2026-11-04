@@ -336,6 +336,7 @@ export function start(root, config = {}) {
 	let spin = { side: 0, top: 0 };
 	let placeCam = false;
 	let started = false;
+	let guestPlay = false; // neprihlásený návštevník trénuje (len tréning, bez ukladania a hry cez internet)
 	let escClosedAt = -1e9; // kedy Esc zavrelo menu (vtedy sa menu samo znova neotvorí)
 	let freeMouse = false; // Ctrl: myš uvoľnená bez menu
 	const finePointer = !!(window.matchMedia && window.matchMedia('(pointer: fine)').matches);
@@ -474,7 +475,7 @@ export function start(root, config = {}) {
 		}
 		const was = view;
 		view = null;
-		controls.blocked = !user;
+		controls.blocked = !user && !guestPlay;
 		rig.minViewZoom = 1;
 		rig.setViewZoom(1);
 		if (was === 'office') {
@@ -556,6 +557,14 @@ export function start(root, config = {}) {
 		place: () => {
 			game.confirmPlace();
 			game.aimAtNearest();
+		},
+		// neprihlásený návštevník: voľný tréning
+		guestTraining: () => {
+			guestPlay = true;
+			controls.blocked = false;
+			ui.showMenu(false);
+			game.aimAtNearest();
+			controls.capture();
 		},
 		resume: () => {
 			if (game.solo && game.solo.done) {
@@ -1020,7 +1029,7 @@ export function start(root, config = {}) {
 		lock: (on) => {
 			ui.setLock(on);
 			// myš sa uvoľnila (Esc): zobraz hlavné menu
-			if (on && !user) {
+			if (on && !user && !guestPlay) {
 				controls.uncapture();
 				return;
 			}
@@ -1107,8 +1116,8 @@ export function start(root, config = {}) {
 		},
 		key: (k) => {
 			const lk = k.toLowerCase();
-			if (!user) {
-				return true; // neprihlásený: len menu s tlačidlom Prihlásiť sa
+			if (!user && !guestPlay) {
+				return true; // neprihlásený: len menu s tlačidlami Tréning a Prihlásiť sa
 			}
 			if (lk === 'ctrl-down' || lk === 'ctrl-up') {
 				// Ctrl drž: voľná myš (kurzor, dá sa klikať); po pustení Ctrl sa myš znova zachytí na tágo

@@ -19,7 +19,7 @@ Hra je napísaná v JavaScripte nad knižnicou [three.js](https://threejs.org/),
 - detail dotyku gúľ zhora (uhol a plnosť zásahu, kruh vo farbe súkna) a krúžok na súkne pod guľou, na ktorú sa mieri
 - zvuky nárazov, mantinelov a jamiek
 - tréning (prvá položka menu, stôl s červeným súknom v tej istej herni): farby sa vracajú na spoty, biela do ruky, vrátenie úderu, body a série
-- hrať môžu len prihlásení používatelia webu, neprihlásený vidí v menu tlačidlo Prihlásiť sa
+- neprihlásený návštevník má v menu Tréning (voľný tréning bez prihlásenia) a Prihlásiť sa; hru o skóre, ligu, partie s priateľmi a vlastné tágá majú prihlásení používatelia webu
 - Poslať výzvu: partia alebo spoločný tréning cez internet s hráčom, ktorý je práve v hre (pozri nižšie)
 - Liga: kancelária hráča (Liga v menu) a nástenka Liga v herni (F12), pozri nižšie
 - Vstúpiť: sledovanie otvorených partií (tréning a Hrať s otvorenými dverami F6, ligové zápasy), pozri nižšie
