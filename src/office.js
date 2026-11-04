@@ -115,37 +115,36 @@ export function buildOffice(scene) {
 	root.add(lampLight);
 	// notebook s mojím miestom v lige
 	const nb = tex(512, 320);
-	add(new THREE.BoxGeometry(0.36, 0.015, 0.25), dark, -0.15, DT + 0.008, DZ - 0.05);
+	add(new THREE.BoxGeometry(0.36, 0.015, 0.25), dark, -0.15, DT + 0.008, DZ - 0.1);
+	// veko so zadným pántom, obrazovka otočená k hráčovi (+z)
 	const lid = new THREE.Group();
-	lid.position.set(-0.15, DT + 0.015, DZ + 0.075);
+	lid.position.set(-0.15, DT + 0.015, DZ - 0.225);
 	lid.rotation.x = -0.32;
 	root.add(lid);
 	add(new THREE.BoxGeometry(0.36, 0.24, 0.01), dark, 0, 0.12, 0, lid);
-	const nbScreen = add(new THREE.PlaneGeometry(0.33, 0.21), new THREE.MeshBasicMaterial({ map: nb.t }), 0, 0.12, -0.006, lid);
-	nbScreen.rotation.y = Math.PI;
+	const nbScreen = add(new THREE.PlaneGeometry(0.33, 0.21), new THREE.MeshBasicMaterial({ map: nb.t }), 0, 0.12, 0.006, lid);
 	// stolový kalendár sezóny (stojaci, dvojitá stieška)
 	const cal = tex(400, 300);
 	const calG = new THREE.Group();
-	calG.position.set(-0.62, DT, DZ - 0.18);
+	calG.position.set(-0.6, DT, DZ - 0.25);
 	calG.rotation.y = 0.5;
 	root.add(calG);
 	const calFront = add(new THREE.PlaneGeometry(0.2, 0.15), new THREE.MeshStandardMaterial({ map: cal.t, roughness: 0.8, side: THREE.DoubleSide }), 0, 0.075, 0, calG);
 	calFront.rotation.x = -0.35;
-	calFront.rotation.y = Math.PI;
 	calFront.position.z = 0.02;
 	add(new THREE.CylinderGeometry(0.004, 0.004, 0.2, 8), brass, 0, 0.145, 0.0, calG).rotation.z = Math.PI / 2;
 
 	// výsledková tabuľa štyroch líg na zadnej stene (-z), cez celú stenu
 	const res = tex(2048, 900);
-	const resMesh = add(new THREE.PlaneGeometry(5.6, 2.0), new THREE.MeshStandardMaterial({ map: res.t, roughness: 0.6, emissive: 0xffffff, emissiveMap: res.t, emissiveIntensity: 0.15 }), 0, FY + 1.95, -RZo + 0.03);
-	add(new THREE.BoxGeometry(5.75, 2.14, 0.04), wood, 0, FY + 1.95, -RZo + 0.01);
+	const resMesh = add(new THREE.PlaneGeometry(5.6, 2.0), new THREE.MeshStandardMaterial({ map: res.t, roughness: 0.6, emissive: 0xffffff, emissiveMap: res.t, emissiveIntensity: 0.15 }), 0, FY + 1.6, -RZo + 0.09);
+	add(new THREE.BoxGeometry(5.75, 2.14, 0.04), wood, 0, FY + 1.6, -RZo + 0.065); // pred lištou obloženia
 
 	// mapa sveta na ľavej stene (-x) s ikonkami hráčov
 	const MAP = { w: 3.8, h: 1.9, y: FY + 1.85 };
 	const mp = tex(2048, 1024);
-	const mapMesh = add(new THREE.PlaneGeometry(MAP.w, MAP.h), new THREE.MeshStandardMaterial({ map: mp.t, roughness: 0.75 }), -RXo + 0.03, MAP.y, 0);
+	const mapMesh = add(new THREE.PlaneGeometry(MAP.w, MAP.h), new THREE.MeshStandardMaterial({ map: mp.t, roughness: 0.75 }), -RXo + 0.09, MAP.y, 0);
 	mapMesh.rotation.y = Math.PI / 2;
-	add(new THREE.BoxGeometry(0.04, MAP.h + 0.1, MAP.w + 0.1), wood, -RXo + 0.01, MAP.y, 0);
+	add(new THREE.BoxGeometry(0.04, MAP.h + 0.1, MAP.w + 0.1), wood, -RXo + 0.065, MAP.y, 0);
 	const drawMap = (players, meId) => {
 		const g = mp.g;
 		g.fillStyle = '#16324f';
@@ -366,7 +365,7 @@ export function buildOffice(scene) {
 		map: mapMesh,
 		MAP,
 		/** Sedím za stolom a pozerám do kancelárie (na výsledkovú tabuľu). */
-		seat: { pos: new THREE.Vector3(OX, FY + 1.22, DZ + 0.55), look: new THREE.Vector3(OX, FY + 1.5, -RZo) },
+		seat: { pos: new THREE.Vector3(OX, FY + 1.25, DZ + 0.75), look: new THREE.Vector3(OX, FY + 0.85, -RZo) },
 		setBoards: drawBoards,
 		setMap: drawMap,
 		setRack,

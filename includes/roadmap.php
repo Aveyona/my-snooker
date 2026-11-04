@@ -99,12 +99,26 @@ function mysn_roadmap() {
 				array( 'Dokumentácia v My Help (obálka, mapa, popis)', 0 ),
 			),
 		),
+		array(
+			'n'      => 6,
+			'title'  => 'Liga',
+			'status' => 'now',
+			'goal'   => 'Sezóna na rok so štyrmi ligami, kancelária hráča a ligové zápasy na štadióne.',
+			'items'  => array(
+				array( 'Sezóna, body (štart 147, víťaz berie nahrané body), štyri ligy, poistky', 1 ),
+				array( 'Kancelária: registrácia do ligy, tabuľa líg, mapa hráčov, kalendár, moje tágá (4 do zápasu)', 1 ),
+				array( 'Nástenka Liga v herni (F12)', 1 ),
+				array( 'Ligové zápasy na štadióne s modrým stolom a divákmi', 0 ),
+				array( 'Koniec sezóny: majster, poháre, minulé sezóny, nastavenie v administrácii', 0 ),
+			),
+		),
 	);
 }
 
 /** Denník zmien (najnovšie hore). */
 function mysn_changelog() {
 	return array(
+		array( '0.3.0', '4. 11. 2026', 'Liga: sezóna na rok, štyri ligy (1. liga top 10, 2. liga 11. až 30. miesto, 3. liga 31. až 70. miesto, 4. liga ostatní), každý začína so 147 bodmi, víťaz získa body, ktoré nahral, a porazený ich stratí. Klik na Liga v menu otvorí kanceláriu hráča: registrácia do ligy za stolom (krajina, mesto, prezývka, ruka, obľúbené tágo, o mne), kalendár sezóny a notebook na stole, výsledková tabuľa štyroch líg na stene, mapa sveta s hráčmi, stojan s mojimi tágami (4 do zápasu, vlastný názov, farby, sila a falše). V herni pribudla nástenka Liga (F12). Ligové zápasy na štadióne prídu v ďalšej verzii.' ),
 		array( '0.2.9', '4. 11. 2026', 'Keď je biela pri mantineli, tágo sa zdvihne strmšie (až do 40 stupňov), aby neprechádzalo cez mantinel a rám stola. Kamera za tágom sa vtedy zdvihne nad tágo.' ),
 		array( '0.2.8', '4. 11. 2026', 'Pri bare (F10) sa dá myšou rozhliadať a kolieskom približovať. Drž Ctrl: myš sa uvoľní a dá sa kliknúť na telefón; so zachytenou myšou stačí pozrieť na telefón a kliknúť. Hra beží aj na vlastnej adrese snooker.hedlajner.sk.' ),
 		array( '0.2.7', '4. 11. 2026', 'F10: pohľad z baru. Na barovom stolíku leží telefón s obrazovkou Môj účet a dva poháre s vodou. Klik na telefón (alebo M) ho zväčší na obrazovku so stránkou Môj účet z webu. Pri hre o skóre čas pri bare stojí. Tabuľa so skóre na stene ukazuje aktuálny čas framu.' ),

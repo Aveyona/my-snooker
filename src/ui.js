@@ -1002,7 +1002,7 @@ export class UI {
 			// registrácia do ligy (alebo úprava údajov hráča)
 			w.appendChild(h('div', 'mysn-news-head', `<b>${reg ? 'Údaje hráča' : 'Registrácia do ligy'}</b>`));
 			if (!reg) {
-				w.appendChild(h('p', 'mysn-mixer-status', `Sezóna ${esc(d.season.name)}, do konca ${d.season.daysLeft} dní. Po registrácii začínaš so 147 bodmi v 4. lige (alebo podľa poradia) a môžeš vyzývať hráčov.`));
+				w.appendChild(h('p', 'mysn-mixer-status', `${esc(d.season.name)}, do konca ${d.season.daysLeft} dní. Po registrácii začínaš so 147 bodmi v 4. lige (alebo podľa poradia) a môžeš vyzývať hráčov.`));
 			}
 			const f = document.createElement('form');
 			f.className = 'mysn-form';
@@ -1164,6 +1164,10 @@ export class UI {
 		box.classList.toggle('mysn-hidden', !name);
 		box.classList.toggle('mysn-view-news', name === 'news' || name === 'magazine' || name === 'chair' || name === 'mixer' || name === 'office');
 		this.root.classList.toggle('mysn-viewing', !!name);
+		this.root.classList.toggle('mysn-in-office', name === 'office');
+		if (this._lastGame) {
+			this.sync(this._lastGame, this._lastCam);
+		}
 		if (!name) {
 			return;
 		}
@@ -1250,7 +1254,7 @@ export class UI {
 			chalk: 'Kriedujem špičku tága. Falše budú 3 údery 5x silnejšie.',
 		};
 		foot.appendChild(h('span', '', texts[name] || ''));
-		if (name !== 'chalk') {
+		if (name !== 'chalk' && name !== 'office') {
 			const back = this.button('Späť do hry', 'back');
 			back.classList.add('mysn-primary');
 			foot.appendChild(back);
@@ -1272,7 +1276,7 @@ export class UI {
 		const s = game.stats;
 		const mt = game.match;
 		this.root.classList.toggle('mysn-online', !!mt);
-		this.modeLabel.textContent = mt ? (mt.league ? 'Ligová partia' : 'Partia') : game.solo ? 'O najlepšie skóre' : 'Tréning';
+		this.modeLabel.textContent = this.root.classList.contains('mysn-in-office') ? 'Liga: kancelária' : mt ? (mt.league ? 'Ligová partia' : 'Partia') : game.solo ? 'O najlepšie skóre' : 'Tréning';
 		const so = game.solo;
 		if (so && !mt) {
 			const t = Math.max(0, Math.round(so.time));

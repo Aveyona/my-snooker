@@ -226,3 +226,6 @@ body.mysn-page { font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans
 .mysn-cue-name span { font-size: 11px; opacity: .7; }
 .mysn-cue-edit { padding: 6px 8px 10px; border-left: 2px solid #FACC15; margin-left: 10px; display: flex; flex-direction: column; gap: 4px; }
 .mysn-cue-edit input[type=color] { width: 60px; height: 26px; border: 0; background: none; }
+
+/* kancelária: horná lišta bez štatistík tréningu */
+.mysn-in-office .mysn-stats { visibility: hidden; }

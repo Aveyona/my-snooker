@@ -340,6 +340,14 @@ export function start(root, config = {}) {
 		if (name === 'chalk' && game.state !== 'aim') {
 			return;
 		}
+		if (view === 'office' && name !== 'office') {
+			// z kancelárie rovno do iného pohľadu v herni
+			rig.noClamp = false;
+			rig.snapNext = true;
+			rig.minViewZoom = 1;
+			rig.setViewZoom(1);
+			ui.openLeague(false);
+		}
 		view = name;
 		controls.blocked = true;
 		// pri kriedovaní a v kresle ostáva myš zachytená (v kresle sa ňou rozhliada)
@@ -364,6 +372,8 @@ export function start(root, config = {}) {
 				// kancelária stojí mimo herne: kamera sa presunie hneď (bez letu cez steny)
 				rig.noClamp = true;
 				rig.jump();
+				rig.minViewZoom = 0.85;
+				rig.setViewZoom(0.85); // širší pohľad: stôl s kalendárom aj celá tabuľa
 			}
 			if (LOOK.has(name)) {
 				// počiatočný smer pohľadu z kresla alebo z baru (otáčanie hlavou myšou)
@@ -384,6 +394,7 @@ export function start(root, config = {}) {
 		const was = view;
 		view = null;
 		controls.blocked = !user;
+		rig.minViewZoom = 1;
 		rig.setViewZoom(1);
 		if (was === 'office') {
 			rig.noClamp = false;
@@ -510,7 +521,8 @@ export function start(root, config = {}) {
 			if (r && !r.error) {
 				leagueData = r;
 				ui.toast(form.edit ? 'Údaje hráča sú uložené.' : 'Vitaj v lige! Začínaš so 147 bodmi.');
-				officeRefresh();
+				officeMode = '';
+				await refreshLeague(); // tabuľa, mapa, kalendár a nástenka F12 s novým hráčom
 			} else {
 				ui.toast((r && r.error) || 'Registrácia sa nepodarila.');
 			}

@@ -100,7 +100,7 @@ export class CameraRig {
 
 	/** Priblíženie v pohľade (F7 z kresla): 1 = normálne, viac = bližšie (užší záber). */
 	setViewZoom(z) {
-		this.viewZoom = Math.min(5, Math.max(1, z));
+		this.viewZoom = Math.min(5, Math.max(this.minViewZoom || 1, z));
 		this.camera.fov = (this.baseFov || 45) / this.viewZoom;
 		this.camera.updateProjectionMatrix();
 	}

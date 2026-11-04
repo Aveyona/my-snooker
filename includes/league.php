@@ -155,7 +155,7 @@ function mysn_league_can_play( $a, $b ) {
 	$ranked = mysn_league_ranked( $s['id'] );
 	$ra     = mysn_league_me( $a, $ranked );
 	$rb     = mysn_league_me( $b, $ranked );
-	if ( ! $ra || ! $rb ) {
+	if ( ! $ra || ! $rb || ! mysn_player( $a ) || ! mysn_player( $b ) ) {
 		return 'Ligovo môžu hrať len hráči registrovaní v lige (registrácia je v kancelárii).';
 	}
 	if ( abs( (int) $ra['league'] - (int) $rb['league'] ) > 1 ) {
@@ -328,7 +328,7 @@ function mysn_rest_league( $req ) {
 		$live[]      = $row;
 	}
 	return array(
-		'registered' => (bool) $me,
+		'registered' => $me && mysn_player( $uid ),
 		'player'     => mysn_player( $uid ),
 		'season'  => array(
 			'id'       => (int) $s['id'],

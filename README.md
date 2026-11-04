@@ -21,6 +21,17 @@ Hra je napísaná v JavaScripte nad knižnicou [three.js](https://threejs.org/),
 - tréning: farby sa vracajú na spoty, biela do ruky, vrátenie úderu, body a série
 - hrať môžu len prihlásení používatelia webu, neprihlásený vidí v menu tlačidlo Prihlásiť sa
 - Hrať s priateľom: partia cez internet s hráčom, ktorý je práve v hre (pozri nižšie)
+- Liga: kancelária hráča (Liga v menu) a nástenka Liga v herni (F12), pozri nižšie
+
+## Liga
+
+- Sezóna trvá rok. Každý registrovaný hráč začína so 147 bodmi, víťaz ligovej partie získa toľko bodov, koľko nahral, a presne toľko stratí porazený (neklesne pod 0).
+- Štyri ligy podľa poradia: 1. liga top 10, 2. liga 11. až 30. miesto, 3. liga 31. až 70. miesto, 4. liga ostatní. Výhra nad hráčom z vyššej ligy sa ráta 1,5-krát, pri vzdaní má víťaz najmenej 30 bodov, s tým istým súperom sa rátajú najviac 3 partie za deň.
+- Klik na Liga v menu otvorí kanceláriu: sedíš za stolom a myšou sa rozhliadaš (koliesko približuje, Ctrl drž: voľná myš, Esc späť do herne).
+- Za stolom je registrácia do ligy (krajina povinná, mesto, prezývka, ruka, obľúbené tágo, o mne). Neregistrovaný hráč ligu nehrá.
+- V kancelárii: kalendár sezóny a notebook na stole, výsledková tabuľa štyroch líg na zadnej stene, mapa sveta s hráčmi na ľavej stene (klik na ikonku ukáže hráča), stojan s mojimi tágami na pravej stene. Do zápasu si vyberieš 4 tágá a každé si môžeš upraviť (názov, farby, sila a falše).
+- Ligu ukladajú tabuľky `my_snooker_seasons` a `my_snooker_league`, údaje hráča sú v používateľskom poli `mysn_player`.
+- Ligové zápasy na štadióne (modrý stôl, traja diváci) prídu v ďalšej verzii.
 
 ## Hrať s priateľom (partia cez internet)
 
@@ -52,6 +63,7 @@ Hra je napísaná v JavaScripte nad knižnicou [three.js](https://threejs.org/),
 | Rebríček: polica s pohármi a tabuľka 4. až 10. miesta | F8 |
 | Mixpult a rádio (šípky stanica a hlasitosť, P zapnúť alebo vypnúť) | F9 |
 | Pohľad z baru (rozhliadanie myšou, koliesko priblíženie; Ctrl drž a klik na telefón alebo M: Môj účet) | F10 |
+| Nástenka Liga (štyri ligy, sezóna, moje miesto) | F12 |
 | Pohľad na stôl zhora | Tab |
 
 ## Tágá
