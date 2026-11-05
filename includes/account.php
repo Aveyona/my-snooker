@@ -70,7 +70,7 @@ function mysn_rest_account() {
 		'links'      => array(
 			'account' => function_exists( 'my_users_account_url' ) ? my_users_account_url() : admin_url( 'profile.php' ),
 			'shop'    => $shop && 'publish' === get_post_status( $shop ) ? get_permalink( $shop ) : '',
-			'logout'  => wp_logout_url( mysn_url() ),
+			'logout'  => html_entity_decode( wp_logout_url( mysn_url() ) ), // wp_logout_url vracia &amp; (inak by sa stratil návrat do hry)
 		),
 	);
 }

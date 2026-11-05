@@ -356,11 +356,18 @@ export class UI {
 				`<div class="mysn-acc-links">` +
 				(d.links.account ? `<a class="mysn-btn" href="${esc(d.links.account)}" target="_blank" rel="noopener">Môj účet na webe</a>` : '') +
 				(d.links.shop ? `<a class="mysn-btn" href="${esc(d.links.shop)}" target="_blank" rel="noopener">Môj e-shop</a>` : '') +
-				`<a class="mysn-btn" href="${esc(d.links.logout)}">Odhlásiť sa</a>` +
+				`<a class="mysn-btn" href="${esc(d.links.logout)}" data-logout>Odhlásiť sa</a>` +
 				`</div>`;
 		}
 		p.innerHTML = `<h3>Môj účet</h3>${body}<button type="button" class="mysn-btn mysn-primary" data-close>Zavrieť</button>`;
 		p.querySelector('[data-close]').addEventListener('click', () => p.classList.add('mysn-hidden'));
+		const out = p.querySelector('[data-logout]');
+		if (out) {
+			// odhlásenie: WordPress zmaže prihlásenie a hneď vráti späť do hry (redirect_to), stránka wp-login.php sa neukáže
+			out.addEventListener('click', () => {
+				out.textContent = 'Odhlasujem…';
+			});
+		}
 		p.classList.remove('mysn-hidden');
 	}
 
