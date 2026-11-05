@@ -151,8 +151,9 @@ function mysn_touch( $uid, $state, $match_id = 0 ) {
 
 function mysn_is_live( $uid ) {
 	global $wpdb;
-	$seen = (int) $wpdb->get_var( $wpdb->prepare( 'SELECT seen FROM ' . mysn_table( 'presence' ) . ' WHERE user_id = %d', $uid ) ); // phpcs:ignore
-	return $seen >= time() - MYSN_LIVE;
+	// away = zhasnutá lampa v kancelárii: hráč nie je online (nedá sa vyzvať ani nájsť)
+	$row = $wpdb->get_row( $wpdb->prepare( 'SELECT seen, state FROM ' . mysn_table( 'presence' ) . ' WHERE user_id = %d', $uid ), ARRAY_A ); // phpcs:ignore
+	return $row && (int) $row['seen'] >= time() - MYSN_LIVE && 'away' !== $row['state'];
 }
 
 /** Súhrn partie pre klienta. */
@@ -213,7 +214,7 @@ function mysn_rest_ping( $req ) {
 	}
 	$pt   = mysn_table( 'presence' );
 	$t    = mysn_table( 'matches' );
-	$rows = $wpdb->get_results( $wpdb->prepare( "SELECT user_id, state FROM $pt WHERE seen >= %d AND user_id <> %d ORDER BY seen DESC LIMIT 50", $now - MYSN_LIVE, $uid ), ARRAY_A ); // phpcs:ignore
+	$rows = $wpdb->get_results( $wpdb->prepare( "SELECT user_id, state FROM $pt WHERE seen >= %d AND user_id <> %d AND state <> 'away' ORDER BY seen DESC LIMIT 50", $now - MYSN_LIVE, $uid ), ARRAY_A ); // phpcs:ignore
 	$live = array();
 	foreach ( $rows as $r ) {
 		$u         = mysn_user( $r['user_id'] );
@@ -253,7 +254,7 @@ function mysn_rest_ping( $req ) {
 		'paused'   => $paused,
 		// notes na stole v kancelárii: hráči v hre teraz a koľkí čakajú na ligový zápas (dvere ŠTADIÓN)
 		'stats'    => array(
-			'online'  => (int) $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM $pt WHERE seen >= %d", $now - MYSN_LIVE ) ), // phpcs:ignore
+			'online'  => (int) $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM $pt WHERE seen >= %d AND state <> 'away'", $now - MYSN_LIVE ) ), // phpcs:ignore
 			'waiting' => (int) $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM $pt WHERE state = 'queue' AND seen >= %d", $now - 15 ) ), // phpcs:ignore
 		),
 		'signals'  => mysn_rtc_take( $uid ),

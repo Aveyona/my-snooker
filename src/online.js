@@ -89,7 +89,7 @@ export class Online {
 
 	async ping() {
 		try {
-			const d = await this.net.call('ping', { state: this.inMatch ? 'match' : this.watching ? 'watch' : this.queueing ? 'queue' : this.lobbyOpen ? 'lobby' : 'training' });
+			const d = await this.net.call('ping', { state: this.inMatch ? 'match' : this.watching ? 'watch' : this.queueing ? 'queue' : this.away ? 'away' : this.lobbyOpen ? 'lobby' : 'training' }); // away = zhasnutá lampa v kancelárii (nie som online)
 			if (d.nonce) {
 				this.net.nonce = d.nonce;
 			}

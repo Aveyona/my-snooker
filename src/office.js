@@ -178,6 +178,12 @@ export function buildOffice(scene) {
 	const lampLight = new THREE.PointLight(0xffe2b0, 2.5, 2.5, 2);
 	lampLight.position.set(0.68, DT + 0.3, DZ - 0.3);
 	root.add(lampLight);
+	// žiarovka pod tienidlom (svieti, keď je lampa zapnutá = som online)
+	const bulb = add(new THREE.SphereGeometry(0.025, 14, 10), new THREE.MeshBasicMaterial({ color: 0xfff1c8 }), 0.68, DT + 0.37, DZ - 0.27);
+	const setLamp = (on) => {
+		lampLight.intensity = on ? 2.5 : 0;
+		bulb.material.color.setHex(on ? 0xfff1c8 : 0x3a3528);
+	};
 	// notebook s mojím miestom v lige
 	const nb = tex(512, 320);
 	add(new THREE.BoxGeometry(0.36, 0.015, 0.25), dark, -0.15, DT + 0.008, DZ - 0.1);
@@ -741,6 +747,9 @@ export function buildOffice(scene) {
 		setCard: drawCard,
 		/** Notes na stole: { online, waiting } z pingu. */
 		setNotes: drawNotes,
+		/** Lampa na stole (F12): zapnutá = som online a môžem hľadať zápas. */
+		lamp: shade,
+		setLamp,
 		door,
 		setDoor: drawDoor,
 		toggleWindow,

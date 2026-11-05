@@ -41,7 +41,7 @@ function mysn_rest_rooms() {
 	$pt   = mysn_table( 'presence' );
 	$now  = time();
 	$out  = array();
-	$rows = $wpdb->get_results( $wpdb->prepare( "SELECT r.user_id, r.kind, r.seq, r.data FROM $rt r JOIN $pt p ON p.user_id = r.user_id WHERE r.door = 1 AND p.seen >= %d AND p.state <> 'match' AND r.user_id <> %d ORDER BY r.updated DESC LIMIT 30", $now - MYSN_LIVE, $uid ), ARRAY_A ); // phpcs:ignore
+	$rows = $wpdb->get_results( $wpdb->prepare( "SELECT r.user_id, r.kind, r.seq, r.data FROM $rt r JOIN $pt p ON p.user_id = r.user_id WHERE r.door = 1 AND p.seen >= %d AND p.state NOT IN ('match', 'away') AND r.user_id <> %d ORDER BY r.updated DESC LIMIT 30", $now - MYSN_LIVE, $uid ), ARRAY_A ); // phpcs:ignore
 	foreach ( $rows as $r ) {
 		$d     = $r['data'] ? json_decode( $r['data'], true ) : array();
 		$out[] = array(

@@ -164,6 +164,8 @@ export function start(root, config = {}) {
 	}
 	const stadium = buildStadium(scene, settings.quality);
 	const office = buildOffice(scene);
+	let lampOn = settings.lamp !== false; // lampa v kancelárii: zhasnutá = nie som online
+	office.setLamp(lampOn);
 	let officeMode = ''; // '' prehľad, 'edit' údaje hráča, 'cues' moje tágá
 	let officeCue = null;
 	const officeData = () => ({ office: { league: leagueData, mode: officeMode, countries: COUNTRIES, cues: [...ownCues.map(ownCueSpec), ...CUES], myCues, cue: officeCue, user } }); // moje uložené tágá sú prvé zľava
@@ -221,7 +223,7 @@ export function start(root, config = {}) {
 	// pohľady, v ktorých sa myšou rozhliada (Ctrl drž = voľná myš)
 	const LOOK = new Set(['chair', 'bar', 'office']);
 	let officeFocusNow = '';
-	const OFFICE_KEYS = 'Kancelária: F1 nástenka s klávesmi za tebou, F8 vizitka (registrácia), F9 alebo dvere ŠTADIÓN: vyhľadať zápas. Esc späť do herne.';
+	const OFFICE_KEYS = 'Kancelária: F1 nástenka s klávesmi za tebou, F8 vizitka (registrácia), F9 alebo dvere ŠTADIÓN: vyhľadať zápas, F12 lampa (zhasnutá = nie si online). Esc späť do herne.';
 	let venue = 'home';
 	const fadeEl = document.createElement('div');
 	fadeEl.className = 'mysn-fade';
@@ -745,6 +747,22 @@ export function start(root, config = {}) {
 			chairLook.pitch = Math.atan2(d.y, Math.hypot(d.x, d.z));
 			rig.setViewZoom(officeFocusNow ? 1 : 0.85);
 		},
+		// lampa na stole (F12 alebo klik): zhasnutá = nie som online (nevidia ma, nedá sa hľadať zápas)
+		officeLamp: async () => {
+			lampOn = !lampOn;
+			settings.lamp = lampOn;
+			saveSettings(settings);
+			office.setLamp(lampOn);
+			if (online) {
+				online.away = !lampOn;
+				if (!lampOn && online.queueing) {
+					await online.seek(false);
+					office.setDoor('');
+				}
+				online.ping();
+			}
+			ui.toast(lampOn ? 'Lampa svieti: si online, ostatní ťa vidia a môžeš hľadať zápas.' : 'Lampa zhasnutá: nie si online, ostatní ťa nevidia a zápas sa hľadať nedá. F12 ju rozsvieti.');
+		},
 		// dvere ŠTADIÓN (alebo F9): vyhľadanie ligového zápasu, druhý klik ho zruší
 		officeDoor: async () => {
 			if (!online) {
@@ -759,6 +777,10 @@ export function start(root, config = {}) {
 				await online.seek(false);
 				office.setDoor('');
 				ui.toast('Vyhľadávanie zápasu je zrušené.');
+				return;
+			}
+			if (!lampOn) {
+				ui.toast('Lampa je zhasnutá, nie si online. Rozsvieť ju (F12 alebo klik na lampu) a potom vyhľadaj zápas.');
 				return;
 			}
 			if (!myCues.selected.length) {
@@ -1127,6 +1149,10 @@ export function start(root, config = {}) {
 					actions.officeCard();
 					return;
 				}
+				if (ray.intersectObject(office.lamp, false).length) {
+					actions.officeLamp();
+					return;
+				}
 				if (ray.intersectObject(office.door, false).length) {
 					actions.officeDoor();
 					return;
@@ -1232,7 +1258,7 @@ export function start(root, config = {}) {
 			}
 			if (view === 'office') {
 				// kancelária má vlastné klávesy (bez bočného panela)
-				const okeys = { f1: ['officeFocus', 'help'], f2: ['myCues'], f3: ['officeFocus', 'calendar'], f4: ['officeFocus', 'results'], f6: ['officeWindow'], f10: ['officeFocus', 'map'], f7: ['officeFocus', 'notebook'], f8: ['officeCard'], f9: ['officeDoor'] };
+				const okeys = { f12: ['officeLamp'], f1: ['officeFocus', 'help'], f2: ['myCues'], f3: ['officeFocus', 'calendar'], f4: ['officeFocus', 'results'], f6: ['officeWindow'], f10: ['officeFocus', 'map'], f7: ['officeFocus', 'notebook'], f8: ['officeCard'], f9: ['officeDoor'] };
 				if (okeys[lk]) {
 					ui.opts.onAction(okeys[lk][0], okeys[lk][1]);
 					return true;
@@ -1528,6 +1554,7 @@ export function start(root, config = {}) {
 			status: () => ui.setNet(online ? online.statusText() : ''),
 			stats: (st) => office.setNotes(st),
 		});
+		online.away = !lampOn; // zhasnutá lampa v kancelárii: nie som online
 	}
 	loadTrophies();
 	loadOwn();

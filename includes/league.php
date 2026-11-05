@@ -324,7 +324,7 @@ function mysn_rest_league( $req ) {
 	foreach ( $ranked as $r ) {
 		$byid[ (int) $r['user_id'] ] = $r;
 	}
-	foreach ( $wpdb->get_results( $wpdb->prepare( "SELECT user_id, state FROM $pt WHERE seen >= %d AND user_id <> %d ORDER BY seen DESC LIMIT 50", time() - MYSN_LIVE, $uid ), ARRAY_A ) as $p ) { // phpcs:ignore
+	foreach ( $wpdb->get_results( $wpdb->prepare( "SELECT user_id, state FROM $pt WHERE seen >= %d AND user_id <> %d AND state <> 'away' ORDER BY seen DESC LIMIT 50", time() - MYSN_LIVE, $uid ), ARRAY_A ) as $p ) { // phpcs:ignore
 		$u  = (int) $p['user_id'];
 		$lg = isset( $byid[ $u ] ) ? (int) $byid[ $u ]['league'] : 4;
 		if ( ! $me || ( ! MYSN_LEAGUE_OPEN && abs( $lg - (int) $me['league'] ) > 1 ) ) {
