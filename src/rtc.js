@@ -11,7 +11,7 @@ const GATHER_MS = 2500;
 const DISC_MS = 15000; // prerušené spojenie (disconnected) sa zruší až po tomto čase
 const HB_MS = 2000; // kontrolný signál cez otvorené spojenie
 const HB_DEAD_MS = 6000; // bez akejkoľvek správy tak dlho: spojenie sa opravuje (ICE restart)
-const RESTART_MS = 14000; // oprava (ICE restart), ktorá sa dovtedy nepodarí: spojenie sa zruší a nadviaže nanovo
+const RESTART_MS = 20000; // oprava (ICE restart), ktorá sa dovtedy nepodarí: spojenie sa zruší a nadviaže nanovo
 
 // celá ponuka naraz: čaká sa na kandidátov spojenia, stačí verejná adresa zo STUN (srflx), najdlhšie GATHER_MS
 // fresh = po ICE restarte: stav 'complete' z predchádzajúceho zberu neplatí, čaká sa na nových kandidátov
@@ -53,6 +53,17 @@ export class Rtc {
 		this._fastT = 0;
 		this.log = []; // posledné udalosti spojení (na ladenie: MySnooker.online.rtc.log)
 		this.supported = typeof window !== 'undefined' && typeof window.RTCPeerConnection === 'function';
+		if (typeof document !== 'undefined') {
+			// prepnutie karty: druhá strana sa to hneď dozvie (v pozadí nespúšťa opravu spojenia)
+			document.addEventListener('visibilitychange', () => {
+				const away = document.visibilityState === 'hidden';
+				for (const p of this.peers.values()) {
+					if (p.state === 'open') {
+						this.send(p, away ? { k: 'hb', away: 1 } : { k: 'hb' });
+					}
+				}
+			});
+		}
 	}
 
 	note(...a) {
@@ -189,6 +200,7 @@ export class Rtc {
 			}
 			if (m && m.k === 'hb') {
 				p.hbSeen = true; // kontrolný signál: len potvrdzuje, že spojenie žije
+				p.peerAway = !!m.away; // druhá strana má hru v pozadí (časovače sú spomalené, signály chodia zriedka)
 				return;
 			}
 			if (m && p.state === 'open') {
@@ -429,10 +441,12 @@ export class Rtc {
 				return;
 			}
 			const now = Date.now();
+			const away = typeof document !== 'undefined' && document.visibilityState === 'hidden';
 			for (const p of open) {
-				this.send(p, { k: 'hb' });
-				// mŕtve spojenie sa rozpozná len u druhej strany s novou verziou (posiela kontrolné signály)
-				if (p.hbSeen && !p.restarting && now - p.lastRx > HB_DEAD_MS) {
+				this.send(p, away ? { k: 'hb', away: 1 } : { k: 'hb' });
+				// mŕtve spojenie sa rozpozná len u druhej strany s novou verziou (posiela kontrolné signály);
+				// keď má súper hru v pozadí alebo ju mám v pozadí ja, oprava sa nespúšťa (signály chodia zriedka)
+				if (p.hbSeen && !p.restarting && !away && !p.peerAway && now - p.lastRx > HB_DEAD_MS) {
 					this.restart(p, 'no hb ' + ((now - p.lastRx) / 1000).toFixed(1) + ' s');
 				}
 			}
