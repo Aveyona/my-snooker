@@ -63,7 +63,6 @@ function mysn_admin_page() {
 				<p>2 hráči cez internet (Poslať výzvu): <b style="color:#008a20">hotové</b></p>
 				<p>Liga so štadiónom: <b style="color:#008a20">hotové</b></p>
 				<p>Sledovanie partií (Pozerať hru): <b style="color:#008a20">hotové</b></p>
-				<p>Proti počítaču: <span style="color:#8c8f94">3. etapa</span></p>
 				<p>Viac hráčov na jednom zariadení: <span style="color:#8c8f94">zatiaľ nie je podporované</span></p>
 				<p><a href="<?php echo esc_url( admin_url( 'admin.php?page=my-snooker-plan' ) ); ?>">Plán vývoja</a></p>
 			</div>

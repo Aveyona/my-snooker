@@ -62,17 +62,6 @@ function mysn_roadmap() {
 		),
 		array(
 			'n'      => 3,
-			'title'  => 'Hra proti počítaču',
-			'status' => 'next',
-			'goal'   => 'Súper, ktorý hľadá najlepší úder a mieri s chybou podľa úrovne.',
-			'items'  => array(
-				array( 'Výber úderu: ktoré gule sa dajú potopiť, kam pôjde biela', 0 ),
-				array( 'Tri úrovne: začiatočník, pokročilý, majster', 0 ),
-				array( 'Obranné údery (safety), keď sa nedá nič potopiť', 0 ),
-			),
-		),
-		array(
-			'n'      => 4,
 			'title'  => '2 hráči cez internet a sledovanie partií',
 			'status' => 'done',
 			'goal'   => 'Dvaja prihlásení hráči hrajú proti sebe každý na svojom zariadení, ostatní môžu partiu sledovať.',
@@ -87,7 +76,7 @@ function mysn_roadmap() {
 			),
 		),
 		array(
-			'n'      => 5,
+			'n'      => 4,
 			'title'  => 'Rebríček, história a dokumentácia',
 			'status' => 'done',
 			'goal'   => 'Výsledky zápasov, rebríček, štatistiky a dokumentácia v My Help.',
@@ -98,7 +87,7 @@ function mysn_roadmap() {
 			),
 		),
 		array(
-			'n'      => 6,
+			'n'      => 5,
 			'title'  => 'Liga',
 			'status' => 'done',
 			'goal'   => 'Sezóna na rok so štyrmi ligami, kancelária hráča a ligové zápasy na štadióne.',
@@ -113,7 +102,7 @@ function mysn_roadmap() {
 			),
 		),
 		array(
-			'n'      => 7,
+			'n'      => 6,
 			'title'  => 'Dokončenie a doladenie',
 			'status' => 'now',
 			'goal'   => 'Posledné drobnosti pred dokončením hry: zvuky divákov, výber oblečenia, doladenie podľa hrania.',
@@ -131,6 +120,7 @@ function mysn_roadmap() {
 /** Denník zmien (najnovšie hore). */
 function mysn_changelog() {
 	return array(
+		array( '0.6.32', '5. 11. 2026', 'Plán vývoja: hra proti počítaču nebude (etapa vypustená, ostatné etapy prečíslované).' ),
 		array( '0.6.31', '5. 11. 2026', 'Plán vývoja: viac hráčov na jednom zariadení zatiaľ nie je podporované (2. etapa sa volá Pravidlá snookeru). Prehľad režimov v administrácii je aktuálny.' ),
 		array( '0.6.30', '5. 11. 2026', 'Plán vývoja aktualizovaný: hotové etapy 3D stôl a tréning, 2 hráči cez internet a sledovanie, rebríček a história, liga; nová etapa Dokončenie a doladenie. Oprava: záznamy denníka zmien 0.6.17 až 0.6.29 sa omylom zobrazovali v pláne vývoja.' ),
 		array( '0.6.29', '5. 11. 2026', 'Oprava: podrobná mapa sveta v kancelárii sa načíta aj v hre na adrese snooker.hedlajner.sk (súbor s hranicami štátov sa berie z tej istej domény).' ),
