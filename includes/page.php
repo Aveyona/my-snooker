@@ -122,9 +122,15 @@ function mysn_auth_config( $game ) {
 	if ( ! function_exists( 'my_users_login_page_url' ) || ! function_exists( 'my_users_opt' ) || ! (int) my_users_opt( 'login_page_id' ) ) {
 		return null;
 	}
+	// okno v hre len keď je prihlasovacia stránka na tej istej adrese ako hra (subdoména: odkaz na stránku Prihlásenie)
+	$login = my_users_login_page_url();
+	$host  = isset( $_SERVER['HTTP_HOST'] ) ? strtolower( sanitize_text_field( wp_unslash( $_SERVER['HTTP_HOST'] ) ) ) : '';
+	if ( strtolower( (string) wp_parse_url( $login, PHP_URL_HOST ) ) !== $host ) {
+		return null;
+	}
 	$email = (bool) my_users_opt( 'email_enabled' );
 	return array(
-		'page'     => (string) wp_parse_url( my_users_login_page_url(), PHP_URL_PATH ), // tá istá adresa ako hra (cookies)
+		'page'     => (string) wp_parse_url( $login, PHP_URL_PATH ), // tá istá adresa ako hra (cookies)
 		'google'   => function_exists( 'my_users_google_ready' ) && my_users_google_ready() ? my_users_google_start_url( $game ) : '',
 		'email'    => $email,
 		'register' => $email && (bool) my_users_opt( 'email_register' ),

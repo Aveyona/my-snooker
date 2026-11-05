@@ -15,7 +15,7 @@ export class LoginBox {
 		this.tab = 'login';
 		this.busy = false;
 		this.el = document.createElement('div');
-		this.el.className = 'mysn-login mysn-hidden';
+		this.el.className = 'mysn-auth mysn-hidden';
 		this.el.setAttribute('role', 'dialog');
 		this.el.setAttribute('aria-modal', 'true');
 		this.el.setAttribute('aria-label', 'Prihlásenie');
