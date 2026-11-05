@@ -18,6 +18,7 @@ const h = (tag, cls, html) => {
 
 import { cueById } from './cues.js';
 import { LoginBox } from './login.js';
+import { countryByCode } from './countries.js';
 const cueNameOf = (id) => cueById(id).name;
 const cueStateId = (c) => c.id;
 
@@ -430,6 +431,175 @@ export class UI {
 	}
 
 	/** Krátka správa navrchu (pozvánka, odmietnutie, chyba). Pri pozvánke s tlačidlami. */
+	/** Kancelária F7: panel Moje zápasy vpravo (história ligových zápasov a detail zápasu). */
+	openHistory(on) {
+		if (!this.histEl) {
+			this.histEl = h('div', 'mysn-hist mysn-hidden');
+			for (const ev of ['mousedown', 'keydown', 'wheel']) {
+				this.histEl.addEventListener(ev, (e) => e.stopPropagation());
+			}
+			this.root.appendChild(this.histEl);
+		}
+		this.histEl.classList.toggle('mysn-hidden', !on);
+		if (on) {
+			this.histEl.innerHTML = '<div class="mysn-hist-load">Načítavam zápasy…</div>';
+		}
+	}
+
+	historyOpen() {
+		return !!(this.histEl && !this.histEl.classList.contains('mysn-hidden'));
+	}
+
+	static histRes(r) {
+		return (
+			{
+				win: ['Výhra', 'win'],
+				loss: ['Prehra', 'loss'],
+				resign: ['Vzdal som', 'loss'],
+				resigned: ['Výhra, súper vzdal', 'win'],
+				disconnect: ['Prehra, výpadok spojenia', 'loss'],
+				'win-disconnect': ['Výhra, súperovi vypadlo spojenie', 'win'],
+				annulled: ['Zrušený, obom vypadlo spojenie', 'void'],
+				live: ['Prebieha', 'void'],
+			}[r] || [r, 'void']
+		);
+	}
+
+	static histDate(t, time = true) {
+		const d = new Date(t * 1000);
+		return d.toLocaleDateString('sk-SK', { day: 'numeric', month: 'numeric', year: 'numeric' }) + (time ? ' ' + d.toLocaleTimeString('sk-SK', { hour: '2-digit', minute: '2-digit' }) : '');
+	}
+
+	static histWho(p) {
+		const c = p && p.country ? countryByCode(p.country) : null;
+		return esc(p ? p.name : '') + (c ? ` <span class="mysn-hist-cc">${esc(c.name)}</span>` : '');
+	}
+
+	/** Zoznam zápasov: d = { list, more, sum }, append = ďalšia strana. */
+	renderHistory(d, append) {
+		const el = this.histEl;
+		if (!el || !d) {
+			return;
+		}
+		if (!append) {
+			el.innerHTML = '';
+			el.appendChild(h('h3', '', 'Moje zápasy v lige'));
+			if (d.sum) {
+				const pct = d.sum.wins + d.sum.losses ? Math.round((d.sum.wins / (d.sum.wins + d.sum.losses)) * 100) : 0;
+				el.appendChild(h('div', 'mysn-hist-sum', `<span><b>${d.sum.played}</b> zápasov</span><span><b>${d.sum.wins}</b> výhier</span><span><b>${d.sum.losses}</b> prehier</span><span><b>${pct} %</b> výhier</span><span>najvyšší brejk <b>${d.sum.best}</b></span>`));
+			}
+			this.histList = h('div', 'mysn-hist-list');
+			el.appendChild(this.histList);
+			el.appendChild(h('div', 'mysn-hist-foot', 'F7 alebo Esc: späť za stôl'));
+		}
+		const list = this.histList;
+		const old = list.querySelector('.mysn-hist-more');
+		if (old) {
+			old.remove();
+		}
+		if (!append && !d.list.length) {
+			list.appendChild(h('p', 'mysn-hist-empty', 'Zatiaľ nemáš žiadny ligový zápas. Vyhľadaj zápas dverami ŠTADIÓN (F9).'));
+		}
+		for (const m of d.list) {
+			const [txt, cls] = UI.histRes(m.result);
+			const row = h(
+				'button',
+				'mysn-hist-row mysn-hist-' + cls,
+				`<span class="mysn-hist-date">${UI.histDate(m.date)}</span><span class="mysn-hist-opp">${UI.histWho(m.opp)}</span>` +
+					`<span class="mysn-hist-score">${m.my} : ${m.their}</span><span class="mysn-hist-res">${txt}</span>` +
+					`<span class="mysn-hist-delta">${m.delta > 0 ? '+' + m.delta : m.delta < 0 ? '−' + Math.abs(m.delta) : ''}</span>`
+			);
+			row.type = 'button';
+			row.addEventListener('click', () => this.opts.onAction('historyMatch', m.id));
+			list.appendChild(row);
+			this.histLast = m.id;
+		}
+		if (d.more) {
+			const more = this.button('Staršie zápasy', 'historyMore');
+			more.classList.add('mysn-hist-more');
+			list.appendChild(more);
+		}
+	}
+
+	/** Detail zápasu: hlavička, porovnanie hráčov, graf skóre a priebeh (brejky a fauly). */
+	renderHistoryMatch(d) {
+		const el = this.histEl;
+		if (!el || !d) {
+			return;
+		}
+		el.innerHTML = '';
+		const back = this.button('← Späť na zoznam', 'historyBack');
+		back.classList.add('mysn-hist-back');
+		el.appendChild(back);
+		const [txt, cls] = UI.histRes(d.result);
+		const P = d.players;
+		const mins = Math.max(1, Math.round(d.duration / 60));
+		el.appendChild(
+			h(
+				'div',
+				'mysn-hist-head mysn-hist-' + cls,
+				`<div class="mysn-hist-vs"><span>${UI.histWho(P[0])}</span><b>${d.scores[0]} : ${d.scores[1]}</b><span>${UI.histWho(P[1])}</span></div>` +
+					`<div class="mysn-hist-meta">${txt}${d.delta ? ` · body ligy ${d.delta > 0 ? '+' + d.delta : '−' + Math.abs(d.delta)}` : ''}<br>${d.season ? esc(d.season) + ' · ' : ''}${UI.histDate(d.date)} · ${d.duration ? mins + ' min' : ''}</div>`
+			)
+		);
+		// porovnanie hráčov
+		const S = d.stats;
+		const rows = [
+			['Body', d.scores[0], d.scores[1]],
+			['Najvyšší brejk', S[0].best, S[1].best],
+			['Brejky 10+', S[0].breaks, S[1].breaks],
+			['Údery', S[0].shots, S[1].shots],
+			['Údery s bodmi', S[0].pots, S[1].pots],
+			['Fauly', S[0].fouls, S[1].fouls],
+			['Trestné body pre súpera', S[0].given, S[1].given],
+		];
+		el.appendChild(
+			h(
+				'table',
+				'mysn-hist-cmp',
+				`<thead><tr><th>${esc(P[0].name)}</th><th></th><th>${esc(P[1].name)}</th></tr></thead><tbody>` +
+					rows.map(([l, a, b]) => `<tr><td class="${a > b ? 'mysn-hi' : ''}">${a}</td><th>${l}</th><td class="${b > a ? 'mysn-hi' : ''}">${b}</td></tr>`).join('') +
+					'</tbody>'
+			)
+		);
+		// graf skóre (SVG): hráč 1 zlatý, hráč 2 modrý
+		const C = d.chart || [];
+		if (C.length > 1) {
+			const W = 360;
+			const H = 150;
+			const max = Math.max(10, ...C.map((c) => Math.max(c[0], c[1])));
+			const pt = (i, v) => `${((i / (C.length - 1)) * (W - 30) + 26).toFixed(1)},${(H - 18 - (v / max) * (H - 30)).toFixed(1)}`;
+			const line = (k) => C.map((c, i) => pt(i, c[k])).join(' ');
+			el.appendChild(h('h4', '', 'Priebeh skóre'));
+			el.appendChild(
+				h(
+					'div',
+					'mysn-hist-chart',
+					`<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Priebeh skóre">` +
+						`<line x1="26" y1="${H - 18}" x2="${W - 4}" y2="${H - 18}" class="ax"/><line x1="26" y1="10" x2="26" y2="${H - 18}" class="ax"/>` +
+						`<text x="22" y="16" class="lb" text-anchor="end">${max}</text><text x="22" y="${H - 18}" class="lb" text-anchor="end">0</text>` +
+						`<text x="${W - 4}" y="${H - 4}" class="lb" text-anchor="end">úder ${C.length - 1}</text>` +
+						`<polyline points="${line(0)}" class="p0"/><polyline points="${line(1)}" class="p1"/></svg>` +
+						`<div class="mysn-hist-legend"><span class="p0">${esc(P[0].name)}</span><span class="p1">${esc(P[1].name)}</span></div>`
+				)
+			);
+		}
+		// priebeh partie
+		const T = d.timeline || [];
+		el.appendChild(h('h4', '', 'Priebeh partie'));
+		if (!T.length) {
+			el.appendChild(h('p', 'mysn-hist-empty', 'V zápase nebol zaznamenaný žiadny brejk ani faul.'));
+		} else {
+			const ul = h('ol', 'mysn-hist-tl');
+			for (const t of T) {
+				ul.appendChild(h('li', t.k === 'foul' ? 'mysn-hist-foul' : 'mysn-hist-brk mysn-side' + t.side, t.k === 'foul' ? `${esc(P[t.side].name)}: faul, ${t.pts} b. pre súpera` : `${esc(P[t.side].name)}: brejk <b>${t.pts}</b>`));
+			}
+			el.appendChild(ul);
+		}
+		el.appendChild(h('div', 'mysn-hist-foot', 'F7 alebo Esc: späť za stôl'));
+		el.scrollTop = 0;
+	}
+
 	/** Výber miesta diváka: nápoveda hore (null = skryť); back = už mám miesto (Esc sa vráti naň). */
 	seatHint(text, back) {
 		if (!this.seatHintEl) {

@@ -361,3 +361,55 @@ body.mysn-page { font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans
 .mysn-seat-hint b { color: #f2d48a; font-size: 17px; }
 .mysn-seat-hint span { font-size: 14px; color: #dfe4ec; line-height: 1.45; }
 .mysn-seat-hint .mysn-btn, .mysn-seat-hint button { margin-top: 4px; width: auto; padding: 6px 14px; font-size: 13px; }
+
+/* kancelária F7: Moje zápasy v lige (zoznam a detail) */
+.mysn-hist { position: absolute; top: 56px; right: 14px; bottom: 14px; width: min(440px, calc(100% - 28px)); z-index: 6; overflow-y: auto; background: #10151ef2; border: 1px solid #2a3140; border-radius: 14px; padding: 14px 16px; box-shadow: 0 8px 30px #000b; color: #e6eae2; font-size: 14px; }
+.mysn-hist h3 { margin: 0 0 10px; color: #f2d48a; font-size: 18px; }
+.mysn-hist h4 { margin: 16px 0 8px; color: #f2d48a; font-size: 15px; }
+.mysn-hist-load, .mysn-hist-empty { color: #9aa3b2; padding: 10px 0; }
+.mysn-hist-sum { display: flex; flex-wrap: wrap; gap: 6px 14px; margin-bottom: 12px; color: #c5ccd8; font-size: 13px; }
+.mysn-hist-sum b { color: #fff; }
+.mysn-hist-list { display: flex; flex-direction: column; gap: 6px; }
+.mysn-hist-row { display: grid; grid-template-columns: 1fr auto; grid-template-areas: 'opp score' 'date res' '. delta'; gap: 2px 10px; text-align: left; background: #171e2a; border: 1px solid #263044; border-left: 4px solid #5a6170; border-radius: 10px; padding: 8px 10px; color: inherit; font: inherit; cursor: pointer; }
+.mysn-hist-row:hover { border-color: #FACC15aa; }
+.mysn-hist-row.mysn-hist-win { border-left-color: #2fb35a; }
+.mysn-hist-row.mysn-hist-loss { border-left-color: #d94141; }
+.mysn-hist-opp { grid-area: opp; font-weight: 700; }
+.mysn-hist-cc { font-weight: 400; color: #9aa3b2; font-size: 12px; }
+.mysn-hist-date { grid-area: date; color: #9aa3b2; font-size: 12px; }
+.mysn-hist-score { grid-area: score; font-weight: 800; font-size: 16px; text-align: right; }
+.mysn-hist-res { grid-area: res; text-align: right; font-size: 12px; }
+.mysn-hist-win .mysn-hist-res { color: #6be08f; }
+.mysn-hist-loss .mysn-hist-res { color: #ff8a8a; }
+.mysn-hist-delta { grid-area: delta; text-align: right; font-size: 12px; color: #f2d48a; }
+.mysn-hist-more, .mysn-hist-back { margin-top: 6px; width: auto; align-self: flex-start; }
+.mysn-hist-head { margin: 10px 0 6px; padding: 10px 12px; border-radius: 10px; background: #171e2a; border-left: 4px solid #5a6170; }
+.mysn-hist-head.mysn-hist-win { border-left-color: #2fb35a; }
+.mysn-hist-head.mysn-hist-loss { border-left-color: #d94141; }
+.mysn-hist-vs { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.mysn-hist-vs span { flex: 1; font-weight: 700; }
+.mysn-hist-vs span:last-child { text-align: right; }
+.mysn-hist-vs b { font-size: 22px; white-space: nowrap; }
+.mysn-hist-meta { margin-top: 6px; color: #9aa3b2; font-size: 12px; line-height: 1.5; }
+.mysn-hist-cmp { width: 100%; border-collapse: collapse; margin-top: 6px; font-size: 13px; }
+.mysn-hist-cmp th, .mysn-hist-cmp td { padding: 5px 4px; border-bottom: 1px solid #222a38; }
+.mysn-hist-cmp thead th { color: #f2d48a; }
+.mysn-hist-cmp tbody th { color: #9aa3b2; font-weight: 400; text-align: center; }
+.mysn-hist-cmp td:first-child { text-align: left; }
+.mysn-hist-cmp td:last-child { text-align: right; }
+.mysn-hist-cmp td.mysn-hi { color: #fff; font-weight: 800; }
+.mysn-hist-chart svg { width: 100%; height: auto; display: block; }
+.mysn-hist-chart .ax { stroke: #3a4352; stroke-width: 1; }
+.mysn-hist-chart .lb { fill: #8a93a3; font-size: 10px; }
+.mysn-hist-chart polyline { fill: none; stroke-width: 2.2; stroke-linejoin: round; }
+.mysn-hist-chart polyline.p0 { stroke: #FACC15; }
+.mysn-hist-chart polyline.p1 { stroke: #5aa2ff; }
+.mysn-hist-legend { display: flex; gap: 16px; font-size: 12px; margin-top: 4px; }
+.mysn-hist-legend span::before { content: ''; display: inline-block; width: 14px; height: 3px; margin-right: 6px; vertical-align: middle; }
+.mysn-hist-legend .p0::before { background: #FACC15; }
+.mysn-hist-legend .p1::before { background: #5aa2ff; }
+.mysn-hist-tl { margin: 0; padding-left: 22px; display: flex; flex-direction: column; gap: 3px; font-size: 13px; }
+.mysn-hist-foul { color: #ff8a8a; }
+.mysn-hist-brk.mysn-side0 b { color: #FACC15; }
+.mysn-hist-brk.mysn-side1 b { color: #5aa2ff; }
+.mysn-hist-foot { margin-top: 14px; color: #8a93a3; font-size: 12px; }

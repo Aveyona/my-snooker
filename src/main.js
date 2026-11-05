@@ -627,6 +627,7 @@ export function start(root, config = {}) {
 		}
 		if (view === 'office' && name !== 'office') {
 			radio.setSpeakers(null);
+			ui.openHistory(false);
 			// z kancelárie rovno do iného pohľadu v herni
 			rig.noClamp = false;
 			rig.snapNext = true;
@@ -705,6 +706,7 @@ export function start(root, config = {}) {
 		rig.setViewZoom(1);
 		if (was === 'office') {
 			radio.setSpeakers(null);
+			ui.openHistory(false);
 			officeFocusNow = '';
 			if (online && online.queueing) {
 				online.seek(false); // odchod z kancelárie zruší vyhľadávanie zápasu
@@ -956,7 +958,49 @@ export function start(root, config = {}) {
 			chairLook.yaw = Math.atan2(d.z, d.x);
 			chairLook.pitch = Math.atan2(d.y, Math.hypot(d.x, d.z));
 			rig.setViewZoom(officeFocusNow ? 1 : 0.85);
+			// F7 notebook: vpravo panel Moje zápasy v lige (myš voľná na klikanie)
+			if (name === 'notebook' || ui.historyOpen()) {
+				const on = officeFocusNow === 'notebook';
+				ui.openHistory(on);
+				if (on) {
+					controls.uncapture();
+					freeMouse = true;
+					ui.setFree(true);
+					actions.historyLoad();
+				} else {
+					actions.officeLook();
+				}
+			}
 		},
+		historyLoad: async () => {
+			const d = online ? await online.net.call('history', null, 'GET').catch((e) => ({ error: e.message })) : null;
+			if (!ui.historyOpen()) {
+				return;
+			}
+			if (!d || d.error) {
+				ui.toast((d && d.error) || 'História zápasov sa nedá načítať.');
+				return;
+			}
+			ui.renderHistory(d, false);
+		},
+		historyMore: async () => {
+			const d = await online.net.call('history?before=' + (ui.histLast || 0), null, 'GET').catch(() => null);
+			if (d && ui.historyOpen()) {
+				ui.renderHistory(d, true);
+			}
+		},
+		historyMatch: async (id) => {
+			const d = await online.net.call('history/match?id=' + id, null, 'GET').catch((e) => ({ error: e.message }));
+			if (!ui.historyOpen()) {
+				return;
+			}
+			if (!d || d.error) {
+				ui.toast((d && d.error) || 'Detail zápasu sa nedá načítať.');
+				return;
+			}
+			ui.renderHistoryMatch(d);
+		},
+		historyBack: () => actions.historyLoad(),
 		// lampa na stole (F12 alebo klik): zhasnutá = nie som online (nevidia ma, nedá sa hľadať zápas)
 		officeLamp: async () => {
 			lampOn = !lampOn;
