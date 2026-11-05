@@ -646,6 +646,87 @@ export function buildOffice(scene) {
 		}
 		cardT.t.needsUpdate = true;
 	};
+	// kancelárska stolička za stolom (hráč na nej sedí): kožený sedák, operadlo, opierky, piest a päťramenný kríž s kolieskami
+	const leather = new THREE.MeshStandardMaterial({ color: 0x3a1f12, roughness: 0.55 });
+	const steel = new THREE.MeshStandardMaterial({ color: 0x2a2c30, roughness: 0.35, metalness: 0.8 });
+	const CZ = DZ + 0.78;
+	add(new THREE.BoxGeometry(0.5, 0.08, 0.48), leather, 0, FY + 0.47, CZ); // sedák
+	const back = add(new THREE.BoxGeometry(0.48, 0.62, 0.08), leather, 0, FY + 0.86, CZ + 0.27); // operadlo
+	back.rotation.x = -0.12;
+	for (const sx of [-1, 1]) {
+		add(new THREE.BoxGeometry(0.05, 0.04, 0.32), leather, sx * 0.27, FY + 0.66, CZ + 0.02); // opierka
+		add(new THREE.BoxGeometry(0.03, 0.16, 0.03), steel, sx * 0.27, FY + 0.57, CZ + 0.1);
+	}
+	add(new THREE.CylinderGeometry(0.03, 0.035, 0.32, 14), steel, 0, FY + 0.27, CZ); // piest
+	for (let i = 0; i < 5; i++) {
+		const a = (i / 5) * Math.PI * 2;
+		const leg = add(new THREE.BoxGeometry(0.3, 0.03, 0.04), steel, Math.cos(a) * 0.15, FY + 0.09, CZ + Math.sin(a) * 0.15);
+		leg.rotation.y = -a;
+		add(new THREE.SphereGeometry(0.025, 10, 8), steel, Math.cos(a) * 0.29, FY + 0.03, CZ + Math.sin(a) * 0.29); // koliesko
+	}
+
+	// malý notes s perom vedľa vizitky: koľko hráčov je práve v hre a koľkí čakajú na ligový zápas
+	const notesT = tex(420, 540);
+	const notesG = new THREE.Group();
+	notesG.position.set(0.43, DT + 0.004, DZ + 0.04);
+	notesG.rotation.y = 0.15;
+	root.add(notesG);
+	const notesTilt = new THREE.Group(); // blok mierne podložený vzadu, natočený k hráčovi
+	notesTilt.rotation.x = 0.5;
+	notesTilt.position.z = 0.095; // naklonený okolo prednej hrany (zadná hrana je vyššie, nič neprechádza cez stôl)
+	notesG.add(notesTilt);
+	add(new THREE.BoxGeometry(0.15, 0.008, 0.19), new THREE.MeshStandardMaterial({ color: 0x6b4a2a, roughness: 0.8 }), 0, 0.004, -0.095, notesTilt); // kartónová podložka
+	const notes = add(new THREE.PlaneGeometry(0.14, 0.18), new THREE.MeshStandardMaterial({ map: notesT.t, roughness: 0.95 }), 0, 0.0085, -0.091, notesTilt);
+	notes.rotation.x = -Math.PI / 2;
+	add(new THREE.BoxGeometry(0.15, 0.012, 0.016), new THREE.MeshStandardMaterial({ color: 0x2b2b2b, roughness: 0.6 }), 0, 0.012, -0.183, notesTilt); // klip hore
+	// stojanček vzadu (podopiera naklonený blok)
+	add(new THREE.BoxGeometry(0.1, 0.085, 0.006), brass, 0, 0.042, -0.07, notesG).rotation.x = -0.25;
+	// pero šikmo vedľa notesu
+	const pen = new THREE.Group();
+	pen.position.set(0.53, DT + 0.006, DZ + 0.05);
+	pen.rotation.y = -1.2;
+	root.add(pen);
+	const penBody = add(new THREE.CylinderGeometry(0.0045, 0.0045, 0.12, 12), new THREE.MeshStandardMaterial({ color: 0x0f1f4a, roughness: 0.35, metalness: 0.3 }), 0, 0, 0, pen);
+	penBody.rotation.z = Math.PI / 2;
+	const penTip = add(new THREE.ConeGeometry(0.0045, 0.014, 12), brass, -0.067, 0, 0, pen);
+	penTip.rotation.z = Math.PI / 2;
+	const penCap = add(new THREE.CylinderGeometry(0.0048, 0.0048, 0.03, 12), brass, 0.048, 0, 0, pen);
+	penCap.rotation.z = Math.PI / 2;
+	const drawNotes = (st) => {
+		const g = notesT.g;
+		const W = 420;
+		const Hn = 540;
+		g.fillStyle = '#e9dfbf';
+		g.fillRect(0, 0, W, Hn);
+		g.strokeStyle = 'rgba(70, 110, 190, .35)';
+		g.lineWidth = 2;
+		for (let y = 120; y < Hn; y += 46) {
+			g.beginPath();
+			g.moveTo(0, y);
+			g.lineTo(W, y);
+			g.stroke();
+		}
+		g.strokeStyle = 'rgba(200, 40, 40, .55)';
+		g.beginPath();
+		g.moveTo(56, 0);
+		g.lineTo(56, Hn);
+		g.stroke();
+		g.textAlign = 'left';
+		g.fillStyle = '#14215c';
+		g.font = 'italic bold 44px Georgia, serif';
+		g.fillText('Teraz v hre', 72, 86);
+		const on = st ? st.online : null;
+		const wt = st ? st.waiting : null;
+		g.font = 'italic bold 40px Georgia, serif';
+		g.fillText('Online', 72, 184);
+		g.fillText('Čakajú na zápas', 72, 362);
+		g.font = 'bold 110px Georgia, serif';
+		g.fillStyle = '#0a1238';
+		g.fillText(on === null ? '…' : String(on), 92, 296);
+		g.fillText(wt === null ? '…' : String(wt), 92, 474);
+		notesT.t.needsUpdate = true;
+	};
+	drawNotes(null);
 	drawCard(null, '', '');
 	drawBoards(null, []);
 	drawMap([], 0);
@@ -658,6 +739,8 @@ export function buildOffice(scene) {
 		seat: { pos: new THREE.Vector3(OX, FY + 1.25, DZ + 0.75), look: new THREE.Vector3(OX, FY + 0.85, -RZo) },
 		card,
 		setCard: drawCard,
+		/** Notes na stole: { online, waiting } z pingu. */
+		setNotes: drawNotes,
 		door,
 		setDoor: drawDoor,
 		toggleWindow,

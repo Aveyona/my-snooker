@@ -101,6 +101,9 @@ export class Online {
 			}
 			const prevInv = (this.data.invites || []).map((i) => i.id).join(',');
 			this.data = d;
+			if (d.stats && this.hooks.stats) {
+				this.hooks.stats(d.stats); // notes na stole v kancelárii
+			}
 			const inv = (d.invites || []).map((i) => i.id).join(',');
 			if (inv && inv !== prevInv && !this.inMatch) {
 				this.hooks.invite(d.invites[0]);

@@ -761,6 +761,14 @@ export function start(root, config = {}) {
 				ui.toast('Vyhľadávanie zápasu je zrušené.');
 				return;
 			}
+			if (!myCues.selected.length) {
+				// bez tága do zápasu sa nedá: otvorí sa výber tág (F2)
+				ui.toast('Najprv si vyber aspoň jedno tágo do ligového zápasu (F2, Moje tágá).');
+				if (officeMode !== 'cues') {
+					actions.myCues();
+				}
+				return;
+			}
 			office.setDoor('wait');
 			ui.toast('Vyhľadávam zápas… Hrá každý s každým, kto je práve vo fronte. Druhý klik na dvere (F9) zruší.');
 			await online.seek(true);
@@ -803,6 +811,10 @@ export function start(root, config = {}) {
 			ui.renderLeague(leagueData);
 		},
 		leagueInvite: async (id) => {
+			if (!myCues.selected.length) {
+				ui.toast('Najprv si vyber aspoň jedno tágo do ligového zápasu (F2, Moje tágá).');
+				return;
+			}
 			await online.invite(id, true);
 			ui.renderLeague(leagueData);
 		},
@@ -1514,6 +1526,7 @@ export function start(root, config = {}) {
 				updateScore();
 			},
 			status: () => ui.setNet(online ? online.statusText() : ''),
+			stats: (st) => office.setNotes(st),
 		});
 	}
 	loadTrophies();

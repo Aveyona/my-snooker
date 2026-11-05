@@ -251,6 +251,11 @@ function mysn_rest_ping( $req ) {
 		) : null,
 		'match'    => $active ? (int) $active['id'] : 0,
 		'paused'   => $paused,
+		// notes na stole v kancelárii: hráči v hre teraz a koľkí čakajú na ligový zápas (dvere ŠTADIÓN)
+		'stats'    => array(
+			'online'  => (int) $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM $pt WHERE seen >= %d", $now - MYSN_LIVE ) ), // phpcs:ignore
+			'waiting' => (int) $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM $pt WHERE state = 'queue' AND seen >= %d", $now - 15 ) ), // phpcs:ignore
+		),
 		'signals'  => mysn_rtc_take( $uid ),
 		'nonce'    => wp_create_nonce( 'wp_rest' ),
 	);
