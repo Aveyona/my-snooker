@@ -29,6 +29,11 @@ add_action( 'wp_loaded', function () {
 		mysn_render( false );
 		exit;
 	}
+	// prihlásenie v hre na subdoméne: formulár z My Users (tie isté kontroly), okno hry ho číta na pozadí
+	if ( '/prihlasenie' === untrailingslashit( $path ) && function_exists( 'my_users_render_auth' ) ) {
+		mysn_auth_endpoint();
+		exit;
+	}
 	if ( '/robots.txt' === $path ) {
 		status_header( 200 );
 		header( 'Content-Type: text/plain; charset=utf-8' );
@@ -117,20 +122,40 @@ function mysn_render( $preview ) {
 }
 
 /** Rádiá z doplnku My Player pre rádio v herni (len priame prúdy, bez HLS a nefunkčných staníc). */
+/**
+ * Prihlásenie na subdoméne: snooker.hedlajner.sk/prihlasenie?okno=1. GET vráti formulár My Users (s ochranným
+ * kódom), POST ho spracuje funkciou My Users (tie isté kontroly, obmedzenie pokusov, cookies pre .hedlajner.sk).
+ * Úspech presmeruje späť do hry, chyba vráti formulár s hláškou. Bez ?okno=1 ide návštevník rovno do hry.
+ */
+function mysn_auth_endpoint() {
+	if ( ! defined( 'DONOTCACHEPAGE' ) ) {
+		define( 'DONOTCACHEPAGE', true );
+	}
+	nocache_headers();
+	$post = 'POST' === ( isset( $_SERVER['REQUEST_METHOD'] ) ? $_SERVER['REQUEST_METHOD'] : '' );
+	if ( ! $post && ( is_user_logged_in() || empty( $_GET['okno'] ) ) ) {
+		wp_safe_redirect( mysn_url() );
+		exit;
+	}
+	if ( $post && function_exists( 'my_users_handle_post' ) ) {
+		my_users_handle_post(); // pri úspechu presmeruje a skončí
+	}
+	status_header( 200 );
+	header( 'Content-Type: text/html; charset=utf-8' );
+	header( 'X-Robots-Tag: noindex' );
+	echo '<!doctype html><html lang="sk"><head><meta charset="utf-8"><meta name="robots" content="noindex"></head><body>' . my_users_render_auth() . '</body></html>'; // phpcs:ignore WordPress.Security.EscapeOutput -- výstup My Users
+}
+
 /** Prihlásenie v hre: nastavenia z doplnku My Users (bez neho null, hra ukáže odkaz na prihlásenie). */
 function mysn_auth_config( $game ) {
 	if ( ! function_exists( 'my_users_login_page_url' ) || ! function_exists( 'my_users_opt' ) || ! (int) my_users_opt( 'login_page_id' ) ) {
 		return null;
 	}
-	// okno v hre len keď je prihlasovacia stránka na tej istej adrese ako hra (subdoména: odkaz na stránku Prihlásenie)
-	$login = my_users_login_page_url();
-	$host  = isset( $_SERVER['HTTP_HOST'] ) ? strtolower( sanitize_text_field( wp_unslash( $_SERVER['HTTP_HOST'] ) ) ) : '';
-	if ( strtolower( (string) wp_parse_url( $login, PHP_URL_HOST ) ) !== $host ) {
-		return null;
-	}
+	// na subdoméne formulár na tej istej adrese (snooker.hedlajner.sk/prihlasenie), na hlavnom webe stránka Prihlásenie
+	$page  = mysn_on() && function_exists( 'my_users_render_auth' ) ? '/prihlasenie?okno=1' : (string) wp_parse_url( my_users_login_page_url(), PHP_URL_PATH );
 	$email = (bool) my_users_opt( 'email_enabled' );
 	return array(
-		'page'     => (string) wp_parse_url( $login, PHP_URL_PATH ), // tá istá adresa ako hra (cookies)
+		'page'     => $page,
 		'google'   => function_exists( 'my_users_google_ready' ) && my_users_google_ready() ? my_users_google_start_url( $game ) : '',
 		'email'    => $email,
 		'register' => $email && (bool) my_users_opt( 'email_register' ),
