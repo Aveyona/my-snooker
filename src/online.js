@@ -91,13 +91,14 @@ export class Online {
 	async ping() {
 		try {
 			const seats = this.seatCtx ? this.seatCtx() : ''; // diváci partie, ktorú hrám alebo sledujem
-			const d = await this.net.call('ping', { state: this.inMatch ? 'match' : this.watching ? 'watch' : this.queueing ? 'queue' : this.away ? 'away' : this.lobbyOpen ? 'lobby' : 'training', seats }); // away = zhasnutá lampa v kancelárii (nie som online)
+			const d = await this.net.call('ping', { state: this.inMatch ? 'match' : this.queueing ? 'queue' : this.watching ? 'watch' : this.away ? 'away' : this.lobbyOpen ? 'lobby' : 'training', seats }); // away = zhasnutá lampa v kancelárii (nie som online)
 			if (d.nonce) {
 				this.net.nonce = d.nonce;
 			}
 			if (d.signals && d.signals.length) {
 				this.rtc.handle(d.signals);
 			}
+			this.foundSync(d.found || null, !!d.match);
 			if (this.inMatch && this.matchId && !d.match) {
 				this.poll(); // partia na serveri už nebeží (prerušená alebo skončená): načítať jej koniec
 			}
@@ -128,6 +129,7 @@ export class Online {
 	}
 
 	async invite(uid, league = false, training = false) {
+		this.seekStopFor('Vyhľadávanie ligového zápasu je zrušené, poslal si výzvu na partiu.');
 		try {
 			const r = await this.net.call('invite', { user: uid, league: league ? 1 : 0, training: training ? 1 : 0 });
 			this._waitFor = r.id;
@@ -147,6 +149,9 @@ export class Online {
 	}
 
 	async answer(id, accept) {
+		if (accept) {
+			this.seekStopFor('Vyhľadávanie ligového zápasu je zrušené, prijal si výzvu na partiu.');
+		}
 		try {
 			await this.net.call('answer', { id, accept: accept ? 1 : 0 });
 			this.data.invites = (this.data.invites || []).filter((i) => i.id !== id);
@@ -415,25 +420,31 @@ export class Online {
 		return { k: 'w-state', seq: m.seq, ver: 0, balls: snapshot(g.balls), place: g.state === 'place' ? 1 : 0, info: `${m.players[0].name} ${sc[0]} : ${sc[1]} ${m.players[1].name}`, scr };
 	}
 
+	/** Vyhľadávanie ligového zápasu: beží aj mimo kancelárie (tréning, hra o skóre), kým ho hráč nezruší. */
 	async seek(on) {
 		clearInterval(this._queueT);
 		this.queueing = !!on;
 		if (!on) {
+			this.found = null;
+			this.seekSince = 0;
+			if (this.hooks.queue) {
+				this.hooks.queue('off');
+			}
 			await this.net.call('league/queue', { on: 0 }).catch(() => null);
 			return null;
 		}
+		this.seekSince = this.seekSince || Date.now();
 		const tick = async () => {
-			if (!this.queueing) {
-				return;
+			if (!this.queueing || this.found) {
+				return; // nájdený zápas čaká na potvrdenie
 			}
 			try {
 				const r = await this.net.call('league/queue', { on: 1 });
-				if (r.matched) {
+				if (r.found) {
+					this.foundSync(r.found, false);
+				} else if (r.matched) {
 					this.queueing = false;
 					clearInterval(this._queueT);
-					if (this.hooks.queue) {
-						this.hooks.queue('found');
-					}
 					await this.ping(); // ping prinesie rozbehnutú partiu
 				} else if (this.hooks.queue) {
 					this.hooks.queue('wait', r.waiting || 1);
@@ -451,6 +462,78 @@ export class Online {
 			this._queueT = setInterval(tick, 3000);
 		}
 		return true;
+	}
+
+	/** Výzva na partiu zruší vyhľadávanie ligového zápasu. */
+	seekStopFor(text) {
+		if (this.queueing) {
+			this.seek(false);
+			this.hooks.toast(text);
+		}
+	}
+
+	/**
+	 * Nájdený ligový zápas zo servera (f = { id, left, mine } alebo null). Okno Prijať alebo Zrušiť; keď zmizne
+	 * bez začatého zápasu, ten kto prijal hľadá ďalej, kto neprijal, tomu sa vyhľadávanie vypne.
+	 */
+	foundSync(f, started) {
+		const had = this.found;
+		if (f && this.queueing) {
+			const fresh = !had || had.id !== f.id;
+			this.found = { id: f.id, mine: !!f.mine || (had && had.id === f.id && had.mine), until: Date.now() + f.left * 1000 };
+			if (fresh && this.hooks.queue) {
+				this.hooks.queue('found', this.found);
+			}
+			return;
+		}
+		if (had && !f) {
+			this.found = null;
+			if (started) {
+				this.queueing = false;
+				clearInterval(this._queueT);
+				this.seekSince = 0;
+				this.hooks.queue('started');
+			} else if (had.mine) {
+				this.hooks.queue('gone', true); // súper nepotvrdil: hľadám ďalej
+			} else {
+				this.hooks.queue('gone', false);
+				this.seek(false);
+			}
+		}
+	}
+
+	/** Okno nájdeného zápasu: ok = prijať, inak zrušiť (zruší aj vyhľadávanie). */
+	async accept(ok) {
+		const f = this.found;
+		if (!f) {
+			return;
+		}
+		if (!ok) {
+			this.found = null;
+			this.queueing = false; // ping už nesmie hlásiť čakanie vo fronte
+			clearInterval(this._queueT);
+			await this.net.call('league/accept', { id: f.id, ok: 0 }).catch(() => null);
+			await this.seek(false);
+			return;
+		}
+		try {
+			const r = await this.net.call('league/accept', { id: f.id, ok: 1 });
+			if (r.matched) {
+				this.found = null;
+				this.queueing = false;
+				clearInterval(this._queueT);
+				this.seekSince = 0;
+				this.hooks.queue('started');
+				await this.ping(); // ping prinesie rozbehnutý zápas
+			} else if (r.waiting) {
+				f.mine = true;
+				this.hooks.queue('accepted', f);
+			} else {
+				this.foundSync(null, false);
+			}
+		} catch (e) {
+			this.hooks.toast(e.message);
+		}
 	}
 
 	async join(id) {

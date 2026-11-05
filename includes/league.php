@@ -247,6 +247,15 @@ add_action(
 		);
 		register_rest_route(
 			'my-snooker/v1',
+			'/league/accept',
+			array(
+				'methods'             => 'POST',
+				'callback'            => 'mysn_rest_league_accept',
+				'permission_callback' => $auth,
+			)
+		);
+		register_rest_route(
+			'my-snooker/v1',
 			'/league/archive',
 			array(
 				'methods'             => 'GET',
@@ -397,6 +406,60 @@ function mysn_league_champions() {
  * Vyhľadanie ligového zápasu (dvere ŠTADIÓN alebo telefón v kancelárii). on = 1 zaradí hráča do fronty a skúsi
  * nájsť súpera z fronty (kým je hráčov málo, hrá každý s každým), on = 0 ho z fronty vyradí.
  */
+const MYSN_FOUND_TTL = 60; // nájdený ligový zápas: čas na potvrdenie
+
+/** Nájdený ligový zápas, ktorý čaká na potvrdenie hráča (null = žiadny). */
+function mysn_found_match( $uid ) {
+	global $wpdb;
+	return $wpdb->get_row( $wpdb->prepare( 'SELECT * FROM ' . mysn_table( 'matches' ) . " WHERE (p1 = %d OR p2 = %d) AND status = 'found' AND created >= %d ORDER BY id DESC LIMIT 1", $uid, $uid, time() - MYSN_FOUND_TTL ), ARRAY_A ); // phpcs:ignore
+}
+
+/** Čo vidí hráč v okne potvrdenia (súper sa neukazuje): id, zostávajúce sekundy, či už prijal. */
+function mysn_found_out( $m, $uid ) {
+	$side = (int) $m['p1'] === $uid ? 1 : 2;
+	return array(
+		'id'   => (int) $m['id'],
+		'left' => max( 0, (int) $m['created'] + MYSN_FOUND_TTL - time() ),
+		'mine' => (int) $m[ 'acc' . $side ],
+	);
+}
+
+/** Potvrdenie nájdeného zápasu: ok = 1 prijať, ok = 0 zrušiť (zruší sa aj čakanie vo fronte). */
+function mysn_rest_league_accept( $req ) {
+	global $wpdb;
+	$uid = get_current_user_id();
+	$m   = mysn_get_match( (int) $req->get_param( 'id' ) );
+	if ( ! $m || ( (int) $m['p1'] !== $uid && (int) $m['p2'] !== $uid ) ) {
+		return mysn_err( 'Zápas sa nenašiel.', 404 );
+	}
+	if ( 'active' === $m['status'] ) {
+		return array( 'matched' => true );
+	}
+	if ( 'found' !== $m['status'] || (int) $m['created'] < time() - MYSN_FOUND_TTL ) {
+		return array( 'gone' => true ); // súper zrušil alebo čas vypršal
+	}
+	$t   = mysn_table( 'matches' );
+	$col = (int) $m['p1'] === $uid ? 'acc1' : 'acc2';
+	if ( ! $req->get_param( 'ok' ) ) {
+		$wpdb->update( $t, array( 'status' => 'declined', 'result' => 'decl:' . $uid, 'updated' => time() ), array( 'id' => (int) $m['id'] ) );
+		mysn_touch( $uid, 'training' );
+		return array( 'cancelled' => true );
+	}
+	$wpdb->query( $wpdb->prepare( "UPDATE $t SET $col = 1 WHERE id = %d", (int) $m['id'] ) ); // phpcs:ignore
+	$m = mysn_get_match( (int) $m['id'] );
+	if ( (int) $m['acc1'] && (int) $m['acc2'] && 'found' === $m['status'] ) {
+		// obaja prijali: zápas začína (kto čakal dlhšie, rozbíja)
+		if ( ! $wpdb->update( $t, array( 'status' => 'invited' ), array( 'id' => (int) $m['id'], 'status' => 'found' ) ) ) {
+			return array( 'matched' => true ); // zápas už spustil súper (prijali naraz)
+		}
+		mysn_match_begin( mysn_get_match( (int) $m['id'] ) );
+		mysn_touch( (int) $m['p1'], 'match' );
+		mysn_touch( (int) $m['p2'], 'match' );
+		return array( 'matched' => true, 'id' => (int) $m['id'] );
+	}
+	return array( 'waiting' => true, 'found' => mysn_found_out( $m, $uid ) );
+}
+
 function mysn_rest_league_queue( $req ) {
 	global $wpdb;
 	$uid = get_current_user_id();
@@ -414,9 +477,14 @@ function mysn_rest_league_queue( $req ) {
 	mysn_touch( $uid, 'queue' );
 	$pt   = mysn_table( 'presence' );
 	$wait = $wpdb->get_col( $wpdb->prepare( "SELECT user_id FROM $pt WHERE state = 'queue' AND seen >= %d AND user_id <> %d ORDER BY seen ASC LIMIT 10", time() - 15, $uid ) ); // phpcs:ignore
+	if ( mysn_found_match( $uid ) ) {
+		return array( 'found' => mysn_found_out( mysn_found_match( $uid ), $uid ) ); // čaká sa na potvrdenie
+	}
 	foreach ( $wait as $other ) {
 		$other = (int) $other;
-		if ( mysn_active_match( $other ) || mysn_league_can_play( $other, $uid ) ) {
+		// kto práve zrušil nájdený zápas, nedostane hneď ďalší (stav vo fronte sa ešte nestihol obnoviť)
+		$declined = (int) $wpdb->get_var( $wpdb->prepare( 'SELECT COUNT(*) FROM ' . mysn_table( 'matches' ) . " WHERE status = 'declined' AND result IN (%s, %s) AND updated >= %d", 'decl:' . $other, 'decl:' . $uid, time() - 20 ) ); // phpcs:ignore
+		if ( $declined || mysn_active_match( $other ) || mysn_found_match( $other ) || mysn_league_can_play( $other, $uid ) ) {
 			continue;
 		}
 		$t   = mysn_table( 'matches' );
@@ -427,7 +495,7 @@ function mysn_rest_league_queue( $req ) {
 			array(
 				'p1'        => $other,
 				'p2'        => $uid,
-				'status'    => 'invited',
+				'status'    => 'found', // obaja musia do MYSN_FOUND_TTL sekúnd potvrdiť
 				'created'   => $now,
 				'updated'   => $now,
 				'league'    => 1,
@@ -436,10 +504,7 @@ function mysn_rest_league_queue( $req ) {
 			)
 		);
 		$mid = (int) $wpdb->insert_id;
-		mysn_match_begin( mysn_get_match( $mid ) );
-		mysn_touch( $other, 'match' );
-		mysn_touch( $uid, 'match' );
-		return array( 'matched' => true, 'id' => $mid );
+		return array( 'found' => mysn_found_out( mysn_get_match( $mid ), $uid ) );
 	}
 	$n = (int) $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM $pt WHERE state = 'queue' AND seen >= %d", time() - 15 ) ); // phpcs:ignore
 	return array( 'queued' => true, 'waiting' => $n );

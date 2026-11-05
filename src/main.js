@@ -451,6 +451,25 @@ export function start(root, config = {}) {
 		}
 		renderCrowd();
 	};
+	// krátky dvojtón pri nájdenom ligovom zápase
+	const foundBeep = () => {
+		const ctx = sound.ctx;
+		if (!ctx) {
+			return;
+		}
+		[880, 1320].forEach((f, i) => {
+			const o = ctx.createOscillator();
+			const g = ctx.createGain();
+			o.frequency.value = f;
+			const t = ctx.currentTime + i * 0.18;
+			g.gain.setValueAtTime(0.0001, t);
+			g.gain.exponentialRampToValueAtTime(0.25, t + 0.02);
+			g.gain.exponentialRampToValueAtTime(0.0001, t + 0.16);
+			o.connect(g).connect(ctx.destination);
+			o.start(t);
+			o.stop(t + 0.18);
+		});
+	};
 	const setVenue = (v) => {
 		if (v === venue) {
 			return;
@@ -708,10 +727,6 @@ export function start(root, config = {}) {
 			radio.setSpeakers(null);
 			ui.openHistory(false);
 			officeFocusNow = '';
-			if (online && online.queueing) {
-				online.seek(false); // odchod z kancelárie zruší vyhľadávanie zápasu
-				office.setDoor('');
-			}
 			rig.noClamp = false;
 			rig.snapNext = true; // z kancelárie späť do herne hneď
 			ui.openLeague(false);
@@ -1001,6 +1016,35 @@ export function start(root, config = {}) {
 			ui.renderHistoryMatch(d);
 		},
 		historyBack: () => actions.historyLoad(),
+		// vyhľadávanie ligového zápasu: ✕ v pásiku, okno nájdeného zápasu
+		seekCancel: async () => {
+			if (online && online.queueing) {
+				if (online.found) {
+					await online.accept(false);
+				} else {
+					await online.seek(false);
+				}
+				office.setDoor('');
+				ui.toast('Vyhľadávanie ligového zápasu je zrušené.');
+			}
+		},
+		foundAccept: () => online && online.accept(true),
+		foundCancel: async () => {
+			ui.foundPopup(null);
+			if (online) {
+				await online.accept(false);
+			}
+			office.setDoor('');
+			ui.toast('Zápas je zrušený a vyhľadávanie vypnuté.');
+		},
+		foundTimeout: async () => {
+			if (online && online.found && !online.found.mine) {
+				ui.foundPopup(null);
+				await online.accept(false);
+				office.setDoor('');
+				ui.toast('Zápas si nepotvrdil do 60 sekúnd, vyhľadávanie je vypnuté.');
+			}
+		},
 		// lampa na stole (F12 alebo klik): zhasnutá = nie som online (nevidia ma, nedá sa hľadať zápas)
 		officeLamp: async () => {
 			lampOn = !lampOn;
@@ -1046,8 +1090,9 @@ export function start(root, config = {}) {
 				return;
 			}
 			office.setDoor('wait');
-			ui.toast('Vyhľadávam zápas… Hrá každý s každým, kto je práve vo fronte. Druhý klik na dvere (F9) zruší.');
+			ui.toast('Vyhľadávam zápas… Môžeš odísť z kancelárie a hrať tréning, hľadanie beží ďalej (pásik hore, ✕ ho zruší).');
 			await online.seek(true);
+			ui.setSeek(online.seekSince);
 		},
 		officeHome: () => {
 			officeMode = '';
@@ -1457,6 +1502,18 @@ export function start(root, config = {}) {
 		},
 		key: (k) => {
 			const lk = k.toLowerCase();
+			if (ui.foundOpen()) {
+				// okno nájdeného ligového zápasu: Enter prijme, Esc zruší (aj vyhľadávanie)
+				if (lk === 'enter') {
+					actions.foundAccept();
+					return true;
+				}
+				if (lk === 'escape') {
+					actions.foundCancel();
+					return true;
+				}
+				return lk !== 'f5' && lk !== 'f11';
+			}
 			if (!user && !guestPlay) {
 				return true; // neprihlásený: len menu s tlačidlami Tréning a Prihlásiť sa
 			}
@@ -1844,10 +1901,24 @@ export function start(root, config = {}) {
 			},
 			acceptWatch: () => roomOpen(),
 			queue: (st, info) => {
-				office.setDoor(st === 'wait' ? 'wait' : '');
+				office.setDoor(online.queueing && st !== 'started' ? 'wait' : '');
+				ui.setSeek(online.queueing && st !== 'started' ? online.seekSince : 0);
 				if (st === 'found') {
-					ui.toast('Súper sa našiel! Ideme na štadión.');
+					// výrazné okno: Prijať alebo Zrušiť do 60 sekúnd (súper sa neukazuje)
+					controls.uncapture();
+					ui.foundPopup(info);
+					foundBeep();
+				} else if (st === 'accepted') {
+					ui.foundPopup(info);
+				} else if (st === 'started') {
+					ui.foundPopup(null);
+				} else if (st === 'gone') {
+					ui.foundPopup(null);
+					ui.toast(info ? 'Súper zápas nepotvrdil. Hľadám ďalej.' : 'Zápas nebol potvrdený, vyhľadávanie je vypnuté.');
+				} else if (st === 'off') {
+					ui.foundPopup(null);
 				} else if (st === 'error') {
+					ui.foundPopup(null);
 					ui.toast(info || 'Vyhľadávanie zápasu sa nepodarilo.');
 				}
 			},

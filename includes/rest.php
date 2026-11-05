@@ -136,6 +136,8 @@ function mysn_housekeeping() {
 	$wpdb->query( $wpdb->prepare( "UPDATE $t SET status = 'expired', updated = %d WHERE status = 'invited' AND created < %d", $now, $now - MYSN_INVITE ) ); // phpcs:ignore
 	// ligový zápas sa neprerušuje: komu vypadne spojenie, prehrá (ako pri vzdaní); obom naraz = zápas sa ruší bez bodov
 	$wpdb->query( $wpdb->prepare( 'DELETE FROM ' . mysn_table( 'seats' ) . ' WHERE seen < %d', $now - 600 ) ); // phpcs:ignore
+	// nepotvrdené nájdené ligové zápasy vypršia (do histórie sa nezapíšu)
+	$wpdb->query( $wpdb->prepare( "UPDATE $t SET status = 'expired', updated = %d WHERE status = 'found' AND created < %d", $now, $now - 60 ) ); // phpcs:ignore
 	$drop = $now - MYSN_LEAGUE_DROP;
 	foreach ( $wpdb->get_results( $wpdb->prepare( "SELECT * FROM $t WHERE status = 'active' AND league = 1 AND (seen1 < %d OR seen2 < %d) LIMIT 20", $drop, $drop ), ARRAY_A ) as $m ) { // phpcs:ignore
 		$gone1 = (int) $m['seen1'] < $drop;
@@ -280,6 +282,8 @@ function mysn_rest_ping( $req ) {
 			'waiting' => (int) $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM $pt WHERE state = 'queue' AND seen >= %d", $now - 15 ) ), // phpcs:ignore
 		),
 		'seats'    => '' !== $seat_ctx ? mysn_seats( $seat_ctx ) : null,
+		// nájdený ligový zápas čaká na potvrdenie (okno Prijať alebo Zrušiť)
+		'found'    => function_exists( 'mysn_found_match' ) && ! $active && mysn_found_match( $uid ) ? mysn_found_out( mysn_found_match( $uid ), $uid ) : null,
 		'signals'  => mysn_rtc_take( $uid ),
 		'nonce'    => wp_create_nonce( 'wp_rest' ),
 	);

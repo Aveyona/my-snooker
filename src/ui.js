@@ -431,6 +431,89 @@ export class UI {
 	}
 
 	/** Krátka správa navrchu (pozvánka, odmietnutie, chyba). Pri pozvánke s tlačidlami. */
+	/** Pásik hore: Vyhľadáva sa ligový zápas · čas · ✕ (since = začiatok v ms, 0 = skryť). Viditeľný v menu aj v hre. */
+	setSeek(since) {
+		if (!this.seekEl) {
+			this.seekEl = h('div', 'mysn-seek mysn-hidden');
+			this.seekEl.addEventListener('mousedown', (e) => e.stopPropagation());
+			this.seekTxt = h('span', '', '');
+			const x = h('button', 'mysn-seek-x', '✕');
+			x.type = 'button';
+			x.title = 'Zrušiť vyhľadávanie zápasu';
+			x.addEventListener('click', (e) => {
+				e.stopPropagation();
+				this.opts.onAction('seekCancel');
+			});
+			this.seekEl.append(h('i', 'mysn-seek-dot', ''), this.seekTxt, x);
+			this.root.appendChild(this.seekEl);
+		}
+		clearInterval(this._seekT);
+		this.seekEl.classList.toggle('mysn-hidden', !since);
+		if (since) {
+			const draw = () => {
+				const sec = Math.max(0, Math.floor((Date.now() - since) / 1000));
+				this.seekTxt.textContent = `Vyhľadáva sa ligový zápas · ${Math.floor(sec / 60)}:${String(sec % 60).padStart(2, '0')}`;
+			};
+			draw();
+			this._seekT = setInterval(draw, 1000);
+		}
+	}
+
+	/** Okno nájdeného ligového zápasu (bez mena súpera): Prijať alebo Zrušiť, odpočet. f = null zavrie. */
+	foundPopup(f) {
+		clearInterval(this._foundT);
+		if (!f) {
+			if (this.foundEl) {
+				this.foundEl.classList.add('mysn-hidden');
+			}
+			return;
+		}
+		if (!this.foundEl) {
+			this.foundEl = h('div', 'mysn-found mysn-hidden');
+			for (const ev of ['mousedown', 'wheel']) {
+				this.foundEl.addEventListener(ev, (e) => e.stopPropagation());
+			}
+			this.root.appendChild(this.foundEl);
+		}
+		const el = this.foundEl;
+		el.innerHTML = '';
+		const box = h('div', 'mysn-found-box');
+		box.appendChild(h('div', 'mysn-found-title', 'Našiel sa zápas do ligy!'));
+		const R = 44;
+		const L = 2 * Math.PI * R;
+		const ring = h('div', 'mysn-found-ring', `<svg viewBox="0 0 110 110"><circle cx="55" cy="55" r="${R}" class="bg"/><circle cx="55" cy="55" r="${R}" class="fg" stroke-dasharray="${L.toFixed(1)}" stroke-dashoffset="0"/></svg><b>60</b>`);
+		box.appendChild(ring);
+		const note = h('div', 'mysn-found-note', f.mine ? 'Prijal si. Čaká sa na potvrdenie súpera…' : 'Potvrď zápas do 60 sekúnd. Zrušiť vypne aj vyhľadávanie.');
+		box.appendChild(note);
+		const row = h('div', 'mysn-found-btns');
+		const ok = this.button('Prijať (Enter)', 'foundAccept');
+		ok.classList.add('mysn-primary');
+		ok.disabled = !!f.mine;
+		const no = this.button('Zrušiť (Esc)', 'foundCancel');
+		row.append(ok, no);
+		box.appendChild(row);
+		el.appendChild(box);
+		el.classList.remove('mysn-hidden');
+		const fg = ring.querySelector('.fg');
+		const num = ring.querySelector('b');
+		const draw = () => {
+			const left = Math.max(0, (f.until - Date.now()) / 1000);
+			num.textContent = String(Math.ceil(left));
+			fg.setAttribute('stroke-dashoffset', ((1 - left / 60) * L).toFixed(1));
+			ring.classList.toggle('mysn-found-hurry', left < 10);
+			if (left <= 0) {
+				clearInterval(this._foundT);
+				this.opts.onAction('foundTimeout');
+			}
+		};
+		draw();
+		this._foundT = setInterval(draw, 250);
+	}
+
+	foundOpen() {
+		return !!(this.foundEl && !this.foundEl.classList.contains('mysn-hidden'));
+	}
+
 	/** Kancelária F7: panel Moje zápasy vpravo (história ligových zápasov a detail zápasu). */
 	openHistory(on) {
 		if (!this.histEl) {
