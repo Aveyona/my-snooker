@@ -442,6 +442,7 @@ export function start(root, config = {}) {
 		}
 		mySeat = -1;
 		watchCtx = '';
+		watchScreen = null;
 		seatList = [];
 		pickEnd();
 		renderer.domElement.style.cursor = '';
@@ -485,11 +486,23 @@ export function start(root, config = {}) {
 			setTimeout(() => fadeEl.classList.remove('mysn-on'), 60);
 		}, 350);
 	};
+	let watchScreen = null; // divák: skóre sledovaného ligového zápasu (prichádza od hráča)
 	const updateStadiumScreen = () => {
 		const m = game.match;
 		const ld = leagueData;
 		const footer = ld && ld.season ? `${ld.season.name} · do konca ${ld.season.daysLeft} dní` : 'My Snooker liga';
-		if (m && m.rules) {
+		if (game.spectating && watchScreen) {
+			const w = watchScreen;
+			stadium.setScreen({
+				title: 'LIGOVÁ PARTIA',
+				names: w.names.slice(0, 2).map((n) => String(n).slice(0, 40)),
+				scores: [Number(w.scores[0]) || 0, Number(w.scores[1]) || 0],
+				turn: w.turn === 0 || w.turn === 1 ? w.turn : -1,
+				brk: Number(w.brk) || 0,
+				on: String(w.on || '').slice(0, 40),
+				footer,
+			});
+		} else if (m && m.rules) {
 			stadium.setScreen({
 				title: m.league ? 'LIGOVÁ PARTIA' : 'PARTIA',
 				names: m.players.map((p) => p.name),
@@ -1731,6 +1744,10 @@ export function start(root, config = {}) {
 				const moving = game.state === 'moving';
 				if (m.k === 'w-state') {
 					sp.info = m.info || sp.info;
+					if (m.scr && Array.isArray(m.scr.names)) {
+						watchScreen = m.scr; // veľká obrazovka na štadióne ukazuje skóre sledovanej partie
+						updateStadiumScreen();
+					}
 					const key = m.seq + ':' + (m.ver || 0);
 					if (key === watchInfo.key || m.seq < watchInfo.seq) {
 						return;
