@@ -8,6 +8,7 @@ const ICE = [{ urls: ['stun:stun.l.google.com:19302', 'stun:stun1.l.google.com:1
 const FAST_MS = 700; // čítanie signálov, kým sa spojenie nadväzuje
 const OPEN_MS = 15000; // spojenie, ktoré sa dovtedy neotvorí, sa zruší
 const GATHER_MS = 2500;
+const DISC_MS = 15000; // prerušené spojenie (disconnected) sa zruší až po tomto čase
 
 // celá ponuka naraz: čaká sa na kandidátov spojenia, stačí verejná adresa zo STUN (srflx), najdlhšie GATHER_MS
 const gathered = (pc) =>
@@ -115,7 +116,9 @@ export class Rtc {
 			if (s === 'failed' || s === 'closed') {
 				this.drop(p, false);
 			} else if (s === 'disconnected') {
-				setTimeout(() => pc.connectionState === 'disconnected' && this.drop(p, false), 4000);
+				// krátky výpadok siete (wifi, mobil, preťažená linka) sa často sám obnoví: spojenie sa nezruší hneď,
+				// ale až keď sa do DISC_MS nevráti (predtým 4 s, čo zbytočne rušilo inak funkčné spojenia)
+				setTimeout(() => pc.connectionState === 'disconnected' && this.drop(p, false, 'disconnected'), DISC_MS);
 			}
 		});
 		this.arm(p, OPEN_MS * 2); // poistka, kým sa ponuka alebo odpoveď ešte len pripravuje

@@ -859,7 +859,10 @@ export class Online {
 			return 'Prehliadač nepodporuje priame spojenie WebRTC, partia so súperom nemôže pokračovať.';
 		}
 		if (this.inMatch && !this.oppOnline) {
-			return 'Nadväzujem priame spojenie so súperom (WebRTC). Ak sa súper nevráti, po 10 minútach sa partia preruší a dá sa v nej pokračovať neskôr.';
+			const lg = this.game.match && this.game.match.league;
+			return lg
+				? 'Obnovujem priame spojenie so súperom (WebRTC). Partia pokračuje, stav stola sa medzitým berie zo servera. Ak sa súper do 2 minút nevráti, zápas prehrá.'
+				: 'Nadväzujem priame spojenie so súperom (WebRTC). Ak sa súper nevráti, po 10 minútach sa partia preruší a dá sa v nej pokračovať neskôr.';
 		}
 		return '';
 	}
