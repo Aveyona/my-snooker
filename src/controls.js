@@ -64,52 +64,6 @@ export class Controls {
 		dom.addEventListener('contextmenu', (e) => e.preventDefault());
 		window.addEventListener('keydown', (e) => this.key(e, true));
 		window.addEventListener('keyup', (e) => this.key(e, false));
-		// Opera (gestá myšou) a niektoré iné prehliadače si pravé tlačidlo občas vezmú a hra nedostane jeho pustenie:
-		// stav tlačidiel sa preto dorovná pri každom pohybe myši (e.buttons), pri pustení cez mouseup aj pri odchode z okna
-		// (tesne po stlačení a pri zachytení myši prehliadač pošle pohyb ešte bez tlačidla: počká sa 0,4 s a na dva pohyby po sebe)
-		const miss = { r: 0, l: 0 };
-		const sync = (e) => {
-			if ((e.pointerType && e.pointerType !== 'mouse') || performance.now() - (this._btnT || 0) < 400) {
-				return;
-			}
-			miss.r = this.panning && !(e.buttons & 2) ? miss.r + 1 : 0;
-			miss.l = this.stroking && !(e.buttons & 1) ? miss.l + 1 : 0;
-			if (miss.r >= 2) {
-				miss.r = 0;
-				this.releaseRight();
-			}
-			if (miss.l >= 2) {
-				miss.l = 0;
-				this.endStroke();
-			}
-		};
-		window.addEventListener('pointermove', sync, true);
-		window.addEventListener('mousemove', sync, true);
-		window.addEventListener(
-			'mouseup',
-			(e) => {
-				if (e.button === 2 && this.panning) {
-					this.releaseRight();
-				}
-			},
-			true
-		);
-		const lost = () => {
-			if (this.panning) {
-				this.releaseRight();
-			}
-			if (this.stroking) {
-				this.endStroke();
-			}
-		};
-		window.addEventListener('blur', lost);
-		document.addEventListener('visibilitychange', () => document.hidden && lost());
-	}
-
-	/** Pustenie pravého tlačidla: pohľad sa vráti na tágo. */
-	releaseRight() {
-		this.panning = false;
-		this.rig.resetPan();
 	}
 
 	tablePoint(e) {
@@ -128,7 +82,6 @@ export class Controls {
 
 	down(e) {
 		this.hooks.unlock();
-		this._btnT = performance.now(); // čas stlačenia (kontrola strateného pustenia čaká chvíľu)
 		const g = this.game;
 		if (this.blocked) {
 			if (this.hooks.viewDown) {
@@ -249,7 +202,8 @@ export class Controls {
 		}
 		if (e.pointerType === 'mouse' && e.button === 2) {
 			// pustením pravého tlačidla sa pohľad vráti na pôvodné miesto
-			this.releaseRight();
+			this.panning = false;
+			this.rig.resetPan();
 		}
 		const t = this._tap;
 		if (t && t.id === e.pointerId) {
