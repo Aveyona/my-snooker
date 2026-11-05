@@ -78,3 +78,6 @@ export function countryByCode(code) {
 	const c = COUNTRIES.find((x) => x[0] === code);
 	return c ? { code: c[0], name: c[1], lat: c[2], lon: c[3] } : null;
 }
+
+/** Číselný kód krajiny ISO 3166 (mapa sveta Natural Earth v kancelárii zvýrazní krajiny s hráčmi ligy). */
+export const ISO_NUM = {'SK': '703', 'CZ': '203', 'HU': '348', 'PL': '616', 'AT': '040', 'DE': '276', 'UA': '804', 'GB': '826', 'IE': '372', 'FR': '250', 'ES': '724', 'PT': '620', 'IT': '380', 'CH': '756', 'NL': '528', 'BE': '056', 'LU': '442', 'DK': '208', 'NO': '578', 'SE': '752', 'FI': '246', 'IS': '352', 'EE': '233', 'LV': '428', 'LT': '440', 'SI': '705', 'HR': '191', 'BA': '070', 'RS': '688', 'ME': '499', 'MK': '807', 'AL': '008', 'GR': '300', 'BG': '100', 'RO': '642', 'MD': '498', 'TR': '792', 'CY': '196', 'MT': '470', 'US': '840', 'CA': '124', 'MX': '484', 'BR': '076', 'AR': '032', 'CL': '152', 'CO': '170', 'PE': '604', 'ZA': '710', 'EG': '818', 'MA': '504', 'NG': '566', 'KE': '404', 'IL': '376', 'AE': '784', 'SA': '682', 'IN': '356', 'PK': '586', 'CN': '156', 'HK': '344', 'TH': '764', 'MY': '458', 'SG': '702', 'VN': '704', 'PH': '608', 'ID': '360', 'JP': '392', 'KR': '410', 'AU': '036', 'NZ': '554', 'RU': '643'};

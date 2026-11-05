@@ -9,6 +9,8 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 function mysn_roadmap() {
 	return array(
+		array( '0.6.29', '5. 11. 2026', 'Oprava: podrobná mapa sveta v kancelárii sa načíta aj v hre na adrese snooker.hedlajner.sk (súbor s hranicami štátov sa berie z tej istej domény).' ),
+		array( '0.6.28', '5. 11. 2026', 'Kancelária: nová podrobná mapa sveta s hranicami všetkých štátov (Natural Earth 1:50 mil., verejné vlastníctvo). Krajiny s hráčmi ligy sú zvýraznené, každá má jeden špendlík s počtom hráčov (moja krajina zlatý, ostatné strieborné), mená sa už neprekrývajú. Ctrl a klik na špendlík ukáže hráčov krajiny s ligou, miestom a bodmi.' ),
 		array( '0.6.27', '5. 11. 2026', 'Vyhľadávanie ligového zápasu: hore je žltý pásik Vyhľadáva sa ligový zápas s časom a krížikom na zrušenie (v menu aj v hre). Hľadanie beží aj po odchode z kancelárie (tréning, hra o skóre, sledovanie), zruší ho krížik, výzva na partiu alebo zhasnutá lampa. Nájdený zápas treba potvrdiť do 60 sekúnd vo výraznom okne (Prijať alebo Zrušiť, súper sa neukazuje); Zrušiť vypne aj vyhľadávanie. Keď súper nepotvrdí, hľadá sa ďalej.' ),
 		array( '0.6.26', '5. 11. 2026', 'Kancelária: F7 priblíži notebook a vpravo otvorí panel Moje zápasy v lige. Všetky ligové zápasy (aj zrušené a prehraté pre výpadok) s dátumom, súperom, skóre, výsledkom a bodmi ligy, súhrn výhier a prehier a najvyšší brejk. Klik na zápas ukáže detail: porovnanie hráčov (body, najvyšší brejk, údery, fauly, trestné body), graf priebehu skóre a priebeh partie (brejky a fauly v poradí).' ),
 		array( '0.6.25', '5. 11. 2026', 'Oprava: oblečenie v šatníku pri pohybe kamery neblikalo medzi košeľou a vestou (časti sa prekrývali v rovnakej hĺbke).' ),

@@ -8,6 +8,8 @@
  */
 import * as THREE from 'three';
 import { buildCueMesh } from './cues.js';
+import { feature } from 'topojson-client';
+import { countryByCode, ISO_NUM } from './countries.js';
 
 export const OX = 40; // kancelária je 40 m od herne
 const FY = -0.86;
@@ -212,70 +214,178 @@ export function buildOffice(scene) {
 
 	// mapa sveta na ľavej stene (-x) s ikonkami hráčov
 	const MAP = { w: 3.8, h: 1.9, y: FY + 1.85 };
-	const mp = tex(2048, 1024);
+	const MW = 3072; // textúra mapy (rovnobežkové zobrazenie: dĺžka a šírka priamo na x a y)
+	const MH = 1536;
+	const mp = tex(MW, MH);
+	mp.t.anisotropy = 8;
 	const mapMesh = add(new THREE.PlaneGeometry(MAP.w, MAP.h), new THREE.MeshStandardMaterial({ map: mp.t, roughness: 0.75 }), -RXo + 0.09, MAP.y, 0);
 	mapMesh.rotation.y = Math.PI / 2;
 	add(new THREE.BoxGeometry(0.04, MAP.h + 0.1, MAP.w + 0.1), wood, -RXo + 0.065, MAP.y, 0);
-	const drawMap = (players, meId) => {
-		const g = mp.g;
-		g.fillStyle = '#16324f';
-		g.fillRect(0, 0, 2048, 1024);
-		g.strokeStyle = 'rgba(255,255,255,0.07)';
-		g.lineWidth = 2;
-		for (let lon = -180; lon <= 180; lon += 30) {
-			const x = ((lon + 180) / 360) * 2048;
-			g.beginPath();
-			g.moveTo(x, 0);
-			g.lineTo(x, 1024);
-			g.stroke();
-		}
-		for (let lat = -60; lat <= 80; lat += 30) {
-			const y = ((90 - lat) / 180) * 1024;
-			g.beginPath();
-			g.moveTo(0, y);
-			g.lineTo(2048, y);
-			g.stroke();
-		}
-		g.fillStyle = '#c9b98a';
-		g.strokeStyle = '#8a7a4a';
-		g.lineWidth = 3;
-		for (const poly of CONTINENTS) {
-			g.beginPath();
-			poly.forEach(([lo, la], i) => {
-				const x = ((lo + 180) / 360) * 2048;
-				const y = ((90 - la) / 180) * 1024;
-				if (i) {
-					g.lineTo(x, y);
-				} else {
-					g.moveTo(x, y);
+	// hranice štátov: Natural Earth 1:50 mil. (verejné vlastníctvo), načíta sa raz zo súboru vedľa hry
+	let world = null;
+	let mapArgs = [[], 0];
+	const px = (lo) => ((lo + 180) / 360) * MW;
+	const py = (la) => ((90 - la) / 180) * MH;
+	const mapSrc = (() => {
+		const sc = document.querySelector('script[src*="snooker.js"]');
+		// rovnaká doména ako stránka (snooker.hedlajner.sk načíta skripty z hedlajner.sk, súbor je dostupný na oboch)
+		return sc ? window.location.origin + new URL(sc.src).pathname.replace(/snooker\.js$/, 'world-50m.json') : '';
+	})();
+	if (mapSrc) {
+		fetch(mapSrc)
+			.then((r) => (r.ok ? r.json() : null))
+			.then((topo) => {
+				if (topo && topo.objects && topo.objects.countries) {
+					world = feature(topo, topo.objects.countries).features;
+					drawMap(...mapArgs);
 				}
-			});
+			})
+			.catch(() => null);
+	}
+	// obrys cez 180. poludník (Rusko, Fidži): dĺžky sa rozvinú plynulo a obrys sa nakreslí aj posunutý o 360°
+	const ring = (g, coords) => {
+		let prev = null;
+		const pts = coords.map(([lo, la]) => {
+			let l = lo;
+			if (prev !== null) {
+				while (l - prev > 180) {
+					l -= 360;
+				}
+				while (l - prev < -180) {
+					l += 360;
+				}
+			}
+			prev = l;
+			return [l, la];
+		});
+		const lo = Math.min(...pts.map((q) => q[0]));
+		const hi = Math.max(...pts.map((q) => q[0]));
+		const shifts = [0];
+		if (hi > 180) {
+			shifts.push(-360);
+		}
+		if (lo < -180) {
+			shifts.push(360);
+		}
+		for (const sh of shifts) {
+			pts.forEach(([l, la], i) => (i ? g.lineTo(px(l + sh), py(la)) : g.moveTo(px(l + sh), py(la))));
 			g.closePath();
-			g.fill();
+		}
+	};
+	const countryPath = (g, geom) => {
+		g.beginPath();
+		const polys = geom.type === 'Polygon' ? [geom.coordinates] : geom.type === 'MultiPolygon' ? geom.coordinates : [];
+		for (const poly of polys) {
+			for (const r of poly) {
+				ring(g, r);
+			}
+		}
+	};
+	const drawMap = (players, meId) => {
+		mapArgs = [players || [], meId];
+		const g = mp.g;
+		// oceán: tmavomodrý s jemným prechodom a mriežkou
+		const sea = g.createLinearGradient(0, 0, 0, MH);
+		sea.addColorStop(0, '#0f2742');
+		sea.addColorStop(0.5, '#16324f');
+		sea.addColorStop(1, '#0d2239');
+		g.fillStyle = sea;
+		g.fillRect(0, 0, MW, MH);
+		g.strokeStyle = 'rgba(255,255,255,0.06)';
+		g.lineWidth = 2;
+		for (let lon = -180; lon <= 180; lon += 15) {
+			g.beginPath();
+			g.moveTo(px(lon), 0);
+			g.lineTo(px(lon), MH);
 			g.stroke();
+		}
+		for (let lat = -75; lat <= 75; lat += 15) {
+			g.beginPath();
+			g.moveTo(0, py(lat));
+			g.lineTo(MW, py(lat));
+			g.stroke();
+		}
+		g.strokeStyle = 'rgba(242,212,138,0.18)';
+		g.setLineDash([10, 8]);
+		g.beginPath();
+		g.moveTo(0, py(0));
+		g.lineTo(MW, py(0)); // rovník
+		g.stroke();
+		g.setLineDash([]);
+		// krajiny hráčov: zoskupenie podľa krajiny
+		const by = new Map();
+		for (const p of mapArgs[0]) {
+			if (!by.has(p.code)) {
+				by.set(p.code, []);
+			}
+			by.get(p.code).push(p);
+		}
+		const hot = new Set([...by.keys()].map((c) => ISO_NUM[c]));
+		if (world) {
+			g.lineJoin = 'round';
+			for (const f of world) {
+				if (!f.geometry || f.id === '010') {
+					continue; // Antarktída sa nekreslí (rovnobežkové zobrazenie ju veľmi roztiahne)
+				}
+				countryPath(g, f.geometry);
+				g.fillStyle = hot.has(f.id) ? '#f0dc9e' : '#c9b98a';
+				g.fill('evenodd');
+			}
+			g.strokeStyle = 'rgba(70,56,24,0.85)';
+			g.lineWidth = 1.4;
+			for (const f of world) {
+				if (f.geometry && f.id !== '010') {
+					countryPath(g, f.geometry);
+					g.stroke();
+				}
+			}
+		} else {
+			// kým sa hranice nenačítajú: zjednodušené kontinenty
+			g.fillStyle = '#c9b98a';
+			for (const poly of CONTINENTS) {
+				g.beginPath();
+				ring(g, poly);
+				g.fill();
+			}
 		}
 		g.fillStyle = '#f2d48a';
-		g.font = 'bold 48px Georgia, serif';
+		g.font = 'bold 64px Georgia, serif';
 		g.textAlign = 'left';
-		g.fillText('Hráči ligy vo svete', 40, 70);
-		const colors = ['#e8b830', '#c9cdd3', '#c8804a', '#2ecc71'];
-		for (const p of players || []) {
-			const x = ((p.lon + 180) / 360) * 2048;
-			const y = ((90 - p.lat) / 180) * 1024;
-			g.fillStyle = 'rgba(0,0,0,0.4)';
+		g.fillText('Hráči ligy vo svete', 56, MH - 96); // dole vľavo (južný oceán je prázdny)
+		g.font = '30px Georgia, serif';
+		g.fillStyle = 'rgba(242,212,138,0.8)';
+		const n = mapArgs[0].length;
+		g.fillText(n ? `${n} ${n === 1 ? 'hráč' : n < 5 ? 'hráči' : 'hráčov'} · ${by.size} ${by.size === 1 ? 'krajina' : by.size < 5 ? 'krajiny' : 'krajín'}` : 'Zatiaľ žiadni hráči', 58, MH - 52);
+		// špendlík za každú krajinu s počtom hráčov; moja krajina zlatá, ostatné strieborné
+		for (const [code, list] of by) {
+			const c = countryByCode(code);
+			if (!c) {
+				continue;
+			}
+			const x = px(c.lon);
+			const y = py(c.lat);
+			const mine = list.some((p) => p.id === meId);
+			const r = 20;
+			g.fillStyle = 'rgba(0,0,0,0.45)';
 			g.beginPath();
-			g.arc(x + 3, y + 4, 16, 0, Math.PI * 2);
+			g.ellipse(x + 3, y + 5, r, r * 0.9, 0, 0, Math.PI * 2);
 			g.fill();
-			g.fillStyle = colors[(p.league || 4) - 1];
+			const grd = g.createRadialGradient(x - 6, y - 7, 2, x, y, r);
+			grd.addColorStop(0, mine ? '#fff3b0' : '#ffffff');
+			grd.addColorStop(1, mine ? '#d49a10' : '#8d939c');
+			g.fillStyle = grd;
 			g.beginPath();
-			g.arc(x, y, 15, 0, Math.PI * 2);
+			g.arc(x, y, r, 0, Math.PI * 2);
 			g.fill();
-			g.strokeStyle = p.id === meId ? '#ffffff' : '#111';
-			g.lineWidth = p.id === meId ? 6 : 3;
+			g.strokeStyle = '#1a1a1a';
+			g.lineWidth = 3;
 			g.stroke();
-			g.fillStyle = '#fff';
-			g.font = 'bold 26px Arial, sans-serif';
-			g.fillText(String(p.name).slice(0, 14), x + 20, y + 9);
+			g.fillStyle = '#111';
+			g.font = 'bold 24px Arial, sans-serif';
+			g.textAlign = 'center';
+			g.textBaseline = 'middle';
+			g.fillText(String(list.length), x, y + 1);
+			g.textBaseline = 'alphabetic';
 		}
 		mp.t.needsUpdate = true;
 	};

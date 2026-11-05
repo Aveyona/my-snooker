@@ -216,9 +216,8 @@ export function start(root, config = {}) {
 				for (const r of (d.leagues && d.leagues[n]) || []) {
 					const c = countryByCode(r.country);
 					if (c) {
-						// hráči z tej istej krajiny sa trochu rozostúpia
-						const k = pts.filter((p) => p.code === c.code).length;
-						pts.push({ id: r.user.id, name: r.user.name, league: r.league, points: r.points, rank: r.rank, code: c.code, lat: c.lat + (k % 3) * 1.6, lon: c.lon + Math.floor(k / 3) * 2.2 + (k % 3) * 1.2 });
+						// na mape je jeden špendlík za krajinu s počtom hráčov
+						pts.push({ id: r.user.id, name: r.user.name, league: r.league, points: r.points, rank: r.rank, code: c.code, lat: c.lat, lon: c.lon });
 					}
 				}
 			}
@@ -1470,9 +1469,10 @@ export function start(root, config = {}) {
 				}
 				const hit = ray.intersectObject(office.map, false)[0];
 				if (hit) {
+					// klik na špendlík krajiny: zoznam jej hráčov
 					const ll = office.mapLonLat(hit.point);
 					let best = null;
-					let bd = 7;
+					let bd = 5;
 					for (const p of officePlayers) {
 						const dd = Math.hypot(p.lon - ll.lon, p.lat - ll.lat);
 						if (dd < bd) {
@@ -1482,7 +1482,8 @@ export function start(root, config = {}) {
 					}
 					if (best) {
 						const c = countryByCode(best.code);
-						ui.toast(`${best.name} (${c ? c.name : ''}): ${best.rank}. miesto, ${best.league}. liga, ${best.points} bodov.`);
+						const list = officePlayers.filter((p) => p.code === best.code).sort((a, b) => a.league - b.league || a.rank - b.rank);
+						ui.toast(`${c ? c.name : best.code} (${list.length}): ` + list.map((p) => `${p.name}, ${p.league}. liga, ${p.rank}. miesto, ${p.points} b.`).join(' · '));
 					}
 				}
 			}
