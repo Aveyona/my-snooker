@@ -62,10 +62,15 @@ export class Cue {
 		const gap = 0.012 + pull * 0.28;
 		const tipX = cue.p.x - dx * (R + gap) + rx * side * 0.5 * R;
 		const tipZ = cue.p.z - dz * (R + gap) + rz * side * 0.5 * R;
+		// sklon sa počíta z polohy tága bez odtiahnutia: pri naťahovaní sa tágo len posúva po svojej osi,
+		// uhol (a s ním kamera) sa nemení
+		const GAP0 = 0.012;
+		const restX = cue.p.x - dx * (R + GAP0) + rx * side * 0.5 * R;
+		const restZ = cue.p.z - dz * (R + GAP0) + rz * side * 0.5 * R;
 		// pri mantineli sa tágo zdvihne strmšie, aby neprechádzalo cez mantinel a rám stola
 		const base = R + top * 0.5 * R;
-		const d1 = toEdge(tipX, tipZ, -dx, -dz, L / 2, W / 2);
-		const d2 = toEdge(tipX, tipZ, -dx, -dz, L / 2 + OUTER, W / 2 + OUTER);
+		const d1 = toEdge(restX, restZ, -dx, -dz, L / 2, W / 2);
+		const d2 = toEdge(restX, restZ, -dx, -dz, L / 2 + OUTER, W / 2 + OUTER);
 		const len = this.spec.len || 1.45;
 		const rad = (sd) => 0.0048 + ((0.0145 - 0.0048) * Math.min(sd, len)) / len;
 		// gule za bielou, ktoré ležia v ceste tága: (h dozadu pozdĺž tága, lat bokom), ostatné sa nekontrolujú
@@ -74,8 +79,8 @@ export class Cue {
 			if (b === cue || !b.on) {
 				continue;
 			}
-			const ox = b.p.x - tipX;
-			const oz = b.p.z - tipZ;
+			const ox = b.p.x - restX;
+			const oz = b.p.z - restZ;
 			const h = -(ox * dx + oz * dz);
 			const lat = ox * rx + oz * rz;
 			if (h > -R && h < len + R && Math.abs(lat) < R + rad(len) + BALL_GAP) {
@@ -85,7 +90,7 @@ export class Cue {
 		const clear = (t) => {
 			const ct = Math.cos(t);
 			const st = Math.sin(t);
-			const tipY = base + gap * Math.tan(t);
+			const tipY = base + GAP0 * Math.tan(t);
 			for (const { h, lat } of near) {
 				// vzdialenosť stredu gule od osi tága (os ide zo špičky dozadu a hore pod uhlom t)
 				const cy = R - tipY;
