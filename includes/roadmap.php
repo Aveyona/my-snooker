@@ -112,6 +112,7 @@ function mysn_roadmap() {
 				array( 'Šatník v kancelárii: výber oblečenia na zápas, ktoré uvidí súper a diváci', 0 ),
 				array( 'Časomiera v ligovom zápase: 30 sekúnd na úder, posledných 5 s odpočet, inak faul za čas', 1 ),
 				array( 'Pozvánka na partiu cez odkaz', 0 ),
+				array( 'TURN server pre priame spojenie (WebRTC): hráči zo sietí, ktoré priame spojenie nedovolia (mobilné dáta, firemné siete), sa spoja cez prepojovací server (riešiť neskôr)', 0 ),
 				array( 'Klávesy F8, F9 a F10 na štadióne (zatiaľ nerobia nič)', 0 ),
 				array( 'Doladenie podľa skúšania (svetlá, citlivosť ovládania, rýchlosť súkna)', 0 ),
 			),
@@ -122,6 +123,7 @@ function mysn_roadmap() {
 /** Denník zmien (najnovšie hore). */
 function mysn_changelog() {
 	return array(
+		array( '0.6.43', '5. 11. 2026', 'Plán vývoja: doplnený TURN server pre priame spojenie hráčov (riešiť neskôr).' ),
 		array( '0.6.42', '5. 11. 2026', 'Spojenie so súperom: krátky výpadok siete už priame spojenie (WebRTC) hneď neruší, počká sa 15 sekúnd, či sa samo neobnoví (predtým 4 s). V ligovom zápase je pri výpadku správny text: partia pokračuje, stav stola sa berie zo servera, súper bez spojenia prehrá po 2 minútach.' ),
 		array( '0.6.41', '5. 11. 2026', 'Oprava rozdielnych pozícií gúľ u hráčov: fyzika počíta vždy rovnaké celé kroky bez ohľadu na rýchlosť počítača a počet snímok za sekundu (predtým mohli gule u súpera skončiť inde). Keď vypadne priame spojenie so súperom a jeho výsledok úderu nepríde, hra pri najbližšom pingu zistí novší úder na serveri a načíta uložený stav stola.' ),
 		array( '0.6.40', '5. 11. 2026', 'Štadión: hráči sedia v čalúnených kreslách (namiesto stoličiek). Nastavenia: Kamera, keď hrá súper (ligový štadión). Sledovať súpera (predvolené, ako doteraz), Pohľad zhora alebo Z kresla (F7): keď súper príde na rad, kamera sa prepne a ostane tak počas celého jeho ťahu; keď prídeš na rad, vráti sa za tágo.' ),
