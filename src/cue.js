@@ -9,6 +9,7 @@ const TILT = THREE.MathUtils.degToRad(4); // tágo je mierne zdvihnuté nad mant
 const MAX_TILT = THREE.MathUtils.degToRad(40);
 const EDGE_H = 0.049 + 0.004; // vrch dreveného rámu nad súknom a malá rezerva
 const OUTER = 0.17; // mantinel a rám za hranou hracej plochy
+const BALL_GAP = 0.003; // rezerva medzi tágom a guľou, ktorú tágo prechádza ponad
 
 /** Vzdialenosť od bodu (x, z) v smere (ux, uz) po obdĺžnik s polovičnými rozmermi hx, hz. */
 function toEdge(x, z, ux, uz, hx, hz) {
@@ -45,8 +46,11 @@ export class Cue {
 		this.pivot.add(this.group);
 	}
 
-	/** Umiestni tágo za bielu: smer dir, odtiahnutie podľa sily, miesto úderu (side, top). */
-	place(cue, dir, pull, side, top, visible) {
+	/**
+	 * Umiestni tágo za bielu: smer dir, odtiahnutie podľa sily, miesto úderu (side, top).
+	 * balls: gule na stole; tágo sa nad ne zdvihne ako nad mantinel (len vzhľad, úder sa nemení).
+	 */
+	place(cue, dir, pull, side, top, visible, balls) {
 		this.pivot.visible = visible;
 		if (!visible) {
 			return;
@@ -64,13 +68,47 @@ export class Cue {
 		const d2 = toEdge(tipX, tipZ, -dx, -dz, L / 2 + OUTER, W / 2 + OUTER);
 		const len = this.spec.len || 1.45;
 		const rad = (sd) => 0.0048 + ((0.0145 - 0.0048) * Math.min(sd, len)) / len;
+		// gule za bielou, ktoré ležia v ceste tága: (h dozadu pozdĺž tága, lat bokom), ostatné sa nekontrolujú
+		const near = [];
+		for (const b of balls || []) {
+			if (b === cue || !b.on) {
+				continue;
+			}
+			const ox = b.p.x - tipX;
+			const oz = b.p.z - tipZ;
+			const h = -(ox * dx + oz * dz);
+			const lat = ox * rx + oz * rz;
+			if (h > -R && h < len + R && Math.abs(lat) < R + rad(len) + BALL_GAP) {
+				near.push({ h, lat });
+			}
+		}
+		const clear = (t) => {
+			const ct = Math.cos(t);
+			const st = Math.sin(t);
+			const tipY = base + gap * Math.tan(t);
+			for (const { h, lat } of near) {
+				// vzdialenosť stredu gule od osi tága (os ide zo špičky dozadu a hore pod uhlom t)
+				const cy = R - tipY;
+				const along = h * ct + cy * st;
+				if (along < 0 || along > len) {
+					continue;
+				}
+				const d2 = h * h + lat * lat + cy * cy - along * along;
+				const need = R + rad(along) + BALL_GAP;
+				if (d2 < need * need) {
+					return false;
+				}
+			}
+			return true;
+		};
 		let want = TILT;
 		for (; want < MAX_TILT; want += 0.005) {
 			const ok = [d1, d2].every((sd) => sd > len || base + sd * Math.sin(want) >= EDGE_H + rad(sd) / Math.cos(want));
-			if (ok) {
+			if (ok && clear(want)) {
 				break;
 			}
 		}
+		want = Math.min(want, MAX_TILT); // guľa tesne za bielou: ďalej sa nezdvíha
 		this.tilt = this.tilt === undefined ? want : this.tilt + (want - this.tilt) * 0.25;
 		const tilt = this.tilt;
 		const tipY = base + gap * Math.tan(tilt);

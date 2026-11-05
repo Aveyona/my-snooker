@@ -119,6 +119,7 @@ function mysn_roadmap() {
 /** Denník zmien (najnovšie hore). */
 function mysn_changelog() {
 	return array(
+		array( '0.6.1', '5. 11. 2026', 'Tágo sa pri mierení samo zdvihne nad guľu, ktorá leží za bielou, podobne ako nad mantinel (najviac o 40 stupňov). Je to len vzhľad, úder sa nemení.' ),
 		array( '0.6.0', '4. 11. 2026', 'Partia cez internet a sledovanie idú priamo medzi prehliadačmi cez WebRTC: mierenie tága asi 20-krát za sekundu, úder a výsledok hneď, bez čítania servera dookola. Server len sprostredkuje nadviazanie spojenia (nová tabuľka my_snooker_signals) a ukladá partiu a odohrané ťahy. Divák sa spojí s hráčom otvorenej partie alebo s oboma hráčmi ligového zápasu.' ),
 		array( '0.5.3', '4. 11. 2026', 'Tágo, s ktorým hráš, nie je pri hre na stojane (je v ruke, jeho miesto je prázdne). Na stojane je len v pohľade F2, keď si prezeráš tágá.' ),
 		array( '0.5.2', '4. 11. 2026', 'Neprihlásený návštevník má v menu aj Tréning: zahrá si voľný tréning bez prihlásenia. Hra o skóre, liga, partie s priateľmi a vlastné tágá ostávajú pre prihlásených.' ),

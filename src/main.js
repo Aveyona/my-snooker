@@ -1688,7 +1688,7 @@ export function start(root, config = {}) {
 		if (watchAim) {
 			pull += ((watchAim.pull || 0) - pull) * Math.min(1, dt * 18);
 		}
-		cue.place(game.cue, game.dir, pull, watchAim ? watchAim.side || 0 : spin.side, watchAim ? watchAim.top || 0 : spin.top, (aiming || view === 'chalk' || (watchAim && !watchAim.place)) && game.cue.on);
+		cue.place(game.cue, game.dir, pull, watchAim ? watchAim.side || 0 : spin.side, watchAim ? watchAim.top || 0 : spin.top, (aiming || view === 'chalk' || (watchAim && !watchAim.place)) && game.cue.on, game.balls);
 		if (chalkT >= 0) {
 			// kriedovanie: tágo sa zdvihne a odtiahne, krieda sa nasadí dierou na špičku, pootáča sa a odíde
 			chalkT = debug.chalkFreeze !== null ? debug.chalkFreeze : (performance.now() - chalkStart) / 1000; // podľa skutočného času
@@ -1746,7 +1746,7 @@ export function start(root, config = {}) {
 	};
 	requestAnimationFrame(frame);
 
-	return { game, rig, renderer, scene, settings, controls, debug, actions, get online() {
+	return { game, rig, renderer, scene, settings, controls, debug, actions, cue, get online() {
 		return online;
 	} };
 }
