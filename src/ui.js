@@ -438,6 +438,35 @@ export class UI {
 	}
 
 	/** Krátka správa navrchu (pozvánka, odmietnutie, chyba). Pri pozvánke s tlačidlami. */
+	/** Časomiera ligového zápasu: sec = zostávajúce sekundy (null = skryť), mine = som na rade. */
+	setClock(sec, mine) {
+		if (!this.clockEl) {
+			this.clockEl = h('div', 'mysn-clock mysn-hidden');
+			this.clockBig = h('div', 'mysn-clock-big mysn-hidden');
+			this.root.append(this.clockEl, this.clockBig);
+		}
+		const el = this.clockEl;
+		const big = this.clockBig;
+		if (sec === null || sec === undefined) {
+			el.classList.add('mysn-hidden');
+			big.classList.add('mysn-hidden');
+			return;
+		}
+		el.classList.remove('mysn-hidden');
+		el.classList.toggle('mysn-clock-warn', sec <= 10);
+		el.classList.toggle('mysn-clock-mine', !!mine);
+		el.innerHTML = `<span>${mine ? 'Tvoj čas' : 'Čas na úder'}</span><b>0:${String(sec).padStart(2, '0')}</b>`;
+		// posledných 5 sekúnd: veľký odpočet uprostred, pri nule Čas!
+		big.classList.toggle('mysn-hidden', sec > 5);
+		if (sec <= 5) {
+			big.textContent = sec > 0 ? String(sec) : 'Čas!';
+			big.classList.toggle('mysn-clock-end', sec === 0);
+			big.classList.remove('mysn-clock-pop');
+			void big.offsetWidth; // znova spustí animáciu
+			big.classList.add('mysn-clock-pop');
+		}
+	}
+
 	/** Poloha detailu dotyku: center, left (vedľa Miesta úderu), right (vedľa ukazovateľa sily), off. */
 	setContactPos(pos) {
 		for (const k of ['left', 'right']) {

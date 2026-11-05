@@ -416,7 +416,7 @@ export class Online {
 		const sc = (m.rules && m.rules.scores) || [0, 0];
 		// scr = údaje pre veľkú obrazovku na štadióne (mená, skóre, kto je na rade, séria, guľa na rade)
 		const r = m.rules || {};
-		const scr = { names: m.players.map((p) => p.name), scores: sc, turn: r.over ? -1 : r.turn, brk: r.brk || 0, on: g.onText ? g.onText() : '' };
+		const scr = { names: m.players.map((p) => p.name), scores: sc, turn: r.over ? -1 : r.turn, brk: r.brk || 0, on: g.onText ? g.onText() : '', left: m.league && m.turnAt ? Math.max(0, 30 - (Date.now() - m.turnAt) / 1000) : null };
 		return { k: 'w-state', seq: m.seq, ver: 0, balls: snapshot(g.balls), place: g.state === 'place' ? 1 : 0, info: `${m.players[0].name} ${sc[0]} : ${sc[1]} ${m.players[1].name}`, scr };
 	}
 
@@ -595,6 +595,37 @@ export class Online {
 		this.aimTarget = null;
 		this.game.endMatch();
 		this.hooks.ended(text);
+	}
+
+	/**
+	 * Faul za čas v ligovom zápase: pošle ho hráč na rade (vypršalo mu 30 sekúnd), alebo súper, keď hráč na rade
+	 * nereaguje. Server overí čas od začiatku ťahu; nový stav ide súperovi a divákom priamo.
+	 */
+	async timeout() {
+		const g = this.game;
+		const m = g.match;
+		if (!m || !this.matchId || this._toBusy || (this._toSeq === m.seq && Date.now() < this._toNext)) {
+			return;
+		}
+		this._toBusy = true;
+		this._toSeq = m.seq;
+		this._toNext = Date.now() + 2500; // server ešte nepustil: skúsi sa znova o chvíľu
+		const { st, seq } = g.timeFoulState();
+		try {
+			const r = await this.net.call('timeout', { id: this.matchId, seq, state: st });
+			if (r && r.ok && g.match && g.match.seq < seq) {
+				g.applyState(st, seq);
+				this.rtcSendOpp({ k: 'settle', seq, state: st });
+				this.wsend(this.matchWState());
+			}
+			if (r && r.match) {
+				this.rtcSendOpp({ k: 'info', m: r.match });
+				this.applyInfo(r.match);
+			}
+		} catch (e) {
+			/* čas na serveri ešte nevypršal alebo výpadok: ďalší pokus o chvíľu */
+		}
+		this._toBusy = false;
 	}
 
 	/** Moje tágá na stojane na štadióne: súperovi a mojim divákom (aj po nadviazaní spojenia). */

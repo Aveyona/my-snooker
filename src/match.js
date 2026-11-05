@@ -206,6 +206,9 @@ export class Game extends Training {
 		for (const b of this.balls) {
 			b.moving = false;
 		}
+		if (m.seq !== seq) {
+			m.turnAt = Date.now(); // začiatok ťahu (časomiera ligového zápasu)
+		}
 		m.seq = seq;
 		m.rules = { ...st.rules, scores: [...st.rules.scores] };
 		m.turn = m.rules.turn;
@@ -400,6 +403,25 @@ export class Game extends Training {
 		const state = { ...r, scores, on: 'any', brk: keep ? r.brk + points : 0, turn: keep || over ? m.me : 1 - m.me, over, winner: over ? (scores[1] > scores[0] ? 1 : 0) : null };
 		const msg = (points ? `${points} ${points === 1 ? 'bod' : points < 5 ? 'body' : 'bodov'}.` : 'Nič nespadlo.') + (white ? ' Biela spadla, súper ju položí do D.' : '');
 		return { state, points, foul: false, penalty: 0, respot, inHand: white, msg };
+	}
+
+	/** Faul za čas (ligový zápas): stav po faule hráča na rade, ktorý do 30 sekúnd neudrel. */
+	timeFoulState() {
+		const m = this.match;
+		const off = m.rules.turn;
+		const reds = this.balls.filter((b) => b.kind === 'red' && b.on).length;
+		const res = evaluate({ ...m.rules, free: false }, { first: null, pots: [], reds });
+		const why = res.msg.replace('Biela netrafila žiadnu guľu.', 'Čas na úder vypršal.');
+		const names = m.players.map((p) => p.name);
+		const st = {
+			balls: snapshot(this.balls),
+			rules: res.state,
+			inHand: !!m.inHand || !this.cue.on, // biela v ruke ostáva súperovi
+			msg: `${names[off]}: ${why}` + (res.state.over ? ` Koniec partie, víťaz: ${names[res.state.winner]}.` : ` Na rade je ${names[res.state.turn]}.`),
+			last: { by: off, points: 0, foul: true, penalty: res.penalty, brk: 0, timeout: true },
+			best: [...(m.best || [0, 0])],
+		};
+		return { st, seq: m.seq + 1 };
 	}
 
 	/** Text o tom, na čo sa hrá (pre tabuľu a lištu). */

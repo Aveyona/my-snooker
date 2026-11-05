@@ -241,6 +241,11 @@ export function buildStadium(scene, quality) {
 		g.fillStyle = '#6a7080';
 		g.font = 'italic 24px Arial, sans-serif';
 		g.textAlign = 'center';
+		g.fillStyle = '#b3121f';
+		g.font = 'bold 26px Arial, sans-serif';
+		g.fillText('Na úder máš 30 sekúnd, inak faul.', w / 2, h - 70);
+		g.fillStyle = '#6a7080';
+		g.font = 'italic 24px Arial, sans-serif';
 		g.fillText('F1 alebo Esc: späť do hry', w / 2, h - 30);
 	});
 	const paperMesh = add(new THREE.PlaneGeometry(PAPER.w, PAPER.h), new THREE.MeshStandardMaterial({ map: paper.t, roughness: 0.85 }), PAPER.x, FY + 0.762, PAPER.z);

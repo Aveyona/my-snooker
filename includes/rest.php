@@ -35,6 +35,7 @@ add_action(
 			'cancel' => 'mysn_rest_cancel',
 			'shot'   => 'mysn_rest_shot',
 			'settle' => 'mysn_rest_settle',
+			'timeout' => 'mysn_rest_timeout',
 			'leave'  => 'mysn_rest_leave',
 			'resume' => 'mysn_rest_resume',
 			'score'  => 'mysn_rest_score',
@@ -372,6 +373,7 @@ function mysn_match_begin( $m ) {
 			'state'  => wp_json_encode( $state ),
 			'seen1'  => $now,
 			'seen2'  => $now,
+			'turnat' => $now, // začiatok ťahu (časomiera ligy)
 		)
 	);
 }
@@ -484,6 +486,7 @@ function mysn_rest_settle( $req ) {
 		'aim'    => null,
 		'score1' => max( 0, (int) $rules['scores'][0] ),
 		'score2' => max( 0, (int) $rules['scores'][1] ),
+		'turnat' => $now,
 	);
 	if ( $over ) {
 		$w              = isset( $rules['winner'] ) && 1 === (int) $rules['winner'] ? 1 : 0;
@@ -499,6 +502,79 @@ function mysn_rest_settle( $req ) {
 		mysn_league_apply( mysn_get_match( $m['id'] ), $data['winner'], (int) $rules['scores'][ $w ], false, $best );
 	}
 	// stav partie po uložení (hráč ho pošle súperovi priamo cez WebRTC)
+	return array(
+		'ok'    => true,
+		'match' => mysn_match_out( mysn_get_match( $m['id'] ), get_current_user_id() ),
+	);
+}
+
+const MYSN_SHOT_CLOCK = 30; // ligový zápas: sekundy na úder
+
+/**
+ * Faul za čas (ligový zápas): hráč na rade do MYSN_SHOT_CLOCK sekúnd neudrel. Pošle ho hráč na rade, alebo
+ * (keď má hru zatvorenú) súper o pár sekúnd neskôr; server overí čas od začiatku ťahu a stav zapíše.
+ */
+function mysn_rest_timeout( $req ) {
+	global $wpdb;
+	$r = mysn_my_match( $req );
+	if ( is_wp_error( $r ) ) {
+		return $r;
+	}
+	list( $m, $me ) = $r;
+	$seq            = (int) $req->get_param( 'seq' );
+	if ( (int) $m['seq'] >= $seq ) {
+		return array( 'ok' => true, 'match' => mysn_match_out( $m, get_current_user_id() ) ); // už zapísané
+	}
+	if ( 'active' !== $m['status'] || empty( $m['league'] ) || (int) $m['seq'] + 1 !== $seq || $m['shot'] ) {
+		return mysn_err( 'Faul za čas sa nedá zapísať.', 409 );
+	}
+	$off  = (int) $m['turn']; // kto nestihol
+	$need = $off === $me ? MYSN_SHOT_CLOCK - 1 : MYSN_SHOT_CLOCK + 2;
+	if ( ! (int) $m['turnat'] || time() - (int) $m['turnat'] < $need ) {
+		return mysn_err( 'Čas na úder ešte nevypršal.', 409 );
+	}
+	$state = mysn_json_param( $req, 'state', 30000 );
+	$st    = $state ? json_decode( $state, true ) : null;
+	if ( ! $st || ! isset( $st['rules']['scores'], $st['rules']['turn'] ) ) {
+		return mysn_err( 'Chýba stav stola.' );
+	}
+	$rules = $st['rules'];
+	$over  = ! empty( $rules['over'] );
+	$now   = time();
+	$wpdb->insert(
+		mysn_table( 'moves' ),
+		array(
+			'match_id' => (int) $m['id'],
+			'seq'      => $seq,
+			'user_id'  => 0 === $off ? (int) $m['p1'] : (int) $m['p2'],
+			'shot'     => wp_json_encode( array( 'timeout' => 1 ) ),
+			'after'    => $state,
+			'points'   => 0,
+			'foul'     => 1,
+			'created'  => $now,
+		)
+	);
+	$data = array(
+		'seq'    => $seq,
+		'state'  => $state,
+		'turn'   => 1 === (int) $rules['turn'] ? 1 : 0,
+		'shot'   => null,
+		'aim'    => null,
+		'score1' => max( 0, (int) $rules['scores'][0] ),
+		'score2' => max( 0, (int) $rules['scores'][1] ),
+		'turnat' => $now,
+	);
+	if ( $over ) {
+		$w              = isset( $rules['winner'] ) && 1 === (int) $rules['winner'] ? 1 : 0;
+		$data['status'] = 'finished';
+		$data['winner'] = 0 === $w ? (int) $m['p1'] : (int) $m['p2'];
+		$data['result'] = 'frame';
+	}
+	mysn_update_match( $m['id'], $data );
+	if ( $over ) {
+		$best = isset( $st['best'] ) && is_array( $st['best'] ) ? array_map( 'intval', $st['best'] ) : array( 0, 0 );
+		mysn_league_apply( mysn_get_match( $m['id'] ), $data['winner'], (int) $rules['scores'][ $w ], false, $best );
+	}
 	return array(
 		'ok'    => true,
 		'match' => mysn_match_out( mysn_get_match( $m['id'] ), get_current_user_id() ),

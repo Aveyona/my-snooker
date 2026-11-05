@@ -20,7 +20,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-const MYSN_DB_VERSION = '9';
+const MYSN_DB_VERSION = '10';
 
 function mysn_table( $name ) {
 	global $wpdb;
@@ -67,6 +67,7 @@ season_id bigint(20) unsigned NOT NULL DEFAULT 0,
 delta int(10) NOT NULL DEFAULT 0,
 acc1 tinyint(1) unsigned NOT NULL DEFAULT 0,
 acc2 tinyint(1) unsigned NOT NULL DEFAULT 0,
+turnat int(10) unsigned NOT NULL DEFAULT 0,
 PRIMARY KEY  (id),
 KEY p1 (p1,status),
 KEY p2 (p2,status),

@@ -454,6 +454,23 @@ export function start(root, config = {}) {
 		}
 		renderCrowd();
 	};
+	// tiknutie časomiery v posledných sekundách (pri nule dlhší tón)
+	const clockTick = (sec) => {
+		const ctx = sound.ctx;
+		if (!ctx) {
+			return;
+		}
+		const o = ctx.createOscillator();
+		const g = ctx.createGain();
+		o.frequency.value = sec <= 1 ? 660 : 990;
+		const t = ctx.currentTime;
+		g.gain.setValueAtTime(0.0001, t);
+		g.gain.exponentialRampToValueAtTime(0.18, t + 0.01);
+		g.gain.exponentialRampToValueAtTime(0.0001, t + 0.09);
+		o.connect(g).connect(ctx.destination);
+		o.start(t);
+		o.stop(t + 0.1);
+	};
 	// krátky dvojtón pri nájdenom ligovom zápase
 	const foundBeep = () => {
 		const ctx = sound.ctx;
@@ -509,10 +526,29 @@ export function start(root, config = {}) {
 		}, 350);
 	};
 	let watchScreen = null; // divák: skóre sledovaného ligového zápasu (prichádza od hráča)
+	let watchTurnAt = 0; // divák: začiatok ťahu v sledovanom ligovom zápase
+	let clockSec = -1; // časomiera: naposledy zobrazená sekunda
+	const SHOT_CLOCK = 30;
+	/** Časomiera ligového zápasu: { left, mine } alebo null (nebeží: úder, koniec, nie liga). */
+	const shotClock = () => {
+		if (game.state === 'moving') {
+			return null;
+		}
+		const m = game.match;
+		if (m && m.league && m.rules && !m.rules.over && m.turnAt && !game.spectating) {
+			return { left: SHOT_CLOCK - (Date.now() - m.turnAt) / 1000, mine: m.turn === m.me };
+		}
+		if (game.spectating && watchScreen && watchTurnAt && watchScreen.turn >= 0 && game.spectating.kind === 'league') {
+			return { left: SHOT_CLOCK - (Date.now() - watchTurnAt) / 1000, mine: false };
+		}
+		return null;
+	};
 	const updateStadiumScreen = () => {
 		const m = game.match;
 		const ld = leagueData;
 		const footer = ld && ld.season ? `${ld.season.name} · do konca ${ld.season.daysLeft} dní` : 'My Snooker liga';
+		const clk = shotClock();
+		const clkTxt = clk ? ` · ${Math.max(0, Math.ceil(clk.left))} s` : '';
 		if (game.spectating && watchScreen) {
 			const w = watchScreen;
 			stadium.setScreen({
@@ -521,7 +557,7 @@ export function start(root, config = {}) {
 				scores: [Number(w.scores[0]) || 0, Number(w.scores[1]) || 0],
 				turn: w.turn === 0 || w.turn === 1 ? w.turn : -1,
 				brk: Number(w.brk) || 0,
-				on: String(w.on || '').slice(0, 40),
+				on: String(w.on || '').slice(0, 40) + clkTxt,
 				footer,
 			});
 		} else if (m && m.rules) {
@@ -531,7 +567,7 @@ export function start(root, config = {}) {
 				scores: m.rules.scores,
 				turn: m.rules.over ? -1 : m.rules.turn,
 				brk: m.rules.brk,
-				on: game.onText(),
+				on: game.onText() + clkTxt,
 				footer,
 			});
 		} else {
@@ -1862,6 +1898,9 @@ export function start(root, config = {}) {
 				if (m.k === 'w-state') {
 					sp.info = m.info || sp.info;
 					if (m.scr && Array.isArray(m.scr.names)) {
+						if (typeof m.scr.left === 'number') {
+							watchTurnAt = Date.now() - (30 - m.scr.left) * 1000; // časomiera sledovaného ligového zápasu
+						}
 						watchScreen = m.scr; // veľká obrazovka na štadióne ukazuje skóre sledovanej partie
 						updateStadiumScreen();
 					}
@@ -2248,6 +2287,31 @@ export function start(root, config = {}) {
 		rig.cueTilt = cue.pivot.visible ? cue.tilt || 0 : 0;
 		// po údere: keď gule zastanú a som na rade, mierim zo smeru, z ktorého sa kamera práve pozerá na bielu
 		// (kamera sa neotáča, len sa plynulo spustí za tágo); v partii aj po súperovom údere
+		// časomiera ligového zápasu: 30 s na úder, posledných 5 s veľký odpočet, potom faul za čas
+		const clk = shotClock();
+		if (clk) {
+			const sec = Math.max(0, Math.ceil(clk.left));
+			if (sec !== clockSec) {
+				clockSec = sec;
+				ui.setClock(sec, clk.mine);
+				if (sec <= 5 && sec > 0 && (clk.mine || game.match)) {
+					clockTick(sec);
+				}
+				if (venue === 'league') {
+					updateStadiumScreen();
+				}
+			}
+			if (online && game.match && !game.spectating) {
+				if (clk.mine && clk.left <= 0 && (game.state === 'aim' || game.state === 'place')) {
+					online.timeout(); // nestihol som: faul za čas
+				} else if (!clk.mine && clk.left <= -3 && game.state === 'watch') {
+					online.timeout(); // súper nereaguje (zatvorená hra): server overí čas a zapíše faul
+				}
+			}
+		} else if (clockSec !== -1) {
+			clockSec = -1;
+			ui.setClock(null);
+		}
 		// partia: keď prídem na rad a sedím na stoličke (F7), pohľad sa sám vráti k stolu
 		const myTurnNow = !!(game.match && game.match.turn === game.match.me && (game.state === 'aim' || game.state === 'place'));
 		if (myTurnNow && !wasMyTurn && view === 'chair') {
