@@ -28,7 +28,7 @@ const AIM_AHEAD = 0.5; // posun pohľadu bez mierenej gule: kamera sa pozerá 50
 
 function loadSettings() {
 	const mobile = /Android|iPhone|iPad|Mobile/i.test(navigator.userAgent);
-	const def = { lines: false, quality: mobile ? 'low' : 'high', volume: 0.8, respot: true, contact: true, contactPos: 'center', camera: 'cue', cue: 'club' };
+	const def = { lines: false, quality: mobile ? 'low' : 'high', volume: 0.8, respot: true, contact: true, contactPos: 'center', afterShot: 'follow', camera: 'cue', cue: 'club' };
 	try {
 		const raw = window.localStorage.getItem(STORE);
 		if (raw) {
@@ -2113,6 +2113,7 @@ export function start(root, config = {}) {
 	let pull = 0;
 	let wasMyTurn = false; // F7: pri príchode na rad sa pohľad vráti zo stoličky k stolu
 	let followSeen = false; // po údere kamera sledovala bielu (pozri frame)
+	let shotTop = false; // po údere je pohľad zhora (Nastavenia, Kamera po údere)
 	const frame = (now) => {
 		const dt = Math.min(0.05, (now - last) / 1000);
 		last = now;
@@ -2325,8 +2326,19 @@ export function start(root, config = {}) {
 			beamsOn = false;
 			stadium.setBeams(false);
 		}
+		// Nastavenia, Kamera po údere: pohľad zhora na stôl počas pohybu gúľ (môj aj súperov úder)
+		if (game.state === 'moving' && !shotTop && settings.afterShot === 'top' && !view && !topView && rig.mode === 'cue') {
+			shotTop = true;
+			rig.setMode('top');
+		} else if (game.state !== 'moving' && shotTop) {
+			shotTop = false;
+			followSeen = false; // smer mierenia ostáva ako pred úderom
+			if (!view && !topView && rig.mode === 'top') {
+				rig.setMode(game.state === 'place' ? 'top' : 'cue');
+			}
+		}
 		if (game.state === 'moving') {
-			followSeen = true;
+			followSeen = !shotTop;
 		} else if (followSeen) {
 			if (game.state === 'aim') {
 				followSeen = false;

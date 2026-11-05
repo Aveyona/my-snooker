@@ -205,6 +205,11 @@ export class UI {
 					<option value="right">Vpravo dole</option>
 					<option value="off">Nezobrazovať</option>
 				</select></label>
+			<label>Kamera po údere
+				<select data-k="afterShot">
+					<option value="follow">Sledovať bielu</option>
+					<option value="top">Pohľad zhora na stôl</option>
+				</select></label>
 			<label class="mysn-check"><input type="checkbox" data-k="respot"> Vracať farebné gule na spoty</label>
 			<p class="mysn-note">Zmena kvality sa prejaví po obnovení stránky.</p>
 			<button type="button" class="mysn-btn mysn-primary" data-close>Zavrieť</button>`;
