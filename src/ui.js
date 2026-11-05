@@ -279,10 +279,10 @@ export class UI {
 		if (kind === 'watch') {
 			// divák sleduje cudziu partiu
 			this.menuMode.textContent = `Sledujem: ${label}`;
-			const stop = this.button('Prestať sledovať', 'watchStop');
-			stop.classList.add('mysn-primary');
-			box.append(stop, this.button('Iná otvorená partia', 'rooms'), this.button('Nastavenia', 'settings'), this.button('Späť na web', 'home'));
-			this.menuFoot.textContent = 'Divák sa len pozerá: myšou sa otáčaš okolo stola, kolieskom približuješ.';
+			const back = this.button('Pokračovať v sledovaní', 'resume');
+			back.classList.add('mysn-primary');
+			box.append(back, this.button('Zmeniť miesto', 'seatChange', 'F6: výber miesta zhora'), this.button('Prestať sledovať', 'watchStop'), this.button('Iná otvorená partia', 'rooms'), this.button('Nastavenia', 'settings'), this.button('Späť na web', 'home'));
+			this.menuFoot.textContent = 'Divák pozerá zo svojho miesta: myšou sa rozhliadaš, kolieskom približuješ. F4 skóre, F6 zmena miesta.';
 			return;
 		}
 		if (kind === 'match') {
@@ -430,6 +430,24 @@ export class UI {
 	}
 
 	/** Krátka správa navrchu (pozvánka, odmietnutie, chyba). Pri pozvánke s tlačidlami. */
+	/** Výber miesta diváka: nápoveda hore (null = skryť); back = už mám miesto (Esc sa vráti naň). */
+	seatHint(text, back) {
+		if (!this.seatHintEl) {
+			this.seatHintEl = h('div', 'mysn-seat-hint mysn-hidden');
+			this.seatHintEl.addEventListener('mousedown', (e) => e.stopPropagation());
+			this.root.appendChild(this.seatHintEl);
+		}
+		const el = this.seatHintEl;
+		el.classList.toggle('mysn-hidden', !text);
+		el.innerHTML = '';
+		if (text) {
+			el.appendChild(h('b', '', 'Kde chceš sedieť?'));
+			el.appendChild(h('span', '', esc(text) + (back ? ' Esc: späť na moje miesto.' : '')));
+			const stop = this.button('Prestať sledovať', 'watchStop');
+			el.appendChild(stop);
+		}
+	}
+
 	toast(text, invite) {
 		if (!this.toastBox) {
 			this.toastBox = h('div', 'mysn-toast mysn-hidden');

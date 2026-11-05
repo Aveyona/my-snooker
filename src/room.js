@@ -966,7 +966,51 @@ export function buildRoomShell(scene, quality, opts = {}) {
 		leaf.rotation.y = a;
 	}
 
+	// miesta na státie pre online divákov (sledovanie tréningu alebo hry o skóre): pri stenách, mimo nábytku, tvárou k stolu
+	const SPOTS = [
+		[-3.8, -2.85], [-1.4, -2.85], [0.9, -2.85], [3.8, -2.85],
+		[-2.4, 2.85], [0, 2.85], [2.4, 2.85], [3.8, 2.85],
+		[-4.2, -1.6], [-4.2, 1.2],
+	];
+	const spotPlace = (i) => {
+		const p = SPOTS[i];
+		return p ? { x: p[0], y: FY, z: p[1], rot: Math.atan2(-p[0], -p[1]), standing: true } : null;
+	};
+	// značky miest na podlahe (len pri výbere miesta)
+	const spotMats = {
+		free: new THREE.MeshBasicMaterial({ color: 0x3bd16f, transparent: true, opacity: 0.85 }),
+		taken: new THREE.MeshBasicMaterial({ color: 0x5a606a, transparent: true, opacity: 0.85 }),
+		mine: new THREE.MeshBasicMaterial({ color: 0xf2c400, transparent: true, opacity: 0.9 }),
+		hover: new THREE.MeshBasicMaterial({ color: 0xb6ffcb, transparent: true, opacity: 0.95 }),
+	};
+	const spotGroup = new THREE.Group(); // skupina sa skrýva s herňou, značky samotné len mimo výberu
+	scene.add(spotGroup);
+	const spotMeshes = SPOTS.map(([x, z], i) => {
+		const m = new THREE.Mesh(new THREE.CylinderGeometry(0.32, 0.32, 0.04, 32), spotMats.free);
+		m.position.set(x, FY + 0.02, z);
+		m.visible = false;
+		m.userData.seat = i;
+		spotGroup.add(m);
+		return m;
+	});
+	const markSpots = (taken, mine, hover) => {
+		spotMeshes.forEach((m, i) => {
+			m.visible = !!taken;
+			m.material = i === mine ? spotMats.mine : taken && taken.has(i) ? spotMats.taken : i === hover ? spotMats.hover : spotMats.free;
+		});
+	};
+
 	return {
+		/** Miesta na státie pre online divákov: počet, miesto, oči diváka, výber zhora. */
+		spotCount: SPOTS.length,
+		spotPlace,
+		spotEye(i) {
+			const p = spotPlace(i);
+			return p ? new THREE.Vector3(p.x, FY + 1.62, p.z) : null;
+		},
+		spotMeshes,
+		markSpots,
+		pick: { pos: new THREE.Vector3(0, FY + 9.5, 0.6), look: new THREE.Vector3(0, FY, 0) },
 		board: { pos: new THREE.Vector3(BOARD.x, BOARD.y, -RZ + 1.62), look: new THREE.Vector3(BOARD.x, BOARD.y, -RZ) },
 		rack: { pos: new THREE.Vector3(RACK.x, FY + 1.15, -RZ + 3.3), look: new THREE.Vector3(RACK.x, FY + 0.6, -RZ) },
 		score: { pos: new THREE.Vector3(-RX + 1.55, SCORE.y, 0), look: new THREE.Vector3(-RX, SCORE.y, 0) },

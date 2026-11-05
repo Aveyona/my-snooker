@@ -89,7 +89,8 @@ export class Online {
 
 	async ping() {
 		try {
-			const d = await this.net.call('ping', { state: this.inMatch ? 'match' : this.watching ? 'watch' : this.queueing ? 'queue' : this.away ? 'away' : this.lobbyOpen ? 'lobby' : 'training' }); // away = zhasnutá lampa v kancelárii (nie som online)
+			const seats = this.seatCtx ? this.seatCtx() : ''; // diváci partie, ktorú hrám alebo sledujem
+			const d = await this.net.call('ping', { state: this.inMatch ? 'match' : this.watching ? 'watch' : this.queueing ? 'queue' : this.away ? 'away' : this.lobbyOpen ? 'lobby' : 'training', seats }); // away = zhasnutá lampa v kancelárii (nie som online)
 			if (d.nonce) {
 				this.net.nonce = d.nonce;
 			}
@@ -101,6 +102,9 @@ export class Online {
 			}
 			const prevInv = (this.data.invites || []).map((i) => i.id).join(',');
 			this.data = d;
+			if (this.hooks.seats) {
+				this.hooks.seats(seats, d.seats || []);
+			}
 			if (d.stats && this.hooks.stats) {
 				this.hooks.stats(d.stats); // notes na stole v kancelárii
 			}
@@ -219,6 +223,11 @@ export class Online {
 				this.rtc.close(uid, 'watch');
 			}
 		}
+	}
+
+	/** Divák si sadne na miesto (seat = -1: odíde). Vráti zoznam obsadených miest alebo vyhodí chybu. */
+	async seat(ctx, seat) {
+		return this.net.call('seat', { ctx, seat });
 	}
 
 	/** Moji diváci (spojenia, kde som hráč). */

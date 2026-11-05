@@ -135,6 +135,7 @@ function mysn_housekeeping() {
 	$now = time();
 	$wpdb->query( $wpdb->prepare( "UPDATE $t SET status = 'expired', updated = %d WHERE status = 'invited' AND created < %d", $now, $now - MYSN_INVITE ) ); // phpcs:ignore
 	// ligový zápas sa neprerušuje: komu vypadne spojenie, prehrá (ako pri vzdaní); obom naraz = zápas sa ruší bez bodov
+	$wpdb->query( $wpdb->prepare( 'DELETE FROM ' . mysn_table( 'seats' ) . ' WHERE seen < %d', $now - 600 ) ); // phpcs:ignore
 	$drop = $now - MYSN_LEAGUE_DROP;
 	foreach ( $wpdb->get_results( $wpdb->prepare( "SELECT * FROM $t WHERE status = 'active' AND league = 1 AND (seen1 < %d OR seen2 < %d) LIMIT 20", $drop, $drop ), ARRAY_A ) as $m ) { // phpcs:ignore
 		$gone1 = (int) $m['seen1'] < $drop;
@@ -230,6 +231,9 @@ function mysn_rest_ping( $req ) {
 		$col = 0 === mysn_side( $active, $uid ) ? 'seen1' : 'seen2';
 		$wpdb->query( $wpdb->prepare( 'UPDATE ' . mysn_table( 'matches' ) . " SET $col = %d WHERE id = %d", $now, $active['id'] ) ); // phpcs:ignore
 	}
+	// miesto online diváka sa obnovuje pingom; zoznam divákov partie, ktorú hrám alebo sledujem (ctx)
+	$wpdb->query( $wpdb->prepare( 'UPDATE ' . mysn_table( 'seats' ) . ' SET seen = %d WHERE user_id = %d', $now, $uid ) ); // phpcs:ignore
+	$seat_ctx = (string) $req->get_param( 'seats' );
 	$pt   = mysn_table( 'presence' );
 	$t    = mysn_table( 'matches' );
 	$rows = $wpdb->get_results( $wpdb->prepare( "SELECT user_id, state FROM $pt WHERE seen >= %d AND user_id <> %d AND state <> 'away' ORDER BY seen DESC LIMIT 50", $now - MYSN_LIVE, $uid ), ARRAY_A ); // phpcs:ignore
@@ -275,6 +279,7 @@ function mysn_rest_ping( $req ) {
 			'online'  => (int) $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM $pt WHERE seen >= %d AND state <> 'away'", $now - MYSN_LIVE ) ), // phpcs:ignore
 			'waiting' => (int) $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM $pt WHERE state = 'queue' AND seen >= %d", $now - 15 ) ), // phpcs:ignore
 		),
+		'seats'    => '' !== $seat_ctx ? mysn_seats( $seat_ctx ) : null,
 		'signals'  => mysn_rtc_take( $uid ),
 		'nonce'    => wp_create_nonce( 'wp_rest' ),
 	);

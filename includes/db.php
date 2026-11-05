@@ -11,6 +11,7 @@
  * {prefix}my_snooker_rooms     otvorené partie pre zoznam Pozerať hru (dvere otvorené F6): druh hry a krátky popis
  * {prefix}my_snooker_cues      vlastné tágá hráčov: šablóna, názov, farby a herné úpravy v medziach ±10 %
  * {prefix}my_snooker_signals   krátke správy na nadviazanie priameho spojenia WebRTC medzi hráčmi (po prečítaní sa mažú)
+ * {prefix}my_snooker_seats    miesta online divákov: stolička na štadióne alebo miesto na státie v herni (jedno miesto = jeden divák)
  * {prefix}my_snooker_scores    jeden hráč o najlepšie skóre: dohrané framy (body, čas, údery, fauly, najvyššia séria)
  *
  * Partia sa ukladá po každom údere, takže pri výpadku internetu sa dá pokračovať tam, kde sa skončila.
@@ -19,7 +20,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-const MYSN_DB_VERSION = '7';
+const MYSN_DB_VERSION = '8';
 
 function mysn_table( $name ) {
 	global $wpdb;
@@ -167,6 +168,17 @@ created int(10) unsigned NOT NULL DEFAULT 0,
 PRIMARY KEY  (id),
 KEY to_user (to_user),
 KEY created (created)
+) $c;"
+	);
+	// miesta online divákov: ctx = m<id zápasu> (štadión) alebo r<id hráča> (herňa), seen = posledný ping diváka
+	dbDelta(
+		'CREATE TABLE ' . mysn_table( 'seats' ) . " (
+ctx varchar(16) NOT NULL,
+seat smallint(5) unsigned NOT NULL,
+user_id bigint(20) unsigned NOT NULL,
+seen int(10) unsigned NOT NULL DEFAULT 0,
+PRIMARY KEY  (ctx,seat),
+KEY user_id (user_id)
 ) $c;"
 	);
 	update_option( 'mysn_db', MYSN_DB_VERSION, true );

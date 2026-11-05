@@ -6,6 +6,7 @@
  */
 import * as THREE from 'three';
 import { buildCueMesh } from './cues.js';
+import { buildFan, reactFans, updateFans } from './fans.js';
 
 const FY = -0.86; // podlaha (rovnako ako v herni)
 
@@ -82,6 +83,8 @@ export function buildStadium(scene, quality) {
 	});
 
 	// tribúny na dlhých stranách (rady stupňov so sedadlami, stúpajú dozadu do tmy)
+	// číslo stoličky: strana (0 = +z, 1 = -z) × 175 + rad × 25 + (miesto + 12); rovnaké číslovanie má server
+	const seatMeshes = []; // [sedadlo, operadlo] podľa čísla stoličky (výber miesta divákom)
 	for (const side of [-1, 1]) {
 		for (let row = 0; row < 7; row++) {
 			const z = side * (BZ + 0.9 + row * 0.75);
@@ -91,9 +94,23 @@ export function buildStadium(scene, quality) {
 				const seat = add(new THREE.BoxGeometry(0.34, 0.07, 0.32), seatMat, s * 0.4, y + 0.24, z);
 				const back = add(new THREE.BoxGeometry(0.34, 0.32, 0.05), seatMat, s * 0.4, y + 0.42, z + side * 0.16);
 				seat.castShadow = back.castShadow = false;
+				const idx = (side > 0 ? 0 : 175) + row * 25 + s + 12;
+				seat.userData.seat = back.userData.seat = idx;
+				seatMeshes[idx] = [seat, back];
 			}
 		}
 	}
+	/** Miesto na stoličke: x, výška sedadla, z a natočenie tvárou k stolu. */
+	const seatPlace = (i) => {
+		if (!(i >= 0 && i < 350)) {
+			return null;
+		}
+		const side = i < 175 ? 1 : -1;
+		const r = i % 175;
+		const row = Math.floor(r / 25);
+		return { x: ((r % 25) - 12) * 0.4, y: FY + 0.25 + row * 0.42 + 0.24, z: side * (BZ + 0.9 + row * 0.75), rot: side > 0 ? Math.PI : 0, standing: false, row, side };
+	};
+	const seatOf = (x, side, row) => (side > 0 ? 0 : 175) + row * 25 + Math.round(x / 0.4) + 12;
 	// tribúny vzadu za kratšími stranami (nižšie, bez sedadiel, len tmavé stupne)
 	for (const side of [-1, 1]) {
 		for (let row = 0; row < 4; row++) {
@@ -231,53 +248,41 @@ export function buildStadium(scene, quality) {
 		});
 	};
 
-	// diváci v prvom rade, otočení k stolu: traja za dlhou stranou (+z), dvaja vedľa seba na druhej strane (-z)
+	// diváci v prvom rade (kulisa), otočení k stolu: traja za dlhou stranou (+z), dvaja vedľa seba na druhej strane (-z);
+	// ich stoličky sú pre online divákov vždy obsadené
 	const fans = [];
-	const skin = [0xe0b48e, 0xc78e66, 0x8d5b3e, 0xd9a07a, 0xa8714f];
-	const shirts = [0x2f6fd6, 0xc0392b, 0x2a9d8f, 0xe0a526, 0x6c4fb3];
-	const hair = [0x3a2414, 0x111111, 0x9a6a2a, 0x5a3a20, 0x222222];
-	[[-1.6, 1], [0.4, 1], [2.0, 1], [0.8, -1], [1.2, -1]].forEach(([x, side], i) => {
-		const z = side * (BZ + 0.9);
-		const y = FY + 0.25 + 0.24;
-		const f = new THREE.Group();
-		f.position.set(x, y, z);
-		f.rotation.y = side > 0 ? Math.PI : 0; // tvárou k stolu
-		root.add(f);
-		const shirt = new THREE.MeshStandardMaterial({ color: shirts[i], roughness: 0.75 });
-		const skinM = new THREE.MeshStandardMaterial({ color: skin[i], roughness: 0.7 });
-		const pants = new THREE.MeshStandardMaterial({ color: 0x23262e, roughness: 0.8 });
-		const body = new THREE.Group();
-		f.add(body);
-		add(new THREE.CapsuleGeometry(0.15, 0.32, 6, 14), shirt, 0, 0.42, 0, body); // trup
-		add(new THREE.BoxGeometry(0.3, 0.12, 0.36), pants, 0, 0.08, 0.12, body); // stehná na sedadle
-		for (const sx of [-0.08, 0.08]) {
-			add(new THREE.CylinderGeometry(0.05, 0.05, 0.42, 10), pants, sx, -0.12, 0.3, body); // lýtka
-		}
-		const head = new THREE.Group();
-		head.position.set(0, 0.84, 0);
-		body.add(head);
-		add(new THREE.SphereGeometry(0.11, 20, 16), skinM, 0, 0, 0, head);
-		const hr = add(new THREE.SphereGeometry(0.115, 20, 12, 0, Math.PI * 2, 0, Math.PI / 2), new THREE.MeshStandardMaterial({ color: hair[i], roughness: 0.9 }), 0, 0.01, -0.01, head);
-		hr.rotation.x = -0.25;
-		for (const ex of [-0.04, 0.04]) {
-			add(new THREE.SphereGeometry(0.014, 8, 8), new THREE.MeshBasicMaterial({ color: 0x111111 }), ex, 0.02, 0.1, head).castShadow = false;
-		}
-		// ruky: rameno -> predlaktie (otáča sa pri tlieskaní)
-		const arms = [-1, 1].map((sx) => {
-			const sh = new THREE.Group();
-			sh.position.set(sx * 0.19, 0.66, 0);
-			body.add(sh);
-			add(new THREE.CapsuleGeometry(0.045, 0.22, 4, 10), shirt, 0, -0.14, 0, sh);
-			const el = new THREE.Group();
-			el.position.set(0, -0.28, 0);
-			sh.add(el);
-			add(new THREE.CapsuleGeometry(0.04, 0.2, 4, 10), skinM, 0, -0.12, 0, el);
-			sh.rotation.x = -0.35;
-			el.rotation.x = -0.9;
-			return { sh, el, sx };
-		});
-		fans.push({ f, body, head, arms, side, baseY: y, act: '', t: 0, phase: i * 1.7 });
+	const decor = [
+		[-1.6, 1, { skin: 0xe0b48e, shirt: 0x2f6fd6, hair: 0x3a2414 }],
+		[0.4, 1, { skin: 0xc78e66, shirt: 0xc0392b, hair: 0x111111 }],
+		[2.0, 1, { skin: 0x8d5b3e, shirt: 0x2a9d8f, hair: 0x9a6a2a }],
+		[0.8, -1, { skin: 0xd9a07a, shirt: 0xe0a526, hair: 0x5a3a20 }],
+		[1.2, -1, { skin: 0xa8714f, shirt: 0x6c4fb3, hair: 0x222222 }],
+	];
+	const reserved = new Set();
+	decor.forEach(([x, side, colors], i) => {
+		const idx = seatOf(x, side, 0);
+		reserved.add(idx);
+		const p = seatPlace(idx);
+		const fan = buildFan(colors, false, i * 1.7);
+		fan.f.position.set(p.x, p.y, p.z);
+		fan.f.rotation.y = p.rot;
+		root.add(fan.f);
+		fans.push(fan);
 	});
+
+	// výber stoličky (pohľad zhora): voľné zelené, obsadené sivé, moja zlatá, pod myšou svetlá
+	const pickMats = {
+		free: new THREE.MeshStandardMaterial({ color: 0x2f9e4f, emissive: 0x1d6b34, emissiveIntensity: 0.6, roughness: 0.6 }),
+		taken: new THREE.MeshStandardMaterial({ color: 0x4a4f58, roughness: 0.8 }),
+		mine: new THREE.MeshStandardMaterial({ color: 0xf2c400, emissive: 0x8a6d00, emissiveIntensity: 0.7, roughness: 0.5 }),
+		hover: new THREE.MeshStandardMaterial({ color: 0x9cf0b0, emissive: 0x58d27a, emissiveIntensity: 0.9, roughness: 0.5 }),
+	};
+	const markSeats = (taken, mine, hover) => {
+		seatMeshes.forEach((pair, i) => {
+			const m = !taken ? seatMat : i === mine ? pickMats.mine : taken.has(i) || reserved.has(i) ? pickMats.taken : i === hover ? pickMats.hover : pickMats.free;
+			pair[0].material = pair[1].material = m;
+		});
+	};
 
 	// obrazovka: mená, skóre, liga, séria, sezóna
 	const drawScreen = (d) => {
@@ -323,24 +328,17 @@ export function buildStadium(scene, quality) {
 	};
 	drawScreen(null);
 
-	const look = new THREE.Vector3();
 	return {
 		root,
 		/** Pohľady na štadióne: F4 skóre = veľká obrazovka nad tribúnou za kratšou stranou. */
 		views: {
 			rack: { pos: new THREE.Vector3(-2.55, FY + 1.3, 2.5), look: new THREE.Vector3(-3.8, FY + 0.75, 2.5) }, // F2 stojan s tágami do ligy
+			pick: { pos: new THREE.Vector3(0, FY + 19, 0.8), look: new THREE.Vector3(0, FY, 0) }, // výber stoličky zhora
 			score: { pos: new THREE.Vector3(-(BX + 3.6) + 3.7, FY + 3.45, 0), look: new THREE.Vector3(-(BX + 3.6), FY + 3.6, 0) },
 		},
 		/** Reakcia divákov: 'clap' (potopená guľa), 'facepalm' (faul), 'stand' (veľká séria). */
 		react(kind) {
-			fans.forEach((fan, i) => {
-				if (kind === 'stand' && i !== 1) {
-					fan.act = 'clap';
-				} else {
-					fan.act = kind;
-				}
-				fan.t = kind === 'stand' ? 3.2 : 1.8;
-			});
+			reactFans(fans, kind);
 		},
 		setScreen: drawScreen,
 		/** Stojan na tágá pri stole: specs = tágá do zápasu, inHand = id tága v ruke. */
@@ -354,47 +352,17 @@ export function buildStadium(scene, quality) {
 		},
 		/** Každý snímok: hlavy sledujú bielu, animácie tlieskania, faulu a vstávania. */
 		update(dt, cueBall) {
-			const now = performance.now() / 1000;
-			for (const fan of fans) {
-				fan.t = Math.max(0, fan.t - dt);
-				if (fan.t === 0) {
-					fan.act = '';
-				}
-				// hlava sa otáča za bielou guľou
-				if (cueBall && cueBall.on) {
-					fan.f.getWorldPosition(look);
-					const dz = cueBall.p.z - look.z;
-					const yaw = fan.side > 0 ? -Math.atan2(cueBall.p.x - look.x, -dz) : Math.atan2(cueBall.p.x - look.x, dz);
-					fan.head.rotation.y += (Math.max(-1, Math.min(1, yaw)) - fan.head.rotation.y) * Math.min(1, dt * 4);
-				}
-				const [l, r] = fan.arms;
-				let shX = -0.35;
-				let elX = -0.9;
-				let shZ = 0;
-				let up = 0;
-				if (fan.act === 'clap' || fan.act === 'stand') {
-					const c = Math.sin((now + fan.phase) * 18) * 0.5 + 0.5;
-					shX = -1.25;
-					elX = -0.4;
-					shZ = 0.35 - c * 0.3;
-					if (fan.act === 'stand') {
-						up = Math.min(1, (3.2 - fan.t) * 3) * Math.min(1, fan.t * 2);
-					}
-				} else if (fan.act === 'facepalm') {
-					shX = -2.4;
-					elX = -1.9;
-					shZ = 0.25;
-				} else {
-					// pokojné sedenie s jemným pohybom
-					shX = -0.35 + Math.sin(now * 0.7 + fan.phase) * 0.03;
-				}
-				for (const a of [l, r]) {
-					a.sh.rotation.x += (shX - a.sh.rotation.x) * Math.min(1, dt * 10);
-					a.el.rotation.x += (elX - a.el.rotation.x) * Math.min(1, dt * 10);
-					a.sh.rotation.z += (a.sx * shZ - a.sh.rotation.z) * Math.min(1, dt * 10);
-				}
-				fan.body.position.y = up * 0.25;
-			}
+			updateFans(fans, dt, cueBall);
 		},
+		/** Stoličky pre online divákov: počet, obsadené kulisou, miesto, oči diváka a výber zhora. */
+		seatCount: 350,
+		reserved,
+		seatPlace,
+		seatEye(i) {
+			const p = seatPlace(i);
+			return p ? new THREE.Vector3(p.x, p.y + 0.86, p.z - p.side * 0.04) : null;
+		},
+		pickMeshes: seatMeshes.flat(),
+		markSeats,
 	};
 }

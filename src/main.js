@@ -9,6 +9,7 @@ import { buildRoomShell } from './room.js';
 import { buildRadioCorner, RadioPlayer } from './radio.js';
 import { buildStadium } from './stadium.js';
 import { buildOffice } from './office.js';
+import { Crowd } from './fans.js';
 import { COUNTRIES, countryByCode } from './countries.js';
 import { BallViews } from './balls.js';
 import { Cue, AimGuide } from './cue.js';
@@ -168,6 +169,10 @@ export function start(root, config = {}) {
 	homeObjs.push(...room.rackObjects()); // tágá stojana v herni na štadióne nevisia vo vzduchu
 	const stadium = buildStadium(scene, settings.quality);
 	const office = buildOffice(scene);
+	// online diváci: na štadióne sedia na stoličkách, v herni stoja pri stenách
+	const crowdLg = new Crowd(stadium.root);
+	const crowdHome = new Crowd(scene);
+	homeObjs.push(crowdHome.group);
 	let lampOn = settings.lamp !== false; // lampa v kancelárii: zhasnutá = nie som online
 	office.setLamp(lampOn);
 	let officeMode = ''; // '' prehľad, 'edit' údaje hráča, 'cues' moje tágá
@@ -225,7 +230,7 @@ export function start(root, config = {}) {
 	};
 	let officePlayers = [];
 	// pohľady, v ktorých sa myšou rozhliada (Ctrl drž = voľná myš)
-	const LOOK = new Set(['chair', 'bar', 'office']);
+	const LOOK = new Set(['chair', 'bar', 'office', 'seat']); // seat = divák na svojom mieste
 	let officeFocusNow = '';
 	const OFFICE_KEYS = 'Kancelária: F1 nástenka s klávesmi za tebou, F8 vizitka (registrácia), F9 alebo dvere ŠTADIÓN: vyhľadať zápas, F12 lampa (zhasnutá = nie si online). Esc späť do herne.';
 	let venue = 'home';
@@ -297,6 +302,140 @@ export function start(root, config = {}) {
 	let beamsOn = true; // bodové svetlá na štadióne
 	let beamsAuto = false; // po začatí partie (prvý úder) sa raz samy zhasnú
 	const stadiumRack = () => stadium.setRack(myCues.selected.map((id) => specFor(id)), view === 'rack' ? null : cueSpec.id, view === 'rack' ? cueSpec.id : null); // F2: vybraté tágo je na stojane zvýraznené
+	// --- miesto online diváka: výber zhora (seatPick), potom pohľad zo stoličky alebo z miesta pri stene (seat) ---
+	let watchCtx = ''; // m<id zápasu> alebo r<id hráča>, ktorého partiu sledujem
+	let mySeat = -1;
+	let seatList = []; // obsadené miesta partie (zo servera s pingom)
+	let seatHover = -1;
+	let seatScore = false; // F4: pohľad zo stoličky na skóre
+	const seatCtxNow = () => (game.spectating ? watchCtx : game.match && game.match.league && online && online.matchId ? 'm' + online.matchId : roomOpen() && user ? 'r' + user.id : '');
+	const seatStadium = () => watchCtx[0] === 'm';
+	const renderCrowd = () => {
+		const ctx = seatCtxNow();
+		const uid = user ? user.id : 0;
+		if (ctx[0] === 'm') {
+			crowdLg.set(seatList, stadium.seatPlace, uid);
+			crowdHome.clear();
+		} else if (ctx[0] === 'r') {
+			crowdHome.set(seatList, room.spotPlace, uid);
+			crowdLg.clear();
+		} else {
+			crowdLg.clear();
+			crowdHome.clear();
+		}
+	};
+	const markPick = () => {
+		const taken = new Set(seatList.filter((x) => !user || x.uid !== user.id).map((x) => x.seat));
+		if (seatStadium()) {
+			stadium.markSeats(taken, mySeat, seatHover);
+		} else {
+			room.markSpots(taken, mySeat, seatHover);
+		}
+	};
+	const pickEnd = () => {
+		stadium.markSeats(null);
+		room.markSpots(null);
+		ui.seatHint(null);
+		seatHover = -1;
+	};
+	const seatPick = () => {
+		if (!game.spectating || !watchCtx) {
+			return;
+		}
+		ui.showMenu(false);
+		ui.showView(null);
+		view = 'seatPick';
+		controls.blocked = true;
+		controls.uncapture();
+		const v = seatStadium() ? stadium.views.pick : room.pick;
+		rig.noClamp = true;
+		rig.minViewZoom = 1;
+		rig.setViewZoom(1);
+		rig.setView(v.pos.clone(), v.look.clone());
+		seatHover = -1;
+		markPick();
+		ui.seatHint(seatStadium() ? 'Vyber si stoličku: zelené sú voľné, sivé obsadené. Klikni na stoličku a sadneš si.' : 'Vyber si miesto pri stene: zelené sú voľné, sivé obsadené. Klikni na miesto a postavíš sa tam.', mySeat >= 0);
+	};
+	const sit = (seat) => {
+		mySeat = seat;
+		pickEnd();
+		view = 'seat';
+		seatScore = false;
+		controls.blocked = true;
+		const eye = seatStadium() ? stadium.seatEye(seat) : room.spotEye(seat);
+		const target = new THREE.Vector3(0, -0.1, 0);
+		rig.noClamp = true;
+		rig.minViewZoom = 1;
+		rig.setViewZoom(1);
+		rig.setView(eye, target.clone());
+		const d = target.clone().sub(eye);
+		chairLook.yaw = Math.atan2(d.z, d.x);
+		chairLook.pitch = Math.atan2(d.y, Math.hypot(d.x, d.z));
+		renderCrowd();
+		refreshMenu();
+		controls.capture();
+	};
+	const seatClick = async (seat) => {
+		const taken = seatList.some((x) => x.seat === seat && (!user || x.uid !== user.id)) || (seatStadium() && stadium.reserved.has(seat));
+		if (taken) {
+			ui.toast('Toto miesto je obsadené, vyber si iné.');
+			return;
+		}
+		try {
+			const r = await online.seat(watchCtx, seat);
+			if (view !== 'seatPick' || !game.spectating) {
+				return;
+			}
+			seatList = r.seats || seatList;
+			sit(seat);
+		} catch (e) {
+			ui.toast(e.message);
+			online.ping(); // obnoví obsadené miesta
+		}
+	};
+	const seatRay = (e) => {
+		const r = renderer.domElement.getBoundingClientRect();
+		const ray = new THREE.Raycaster();
+		ray.setFromCamera(new THREE.Vector2(((e.clientX - r.left) / r.width) * 2 - 1, -((e.clientY - r.top) / r.height) * 2 + 1), rig.camera);
+		const hit = ray.intersectObjects(seatStadium() ? stadium.pickMeshes : room.spotMeshes, false)[0];
+		return hit ? hit.object.userData.seat : -1;
+	};
+	renderer.domElement.addEventListener('mousemove', (e) => {
+		if (view !== 'seatPick') {
+			return;
+		}
+		const h = seatRay(e);
+		if (h !== seatHover) {
+			seatHover = h;
+			markPick();
+			renderer.domElement.style.cursor = h >= 0 ? 'pointer' : '';
+		}
+	});
+	// F4 diváka: rovnaký pohľad zblízka na skóre ako u hráča (štadión: veľká obrazovka, herňa: tabuľa); znova F4 alebo Esc späť na miesto
+	const seatLookScore = () => {
+		if (seatScore) {
+			sit(mySeat);
+			return;
+		}
+		seatScore = true;
+		const v = seatStadium() ? stadium.views.score : room.score;
+		rig.setView(v.pos.clone(), v.look.clone());
+		rig.setViewZoom(1);
+	};
+	const seatLeave = () => {
+		if (online && mySeat >= 0) {
+			online.seat('', -1).catch(() => null);
+		}
+		mySeat = -1;
+		watchCtx = '';
+		seatList = [];
+		pickEnd();
+		renderer.domElement.style.cursor = '';
+		if (view === 'seat' || view === 'seatPick') {
+			exitView();
+		}
+		renderCrowd();
+	};
 	const setVenue = (v) => {
 		if (v === venue) {
 			return;
@@ -725,6 +864,7 @@ export function start(root, config = {}) {
 			if (game.spectating) {
 				online.watchStop();
 				game.spectateEnd();
+				seatLeave();
 			}
 			roomBroadcast('close'); // kým sledujem, moja partia nie je otvorená
 			watchInfo = { key: '', seq: -1, played: -1, pending: null };
@@ -733,10 +873,13 @@ export function start(root, config = {}) {
 			setVenue(r.type === 'match' ? 'league' : 'home');
 			rig.setMode('cue');
 			online.watchStart(r.type, r.id, r.peers || [r.id]);
+			watchCtx = (r.type === 'match' ? 'm' : 'r') + r.id;
+			seatList = [];
 			refreshMenu();
-			controls.capture();
-			ui.toast(`Sleduješ: ${r.title}. Myšou sa otáčaš okolo stola, Esc: menu.`);
+			online.ping(); // obsadené miesta
+			setTimeout(seatPick, 420); // po prechode na štadión (alebo hneď v herni) výber miesta zhora
 		},
+		seatChange: () => seatPick(),
 		watchStop: () => {
 			if (!game.spectating) {
 				return;
@@ -744,6 +887,7 @@ export function start(root, config = {}) {
 			online.watchStop();
 			online.aimTarget = null;
 			game.spectateEnd();
+			seatLeave();
 			setVenue('home');
 			refreshMenu();
 			ui.showMenu(false);
@@ -1136,13 +1280,13 @@ export function start(root, config = {}) {
 				freeMouse = false;
 				ui.setFree(false);
 				ui.showMenu(false);
-			} else if (finePointer && !view && !freeMouse && !ui.partyOpen() && performance.now() - escClosedAt > 1500) {
+			} else if (finePointer && (!view || view === 'seat') && !freeMouse && !ui.partyOpen() && performance.now() - escClosedAt > 1500) {
 				ui.showMenu(true, started);
 			}
 		},
 		stroke: (on) => ui.setStroke(on),
 		look: (dx, dy) => {
-			if (!LOOK.has(view) || freeMouse) {
+			if (!LOOK.has(view) || freeMouse || (view === 'seat' && seatScore)) {
 				return;
 			}
 			const k = 0.0025 / (rig.viewZoom || 1); // pri priblížení jemnejšie
@@ -1157,6 +1301,18 @@ export function start(root, config = {}) {
 			}
 		},
 		viewDown: (e) => {
+			if (view === 'seatPick' && e.button === 0) {
+				const sseat = seatRay(e);
+				if (sseat >= 0) {
+					seatClick(sseat);
+				}
+				return;
+			}
+			if (view === 'seat' && e.button === 0 && !controls.captured) {
+				ui.showMenu(false);
+				controls.capture();
+				return;
+			}
 			if (view === 'chair' && e.button === 0) {
 				controls.capture();
 			}
@@ -1242,6 +1398,33 @@ export function start(root, config = {}) {
 				ui.setFree(freeMouse);
 				return true;
 			}
+			if (game.spectating && (view === 'seat' || view === 'seatPick')) {
+				// divák: len zo svojho miesta (otáčanie myšou, koliesko približuje); F4 skóre, F6 zmena miesta
+				if (lk === 'escape') {
+					if (ui.menuOpen() && performance.now() - (ui._menuAt || 0) < 300) {
+						return true; // Esc práve uvoľnil myš a otvoril menu
+					}
+					if ((view === 'seatPick' && mySeat >= 0) || (view === 'seat' && seatScore)) {
+						sit(mySeat);
+					} else if (ui.menuOpen()) {
+						ui.showMenu(false);
+						ui.toast('Klikni do hry, myš sa zachytí.');
+					} else {
+						controls.uncapture();
+						ui.showMenu(true, true);
+					}
+					return true;
+				}
+				if (lk === 'f6') {
+					seatPick();
+					return true;
+				}
+				if (lk === 'f4' && view === 'seat') {
+					seatLookScore();
+					return true;
+				}
+				return lk !== 'f5' && lk !== 'f11'; // F5 obnoví stránku, F11 celá obrazovka; ostatné klávesy divák nepoužíva
+			}
 			if (lk === 'f6' && view === 'office') {
 				actions.officeWindow(); // v kancelárii F6 otvorí alebo zatvorí okno
 				return true;
@@ -1309,6 +1492,9 @@ export function start(root, config = {}) {
 					}
 					return true;
 				}
+			}
+			if (lk === 'f12' && game.spectating) {
+				return true; // divák bodové svetlá neprepína
 			}
 			if (lk === 'f12' && venue === 'league') {
 				// štadión: F12 zapne alebo vypne bodové svetlá, len keď som na ťahu
@@ -1604,7 +1790,22 @@ export function start(root, config = {}) {
 			},
 			status: () => ui.setNet(online ? online.statusText() : ''),
 			stats: (st) => office.setNotes(st),
+			// obsadené miesta divákov partie, ktorú hrám alebo sledujem
+			seats: (ctx, list) => {
+				if (ctx !== seatCtxNow()) {
+					return;
+				}
+				seatList = list || [];
+				if (game.spectating && mySeat >= 0 && user && !seatList.some((x) => x.uid === user.id && x.seat === mySeat) && view === 'seat') {
+					online.seat(watchCtx, mySeat).catch(() => null); // miesto sa stratilo (výpadok): obsadiť znova
+				}
+				renderCrowd();
+				if (view === 'seatPick') {
+					markPick();
+				}
+			},
 		});
+		online.seatCtx = seatCtxNow;
 		online.away = !lampOn; // zhasnutá lampa v kancelárii: nie som online
 	}
 	loadTrophies();
@@ -1702,6 +1903,9 @@ export function start(root, config = {}) {
 					sound.pot();
 					if (venue === 'league' && game.balls[e.a] && game.balls[e.a].kind !== 'white') {
 						stadium.react('clap'); // diváci tlieskajú pri potopenej guli
+						crowdLg.react('clap');
+					} else if (venue !== 'league' && game.balls[e.a] && game.balls[e.a].kind !== 'white') {
+						crowdHome.react('clap');
 					}
 				}
 			}
@@ -1713,14 +1917,19 @@ export function start(root, config = {}) {
 				if (lastSeqSeen >= 0 && m.last) {
 					if (m.last.foul) {
 						stadium.react('facepalm');
+						crowdLg.react('facepalm');
 					} else if ((m.last.brk || 0) >= 30 && m.last.points > 0) {
 						stadium.react('stand');
+						crowdLg.react('stand');
 					}
 				}
 				lastSeqSeen = m.seq;
 				updateStadiumScreen();
 			}
 			stadium.update(dt, game.cue);
+			crowdLg.update(dt, game.cue);
+		} else {
+			crowdHome.update(dt, game.cue);
 		}
 		const aiming = game.state === 'aim' && !view;
 		// súper je na rade: jeho tágo podľa mierenia z priameho spojenia (plynulo)
