@@ -76,7 +76,9 @@ function mysn_render( $preview ) {
 		'radio'    => mysn_radio_stations(),
 		// hrať môžu len prihlásení; neprihlásený vidí herňu a v menu tlačidlo Prihlásiť sa
 		'user'     => $user,
-		'loginUrl' => wp_login_url( $game ),
+		'loginUrl' => function_exists( 'my_users_login_page_url' ) ? my_users_login_page_url( array( 'redirect_to' => rawurlencode( $game ) ) ) : wp_login_url( $game ),
+		// prihlásenie v hre: formulár ide na stránku Prihlásenie z My Users (na tej istej adrese ako hra)
+		'auth'     => $user ? null : mysn_auth_config( $game ),
 		// Môj účet (telefón na bare, F10): stránka doplnku My Users, inak profil WordPressu
 		'accountUrl' => $user ? ( function_exists( 'my_users_account_url' ) ? my_users_account_url() : admin_url( 'profile.php' ) ) : '',
 		// REST na tej istej adrese, z ktorej sa hra načítala (hlavný web alebo subdoména)
@@ -115,6 +117,23 @@ function mysn_render( $preview ) {
 }
 
 /** Rádiá z doplnku My Player pre rádio v herni (len priame prúdy, bez HLS a nefunkčných staníc). */
+/** Prihlásenie v hre: nastavenia z doplnku My Users (bez neho null, hra ukáže odkaz na prihlásenie). */
+function mysn_auth_config( $game ) {
+	if ( ! function_exists( 'my_users_login_page_url' ) || ! function_exists( 'my_users_opt' ) || ! (int) my_users_opt( 'login_page_id' ) ) {
+		return null;
+	}
+	$email = (bool) my_users_opt( 'email_enabled' );
+	return array(
+		'page'     => (string) wp_parse_url( my_users_login_page_url(), PHP_URL_PATH ), // tá istá adresa ako hra (cookies)
+		'google'   => function_exists( 'my_users_google_ready' ) && my_users_google_ready() ? my_users_google_start_url( $game ) : '',
+		'email'    => $email,
+		'register' => $email && (bool) my_users_opt( 'email_register' ),
+		'terms'    => (string) my_users_opt( 'terms_url' ),
+		'privacy'  => (string) ( my_users_opt( 'privacy_url' ) ? my_users_opt( 'privacy_url' ) : get_privacy_policy_url() ),
+		'news'     => (bool) my_users_opt( 'newsletter_option' ),
+	);
+}
+
 function mysn_radio_stations() {
 	if ( ! function_exists( 'mpl_public_list' ) ) {
 		return array();

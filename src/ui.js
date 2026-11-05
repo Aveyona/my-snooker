@@ -17,6 +17,7 @@ const h = (tag, cls, html) => {
 };
 
 import { cueById } from './cues.js';
+import { LoginBox } from './login.js';
 const cueNameOf = (id) => cueById(id).name;
 const cueStateId = (c) => c.id;
 
@@ -251,8 +252,19 @@ export class UI {
 		if (kind === 'guest') {
 			this.menuMode.textContent = '3D snooker v prehliadači';
 			const tr = this.button('Tréning', 'guestTraining', 'Voľný tréning na stole bez prihlásenia');
-			const a = h('a', 'mysn-btn mysn-login', 'Prihlásiť sa');
-			a.href = this.opts.loginUrl || '/wp-login.php';
+			let a;
+			if (this.opts.auth) {
+				// prihlásenie priamo v hre (okno v štýle stránky Prihlásenie), nie cez wp-admin
+				a = h('button', 'mysn-btn mysn-login', 'Prihlásiť sa');
+				a.type = 'button';
+				a.addEventListener('click', (e) => {
+					e.stopPropagation();
+					this.openLogin();
+				});
+			} else {
+				a = h('a', 'mysn-btn mysn-login', 'Prihlásiť sa');
+				a.href = this.opts.loginUrl || '/wp-login.php';
+			}
 			box.append(tr, a);
 			this.menuFoot.textContent = 'Tréning si môžeš zahrať aj bez prihlásenia. Hru o skóre, ligu, partie s priateľmi a vlastné tágá majú prihlásení používatelia webu Hedlajner.';
 			return;
@@ -299,6 +311,18 @@ export class UI {
 		}
 		box.appendChild(this.button('Späť na web', 'home'));
 		this.menuFoot.textContent = 'V hre sa myš zachytí v okne. Esc ju uvoľní a otvorí toto menu. F1 nápoveda na nástenke, F2 stojan s tágami.';
+	}
+
+	/** Okno prihlásenia a registrácie v hre. */
+	openLogin(tab) {
+		if (!this.login) {
+			this.login = new LoginBox(this.menu.parentNode, this.opts.auth);
+		}
+		this.login.open(tab);
+	}
+
+	loginOpen() {
+		return !!(this.login && this.login.isOpen());
 	}
 
 	/** Správa v menu (napríklad výsledok partie); prázdna skryje. */

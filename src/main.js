@@ -1025,6 +1025,7 @@ export function start(root, config = {}) {
 		homeUrl: config.homeUrl,
 		user,
 		loginUrl: config.loginUrl,
+		auth: config.auth || null,
 		accountUrl: config.accountUrl,
 		venue: () => venue,
 		settings,
