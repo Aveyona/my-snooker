@@ -9,6 +9,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 function mysn_roadmap() {
 	return array(
+		array( '0.6.17', '5. 11. 2026', 'Štadión: bodové svetlá reflektorov svietia šikmo na stôl a až po zem. Pred partiou svietia, po prvom údere samy zhasnú, F12 ich zapne alebo vypne, keď si na ťahu. F2 ukáže stojan v rohu arény a vyberá sa len z tág vybratých do ligy (najviac 4, nastavujú sa v kancelárii). Na druhej strane sedia vedľa seba dvaja ďalší diváci. V menu partie je Vzdať partiu hneď pod Pokračovať v partii.' ),
 		array(
 			'n'      => 1,
 			'title'  => '3D stôl, fyzika a tréning',
