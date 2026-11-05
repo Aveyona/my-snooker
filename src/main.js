@@ -162,6 +162,7 @@ export function start(root, config = {}) {
 			homeObjs.push(o); // podlaha herne
 		}
 	}
+	homeObjs.push(...room.rackObjects()); // tágá stojana v herni na štadióne nevisia vo vzduchu
 	const stadium = buildStadium(scene, settings.quality);
 	const office = buildOffice(scene);
 	let lampOn = settings.lamp !== false; // lampa v kancelárii: zhasnutá = nie som online
@@ -289,6 +290,8 @@ export function start(root, config = {}) {
 			ui.feltColor = { green: '#1d6b34', red: '#a1303a', blue: '#2a64bc' }[want];
 		}
 	};
+	// stojan na štadióne: moje tágá do zápasu, tágo v ruke chýba
+	const stadiumRack = () => stadium.setRack(myCues.selected.map((id) => specFor(id)), cueSpec.id);
 	const setVenue = (v) => {
 		if (v === venue) {
 			return;
@@ -301,6 +304,9 @@ export function start(root, config = {}) {
 				o.visible = !lg;
 			}
 			stadium.root.visible = lg;
+			if (lg) {
+				stadiumRack();
+			}
 			updateFelt();
 			scene.background.setHex(lg ? 0x020306 : 0x0c0f14);
 			if (lg && view) {
@@ -466,8 +472,12 @@ export function start(root, config = {}) {
 			chalkStart = performance.now();
 			chalkMesh.visible = true;
 		} else {
-			const v = name === 'mixer' ? radioCorner.view : name === 'office' ? office.seat : room[name];
+			// na štadióne (liga) majú niektoré pohľady vlastné miesto (F4 skóre na veľkej obrazovke)
+			const v = name === 'mixer' ? radioCorner.view : name === 'office' ? office.seat : venue === 'league' && stadium.views[name] ? stadium.views[name] : room[name];
 			rig.setView(v.pos, v.look.clone());
+			if (venue === 'league' && stadium.views[name]) {
+				rig.noClamp = true; // štadión je väčší ako herňa (kamera sa nesmie obmedziť stenami herne)
+			}
 			if (name === 'office') {
 				// kancelária stojí mimo herne: kamera sa presunie hneď (bez letu cez steny)
 				rig.noClamp = true;
@@ -498,6 +508,7 @@ export function start(root, config = {}) {
 		room.setRackView(false);
 		controls.blocked = !user && !guestPlay;
 		rig.minViewZoom = 1;
+		rig.noClamp = false; // pohľady na štadióne kameru neobmedzujú, za tágom už áno
 		rig.setViewZoom(1);
 		if (was === 'office') {
 			radio.setSpeakers(null);
@@ -523,6 +534,7 @@ export function start(root, config = {}) {
 		settings.cue = cueSpec.id;
 		saveSettings(settings);
 		cue.setSpec(cueSpec);
+		stadiumRack();
 		controls.setCue(cueSpec);
 		room.selectCue(cueSpec.id, cueSpec.base);
 		ui.showView(view, rackList(), cueSpec.id, rackInfo());

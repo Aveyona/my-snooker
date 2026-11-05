@@ -382,7 +382,7 @@ export function buildRoomShell(scene, quality, opts = {}) {
 		const label = new THREE.Mesh(new THREE.PlaneGeometry(0.18, 0.068), new THREE.MeshStandardMaterial({ map: labelTexture(String(i + 1), spec.category), roughness: 0.4, metalness: 0.3 }));
 		label.position.set(x, FY + 0.3, -RZ + 0.07);
 		scene.add(label);
-		rackCues.push({ group: g, baseZ: -RZ + 0.12, spec });
+		rackCues.push({ group: g, baseZ: -RZ + 0.12, spec, label });
 	});
 	const glow = new THREE.Mesh(new THREE.RingGeometry(0.035, 0.06, 32), new THREE.MeshBasicMaterial({ color: 0xffd23f, transparent: true, opacity: 0.9 }));
 	glow.rotation.x = -Math.PI / 2;
@@ -992,6 +992,8 @@ export function buildRoomShell(scene, quality, opts = {}) {
 			selectCue(lastSel[0], lastSel[1]);
 		},
 		setRackSpecs,
+		/** Tágá a štítky stojana (na štadióne sa skryjú spolu s herňou). */
+		rackObjects: () => [...rackCues.flatMap((rc) => [rc.group, rc.label]), glow],
 		updateScore,
 		setClock,
 		setTrophies,

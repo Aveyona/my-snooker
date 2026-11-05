@@ -5,6 +5,7 @@
  * Všetko je postavené z 3D tvarov, prepína sa s herňou (visible).
  */
 import * as THREE from 'three';
+import { buildCueMesh } from './cues.js';
 
 const FY = -0.86; // podlaha (rovnako ako v herni)
 
@@ -189,6 +190,34 @@ export function buildStadium(scene, quality) {
 		}
 	}
 
+	// stojan na tágá hráča: v rohu arény pri kratšej strane pod lúčom reflektora (nižší ako tribúny, nikomu nezavadzia),
+	// vedľa stoličky hráča, natočený k stolu; na ňom tágá vybraté do zápasu, tágo v ruke chýba
+	const stand = new THREE.Group();
+	stand.position.set(-3.8, FY, 2.5);
+	stand.rotation.y = Math.PI / 2; // predná strana k stolu (+x)
+	root.add(stand);
+	add(new THREE.BoxGeometry(1.0, 0.06, 0.32), wood, 0, 0.03, 0, stand); // podstavec s miskami
+	add(new THREE.BoxGeometry(1.0, 1.25, 0.04), wood, 0, 0.66, -0.13, stand); // zadná doska
+	add(new THREE.BoxGeometry(1.04, 0.05, 0.14), wood, 0, 1.12, -0.07, stand); // horný držiak
+	const standCues = [];
+	const setRack = (specs, inHand) => {
+		for (const g of standCues) {
+			stand.remove(g);
+		}
+		standCues.length = 0;
+		(specs || []).slice(0, 4).forEach((spec, i) => {
+			if (!spec || spec.id === inHand) {
+				return; // tágo v ruke na stojane chýba
+			}
+			const g = new THREE.Group();
+			g.position.set(-0.33 + i * 0.22, 0.06 + spec.len, -0.06);
+			g.rotation.x = Math.PI + 0.04; // špička hore, mierne opreté o držiak
+			g.add(buildCueMesh(spec, high));
+			stand.add(g);
+			standCues.push(g);
+		});
+	};
+
 	// traja diváci v prvom rade za dlhou stranou (+z), otočení k stolu
 	const fans = [];
 	const skin = [0xe0b48e, 0xc78e66, 0x8d5b3e];
@@ -284,6 +313,10 @@ export function buildStadium(scene, quality) {
 	const look = new THREE.Vector3();
 	return {
 		root,
+		/** Pohľady na štadióne: F4 skóre = veľká obrazovka nad tribúnou za kratšou stranou. */
+		views: {
+			score: { pos: new THREE.Vector3(-(BX + 3.6) + 3.7, FY + 3.45, 0), look: new THREE.Vector3(-(BX + 3.6), FY + 3.6, 0) },
+		},
 		/** Reakcia divákov: 'clap' (potopená guľa), 'facepalm' (faul), 'stand' (veľká séria). */
 		react(kind) {
 			fans.forEach((fan, i) => {
@@ -296,6 +329,8 @@ export function buildStadium(scene, quality) {
 			});
 		},
 		setScreen: drawScreen,
+		/** Stojan na tágá pri stole: specs = tágá do zápasu, inHand = id tága v ruke. */
+		setRack,
 		/** Každý snímok: hlavy sledujú bielu, animácie tlieskania, faulu a vstávania. */
 		update(dt, cueBall) {
 			const now = performance.now() / 1000;
