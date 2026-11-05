@@ -111,9 +111,11 @@ export class LoginBox {
 				? `<div class="mysn-lg-tabs" role="tablist"><button type="button" role="tab" data-tab="login" aria-selected="${!reg}">Prihlásiť sa</button><button type="button" role="tab" data-tab="register" aria-selected="${reg}">Zaregistrovať sa</button></div>`
 				: '';
 		this.el.innerHTML = `<div class="mysn-lg-wrap">
-			<button type="button" class="mysn-lg-close" aria-label="Zavrieť" title="Zavrieť (Esc)">×</button>
-			<h2 class="mysn-lg-title">Prihlásenie</h2>
-			<div class="mysn-lg-card">${tabs}${body}</div>
+			<div class="mysn-lg-card">
+				<button type="button" class="mysn-lg-close" aria-label="Zavrieť" title="Zavrieť (Esc)">×</button>
+				<div class="mysn-lg-head"><h2>My Snooker</h2><p>Prihlásenie do hry</p></div>
+				${tabs}${body}
+			</div>
 			${a.google && tab !== 'lost' && tab !== 'sent' ? '<p class="mysn-lg-foot">Pri prvom prihlásení cez Google sa účet vytvorí automaticky a súhlasíš s podmienkami používania. Uložíme meno, e-mail a fotku z Google účtu.</p>' : ''}
 		</div>`;
 		this.el.querySelector('.mysn-lg-close').addEventListener('click', () => this.close());
