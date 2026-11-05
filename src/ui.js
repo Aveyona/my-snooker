@@ -90,6 +90,7 @@ export class UI {
 		root.appendChild(this.contact);
 		this.contactCanvas = this.contact.querySelector('canvas');
 		this.contactInfo = this.contact.querySelector('.mysn-contact-info');
+		this.setContactPos((opts.settings && opts.settings.contactPos) || 'center');
 		this._contactKey = '';
 		this.help = this.buildHelp();
 		root.appendChild(this.help);
@@ -197,7 +198,13 @@ export class UI {
 					<option value="low">Nízka (pre slabšie zariadenia)</option>
 				</select></label>
 			<label>Hlasitosť <input type="range" min="0" max="1" step="0.05" data-k="volume"></label>
-			<label class="mysn-check"><input type="checkbox" data-k="contact"> Detail dotyku gúľ pri mierení</label>
+			<label>Detail dotyku pri mierení
+				<select data-k="contactPos">
+					<option value="center">V strede dole</option>
+					<option value="left">Vľavo dole</option>
+					<option value="right">Vpravo dole</option>
+					<option value="off">Nezobrazovať</option>
+				</select></label>
 			<label class="mysn-check"><input type="checkbox" data-k="respot"> Vracať farebné gule na spoty</label>
 			<p class="mysn-note">Zmena kvality sa prejaví po obnovení stránky.</p>
 			<button type="button" class="mysn-btn mysn-primary" data-close>Zavrieť</button>`;
@@ -431,6 +438,13 @@ export class UI {
 	}
 
 	/** Krátka správa navrchu (pozvánka, odmietnutie, chyba). Pri pozvánke s tlačidlami. */
+	/** Poloha detailu dotyku: center, left (vedľa Miesta úderu), right (vedľa ukazovateľa sily), off. */
+	setContactPos(pos) {
+		for (const k of ['left', 'right']) {
+			this.contact.classList.toggle('mysn-contact-' + k, pos === k);
+		}
+	}
+
 	/** Pásik hore: Vyhľadáva sa ligový zápas · čas · ✕ (since = začiatok v ms, 0 = skryť). Viditeľný v menu aj v hre. */
 	setSeek(since) {
 		if (!this.seekEl) {

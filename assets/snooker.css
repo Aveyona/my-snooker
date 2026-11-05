@@ -434,3 +434,11 @@ body.mysn-page { font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans
 .mysn-found-note { color: #c5ccd8; font-size: 14px; margin-bottom: 16px; line-height: 1.45; }
 .mysn-found-btns { display: flex; gap: 10px; justify-content: center; }
 .mysn-found-btns button { flex: 1; }
+
+/* detail dotyku: poloha podľa Nastavení (vľavo vedľa Miesta úderu, vpravo vedľa ukazovateľa sily) */
+.mysn-contact.mysn-contact-left { left: 120px; right: auto; transform: none; bottom: 24px; }
+.mysn-contact.mysn-contact-right { left: auto; right: 64px; transform: none; bottom: 24px; }
+@media (max-width: 720px) {
+	.mysn-contact.mysn-contact-left { left: 86px; bottom: 96px; }
+	.mysn-contact.mysn-contact-right { right: 48px; bottom: 104px; }
+}

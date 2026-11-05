@@ -28,11 +28,15 @@ const AIM_AHEAD = 0.5; // posun pohľadu bez mierenej gule: kamera sa pozerá 50
 
 function loadSettings() {
 	const mobile = /Android|iPhone|iPad|Mobile/i.test(navigator.userAgent);
-	const def = { lines: false, quality: mobile ? 'low' : 'high', volume: 0.8, respot: true, contact: true, camera: 'cue', cue: 'club' };
+	const def = { lines: false, quality: mobile ? 'low' : 'high', volume: 0.8, respot: true, contact: true, contactPos: 'center', camera: 'cue', cue: 'club' };
 	try {
 		const raw = window.localStorage.getItem(STORE);
 		if (raw) {
-			return { ...def, ...JSON.parse(raw) };
+			const s = { ...def, ...JSON.parse(raw) };
+			if (!s.contactPos) {
+				s.contactPos = s.contact === false ? 'off' : 'center'; // staré nastavenie: vypnutý detail dotyku
+			}
+			return s;
 		}
 	} catch (e) {
 		/* úložisko nemusí byť dostupné */
@@ -1366,6 +1370,10 @@ export function start(root, config = {}) {
 			if (k === 'respot') {
 				game.respot = !!v;
 			}
+			if (k === 'contactPos') {
+				settings.contact = v !== 'off';
+				ui.setContactPos(v);
+			}
 			saveSettings(settings);
 		},
 	};
@@ -2220,7 +2228,7 @@ export function start(root, config = {}) {
 			}
 		}
 		const tr = guide.update(game.balls, game.cue, game.dir, aiming && game.cue.on, settings.lines ? 2 : 0);
-		const showContact = aiming && game.cue.on && !!settings.contact;
+		const showContact = aiming && game.cue.on && settings.contactPos !== 'off';
 		const trace = tr || (aiming && game.cue.on ? aimTrace(game.balls, game.cue, game.dir) : null);
 		ui.drawContact(showContact ? trace : null, game.dir, showContact, settings.lines);
 		views.highlight(trace && aiming ? trace.ball : null, dt, trace ? trace.ghost : null);

@@ -121,6 +121,7 @@ function mysn_roadmap() {
 /** Denník zmien (najnovšie hore). */
 function mysn_changelog() {
 	return array(
+		array( '0.6.35', '5. 11. 2026', 'Nastavenia: Detail dotyku pri mierení má štyri možnosti: v strede dole, vľavo dole (vedľa Miesta úderu), vpravo dole (vedľa ukazovateľa sily) alebo nezobrazovať. Zmena platí hneď.' ),
 		array( '0.6.34', '5. 11. 2026', 'Pravidlá: voľná guľa. Keď po faule súper nevidí priamo oba okraje žiadnej gule na rade, dostane voľnú guľu (na lište: voľná guľa alebo guľa na rade). Ľubovoľná farba platí ako guľa na rade, potopená sa vráti na spot. Platí v partii s priateľom aj v lige, v hre o skóre nie.' ),
 		array( '0.6.33', '5. 11. 2026', 'Administrácia: nová stránka My Snooker, Sezóna ligy. Prehľad aktuálnej sezóny (začiatok, koniec, hráči, zápasy, prvé miesto), posun dátumu konca a názvu, tlačidlo Ukončiť sezónu a začať novú s potvrdením (riadne s majstrom, alebo ako testovacia bez majstra a bez poradia; dĺžka novej sezóny rok, 6, 3 alebo 1 mesiac) a zoznam minulých sezón.' ),
 		array( '0.6.32', '5. 11. 2026', 'Plán vývoja: hra proti počítaču nebude (etapa vypustená, ostatné etapy prečíslované).' ),
