@@ -1324,6 +1324,7 @@ export function start(root, config = {}) {
 		if (game.match) {
 			return;
 		}
+		ui.trainingFirst = false;
 		exitView();
 		ui.showLeaderboard(null);
 		topView = false;
@@ -1477,6 +1478,9 @@ export function start(root, config = {}) {
 			},
 			ended: async (text) => {
 				exitView();
+				// po zápase (aj ligovom zo štadióna) späť doma v herni, v menu je vybraný Tréning
+				ui.trainingFirst = true;
+				setVenue('home');
 				if (online && online.lastLeague) {
 					online.lastLeague = false;
 					leagueData = (await online.league()) || leagueData;

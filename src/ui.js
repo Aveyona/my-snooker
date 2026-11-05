@@ -240,7 +240,7 @@ export class UI {
 
 	/** Obsah menu: 'guest' (neprihlásený), 'training' alebo 'match' (label = meno súpera). */
 	setMenu(kind, label) {
-		const key = kind + '|' + (label || '') + '|' + (this.opts.venue ? this.opts.venue() : '');
+		const key = kind + '|' + (label || '') + '|' + (this.opts.venue ? this.opts.venue() : '') + '|' + (this.trainingFirst ? 1 : 0);
 		if (this._menuKind === key) {
 			return;
 		}
@@ -284,11 +284,12 @@ export class UI {
 			// Hrať = o najlepšie skóre: rozohraný frame sa pamätá, kým neskončí, potom sa začne nový
 			this.menuMode.textContent = kind === 'solo' ? 'Hrá sa o najlepšie skóre' : user ? `Prihlásený: ${user.name}` : 'Tréning';
 			const play = this.button('Hrať', kind === 'solo' ? 'resume' : 'solo', 'O najlepšie skóre: celý frame podľa pravidiel, rebríček podľa bodov, pri rovnosti rozhoduje kratší čas');
-			play.classList.add('mysn-primary');
-			this.btnResume = play;
+			const trainFirst = kind === 'training' && this.trainingFirst; // po skončenom zápase je vybraný Tréning
 			const lg = this.button('Liga', 'league', 'Kancelária ligy: registrácia, 4 ligy, body a sezóna na rok');
 			lg.classList.add('mysn-league-btn');
 			const tr = this.button('Tréning', kind === 'solo' ? 'training' : 'resume', 'Voľný tréning na stole s červeným súknom');
+			(trainFirst ? tr : play).classList.add('mysn-primary');
+			this.btnResume = trainFirst ? tr : play;
 			const enter = this.button('Vstúpiť', 'rooms', 'Otvorené partie: tréningy a hry s otvorenými dverami a ligové zápasy, dá sa ich sledovať');
 			box.append(tr, play, lg, fr(), enter); // rebríček je na F8
 			if (this.opts.venue && this.opts.venue() === 'league') {
