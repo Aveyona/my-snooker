@@ -72,7 +72,7 @@ add_filter(
 			array(
 				'id'     => 'snooker',
 				'title'  => 'My Snooker',
-				'desc'   => 'Relax hra: 3D snooker v prehliadači s ligou. Tréning, hra o najlepšie skóre a partie s priateľmi cez internet.',
+				'desc'   => '3D snooker v prehliadači s ligou. Tréning, hra o najlepšie skóre a partie s priateľmi cez internet.',
 				'url'    => mysn_url(),
 				'icon'   => 'snooker',
 				'status' => 'ready',
