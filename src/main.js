@@ -1609,16 +1609,17 @@ export function start(root, config = {}) {
 			stadium.update(dt, game.cue);
 		}
 		const aiming = game.state === 'aim' && !view;
-		// súper je na rade: jeho tágo podľa mierenia zo servera (plynulo)
+		// súper je na rade: jeho tágo podľa mierenia z priameho spojenia (plynulo)
 		const watchAim = game.state === 'watch' && online && online.aimTarget;
 		if (watchAim) {
 			const a = online.aimTarget;
 			let d = a.dir - game.dir;
 			d = Math.atan2(Math.sin(d), Math.cos(d));
-			game.dir += d * Math.min(1, dt * 8);
+			// mierenie chodí priamo asi 20-krát za sekundu, stačí krátke dorovnanie medzi správami
+			game.dir += d * Math.min(1, dt * 18);
 			if (game.cue.on) {
-				game.cue.p.x += (a.cx - game.cue.p.x) * Math.min(1, dt * 8);
-				game.cue.p.z += (a.cz - game.cue.p.z) * Math.min(1, dt * 8);
+				game.cue.p.x += (a.cx - game.cue.p.x) * Math.min(1, dt * 18);
+				game.cue.p.z += (a.cz - game.cue.p.z) * Math.min(1, dt * 18);
 			}
 		}
 		if (online && roomOpen() && (game.state === 'aim' || game.state === 'place') && online.watchers().length) {
@@ -1685,7 +1686,7 @@ export function start(root, config = {}) {
 			sound.doorShut();
 		}
 		if (watchAim) {
-			pull += ((watchAim.pull || 0) - pull) * Math.min(1, dt * 10);
+			pull += ((watchAim.pull || 0) - pull) * Math.min(1, dt * 18);
 		}
 		cue.place(game.cue, game.dir, pull, watchAim ? watchAim.side || 0 : spin.side, watchAim ? watchAim.top || 0 : spin.top, (aiming || view === 'chalk' || (watchAim && !watchAim.place)) && game.cue.on);
 		if (chalkT >= 0) {
