@@ -57,6 +57,7 @@ export class Online {
 		this.hooks = hooks;
 		this.data = { live: [], invites: [], outgoing: null, paused: [] };
 		this.lobbyOpen = false;
+		this.myRack = null;
 		this.matchId = 0;
 		this.info = null; // posledný stav partie zo servera
 		this.queue = []; // odosielanie úderov a výsledkov (poradie sa zachová, pri výpadku sa opakuje)
@@ -271,6 +272,9 @@ export class Online {
 			this.hooks.status();
 			const g = this.game;
 			this.rtc.send(p, { k: 'hello', seq: g.match ? g.match.seq : -1 });
+			if (this.myRack) {
+				this.rtc.send(p, { k: 'rack', ...this.myRack }); // súper uvidí moje tágá na mojom stojane
+			}
 			return;
 		}
 		if (p.offerer) {
@@ -283,6 +287,9 @@ export class Online {
 		// nový divák: hneď dostane stav stola
 		if (this.inMatch) {
 			this.rtc.send(p, this.matchWState());
+			if (this.myRack) {
+				this.rtc.send(p, { k: 'w-rack', ...this.myRack });
+			}
 			this.hooks.status();
 		} else if (this.hooks.watcherOpen) {
 			this.hooks.watcherOpen(p);
@@ -347,6 +354,10 @@ export class Online {
 			this.applyInfo({ ...(this.info || {}), id: this.matchId, status: 'active', seq: m.seq, state: m.state, shot: null, players: g.match.players, me: g.match.me });
 		} else if (m.k === 'info' && m.m) {
 			this.applyInfo({ ...m.m, me: 1 - m.m.me });
+		} else if (m.k === 'rack') {
+			if (this.hooks.rack) {
+				this.hooks.rack(m);
+			}
 		} else if (m.k === 'lights') {
 			// súper zapol alebo zhasol bodové svetlá na štadióne: aj u mňa a u mojich divákov
 			this.wsend({ k: 'w-lights', on: !!m.on });
@@ -492,11 +503,22 @@ export class Online {
 		this.pendingShot = null;
 		setTimeout(() => this.rtc.close(opp, 'match'), 1500); // súper ešte dostane posledný stav
 		this.matchId = 0;
+		this.myRack = null;
 		this.info = null;
 		this.queue = [];
 		this.aimTarget = null;
 		this.game.endMatch();
 		this.hooks.ended(text);
+	}
+
+	/** Moje tágá na stojane na štadióne: súperovi a mojim divákom (aj po nadviazaní spojenia). */
+	sendRack(r) {
+		this.myRack = r;
+		if (!this.matchId) {
+			return;
+		}
+		this.rtcSendOpp({ k: 'rack', ...r });
+		this.wsend({ k: 'w-rack', ...r });
 	}
 
 	/** Bodové svetlá na štadióne (F12): súperovi a divákom. */

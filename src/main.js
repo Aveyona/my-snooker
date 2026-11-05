@@ -301,7 +301,20 @@ export function start(root, config = {}) {
 	// stojan na štadióne: moje tágá do zápasu, tágo v ruke chýba
 	let beamsOn = true; // bodové svetlá na štadióne
 	let beamsAuto = false; // po začatí partie (prvý úder) sa raz samy zhasnú
-	const stadiumRack = () => stadium.setRack(myCues.selected.map((id) => specFor(id)), view === 'rack' ? null : cueSpec.id, view === 'rack' ? cueSpec.id : null); // F2: vybraté tágo je na stojane zvýraznené
+	// moja strana na štadióne: hráč 1 (0) má stoličku a stojan v rohu -x, hráč 2 (1) oproti
+	const mySide = () => (game.match && game.match.me ? 1 : 0);
+	let oppRack = null; // tágá súpera na jeho stojane (prídu priamo od neho)
+	const stadiumRack = () => {
+		if (game.spectating) {
+			return; // divák vidí stojany hráčov (prídu od nich)
+		}
+		const specs = myCues.selected.map((id) => specFor(id));
+		stadium.setRack(mySide(), specs, view === 'rack' ? null : cueSpec.id, view === 'rack' ? cueSpec.id : null); // F2: vybraté tágo je na stojane zvýraznené
+		stadium.setRack(1 - mySide(), oppRack ? oppRack.specs : [], oppRack ? oppRack.inHand : null, null);
+		if (online && game.match && game.match.league) {
+			online.sendRack({ side: mySide(), specs, inHand: cueSpec.id }); // súper a diváci vidia moje tágá na mojom stojane
+		}
+	};
 	// --- miesto online diváka: výber zhora (seatPick), potom pohľad zo stoličky alebo z miesta pri stene (seat) ---
 	let watchCtx = ''; // m<id zápasu> alebo r<id hráča>, ktorého partiu sledujem
 	let mySeat = -1;
@@ -451,7 +464,13 @@ export function start(root, config = {}) {
 			stadium.root.visible = lg;
 			room.setRackHidden(lg);
 			if (lg) {
-				stadiumRack();
+				oppRack = null;
+				if (game.spectating) {
+					stadium.setRack(0, [], null, null);
+					stadium.setRack(1, [], null, null);
+				} else {
+					stadiumRack();
+				}
 				beamsOn = true; // pred partiou svietia, po prvom údere zhasnú
 				beamsAuto = true;
 				stadium.setBeams(true);
@@ -625,9 +644,11 @@ export function start(root, config = {}) {
 			chalkMesh.visible = true;
 		} else {
 			// na štadióne (liga) majú niektoré pohľady vlastné miesto (F4 skóre na veľkej obrazovke)
-			const v = name === 'mixer' ? radioCorner.view : name === 'office' ? office.seat : venue === 'league' && stadium.views[name] ? stadium.views[name] : room[name];
+			// F7 stolička a F2 stojan na štadióne podľa strany hráča
+			const sname = venue === 'league' && (name === 'chair' || name === 'rack') ? name + mySide() : name;
+			const v = name === 'mixer' ? radioCorner.view : name === 'office' ? office.seat : venue === 'league' && stadium.views[sname] ? stadium.views[sname] : room[name];
 			rig.setView(v.pos, v.look.clone());
-			if (venue === 'league' && stadium.views[name]) {
+			if (venue === 'league' && stadium.views[sname]) {
 				rig.noClamp = true; // štadión je väčší ako herňa (kamera sa nesmie obmedziť stenami herne)
 			}
 			if (name === 'office') {
@@ -649,7 +670,7 @@ export function start(root, config = {}) {
 		if (name === 'trophies') {
 			refreshTrophies();
 		}
-		ui.showView(name, name === 'rack' ? rackNow() : allCues(), cueSpec.id, name === 'office' ? officeData() : name === 'rack' ? rackInfoNow() : name === 'mixer' ? { radio } : name === 'magazine' ? room.rssItems : name === 'chair' ? { news: room.newsItems, rss: room.rssItems } : room.newsItems);
+		ui.showView(name, name === 'rack' ? rackNow() : allCues(), cueSpec.id, name === 'office' ? officeData() : name === 'rack' ? rackInfoNow() : name === 'mixer' ? { radio } : name === 'magazine' ? room.rssItems : name === 'chair' ? (venue === 'league' ? null : { news: room.newsItems, rss: room.rssItems }) : room.newsItems);
 	};
 	const exitView = () => {
 		if (!view) {
@@ -1682,6 +1703,14 @@ export function start(root, config = {}) {
 			},
 			invite: (inv) => !ui.menuOpen() && ui.toast(`Boli ste vyzvaný! ${inv.from.name} ťa vyzýva ${inv.training ? 'na spoločný tréning' : inv.league ? 'na ligovú partiu' : 'na partiu'}.${controls.captured ? ' Esc alebo Ctrl uvoľní myš.' : ''}`, inv),
 			toast: (t) => ui.toast(t),
+			// tágá súpera na jeho stojane na štadióne
+			rack: (d) => {
+				if (!game.match || !d || !Array.isArray(d.specs)) {
+					return;
+				}
+				oppRack = { specs: d.specs.slice(0, 4), inHand: d.inHand };
+				stadium.setRack(1 - mySide(), oppRack.specs, oppRack.inHand, null);
+			},
 			// súper zapol alebo zhasol bodové svetlá na štadióne
 			lights: (on) => {
 				beamsOn = on;
@@ -1724,6 +1753,10 @@ export function start(root, config = {}) {
 					game.spectateSet(m.before);
 					game.playRemote(m.shot, false);
 					watchInfo.seq = m.seq;
+				} else if (m.k === 'w-rack') {
+					if (Array.isArray(m.specs)) {
+						stadium.setRack(m.side ? 1 : 0, m.specs.slice(0, 4), m.inHand, null); // stojan hráča
+					}
 				} else if (m.k === 'w-lights') {
 					beamsOn = !!m.on; // hráč zapol alebo zhasol bodové svetlá
 					beamsAuto = false;

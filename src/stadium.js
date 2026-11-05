@@ -201,35 +201,43 @@ export function buildStadium(scene, quality) {
 	for (const gx of [2.4, 2.8]) {
 		add(new THREE.CylinderGeometry(0.035, 0.03, 0.12, 20, 1, true), glass, gx, FY + 0.82, BZ - 0.55).castShadow = false;
 	}
+	// hráči: hráč 1 (strana 0) v rohu -x pri dlhej strane +z, hráč 2 (strana 1) oproti v rohu +x pri dlhej strane -z;
+	// každý má svoju stoličku (F7) a vedľa nej svoj stojan s tágami do zápasu (F2), tágo v ruke na stojane chýba
 	const chairMat = new THREE.MeshStandardMaterial({ color: 0x1a1a1f, roughness: 0.5 });
-	for (const cx of [-2.6, 3.3]) {
-		add(new THREE.BoxGeometry(0.5, 0.08, 0.5), chairMat, cx, FY + 0.48, BZ - 0.55);
-		add(new THREE.BoxGeometry(0.5, 0.6, 0.06), chairMat, cx, FY + 0.82, BZ - 0.3);
+	const PL = [
+		{ chair: [-2.6, BZ - 0.55], dz: 1, stand: [-3.8, 2.5], rot: Math.PI / 2 },
+		{ chair: [2.6, -(BZ - 0.55)], dz: -1, stand: [3.8, -2.5], rot: -Math.PI / 2 },
+	];
+	for (const p of PL) {
+		const [cx, cz] = p.chair;
+		add(new THREE.BoxGeometry(0.5, 0.08, 0.5), chairMat, cx, FY + 0.48, cz);
+		add(new THREE.BoxGeometry(0.5, 0.6, 0.06), chairMat, cx, FY + 0.82, cz + p.dz * 0.25); // operadlo ďalej od stola
 		for (const lx of [-0.2, 0.2]) {
-			add(new THREE.CylinderGeometry(0.02, 0.02, 0.46, 8), metal, cx + lx, FY + 0.23, BZ - 0.55);
+			add(new THREE.CylinderGeometry(0.02, 0.02, 0.46, 8), metal, cx + lx, FY + 0.23, cz);
 		}
 	}
-
-	// stojan na tágá hráča: v rohu arény pri kratšej strane pod lúčom reflektora (nižší ako tribúny, nikomu nezavadzia),
-	// vedľa stoličky hráča, natočený k stolu; na ňom tágá vybraté do zápasu, tágo v ruke chýba
-	const stand = new THREE.Group();
-	stand.position.set(-3.8, FY, 2.5);
-	stand.rotation.y = Math.PI / 2; // predná strana k stolu (+x)
-	root.add(stand);
-	add(new THREE.BoxGeometry(1.0, 0.06, 0.32), wood, 0, 0.03, 0, stand); // podstavec s miskami
-	add(new THREE.BoxGeometry(1.0, 1.25, 0.04), wood, 0, 0.66, -0.13, stand); // zadná doska
-	add(new THREE.BoxGeometry(1.04, 0.05, 0.14), wood, 0, 1.12, -0.07, stand); // horný držiak
-	const standCues = [];
-	const standGlow = new THREE.Mesh(new THREE.RingGeometry(0.035, 0.06, 32), new THREE.MeshBasicMaterial({ color: 0xffd23f, transparent: true, opacity: 0.9 }));
-	standGlow.rotation.x = -Math.PI / 2;
-	standGlow.visible = false;
-	stand.add(standGlow);
-	const setRack = (specs, inHand, sel) => {
-		standGlow.visible = false;
-		for (const g of standCues) {
-			stand.remove(g);
+	const stands = PL.map((p) => {
+		const stand = new THREE.Group();
+		stand.position.set(p.stand[0], FY, p.stand[1]);
+		stand.rotation.y = p.rot; // predná strana k stolu
+		root.add(stand);
+		add(new THREE.BoxGeometry(1.0, 0.06, 0.32), wood, 0, 0.03, 0, stand); // podstavec s miskami
+		add(new THREE.BoxGeometry(1.0, 1.25, 0.04), wood, 0, 0.66, -0.13, stand); // zadná doska
+		add(new THREE.BoxGeometry(1.04, 0.05, 0.14), wood, 0, 1.12, -0.07, stand); // horný držiak
+		const glow = new THREE.Mesh(new THREE.RingGeometry(0.035, 0.06, 32), new THREE.MeshBasicMaterial({ color: 0xffd23f, transparent: true, opacity: 0.9 }));
+		glow.rotation.x = -Math.PI / 2;
+		glow.visible = false;
+		stand.add(glow);
+		return { stand, glow, cues: [] };
+	});
+	/** Stojan hráča (side 0 alebo 1): specs = tágá do zápasu, inHand = tágo v ruke (chýba), sel = zvýraznené (F2). */
+	const setRack = (side, specs, inHand, sel) => {
+		const st = stands[side ? 1 : 0];
+		st.glow.visible = false;
+		for (const g of st.cues) {
+			st.stand.remove(g);
 		}
-		standCues.length = 0;
+		st.cues.length = 0;
 		(specs || []).slice(0, 4).forEach((spec, i) => {
 			if (!spec || spec.id === inHand) {
 				return; // tágo v ruke na stojane chýba
@@ -238,15 +246,25 @@ export function buildStadium(scene, quality) {
 			const on = spec.id === sel;
 			g.position.set(-0.33 + i * 0.22, 0.06 + spec.len, on ? 0.04 : -0.06); // F2: vybraté tágo vysunuté dopredu
 			if (on) {
-				standGlow.position.set(g.position.x, 0.065, 0.04);
-				standGlow.visible = true;
+				st.glow.position.set(g.position.x, 0.065, 0.04);
+				st.glow.visible = true;
 			}
 			g.rotation.x = Math.PI + 0.04; // špička hore, mierne opreté o držiak
 			g.add(buildCueMesh(spec, high));
-			stand.add(g);
-			standCues.push(g);
+			st.stand.add(g);
+			st.cues.push(g);
 		});
 	};
+	// pohľady hráča podľa strany: F7 zo stoličky na stôl, F2 na stojan s tágami
+	const sideViews = PL.map((p) => {
+		const [cx, cz] = p.chair;
+		const [sx, sz] = p.stand;
+		const ax = Math.sign(-sx); // stojan je natočený k stolu (+x alebo -x)
+		return {
+			chair: { pos: new THREE.Vector3(cx, FY + 1.15, cz + p.dz * 0.05), look: new THREE.Vector3(cx * 0.3, FY + 0.7, 0) },
+			rack: { pos: new THREE.Vector3(sx + ax * 1.25, FY + 1.3, sz), look: new THREE.Vector3(sx, FY + 0.75, sz) },
+		};
+	});
 
 	// diváci v prvom rade (kulisa), otočení k stolu: traja za dlhou stranou (+z), dvaja vedľa seba na druhej strane (-z);
 	// ich stoličky sú pre online divákov vždy obsadené
@@ -332,7 +350,10 @@ export function buildStadium(scene, quality) {
 		root,
 		/** Pohľady na štadióne: F4 skóre = veľká obrazovka nad tribúnou za kratšou stranou. */
 		views: {
-			rack: { pos: new THREE.Vector3(-2.55, FY + 1.3, 2.5), look: new THREE.Vector3(-3.8, FY + 0.75, 2.5) }, // F2 stojan s tágami do ligy
+			chair0: sideViews[0].chair, // F7 hráč 1
+			chair1: sideViews[1].chair, // F7 hráč 2
+			rack0: sideViews[0].rack, // F2 stojan hráča 1
+			rack1: sideViews[1].rack, // F2 stojan hráča 2
 			pick: { pos: new THREE.Vector3(0.9, FY + 17, 0), look: new THREE.Vector3(0, FY, 0) }, // výber stoličky zhora (tribúny vľavo a vpravo)
 			score: { pos: new THREE.Vector3(-(BX + 3.6) + 3.7, FY + 3.45, 0), look: new THREE.Vector3(-(BX + 3.6), FY + 3.6, 0) },
 		},
@@ -341,7 +362,7 @@ export function buildStadium(scene, quality) {
 			reactFans(fans, kind);
 		},
 		setScreen: drawScreen,
-		/** Stojan na tágá pri stole: specs = tágá do zápasu, inHand = id tága v ruke. */
+		/** Stojan hráča pri stole: side 0 alebo 1, specs = tágá do zápasu, inHand = id tága v ruke. */
 		setRack,
 		/** Bodové svetlá (lúče reflektorov a škvrny): svietia pred partiou, F12 na ťahu. */
 		setBeams(on) {
