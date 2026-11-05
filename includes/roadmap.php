@@ -119,6 +119,7 @@ function mysn_roadmap() {
 /** Denník zmien (najnovšie hore). */
 function mysn_changelog() {
 	return array(
+		array( '0.6.8', '5. 11. 2026', 'V menu pribudol Účet (nad Nastaveniami): meno, e-mail, člen od, úroveň, liga (sezóna, liga a miesto, body, výhry a prehry), dohraté partie cez internet, hra o skóre (framy, najlepšie skóre, najvyšší brejk) a vlastné tágá; odkazy Môj účet na webe, Môj e-shop a Odhlásiť sa. Tlačidlo Vstúpiť sa volá Pozerať hru.' ),
 		array( '0.6.7', '5. 11. 2026', 'Oprava: Cache Enabler posielal neprihláseným návštevníkom na snooker.hedlajner.sk starú uloženú stránku hry (z verzie 0.5.3), preto Prihlásiť sa viedlo na wp-login.php. Stránka hry sa už do cache neukladá a stará kópia sa po novej verzii zmaže sama.' ),
 		array( '0.6.6', '5. 11. 2026', 'Okno prihlásenia má vzhľad hry: tmavé okno ako menu, zlatý nadpis My Snooker, zlaté karty a odkazy, žlté tlačidlo Prihlásiť sa. Formulár ostáva ako na stránke Prihlásenie (Google, e-mail a heslo, zapamätať, zabudnuté heslo, registrácia).' ),
 		array( '0.6.5', '5. 11. 2026', 'Prihlásenie v okne hry funguje aj na subdoméne snooker.hedlajner.sk: formulár ide na snooker.hedlajner.sk/prihlasenie, kde ho spracuje doplnok My Users (tie isté kontroly a obmedzenie pokusov), prihlásenie platí pre celý web. Google prihlási a vráti späť do hry.' ),

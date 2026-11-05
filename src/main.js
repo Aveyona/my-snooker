@@ -241,7 +241,7 @@ export function start(root, config = {}) {
 	const roomOpen = () => homeDoorOpen && !game.match && !game.spectating;
 	const roomState = () => ({ k: 'w-state', seq: roomSeq, ver: roomVer, balls: snapshot(game.balls), place: game.state === 'place' ? 1 : 0, info: roomInfo() });
 	const roomList = (force) => {
-		// zoznam Vstúpiť: pri otvorení a zatvorení dverí hneď, popis (body) najviac raz za 20 s
+		// zoznam Pozerať hru: pri otvorení a zatvorení dverí hneď, popis (body) najviac raz za 20 s
 		const kind = game.solo ? 'solo' : 'training';
 		const open = roomOpen();
 		const key = open ? 'open:' + kind : 'closed';
@@ -676,7 +676,7 @@ export function start(root, config = {}) {
 			officeRefresh();
 		},
 		officeKeys: () => ui.toast(OFFICE_KEYS),
-		// Vstúpiť: otvorené partie (tréning a Hrať s otvorenými dverami, ligové zápasy)
+		// Pozerať hru: otvorené partie (tréning a Hrať s otvorenými dverami, ligové zápasy)
 		rooms: async () => {
 			if (!online) {
 				return;
@@ -888,7 +888,24 @@ export function start(root, config = {}) {
 		home: () => {
 			window.location.href = config.homeUrl || '/';
 		},
-		settings: () => ui.toggle(ui.panel),
+		settings: () => {
+			if (ui.accountPanel) {
+				ui.accountPanel.classList.add('mysn-hidden');
+			}
+			ui.toggle(ui.panel);
+		},
+		// menu Účet: údaje účtu hráča, liga, partie a skóre
+		account: async () => {
+			if (!online) {
+				return;
+			}
+			ui.showAccount(null);
+			try {
+				ui.showAccount(await online.net.call('account', null, 'GET'));
+			} catch (e) {
+				ui.showAccount(null, e.message || 'Účet sa nepodarilo načítať.');
+			}
+		},
 		help: () => enterView('board'),
 		board: () => enterView('board'),
 		rack: () => enterView('rack'),
@@ -1165,12 +1182,12 @@ export function start(root, config = {}) {
 				return true;
 			}
 			if (lk === 'f6') {
-				// dvere herne: otvoriť alebo zatvoriť (so zvukom); otvorené dvere = partiu môžu sledovať iní (Vstúpiť)
+				// dvere herne: otvoriť alebo zatvoriť (so zvukom); otvorené dvere = partiu môžu sledovať iní (Pozerať hru)
 				sound.unlock();
 				homeDoorOpen = room.toggleDoor();
 				roomBroadcast('door');
 				if (online && !game.match && !game.spectating) {
-					ui.toast(homeDoorOpen ? 'Dvere sú otvorené: tvoju partiu môžu sledovať iní hráči (Vstúpiť v menu).' : 'Dvere sú zatvorené: tvoja partia nie je v zozname otvorených partií.');
+					ui.toast(homeDoorOpen ? 'Dvere sú otvorené: tvoju partiu môžu sledovať iní hráči (Pozerať hru v menu).' : 'Dvere sú zatvorené: tvoja partia nie je v zozname otvorených partií.');
 				}
 				sound.doorCreak();
 				return true;

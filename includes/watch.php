@@ -1,6 +1,6 @@
 <?php
 /**
- * My Snooker: otvorené partie a sledovanie (Vstúpiť v menu). Server drží len zoznam: kto má otvorené dvere herne
+ * My Snooker: otvorené partie a sledovanie (Pozerať hru v menu). Server drží len zoznam: kto má otvorené dvere herne
  * (F6) pri tréningu alebo pri hre o skóre a prebiehajúce ligové zápasy. Stôl, údery a tágo ide divákovi priamo
  * od hráča cez WebRTC (includes/rtc.php len sprostredkuje nadviazanie spojenia). Divák sa len pozerá.
  */

@@ -268,7 +268,7 @@ export class Game extends Training {
 		this.emit('shot', { power: shot.power });
 	}
 
-	/** Sledovanie cudzej partie (Vstúpiť): uloží moju rozohranú hru, divák sa len pozerá. info = { type, id, title, kind } */
+	/** Sledovanie cudzej partie (Pozerať hru): uloží moju rozohranú hru, divák sa len pozerá. info = { type, id, title, kind } */
 	spectateBegin(info) {
 		this._saved = { snap: snapshot(this.balls), state: this.state === 'moving' ? 'aim' : this.state, solo: this.solo };
 		this.solo = null;

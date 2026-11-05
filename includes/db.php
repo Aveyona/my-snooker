@@ -8,7 +8,7 @@
  * {prefix}my_snooker_moves     záznam partie: každý úder s parametrami, stavom po údere, bodmi a faulom
  * {prefix}my_snooker_seasons   sezóny ligy (približne rok): názov, začiatok, koniec, stav, majster sezóny
  * {prefix}my_snooker_league    body ligy hráčov v sezóne, výhry, prehry, najvyššia séria, konečné poradie a liga
- * {prefix}my_snooker_rooms     otvorené partie pre zoznam Vstúpiť (dvere otvorené F6): druh hry a krátky popis
+ * {prefix}my_snooker_rooms     otvorené partie pre zoznam Pozerať hru (dvere otvorené F6): druh hry a krátky popis
  * {prefix}my_snooker_cues      vlastné tágá hráčov: šablóna, názov, farby a herné úpravy v medziach ±10 %
  * {prefix}my_snooker_signals   krátke správy na nadviazanie priameho spojenia WebRTC medzi hráčmi (po prečítaní sa mažú)
  * {prefix}my_snooker_scores    jeden hráč o najlepšie skóre: dohrané framy (body, čas, údery, fauly, najvyššia séria)

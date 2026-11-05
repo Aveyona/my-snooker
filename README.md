@@ -12,6 +12,7 @@ Hra je napísaná v JavaScripte nad knižnicou [three.js](https://threejs.org/),
 - priehľadná 3D šípka vo farbe trafenej gule ukazuje, kam guľa pôjde
 - rádio so stanicami z My Player: retro rádio na komode, mixpult a dva reproduktory pri pravej stene, priestorový zvuk z reproduktorov, mixpult mení hlasitosť, basy, výšky a vyváženie (F9)
 - barový stolík s telefónom (Môj účet, F10) a dvoma pohármi s vodou
+- menu Účet: údaje účtu hráča, liga, dohraté partie, hra o skóre a vlastné tágá; prihlásenie a registrácia priamo v hre (aj cez Google)
 - konferenčný stolík s novinami a časopisom; v pohľade z kresla (F7) vpravo titulka webu Hedlajner a správy z RSS, C a V ich otvoria na celú obrazovku, koliesko približuje pohľad
 - O najlepšie skóre: jeden hráč hrá celý frame podľa pravidiel (fauly sa odpočítajú), rebríček prihlásených hráčov podľa bodov a pri rovnosti kratšieho celkového času; v herni polica s pohármi troch najlepších a tabuľka 4. až 10. miesta (F8), na konci framu slávnostné ukončenie
 - fyzika gúľ: kĺzanie, kotúľanie, guľa dopredu, guľa späť, zastavenie a bočná falša
@@ -22,11 +23,11 @@ Hra je napísaná v JavaScripte nad knižnicou [three.js](https://threejs.org/),
 - neprihlásený návštevník má v menu Tréning (voľný tréning bez prihlásenia) a Prihlásiť sa; hru o skóre, ligu, partie s priateľmi a vlastné tágá majú prihlásení používatelia webu
 - Poslať výzvu: partia alebo spoločný tréning cez internet s hráčom, ktorý je práve v hre (pozri nižšie)
 - Liga: kancelária hráča (Liga v menu) a nástenka Liga v herni (F12), pozri nižšie
-- Vstúpiť: sledovanie otvorených partií (tréning a Hrať s otvorenými dverami F6, ligové zápasy), pozri nižšie
+- Pozerať hru: sledovanie otvorených partií (tréning a Hrať s otvorenými dverami F6, ligové zápasy), pozri nižšie
 
-## Vstúpiť (sledovanie partií)
+## Pozerať hru (sledovanie partií)
 
-- V menu je tlačidlo Vstúpiť. Otvorí okno Otvorené partie: tréningy a hry o skóre, ktoré majú otvorené dvere herne (F6), a všetky prebiehajúce ligové zápasy.
+- V menu je tlačidlo Pozerať hru. Otvorí okno Otvorené partie: tréningy a hry o skóre, ktoré majú otvorené dvere herne (F6), a všetky prebiehajúce ligové zápasy.
 - Dvere herne sú po načítaní zatvorené, partia je súkromná. Keď ich hráč otvorí (F6), jeho partia sa objaví v zozname (tabuľka `my_snooker_rooms` drží len otvorené dvere, druh hry a krátky popis).
 - Sledovanie ide priamo medzi prehliadačmi cez WebRTC: divák sa spojí s hráčom (pri ligovom zápase s oboma hráčmi), hráč mu hneď posiela stav stola, každý úder (divák si ho prehrá rovnakou fyzikou) a mierenie tága asi 20-krát za sekundu. Server stôl nečíta ani neposiela.
 - Keď sa priame spojenie nepodarí nadviazať (niektoré firemné siete a mobilní operátori ho blokujú), sledovanie nejde a divák dostane správu.

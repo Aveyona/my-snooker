@@ -275,7 +275,7 @@ export class UI {
 			return b;
 		};
 		// tágá, nápoveda a skóre sú na klávesoch F2, F1 a F4 (v menu nie sú)
-		const common = () => [this.button('Nastavenia', 'settings')];
+		const common = () => [this.button('Účet', 'account', 'Môj účet v My Snooker: údaje, liga, partie a skóre'), this.button('Nastavenia', 'settings')];
 		if (kind === 'watch') {
 			// divák sleduje cudziu partiu
 			this.menuMode.textContent = `Sledujem: ${label}`;
@@ -302,7 +302,7 @@ export class UI {
 			const tr = this.button('Tréning', kind === 'solo' ? 'training' : 'resume', 'Voľný tréning na stole s červeným súknom');
 			(trainFirst ? tr : play).classList.add('mysn-primary');
 			this.btnResume = trainFirst ? tr : play;
-			const enter = this.button('Vstúpiť', 'rooms', 'Otvorené partie: tréningy a hry s otvorenými dverami a ligové zápasy, dá sa ich sledovať');
+			const enter = this.button('Pozerať hru', 'rooms', 'Otvorené partie: tréningy a hry s otvorenými dverami a ligové zápasy, dá sa ich sledovať');
 			box.append(tr, play, lg, fr(), enter); // rebríček je na F8
 			if (this.opts.venue && this.opts.venue() === 'league') {
 				box.appendChild(this.button('Späť do herne', 'leagueHome'));
@@ -311,6 +311,57 @@ export class UI {
 		}
 		box.appendChild(this.button('Späť na web', 'home'));
 		this.menuFoot.textContent = 'V hre sa myš zachytí v okne. Esc ju uvoľní a otvorí toto menu. F1 nápoveda na nástenke, F2 stojan s tágami.';
+	}
+
+	/** Účet hráča (menu Účet): d = null načítava sa, inak údaje z REST account. */
+	showAccount(d, err) {
+		if (!this.accountPanel) {
+			const p = h('div', 'mysn-panel mysn-account mysn-hidden');
+			for (const t of ['keydown', 'mousedown', 'pointerdown', 'wheel', 'click']) {
+				p.addEventListener(t, (e) => e.stopPropagation());
+			}
+			p.addEventListener('keydown', (e) => e.key === 'Escape' && p.classList.add('mysn-hidden'));
+			this.menu.parentNode.appendChild(p);
+			this.accountPanel = p;
+		}
+		const p = this.accountPanel;
+		this.panel.classList.add('mysn-hidden');
+		const row = (k, v) => `<div class="mysn-acc-row"><span>${esc(k)}</span><b>${v}</b></div>`;
+		const time = (s) => `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`;
+		let body;
+		if (err) {
+			body = `<p class="mysn-note">${esc(err)}</p>`;
+		} else if (!d) {
+			body = '<p class="mysn-note">Načítavam účet…</p>';
+		} else {
+			const lg = d.league;
+			body =
+				`<div class="mysn-acc-head">${d.avatar ? `<img src="${esc(d.avatar)}" alt="" width="56" height="56">` : ''}<div><b>${esc(d.name)}</b><span>${esc(d.email)}</span>${d.levelName ? `<em>Úroveň ${esc(String(d.level))}: ${esc(d.levelName)}</em>` : ''}</div></div>` +
+				`<h4>Účet</h4>` +
+				row('Meno', esc(d.name)) +
+				row('E-mail', esc(d.email)) +
+				row('Člen od', esc(d.registered)) +
+				`<h4>Liga</h4>` +
+				(lg
+					? row('Prezývka', esc(lg.nick || d.name)) +
+						row('Sezóna', esc(lg.season)) +
+						(lg.league ? row('Liga a miesto', `${lg.league}. liga, ${lg.rank}. miesto`) + row('Body', String(lg.points)) + row('Výhry a prehry', `${lg.wins} : ${lg.losses}`) : row('Stav', 'zatiaľ bez zápasu'))
+					: '<p class="mysn-note">V lige nie si zaregistrovaný. Registrácia je v kancelárii (Liga v menu).</p>') +
+				`<h4>Partie a skóre</h4>` +
+				row('Dohraté partie cez internet', `${d.matches.played} (výhry ${d.matches.won}, ligové ${d.matches.league})`) +
+				row('Hrať: odohrané framy', String(d.solo.frames)) +
+				row('Najlepšie skóre', d.solo.frames ? `${d.solo.best} bodov za ${time(d.solo.time)}` : 'zatiaľ žiadne') +
+				row('Najvyšší brejk', String(d.solo.brk)) +
+				row('Vlastné tágá', `${d.cues} z 10`) +
+				`<div class="mysn-acc-links">` +
+				(d.links.account ? `<a class="mysn-btn" href="${esc(d.links.account)}" target="_blank" rel="noopener">Môj účet na webe</a>` : '') +
+				(d.links.shop ? `<a class="mysn-btn" href="${esc(d.links.shop)}" target="_blank" rel="noopener">Môj e-shop</a>` : '') +
+				`<a class="mysn-btn" href="${esc(d.links.logout)}">Odhlásiť sa</a>` +
+				`</div>`;
+		}
+		p.innerHTML = `<h3>Môj účet</h3>${body}<button type="button" class="mysn-btn mysn-primary" data-close>Zavrieť</button>`;
+		p.querySelector('[data-close]').addEventListener('click', () => p.classList.add('mysn-hidden'));
+		p.classList.remove('mysn-hidden');
 	}
 
 	/** Okno prihlásenia a registrácie v hre. */
@@ -393,7 +444,7 @@ export class UI {
 	}
 
 	/** Hrať s priateľom: živí hráči v hre, pozvánky a rozohrané partie. */
-	/** Vstúpiť: zoznam otvorených partií (tréning a Hrať s otvorenými dverami, ligové zápasy). list = null: načítava sa. */
+	/** Pozerať hru: zoznam otvorených partií (tréning a Hrať s otvorenými dverami, ligové zápasy). list = null: načítava sa. */
 	openRooms(on, list) {
 		if (!this.roomsBox) {
 			this.roomsBox = h('div', 'mysn-panel mysn-lobby mysn-hidden');
