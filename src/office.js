@@ -2,7 +2,7 @@
  * My Snooker: kancelária snookerového hráča (Liga v menu). Hráč sedí za písacím stolom a myšou sa rozhliada.
  * Na stole kalendár sezóny, notebook s miestom v lige a lampa. Na jednej stene výsledková tabuľa štyroch líg,
  * na druhej mapa sveta s ikonkami hráčov ligy, pri tretej stojan s mojimi tágami (4 si beriem do zápasu),
- * knižnica s pohármi, okno a dvere na štadión.
+ * šatník s oblečením na zápas, okno a dvere na štadión.
  *
  * Kancelária stojí mimo herne (posunutá o OX metrov), aby sa nemiešala so stolom a herňou.
  */
@@ -314,22 +314,75 @@ export function buildOffice(scene) {
 		});
 	};
 
-	// knižnica s pohármi, okno, dvere na štadión
-	add(new THREE.BoxGeometry(0.4, 2.0, 1.2), panel, RXo - 0.22, FY + 1.0, 1.65);
-	for (let i = 0; i < 4; i++) {
-		add(new THREE.BoxGeometry(0.38, 0.03, 1.15), wood, RXo - 0.22, FY + 0.4 + i * 0.45, 1.65);
+	// šatník pri pravej stene (otvorený, bez dverí): oblečenie na zápas na vešiakoch, dole topánky; zatiaľ len na pohľad
+	const SX = RXo - 0.3; // stred hĺbky skrine (zadná stena pri stene kancelárie)
+	const SZ = 1.65;
+	const SW = 1.2; // šírka (pozdĺž steny)
+	const SH = 2.1;
+	const SD = 0.56; // hĺbka
+	const front = SX - SD / 2; // otvorená strana smerom do miestnosti (-x)
+	add(new THREE.BoxGeometry(0.03, SH, SW), panel, SX + SD / 2 - 0.015, FY + SH / 2, SZ); // zadná doska
+	for (const sz of [-1, 1]) {
+		add(new THREE.BoxGeometry(SD, SH, 0.04), wood, SX, FY + SH / 2, SZ + sz * (SW / 2 - 0.02)); // boky
 	}
-	const trophyGroup = new THREE.Group();
-	root.add(trophyGroup);
-	const shape = [[0, 0], [0.05, 0], [0.05, 0.02], [0.02, 0.03], [0.012, 0.09], [0.04, 0.12], [0.06, 0.2], [0.055, 0.21], [0.03, 0.14], [0, 0.13]].map(([x, y]) => new THREE.Vector2(x, y));
-	const setChampions = (list) => {
-		trophyGroup.clear();
-		(list || []).slice(0, 4).forEach((c, i) => {
-			const m = new THREE.Mesh(new THREE.LatheGeometry(shape, 28), gold);
-			m.position.set(RXo - 0.22, FY + 0.84 + i * 0.45, 1.3 + (i % 2) * 0.3);
-			trophyGroup.add(m);
-		});
+	add(new THREE.BoxGeometry(SD + 0.04, 0.05, SW + 0.06), wood, SX - 0.01, FY + SH - 0.025, SZ); // strop skrine
+	add(new THREE.BoxGeometry(SD + 0.06, 0.06, SW + 0.08), wood, SX - 0.02, FY + SH + 0.03, SZ); // ozdobná lišta hore
+	add(new THREE.BoxGeometry(SD, 0.1, SW), wood, SX, FY + 0.05, SZ); // sokel
+	add(new THREE.BoxGeometry(SD - 0.04, 0.03, SW - 0.08), wood, SX, FY + 0.32, SZ); // polica na topánky
+	add(new THREE.CylinderGeometry(0.012, 0.012, SW - 0.08, 12), brass, SX, FY + 1.78, SZ).rotation.x = Math.PI / 2; // tyč na vešiaky
+	// vešiak: háčik na tyči a drevené ramená
+	const hanger = (z) => {
+		add(new THREE.TorusGeometry(0.022, 0.004, 6, 14, Math.PI * 1.3), brass, SX, FY + 1.79, z).rotation.y = Math.PI / 2;
+		const bar = add(new THREE.BoxGeometry(0.02, 0.025, 0.4), wood, SX, FY + 1.71, z);
+		bar.castShadow = false;
 	};
+	const cloth = (color, rough = 0.85) => new THREE.MeshStandardMaterial({ color, roughness: rough });
+	const shirtM = cloth(0xf4f4ef);
+	const vestM = cloth(0x1c1f2a, 0.6);
+	const trouserM = cloth(0x101114, 0.7);
+	const blackM = new THREE.MeshStandardMaterial({ color: 0x0b0b0d, roughness: 0.25, metalness: 0.2 });
+	// biela košeľa s rukávmi a motýlikom
+	const zs = SZ - 0.36;
+	hanger(zs);
+	add(new THREE.BoxGeometry(0.06, 0.72, 0.4), shirtM, SX, FY + 1.34, zs); // trup
+	for (const sz of [-1, 1]) {
+		const sl = add(new THREE.BoxGeometry(0.05, 0.62, 0.1), shirtM, SX, FY + 1.36, zs + sz * 0.23); // rukáv
+		sl.rotation.x = sz * 0.08;
+	}
+	add(new THREE.BoxGeometry(0.07, 0.05, 0.16), shirtM, SX - 0.005, FY + 1.69, zs); // golier
+	const bow = new THREE.Group();
+	bow.position.set(front + 0.22, FY + 1.65, zs);
+	root.add(bow);
+	for (const sz of [-1, 1]) {
+		const w = add(new THREE.ConeGeometry(0.03, 0.06, 4), blackM, 0, 0, sz * 0.03, bow); // krídla motýlika
+		w.rotation.x = (-sz * Math.PI) / 2; // špičky do uzla, široké konce von
+	}
+	add(new THREE.BoxGeometry(0.02, 0.025, 0.02), blackM, 0, 0, 0, bow); // uzol
+	// vesta so zlatými gombíkmi (otvorená spredu, pod ňou biela podšívka)
+	const zv = SZ;
+	hanger(zv);
+	for (const sz of [-1, 1]) {
+		add(new THREE.BoxGeometry(0.06, 0.6, 0.17), vestM, SX, FY + 1.38, zv + sz * 0.1); // polovice vesty
+	}
+	add(new THREE.BoxGeometry(0.05, 0.6, 0.04), cloth(0x8a1c2a, 0.5), SX + 0.005, FY + 1.38, zv); // saténová podšívka
+	for (let b = 0; b < 4; b++) {
+		add(new THREE.SphereGeometry(0.009, 10, 8), gold, front + 0.245, FY + 1.56 - b * 0.11, zv - 0.035); // gombíky
+	}
+	// čierne nohavice preložené cez vešiak
+	const zt = SZ + 0.37;
+	hanger(zt);
+	add(new THREE.BoxGeometry(0.05, 0.06, 0.38), trouserM, SX, FY + 1.69, zt); // preložené cez rameno vešiaka
+	for (const sz of [-1, 1]) {
+		add(new THREE.BoxGeometry(0.05, 0.62, 0.15), trouserM, SX, FY + 1.36, zt + sz * 0.09); // nohavice
+	}
+	// čierne lakované topánky na polici
+	for (const sz of [-1, 1]) {
+		const shoe = add(new THREE.CapsuleGeometry(0.045, 0.16, 4, 12), blackM, front + 0.2, FY + 0.38, SZ + 0.15 + sz * 0.06);
+		shoe.rotation.z = Math.PI / 2; // špička von zo skrine
+		shoe.scale.set(1, 1, 0.75);
+	}
+	/** Majstri ligy sa v kancelárii už nezobrazujú (miesto knižnice je šatník). */
+	const setChampions = () => {};
 	// vysoké okno za hráčom (F6 ho otvorí): večerné mesto a osvetlený štadión, dve krídla sa otvárajú dovnútra
 	const WX = -1.7;
 	const WW = 1.5;
