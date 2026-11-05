@@ -1596,6 +1596,7 @@ export function start(root, config = {}) {
 	window.addEventListener('pagehide', savePlayTime);
 	let lastSoloT = last;
 	let pull = 0;
+	let followSeen = false; // po údere kamera sledovala bielu (pozri frame)
 	const frame = (now) => {
 		const dt = Math.min(0.05, (now - last) / 1000);
 		last = now;
@@ -1762,6 +1763,20 @@ export function start(root, config = {}) {
 		updateFelt();
 		office.updateWindow(dt);
 		rig.cueTilt = cue.pivot.visible ? cue.tilt || 0 : 0;
+		// po údere: keď gule zastanú a som na rade, mierim zo smeru, z ktorého sa kamera práve pozerá na bielu
+		// (kamera sa neotáča, len sa plynulo spustí za tágo); v partii aj po súperovom údere
+		if (game.state === 'moving') {
+			followSeen = true;
+		} else if (followSeen) {
+			if (game.state === 'aim') {
+				followSeen = false;
+				if (rig.mode === 'cue' && !view && !game.spectating) {
+					game.dir = Math.atan2(Math.sin(rig.followYaw), Math.cos(rig.followYaw));
+				}
+			} else if (game.state !== 'watch') {
+				followSeen = false; // biela do D (pohľad zhora), koniec partie
+			}
+		}
 		rig.update(dt, game.cue, game.dir, game.state === 'moving');
 		renderer.render(scene, rig.camera);
 		requestAnimationFrame(frame);
