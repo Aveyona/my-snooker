@@ -244,6 +244,9 @@ export class Game extends Training {
 		if (!super.shoot(power, side, top)) {
 			return false;
 		}
+		if (this.match) {
+			this.match.turnAt = 0; // časomiera sa po údere zastaví (znova beží až pri ďalšom ťahu)
+		}
 		if (this.match && this.onNet) {
 			this.onNet('shot', { seq: this.match.seq + 1, shot });
 		}
@@ -266,6 +269,9 @@ export class Game extends Training {
 		this.lastPots = [];
 		strike(c, shot.dir, shot.power, shot.side, shot.top);
 		this.remote = !own;
+		if (this.match) {
+			this.match.turnAt = 0; // súper vystrelil: časomiera sa zastaví
+		}
 		this.state = 'moving';
 		this.message = '';
 		this.emit('shot', { power: shot.power });

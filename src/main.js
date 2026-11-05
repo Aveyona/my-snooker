@@ -531,7 +531,8 @@ export function start(root, config = {}) {
 	const SHOT_CLOCK = 30;
 	/** Časomiera ligového zápasu: { left, mine } alebo null (nebeží: úder, koniec, nie liga). */
 	const shotClock = () => {
-		if (game.state === 'moving') {
+		// čas beží len pri mierení, kladení bielej a čakaní na súpera; po údere (aj kým sa dohráva) nie
+		if (game.state !== 'aim' && game.state !== 'place' && game.state !== 'watch') {
 			return null;
 		}
 		const m = game.match;
@@ -1917,6 +1918,7 @@ export function start(root, config = {}) {
 					watchInfo.key = key;
 					watchInfo.seq = m.seq;
 				} else if (m.k === 'w-shot') {
+					watchTurnAt = 0; // hráč vystrelil: časomiera sa zastaví do ďalšieho ťahu
 					if (m.seq <= watchInfo.played || !m.before || !m.shot) {
 						return;
 					}

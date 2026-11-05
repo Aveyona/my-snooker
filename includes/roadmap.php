@@ -122,6 +122,7 @@ function mysn_roadmap() {
 /** Denník zmien (najnovšie hore). */
 function mysn_changelog() {
 	return array(
+		array( '0.6.38', '5. 11. 2026', 'Oprava časomiery: po údere (vlastnom aj súperovom) sa čas a odpočet hneď skryjú, aj kým sa súperov úder prehráva a čaká sa na výsledok. Znova beží až pri ďalšom ťahu. Rovnako u divákov.' ),
 		array( '0.6.37', '5. 11. 2026', 'Liga: časomiera. Hráč na rade má na úder 30 sekúnd (hore ukazovateľ času, od 10 s žltý, posledných 5 s veľký odpočet s tiknutím, pri nule Čas!). Kto nestihne, má faul za čas: súper dostane 4 body alebo hodnotu gule na rade a je na rade. Keď má hráč hru zatvorenú, faul po 3 sekundách zapíše server na podnet súpera. Čas vidia aj diváci a je na veľkej obrazovke štadióna.' ),
 		array( '0.6.36', '5. 11. 2026', 'Oprava: pri naťahovaní tága ľavým tlačidlom myši (najmä pri bielej pri mantineli, keď je tágo zdvihnuté) sa už nemení uhol tága ani pohľad kamery. Sklon sa určí z polohy tága bez odtiahnutia a tágo sa pri naťahovaní len posúva po svojej osi.' ),
 		array( '0.6.35', '5. 11. 2026', 'Nastavenia: Detail dotyku pri mierení má štyri možnosti: v strede dole, vľavo dole (vedľa Miesta úderu), vpravo dole (vedľa ukazovateľa sily) alebo nezobrazovať. Zmena platí hneď.' ),

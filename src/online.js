@@ -353,6 +353,9 @@ export class Online {
 				this.aimTarget = m.a;
 			}
 		} else if (m.k === 'shot') {
+			if (g.match) {
+				g.match.turnAt = 0; // súper vystrelil: časomiera sa hneď zastaví (aj kým sa jeho úder prehrá)
+			}
 			this.pendingShot = m.shot;
 			this.takeShot();
 		} else if (m.k === 'settle') {
