@@ -9,6 +9,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 function mysn_roadmap() {
 	return array(
+		array( '0.6.22', '5. 11. 2026', 'Štadión: pohľad zo stoličky (F7) je bez bočného panela s novinami. Keď hráč sedí na stoličke a príde na rad, pohľad sa sám vráti k stolu za tágo (platí v každej partii).' ),
 		array( '0.6.21', '5. 11. 2026', 'Oprava: divák ligového zápasu vidí na veľkej obrazovke štadióna (F4) skutočné skóre partie: mená hráčov, body, kto je na rade, sériu a guľu na rade, nie len nápis Vyzvi hráča z ligy.' ),
 		array( '0.6.20', '5. 11. 2026', 'Štadión: každý hráč má svoju stranu. Hráč 1 sedí v rohu pri dlhej strane so svojou stoličkou (F7) a stojanom so svojimi tágami (F2), hráč 2 oproti v druhom rohu so svojou stoličkou a svojimi tágami. Súper aj diváci vidia na stojane tágá hráča, ktoré si vybral do ligy (tágo v ruke na stojane chýba).' ),
 		array( '0.6.19', '5. 11. 2026', 'Online divák si pri vstupe vyberie miesto zhora: na štadióne voľnú stoličku na tribúne, v herni miesto na státie pri stene (zelené voľné, sivé obsadené, každé miesto má len jeden divák). Pozerá zo svojho miesta, myšou sa rozhliada a kolieskom približuje. F4 ukáže skóre zblízka ako hráčovi, F6 zmení miesto. Hráči aj ostatní diváci vidia na mieste diváka postavičku s jeho menom, ktorá tlieska pri potopenej guli a chytá sa za hlavu pri faule. Stoličky kulisových divákov sú vždy obsadené. Divák neprepína bodové svetlá (F12).' ),

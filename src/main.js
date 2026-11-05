@@ -683,6 +683,10 @@ export function start(root, config = {}) {
 		if (name === 'trophies') {
 			refreshTrophies();
 		}
+		if (name === 'chair' && venue === 'league') {
+			ui.showView(null); // štadión: zo stoličky bez bočného panela
+			return;
+		}
 		ui.showView(name, name === 'rack' ? rackNow() : allCues(), cueSpec.id, name === 'office' ? officeData() : name === 'rack' ? rackInfoNow() : name === 'mixer' ? { radio } : name === 'magazine' ? room.rssItems : name === 'chair' ? (venue === 'league' ? null : { news: room.newsItems, rss: room.rssItems }) : room.newsItems);
 	};
 	const exitView = () => {
@@ -1939,6 +1943,7 @@ export function start(root, config = {}) {
 	window.addEventListener('pagehide', savePlayTime);
 	let lastSoloT = last;
 	let pull = 0;
+	let wasMyTurn = false; // F7: pri príchode na rad sa pohľad vráti zo stoličky k stolu
 	let followSeen = false; // po údere kamera sledovala bielu (pozri frame)
 	const frame = (now) => {
 		const dt = Math.min(0.05, (now - last) / 1000);
@@ -2116,6 +2121,12 @@ export function start(root, config = {}) {
 		rig.cueTilt = cue.pivot.visible ? cue.tilt || 0 : 0;
 		// po údere: keď gule zastanú a som na rade, mierim zo smeru, z ktorého sa kamera práve pozerá na bielu
 		// (kamera sa neotáča, len sa plynulo spustí za tágo); v partii aj po súperovom údere
+		// partia: keď prídem na rad a sedím na stoličke (F7), pohľad sa sám vráti k stolu
+		const myTurnNow = !!(game.match && game.match.turn === game.match.me && (game.state === 'aim' || game.state === 'place'));
+		if (myTurnNow && !wasMyTurn && view === 'chair') {
+			exitView();
+		}
+		wasMyTurn = myTurnNow;
 		if (game.state === 'moving' && beamsAuto && venue === 'league') {
 			beamsAuto = false; // partia sa začala: bodové svetlá zhasnú (F12 na ťahu ich zapne)
 			beamsOn = false;
