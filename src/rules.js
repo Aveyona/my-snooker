@@ -14,8 +14,11 @@ export function newFrame(turn = 0) {
 	return { scores: [0, 0], turn, on: 'red', brk: 0, over: false, winner: null };
 }
 
-/** Text pre hráča: na akú guľu hrá. */
-export function onLabel(on) {
+/** Text pre hráča: na akú guľu hrá (free = voľná guľa po súperovom faule). */
+export function onLabel(on, free = false) {
+	if (free && (on === 'red' || VALUE[on])) {
+		return `voľná guľa (ľubovoľná farba) alebo ${onLabel(on)}`;
+	}
 	if (on === 'red') {
 		return 'červená';
 	}
@@ -41,10 +44,53 @@ export function remaining(state, reds) {
 }
 
 /**
+ * Je hráč po faule zasnookrovaný? Zasnookrovaný je, keď z miesta bielej nemôže priamo trafiť oba krajné okraje
+ * žiadnej gule na rade (iná guľa stojí v ceste). Body sú { x, z }, R polomer gule. Mantinely sa neberú do úvahy.
+ */
+export function snookered(cue, targets, others, R) {
+	const blocked = (ax, az, bx, bz, skip) => {
+		const dx = bx - ax;
+		const dz = bz - az;
+		const L2 = dx * dx + dz * dz || 1e-9;
+		for (const o of others) {
+			if (o === skip) {
+				continue;
+			}
+			const t = Math.max(0, Math.min(1, ((o.x - ax) * dx + (o.z - az) * dz) / L2));
+			const px = ax + dx * t - o.x;
+			const pz = az + dz * t - o.z;
+			if (px * px + pz * pz < (2 * R - 1e-4) ** 2) {
+				return true; // biela by po ceste narazila do inej gule
+			}
+		}
+		return false;
+	};
+	for (const t of targets) {
+		const dx = t.x - cue.x;
+		const dz = t.z - cue.z;
+		const L = Math.hypot(dx, dz) || 1e-9;
+		const nx = -dz / L;
+		const nz = dx / L;
+		const g = 2 * R - 0.0005; // biela sa len dotkne krajného okraja
+		const left = !blocked(cue.x, cue.z, t.x + nx * g, t.z + nz * g, t);
+		const right = !blocked(cue.x, cue.z, t.x - nx * g, t.z - nz * g, t);
+		if (left && right) {
+			return false;
+		}
+	}
+	return targets.length > 0;
+}
+
+/**
  * Vyhodnotí úder. Nominovaná farba (keď sa hrá na farbu) je prvá trafená farba.
+ * Voľná guľa (state.free): prvá trafená farba môže zastúpiť guľu na rade; potopená platí ako guľa na rade
+ * a vráti sa na spot.
  */
 export function evaluate(state, shot) {
-	const s = { ...state, scores: [...state.scores] };
+	if (state.free && shot.first && shot.first !== 'white' && shot.first !== 'red' && shot.first !== state.on && (state.on === 'red' || VALUE[state.on])) {
+		return evaluateFree(state, shot);
+	}
+	const s = { ...state, scores: [...state.scores], free: false };
 	const first = shot.first || null;
 	const pots = shot.pots || [];
 	const cuePotted = pots.includes('white');
@@ -179,6 +225,60 @@ export function evaluate(state, shot) {
 		if (i >= 0) {
 			respot.splice(i, 1);
 		}
+	}
+	return { state: s, points, foul: !!foul, penalty: foul ? penalty : 0, respot, inHand: cuePotted, msg };
+}
+
+/** Voľná guľa: prvá trafená farba (fb) zastupuje guľu na rade (červenú alebo farbu v poradí). */
+function evaluateFree(state, shot) {
+	const s = { ...state, scores: [...state.scores], free: false };
+	const fb = shot.first;
+	const pots = shot.pots || [];
+	const cuePotted = pots.includes('white');
+	const balls = pots.filter((k) => k !== 'white');
+	const reds = shot.reds;
+	const me = s.turn;
+	const onRed = state.on === 'red';
+	const worth = onRed ? 1 : VALUE[state.on]; // voľná guľa platí ako guľa na rade
+	let foul = '';
+	let penalty = Math.max(4, onRed ? 4 : VALUE[state.on], VALUE[fb] || 0);
+	const respot = [];
+	let points = 0;
+	for (const k of balls) {
+		if (k !== 'red') {
+			respot.push(k); // voľná guľa aj iné farby sa vracajú na spot
+		}
+		const legal = k === fb || (onRed ? k === 'red' : k === state.on);
+		if (!legal) {
+			penalty = Math.max(penalty, VALUE[k] || 4);
+			foul = foul || `Spadla ${NAME[k]}, voľná guľa bola ${NAME[fb]}.`;
+		}
+	}
+	if (!foul && !cuePotted && balls.length) {
+		// voľná guľa a guľa na rade naraz: počíta sa len guľa na rade (pri červených každá červená)
+		points = onRed ? Math.max(1, balls.filter((k) => k === 'red').length) : worth;
+	}
+	if (cuePotted && !foul) {
+		foul = 'Biela spadla do jamky.';
+	}
+	let msg = '';
+	if (foul) {
+		s.scores[1 - me] += penalty;
+		s.turn = 1 - me;
+		s.brk = 0;
+		s.on = onRed ? (reds > 0 ? 'red' : 'yellow') : state.on;
+		msg = `Faul: ${foul} Súper dostáva ${penalty} ${penalty < 5 ? 'body' : 'bodov'}.`;
+	} else if (points > 0) {
+		s.scores[me] += points;
+		s.brk += points;
+		// po voľnej guli namiesto červenej sa hrá farba; namiesto farby v poradí ostáva tá istá farba na rade
+		s.on = onRed ? 'colour' : state.on;
+		msg = `Voľná guľa ${NAME[fb]} za ${points} ${points === 1 ? 'bod' : points < 5 ? 'body' : 'bodov'}, séria ${s.brk}.`;
+	} else {
+		s.turn = 1 - me;
+		s.brk = 0;
+		s.on = onRed ? (reds > 0 ? 'red' : 'yellow') : state.on;
+		msg = 'Bez bodov, na rade je súper.';
 	}
 	return { state: s, points, foul: !!foul, penalty: foul ? penalty : 0, respot, inHand: cuePotted, msg };
 }

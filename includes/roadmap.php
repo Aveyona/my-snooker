@@ -50,14 +50,15 @@ function mysn_roadmap() {
 			'n'      => 2,
 			'title'  => 'Pravidlá snookeru',
 			'status' => 'now',
-			'goal'   => 'Skutočný frame podľa pravidiel. Viac hráčov na jednom zariadení zatiaľ nie je podporované.',
+			'goal'   => 'Skutočný frame podľa pravidiel. Pravidlo miss nebude, viac hráčov na jednom zariadení zatiaľ nie je podporované.',
 			'items'  => array(
 				array( 'Poradie gúľ: červená, farba, na konci farby od žltej po čiernu (modul pravidiel s testami)', 1 ),
 				array( 'Fauly a trestné body (minimálne 4): minutie, prvá trafená nesprávna guľa, nesprávna guľa v jamke, biela v jamke (biela do ruky v D)', 1 ),
 				array( 'Ukazovateľ, na akú guľu sa hrá, skóre, náboj, zostávajúce body na stole', 1 ),
 				array( 'Koniec framu, opätovné položenie čiernej pri rovnosti', 1 ),
-				array( 'Voľná guľa, opakovanie úderu na žiadosť súpera, pravidlo miss', 0 ),
-				array( 'Zápas na viac framov (napríklad na 3 alebo 5)', 0 ),
+				array( 'Voľná guľa po faule, keď je súper zasnookrovaný (ľubovoľná farba platí ako guľa na rade)', 1 ),
+				array( 'Po faule voľba Hrám ja alebo Nech hrá súper', 0 ),
+				array( 'Zápas na viac framov (1, 3 alebo 5) pri výzve na partiu, liga ostáva na 1 frame', 0 ),
 			),
 		),
 		array(
@@ -120,6 +121,7 @@ function mysn_roadmap() {
 /** Denník zmien (najnovšie hore). */
 function mysn_changelog() {
 	return array(
+		array( '0.6.34', '5. 11. 2026', 'Pravidlá: voľná guľa. Keď po faule súper nevidí priamo oba okraje žiadnej gule na rade, dostane voľnú guľu (na lište: voľná guľa alebo guľa na rade). Ľubovoľná farba platí ako guľa na rade, potopená sa vráti na spot. Platí v partii s priateľom aj v lige, v hre o skóre nie.' ),
 		array( '0.6.33', '5. 11. 2026', 'Administrácia: nová stránka My Snooker, Sezóna ligy. Prehľad aktuálnej sezóny (začiatok, koniec, hráči, zápasy, prvé miesto), posun dátumu konca a názvu, tlačidlo Ukončiť sezónu a začať novú s potvrdením (riadne s majstrom, alebo ako testovacia bez majstra a bez poradia; dĺžka novej sezóny rok, 6, 3 alebo 1 mesiac) a zoznam minulých sezón.' ),
 		array( '0.6.32', '5. 11. 2026', 'Plán vývoja: hra proti počítaču nebude (etapa vypustená, ostatné etapy prečíslované).' ),
 		array( '0.6.31', '5. 11. 2026', 'Plán vývoja: viac hráčov na jednom zariadení zatiaľ nie je podporované (2. etapa sa volá Pravidlá snookeru). Prehľad režimov v administrácii je aktuálny.' ),

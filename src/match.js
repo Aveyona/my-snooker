@@ -7,8 +7,8 @@
  * 'over' (koniec partie).
  */
 import { Training } from './training.js';
-import { createRack, snapshot, restore, strike } from './physics.js';
-import { evaluate, onLabel, newFrame, VALUE } from './rules.js';
+import { createRack, snapshot, restore, strike, R } from './physics.js';
+import { evaluate, onLabel, newFrame, VALUE, snookered } from './rules.js';
 
 const SOLO_KEY = 'mySnookerSolo';
 
@@ -346,6 +346,16 @@ export class Game extends Training {
 		if (res.inHand) {
 			this.cue.on = false;
 		}
+		// voľná guľa: po faule je súper zasnookrovaný na guľu na rade (nevidí oba okraje žiadnej z nich)
+		if (!m.training && res.foul && !res.inHand && !res.state.over && this.cue.on) {
+			const on = res.state.on;
+			const targets = this.balls.filter((b) => b.on && (on === 'red' ? b.kind === 'red' : b.kind === on)).map((b) => b.p);
+			const others = this.balls.filter((b) => b.on && b !== this.cue).map((b) => b.p);
+			if (snookered(this.cue.p, targets, others, R)) {
+				res.state.free = true;
+				res.msg += ' Voľná guľa: súper môže hrať ľubovoľnú farbu namiesto gule na rade.';
+			}
+		}
 		const names = m.players.map((p) => p.name);
 		const st = {
 			balls: snapshot(this.balls),
@@ -397,7 +407,7 @@ export class Game extends Training {
 		if (this.solo) {
 			return onLabel(this.solo.rules.on);
 		}
-		return this.match && this.match.rules ? onLabel(this.match.rules.on) : '';
+		return this.match && this.match.rules ? onLabel(this.match.rules.on, !!this.match.rules.free) : '';
 	}
 
 	undo() {

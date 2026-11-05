@@ -1,6 +1,6 @@
 // Testy pravidiel snookeru: node src/rules.test.mjs
 import assert from 'node:assert/strict';
-import { newFrame, evaluate, remaining } from './rules.js';
+import { newFrame, evaluate, remaining, snookered } from './rules.js';
 
 let n = 0;
 const t = (name, fn) => {
@@ -99,5 +99,35 @@ t('remíza po čiernej: čierna späť na spot', () => {
 });
 t('zostávajúce body na začiatku 147', () => {
 	assert.equal(remaining(newFrame(), 15), 147);
+});
+t('voľná guľa: trafená a potopená zelená namiesto červenej = 1 bod, potom farba', () => {
+	const r = evaluate({ ...newFrame(), free: true }, { first: 'green', pots: ['green'], reds: 10 });
+	assert.equal(r.foul, false);
+	assert.equal(r.state.scores[0], 1);
+	assert.equal(r.state.on, 'colour');
+	assert.deepEqual(r.respot, ['green']);
+	assert.equal(r.state.free, false);
+});
+t('voľná guľa pri farbách: modrá namiesto žltej = 2 body, žltá ostáva na rade', () => {
+	const r = evaluate({ ...newFrame(), on: 'yellow', free: true }, { first: 'blue', pots: ['blue'], reds: 0 });
+	assert.equal(r.state.scores[0], 2);
+	assert.equal(r.state.on, 'yellow');
+	assert.deepEqual(r.respot, ['blue']);
+});
+t('voľná guľa: trafená, nič nespadlo = bez faulu, súper na rade', () => {
+	const r = evaluate({ ...newFrame(), free: true }, { first: 'pink', pots: [], reds: 9 });
+	assert.equal(r.foul, false);
+	assert.equal(r.state.turn, 1);
+});
+t('bez voľnej gule je trafená farba namiesto červenej faul', () => {
+	const r = evaluate(newFrame(), { first: 'green', pots: ['green'], reds: 10 });
+	assert.equal(r.foul, true);
+});
+t('zasnookrovaný: guľa priamo pred bielou', () => {
+	const R = 0.02625;
+	assert.equal(snookered({ x: 0, z: 0 }, [{ x: 1, z: 0 }], [{ x: 0.5, z: 0 }], R), true);
+	assert.equal(snookered({ x: 0, z: 0 }, [{ x: 1, z: 0 }], [{ x: 0.5, z: 0.3 }], R), false);
+	// zakrytý len jeden okraj stačí na snooker
+	assert.equal(snookered({ x: 0, z: 0 }, [{ x: 1, z: 0 }], [{ x: 0.5, z: 0.045 }], R), true);
 });
 console.log(n, 'testov pravidiel ok');
