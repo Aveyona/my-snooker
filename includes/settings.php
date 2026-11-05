@@ -62,3 +62,23 @@ add_filter( 'allowed_redirect_hosts', function ( $hosts ) {
 	$hosts[] = preg_replace( '/:\d+$/', '', mysn_host() );
 	return array_unique( $hosts );
 } );
+
+/* Nástroje webu (stránka Nástroje z My Users): hra My Snooker ako prvá. */
+add_filter(
+	'my_users_tools',
+	function ( $tools ) {
+		array_unshift(
+			$tools,
+			array(
+				'id'     => 'snooker',
+				'title'  => 'My Snooker',
+				'desc'   => 'Relax hra: 3D snooker v prehliadači s ligou. Tréning, hra o najlepšie skóre a partie s priateľmi cez internet.',
+				'url'    => mysn_url(),
+				'icon'   => 'snooker',
+				'status' => 'ready',
+			)
+		);
+		return $tools;
+	},
+	100
+);

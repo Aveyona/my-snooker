@@ -119,6 +119,7 @@ function mysn_roadmap() {
 /** Denník zmien (najnovšie hore). */
 function mysn_changelog() {
 	return array(
+		array( '0.6.12', '5. 11. 2026', 'Hra je na stránke Nástroje webu ako prvá: My Snooker, relax hra s ligou (ikona tága s guľou, My Users 1.4.4).' ),
 		array( '0.6.11', '5. 11. 2026', 'Po údere sa kamera neotáča: keď gule zastanú a si na rade, mieriš zo smeru, z ktorého sa kamera práve pozerá na bielu (aj keď si sa počas pohybu otočil myšou), kamera sa len plynulo spustí za tágo. V partii platí aj po súperovom údere, mierenie sa už samo neotáča na najbližšiu guľu.' ),
 		array( '0.6.10', '5. 11. 2026', 'E-maily účtu poslané z hry (potvrdenie registrácie, už máš účet, zabudnuté heslo) majú tému snookru: zelené súkno s guľami, zlatý nadpis My Snooker, žlté tlačidlo Potvrdiť účet a hrať a pätička s adresou hry. Text e-mailu ostáva od My Users a WordPressu, e-mail pre správcu webu sa nemení.' ),
 		array( '0.6.9', '5. 11. 2026', 'Oprava: Odhlásiť sa v okne Účet nechalo hráča na stránke wp-login.php (adresa odhlásenia mala zakódované &amp; a stratil sa návrat do hry). Teraz odhlási a vráti späť do hry.' ),
