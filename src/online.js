@@ -338,6 +338,12 @@ export class Online {
 			this.applyInfo({ ...(this.info || {}), id: this.matchId, status: 'active', seq: m.seq, state: m.state, shot: null, players: g.match.players, me: g.match.me });
 		} else if (m.k === 'info' && m.m) {
 			this.applyInfo({ ...m.m, me: 1 - m.m.me });
+		} else if (m.k === 'lights') {
+			// súper zapol alebo zhasol bodové svetlá na štadióne: aj u mňa a u mojich divákov
+			this.wsend({ k: 'w-lights', on: !!m.on });
+			if (this.hooks.lights) {
+				this.hooks.lights(!!m.on);
+			}
 		}
 	}
 
@@ -482,6 +488,15 @@ export class Online {
 		this.aimTarget = null;
 		this.game.endMatch();
 		this.hooks.ended(text);
+	}
+
+	/** Bodové svetlá na štadióne (F12): súperovi a divákom. */
+	sendLights(on) {
+		if (!this.matchId) {
+			return;
+		}
+		this.rtcSendOpp({ k: 'lights', on: !!on });
+		this.wsend({ k: 'w-lights', on: !!on });
 	}
 
 	rtcSendOpp(msg) {

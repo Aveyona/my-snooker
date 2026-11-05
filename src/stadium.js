@@ -236,7 +236,7 @@ export function buildStadium(scene, quality) {
 	const skin = [0xe0b48e, 0xc78e66, 0x8d5b3e, 0xd9a07a, 0xa8714f];
 	const shirts = [0x2f6fd6, 0xc0392b, 0x2a9d8f, 0xe0a526, 0x6c4fb3];
 	const hair = [0x3a2414, 0x111111, 0x9a6a2a, 0x5a3a20, 0x222222];
-	[[-1.6, 1], [0.2, 1], [1.9, 1], [0.8, -1], [1.2, -1]].forEach(([x, side], i) => {
+	[[-1.6, 1], [0.4, 1], [2.0, 1], [0.8, -1], [1.2, -1]].forEach(([x, side], i) => {
 		const z = side * (BZ + 0.9);
 		const y = FY + 0.25 + 0.24;
 		const f = new THREE.Group();

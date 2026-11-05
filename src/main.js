@@ -1317,7 +1317,11 @@ export function start(root, config = {}) {
 					return true;
 				}
 				beamsOn = !beamsOn;
+				beamsAuto = false;
 				stadium.setBeams(beamsOn);
+				if (online && game.match) {
+					online.sendLights(beamsOn); // súper a diváci vidia rovnaké svetlá
+				}
 				return true;
 			}
 			const fkeys = { f1: 'board', f2: 'rack', f3: 'chalk', f4: 'score', f7: 'chair', f8: 'trophies', f9: 'mixer', f10: 'bar', f12: 'leagueBoard' };
@@ -1491,6 +1495,12 @@ export function start(root, config = {}) {
 			},
 			invite: (inv) => !ui.menuOpen() && ui.toast(`Boli ste vyzvaný! ${inv.from.name} ťa vyzýva ${inv.training ? 'na spoločný tréning' : inv.league ? 'na ligovú partiu' : 'na partiu'}.${controls.captured ? ' Esc alebo Ctrl uvoľní myš.' : ''}`, inv),
 			toast: (t) => ui.toast(t),
+			// súper zapol alebo zhasol bodové svetlá na štadióne
+			lights: (on) => {
+				beamsOn = on;
+				beamsAuto = false;
+				stadium.setBeams(on);
+			},
 			// divák: správy od hráča sledovanej partie (priamo cez WebRTC)
 			watch: (m) => {
 				const sp = game.spectating;
@@ -1527,6 +1537,10 @@ export function start(root, config = {}) {
 					game.spectateSet(m.before);
 					game.playRemote(m.shot, false);
 					watchInfo.seq = m.seq;
+				} else if (m.k === 'w-lights') {
+					beamsOn = !!m.on; // hráč zapol alebo zhasol bodové svetlá
+					beamsAuto = false;
+					stadium.setBeams(beamsOn);
 				} else if (m.k === 'w-aim') {
 					if (!moving && m.a && m.a.seq === watchInfo.seq) {
 						online.aimTarget = m.a; // tágo hráča pri mierení
