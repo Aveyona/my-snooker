@@ -90,6 +90,7 @@ function mysn_admin_matches() {
 		'active'   => 'rozohraná',
 		'paused'   => 'prerušená',
 		'finished' => 'skončená',
+		'annulled' => 'zrušená (obom vypadlo spojenie)',
 	);
 	?>
 	<h2>Partie cez internet</h2>

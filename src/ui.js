@@ -291,7 +291,12 @@ export class UI {
 			this.btnResume.classList.add('mysn-primary');
 			this.menuMode.textContent = `${trn ? 'Tréning' : 'Partia'} s hráčom ${label}`;
 			box.append(this.btnResume, ...common());
-			box.append(this.button(trn ? 'Prerušiť tréning' : 'Prerušiť partiu', 'pauseMatch', 'Uloží sa, pokračovať sa dá neskôr'), this.button(trn ? 'Ukončiť tréning' : 'Vzdať partiu', 'resign'));
+			const lgm = !!(this._lastGame && this._lastGame.match && this._lastGame.match.league);
+			if (!lgm) {
+				// ligový zápas sa neprerušuje (kto stratí spojenie, prehrá; obom naraz = zápas sa ruší)
+				box.append(this.button(trn ? 'Prerušiť tréning' : 'Prerušiť partiu', 'pauseMatch', 'Uloží sa, pokračovať sa dá neskôr'));
+			}
+			box.append(this.button(trn ? 'Ukončiť tréning' : 'Vzdať partiu', 'resign'));
 		} else {
 			// Hrať = o najlepšie skóre: rozohraný frame sa pamätá, kým neskončí, potom sa začne nový
 			this.menuMode.textContent = kind === 'solo' ? 'Hrá sa o najlepšie skóre' : user ? `Prihlásený: ${user.name}` : 'Tréning';

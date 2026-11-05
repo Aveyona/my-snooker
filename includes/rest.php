@@ -18,6 +18,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 const MYSN_LIVE = 20; // hráč je živý, ak poslal signál za posledných 20 s
 const MYSN_ONLINE = 15; // súper v partii je pripojený, ak čítal partiu za posledných 15 s
 const MYSN_PAUSE = 600; // po 10 minútach bez súpera sa partia preruší (dá sa v nej pokračovať)
+const MYSN_LEAGUE_DROP = 120; // ligový zápas: hráč bez spojenia 2 minúty prehrá, oba bez spojenia = zápas zrušený
 const MYSN_INVITE = 60; // pozvánka platí minútu
 
 add_action(
@@ -133,7 +134,24 @@ function mysn_housekeeping() {
 	$t   = mysn_table( 'matches' );
 	$now = time();
 	$wpdb->query( $wpdb->prepare( "UPDATE $t SET status = 'expired', updated = %d WHERE status = 'invited' AND created < %d", $now, $now - MYSN_INVITE ) ); // phpcs:ignore
-	$wpdb->query( $wpdb->prepare( "UPDATE $t SET status = 'paused', updated = %d WHERE status = 'active' AND (seen1 < %d OR seen2 < %d)", $now, $now - MYSN_PAUSE, $now - MYSN_PAUSE ) ); // phpcs:ignore
+	// ligový zápas sa neprerušuje: komu vypadne spojenie, prehrá (ako pri vzdaní); obom naraz = zápas sa ruší bez bodov
+	$drop = $now - MYSN_LEAGUE_DROP;
+	foreach ( $wpdb->get_results( $wpdb->prepare( "SELECT * FROM $t WHERE status = 'active' AND league = 1 AND (seen1 < %d OR seen2 < %d) LIMIT 20", $drop, $drop ), ARRAY_A ) as $m ) { // phpcs:ignore
+		$gone1 = (int) $m['seen1'] < $drop;
+		$gone2 = (int) $m['seen2'] < $drop;
+		if ( $gone1 && $gone2 ) {
+			mysn_update_match( $m['id'], array( 'status' => 'annulled', 'result' => 'annulled' ) );
+			continue;
+		}
+		$wi     = $gone1 ? 1 : 0; // vyhráva ten, kto ostal
+		$winner = 1 === $wi ? (int) $m['p2'] : (int) $m['p1'];
+		mysn_update_match( $m['id'], array( 'status' => 'finished', 'result' => 'disconnect', 'winner' => $winner ) );
+		$st   = $m['state'] ? json_decode( $m['state'], true ) : array();
+		$sc   = isset( $st['rules']['scores'][ $wi ] ) ? (int) $st['rules']['scores'][ $wi ] : 0;
+		$best = isset( $st['best'] ) && is_array( $st['best'] ) ? array_map( 'intval', $st['best'] ) : array( 0, 0 );
+		mysn_league_apply( mysn_get_match( $m['id'] ), $winner, $sc, true, $best );
+	}
+	$wpdb->query( $wpdb->prepare( "UPDATE $t SET status = 'paused', updated = %d WHERE status = 'active' AND league = 0 AND (seen1 < %d OR seen2 < %d)", $now, $now - MYSN_PAUSE, $now - MYSN_PAUSE ) ); // phpcs:ignore
 }
 
 function mysn_touch( $uid, $state, $match_id = 0 ) {
@@ -372,7 +390,7 @@ function mysn_rest_match( $req ) {
 	if ( 'active' === $m['status'] ) {
 		mysn_touch( get_current_user_id(), 'match', $m['id'] );
 		$other = 0 === $me ? 'seen2' : 'seen1';
-		if ( (int) $m[ $other ] < $now - MYSN_PAUSE ) {
+		if ( empty( $m['league'] ) && (int) $m[ $other ] < $now - MYSN_PAUSE ) {
 			mysn_update_match( $m['id'], array( 'status' => 'paused' ) );
 			$m['status'] = 'paused';
 		}
@@ -504,8 +522,10 @@ function mysn_rest_leave( $req ) {
 			$best = isset( $st['best'] ) && is_array( $st['best'] ) ? array_map( 'intval', $st['best'] ) : array( 0, 0 );
 			mysn_league_apply( mysn_get_match( $m['id'] ), 0 === $me ? (int) $m['p2'] : (int) $m['p1'], $sc, true, $best );
 		}
-	} else {
+	} elseif ( empty( $m['league'] ) ) {
 		mysn_update_match( $m['id'], array( 'status' => 'paused' ) );
+	} else {
+		return mysn_err( 'Ligový zápas sa nedá prerušiť. Dá sa len vzdať.' );
 	}
 	return array(
 		'ok'    => true,

@@ -100,21 +100,53 @@ export function buildStadium(scene, quality) {
 		}
 	}
 
-	// reflektory na konštrukcii pod stropom (kužele svetla do arény)
+	// reflektory na konštrukcii pod stropom: lúč svetla zo šošovky až na podlahu (smerom k stolu), na zemi svetlá škvrna
 	const trussY = FY + 5.2;
+	const beamMat = new THREE.MeshBasicMaterial({ color: 0xc8dbff, vertexColors: true, transparent: true, opacity: 0.045, depthWrite: false, side: THREE.DoubleSide, blending: THREE.AdditiveBlending });
+	const poolC = document.createElement('canvas');
+	poolC.width = poolC.height = 256;
+	const pg = poolC.getContext('2d');
+	const grd = pg.createRadialGradient(128, 128, 0, 128, 128, 128);
+	grd.addColorStop(0, 'rgba(255,255,255,1)');
+	grd.addColorStop(0.55, 'rgba(255,255,255,.45)');
+	grd.addColorStop(1, 'rgba(255,255,255,0)');
+	pg.fillStyle = grd;
+	pg.fillRect(0, 0, 256, 256);
+	const poolT = new THREE.CanvasTexture(poolC);
+	const poolMat = new THREE.MeshBasicMaterial({ map: poolT, color: 0xa9c4ff, transparent: true, opacity: 0.32, depthWrite: false, blending: THREE.AdditiveBlending });
+	const lensMat = new THREE.MeshBasicMaterial({ color: 0xf2f6ff });
+	const up = new THREE.Vector3(0, 1, 0);
 	for (const z of [-2.4, 2.4]) {
 		add(new THREE.BoxGeometry(9, 0.12, 0.12), metal, 0, trussY, z);
 		for (const x of [-3.5, -1.2, 1.2, 3.5]) {
 			add(new THREE.CylinderGeometry(0.12, 0.16, 0.3, 16), metal, x, trussY - 0.18, z);
-			const beam = new THREE.Mesh(
-				new THREE.ConeGeometry(1.1, 4.6, 24, 1, true),
-				new THREE.MeshBasicMaterial({ color: 0xbfd4ff, transparent: true, opacity: 0.035, depthWrite: false, side: THREE.DoubleSide })
-			);
-			beam.position.set(x * 0.8, trussY - 2.45, z * 0.6);
-			beam.lookAt(x * 0.8, trussY + 1, z * 0.6);
-			beam.rotation.x += Math.PI / 2;
+			const lens = add(new THREE.CircleGeometry(0.14, 20), lensMat, x, trussY - 0.335, z);
+			lens.rotation.x = Math.PI / 2;
+			lens.castShadow = false;
+			// lúč: zrezaný kužeľ od šošovky po podlahu vedľa stola (nesvieti cez súkno), hore jasnejší, dole slabne
+			const S = new THREE.Vector3(x, trussY - 0.34, z);
+			const E = new THREE.Vector3(x * 0.95, FY + 0.01, z * 1.12);
+			const len = S.distanceTo(E);
+			const geo = new THREE.CylinderGeometry(0.13, 0.85, len, 32, 10, true);
+			const pos = geo.attributes.position;
+			const col = new Float32Array(pos.count * 3);
+			for (let i = 0; i < pos.count; i++) {
+				const t = pos.getY(i) / len + 0.5; // 1 hore pri reflektore, 0 dole
+				const k = 0.35 + 0.65 * t;
+				col[i * 3] = col[i * 3 + 1] = col[i * 3 + 2] = k;
+			}
+			geo.setAttribute('color', new THREE.BufferAttribute(col, 3));
+			const beam = new THREE.Mesh(geo, beamMat);
+			beam.position.copy(S).add(E).multiplyScalar(0.5);
+			beam.quaternion.setFromUnitVectors(up, S.clone().sub(E).normalize());
 			beam.castShadow = false;
+			beam.renderOrder = 2;
 			root.add(beam);
+			// svetlá škvrna na podlahe
+			const pool = add(new THREE.PlaneGeometry(1.9, 1.9), poolMat, E.x, FY + 0.012, E.z);
+			pool.rotation.x = -Math.PI / 2;
+			pool.castShadow = false;
+			pool.renderOrder = 1;
 		}
 	}
 	const fill = new THREE.HemisphereLight(0x6c7aa8, 0x07080b, 0.35);

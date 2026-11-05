@@ -119,6 +119,7 @@ function mysn_roadmap() {
 /** Denník zmien (najnovšie hore). */
 function mysn_changelog() {
 	return array(
+		array( '0.6.15', '5. 11. 2026', 'Štadión: lúče reflektorov svietia zo šošovky až na podlahu vedľa stola a končia svetlou škvrnou. Ligový zápas sa nedá prerušiť (v menu len Vzdať partiu): komu vypadne spojenie na 2 minúty, prehrá ako pri vzdaní, keď vypadne obom, zápas sa zruší bez bodov.' ),
 		array( '0.6.14', '5. 11. 2026', 'Kancelária: lampa na stole sa zhasína a rozsvecuje klávesom F12 alebo klikom. Zhasnutá lampa znamená, že hráč nie je online: nevidia ho v zoznamoch, nedá sa vyzvať, jeho otvorené dvere nie sú v Pozerať hru a nedá sa hľadať zápas (prebiehajúce hľadanie sa zruší). Stav lampy si hra pamätá.' ),
 		array( '0.6.13', '5. 11. 2026', 'Kancelária: na stole notes s perom ukazuje, koľko hráčov je práve v hre a koľkí čakajú na ligový zápas (obnovuje sa s pingom). Za stolom stojí kancelárska stolička. Vyhľadať zápas (dvere ŠTADIÓN, F9) ani vyzvať hráča z ligy sa nedá bez vybraného tága do zápasu, hra otvorí výber tág.' ),
 		array( '0.6.12', '5. 11. 2026', 'Hra je na stránke Nástroje webu ako prvá: My Snooker, 3D snooker s ligou (ikona tága s guľou, My Users 1.4.4).' ),

@@ -604,8 +604,12 @@ export class Online {
 			this.lastLeague = !!m.league;
 			this.stopMatchText = lg;
 			const wi = m.players.findIndex((p) => p.id === m.winner);
-			const wtext = wi < 0 ? 'Zápas skončil.' : m.result === 'resign' ? `${m.players[1 - wi].name} sa vzdáva partie, víťaz ${m.players[wi].name}.` : `Zápas skončil, víťaz ${m.players[wi].name}, skóre ${m.scores[wi]} : ${m.scores[1 - wi]}.`;
-			this.stopMatch(m.result === 'resign' ? (won ? `${opp.name} sa vzdáva partie. Víťazstvo je tvoje!` : 'Partia je vzdaná.') : won ? `Víťazstvo je tvoje! Skóre ${m.scores[m.me]} : ${m.scores[1 - m.me]}.` : `Víťaz partie: ${opp.name}, skóre ${m.scores[1 - m.me]} : ${m.scores[m.me]}.`, wtext);
+			const wtext = wi < 0 ? 'Zápas skončil.' : m.result === 'disconnect' ? `${m.players[1 - wi].name} stratil spojenie, víťaz ${m.players[wi].name}.` : m.result === 'resign' ? `${m.players[1 - wi].name} sa vzdáva partie, víťaz ${m.players[wi].name}.` : `Zápas skončil, víťaz ${m.players[wi].name}, skóre ${m.scores[wi]} : ${m.scores[1 - wi]}.`;
+			this.stopMatch(m.result === 'disconnect' ? (won ? `${opp.name} stratil spojenie a zápas prehral. Víťazstvo je tvoje!` : 'Stratil si spojenie so zápasom a zápas je prehratý.') : m.result === 'resign' ? (won ? `${opp.name} sa vzdáva partie. Víťazstvo je tvoje!` : 'Partia je vzdaná.') : won ? `Víťazstvo je tvoje! Skóre ${m.scores[m.me]} : ${m.scores[1 - m.me]}.` : `Víťaz partie: ${opp.name}, skóre ${m.scores[1 - m.me]} : ${m.scores[m.me]}.`, wtext);
+			return;
+		}
+		if (m.status === 'annulled') {
+			this.stopMatch('Ligový zápas je zrušený: obom hráčom vypadlo spojenie. Body sa nepočítajú.', 'Zápas je zrušený, obom hráčom vypadlo spojenie.');
 			return;
 		}
 		if (m.status === 'paused') {
