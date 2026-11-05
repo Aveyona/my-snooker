@@ -264,8 +264,11 @@ body.mysn-page { font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans
 .mysn-cue.mysn-def { border-color: #7cc4f2; box-shadow: 0 0 0 2px #7cc4f2 inset; }
 .mysn-cue.mysn-def em { color: #7cc4f2; }
 .mysn-cue .mysn-cue-defbtn { margin-top: 5px; padding: 3px 8px; font-size: 11px; align-self: flex-start; }
-/* kancelária F2: 10 tág v dvoch riadkoch po 5 */
-.mysn-office-rack .mysn-cues { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 8px; width: 100%; max-width: 1000px; }
+/* kancelária F2: tágá najviac v dvoch riadkoch (5 stĺpcov na šírku), ďalšie vpravo, posun vodorovne */
+.mysn-office-rack .mysn-cues { display: grid; grid-auto-flow: column; grid-template-rows: repeat(2, auto); grid-auto-columns: calc((100% - 32px) / 5); justify-content: start; gap: 8px; width: 100%; max-width: 1000px; overflow-x: auto; overflow-y: hidden; padding-bottom: 6px; scrollbar-width: thin; scrollbar-color: #c9a24a #141a24; }
+.mysn-office-rack .mysn-cues::-webkit-scrollbar { height: 8px; }
+.mysn-office-rack .mysn-cues::-webkit-scrollbar-thumb { background: #c9a24a; border-radius: 4px; }
+.mysn-office-rack .mysn-cues::-webkit-scrollbar-track { background: #141a24; border-radius: 4px; }
 .mysn-office-rack .mysn-cue { width: auto; min-width: 0; }
 /* divák (Vstúpiť): bez spodných tlačidiel, sily a miesta úderu */
 .mysn-watching .mysn-tools, .mysn-watching .mysn-power, .mysn-watching .mysn-spin { display: none; }

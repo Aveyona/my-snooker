@@ -166,7 +166,7 @@ export function start(root, config = {}) {
 	const office = buildOffice(scene);
 	let officeMode = ''; // '' prehľad, 'edit' údaje hráča, 'cues' moje tágá
 	let officeCue = null;
-	const officeData = () => ({ office: { league: leagueData, mode: officeMode, countries: COUNTRIES, cues: allCues(), myCues, cue: officeCue, user } });
+	const officeData = () => ({ office: { league: leagueData, mode: officeMode, countries: COUNTRIES, cues: [...ownCues.map(ownCueSpec), ...CUES], myCues, cue: officeCue, user } }); // moje uložené tágá sú prvé zľava
 	const officeRefresh = () => {
 		office.setRack(CUES.map((c) => specFor(c.id)), myCues.selected, myCues.selected.includes(myCues.def) ? myCues.def : myCues.selected[0]);
 		if (view === 'office') {

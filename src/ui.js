@@ -1281,6 +1281,23 @@ export class UI {
 				list.appendChild(card);
 			});
 			w.appendChild(list);
+			// dva riadky, ďalšie tágá vpravo: posun vodorovne (aj kolieskom myši), poloha ostane aj po kliku na kartu
+			list.addEventListener('scroll', () => {
+				this._officeCuesX = list.scrollLeft;
+			});
+			list.addEventListener(
+				'wheel',
+				(e) => {
+					if (list.scrollWidth > list.clientWidth && Math.abs(e.deltaY) > Math.abs(e.deltaX)) {
+						e.preventDefault();
+						list.scrollLeft += e.deltaY;
+					}
+				},
+				{ passive: false }
+			);
+			requestAnimationFrame(() => {
+				list.scrollLeft = this._officeCuesX || 0;
+			});
 			w.appendChild(h('p', 'mysn-mixer-status mysn-cue-hint', 'Klik na kartu tágo zoberie do ligového zápasu alebo odoberie. ★ predvolené: s ním začneš zápas, v zápase sa prepína len medzi týmito 4 tágami. F2 alebo Esc: späť za stôl.'));
 		} else {
 			// prehľad hráča v lige
