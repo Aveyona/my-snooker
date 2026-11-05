@@ -32,3 +32,4 @@ require_once MYSN_DIR . 'includes/mail.php';
 require_once MYSN_DIR . 'includes/page.php';
 require_once MYSN_DIR . 'includes/admin.php';
 require_once MYSN_DIR . 'includes/season-admin.php';
+require_once MYSN_DIR . 'includes/diag-admin.php';

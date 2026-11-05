@@ -2083,6 +2083,12 @@ export function start(root, config = {}) {
 	document.addEventListener('visibilitychange', () => {
 		if (document.visibilityState === 'hidden') {
 			game.saveSoloTime();
+		} else if (online && game.match && online.inMatch) {
+			// návrat z inej karty alebo okna: hneď ping a stav partie zo servera (v pozadí prehliadač spomaľuje
+			// časovače a zastaví vykresľovanie, súperov úder sa mohol stratiť alebo prísť neskoro)
+			online.ping();
+			online.poll();
+			online.matchPeer();
 		}
 	});
 	resize();

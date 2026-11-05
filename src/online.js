@@ -78,6 +78,8 @@ export class Online {
 			open: (p) => this.rtcOpen(p),
 			message: (p, m) => this.rtcMessage(p, m),
 			close: (p) => this.rtcClose(p),
+			// spojenie so súperom sa opravilo bez nového nadväzovania: tiež do diagnostiky
+			repaired: (p) => p.tag === 'match' && p.uid === this.opp && this.diag(p, 'opravené (ICE restart)'),
 		});
 		game.onNet = (type, d) => this.send(type, d);
 		this.ping();
@@ -305,10 +307,41 @@ export class Online {
 		}
 	}
 
+	/**
+	 * Diagnostika: pri výpadku spojenia so súperom pošle na server záznam udalostí spojenia (administrácia,
+	 * My Snooker, Diagnostika spojení). Najviac raz za 20 s.
+	 */
+	diag(p, why) {
+		const now = Date.now();
+		if (now - (this._diagAt || 0) < 20000) {
+			return;
+		}
+		this._diagAt = now;
+		const c = navigator.connection || {};
+		const ua = navigator.userAgent || '';
+		const br = (ua.match(/(Edg|OPR|Opera|Firefox|Chrome|Safari)\/[\d.]+/g) || []).pop() || '';
+		this.net
+			.call('rtc/diag', {
+				match: this.matchId || 0,
+				peer: p.uid,
+				tag: p.tag,
+				why: String(why || p.why || 'close').slice(0, 120),
+				path: p.path || '',
+				net: [c.type, c.effectiveType, c.rtt ? c.rtt + ' ms' : ''].filter(Boolean).join(' '),
+				ua: br + (/Mobile|Android|iPhone/.test(ua) ? ' mobil' : ''),
+				hidden: document.visibilityState === 'hidden' ? 1 : 0,
+				log: this.rtc.log.slice(-60).join('\n'),
+			})
+			.catch(() => null);
+	}
+
 	rtcClose(p) {
 		if (p.tag === 'match') {
 			if (this.opp !== p.uid) {
 				return;
+			}
+			if (this.matchId && p.why !== 'local') {
+				this.diag(p);
 			}
 			this.oppOnline = false;
 			this.hooks.status();

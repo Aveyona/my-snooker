@@ -12,7 +12,8 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 const MYSN_RTC_TTL  = 60;  // neprečítaná správa po minúte zanikne
-const MYSN_RTC_RATE = 40;  // najviac správ od jedného hráča za minútu
+const MYSN_RTC_RATE = 60;  // najviac správ pre jedného príjemcu (jedno spojenie) za minútu
+const MYSN_RTC_RATE_ALL = 240; // najviac správ od jedného hráča za minútu spolu (aj s divákmi)
 const MYSN_RTC_MAX  = 12000;
 
 /** Smie hráč $from nadviazať spojenie s hráčom $to? */
@@ -49,7 +50,10 @@ function mysn_rest_rtc_send( $req ) {
 	$st  = mysn_table( 'signals' );
 	$now = time();
 	$wpdb->query( $wpdb->prepare( "DELETE FROM $st WHERE created < %d", $now - MYSN_RTC_TTL ) ); // phpcs:ignore
-	if ( (int) $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM $st WHERE from_user = %d AND created >= %d", $uid, $now - 60 ) ) >= MYSN_RTC_RATE ) { // phpcs:ignore
+	// limit zvlášť pre každé spojenie (diváci neuberajú zo spojenia so súperom) a spolu
+	$pair = (int) $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM $st WHERE from_user = %d AND to_user = %d AND created >= %d", $uid, $to, $now - 60 ) ); // phpcs:ignore
+	$all  = (int) $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM $st WHERE from_user = %d AND created >= %d", $uid, $now - 60 ) ); // phpcs:ignore
+	if ( $pair >= MYSN_RTC_RATE || $all >= MYSN_RTC_RATE_ALL ) {
 		return mysn_err( 'Príliš veľa pokusov o spojenie, skús o chvíľu.', 429 );
 	}
 	$data = mysn_json_param( $req, 'data', MYSN_RTC_MAX );
@@ -93,6 +97,41 @@ function mysn_rtc_take( $uid ) {
 	return $out;
 }
 
+/*
+ * Diagnostika spojení: pri výpadku priameho spojenia so súperom hra pošle záznam udalostí spojenia. Uloží sa
+ * posledných MYSN_DIAG_MAX záznamov (administrácia, My Snooker, Diagnostika spojení).
+ */
+const MYSN_DIAG_MAX = 150;
+
+function mysn_rest_rtc_diag( $req ) {
+	$uid = get_current_user_id();
+	$key = 'mysn_diag_' . $uid;
+	if ( get_transient( $key ) ) {
+		return array( 'ok' => true ); // najviac raz za 15 s od hráča
+	}
+	set_transient( $key, 1, 15 );
+	$clip = function ( $k, $n ) use ( $req ) {
+		return mb_substr( sanitize_textarea_field( (string) $req->get_param( $k ) ), 0, $n );
+	};
+	$list   = get_option( 'mysn_rtc_diag', array() );
+	$list   = is_array( $list ) ? $list : array();
+	$list[] = array(
+		't'      => time(),
+		'user'   => $uid,
+		'peer'   => (int) $req->get_param( 'peer' ),
+		'match'  => (int) $req->get_param( 'match' ),
+		'tag'    => 'match' === $req->get_param( 'tag' ) ? 'match' : 'watch',
+		'why'    => $clip( 'why', 120 ),
+		'path'   => $clip( 'path', 40 ),
+		'net'    => $clip( 'net', 60 ),
+		'ua'     => $clip( 'ua', 60 ),
+		'hidden' => (int) (bool) $req->get_param( 'hidden' ),
+		'log'    => $clip( 'log', 6000 ),
+	);
+	update_option( 'mysn_rtc_diag', array_slice( $list, -MYSN_DIAG_MAX ), false );
+	return array( 'ok' => true );
+}
+
 function mysn_rest_rtc_inbox() {
 	return array( 'signals' => mysn_rtc_take( get_current_user_id() ) );
 }
@@ -103,6 +142,15 @@ add_action(
 		$auth = function () {
 			return is_user_logged_in();
 		};
+		register_rest_route(
+			'my-snooker/v1',
+			'/rtc/diag',
+			array(
+				'methods'             => 'POST',
+				'callback'            => 'mysn_rest_rtc_diag',
+				'permission_callback' => $auth,
+			)
+		);
 		register_rest_route(
 			'my-snooker/v1',
 			'/rtc',
