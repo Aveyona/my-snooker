@@ -172,7 +172,9 @@ export class Online {
 		if (r && r.match) {
 			this.rtcSendOpp({ k: 'info', m: r.match });
 		}
-		this.stopMatch(mode === 'resign' ? 'Partia je vzdaná.' : 'Partia je prerušená. Pokračovať sa dá v ponuke Poslať výzvu.');
+		const g = this.game;
+		const me = g.match && g.match.players ? g.match.players[g.match.me] : null;
+		this.stopMatch(mode === 'resign' ? 'Partia je vzdaná.' : 'Partia je prerušená. Pokračovať sa dá v ponuke Poslať výzvu.', mode === 'resign' ? `${me ? me.name : 'Hráč'} sa vzdáva partie.` : 'Zápas je prerušený.');
 	}
 
 	/** Pripojí sa do partie a načíta jej stav. */
@@ -458,11 +460,12 @@ export class Online {
 		}
 	}
 
-	stopMatch(text0) {
+	/** text0 pre mňa, wtext pre divákov (bez „ty“, rovnaký od oboch hráčov). */
+	stopMatch(text0, wtext) {
 		const text = (text0 || '') + (this.stopMatchText || '');
 		this.stopMatchText = '';
 		if (this.watchers().length) {
-			this.closeWatchers(text || 'Zápas skončil.');
+			this.closeWatchers(wtext || 'Zápas skončil.');
 		}
 		clearTimeout(this._retryT);
 		const opp = this.opp;
@@ -597,11 +600,13 @@ export class Online {
 			const lg = m.league ? ` Liga: ${won ? '+' : '-'}${Math.max(0, m.delta)} bodov.` : '';
 			this.lastLeague = !!m.league;
 			this.stopMatchText = lg;
-			this.stopMatch(m.result === 'resign' ? (won ? `${opp.name} sa vzdáva partie. Víťazstvo je tvoje!` : 'Partia je vzdaná.') : won ? `Víťazstvo je tvoje! Skóre ${m.scores[m.me]} : ${m.scores[1 - m.me]}.` : `Víťaz partie: ${opp.name}, skóre ${m.scores[1 - m.me]} : ${m.scores[m.me]}.`);
+			const wi = m.players.findIndex((p) => p.id === m.winner);
+			const wtext = wi < 0 ? 'Zápas skončil.' : m.result === 'resign' ? `${m.players[1 - wi].name} sa vzdáva partie, víťaz ${m.players[wi].name}.` : `Zápas skončil, víťaz ${m.players[wi].name}, skóre ${m.scores[wi]} : ${m.scores[1 - wi]}.`;
+			this.stopMatch(m.result === 'resign' ? (won ? `${opp.name} sa vzdáva partie. Víťazstvo je tvoje!` : 'Partia je vzdaná.') : won ? `Víťazstvo je tvoje! Skóre ${m.scores[m.me]} : ${m.scores[1 - m.me]}.` : `Víťaz partie: ${opp.name}, skóre ${m.scores[1 - m.me]} : ${m.scores[m.me]}.`, wtext);
 			return;
 		}
 		if (m.status === 'paused') {
-			this.stopMatch(`Partia je prerušená (${this.oppOnline ? 'súper ju prerušil' : 'súper dlho neodpovedal'}). Dokončiť sa dá v ponuke Poslať výzvu, Rozohrané partie.`);
+			this.stopMatch(`Partia je prerušená (${this.oppOnline ? 'súper ju prerušil' : 'súper dlho neodpovedal'}). Dokončiť sa dá v ponuke Poslať výzvu, Rozohrané partie.`, 'Zápas je prerušený.');
 			return;
 		}
 		if (m.seq > g.match.seq) {

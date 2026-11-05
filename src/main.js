@@ -1685,9 +1685,9 @@ export function start(root, config = {}) {
 			sound.doorShut();
 		}
 		if (watchAim) {
-			pull += ((online.aimTarget.pull || 0) - pull) * Math.min(1, dt * 10);
+			pull += ((watchAim.pull || 0) - pull) * Math.min(1, dt * 10);
 		}
-		cue.place(game.cue, game.dir, pull, watchAim ? online.aimTarget.side || 0 : spin.side, watchAim ? online.aimTarget.top || 0 : spin.top, (aiming || view === 'chalk' || (watchAim && !online.aimTarget.place)) && game.cue.on);
+		cue.place(game.cue, game.dir, pull, watchAim ? watchAim.side || 0 : spin.side, watchAim ? watchAim.top || 0 : spin.top, (aiming || view === 'chalk' || (watchAim && !watchAim.place)) && game.cue.on);
 		if (chalkT >= 0) {
 			// kriedovanie: tágo sa zdvihne a odtiahne, krieda sa nasadí dierou na špičku, pootáča sa a odíde
 			chalkT = debug.chalkFreeze !== null ? debug.chalkFreeze : (performance.now() - chalkStart) / 1000; // podľa skutočného času

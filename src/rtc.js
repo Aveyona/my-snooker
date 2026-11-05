@@ -173,8 +173,11 @@ export class Rtc {
 			const sdp = p.pc.localDescription.sdp;
 			p.sent = true;
 			this.note('offer', tag, uid, (sdp.match(/a=candidate/g) || []).length + ' cand');
-			await this.signal(uid, tag, { t: 'offer', cid: p.cid, sdp });
 			this.arm(p, OPEN_MS + 6000); // druhá strana číta signály aj len pri pingu (každých 5 s)
+			await this.signal(uid, tag, { t: 'offer', cid: p.cid, sdp });
+			if (p.state === 'connecting') {
+				this.arm(p, OPEN_MS + 6000);
+			}
 			this.fast();
 		} catch (e) {
 			this.drop(p, true, e.message);
@@ -211,8 +214,11 @@ export class Rtc {
 					if (np.state === 'connecting') {
 						const sdp = np.pc.localDescription.sdp;
 						np.sent = true;
-						await this.signal(s.from, s.tag, { t: 'answer', cid: d.cid, sdp });
 						this.arm(np, OPEN_MS);
+						await this.signal(s.from, s.tag, { t: 'answer', cid: d.cid, sdp });
+						if (np.state === 'connecting') {
+							this.arm(np, OPEN_MS);
+						}
 						this.fast(); // dopísaní kandidáti druhej strany
 					}
 				} catch (e) {
@@ -225,6 +231,7 @@ export class Rtc {
 					try {
 						await p.pc.setRemoteDescription({ type: 'answer', sdp: d.sdp });
 						this.note('answer set', s.tag, s.from);
+						this.arm(p, OPEN_MS); // odpoveď prišla, na otvorenie spojenia je opäť celý čas
 						await this.addRemote(p);
 					} catch (e) {
 						this.drop(p, true, e.message);
@@ -232,6 +239,9 @@ export class Rtc {
 				}
 			} else if (d.t === 'cand') {
 				if (p && p.cid === d.cid && Array.isArray(d.c)) {
+					if (p.state === 'connecting' && p.sent) {
+						this.arm(p, OPEN_MS); // druhá strana ešte dopĺňa kandidátov
+					}
 					p.remote.push(...d.c);
 					if (p.pc.remoteDescription) {
 						await this.addRemote(p);
