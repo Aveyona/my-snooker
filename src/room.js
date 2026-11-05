@@ -403,16 +403,17 @@ export function buildRoomShell(scene, quality, opts = {}) {
 			rc.spec = spec;
 		});
 	};
+	let rackHidden = false; // na štadióne (liga) je stojan herne skrytý
 	let rackView = false; // F2: pozerám tágá, vybraté tágo je na stojane (vysunuté dopredu)
 	let lastSel = [null, null];
 	const selectCue = (id, base) => {
 		lastSel = [id, base];
 		const hit = rackCues.some((rc) => rc.spec.id === id) ? id : null; // vlastné tágo mimo stojana: stojan ostane plný
-		glow.visible = !!hit;
+		glow.visible = !!hit && !rackHidden;
 		for (const rc of rackCues) {
 			const on = rc.spec.id === hit;
 			rc.group.position.z = rc.baseZ + (on && rackView ? 0.12 : 0);
-			rc.group.visible = !on || rackView; // pri hre je tágo v ruke, na stojane len v pohľade F2
+			rc.group.visible = !rackHidden && (!on || rackView); // pri hre je tágo v ruke, na stojane len v pohľade F2
 			if (on) {
 				glow.position.set(rc.group.position.x, FY + 0.005, rc.group.position.z);
 			}
@@ -992,6 +993,14 @@ export function buildRoomShell(scene, quality, opts = {}) {
 			selectCue(lastSel[0], lastSel[1]);
 		},
 		setRackSpecs,
+		/** Skryje tágá stojana herne (štadión), aj keď sa zmení vybraté tágo. */
+		setRackHidden(on) {
+			rackHidden = !!on;
+			for (const rc of rackCues) {
+				rc.label.visible = !rackHidden;
+			}
+			selectCue(lastSel[0], lastSel[1]);
+		},
 		/** Tágá a štítky stojana (na štadióne sa skryjú spolu s herňou). */
 		rackObjects: () => [...rackCues.flatMap((rc) => [rc.group, rc.label]), glow],
 		updateScore,

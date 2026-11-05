@@ -290,13 +290,12 @@ export class UI {
 			this.btnResume = this.button(trn ? 'Pokračovať v tréningu' : 'Pokračovať v partii', 'resume');
 			this.btnResume.classList.add('mysn-primary');
 			this.menuMode.textContent = `${trn ? 'Tréning' : 'Partia'} s hráčom ${label}`;
-			box.append(this.btnResume, ...common());
+			box.append(this.btnResume, this.button(trn ? 'Ukončiť tréning' : 'Vzdať partiu', 'resign'), ...common()); // vzdať hneď pod pokračovať
 			const lgm = !!(this._lastGame && this._lastGame.match && this._lastGame.match.league);
 			if (!lgm) {
 				// ligový zápas sa neprerušuje (kto stratí spojenie, prehrá; obom naraz = zápas sa ruší)
 				box.append(this.button(trn ? 'Prerušiť tréning' : 'Prerušiť partiu', 'pauseMatch', 'Uloží sa, pokračovať sa dá neskôr'));
 			}
-			box.append(this.button(trn ? 'Ukončiť tréning' : 'Vzdať partiu', 'resign'));
 		} else {
 			// Hrať = o najlepšie skóre: rozohraný frame sa pamätá, kým neskončí, potom sa začne nový
 			this.menuMode.textContent = kind === 'solo' ? 'Hrá sa o najlepšie skóre' : user ? `Prihlásený: ${user.name}` : 'Tréning';
@@ -1169,6 +1168,11 @@ export class UI {
 		P.appendChild(h('h3', '', esc(c.name)));
 		P.appendChild(h('div', 'mysn-cp-stats', this.cueStats(c)));
 		P.appendChild(h('p', 'mysn-cp-note', esc(c.note)));
+		if (info && info.league) {
+			// ligový zápas: len tágá vybraté do ligy (najviac 4), vyberajú sa v kancelárii, upravujú v herni
+			P.appendChild(h('p', 'mysn-cp-note', 'Na stojane sú len tágá, ktoré si si vybral do ligy (najviac 4). Vyberáš ich v kancelárii ligy, vlastné tágá upravuješ v herni.'));
+			return;
+		}
 		const row = (label, el) => {
 			const l = h('label', 'mysn-cp-row', `<span>${label}</span>`);
 			l.appendChild(el);

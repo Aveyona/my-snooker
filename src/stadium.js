@@ -103,7 +103,7 @@ export function buildStadium(scene, quality) {
 
 	// reflektory na konštrukcii pod stropom: lúč svetla zo šošovky až na podlahu (smerom k stolu), na zemi svetlá škvrna
 	const trussY = FY + 5.2;
-	const beamMat = new THREE.MeshBasicMaterial({ color: 0xc8dbff, vertexColors: true, transparent: true, opacity: 0.045, depthWrite: false, side: THREE.DoubleSide, blending: THREE.AdditiveBlending });
+	const beamMat = new THREE.MeshBasicMaterial({ color: 0xc8dbff, vertexColors: true, transparent: true, opacity: 0.06, depthWrite: false, side: THREE.DoubleSide, blending: THREE.AdditiveBlending });
 	const poolC = document.createElement('canvas');
 	poolC.width = poolC.height = 256;
 	const pg = poolC.getContext('2d');
@@ -117,6 +117,7 @@ export function buildStadium(scene, quality) {
 	const poolMat = new THREE.MeshBasicMaterial({ map: poolT, color: 0xa9c4ff, transparent: true, opacity: 0.32, depthWrite: false, blending: THREE.AdditiveBlending });
 	const lensMat = new THREE.MeshBasicMaterial({ color: 0xf2f6ff });
 	const up = new THREE.Vector3(0, 1, 0);
+	const beams = []; // lúče a škvrny (F12 ich zapína a vypína)
 	for (const z of [-2.4, 2.4]) {
 		add(new THREE.BoxGeometry(9, 0.12, 0.12), metal, 0, trussY, z);
 		for (const x of [-3.5, -1.2, 1.2, 3.5]) {
@@ -124,11 +125,11 @@ export function buildStadium(scene, quality) {
 			const lens = add(new THREE.CircleGeometry(0.14, 20), lensMat, x, trussY - 0.335, z);
 			lens.rotation.x = Math.PI / 2;
 			lens.castShadow = false;
-			// lúč: zrezaný kužeľ od šošovky po podlahu vedľa stola (nesvieti cez súkno), hore jasnejší, dole slabne
+			// lúč: zrezaný kužeľ od šošovky šikmo na stôl a až po podlahu, hore jasnejší, dole slabne
 			const S = new THREE.Vector3(x, trussY - 0.34, z);
-			const E = new THREE.Vector3(x * 0.95, FY + 0.01, z * 1.12);
+			const E = new THREE.Vector3(x * 0.8, FY + 0.01, z * 0.6);
 			const len = S.distanceTo(E);
-			const geo = new THREE.CylinderGeometry(0.13, 0.85, len, 32, 10, true);
+			const geo = new THREE.CylinderGeometry(0.13, 1.0, len, 32, 10, true);
 			const pos = geo.attributes.position;
 			const col = new Float32Array(pos.count * 3);
 			for (let i = 0; i < pos.count; i++) {
@@ -143,11 +144,13 @@ export function buildStadium(scene, quality) {
 			beam.castShadow = false;
 			beam.renderOrder = 2;
 			root.add(beam);
+			beams.push(beam);
 			// svetlá škvrna na podlahe
-			const pool = add(new THREE.PlaneGeometry(1.9, 1.9), poolMat, E.x, FY + 0.012, E.z);
+			const pool = add(new THREE.PlaneGeometry(2.2, 2.2), poolMat, E.x, FY + 0.012, E.z);
 			pool.rotation.x = -Math.PI / 2;
 			pool.castShadow = false;
 			pool.renderOrder = 1;
+			beams.push(pool);
 		}
 	}
 	const fill = new THREE.HemisphereLight(0x6c7aa8, 0x07080b, 0.35);
@@ -200,7 +203,12 @@ export function buildStadium(scene, quality) {
 	add(new THREE.BoxGeometry(1.0, 1.25, 0.04), wood, 0, 0.66, -0.13, stand); // zadná doska
 	add(new THREE.BoxGeometry(1.04, 0.05, 0.14), wood, 0, 1.12, -0.07, stand); // horný držiak
 	const standCues = [];
-	const setRack = (specs, inHand) => {
+	const standGlow = new THREE.Mesh(new THREE.RingGeometry(0.035, 0.06, 32), new THREE.MeshBasicMaterial({ color: 0xffd23f, transparent: true, opacity: 0.9 }));
+	standGlow.rotation.x = -Math.PI / 2;
+	standGlow.visible = false;
+	stand.add(standGlow);
+	const setRack = (specs, inHand, sel) => {
+		standGlow.visible = false;
 		for (const g of standCues) {
 			stand.remove(g);
 		}
@@ -210,7 +218,12 @@ export function buildStadium(scene, quality) {
 				return; // tágo v ruke na stojane chýba
 			}
 			const g = new THREE.Group();
-			g.position.set(-0.33 + i * 0.22, 0.06 + spec.len, -0.06);
+			const on = spec.id === sel;
+			g.position.set(-0.33 + i * 0.22, 0.06 + spec.len, on ? 0.04 : -0.06); // F2: vybraté tágo vysunuté dopredu
+			if (on) {
+				standGlow.position.set(g.position.x, 0.065, 0.04);
+				standGlow.visible = true;
+			}
 			g.rotation.x = Math.PI + 0.04; // špička hore, mierne opreté o držiak
 			g.add(buildCueMesh(spec, high));
 			stand.add(g);
@@ -218,17 +231,17 @@ export function buildStadium(scene, quality) {
 		});
 	};
 
-	// traja diváci v prvom rade za dlhou stranou (+z), otočení k stolu
+	// diváci v prvom rade, otočení k stolu: traja za dlhou stranou (+z), dvaja vedľa seba na druhej strane (-z)
 	const fans = [];
-	const skin = [0xe0b48e, 0xc78e66, 0x8d5b3e];
-	const shirts = [0x2f6fd6, 0xc0392b, 0x2a9d8f];
-	const hair = [0x3a2414, 0x111111, 0x9a6a2a];
-	[-1.6, 0.2, 1.9].forEach((x, i) => {
-		const z = BZ + 0.9;
+	const skin = [0xe0b48e, 0xc78e66, 0x8d5b3e, 0xd9a07a, 0xa8714f];
+	const shirts = [0x2f6fd6, 0xc0392b, 0x2a9d8f, 0xe0a526, 0x6c4fb3];
+	const hair = [0x3a2414, 0x111111, 0x9a6a2a, 0x5a3a20, 0x222222];
+	[[-1.6, 1], [0.2, 1], [1.9, 1], [0.8, -1], [1.2, -1]].forEach(([x, side], i) => {
+		const z = side * (BZ + 0.9);
 		const y = FY + 0.25 + 0.24;
 		const f = new THREE.Group();
 		f.position.set(x, y, z);
-		f.rotation.y = Math.PI; // tvárou k stolu (-z)
+		f.rotation.y = side > 0 ? Math.PI : 0; // tvárou k stolu
 		root.add(f);
 		const shirt = new THREE.MeshStandardMaterial({ color: shirts[i], roughness: 0.75 });
 		const skinM = new THREE.MeshStandardMaterial({ color: skin[i], roughness: 0.7 });
@@ -263,7 +276,7 @@ export function buildStadium(scene, quality) {
 			el.rotation.x = -0.9;
 			return { sh, el, sx };
 		});
-		fans.push({ f, body, head, arms, baseY: y, act: '', t: 0, phase: i * 1.7 });
+		fans.push({ f, body, head, arms, side, baseY: y, act: '', t: 0, phase: i * 1.7 });
 	});
 
 	// obrazovka: mená, skóre, liga, séria, sezóna
@@ -315,6 +328,7 @@ export function buildStadium(scene, quality) {
 		root,
 		/** Pohľady na štadióne: F4 skóre = veľká obrazovka nad tribúnou za kratšou stranou. */
 		views: {
+			rack: { pos: new THREE.Vector3(-2.55, FY + 1.3, 2.5), look: new THREE.Vector3(-3.8, FY + 0.75, 2.5) }, // F2 stojan s tágami do ligy
 			score: { pos: new THREE.Vector3(-(BX + 3.6) + 3.7, FY + 3.45, 0), look: new THREE.Vector3(-(BX + 3.6), FY + 3.6, 0) },
 		},
 		/** Reakcia divákov: 'clap' (potopená guľa), 'facepalm' (faul), 'stand' (veľká séria). */
@@ -331,6 +345,13 @@ export function buildStadium(scene, quality) {
 		setScreen: drawScreen,
 		/** Stojan na tágá pri stole: specs = tágá do zápasu, inHand = id tága v ruke. */
 		setRack,
+		/** Bodové svetlá (lúče reflektorov a škvrny): svietia pred partiou, F12 na ťahu. */
+		setBeams(on) {
+			for (const b of beams) {
+				b.visible = !!on;
+			}
+			lensMat.color.setHex(on ? 0xf2f6ff : 0x3a3f4a);
+		},
 		/** Každý snímok: hlavy sledujú bielu, animácie tlieskania, faulu a vstávania. */
 		update(dt, cueBall) {
 			const now = performance.now() / 1000;
@@ -342,8 +363,9 @@ export function buildStadium(scene, quality) {
 				// hlava sa otáča za bielou guľou
 				if (cueBall && cueBall.on) {
 					fan.f.getWorldPosition(look);
-					const yaw = Math.atan2(cueBall.p.x - look.x, -(cueBall.p.z - look.z));
-					fan.head.rotation.y += (Math.max(-1, Math.min(1, -yaw)) - fan.head.rotation.y) * Math.min(1, dt * 4);
+					const dz = cueBall.p.z - look.z;
+					const yaw = fan.side > 0 ? -Math.atan2(cueBall.p.x - look.x, -dz) : Math.atan2(cueBall.p.x - look.x, dz);
+					fan.head.rotation.y += (Math.max(-1, Math.min(1, yaw)) - fan.head.rotation.y) * Math.min(1, dt * 4);
 				}
 				const [l, r] = fan.arms;
 				let shX = -0.35;

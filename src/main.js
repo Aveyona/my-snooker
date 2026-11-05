@@ -114,6 +114,9 @@ export function start(root, config = {}) {
 			const row = ownCues.find((r) => r.base === t.id && r.data && r.data.rack);
 			return row ? ownCueSpec(row) : t;
 		});
+	// F2 na štadióne: len tágá vybraté do ligy (max 4, nastavujú sa v kancelárii)
+	const rackNow = () => (venue === 'league' && myCues.selected.length ? myCues.selected.map((id) => specFor(id)) : rackList());
+	const rackInfoNow = () => (venue === 'league' ? { rack: { ...rackInfo().rack, league: true } } : rackInfo());
 	const OWN_MAX = 10;
 	const rackInfo = () => ({ rack: { user: !!user, ownCount: ownCues.length, ownMax: OWN_MAX, own: ownCues.map(ownCueSpec), sel: cueSpec } });
 	const rackRefresh = () => {
@@ -136,7 +139,7 @@ export function start(root, config = {}) {
 			if (settings.cue && settings.cue[0] === 'u' && cueSpec.id !== settings.cue && ownCues.some((x) => 'u' + x.id === settings.cue)) {
 				pickCue(settings.cue); // naposledy vybraté vlastné tágo
 			} else if (view === 'rack') {
-				ui.showView('rack', rackList(), cueSpec.id, rackInfo());
+				ui.showView('rack', rackNow(), cueSpec.id, rackInfoNow());
 			}
 			rackRefresh();
 		}
@@ -291,7 +294,9 @@ export function start(root, config = {}) {
 		}
 	};
 	// stojan na štadióne: moje tágá do zápasu, tágo v ruke chýba
-	const stadiumRack = () => stadium.setRack(myCues.selected.map((id) => specFor(id)), cueSpec.id);
+	let beamsOn = true; // bodové svetlá na štadióne
+	let beamsAuto = false; // po začatí partie (prvý úder) sa raz samy zhasnú
+	const stadiumRack = () => stadium.setRack(myCues.selected.map((id) => specFor(id)), view === 'rack' ? null : cueSpec.id, view === 'rack' ? cueSpec.id : null); // F2: vybraté tágo je na stojane zvýraznené
 	const setVenue = (v) => {
 		if (v === venue) {
 			return;
@@ -304,8 +309,12 @@ export function start(root, config = {}) {
 				o.visible = !lg;
 			}
 			stadium.root.visible = lg;
+			room.setRackHidden(lg);
 			if (lg) {
 				stadiumRack();
+				beamsOn = true; // pred partiou svietia, po prvom údere zhasnú
+				beamsAuto = true;
+				stadium.setBeams(true);
 			}
 			updateFelt();
 			scene.background.setHex(lg ? 0x020306 : 0x0c0f14);
@@ -455,6 +464,9 @@ export function start(root, config = {}) {
 		}
 		view = name;
 		room.setRackView(name === 'rack');
+		if (venue === 'league') {
+			stadiumRack();
+		}
 		controls.blocked = true;
 		// pri kriedovaní a v kresle ostáva myš zachytená (v kresle sa ňou rozhliada)
 		if (name !== 'chalk' && !LOOK.has(name)) {
@@ -497,7 +509,7 @@ export function start(root, config = {}) {
 		if (name === 'trophies') {
 			refreshTrophies();
 		}
-		ui.showView(name, name === 'rack' ? rackList() : allCues(), cueSpec.id, name === 'office' ? officeData() : name === 'rack' ? rackInfo() : name === 'mixer' ? { radio } : name === 'magazine' ? room.rssItems : name === 'chair' ? { news: room.newsItems, rss: room.rssItems } : room.newsItems);
+		ui.showView(name, name === 'rack' ? rackNow() : allCues(), cueSpec.id, name === 'office' ? officeData() : name === 'rack' ? rackInfoNow() : name === 'mixer' ? { radio } : name === 'magazine' ? room.rssItems : name === 'chair' ? { news: room.newsItems, rss: room.rssItems } : room.newsItems);
 	};
 	const exitView = () => {
 		if (!view) {
@@ -506,6 +518,9 @@ export function start(root, config = {}) {
 		const was = view;
 		view = null;
 		room.setRackView(false);
+		if (venue === 'league') {
+			stadiumRack();
+		}
 		controls.blocked = !user && !guestPlay;
 		rig.minViewZoom = 1;
 		rig.noClamp = false; // pohľady na štadióne kameru neobmedzujú, za tágom už áno
@@ -537,7 +552,7 @@ export function start(root, config = {}) {
 		stadiumRack();
 		controls.setCue(cueSpec);
 		room.selectCue(cueSpec.id, cueSpec.base);
-		ui.showView(view, rackList(), cueSpec.id, rackInfo());
+		ui.showView(view, rackNow(), cueSpec.id, rackInfoNow());
 		ui.setCueInfo(cueSpec);
 		updateScore();
 	};
@@ -1054,7 +1069,7 @@ export function start(root, config = {}) {
 			saveOwn(row);
 			rackRefresh();
 			ui.toast(on ? `${row.name} je na stojane namiesto šablóny ${cueById(row.base).name}.` : `${row.name} je späť len v zozname Moje tágá, na stojane je znova ${cueById(row.base).name}.`);
-			ui.showView('rack', rackList(), cueSpec.id, rackInfo());
+			ui.showView('rack', rackNow(), cueSpec.id, rackInfoNow());
 		},
 		cueOwnDelete: async (id) => {
 			const row = ownCues.find((x) => x.id === id);
@@ -1295,6 +1310,16 @@ export function start(root, config = {}) {
 					return true;
 				}
 			}
+			if (lk === 'f12' && venue === 'league') {
+				// štadión: F12 zapne alebo vypne bodové svetlá, len keď som na ťahu
+				if (game.match && !(game.match.turn === game.match.me && (game.state === 'aim' || game.state === 'place'))) {
+					ui.toast('Svetlá reflektorov môžeš zapnúť alebo vypnúť, keď si na ťahu.');
+					return true;
+				}
+				beamsOn = !beamsOn;
+				stadium.setBeams(beamsOn);
+				return true;
+			}
 			const fkeys = { f1: 'board', f2: 'rack', f3: 'chalk', f4: 'score', f7: 'chair', f8: 'trophies', f9: 'mixer', f10: 'bar', f12: 'leagueBoard' };
 			if (fkeys[lk]) {
 				ui.opts.onAction(fkeys[lk]);
@@ -1351,7 +1376,7 @@ export function start(root, config = {}) {
 					return true;
 				}
 				if (view === 'rack' && (lk === 'arrowleft' || lk === 'arrowright')) {
-					const list = rackList();
+					const list = rackNow();
 					const i = Math.max(0, list.findIndex((c) => c.id === cueSpec.id || c.id === cueSpec.base));
 					pickCue(list[(i + (lk === 'arrowleft' ? list.length - 1 : 1)) % list.length].id);
 					return true;
@@ -1817,6 +1842,11 @@ export function start(root, config = {}) {
 		rig.cueTilt = cue.pivot.visible ? cue.tilt || 0 : 0;
 		// po údere: keď gule zastanú a som na rade, mierim zo smeru, z ktorého sa kamera práve pozerá na bielu
 		// (kamera sa neotáča, len sa plynulo spustí za tágo); v partii aj po súperovom údere
+		if (game.state === 'moving' && beamsAuto && venue === 'league') {
+			beamsAuto = false; // partia sa začala: bodové svetlá zhasnú (F12 na ťahu ich zapne)
+			beamsOn = false;
+			stadium.setBeams(false);
+		}
 		if (game.state === 'moving') {
 			followSeen = true;
 		} else if (followSeen) {
