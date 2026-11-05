@@ -276,6 +276,7 @@ function mysn_rest_ping( $req ) {
 			'to'     => mysn_user( $out['p2'] ),
 		) : null,
 		'match'    => $active ? (int) $active['id'] : 0,
+		'mseq'     => $active ? (int) $active['seq'] : 0, // posledný uložený úder (záchrana, keď vypadne priame spojenie)
 		'paused'   => $paused,
 		// notes na stole v kancelárii: hráči v hre teraz a koľkí čakajú na ligový zápas (dvere ŠTADIÓN)
 		'stats'    => array(

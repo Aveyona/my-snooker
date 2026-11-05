@@ -122,6 +122,7 @@ function mysn_roadmap() {
 /** Denník zmien (najnovšie hore). */
 function mysn_changelog() {
 	return array(
+		array( '0.6.41', '5. 11. 2026', 'Oprava rozdielnych pozícií gúľ u hráčov: fyzika počíta vždy rovnaké celé kroky bez ohľadu na rýchlosť počítača a počet snímok za sekundu (predtým mohli gule u súpera skončiť inde). Keď vypadne priame spojenie so súperom a jeho výsledok úderu nepríde, hra pri najbližšom pingu zistí novší úder na serveri a načíta uložený stav stola.' ),
 		array( '0.6.40', '5. 11. 2026', 'Štadión: hráči sedia v čalúnených kreslách (namiesto stoličiek). Nastavenia: Kamera, keď hrá súper (ligový štadión). Sledovať súpera (predvolené, ako doteraz), Pohľad zhora alebo Z kresla (F7): keď súper príde na rad, kamera sa prepne a ostane tak počas celého jeho ťahu; keď prídeš na rad, vráti sa za tágo.' ),
 		array( '0.6.39', '5. 11. 2026', 'Nastavenia: Kamera po údere. Sledovať bielu (predvolené, ako doteraz) alebo Pohľad zhora na stôl: po mojom aj súperovom údere kamera ukáže celý stôl zhora a keď gule zastanú, vráti sa za tágo do smeru mierenia pred úderom.' ),
 		array( '0.6.38', '5. 11. 2026', 'Oprava časomiery: po údere (vlastnom aj súperovom) sa čas a odpočet hneď skryjú, aj kým sa súperov úder prehráva a čaká sa na výsledok. Znova beží až pri ďalšom ťahu. Rovnako u divákov.' ),

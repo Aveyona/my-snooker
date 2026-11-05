@@ -168,14 +168,18 @@ export class Physics {
 		return this.balls.some((b) => b.on && b.moving);
 	}
 
-	/** Posunie simuláciu o dt sekúnd (v malých krokoch). Vráti true, kým sa niečo hýbe. */
+	/**
+	 * Posunie simuláciu o dt sekúnd. Vždy len celé kroky STEP (zvyšok sa prenesie do ďalšieho snímku): výsledok
+	 * úderu je tak rovnaký na každom počítači bez ohľadu na počet snímok za sekundu (60 Hz, 144 Hz, karta v pozadí).
+	 * Predtým posledný kratší krok v každom snímku závisel od rýchlosti počítača a gule mohli skončiť inde.
+	 */
 	advance(dt) {
-		let left = dt;
-		while (left > 1e-9) {
-			const h = Math.min(STEP, left);
-			this.step(h);
-			left -= h;
+		this.acc = (this.acc || 0) + dt;
+		while (this.acc >= STEP) {
+			this.step(STEP);
+			this.acc -= STEP;
 			if (!this.moving) {
+				this.acc = 0; // ďalší úder začne od nuly
 				break;
 			}
 		}

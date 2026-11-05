@@ -101,6 +101,10 @@ export class Online {
 			this.foundSync(d.found || null, !!d.match);
 			if (this.inMatch && this.matchId && !d.match) {
 				this.poll(); // partia na serveri už nebeží (prerušená alebo skončená): načítať jej koniec
+			} else if (this.inMatch && d.match === this.matchId && this.game.match && d.mseq > this.game.match.seq && !this.queue.length && !this._polling) {
+				// server má novší úder, než aký mám ja (priame spojenie so súperom vypadlo a jeho výsledok neprišiel):
+				// načítať uložený stav stola, aby obaja hráči videli gule rovnako
+				this.poll();
 			}
 			const prevInv = (this.data.invites || []).map((i) => i.id).join(',');
 			this.data = d;
