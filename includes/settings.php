@@ -53,3 +53,12 @@ function mysn_asset_ver( $file ) {
 	$p = MYSN_DIR . 'assets/' . $file;
 	return file_exists( $p ) ? MYSN_VERSION . '.' . filemtime( $p ) : MYSN_VERSION;
 }
+
+/*
+ * Adresa hry (snooker.hedlajner.sk) je povolený cieľ presmerovania. Inak by WordPress po prihlásení
+ * na stránke Prihlásenie hlavného webu namiesto návratu do hry poslal hráča do wp-admin.
+ */
+add_filter( 'allowed_redirect_hosts', function ( $hosts ) {
+	$hosts[] = preg_replace( '/:\d+$/', '', mysn_host() );
+	return array_unique( $hosts );
+} );

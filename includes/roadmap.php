@@ -119,6 +119,7 @@ function mysn_roadmap() {
 /** Denník zmien (najnovšie hore). */
 function mysn_changelog() {
 	return array(
+		array( '0.6.4', '5. 11. 2026', 'Oprava: po prihlásení zo subdomény snooker.hedlajner.sk WordPress posielal hráča do wp-admin, lebo adresa hry nebola povolený cieľ presmerovania. Teraz sa vráti späť do hry (aj cez Google). My Users 1.4.2: už prihlásený na stránke Prihlásenie ide späť do hry a prihlásenie sa obnoví aj pre subdoménu.' ),
 		array( '0.6.3', '5. 11. 2026', 'Oprava: tlačidlo Prihlásiť sa v menu neprihláseného návštevníka sa roztiahlo cez celú obrazovku a zakrylo hru (rovnaký názov štýlu ako okno prihlásenia). Na subdoméne snooker.hedlajner.sk vedie Prihlásiť sa na stránku Prihlásenie hlavného webu (okno v hre funguje len na adrese hedlajner.sk/my-snooker).' ),
 		array( '0.6.2', '5. 11. 2026', 'Prihlásenie a registrácia priamo v hre, v okne v štýle stránky Prihlásenie (Google, e-mail a heslo, zabudnuté heslo), nie cez wp-admin. Formulár ide na stránku Prihlásenie z My Users, chyby sa ukážu v okne a po prihlásení sa hra načíta znova už s účtom.' ),
 		array( '0.6.1', '5. 11. 2026', 'Tágo sa pri mierení samo zdvihne nad guľu, ktorá leží za bielou, podobne ako nad mantinel (najviac o 40 stupňov). Je to len vzhľad, úder sa nemení. Po skončení zápasu (aj ligového zo štadióna) sa hráč vráti domov do herne a v menu má vybratý Tréning. Výber tág do ligy v kancelárii (F2) je najviac v dvoch riadkoch, ďalšie tágá sú vpravo (posun kolieskom myši alebo posuvníkom) a moje uložené tágá sú prvé zľava.' ),
