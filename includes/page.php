@@ -54,6 +54,9 @@ add_action( 'wp_loaded', function () {
 
 /** Vykreslí celú stránku hry. */
 function mysn_render( $preview ) {
+	if ( ! defined( 'DONOTCACHEPAGE' ) ) {
+		define( 'DONOTCACHEPAGE', true ); // stránka hry sa nesmie uložiť do cache (Cache Enabler), inak by návštevníci dostali starú verziu
+	}
 	nocache_headers();
 	status_header( 200 );
 	header( 'Content-Type: text/html; charset=utf-8' );
@@ -186,3 +189,24 @@ function mysn_radio_stations() {
 	}
 	return $out;
 }
+
+/* Cache Enabler: stránku hry (subdoména aj náhľad na hlavnom webe) nikdy neukladať. */
+add_filter( 'cache_enabler_bypass_cache', function ( $bypass ) {
+	if ( mysn_on() ) {
+		return true;
+	}
+	$path = (string) wp_parse_url( isset( $_SERVER['REQUEST_URI'] ) ? (string) $_SERVER['REQUEST_URI'] : '/', PHP_URL_PATH );
+	return untrailingslashit( $path ) === untrailingslashit( mysn_preview_path() ) ? true : $bypass;
+} );
+
+/* Po novej verzii raz zmaže uloženú kópiu stránky hry v Cache Enabler (stará kópia by sa inak posielala ďalej). */
+add_action( 'init', function () {
+	if ( get_option( 'mysn_cache_cleared' ) === MYSN_VERSION ) {
+		return;
+	}
+	update_option( 'mysn_cache_cleared', MYSN_VERSION, false );
+	if ( class_exists( 'Cache_Enabler' ) && method_exists( 'Cache_Enabler', 'clear_page_cache_by_url' ) ) {
+		Cache_Enabler::clear_page_cache_by_url( mysn_url() );
+		Cache_Enabler::clear_page_cache_by_url( mysn_main_url() . mysn_preview_path() );
+	}
+} );
