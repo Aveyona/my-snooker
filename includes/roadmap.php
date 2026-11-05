@@ -9,6 +9,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 function mysn_roadmap() {
 	return array(
+		array( '0.6.25', '5. 11. 2026', 'Oprava: oblečenie v šatníku pri pohybe kamery neblikalo medzi košeľou a vestou (časti sa prekrývali v rovnakej hĺbke).' ),
 		array( '0.6.24', '5. 11. 2026', 'Kancelária: namiesto knižnice s pohármi majstrov stojí pri pravej stene otvorený šatník bez dverí. Na tyči visí oblečenie na zápas (biela košeľa s čiernym motýlikom, tmavá vesta so zlatými gombíkmi, čierne nohavice), dole sú čierne lakované topánky. Zatiaľ je len na pohľad.' ),
 		array( '0.6.23', '5. 11. 2026', 'Štadión: F1 ukáže papier s krátkym návodom na klávesy, ktorý leží na stolíku rozhodcu medzi dvoma pohármi s vodou (bez bočného panela). F8, F9 a F10 na štadióne zatiaľ nerobia nič.' ),
 		array( '0.6.22', '5. 11. 2026', 'Štadión: pohľad zo stoličky (F7) je bez bočného panela s novinami. Keď hráč sedí na stoličke a príde na rad, pohľad sa sám vráti k stolu za tágo (platí v každej partii).' ),

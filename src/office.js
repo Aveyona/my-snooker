@@ -342,12 +342,12 @@ export function buildOffice(scene) {
 	const trouserM = cloth(0x101114, 0.7);
 	const blackM = new THREE.MeshStandardMaterial({ color: 0x0b0b0d, roughness: 0.25, metalness: 0.2 });
 	// biela košeľa s rukávmi a motýlikom
-	const zs = SZ - 0.36;
+	// oblečenie sa nesmie prekrývať v rovnakej hĺbke (inak plochy pri pohybe kamery blikajú)
+	const zs = SZ - 0.37;
 	hanger(zs);
-	add(new THREE.BoxGeometry(0.06, 0.72, 0.4), shirtM, SX, FY + 1.34, zs); // trup
+	add(new THREE.BoxGeometry(0.06, 0.72, 0.36), shirtM, SX, FY + 1.34, zs); // trup
 	for (const sz of [-1, 1]) {
-		const sl = add(new THREE.BoxGeometry(0.05, 0.62, 0.1), shirtM, SX, FY + 1.36, zs + sz * 0.23); // rukáv
-		sl.rotation.x = sz * 0.08;
+		add(new THREE.BoxGeometry(0.03, 0.62, 0.06), shirtM, SX + 0.02, FY + 1.36, zs + sz * 0.19); // rukáv za trupom
 	}
 	add(new THREE.BoxGeometry(0.07, 0.05, 0.16), shirtM, SX - 0.005, FY + 1.69, zs); // golier
 	const bow = new THREE.Group();
@@ -359,7 +359,7 @@ export function buildOffice(scene) {
 	}
 	add(new THREE.BoxGeometry(0.02, 0.025, 0.02), blackM, 0, 0, 0, bow); // uzol
 	// vesta so zlatými gombíkmi (otvorená spredu, pod ňou biela podšívka)
-	const zv = SZ;
+	const zv = SZ + 0.03;
 	hanger(zv);
 	for (const sz of [-1, 1]) {
 		add(new THREE.BoxGeometry(0.06, 0.6, 0.17), vestM, SX, FY + 1.38, zv + sz * 0.1); // polovice vesty
@@ -369,9 +369,9 @@ export function buildOffice(scene) {
 		add(new THREE.SphereGeometry(0.009, 10, 8), gold, front + 0.245, FY + 1.56 - b * 0.11, zv - 0.035); // gombíky
 	}
 	// čierne nohavice preložené cez vešiak
-	const zt = SZ + 0.37;
+	const zt = SZ + 0.385;
 	hanger(zt);
-	add(new THREE.BoxGeometry(0.05, 0.06, 0.38), trouserM, SX, FY + 1.69, zt); // preložené cez rameno vešiaka
+	add(new THREE.BoxGeometry(0.064, 0.06, 0.34), trouserM, SX, FY + 1.69, zt); // preložené cez rameno vešiaka
 	for (const sz of [-1, 1]) {
 		add(new THREE.BoxGeometry(0.05, 0.62, 0.15), trouserM, SX, FY + 1.36, zt + sz * 0.09); // nohavice
 	}
