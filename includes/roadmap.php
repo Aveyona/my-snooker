@@ -96,7 +96,7 @@ function mysn_roadmap() {
 				array( 'Sezóna, body (štart 147, víťaz berie nahrané body), štyri ligy, poistky, koniec sezóny s majstrom a minulými sezónami', 1 ),
 				array( 'Kancelária: registrácia (vizitka), tabuľa líg, podrobná mapa hráčov vo svete, kalendár, notes s počtom hráčov, lampa (online), moje tágá (4 do zápasu), šatník, história zápasov', 1 ),
 				array( 'Vyhľadávanie zápasu (dvere ŠTADIÓN): beží aj mimo kancelárie, pásik hore s časom a krížikom, nájdený zápas treba potvrdiť do 60 sekúnd', 1 ),
-				array( 'Štadión s modrým stolom: tribúny s divákmi, bodové svetlá (F12 na ťahu), veľká obrazovka so skóre (F4), stolička a stojan s tágami pre každého hráča (F7, F2), návod na stolíku rozhodcu (F1)', 1 ),
+				array( 'Štadión s modrým stolom: tribúny s divákmi, bodové svetlá (F12 na ťahu), veľká obrazovka so skóre (F4), kreslo a stojan s tágami pre každého hráča (F7, F2), návod na stolíku rozhodcu (F1)', 1 ),
 				array( 'Ligový zápas sa nedá prerušiť: výpadok spojenia na 2 minúty prehrá, obom naraz zápas zruší', 1 ),
 				array( 'Nástenka Liga v herni (F12)', 1 ),
 				array( 'Sezóna ligy v administrácii: prehľad, posun dátumu konca, ukončenie sezóny a začiatok novej (aj testovacej bez majstra), minulé sezóny', 1 ),
@@ -122,6 +122,7 @@ function mysn_roadmap() {
 /** Denník zmien (najnovšie hore). */
 function mysn_changelog() {
 	return array(
+		array( '0.6.40', '5. 11. 2026', 'Štadión: hráči sedia v čalúnených kreslách (namiesto stoličiek). Nastavenia: Kamera, keď hrá súper (ligový štadión). Sledovať súpera (predvolené, ako doteraz), Pohľad zhora alebo Z kresla (F7): keď súper príde na rad, kamera sa prepne a ostane tak počas celého jeho ťahu; keď prídeš na rad, vráti sa za tágo.' ),
 		array( '0.6.39', '5. 11. 2026', 'Nastavenia: Kamera po údere. Sledovať bielu (predvolené, ako doteraz) alebo Pohľad zhora na stôl: po mojom aj súperovom údere kamera ukáže celý stôl zhora a keď gule zastanú, vráti sa za tágo do smeru mierenia pred úderom.' ),
 		array( '0.6.38', '5. 11. 2026', 'Oprava časomiery: po údere (vlastnom aj súperovom) sa čas a odpočet hneď skryjú, aj kým sa súperov úder prehráva a čaká sa na výsledok. Znova beží až pri ďalšom ťahu. Rovnako u divákov.' ),
 		array( '0.6.37', '5. 11. 2026', 'Liga: časomiera. Hráč na rade má na úder 30 sekúnd (hore ukazovateľ času, od 10 s žltý, posledných 5 s veľký odpočet s tiknutím, pri nule Čas!). Kto nestihne, má faul za čas: súper dostane 4 body alebo hodnotu gule na rade a je na rade. Keď má hráč hru zatvorenú, faul po 3 sekundách zapíše server na podnet súpera. Čas vidia aj diváci a je na veľkej obrazovke štadióna.' ),

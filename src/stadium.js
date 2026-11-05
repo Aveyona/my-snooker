@@ -220,7 +220,7 @@ export function buildStadium(scene, quality) {
 			['F2', 'môj stojan s tágami'],
 			['F3', 'krieda na tágo'],
 			['F4', 'skóre na obrazovke'],
-			['F7', 'moja stolička'],
+			['F7', 'moje kreslo'],
 			['F12', 'bodové svetlá (na ťahu)'],
 			['Tab', 'pohľad zhora'],
 			['Ctrl', 'voľná myš'],
@@ -258,12 +258,17 @@ export function buildStadium(scene, quality) {
 		{ chair: [-2.6, BZ - 0.55], dz: 1, stand: [-3.8, 2.5], rot: Math.PI / 2 },
 		{ chair: [2.6, -(BZ - 0.55)], dz: -1, stand: [3.8, -2.5], rot: -Math.PI / 2 },
 	];
+	// kreslo hráča: čalúnené (tmavá koža), sedák, vysoké operadlo a opierky rúk, operadlo ďalej od stola
+	const leather = new THREE.MeshStandardMaterial({ color: 0x3a1d14, roughness: 0.45, metalness: 0.05 });
 	for (const p of PL) {
 		const [cx, cz] = p.chair;
-		add(new THREE.BoxGeometry(0.5, 0.08, 0.5), chairMat, cx, FY + 0.48, cz);
-		add(new THREE.BoxGeometry(0.5, 0.6, 0.06), chairMat, cx, FY + 0.82, cz + p.dz * 0.25); // operadlo ďalej od stola
-		for (const lx of [-0.2, 0.2]) {
-			add(new THREE.CylinderGeometry(0.02, 0.02, 0.46, 8), metal, cx + lx, FY + 0.23, cz);
+		const dz = p.dz;
+		add(new THREE.BoxGeometry(0.66, 0.16, 0.6), chairMat, cx, FY + 0.08, cz); // podstava
+		add(new THREE.BoxGeometry(0.58, 0.16, 0.56), leather, cx, FY + 0.32, cz - dz * 0.01); // sedák
+		const back = add(new THREE.BoxGeometry(0.66, 0.78, 0.14), leather, cx, FY + 0.7, cz + dz * 0.26); // operadlo
+		back.rotation.x = -dz * 0.12; // mierne sklonené dozadu
+		for (const sx of [-1, 1]) {
+			add(new THREE.BoxGeometry(0.1, 0.24, 0.6), leather, cx + sx * 0.33, FY + 0.44, cz); // opierky rúk
 		}
 	}
 	const stands = PL.map((p) => {
@@ -305,13 +310,13 @@ export function buildStadium(scene, quality) {
 			st.cues.push(g);
 		});
 	};
-	// pohľady hráča podľa strany: F7 zo stoličky na stôl, F2 na stojan s tágami
+	// pohľady hráča podľa strany: F7 z kresla na stôl, F2 na stojan s tágami
 	const sideViews = PL.map((p) => {
 		const [cx, cz] = p.chair;
 		const [sx, sz] = p.stand;
 		const ax = Math.sign(-sx); // stojan je natočený k stolu (+x alebo -x)
 		return {
-			chair: { pos: new THREE.Vector3(cx, FY + 1.15, cz + p.dz * 0.05), look: new THREE.Vector3(cx * 0.3, FY + 0.7, 0) },
+			chair: { pos: new THREE.Vector3(cx, FY + 1.05, cz + p.dz * 0.05), look: new THREE.Vector3(cx * 0.3, FY + 0.7, 0) },
 			rack: { pos: new THREE.Vector3(sx + ax * 1.25, FY + 1.3, sz), look: new THREE.Vector3(sx, FY + 0.75, sz) },
 		};
 	});

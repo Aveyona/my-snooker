@@ -28,7 +28,7 @@ const AIM_AHEAD = 0.5; // posun pohľadu bez mierenej gule: kamera sa pozerá 50
 
 function loadSettings() {
 	const mobile = /Android|iPhone|iPad|Mobile/i.test(navigator.userAgent);
-	const def = { lines: false, quality: mobile ? 'low' : 'high', volume: 0.8, respot: true, contact: true, contactPos: 'center', afterShot: 'follow', camera: 'cue', cue: 'club' };
+	const def = { lines: false, quality: mobile ? 'low' : 'high', volume: 0.8, respot: true, contact: true, contactPos: 'center', afterShot: 'follow', oppCam: 'follow', camera: 'cue', cue: 'club' };
 	try {
 		const raw = window.localStorage.getItem(STORE);
 		if (raw) {
@@ -2112,6 +2112,8 @@ export function start(root, config = {}) {
 	let lastSoloT = last;
 	let pull = 0;
 	let wasMyTurn = false; // F7: pri príchode na rad sa pohľad vráti zo stoličky k stolu
+	let wasOppTurn = false; // súper práve prišiel na rad (Kamera keď hrá súper)
+	let oppTop = false; // pohľad zhora počas súperovho ťahu
 	let followSeen = false; // po údere kamera sledovala bielu (pozri frame)
 	let shotTop = false; // po údere je pohľad zhora (Nastavenia, Kamera po údere)
 	const frame = (now) => {
@@ -2320,7 +2322,26 @@ export function start(root, config = {}) {
 		if (myTurnNow && !wasMyTurn && view === 'chair') {
 			exitView();
 		}
+		if (myTurnNow && oppTop) {
+			// súperov ťah skončil: z pohľadu zhora späť za tágo
+			oppTop = false;
+			followSeen = false;
+			if (!view && !topView && rig.mode === 'top') {
+				rig.setMode(game.state === 'place' ? 'top' : 'cue');
+			}
+		}
 		wasMyTurn = myTurnNow;
+		// Nastavenia, Kamera keď hrá súper (ligový štadión): zhora alebo zo stoličky (F7) počas celého súperovho ťahu
+		const oppTurnNow = !!(venue === 'league' && game.match && game.match.league && game.match.rules && !game.match.rules.over && game.match.turn !== game.match.me && game.state === 'watch');
+		if (oppTurnNow && !wasOppTurn && !view && !topView) {
+			if (settings.oppCam === 'top') {
+				oppTop = true;
+				rig.setMode('top');
+			} else if (settings.oppCam === 'chair') {
+				enterView('chair');
+			}
+		}
+		wasOppTurn = oppTurnNow;
 		if (game.state === 'moving' && beamsAuto && venue === 'league') {
 			beamsAuto = false; // partia sa začala: bodové svetlá zhasnú (F12 na ťahu ich zapne)
 			beamsOn = false;
