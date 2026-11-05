@@ -352,6 +352,7 @@ export function start(root, config = {}) {
 		rig.minViewZoom = 1;
 		rig.setViewZoom(1);
 		rig.setView(v.pos.clone(), v.look.clone());
+		rig.jump(); // zhora hneď (bez preletu cez tribúny)
 		seatHover = -1;
 		markPick();
 		ui.seatHint(seatStadium() ? 'Vyber si stoličku: zelené sú voľné, sivé obsadené. Klikni na stoličku a sadneš si.' : 'Vyber si miesto pri stene: zelené sú voľné, sivé obsadené. Klikni na miesto a postavíš sa tam.', mySeat >= 0);

@@ -333,7 +333,7 @@ export function buildStadium(scene, quality) {
 		/** Pohľady na štadióne: F4 skóre = veľká obrazovka nad tribúnou za kratšou stranou. */
 		views: {
 			rack: { pos: new THREE.Vector3(-2.55, FY + 1.3, 2.5), look: new THREE.Vector3(-3.8, FY + 0.75, 2.5) }, // F2 stojan s tágami do ligy
-			pick: { pos: new THREE.Vector3(0, FY + 19, 0.8), look: new THREE.Vector3(0, FY, 0) }, // výber stoličky zhora
+			pick: { pos: new THREE.Vector3(0.9, FY + 17, 0), look: new THREE.Vector3(0, FY, 0) }, // výber stoličky zhora (tribúny vľavo a vpravo)
 			score: { pos: new THREE.Vector3(-(BX + 3.6) + 3.7, FY + 3.45, 0), look: new THREE.Vector3(-(BX + 3.6), FY + 3.6, 0) },
 		},
 		/** Reakcia divákov: 'clap' (potopená guľa), 'facepalm' (faul), 'stand' (veľká séria). */
