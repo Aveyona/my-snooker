@@ -98,7 +98,7 @@ function mysn_roadmap() {
 				array( 'Štadión s modrým stolom: tribúny s divákmi, bodové svetlá (F12 na ťahu), veľká obrazovka so skóre (F4), stolička a stojan s tágami pre každého hráča (F7, F2), návod na stolíku rozhodcu (F1)', 1 ),
 				array( 'Ligový zápas sa nedá prerušiť: výpadok spojenia na 2 minúty prehrá, obom naraz zápas zruší', 1 ),
 				array( 'Nástenka Liga v herni (F12)', 1 ),
-				array( 'Nastavenie sezóny v administrácii (dĺžka, začiatok novej sezóny)', 0 ),
+				array( 'Sezóna ligy v administrácii: prehľad, posun dátumu konca, ukončenie sezóny a začiatok novej (aj testovacej bez majstra), minulé sezóny', 1 ),
 			),
 		),
 		array(
@@ -120,6 +120,7 @@ function mysn_roadmap() {
 /** Denník zmien (najnovšie hore). */
 function mysn_changelog() {
 	return array(
+		array( '0.6.33', '5. 11. 2026', 'Administrácia: nová stránka My Snooker, Sezóna ligy. Prehľad aktuálnej sezóny (začiatok, koniec, hráči, zápasy, prvé miesto), posun dátumu konca a názvu, tlačidlo Ukončiť sezónu a začať novú s potvrdením (riadne s majstrom, alebo ako testovacia bez majstra a bez poradia; dĺžka novej sezóny rok, 6, 3 alebo 1 mesiac) a zoznam minulých sezón.' ),
 		array( '0.6.32', '5. 11. 2026', 'Plán vývoja: hra proti počítaču nebude (etapa vypustená, ostatné etapy prečíslované).' ),
 		array( '0.6.31', '5. 11. 2026', 'Plán vývoja: viac hráčov na jednom zariadení zatiaľ nie je podporované (2. etapa sa volá Pravidlá snookeru). Prehľad režimov v administrácii je aktuálny.' ),
 		array( '0.6.30', '5. 11. 2026', 'Plán vývoja aktualizovaný: hotové etapy 3D stôl a tréning, 2 hráči cez internet a sledovanie, rebríček a história, liga; nová etapa Dokončenie a doladenie. Oprava: záznamy denníka zmien 0.6.17 až 0.6.29 sa omylom zobrazovali v pláne vývoja.' ),
