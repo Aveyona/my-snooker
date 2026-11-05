@@ -683,8 +683,8 @@ export function start(root, config = {}) {
 		if (name === 'trophies') {
 			refreshTrophies();
 		}
-		if (name === 'chair' && venue === 'league') {
-			ui.showView(null); // štadión: zo stoličky bez bočného panela
+		if ((name === 'chair' || name === 'board') && venue === 'league') {
+			ui.showView(null); // štadión: stolička a návod na stolíku bez bočného panela
 			return;
 		}
 		ui.showView(name, name === 'rack' ? rackNow() : allCues(), cueSpec.id, name === 'office' ? officeData() : name === 'rack' ? rackInfoNow() : name === 'mixer' ? { radio } : name === 'magazine' ? room.rssItems : name === 'chair' ? (venue === 'league' ? null : { news: room.newsItems, rss: room.rssItems }) : room.newsItems);
@@ -1548,6 +1548,9 @@ export function start(root, config = {}) {
 					online.sendLights(beamsOn); // súper a diváci vidia rovnaké svetlá
 				}
 				return true;
+			}
+			if (venue === 'league' && (lk === 'f8' || lk === 'f9' || lk === 'f10')) {
+				return true; // na štadióne zatiaľ nič nerobia
 			}
 			const fkeys = { f1: 'board', f2: 'rack', f3: 'chalk', f4: 'score', f7: 'chair', f8: 'trophies', f9: 'mixer', f10: 'bar', f12: 'leagueBoard' };
 			if (fkeys[lk]) {

@@ -198,9 +198,54 @@ export function buildStadium(scene, quality) {
 		add(new THREE.BoxGeometry(0.04, 0.72, 0.4), wood, 2.6 + sx * 0.42, FY + 0.36, BZ - 0.55);
 	}
 	const glass = new THREE.MeshStandardMaterial({ color: 0xe8f4ff, transparent: true, opacity: 0.25, roughness: 0.05, depthWrite: false });
-	for (const gx of [2.4, 2.8]) {
+	// dva poháre s vodou na krajoch stolíka
+	const water = new THREE.MeshStandardMaterial({ color: 0x9fd4ff, transparent: true, opacity: 0.55, roughness: 0.05, metalness: 0 });
+	for (const gx of [2.24, 2.96]) {
 		add(new THREE.CylinderGeometry(0.035, 0.03, 0.12, 20, 1, true), glass, gx, FY + 0.82, BZ - 0.55).castShadow = false;
+		add(new THREE.CylinderGeometry(0.031, 0.029, 0.075, 20), water, gx, FY + 0.76 + 0.04, BZ - 0.55).castShadow = false;
 	}
+	// F1: papier s krátkym návodom na klávesy, leží na stolíku medzi pohármi (text čitateľný od stola)
+	const PAPER = { x: 2.6, z: BZ - 0.55, w: 0.3, h: 0.4 };
+	const paper = canvasTex(600, 800, (g, w, h) => {
+		g.fillStyle = '#f7f4ea';
+		g.fillRect(0, 0, w, h);
+		g.fillStyle = '#1d3f8f';
+		g.fillRect(0, 0, w, 86);
+		g.fillStyle = '#ffffff';
+		g.font = 'bold 40px Arial, sans-serif';
+		g.textAlign = 'center';
+		g.fillText('Klávesy na štadióne', w / 2, 57);
+		const rows = [
+			['F1', 'tento návod'],
+			['F2', 'môj stojan s tágami'],
+			['F3', 'krieda na tágo'],
+			['F4', 'skóre na obrazovke'],
+			['F7', 'moja stolička'],
+			['F12', 'bodové svetlá (na ťahu)'],
+			['Tab', 'pohľad zhora'],
+			['Ctrl', 'voľná myš'],
+			['Esc', 'menu'],
+			['F5', 'obnoviť stránku'],
+			['F11', 'celá obrazovka'],
+		];
+		g.textAlign = 'left';
+		rows.forEach(([k, t], i) => {
+			const y = 140 + i * 56;
+			g.fillStyle = '#1d3f8f';
+			g.font = 'bold 34px Arial, sans-serif';
+			g.fillText(k, 46, y);
+			g.fillStyle = '#20242c';
+			g.font = '32px Arial, sans-serif';
+			g.fillText(t, 150, y);
+		});
+		g.fillStyle = '#6a7080';
+		g.font = 'italic 24px Arial, sans-serif';
+		g.textAlign = 'center';
+		g.fillText('F1 alebo Esc: späť do hry', w / 2, h - 30);
+	});
+	const paperMesh = add(new THREE.PlaneGeometry(PAPER.w, PAPER.h), new THREE.MeshStandardMaterial({ map: paper.t, roughness: 0.85 }), PAPER.x, FY + 0.762, PAPER.z);
+	paperMesh.rotation.set(-Math.PI / 2, 0, Math.PI); // horný okraj ďalej od stola (+z)
+	paperMesh.castShadow = false;
 	// hráči: hráč 1 (strana 0) v rohu -x pri dlhej strane +z, hráč 2 (strana 1) oproti v rohu +x pri dlhej strane -z;
 	// každý má svoju stoličku (F7) a vedľa nej svoj stojan s tágami do zápasu (F2), tágo v ruke na stojane chýba
 	const chairMat = new THREE.MeshStandardMaterial({ color: 0x1a1a1f, roughness: 0.5 });
@@ -350,6 +395,7 @@ export function buildStadium(scene, quality) {
 		root,
 		/** Pohľady na štadióne: F4 skóre = veľká obrazovka nad tribúnou za kratšou stranou. */
 		views: {
+			board: { pos: new THREE.Vector3(2.6, FY + 1.28, BZ - 0.55 - 0.16), look: new THREE.Vector3(2.6, FY + 0.76, BZ - 0.55 + 0.005) }, // F1 návod na stolíku
 			chair0: sideViews[0].chair, // F7 hráč 1
 			chair1: sideViews[1].chair, // F7 hráč 2
 			rack0: sideViews[0].rack, // F2 stojan hráča 1

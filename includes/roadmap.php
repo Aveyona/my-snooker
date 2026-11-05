@@ -9,6 +9,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 function mysn_roadmap() {
 	return array(
+		array( '0.6.23', '5. 11. 2026', 'Štadión: F1 ukáže papier s krátkym návodom na klávesy, ktorý leží na stolíku rozhodcu medzi dvoma pohármi s vodou (bez bočného panela). F8, F9 a F10 na štadióne zatiaľ nerobia nič.' ),
 		array( '0.6.22', '5. 11. 2026', 'Štadión: pohľad zo stoličky (F7) je bez bočného panela s novinami. Keď hráč sedí na stoličke a príde na rad, pohľad sa sám vráti k stolu za tágo (platí v každej partii).' ),
 		array( '0.6.21', '5. 11. 2026', 'Oprava: divák ligového zápasu vidí na veľkej obrazovke štadióna (F4) skutočné skóre partie: mená hráčov, body, kto je na rade, sériu a guľu na rade, nie len nápis Vyzvi hráča z ligy.' ),
 		array( '0.6.20', '5. 11. 2026', 'Štadión: každý hráč má svoju stranu. Hráč 1 sedí v rohu pri dlhej strane so svojou stoličkou (F7) a stojanom so svojimi tágami (F2), hráč 2 oproti v druhom rohu so svojou stoličkou a svojimi tágami. Súper aj diváci vidia na stojane tágá hráča, ktoré si vybral do ligy (tágo v ruke na stojane chýba).' ),
