@@ -59,9 +59,12 @@ function mysn_admin_page() {
 			<div class="card" style="margin:0;max-width:420px">
 				<h2 style="margin-top:8px">Režimy</h2>
 				<p>Tréning: <b style="color:#008a20">hotové</b></p>
-				<p>2 hráči na jednom zariadení: <span style="color:#8c8f94">2. etapa</span></p>
+				<p>Hra o najlepšie skóre (Hrať): <b style="color:#008a20">hotové</b></p>
+				<p>2 hráči cez internet (Poslať výzvu): <b style="color:#008a20">hotové</b></p>
+				<p>Liga so štadiónom: <b style="color:#008a20">hotové</b></p>
+				<p>Sledovanie partií (Pozerať hru): <b style="color:#008a20">hotové</b></p>
 				<p>Proti počítaču: <span style="color:#8c8f94">3. etapa</span></p>
-				<p>2 hráči cez internet: <b style="color:#008a20">prvá verzia</b> (Hrať s priateľom)</p>
+				<p>Viac hráčov na jednom zariadení: <span style="color:#8c8f94">zatiaľ nie je podporované</span></p>
 				<p><a href="<?php echo esc_url( admin_url( 'admin.php?page=my-snooker-plan' ) ); ?>">Plán vývoja</a></p>
 			</div>
 		</div>

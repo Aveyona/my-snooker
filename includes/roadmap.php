@@ -48,16 +48,15 @@ function mysn_roadmap() {
 		),
 		array(
 			'n'      => 2,
-			'title'  => 'Pravidlá snookeru a 2 hráči na jednom zariadení',
+			'title'  => 'Pravidlá snookeru',
 			'status' => 'now',
-			'goal'   => 'Skutočný frame podľa pravidiel, dvaja hráči sa striedajú na jednom počítači alebo mobile.',
+			'goal'   => 'Skutočný frame podľa pravidiel. Viac hráčov na jednom zariadení zatiaľ nie je podporované.',
 			'items'  => array(
 				array( 'Poradie gúľ: červená, farba, na konci farby od žltej po čiernu (modul pravidiel s testami)', 1 ),
 				array( 'Fauly a trestné body (minimálne 4): minutie, prvá trafená nesprávna guľa, nesprávna guľa v jamke, biela v jamke (biela do ruky v D)', 1 ),
 				array( 'Ukazovateľ, na akú guľu sa hrá, skóre, náboj, zostávajúce body na stole', 1 ),
 				array( 'Koniec framu, opätovné položenie čiernej pri rovnosti', 1 ),
 				array( 'Voľná guľa, opakovanie úderu na žiadosť súpera, pravidlo miss', 0 ),
-				array( '2 hráči na jednom zariadení', 0 ),
 				array( 'Zápas na viac framov (napríklad na 3 alebo 5)', 0 ),
 			),
 		),
@@ -132,6 +131,7 @@ function mysn_roadmap() {
 /** Denník zmien (najnovšie hore). */
 function mysn_changelog() {
 	return array(
+		array( '0.6.31', '5. 11. 2026', 'Plán vývoja: viac hráčov na jednom zariadení zatiaľ nie je podporované (2. etapa sa volá Pravidlá snookeru). Prehľad režimov v administrácii je aktuálny.' ),
 		array( '0.6.30', '5. 11. 2026', 'Plán vývoja aktualizovaný: hotové etapy 3D stôl a tréning, 2 hráči cez internet a sledovanie, rebríček a história, liga; nová etapa Dokončenie a doladenie. Oprava: záznamy denníka zmien 0.6.17 až 0.6.29 sa omylom zobrazovali v pláne vývoja.' ),
 		array( '0.6.29', '5. 11. 2026', 'Oprava: podrobná mapa sveta v kancelárii sa načíta aj v hre na adrese snooker.hedlajner.sk (súbor s hranicami štátov sa berie z tej istej domény).' ),
 		array( '0.6.28', '5. 11. 2026', 'Kancelária: nová podrobná mapa sveta s hranicami všetkých štátov (Natural Earth 1:50 mil., verejné vlastníctvo). Krajiny s hráčmi ligy sú zvýraznené, každá má jeden špendlík s počtom hráčov (moja krajina zlatý, ostatné strieborné), mená sa už neprekrývajú. Ctrl a klik na špendlík ukáže hráčov krajiny s ligou, miestom a bodmi.' ),
