@@ -807,13 +807,25 @@ export function start(root, config = {}) {
 	}
 	const radioSync = (kind) => {
 		radioCorner.setControls(radio.params, radio.station ? radio.station.name : '', radio.on);
-		settings.radio = { params: radio.params, index: radio.index };
+		settings.radio = { params: radio.params, index: radio.index, on: !!radio.on }; // on: hrá aj po obnovení (F5)
 		saveSettings(settings);
 		if (view === 'mixer' && kind !== 'param') {
 			ui.showView('mixer', CUES, cueSpec.id, { radio });
 		}
 	};
 	radio.onChange = radioSync;
+	if (settings.radio && settings.radio.on && radio.stations.length) {
+		// rádio hralo pred obnovením stránky: zapne sa pri prvom kliknutí alebo klávese (prehliadač nedovolí zvuk skôr)
+		const resume = () => {
+			window.removeEventListener('pointerdown', resume, true);
+			window.removeEventListener('keydown', resume, true);
+			if (!radio.on) {
+				radio.play(radio.index >= 0 ? radio.index : 0);
+			}
+		};
+		window.addEventListener('pointerdown', resume, true);
+		window.addEventListener('keydown', resume, true);
+	}
 	radioCorner.setControls(radio.params, radio.station ? radio.station.name : '', false);
 
 	const overlay = document.createElement('div');
