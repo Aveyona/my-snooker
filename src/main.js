@@ -1577,7 +1577,7 @@ export function start(root, config = {}) {
 		ui.openPhone(false);
 		chalkT = -1;
 		chalkMesh.visible = false;
-		rig.setMode(game.state === 'place' || topView ? 'top' : 'cue');
+		rig.setMode(topView ? 'top' : 'cue');
 		ui.showView(null);
 		if (!keepFree) {
 			controls.capture(); // s držaným Ctrl (keepFree) ostáva myš voľná
@@ -1674,6 +1674,15 @@ export function start(root, config = {}) {
 			}
 		},
 		reset: () => {
+			rackWasFresh = false; // trojuholník sa ukáže aj pri opakovanom novom rozostavení
+			if (game.match) {
+				ui.toast('V partii sa gule nanovo nestavajú.');
+				return;
+			}
+			if (game.solo) {
+				actions.soloNew(); // hra o skóre: nový frame, čas a body od nuly
+				return;
+			}
 			game.reset();
 			game.aimAtNearest();
 			saveTraining();
@@ -2376,11 +2385,7 @@ export function start(root, config = {}) {
 				ui.toast('V partii sa gule nanovo nestavajú.');
 				return;
 			}
-			if (game.solo) {
-				actions.soloNew();
-			} else {
-				actions.reset();
-			}
+			actions.reset();
 			if (!freeMouse) {
 				controls.capture();
 			}
@@ -2542,7 +2547,7 @@ export function start(root, config = {}) {
 			}
 			topView = !topView;
 			placeCam = false;
-			rig.setMode(topView || game.state === 'place' ? 'top' : 'cue');
+			rig.setMode(topView ? 'top' : 'cue');
 		},
 		back: () => exitView(),
 		paintSun: () => {
@@ -3212,7 +3217,10 @@ export function start(root, config = {}) {
 		ui.showLeaderboard(null);
 		topView = false;
 		game.startSolo(fresh);
-		rig.setMode(game.state === 'place' ? 'top' : 'cue');
+		if (game.state === 'place') {
+			game.dir = 0; // biela v ruke: pohľad spoza baulku smerom k červeným
+		}
+		rig.setMode('cue'); // aj biela v ruke sa kladie z pohľadu za tágom
 		refreshMenu();
 		ui.showMenu(false);
 		controls.capture();
@@ -3264,7 +3272,7 @@ export function start(root, config = {}) {
 			sound.pot();
 		}
 		game.startSolo(true);
-		rig.setMode(game.state === 'place' ? 'top' : 'cue');
+		rig.setMode('cue'); // aj biela v ruke sa kladie z pohľadu za tágom
 		refreshMenu();
 		ui.sync(game, rig.mode);
 		updateScore();
@@ -3423,7 +3431,7 @@ export function start(root, config = {}) {
 				ui.hideToast();
 				ui.showInvites([]);
 				topView = false;
-				rig.setMode(game.state === 'place' ? 'top' : 'cue');
+				rig.setMode('cue'); // aj biela v ruke sa kladie z pohľadu za tágom
 				refreshMenu();
 				ui.showMenu(false);
 				ui.toast(`Partia s hráčom ${m.players[1 - m.me].name}. ${m.turn === m.me ? 'Si na rade.' : 'Na rade je súper.'}`);
@@ -3521,9 +3529,6 @@ export function start(root, config = {}) {
 			// v pohľade na nástenku alebo stojan kameru nemeníme
 		} else if (topView) {
 			// Tab: pohľad zhora ostáva
-		} else if (game.state === 'place' && rig.mode === 'cue') {
-			rig.setMode('top');
-			placeCam = true;
 		} else if (game.state !== 'place' && placeCam) {
 			placeCam = false;
 			if (rig.mode === 'top') {
@@ -3958,7 +3963,7 @@ export function start(root, config = {}) {
 			oppTop = false;
 			followSeen = false;
 			if (!view && !topView && rig.mode === 'top') {
-				rig.setMode(game.state === 'place' ? 'top' : 'cue');
+				rig.setMode('cue'); // aj biela v ruke sa kladie z pohľadu za tágom
 			}
 		}
 		wasMyTurn = myTurnNow;
@@ -3986,7 +3991,7 @@ export function start(root, config = {}) {
 			shotTop = false;
 			followSeen = false; // smer mierenia ostáva ako pred úderom
 			if (!view && !topView && rig.mode === 'top') {
-				rig.setMode(game.state === 'place' ? 'top' : 'cue');
+				rig.setMode('cue'); // aj biela v ruke sa kladie z pohľadu za tágom
 			}
 		}
 		if (game.state === 'moving') {

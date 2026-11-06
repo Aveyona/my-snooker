@@ -2334,7 +2334,7 @@ export class UI {
 		const st0 = game.state;
 		const base =
 			st0 === 'place'
-				? 'Posuň bielu guľu v D a potvrď tlačidlom Hotovo.'
+				? 'Posuň bielu guľu v D myšou a polož ju ľavým tlačidlom myši (alebo Enter, Hotovo).'
 				: st0 === 'watch' && !game.message
 					? 'Na rade je súper.'
 					: st0 === 'wait'
@@ -2347,7 +2347,7 @@ export class UI {
 		this.btnSkip.classList.toggle('mysn-hidden', st !== 'moving');
 		this.btnUndo.disabled = st === 'moving' || !game.history.length || !!mt || !!so;
 		this.btnHand.disabled = st !== 'aim' || !!mt || !!so;
-		this.btnReset.disabled = !!mt || !!so;
+		this.btnReset.disabled = !!mt; // v hre o skóre začne nový frame (čas a body od nuly)
 		this.powerBox.classList.toggle('mysn-off', st !== 'aim');
 		for (const m of Object.keys(this.camBtns)) {
 			this.camBtns[m].classList.toggle('mysn-on', m === camMode);

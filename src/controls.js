@@ -123,6 +123,11 @@ export class Controls {
 			}
 			return;
 		}
+		if (g.state === 'place' && e.pointerType === 'mouse' && e.button === 0 && this.rig.mode === 'cue') {
+			// pohľad za tágom: prvý klik zachytí myš, potom sa biela posúva pohybom myši a ďalší klik ju položí
+			this.capture();
+			return;
+		}
 		if (g.state === 'place') {
 			const p = this.tablePoint(e);
 			if (p) {
