@@ -496,6 +496,7 @@ export function start(root, config = {}) {
 			dir.set(Math.cos(chairLook.yaw) * c, Math.sin(chairLook.pitch), Math.sin(chairLook.yaw) * c);
 		}
 		freeVel.set(0, 0, 0);
+		hotCache.clear(); // predmety sa mohli zmeniť (tágá v stojane, miestnosť)
 		rig.viewSnap = true;
 		view = 'free';
 		controls.blocked = true;
@@ -519,6 +520,121 @@ export function start(root, config = {}) {
 	let freeZoomTo = 1; // voľná kamera: priblíženie kolieskom (plynulo k cieľu)
 	let freeUp = 0; // voľná kamera: držané tlačidlo myši (pravé = hore, ľavé = dole)
 	let freeDown = 0;
+	// --- voľná kamera s Ctrl: klikateľné predmety (jemne sa rozsvietia pod kurzorom, klik = ich kláves) ---
+	const hotRay = new THREE.Raycaster();
+	const hotMouse = new THREE.Vector2();
+	let hotMouseOk = false;
+	let hotT = 0;
+	let hotNow = null; // predmet pod kurzorom
+	const hotCache = new Map(); // id miesta → zoznam meshov na rozsvietenie
+	const hotLift = new Map(); // mesh → pôvodný materiál
+	const below = (v, dy) => v.clone().add(new THREE.Vector3(0, -dy, 0));
+	/** Klikateľné miesta podľa miestnosti: stred, polomer a kláves, ktorý klik urobí. */
+	const hotSpots = () => {
+		if (venue === 'league') {
+			const sd = mySide();
+			const v = stadium.views;
+			return [
+				{ id: 'lg-board', key: 'f1', pos: v.board.look, r: 0.45 },
+				{ id: 'lg-score', key: 'f4', pos: v.score.look, r: 2.6 },
+				{ id: 'lg-chair' + sd, key: 'f7', pos: below(v['chair' + sd].pos, 0.55), r: 0.7 },
+				{ id: 'lg-rack' + sd, key: 'f2', pos: v['rack' + sd].look, r: 0.8 },
+			];
+		}
+		return [
+			{ id: 'board', key: 'f1', pos: room.board.look, r: 0.9 },
+			{ id: 'rack', key: 'f2', pos: room.rack.look, r: 0.9 },
+			{ id: 'score', key: 'f4', pos: room.score.look, r: 0.8 },
+			{ id: 'chair', key: 'f7', pos: below(room.chair.pos, 0.55), r: 0.7 },
+			{ id: 'trophies', key: 'f8', pos: room.trophies.look, r: 0.9 },
+			{ id: 'bar', key: 'f10', pos: room.bar.look, r: 0.7 },
+			{ id: 'leagueBoard', key: 'f12', pos: room.leagueBoard.look, r: 0.9 },
+		];
+	};
+	const shown = (o) => {
+		for (let x = o; x; x = x.parent) {
+			if (!x.visible) {
+				return false;
+			}
+		}
+		return true;
+	};
+	/** Meshe predmetu: stred ich obalu je blízko miesta a nie sú väčšie než predmet (bez stien a podlahy). */
+	const hotMeshes = (h) => {
+		if (hotCache.has(h.id)) {
+			return hotCache.get(h.id);
+		}
+		const list = [];
+		const box = new THREE.Box3();
+		const c = new THREE.Vector3();
+		const sz = new THREE.Vector3();
+		scene.traverse((o) => {
+			if (!o.isMesh || !o.material || Array.isArray(o.material) || !('emissive' in o.material) || !shown(o)) {
+				return;
+			}
+			box.setFromObject(o);
+			box.getCenter(c);
+			box.getSize(sz);
+			if (c.distanceTo(h.pos) < h.r && Math.max(sz.x, sz.y, sz.z) < h.r * 2.6) {
+				list.push(o);
+			}
+		});
+		hotCache.set(h.id, list);
+		return list;
+	};
+	const hotSet = (h) => {
+		if (hotNow === h || (hotNow && h && hotNow.id === h.id)) {
+			return;
+		}
+		for (const [m, mat] of hotLift) {
+			m.material = mat;
+		}
+		hotLift.clear();
+		hotNow = h;
+		renderer.domElement.style.cursor = h ? 'pointer' : '';
+		if (!h) {
+			return;
+		}
+		for (const m of hotMeshes(h)) {
+			const glow = m.material.clone();
+			glow.emissive = m.material.emissive.clone().add(new THREE.Color(0x2a2418)); // jemné teplé rozsvietenie
+			hotLift.set(m, m.material);
+			m.material = glow;
+		}
+	};
+	/** Raz za 0,1 s: ktorý predmet je pod kurzorom (len vo voľnej kamere s držaným Ctrl). */
+	const hotTick = (dt) => {
+		if (view !== 'free' || !freeMouse || !hotMouseOk) {
+			hotSet(null);
+			return;
+		}
+		hotT -= dt;
+		if (hotT > 0) {
+			return;
+		}
+		hotT = 0.1;
+		hotRay.setFromCamera(hotMouse, rig.camera);
+		hotRay.far = 25;
+		const hit = hotRay.intersectObjects(scene.children, true).find((x) => x.object.isMesh && shown(x.object));
+		let best = null;
+		if (hit) {
+			for (const h of hotSpots()) {
+				const d = hit.point.distanceTo(h.pos);
+				if (d < h.r && (!best || d < best.d)) {
+					best = { h, d };
+				}
+			}
+		}
+		hotSet(best ? best.h : null);
+	};
+	renderer.domElement.addEventListener('pointermove', (e) => {
+		const r = renderer.domElement.getBoundingClientRect();
+		hotMouse.set(((e.clientX - r.left) / r.width) * 2 - 1, -((e.clientY - r.top) / r.height) * 2 + 1);
+		hotMouseOk = true;
+	});
+	renderer.domElement.addEventListener('pointerleave', () => {
+		hotMouseOk = false;
+	});
 	const freeKeys = (k) => controls._keys.has(k) || controls._keys.has(k.toUpperCase());
 	const freeMove = (dt) => {
 		const f = new THREE.Vector3(Math.cos(chairLook.yaw), 0, Math.sin(chairLook.yaw));
@@ -769,6 +885,10 @@ export function start(root, config = {}) {
 		if (view === name) {
 			exitView();
 			return;
+		}
+		if (view === 'free') {
+			freeLeave(); // z voľnej kamery rovno do pohľadu (klik na predmet): poloha sa zapamätá
+			rig.setViewZoom(1);
 		}
 		if (game.state === 'moving' || chalkT >= 0) {
 			return;
@@ -1623,6 +1743,15 @@ export function start(root, config = {}) {
 			}
 		},
 		viewDown: (e) => {
+			if (view === 'free' && freeMouse && e.button === 0 && hotNow) {
+				// Ctrl + klik na predmet: to isté ako jeho kláves (stojan F2, skóre F4 a podobne)
+				const k = hotNow.key;
+				hotSet(null);
+				freeMouse = false;
+				ui.setFree(false);
+				controls.hooks.key(k);
+				return;
+			}
 			if (view === 'free' && !freeMouse && (e.button === 2 || e.button === 0)) {
 				// voľná kamera: drž pravé tlačidlo = hore, ľavé = dole (s Ctrl fungujú tlačidlá normálne, klik na predmety)
 				if (e.button === 2) {
@@ -2480,6 +2609,9 @@ export function start(root, config = {}) {
 		rig.cueTilt = cue.pivot.visible ? cue.tilt || 0 : 0;
 		// po údere: keď gule zastanú a som na rade, mierim zo smeru, z ktorého sa kamera práve pozerá na bielu
 		// (kamera sa neotáča, len sa plynulo spustí za tágo); v partii aj po súperovom údere
+		if (view !== 'free' && hotNow) {
+			hotSet(null);
+		}
 		if (view === 'free') {
 			if (freeMouse) {
 				freeVel.set(0, 0, 0); // Ctrl: kamera stojí
@@ -2488,6 +2620,7 @@ export function start(root, config = {}) {
 			} else {
 				freeMove(Math.min(0.05, dt));
 			}
+			hotTick(dt);
 			// priblíženie kolieskom: plynulo k cieľu
 			const zt = freeZoomTo;
 			const zc = rig.viewZoom || 1;

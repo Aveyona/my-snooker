@@ -118,7 +118,7 @@ function mysn_roadmap() {
 				array( 'ELO sila hráča ako v šachu (len ligové zápasy), nový hráč začína na 1350', 0 ),
 				array( 'Voľná kamera: Tab zobrazí mini náhľad stola ako ďalšiu kameru', 0 ),
 				array( 'Mobil: úder ťahaním prstom, priblíženie dvoma prstami; chat (Enter)', 0 ),
-				array( 'Klik na predmety v scéne (vo voľnom pohľade s Ctrl) ako ich klávesy F2, F4, F8 a ďalšie', 0 ),
+				array( 'Klik na predmety v scéne (vo voľnom pohľade s Ctrl) ako ich klávesy F2, F4, F8 a ďalšie', 1 ),
 				array( 'Ochrana proti podvádzaniu (až pred dokončením hry): súper ako rozhodca (porovná výsledok úderu), kontrola rozumnosti bodov na serveri, overenie skóre v hre o skóre, označenie podozrivo presných hráčov', 0 ),
 				array( 'TURN server pre priame spojenie (WebRTC): odložené, zatiaľ netreba (spojenie po 0.6.44 funguje)', 0 ),
 				array( 'Klávesy F8, F9 a F10 na štadióne (zatiaľ nerobia nič)', 0 ),
@@ -131,6 +131,7 @@ function mysn_roadmap() {
 /** Denník zmien (najnovšie hore). */
 function mysn_changelog() {
 	return array(
+		array( '0.6.54', '6. 11. 2026', 'Voľná kamera: s držaným Ctrl sa predmet pod kurzorom jemne rozsvieti a klik urobí to isté ako jeho kláves (nástenka, stojan, skóre, kreslo, poháre, bar, nástenka ligy; na štadióne návod, stojan, obrazovka, kreslo).' ),
 		array( '0.6.53', '6. 11. 2026', 'Voľná kamera: Esc pohľad neprepína, len uvoľní myš a otvorí menu (späť za tágo je medzerník). Koliesko približuje a odďaľuje, pravé tlačidlo myši hore, ľavé dole; s Ctrl fungujú tlačidlá normálne. Plán: mini náhľad stola na Tab vo voľnom pohľade, ELO len z ligových zápasov.' ),
 		array( '0.6.51', '6. 11. 2026', 'Plán vývoja: ochrana proti podvádzaniu sa robí až pred dokončením hry.' ),
 		array( '0.6.50', '6. 11. 2026', 'Role admin a správca hry: administrácia My Snooker, Hráči (zoznam hráčov, nastavenie roly správca hry), v hre tlačidlo Správa hry (bežiace zápasy, herne, hráči online, neviditeľné sledovanie, zmena prezývky; admin aj ukončenie alebo zrušenie zápasu, zákaz ligy, vynulovanie bodov). Voľná kamera: návrat za tágo je okamžitý, bez preletu; koliesko plynulo posúva kameru hore a dole, držané pravé tlačidlo približuje na predmet, na ktorý sa pozeráš.' ),
