@@ -434,7 +434,7 @@ export function buildRoomShell(scene, quality, opts = {}) {
 	const selectCue = (id, base) => {
 		lastSel = [id, base];
 		const hit = rackCues.some((rc) => rc.spec.id === id) ? id : null; // vlastné tágo mimo stojana: stojan ostane plný
-		glow.visible = !!hit && !rackHidden;
+		glow.visible = !!hit && !rackHidden && rackView; // krúžok pod vybratým tágom len v pohľade F2
 		for (const rc of rackCues) {
 			const on = rc.spec.id === hit;
 			rc.group.position.z = rc.baseZ + (on && rackView ? 0.12 : 0);
