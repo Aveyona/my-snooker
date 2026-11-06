@@ -2831,6 +2831,7 @@ export function start(root, config = {}) {
 					beamsAuto = false;
 					stadium.setBeams(beamsOn);
 				} else if (m.k === 'w-aim') {
+					online.setRemoteCue(m.a && m.a.cue); // tágo hráča, ktorý mieri
 					if (!moving && m.a && m.a.seq === watchInfo.seq) {
 						online.aimTarget = m.a; // tágo hráča pri mierení
 					}
@@ -3111,7 +3112,7 @@ export function start(root, config = {}) {
 			online.hooks.watch(m);
 		}
 		if (online) {
-			online.update(dt, game.myTurn ? { dir: game.dir, cx: game.cue.p.x, cz: game.cue.p.z, pull: controls.stroking ? Math.max(0, controls.strokePull) : 0, side: spin.side, top: spin.top, ...aimExtra() } : null);
+			online.update(dt, game.myTurn ? { dir: game.dir, cx: game.cue.p.x, cz: game.cue.p.z, pull: controls.stroking ? Math.max(0, controls.strokePull) : 0, side: spin.side, top: spin.top, ...aimExtra(), cue: cueSpec } : null);
 		}
 		if (controls.stroking) {
 			pull = Math.max(0, controls.strokePull); // tágo ide presne s rukou
@@ -3216,6 +3217,20 @@ export function start(root, config = {}) {
 			remoteRest.mesh.rotation.set(0, -game.dir, 0);
 		} else if (remoteRest) {
 			remoteRest.mesh.visible = false;
+		}
+		// tágo na stole: pri mojom ťahu moje, pri ťahu súpera (a u diváka) model, ktorý poslal hráč na rade
+		const remoteTurn = !!(online && (game.spectating || (game.match && !game.myTurn)) && online.remoteCue);
+		const wantCue = remoteTurn ? online.remoteCue : cueSpec;
+		if (cue.spec !== wantCue) {
+			try {
+				cue.setSpec(wantCue);
+			} catch (e) {
+				if (online) {
+					online.remoteCue = null;
+				}
+				// poškodený model od súpera: ostane moje tágo
+				cue.setSpec(cueSpec);
+			}
 		}
 		cue.place(game.cue, game.dir, pull, watchAim ? watchAim.side || 0 : spin.side, watchAim ? watchAim.top || 0 : spin.top, (aiming || view === 'chalk' || (watchAim && !watchAim.place)) && game.cue.on, game.balls, spiderNow || restRemote);
 		if (restRemote) {

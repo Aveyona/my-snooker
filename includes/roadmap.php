@@ -131,6 +131,7 @@ function mysn_roadmap() {
 /** Denník zmien (najnovšie hore). */
 function mysn_changelog() {
 	return array(
+		array( '0.7.3', '6. 11. 2026', 'Tágo v online partii: súper a diváci vidia na stole tágo, ktoré má hráč na rade naozaj v ruke (aj vlastné upravené tágo). Doteraz každý videl pri každom ťahu svoje vlastné tágo.' ),
 		array( '0.7.2', '6. 11. 2026', 'Prezývka z ligy všade: kto má v lige nastavenú prezývku, ostatní ho pod ňou vidia v pozvánkach, zápasoch, na obrazovke a menovkách na štadióne, v tabuľkách, histórii, sledovaní a na mape hráčov. Po uložení prezývky v kancelárii platí hneď. Správa hry vidí meno účtu aj prezývku.' ),
 		array( '0.7.1', '6. 11. 2026', 'Jamky podľa miestnosti: na štadióne tesné turnajové (najmenší výrez, tenká svetlá obruba), pri Hrať klasické čierne (čierna kožená obruba a výstelka), v tréningu so širokou svetlou obrubou. Ústie jamiek a fyzika sú všade rovnaké, mení sa len vzhľad.' ),
 		array( '0.7.0', '6. 11. 2026', 'Koniec ligového zápasu na štadióne: hráči aj diváci ostanú na štadióne, veľká obrazovka ukáže víťaza (skóre, najvyššia séria, body ligy, výhry v sezóne), zo stropu stále padajú konfety a dvaja diváci ich chvíľu púšťajú; Späť do herne v menu. Divák: F1 telefón s pomocníkom, F7 konfety zo svojho miesta (3-krát za zápas, 15 sekúnd), vidia ich obaja hráči aj ostatní diváci. Admin: Mapa miestností, Štadión, Ukážka konca zápasu.' ),

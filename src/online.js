@@ -229,6 +229,8 @@ export class Online {
 
 	watchStop() {
 		const w = this.watching;
+		this.remoteCue = null;
+		this._rcKey = '';
 		this.watching = null;
 		if (w) {
 			for (const uid of w.peers) {
@@ -406,6 +408,7 @@ export class Online {
 				this.poll(); // súper je o úder ďalej (napr. po obnovení stránky): načítať uloženú partiu
 			}
 		} else if (m.k === 'aim') {
+			this.setRemoteCue(m.a && m.a.cue); // tágo súpera (model), aby sme videli rovnaké
 			if (m.a && g.state === 'watch' && m.a.seq === g.match.seq) {
 				this.aimTarget = m.a;
 			}
@@ -637,6 +640,8 @@ export class Online {
 
 	/** text0 pre mňa, wtext pre divákov (bez „ty“, rovnaký od oboch hráčov). */
 	stopMatch(text0, wtext) {
+		this.remoteCue = null;
+		this._rcKey = '';
 		const text = (text0 || '') + (this.stopMatchText || '');
 		this.stopMatchText = '';
 		if (this.watchers().length) {
@@ -686,6 +691,18 @@ export class Online {
 			/* čas na serveri ešte nevypršal alebo výpadok: ďalší pokus o chvíľu */
 		}
 		this._toBusy = false;
+	}
+
+	/** Model tága hráča na rade (od súpera alebo pre diváka od sledovaného hráča). Mení sa len pri zmene. */
+	setRemoteCue(c) {
+		if (!c || typeof c !== 'object' || typeof c.id !== 'string') {
+			return;
+		}
+		const k = JSON.stringify(c);
+		if (k !== this._rcKey) {
+			this._rcKey = k;
+			this.remoteCue = c;
+		}
 	}
 
 	/** Moje tágá na stojane na štadióne: súperovi a mojim divákom (aj po nadviazaní spojenia). */
@@ -774,9 +791,18 @@ export class Online {
 		if (aim && g.myTurn && (g.state === 'aim' || g.state === 'place') && this._aimT >= AIM_MS) {
 			const a = { seq: g.match.seq, dir: +aim.dir.toFixed(4), cx: +aim.cx.toFixed(4), cz: +aim.cz.toFixed(4), pull: +aim.pull.toFixed(3), side: +aim.side.toFixed(2), top: +aim.top.toFixed(2), place: g.state === 'place' ? 1 : 0, rest: aim.rest || 0, ch: aim.ch === undefined ? -1 : aim.ch }; // rest = nádstavec, ch = kriedovanie
 			const key = JSON.stringify(a);
-			if (key !== this._aimSent) {
+			// moje tágo (model) pribalím na začiatku ťahu, pri zmene a potom každé 2 s: súper a diváci vidia rovnaké tágo
+			this._cueT = (this._cueT || 0) + step;
+			const ck = aim.cue ? aim.cue.id + ':' + g.match.seq : '';
+			const sendCue = aim.cue && (ck !== this._cueKey || this._cueT >= 2000);
+			if (key !== this._aimSent || sendCue) {
 				this._aimT = 0;
 				this._aimSent = key;
+				if (sendCue) {
+					a.cue = aim.cue;
+					this._cueKey = ck;
+					this._cueT = 0;
+				}
 				this.rtcSendOpp({ k: 'aim', a });
 				this.wsend({ k: 'w-aim', a });
 			}
