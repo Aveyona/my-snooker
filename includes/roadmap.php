@@ -131,6 +131,7 @@ function mysn_roadmap() {
 /** Denník zmien (najnovšie hore). */
 function mysn_changelog() {
 	return array(
+		array( '0.7.17', '6. 11. 2026', 'Obrazovky nad stolom: raz za minútu ukážu na 5 sekúnd reklamu (striedavo HEDLAJNER a MY SNOOKER) a potom na 3 sekundy skóre zápasu. Všetci to vidia naraz.' ),
 		array( '0.7.16', '6. 11. 2026', 'Štadión: nad stolom je už len jedno svietidlo. Svietidlo s obrazovkami visí nižšie, vo výške pôvodných lámp, a nahrádza ich zelené tienidlá; svetlo na stôl ostáva rovnaké. V pohľadoch zhora (výber sedadla, Tab) sa svietidlo nekreslí, aby nezakrylo stôl. Ukážka od diváka: F6 zmena sedadla funguje.' ),
 		array( '0.7.15', '6. 11. 2026', 'Svietidlo s obrazovkami: obrazovka na strane k tribúne s dvoma divákmi mala zlý uhol a nesedela v ráme, teraz obe presne kopírujú šikmé steny. Ukážka od diváka (admin): F6 zmena sedadla funguje (výber zhora, klik na stoličku).' ),
 		array( '0.7.14', '6. 11. 2026', 'Štadión: obrazovky sú teraz súčasťou svietidla nad stolom. Moderný kužeľ (dole užší, hore širší) visí nad stolom, na oboch šikmých stranách má obrazovku otočenú k tribúne a dole svetelný panel. Obrazovky ukazujú pohľad hráča na rade so širším záberom (inak krúžiacu kameru), divák ich zapne alebo vypne F9 alebo v telefóne F1, zmena platí pre všetkých.' ),

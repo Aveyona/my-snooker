@@ -1149,9 +1149,90 @@ export function start(root, config = {}) {
 	let lcdInit = false;
 	// svietidlo s obrazovkami nekresliť v pohľadoch zhora (zakrylo by stôl), ako tienidlá lámp v herni
 	const lcdBoxVis = () => view !== 'seatPick' && rig.mode !== 'top';
+	// raz za minútu: 5 s reklama (striedavo HEDLAJNER a MY SNOOKER), potom 3 s skóre; podľa času, u všetkých naraz
+	const lcdCanvas = document.createElement('canvas');
+	lcdCanvas.width = 960;
+	lcdCanvas.height = 540;
+	const lcdCanvasTex = new THREE.CanvasTexture(lcdCanvas);
+	lcdCanvasTex.colorSpace = THREE.SRGBColorSpace;
+	let lcdCanvasKey = '';
+	const lcdScore = () => {
+		const w = specView() && watchScreen;
+		if (w && Array.isArray(w.names)) {
+			return { names: w.names.slice(0, 2).map((n) => String(n)), scores: [Number(w.scores[0]) || 0, Number(w.scores[1]) || 0], turn: w.turn };
+		}
+		const m = game.match;
+		if (m && m.rules) {
+			return { names: m.players.map((p) => p.name), scores: m.rules.scores, turn: m.rules.over ? -1 : m.rules.turn };
+		}
+		return null;
+	};
+	/** Obsah obrazovky mimo pohľadu hráča: 'ad' alebo 'score' (null = pohľad hráča). */
+	const lcdOverlay = () => {
+		const t = (Date.now() / 1000) % 60;
+		if (t < 5) {
+			return { kind: 'ad', text: Math.floor(Date.now() / 60000) % 2 ? 'MY SNOOKER' : 'HEDLAJNER' };
+		}
+		if (t < 8) {
+			const sc = lcdScore();
+			return sc ? { kind: 'score', sc } : null;
+		}
+		return null;
+	};
+	const lcdDraw = (o) => {
+		const key = JSON.stringify(o);
+		if (key === lcdCanvasKey) {
+			return;
+		}
+		lcdCanvasKey = key;
+		const g = lcdCanvas.getContext('2d');
+		const W = 960;
+		const H = 540;
+		const bg = g.createLinearGradient(0, 0, W, H);
+		bg.addColorStop(0, '#0a1a44');
+		bg.addColorStop(1, '#1747b5');
+		g.fillStyle = bg;
+		g.fillRect(0, 0, W, H);
+		g.textAlign = 'center';
+		g.textBaseline = 'middle';
+		if (o.kind === 'ad') {
+			g.fillStyle = '#FACC15';
+			g.fillRect(0, H - 40, W, 40);
+			g.fillStyle = '#ffffff';
+			g.font = '900 150px Arial, sans-serif';
+			g.fillText(o.text, W / 2, H / 2 - 20, W - 60);
+			g.fillStyle = '#0a1a44';
+			g.font = '700 26px Arial, sans-serif';
+			g.fillText(o.text === 'HEDLAJNER' ? 'hedlajner.sk' : 'snooker.hedlajner.sk', W / 2, H - 20);
+		} else {
+			const { names, scores, turn } = o.sc;
+			g.fillStyle = '#FACC15';
+			g.font = '700 40px Arial, sans-serif';
+			g.fillText('SKÓRE', W / 2, 70);
+			for (let i = 0; i < 2; i++) {
+				const x = i ? W * 0.75 : W * 0.25;
+				g.fillStyle = turn === i ? '#FACC15' : '#ffffff';
+				g.font = '700 46px Arial, sans-serif';
+				g.fillText(String(names[i] || '').slice(0, 18), x, 200, W / 2 - 40);
+				g.font = '900 170px Arial, sans-serif';
+				g.fillText(String(scores[i] ?? 0), x, 350);
+			}
+			g.fillStyle = 'rgba(255,255,255,0.6)';
+			g.font = '900 120px Arial, sans-serif';
+			g.fillText(':', W / 2, 345);
+		}
+		lcdCanvasTex.needsUpdate = true;
+	};
 	const lcdRender = () => {
 		stadium.lcdBox.visible = lcdBoxVis();
 		const vis = venue === 'league' && stadium.root.visible && flagOn('w-lcd');
+		const ov = vis ? lcdOverlay() : null;
+		if (ov) {
+			lcdDraw(ov);
+			lcdInit = false;
+			stadium.setLcd(true, lcdCanvasTex);
+			return;
+		}
 		let src = null;
 		if (vis) {
 			if (!specView() && game.match && game.myTurn) {
