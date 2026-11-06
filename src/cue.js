@@ -21,6 +21,127 @@ function toEdge(x, z, ux, uz, hx, hz) {
 	return Math.max(0, d);
 }
 
+/* ---------- Pavúk (spider) a mierenie pri mantineli ---------- */
+
+export const SPIDER_TILT = THREE.MathUtils.degToRad(14); // tágo na pavúkovi: vždy rovnaký sklon nad bielou
+const SPIDER_FOOT = 0.065; // polomer nôh pavúka (nesmie zavadiť o guľu)
+const GAP_REST = 0.012;
+
+/**
+ * Miesto pre pavúka za bielou v smere tága: najbližšia voľná vzdialenosť, kde nohy nezavadia o guľu, sú na
+ * hracej ploche (nie pri mantineli) a tágo pod sklonom SPIDER_TILT prejde ponad gule. Vráti { x, z, d, h } alebo null.
+ */
+export function spiderSpot(cue, dir, balls) {
+	const dx = Math.cos(dir);
+	const dz = Math.sin(dir);
+	const tipX = cue.p.x - dx * (R + GAP_REST);
+	const tipZ = cue.p.z - dz * (R + GAP_REST);
+	const tipY = R;
+	const tan = Math.tan(SPIDER_TILT);
+	// tágo nad guľami medzi bielou a pavúkom
+	for (const b of balls || []) {
+		if (b === cue || !b.on) {
+			continue;
+		}
+		const ox = b.p.x - tipX;
+		const oz = b.p.z - tipZ;
+		const h = -(ox * dx + oz * dz);
+		const lat = Math.abs(ox * dz - oz * dx);
+		if (h > 0 && h < 0.8 && lat < R + 0.014 && tipY + h * tan < 2 * R + 0.016) {
+			return null; // guľa tesne za bielou: ani pavúk nepomôže
+		}
+	}
+	for (let d = 0.2; d <= 0.75; d += 0.01) {
+		const x = tipX - dx * d;
+		const z = tipZ - dz * d;
+		if (Math.abs(x) > L / 2 - SPIDER_FOOT - 0.01 || Math.abs(z) > W / 2 - SPIDER_FOOT - 0.01) {
+			return null; // pri mantineli pavúk nefunguje
+		}
+		let free = true;
+		for (const b of balls || []) {
+			if (b.on && Math.hypot(b.p.x - x, b.p.z - z) < R + SPIDER_FOOT) {
+				free = false;
+				break;
+			}
+		}
+		if (free) {
+			return { x, z, d, h: tipY + d * tan };
+		}
+	}
+	return null;
+}
+
+/**
+ * Pri mantineli: o koľko vyššie treba udrieť bielu (top 0 až 0,8), aby tágo nemuselo ísť strmo hore.
+ * 0 = netreba (ďaleko od mantinelu).
+ */
+export function cushionTop(cue, dir, len = 1.45) {
+	const dx = Math.cos(dir);
+	const dz = Math.sin(dir);
+	const restX = cue.p.x - dx * (R + GAP_REST);
+	const restZ = cue.p.z - dz * (R + GAP_REST);
+	const cap = THREE.MathUtils.degToRad(12); // najviac takto strmo, zvyšok vyrieši vyšší úder
+	let need = 0;
+	for (const sd of [toEdge(restX, restZ, -dx, -dz, L / 2, W / 2), toEdge(restX, restZ, -dx, -dz, L / 2 + OUTER, W / 2 + OUTER)]) {
+		if (sd > len) {
+			continue;
+		}
+		const r = 0.0048 + ((0.0145 - 0.0048) * Math.min(sd, len)) / len;
+		const base = EDGE_H + r / Math.cos(cap) - sd * Math.sin(cap);
+		need = Math.max(need, (base - R) / (0.5 * R));
+	}
+	return Math.max(0, Math.min(0.8, need));
+}
+
+/** Model pavúka: nohy, stĺpik a hlava s drážkami; h = výška drážky nad súknom (mení sa stĺpikom). */
+export function buildSpider() {
+	const g = new THREE.Group();
+	const chrome = new THREE.MeshStandardMaterial({ color: 0xc9ced6, metalness: 0.9, roughness: 0.25 });
+	const brass = new THREE.MeshStandardMaterial({ color: 0xc8a050, metalness: 0.85, roughness: 0.3 });
+	const rubber = new THREE.MeshStandardMaterial({ color: 0x151515, roughness: 0.8 });
+	const hub = new THREE.Group();
+	for (let i = 0; i < 4; i++) {
+		const a = (i / 4) * Math.PI * 2 + Math.PI / 4;
+		const fx = Math.cos(a) * SPIDER_FOOT;
+		const fz = Math.sin(a) * SPIDER_FOOT;
+		const leg = new THREE.Mesh(new THREE.CylinderGeometry(0.0035, 0.0035, 1, 8), chrome);
+		const from = new THREE.Vector3(fx, 0.004, fz);
+		const to = new THREE.Vector3(0, 0.035, 0);
+		leg.scale.y = from.distanceTo(to);
+		leg.position.copy(from).add(to).multiplyScalar(0.5);
+		leg.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), to.clone().sub(from).normalize());
+		hub.add(leg);
+		const foot = new THREE.Mesh(new THREE.SphereGeometry(0.007, 10, 8), rubber);
+		foot.position.copy(from);
+		hub.add(foot);
+	}
+	g.add(hub);
+	const post = new THREE.Mesh(new THREE.CylinderGeometry(0.0045, 0.0045, 1, 10), chrome);
+	g.add(post);
+	const head = new THREE.Group();
+	const bar = new THREE.Mesh(new THREE.BoxGeometry(0.012, 0.02, 0.09), brass);
+	head.add(bar);
+	for (const z of [-0.03, 0, 0.03]) {
+		const notch = new THREE.Mesh(new THREE.BoxGeometry(0.014, 0.008, 0.012), rubber);
+		notch.position.set(0, 0.009, z);
+		head.add(notch);
+	}
+	g.add(head);
+	g.userData.setHeight = (h) => {
+		const top = Math.max(0.05, h - 0.022);
+		post.scale.y = top - 0.03;
+		post.position.y = 0.03 + (top - 0.03) / 2;
+		head.position.y = top + 0.01;
+	};
+	g.userData.setHeight(0.1);
+	g.traverse((o) => {
+		if (o.isMesh) {
+			o.castShadow = true;
+		}
+	});
+	return g;
+}
+
 export class Cue {
 	constructor(scene, spec) {
 		this.pivot = new THREE.Group();
@@ -50,7 +171,7 @@ export class Cue {
 	 * Umiestni tágo za bielu: smer dir, odtiahnutie podľa sily, miesto úderu (side, top).
 	 * balls: gule na stole; tágo sa nad ne zdvihne ako nad mantinel (len vzhľad, úder sa nemení).
 	 */
-	place(cue, dir, pull, side, top, visible, balls) {
+	place(cue, dir, pull, side, top, visible, balls, spider = null) {
 		this.pivot.visible = visible;
 		if (!visible) {
 			return;
@@ -106,8 +227,8 @@ export class Cue {
 			}
 			return true;
 		};
-		let want = TILT;
-		for (; want < MAX_TILT; want += 0.005) {
+		let want = spider ? SPIDER_TILT : TILT;
+		for (; !spider && want < MAX_TILT; want += 0.005) {
 			const ok = [d1, d2].every((sd) => sd > len || base + sd * Math.sin(want) >= EDGE_H + rad(sd) / Math.cos(want));
 			if (ok && clear(want)) {
 				break;

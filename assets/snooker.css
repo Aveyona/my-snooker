@@ -482,3 +482,10 @@ body.mysn-page { font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans
 .mysn-tour span { font-size: 12px; opacity: .75; }
 .mysn-tour div { display: flex; gap: 6px; flex-wrap: wrap; }
 .mysn-tour .mysn-btn { width: auto; flex: 1; }
+/* Ponuka F3: krieda, pavúk, nové postavenie gúľ */
+.mysn-tools-menu { width: min(360px, calc(100vw - 32px)); display: flex; flex-direction: column; gap: 8px; }
+.mysn-tools-menu .mysn-btn { text-align: left; }
+.mysn-tools-menu .mysn-btn b { display: inline-block; min-width: 18px; color: #d4a72c; }
+.mysn-tools-menu .mysn-btn:disabled { opacity: .45; }
+.mysn-tools-menu .mysn-note { margin: -4px 0 2px; font-size: 12px; }
+.mysn-spin-note { font-size: 11px; color: #ffd34d; font-weight: 600; }

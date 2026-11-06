@@ -1519,6 +1519,63 @@ export class UI {
 		this.setCtrl(on, freeCam);
 	}
 
+	/**
+	 * Ponuka F3: 1 Nakriedovať, 2 Pavúk, 3 Nové postavenie gúľ. o.spider = 'ok' | 'on' | text prečo nie,
+	 * o.rack = názov alebo '' (v partii nie).
+	 */
+	openTools(on, o = {}) {
+		if (!this.toolsBox) {
+			this.toolsBox = h('div', 'mysn-panel mysn-tools-menu mysn-hidden');
+			for (const t of ['pointerdown', 'mousedown', 'click', 'wheel']) {
+				this.toolsBox.addEventListener(t, (e) => e.stopPropagation());
+			}
+			this.root.appendChild(this.toolsBox);
+		}
+		const B = this.toolsBox;
+		B.classList.toggle('mysn-hidden', !on);
+		if (!on) {
+			this._tools = null;
+			return;
+		}
+		this._tools = { toolChalk: !!o.chalk, spiderPick: o.spider === 'ok' || o.spider === 'on', rackNew: !!o.rack };
+		B.innerHTML = '<h3>Krieda a pomôcky (F3)</h3>';
+		const row = (n, label, act, ok, note) => {
+			const b = this.button(`<b>${n}</b> ${label}`, act, note || '');
+			b.disabled = !ok;
+			B.appendChild(b);
+			if (note && !ok) {
+				B.appendChild(h('p', 'mysn-note', esc(note)));
+			}
+		};
+		row(1, 'Nakriedovať tágo', 'toolChalk', !!o.chalk);
+		row(2, o.spider === 'on' ? 'Odložiť pavúka' : 'Pavúk (na jeden úder)', 'spiderPick', this._tools.spiderPick, o.spider === 'ok' || o.spider === 'on' ? '' : o.spider);
+		if (o.rack) {
+			row(3, o.rack, 'rackNew', true);
+		}
+		B.appendChild(h('p', 'mysn-note', 'Klávesy 1 až 3, Esc alebo F3 zavrie. Pavúk aj trojuholník visia pod stolom (Ctrl a klik).'));
+	}
+
+	toolsOpen() {
+		return !!this._tools;
+	}
+
+	toolEnabled(act) {
+		return !!(this._tools && this._tools[act]);
+	}
+
+	/** Poznámka pod guľou Miesto úderu (napríklad automaticky vyšší úder pri mantineli). */
+	spinNote(text) {
+		if (!this.spinNoteEl) {
+			this.spinNoteEl = h('div', 'mysn-spin-note');
+			this.spinBox.appendChild(this.spinNoteEl);
+		}
+		if (this._spinNote !== text) {
+			this._spinNote = text;
+			this.spinNoteEl.textContent = text;
+			this.spinNoteEl.style.display = text ? '' : 'none';
+		}
+	}
+
 	/** FPS (snímky za sekundu): výrazne vľavo hore, len pri držanom Ctrl. */
 	setFps(fps) {
 		if (!this.fpsBox) {

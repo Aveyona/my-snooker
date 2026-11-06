@@ -131,6 +131,7 @@ function mysn_roadmap() {
 /** Denník zmien (najnovšie hore). */
 function mysn_changelog() {
 	return array(
+		array( '0.6.78', '6. 11. 2026', 'Pavúk (spider) a ponuka F3: F3 otvorí ponuku Nakriedovať, Pavúk a Nové postavenie gúľ. Pavúk sa položí sám za bielu na najbližšie voľné miesto, tágo na ňom leží vždy v rovnakom sklone, platí na jeden úder. Pri mantineli nefunguje. Pod stolom visí pavúk (strana baulku) a na druhom konci trojuholník, oba sa dajú vziať Ctrl a klikom. Pri mantineli sa úder automaticky posunie vyššie na bielu (tágo sa menej zdvíha), dá sa doladiť na guli Miesto úderu, sklon tága a kamera sa prispôsobia.' ),
 		array( '0.6.77', '6. 11. 2026', 'Oprava: návrat z pohľadu na predmet pravým tlačidlom pri držanom Ctrl nechá myš voľnú (kurzor ostane, predmety sa ďalej rozsvecujú).' ),
 		array( '0.6.76', '6. 11. 2026', 'Vypínač na stene vľavo od dverí herne: s Ctrl a kliknutím zhasne alebo rozsvieti nástenné lampy, potom svieti len nad stolom. Pamätá sa.' ),
 		array( '0.6.75', '6. 11. 2026', 'Admin: v Nastaveniach Prehliadka (Herňa, Štadión, Kancelária), voľná kamera bez hraníc miestností.' ),

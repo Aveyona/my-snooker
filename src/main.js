@@ -12,7 +12,7 @@ import { buildOffice } from './office.js';
 import { Crowd } from './fans.js';
 import { COUNTRIES, countryByCode } from './countries.js';
 import { BallViews } from './balls.js';
-import { Cue, AimGuide } from './cue.js';
+import { Cue, AimGuide, spiderSpot, cushionTop, buildSpider, SPIDER_TILT } from './cue.js';
 import { Hands } from './hands.js';
 import { CameraRig } from './camera.js';
 import { Controls } from './controls.js';
@@ -21,7 +21,7 @@ import { UI } from './ui.js';
 import { Game, fmtTime } from './match.js';
 import { Online } from './online.js';
 import { remaining } from './rules.js';
-import { aimTrace, R, snapshot } from './physics.js';
+import { aimTrace, R, L, snapshot } from './physics.js';
 import { CUES, cueById, ownCueSpec } from './cues.js';
 
 const STORE = 'mySnookerSettings';
@@ -154,6 +154,45 @@ export function start(root, config = {}) {
 	};
 	let cueSpec = specFor(settings.cue);
 	const cue = new Cue(scene, cueSpec);
+	// --- pavúk (F3 alebo Ctrl a klik pod stolom): na jeden úder, potom sa sám odloží ---
+	const spiderMesh = buildSpider();
+	spiderMesh.visible = false;
+	scene.add(spiderMesh);
+	const HANG_X = L / 2 - 0.05 + 0.012; // čelo skrine stola (pod rámom)
+	const spiderHang = buildSpider(); // zavesený pod stolom na strane baulku
+	spiderHang.userData.setHeight(0.12);
+	spiderHang.rotation.set(0, 0, Math.PI / 2); // naležato na čele skrine, nohy k stene skrine
+	spiderHang.position.set(-HANG_X - 0.004, -0.17, 0.25);
+	table.group.add(spiderHang);
+	// trojuholník na gule zavesený na druhom konci stola (nové postavenie gúľ)
+	const triangle = new THREE.Group();
+	{
+		const tri = new THREE.MeshStandardMaterial({ color: 0x2a1a10, roughness: 0.45, metalness: 0.1 });
+		const side = 0.32;
+		const rr = side / Math.sqrt(3);
+		for (let i = 0; i < 3; i++) {
+			const a = (i / 3) * Math.PI * 2 + Math.PI / 2;
+			const b = ((i + 1) / 3) * Math.PI * 2 + Math.PI / 2;
+			const p1 = new THREE.Vector3(0, Math.sin(a) * rr, Math.cos(a) * rr);
+			const p2 = new THREE.Vector3(0, Math.sin(b) * rr, Math.cos(b) * rr);
+			const bar = new THREE.Mesh(new THREE.BoxGeometry(0.012, 0.022, side + 0.02), tri);
+			bar.position.copy(p1).add(p2).multiplyScalar(0.5);
+			bar.quaternion.setFromUnitVectors(new THREE.Vector3(0, 0, 1), p2.clone().sub(p1).normalize());
+			bar.castShadow = true;
+			triangle.add(bar);
+		}
+		const hook = new THREE.Mesh(new THREE.CylinderGeometry(0.004, 0.004, 0.03, 8), new THREE.MeshStandardMaterial({ color: 0xb08a3c, metalness: 0.85, roughness: 0.35 }));
+		hook.rotation.z = Math.PI / 2;
+		hook.position.set(-0.015, rr - 0.005, 0);
+		triangle.add(hook);
+	}
+	triangle.position.set(HANG_X + 0.008, -0.15, 0);
+	table.group.add(triangle);
+	let spiderOn = false; // hráč si vybral pavúka na najbližší úder
+	let spiderNow = null; // kde pavúk práve stojí (null = nie je na stole)
+	let spiderWarnT = 0;
+	// pri mantineli: automaticky vyšší úder (tágo nemusí ísť strmo hore); hráč ho môže doladiť
+	let cushAuto = null; // { prev, val } kým platí automatické nastavenie
 	let fpsAvg = 60; // snímky za sekundu (Ctrl)
 	let fpsT = 0;
 	let fpsLast = 0;
@@ -543,6 +582,11 @@ export function start(root, config = {}) {
 	const hotCache = new Map(); // id miesta → zoznam meshov na rozsvietenie
 	const hotLift = new Map(); // mesh → pôvodný materiál
 	const below = (v, dy) => v.clone().add(new THREE.Vector3(0, -dy, 0));
+	/** Pod stolom: zavesený pavúk (strana baulku) a trojuholník (druhý koniec). */
+	const tableSpots = () => [
+		{ id: 'spider', act: 'spiderPick', pos: new THREE.Vector3(-HANG_X - 0.06, -0.17, 0.25), r: 0.16 },
+		{ id: 'triangle', act: 'rackNew', pos: new THREE.Vector3(HANG_X, -0.15, 0), r: 0.2 },
+	];
 	/** Klikateľné miesta podľa miestnosti: stred, polomer a kláves, ktorý klik urobí. */
 	const hotSpots = () => {
 		if (venue === 'league') {
@@ -553,6 +597,7 @@ export function start(root, config = {}) {
 				{ id: 'lg-score', key: 'f4', pos: v.score.look, r: 2.6 },
 				{ id: 'lg-chair' + sd, key: 'f7', pos: below(v['chair' + sd].pos, 0.55), r: 0.7 },
 				{ id: 'lg-rack' + sd, key: 'f2', pos: v['rack' + sd].look, r: 0.8 },
+				...tableSpots(),
 			];
 		}
 		return [
@@ -567,6 +612,7 @@ export function start(root, config = {}) {
 			{ id: 'radio', key: 'f9', pos: new THREE.Vector3(RADIO.radio.x, RADIO.radio.top + 0.11, RADIO.radio.z), r: 0.3 },
 			{ id: 'mixer', key: 'f9', pos: new THREE.Vector3(RADIO.desk.x, RADIO.desk.top + 0.06, RADIO.desk.z), r: 0.45 },
 			{ id: 'switch', act: 'wallLamps', pos: room.lightSwitch, r: 0.13 }, // vypínač lámp pri dverách (len myšou)
+			...tableSpots(),
 		];
 	};
 	const shown = (o) => {
@@ -1051,6 +1097,12 @@ export function start(root, config = {}) {
 		// krieda: nakriedovaná špička prenesie miesto úderu (falšu) naplno, bez kriedy len pätinu
 		const k = cueSpec.grip * (chalk > 0 ? 1 : CHALK_SPIN);
 		if (game.shoot(power, spin.side * k, spin.top * k)) {
+			spiderOn = false; // pavúk platí na jeden úder
+			if (cushAuto && !cushAuto.user) {
+				ui.setSpin(spin.side, cushAuto.prev); // automatický vyšší úder pri mantineli platil len na tento úder
+			}
+			cushAuto = null;
+			ui.spinNote('');
 			if (chalk > 0) {
 				chalk--;
 			}
@@ -1612,6 +1664,61 @@ export function start(root, config = {}) {
 			saveSettings(settings);
 			sound.cue && sound.cue(0.05); // krátke cvaknutie
 		},
+		// F3: ponuka kriedy, pavúka a nového postavenia gúľ
+		tools: () => {
+			if (ui.toolsOpen()) {
+				ui.openTools(false);
+				return;
+			}
+			const mine = game.state === 'aim' && !game.spectating;
+			const sp = mine && game.cue.on ? spiderSpot(game.cue, game.dir, game.balls) : null;
+			controls.uncapture(); // kurzor na výber v ponuke (alebo klávesy 1 až 3)
+			ui.openTools(true, {
+				chalk: mine,
+				spider: spiderOn ? 'on' : sp ? 'ok' : mine ? 'Pri mantineli alebo s guľou tesne za bielou sa pavúk nedá položiť.' : 'Pavúk sa dá vziať, keď mieriš.',
+				rack: !game.match ? (game.solo ? 'Nový frame' : 'Nové postavenie gúľ') : '',
+			});
+		},
+		toolChalk: () => {
+			ui.openTools(false);
+			enterView('chalk');
+		},
+		spiderPick: () => {
+			ui.openTools(false);
+			if (spiderOn) {
+				spiderOn = false; // druhé vybratie: pavúk späť pod stôl
+				ui.toast('Pavúk je odložený.');
+				return;
+			}
+			if (game.state !== 'aim' || game.spectating || !game.cue.on) {
+				ui.toast('Pavúk sa dá vziať, keď mieriš.');
+				return;
+			}
+			if (!spiderSpot(game.cue, game.dir, game.balls)) {
+				ui.toast('Pavúk sa sem nedá položiť: biela je pri mantineli alebo je tesne za ňou guľa.');
+				return;
+			}
+			spiderOn = true;
+			if (!freeMouse) {
+				controls.capture();
+			}
+			ui.toast('Pavúk: tágo leží vždy v rovnakej výške nad bielou. Po údere sa sám odloží.');
+		},
+		rackNew: () => {
+			ui.openTools(false);
+			if (game.match) {
+				ui.toast('V partii sa gule nanovo nestavajú.');
+				return;
+			}
+			if (game.solo) {
+				actions.soloNew();
+			} else {
+				actions.reset();
+			}
+			if (!freeMouse) {
+				controls.capture();
+			}
+		},
 		help: () => enterView('board'),
 		board: () => enterView('board'),
 		rack: () => enterView('rack'),
@@ -1936,6 +2043,18 @@ export function start(root, config = {}) {
 		},
 		key: (k) => {
 			const lk = k.toLowerCase();
+			if (ui.toolsOpen()) {
+				// ponuka F3: 1 krieda, 2 pavúk, 3 nové postavenie, Esc alebo F3 zavrie
+				const pick = { 1: 'toolChalk', 2: 'spiderPick', 3: 'rackNew' }[lk];
+				if (pick && ui.toolEnabled(pick)) {
+					actions[pick]();
+					return true;
+				}
+				if (lk === 'escape' || lk === 'f3') {
+					ui.openTools(false);
+					return true;
+				}
+			}
 			if (ui.foundOpen()) {
 				// okno nájdeného ligového zápasu: Enter prijme, Esc zruší (aj vyhľadávanie)
 				if (lk === 'enter') {
@@ -2107,7 +2226,7 @@ export function start(root, config = {}) {
 			if (venue === 'league' && (lk === 'f8' || lk === 'f9' || lk === 'f10')) {
 				return true; // na štadióne zatiaľ nič nerobia
 			}
-			const fkeys = { f1: 'board', f2: 'rack', f3: 'chalk', f4: 'score', f7: 'chair', f8: 'trophies', f9: 'mixer', f10: 'bar', f12: 'leagueBoard' };
+			const fkeys = { f1: 'board', f2: 'rack', f3: 'tools', f4: 'score', f7: 'chair', f8: 'trophies', f9: 'mixer', f10: 'bar', f12: 'leagueBoard' };
 			if (fkeys[lk]) {
 				ui.opts.onAction(fkeys[lk]);
 				return true;
@@ -2673,7 +2792,47 @@ export function start(root, config = {}) {
 		if (watchAim) {
 			pull += ((watchAim.pull || 0) - pull) * Math.min(1, dt * 18);
 		}
-		cue.place(game.cue, game.dir, pull, watchAim ? watchAim.side || 0 : spin.side, watchAim ? watchAim.top || 0 : spin.top, (aiming || view === 'chalk' || (watchAim && !watchAim.place)) && game.cue.on, game.balls);
+		// pavúk: stojí za bielou na najbližšom voľnom mieste, kým mierim (po údere sa odloží)
+		spiderNow = spiderOn && aiming && game.cue.on ? spiderSpot(game.cue, game.dir, game.balls) : null;
+		if (spiderOn && aiming && !spiderNow && performance.now() - spiderWarnT > 4000) {
+			spiderWarnT = performance.now();
+			ui.toast('Pavúk sa v tomto smere nedá položiť (mantinel alebo guľa tesne za bielou).');
+		}
+		spiderMesh.visible = !!spiderNow;
+		spiderHang.visible = !spiderOn;
+		if (spiderNow) {
+			spiderMesh.position.set(spiderNow.x, 0, spiderNow.z);
+			spiderMesh.rotation.set(0, -game.dir, 0);
+			spiderMesh.userData.setHeight(spiderNow.h);
+		}
+		// pri mantineli: úder automaticky vyššie na bielu (menej zdvihnuté tágo); hráč to môže doladiť
+		// na guli Miesto úderu, sklon tága (a s ním kamera) sa potom prispôsobí
+		if (aiming && game.cue.on && !spiderNow && !game.spectating) {
+			const ct = cushionTop(game.cue, game.dir, cueSpec.len || 1.45);
+			if (ct > 0.02) {
+				if (!cushAuto) {
+					cushAuto = { prev: spin.top, val: -1, user: false };
+				}
+				if (!cushAuto.user && Math.abs(spin.top - cushAuto.val) > 0.001 && cushAuto.val >= 0) {
+					cushAuto.user = true; // hráč si miesto úderu zmenil sám
+				}
+				if (!cushAuto.user) {
+					const want = Math.max(cushAuto.prev, ct);
+					if (Math.abs(want - spin.top) > 0.004) {
+						ui.setSpin(spin.side, want);
+					}
+					cushAuto.val = spin.top;
+				}
+				ui.spinNote(cushAuto.user ? '' : 'Vyššie (mantinel)');
+			} else if (cushAuto) {
+				if (!cushAuto.user) {
+					ui.setSpin(spin.side, cushAuto.prev);
+				}
+				cushAuto = null;
+				ui.spinNote('');
+			}
+		}
+		cue.place(game.cue, game.dir, pull, watchAim ? watchAim.side || 0 : spin.side, watchAim ? watchAim.top || 0 : spin.top, (aiming || view === 'chalk' || (watchAim && !watchAim.place)) && game.cue.on, game.balls, spiderNow);
 		if (!hands) {
 			hands = new Hands(scene, rig.camera);
 		}
