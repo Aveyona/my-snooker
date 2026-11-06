@@ -6,7 +6,7 @@ import * as THREE from 'three';
 import { RoomEnvironment } from 'three/examples/jsm/environments/RoomEnvironment.js';
 import { buildTable, buildRoom } from './table.js';
 import { buildRoomShell, ROOM } from './room.js';
-import { buildRadioCorner, RadioPlayer } from './radio.js';
+import { buildRadioCorner, RadioPlayer, RADIO } from './radio.js';
 import { buildStadium } from './stadium.js';
 import { buildOffice } from './office.js';
 import { Crowd } from './fans.js';
@@ -552,6 +552,9 @@ export function start(root, config = {}) {
 			{ id: 'trophies', key: 'f8', pos: room.trophies.look, r: 0.9 },
 			{ id: 'bar', key: 'f10', pos: room.bar.look, r: 0.7 },
 			{ id: 'leagueBoard', key: 'f12', pos: room.leagueBoard.look, r: 0.9 },
+			// rádio na komode aj mixpult robia to isté: F9 (rádio, stanice a hlasitosť)
+			{ id: 'radio', key: 'f9', pos: new THREE.Vector3(RADIO.radio.x, RADIO.radio.top + 0.11, RADIO.radio.z), r: 0.3 },
+			{ id: 'mixer', key: 'f9', pos: new THREE.Vector3(RADIO.desk.x, RADIO.desk.top + 0.06, RADIO.desk.z), r: 0.45 },
 		];
 	};
 	const shown = (o) => {
