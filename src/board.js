@@ -38,7 +38,7 @@ const PAPERS = [
 			'Esc  hlavné menu, Ctrl drž: voľná myš',
 			'Z späť, B biela do ruky,',
 			'R nové rozostavenie, S preskočiť',
-			'Enter drž: sila, šípky: mierenie, medzerník: voľná kamera',
+			'Ťahaj myšou: úder, šípky: mierenie, medzerník: voľná kamera',
 		],
 	},
 	{

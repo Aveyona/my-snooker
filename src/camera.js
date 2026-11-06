@@ -184,7 +184,8 @@ export class CameraRig {
 			// kamera nesmie prejsť cez steny, strop ani podlahu herne (kancelária stojí mimo herne)
 			clampToRoom(pos);
 		}
-		const k = this.snapNext ? 1 : 1 - Math.exp(-dt * (this.mode === 'view' ? 4 : moving ? 4 : 7));
+		// voľná kamera (viewSnap): bez oneskorenia, plynulosť rieši pohyb sám (inak pohľad zaostáva a pohyb seká)
+		const k = this.snapNext || (this.mode === 'view' && this.viewSnap) ? 1 : 1 - Math.exp(-dt * (this.mode === 'view' ? 4 : moving ? 4 : 7));
 		this.snapNext = false;
 		this.camera.position.lerp(pos, k);
 		this._curLook.lerp(look, k);

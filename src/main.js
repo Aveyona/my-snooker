@@ -472,15 +472,26 @@ export function start(root, config = {}) {
 		o.stop(t + 0.1);
 	};
 	// --- voľná kamera (medzerník): z aktuálneho pohľadu, pohyb klávesmi, myšou rozhliadanie ---
+	let freeMem = null; // posledná poloha voľnej kamery (v tej istej miestnosti sa k nej vráti)
+	const freeVel = new THREE.Vector3();
 	const freeCam = () => {
 		if (view) {
 			exitView();
 		}
-		const pos = rig.camera.position.clone();
+		let pos = rig.camera.position.clone();
 		const dir = new THREE.Vector3();
 		rig.camera.getWorldDirection(dir);
 		chairLook.yaw = Math.atan2(dir.z, dir.x);
 		chairLook.pitch = Math.max(-1.2, Math.min(0.9, Math.asin(Math.max(-1, Math.min(1, dir.y)))));
+		if (freeMem && freeMem.venue === venue) {
+			pos = freeMem.pos.clone();
+			chairLook.yaw = freeMem.yaw;
+			chairLook.pitch = freeMem.pitch;
+			const c = Math.cos(chairLook.pitch);
+			dir.set(Math.cos(chairLook.yaw) * c, Math.sin(chairLook.pitch), Math.sin(chairLook.yaw) * c);
+		}
+		freeVel.set(0, 0, 0);
+		rig.viewSnap = true;
 		view = 'free';
 		controls.blocked = true;
 		rig.noClamp = true;
@@ -490,6 +501,12 @@ export function start(root, config = {}) {
 		rig.jump();
 		ui.showView(null);
 		ui.toast('Voľná kamera: myš rozhliadanie, šípky alebo W A S D posun, Q a E dole a hore, Shift rýchlejšie, Ctrl zastaví kameru. Medzerník alebo Esc: späť za tágo.');
+	};
+	/** Odchod z voľnej kamery: zapamätá si polohu a smer pohľadu. */
+	const freeLeave = () => {
+		freeMem = { venue, pos: rig.viewPos.clone(), yaw: chairLook.yaw, pitch: chairLook.pitch };
+		rig.viewSnap = false;
+		freeVel.set(0, 0, 0);
 	};
 	const freeKeys = (k) => controls._keys.has(k) || controls._keys.has(k.toUpperCase());
 	const freeMove = (dt) => {
@@ -514,11 +531,15 @@ export function start(root, config = {}) {
 		if (freeKeys('q')) {
 			m.y -= 1;
 		}
-		if (!m.lengthSq()) {
+		// plynulý rozbeh a dobeh (rýchlosť sa mení postupne)
+		if (m.lengthSq()) {
+			m.normalize().multiplyScalar(controls._keys.has('Shift') ? 6 : 2.2);
+		}
+		freeVel.lerp(m, 1 - Math.exp(-dt * 9));
+		if (freeVel.lengthSq() < 1e-6) {
 			return;
 		}
-		m.normalize().multiplyScalar(dt * (controls._keys.has('Shift') ? 6 : 2.2));
-		const p = rig.viewPos.clone().add(m);
+		const p = rig.viewPos.clone().addScaledVector(freeVel, dt);
 		// kamera ostáva v miestnosti (herňa) alebo v aréne (štadión)
 		const lg = venue === 'league';
 		const bx = lg ? 9.5 : ROOM.x - 0.25;
@@ -814,6 +835,9 @@ export function start(root, config = {}) {
 			return;
 		}
 		const was = view;
+		if (was === 'free') {
+			freeLeave();
+		}
 		view = null;
 		room.setRackView(false);
 		if (venue === 'league') {
@@ -2370,8 +2394,12 @@ export function start(root, config = {}) {
 		rig.cueTilt = cue.pivot.visible ? cue.tilt || 0 : 0;
 		// po údere: keď gule zastanú a som na rade, mierim zo smeru, z ktorého sa kamera práve pozerá na bielu
 		// (kamera sa neotáča, len sa plynulo spustí za tágo); v partii aj po súperovom údere
-		if (view === 'free' && !freeMouse) {
-			freeMove(Math.min(0.05, dt));
+		if (view === 'free') {
+			if (freeMouse) {
+				freeVel.set(0, 0, 0); // Ctrl: kamera stojí
+			} else {
+				freeMove(Math.min(0.05, dt));
+			}
 		}
 		// časomiera ligového zápasu: 30 s na úder, posledných 5 s veľký odpočet, potom faul za čas
 		const clk = shotClock();

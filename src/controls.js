@@ -10,7 +10,7 @@
  *  Zhora: klikni alebo ťahaj na stole = smer úderu.
  *  Voľná kamera: ťahanie otáča pohľad, krátke ťuknutie na stôl alebo šípky = smer.
  *  Biela do ruky: klikni alebo ťahaj v D.
- *  Sila: ťahaj ukazovateľ sily nadol a pusť, alebo drž Enter. Medzerník: voľná kamera.
+ *  Úder: ťahanie myšou (dôležitá súčasť hry; na mobile ťahanie prstom). Medzerník: voľná kamera.
  */
 import * as THREE from 'three';
 import { R } from './physics.js';
@@ -445,25 +445,6 @@ export class Controls {
 			}
 			return;
 		}
-		if (k === 'Enter' && g.state !== 'place') {
-			// Enter drž: sila stúpa a klesá, pustenie = úder (okná ako nájdený zápas majú prednosť)
-			if (isDown && !this.charging && this.hooks.key && this.hooks.key(k, e)) {
-				e.preventDefault();
-				return;
-			}
-			e.preventDefault();
-			if (this.blocked) {
-				return;
-			}
-			if (isDown && !this.charging && g.canShoot()) {
-				this.hooks.unlock();
-				this.charging = true;
-				this._spaceT = 0;
-			} else if (!isDown && this.charging) {
-				this.release();
-			}
-			return;
-		}
 		if (!isDown) {
 			return;
 		}
@@ -495,7 +476,7 @@ export class Controls {
 		}
 	}
 
-	/** Šípky (plynulé mierenie) a Enter (nabíjanie). */
+	/** Šípky (plynulé mierenie). Úder len myšou (ťahanie), klávesom sa neudiera. */
 	update(dt) {
 		const g = this.game;
 		if (g.state === 'aim' && !this.blocked) {
@@ -514,12 +495,6 @@ export class Controls {
 		// keď ruka stojí, ukazovateľ sily pomaly klesne na nulu
 		if (this.stroking && this._hist.length && performance.now() - this._hist[this._hist.length - 1].t > 120) {
 			this.power *= Math.exp(-dt * 8);
-		}
-		if (this.charging && this._keys.has('Enter')) {
-			// sila stúpa a klesá (ping-pong), aby sa dala trafiť presne
-			this._spaceT += dt;
-			const t = (this._spaceT / 1.6) % 2;
-			this.power = t < 1 ? t : 2 - t;
 		}
 	}
 }
