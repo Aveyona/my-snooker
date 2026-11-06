@@ -1963,6 +1963,15 @@ export class UI {
 			`<div class="mysn-tip-bar"><i style="width:${Math.min(100, pct)}%;background:${col}"></i></div>` +
 			`<div class="mysn-tip-state">Opotrebenie <b>${pct} %</b>, ${state}</div>` +
 			(t.guest ? '<p class="mysn-cp-note">Špice sa ukladajú len prihláseným hráčom.</p>' : `<div class="mysn-tip-sum">Spolu úderov <b>${t.total}</b> · vymenených špíc <b>${t.replaced}</b></div><div class="mysn-tip-new"><span>Vymeniť za novú:</span></div>`);
+		el.insertAdjacentHTML(
+			'beforeend',
+			'<ul class="mysn-tip-info">' +
+				'<li>Mäkká špica drží falše o desatinu lepšie, ale je o niečo slabšia. Tvrdá je o niečo silnejšia a falše drží o desatinu slabšie.</li>' +
+				'<li>Od 70 % opotrebenia slabnú falše, pri 100 % na polovicu.</li>' +
+				'<li>Nad 90 % sa tágo pri úderoch s falšou môže šmyknúť (asi 1 z 10 takých úderov, pri 100 % 3 z 10). Úder je potom slabý, mierne vybočí a nemá falšu.</li>' +
+				'<li>Pri 90 % príde upozornenie, že treba vymeniť špicu. Špica vydrží približne 1000 úderov, mäkká sa pri silných úderoch ničí rýchlejšie.</li>' +
+				'</ul>'
+		);
 		const nw = el.querySelector('.mysn-tip-new');
 		if (nw) {
 			for (const k of ['soft', 'medium', 'hard']) {
