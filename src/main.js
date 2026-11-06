@@ -228,6 +228,29 @@ export function start(root, config = {}) {
 		ch: chalkT >= 0 ? +chalkT.toFixed(2) : -1,
 	});
 	let remoteRest = null; // { kind, mesh } nádstavec súpera alebo sledovaného hráča
+	/**
+	 * O koľko musí tyč nádstavca stúpať (na 1,35 m), aby prešla ponad mantinel a rám stola: od miesta
+	 * nádstavca dozadu v smere tyče k vonkajšiemu okraju rámu musí byť nad rámom.
+	 */
+	const restRise = (x, z, y, h) => {
+		const yaw = 0.22;
+		const lx = -Math.cos(yaw);
+		const lz = -Math.sin(yaw);
+		const c = Math.cos(game.dir);
+		const sn = Math.sin(game.dir);
+		const ux = lx * c - lz * sn;
+		const uz = lx * sn + lz * c;
+		const hx = L / 2; // už nad nosom mantinelu musí byť tyč nad mantinelom a rámom
+		const hz = 1.778 / 2;
+		let d = Infinity;
+		if (ux > 1e-6) d = Math.min(d, (hx - x) / ux);
+		if (ux < -1e-6) d = Math.min(d, (-hx - x) / ux);
+		if (uz > 1e-6) d = Math.min(d, (hz - z) / uz);
+		if (uz < -1e-6) d = Math.min(d, (-hz - z) / uz);
+		d = Math.max(0.05, d);
+		const start = y + h * 0.6;
+		return Math.min(0.9, Math.max(0.16, ((0.075 - start) / d) * 1.35));
+	};
 	const HANG_X = L / 2 - 0.05 + 0.012; // čelo skrine stola (pod rámom)
 	const spiderHang = buildSpider(0, 0); // zavesený pod stolom na strane baulku (palica vodorovne pozdĺž čela skrine)
 	spiderHang.userData.setHeight(0.1);
@@ -3052,9 +3075,11 @@ export function start(root, config = {}) {
 		if (restRemote) {
 			const tp = cue.pivot.position;
 			const hh = tp.y + Math.hypot(restRemote.x - tp.x, restRemote.z - tp.z) * Math.tan(cue.tilt || 0) - restRemote.y;
-			if (Math.abs(hh - remoteRest.mesh.userData.h) > 0.0005) {
+			const rr = restRise(restRemote.x, restRemote.z, restRemote.y, hh);
+			if (Math.abs(hh - remoteRest.mesh.userData.h) > 0.0005 || Math.abs(rr - (remoteRest.mesh.userData.r || 0)) > 0.005) {
 				remoteRest.mesh.userData.h = hh;
-				remoteRest.mesh.userData.setHeight(hh);
+				remoteRest.mesh.userData.r = rr;
+				remoteRest.mesh.userData.setHeight(hh, rr);
 			}
 		}
 		if (spiderNow) {
@@ -3063,9 +3088,11 @@ export function start(root, config = {}) {
 			const tp = cue.pivot.position;
 			const dist = Math.hypot(spiderNow.x - tp.x, spiderNow.z - tp.z);
 			const hh = tp.y + dist * Math.tan(cue.tilt || 0) - (spiderNow.y || 0);
-			if (Math.abs(hh - (spiderMesh.userData.h || 0)) > 0.0005) {
+			const rr = restRise(spiderNow.x, spiderNow.z, spiderNow.y || 0, hh); // tyč ponad mantinel a rám
+			if (Math.abs(hh - (spiderMesh.userData.h || 0)) > 0.0005 || Math.abs(rr - (spiderMesh.userData.r || 0)) > 0.005) {
 				spiderMesh.userData.h = hh;
-				spiderMesh.userData.setHeight(hh);
+				spiderMesh.userData.r = rr;
+				spiderMesh.userData.setHeight(hh, rr);
 			}
 		}
 		if (!hands) {

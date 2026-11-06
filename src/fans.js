@@ -217,7 +217,7 @@ export class Crowd {
 export function buildReferee() {
 	const r = new THREE.Group();
 	const mat = (color, rough = 0.6, metal = 0) => new THREE.MeshStandardMaterial({ color, roughness: rough, metalness: metal });
-	const skin = mat(0xe2b592, 0.65);
+	const skin = mat(0xeec3a2, 0.62);
 	const shirt = mat(0xf4f4f2, 0.7);
 	const vest = mat(0x14151a, 0.55);
 	const trousers = mat(0x15161b, 0.7);
@@ -278,14 +278,38 @@ export function buildReferee() {
 	head.position.set(0, 1.72, 0);
 	r.add(head);
 	add(new THREE.SphereGeometry(0.105, 24, 18), skin, 0, 0, 0, head).scale.set(0.9, 1.08, 1);
+	const white = mat(0xf7f7f2, 0.3);
+	const iris = mat(0x3b5a78, 0.3);
+	const lips = mat(0xa8584e, 0.6);
+	const brow = mat(0x3d3d42, 0.9);
+	const frameM = mat(0x1a1a1a, 0.3, 0.6);
+	const lens = new THREE.MeshStandardMaterial({ color: 0xcfe6ff, transparent: true, opacity: 0.18, roughness: 0.05, metalness: 0.2, depthWrite: false });
 	for (const sx of [-1, 1]) {
 		add(new THREE.SphereGeometry(0.022, 10, 8), skin, sx * 0.095, 0, -0.005, head).scale.set(0.5, 1, 0.8); // uši
-		add(new THREE.SphereGeometry(0.011, 8, 6), dark, sx * 0.035, 0.018, 0.093, head); // oči
+		// oči: bielko, dúhovka, zrenička
+		add(new THREE.SphereGeometry(0.013, 12, 10), white, sx * 0.034, 0.016, 0.086, head).scale.set(1.2, 0.8, 0.6);
+		add(new THREE.SphereGeometry(0.0065, 10, 8), iris, sx * 0.034, 0.016, 0.0935, head);
+		add(new THREE.SphereGeometry(0.003, 8, 6), dark, sx * 0.034, 0.016, 0.0985, head);
+		// obočie
+		const b = add(new THREE.BoxGeometry(0.03, 0.006, 0.008), brow, sx * 0.035, 0.038, 0.092, head);
+		b.rotation.z = sx * -0.12;
+		// okuliare: okrúhle obrúčky so sklom a stranice k ušiam
+		const rim = add(new THREE.TorusGeometry(0.019, 0.0022, 8, 24), frameM, sx * 0.035, 0.016, 0.105, head);
+		rim.scale.y = 0.85;
+		add(new THREE.CircleGeometry(0.018, 20), lens, sx * 0.035, 0.016, 0.1045, head).scale.y = 0.85;
+		const arm = add(new THREE.BoxGeometry(0.003, 0.003, 0.085), frameM, sx * 0.08, 0.018, 0.058, head);
+		arm.rotation.y = sx * 0.28;
 	}
-	const nose = add(new THREE.ConeGeometry(0.014, 0.04, 8), skin, 0, -0.005, 0.105, head);
-	nose.rotation.x = Math.PI / 2;
-	const hairM = add(new THREE.SphereGeometry(0.109, 24, 14, 0, Math.PI * 2, 0, Math.PI * 0.55), hair, 0, 0.012, -0.008, head);
-	hairM.scale.set(0.93, 1.06, 1.03);
+	add(new THREE.BoxGeometry(0.018, 0.003, 0.003), frameM, 0, 0.02, 0.108, head); // mostík okuliarov
+	add(new THREE.SphereGeometry(0.013, 12, 10), skin, 0, -0.008, 0.103, head).scale.set(0.85, 1.3, 1.1); // nos
+	// ústa: pery mierne do úsmevu
+	const mouth = add(new THREE.CapsuleGeometry(0.004, 0.024, 4, 8), lips, 0, -0.045, 0.094, head);
+	mouth.rotation.z = Math.PI / 2;
+	// vlasy: krátke, len hore a vzadu (čelo a tvár voľné)
+	const top = add(new THREE.SphereGeometry(0.109, 24, 10, 0, Math.PI * 2, 0, Math.PI * 0.3), hair, 0, 0.014, -0.006, head);
+	top.scale.set(0.93, 1.06, 1.03);
+	const back = add(new THREE.SphereGeometry(0.11, 24, 14, Math.PI / 2 + 1.05, Math.PI * 2 - 2.1, 0, Math.PI * 0.62), hair, 0, 0.008, -0.004, head);
+	back.scale.set(0.93, 1.06, 1.03);
 	r.userData.head = head;
 	return r;
 }

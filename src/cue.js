@@ -184,7 +184,8 @@ export function buildSpider(shaftYaw = 0.22, rise = 0.16, kind = 'spider') {
 		}
 		return sh;
 	};
-	g.userData.setHeight = (h) => {
+	g.userData.setHeight = (h, riseNow = rise) => {
+		rise = riseNow;
 		const ty = Math.max(0.045, h - 0.007); // spodok tága (polomer asi 6 mm) leží v strednom žliabku
 		if (plate) {
 			g.remove(plate);
