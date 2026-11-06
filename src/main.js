@@ -1741,6 +1741,9 @@ export function start(root, config = {}) {
 		tools: () => {
 			if (ui.toolsOpen()) {
 				ui.openTools(false);
+				if (!freeMouse) {
+					controls.capture();
+				}
 				return;
 			}
 			const mine = game.state === 'aim' && !game.spectating;
@@ -1759,6 +1762,9 @@ export function start(root, config = {}) {
 		},
 		toolChalk: () => {
 			ui.openTools(false);
+			if (!freeMouse) {
+				controls.capture();
+			}
 			enterView('chalk');
 		},
 		spiderPick: (kind) => {
@@ -2134,6 +2140,9 @@ export function start(root, config = {}) {
 				}
 				if (lk === 'escape' || lk === 'f3') {
 					ui.openTools(false);
+					if (!freeMouse) {
+						controls.capture(); // späť do hry: myš sa znova zachytí na tágo
+					}
 					return true;
 				}
 			}

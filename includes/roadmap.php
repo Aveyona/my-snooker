@@ -131,6 +131,7 @@ function mysn_roadmap() {
 /** Denník zmien (najnovšie hore). */
 function mysn_changelog() {
 	return array(
+		array( '0.6.87', '6. 11. 2026', 'Oprava: po zatvorení ponuky F3 (F3 alebo Esc) a po nakriedovaní sa myš znova zachytí v hre.' ),
 		array( '0.6.86', '6. 11. 2026', 'Oprava: tágo už neprechádza cez krížik ani pavúka, leží presne v drážke (výška nádstavca sa riadi skutočnou polohou tága, aj pri údere vyššie alebo nižšie na bielu).' ),
 		array( '0.6.85', '6. 11. 2026', 'Krížik pri mantineli sa kladie na rám čo najďalej k vonkajšiemu okraju stola, tágo má menší sklon.' ),
 		array( '0.6.84', '6. 11. 2026', 'Tréning si pamätá rozloženie gúľ a štatistiku aj po obnovení stránky (F5) a po návrate z hry o skóre; ukladá sa po každom údere a po Späť, Biela do ruky, Hotovo a Nové rozostavenie.' ),
