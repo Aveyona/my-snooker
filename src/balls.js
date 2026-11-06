@@ -2,7 +2,8 @@
  * My Snooker: 3D gule (farba, lesk, rotácia podľa fyziky, padanie do jamky).
  */
 import * as THREE from 'three';
-import { R, COLOURS } from './physics.js';
+import { R, COLOURS, POCKETS } from './physics.js';
+import { BASKET } from './table.js';
 
 /** Textúra gule: farba a dve jemné bodky, aby bolo vidieť, ako sa guľa otáča (falše). */
 function ballTexture(hex, kind) {
@@ -104,8 +105,45 @@ export class BallViews {
 		this._axis = new THREE.Vector3();
 	}
 
-	/** Prenesie polohy z fyziky, otočí gule podľa uhlovej rýchlosti a dokreslí padanie do jamky. */
+	/**
+	 * Spadnuté gule ostávajú vidieť v košíku pod jamkou, kam padli (po 3 v rade, rady nad sebou).
+	 * Guľa bez známej jamky (napríklad po načítaní stavu partie) ide do košíka podľa poradia.
+	 */
+	basketSlots() {
+		const per = POCKETS.map(() => []);
+		const down = this.items.filter((it) => !it.ball.on);
+		down.sort((a, b) => (a.ball.potted ? a.ball.potted.t : -1) - (b.ball.potted ? b.ball.potted.t : -1));
+		down.forEach((it, i) => {
+			const pt = it.ball.potted;
+			let k = i % POCKETS.length;
+			if (pt) {
+				let best = Infinity;
+				POCKETS.forEach((q, j) => {
+					const d = Math.hypot(q.x - pt.x, q.z - pt.z);
+					if (d < best) {
+						best = d;
+						k = j;
+					}
+				});
+			}
+			per[k].push(it);
+		});
+		const out = new Map();
+		per.forEach((list, k) => {
+			const q = POCKETS[k];
+			list.forEach((it, i) => {
+				const layer = Math.floor(i / 3);
+				const a = (i % 3) * ((Math.PI * 2) / 3) + layer * 0.9;
+				const rr = 0.029;
+				out.set(it, { x: q.x + Math.cos(a) * rr, y: BASKET.y - BASKET.depth + R + 0.03 + layer * 0.042, z: q.z + Math.sin(a) * rr });
+			});
+		});
+		return out;
+	}
+
+	/** Prenesie polohy z fyziky, otočí gule podľa uhlovej rýchlosti a dokreslí padanie do jamky a do košíka. */
 	update(dt) {
+		const slots = this.items.some((it) => !it.ball.on) ? this.basketSlots() : null;
 		for (const it of this.items) {
 			const b = it.ball;
 			const m = it.mesh;
@@ -121,18 +159,36 @@ export class BallViews {
 					this._q.setFromAxisAngle(this._axis, wl * dt);
 					m.quaternion.premultiply(this._q);
 				}
-			} else if (b.potted) {
-				it.blob.visible = false;
-				// padá do jamky: dokotúľa sa k stredu a klesne
-				it.drop = Math.min(1, it.drop + dt * 3);
-				const k = it.drop;
-				m.position.x += (b.potted.x - m.position.x) * Math.min(1, dt * 12);
-				m.position.z += (b.potted.z - m.position.z) * Math.min(1, dt * 12);
-				m.position.y = R - k * k * 0.12;
-				m.visible = k < 1;
 			} else {
-				m.visible = false;
 				it.blob.visible = false;
+				m.visible = true;
+				const slot = slots && slots.get(it);
+				if (b.potted && it.drop < 1) {
+					// padá do jamky: dokotúľa sa k stredu a klesne
+					it.drop = Math.min(1, it.drop + dt * 3);
+					const k = it.drop;
+					m.position.x += (b.potted.x - m.position.x) * Math.min(1, dt * 12);
+					m.position.z += (b.potted.z - m.position.z) * Math.min(1, dt * 12);
+					m.position.y = R - k * k * 0.12;
+				} else if (slot) {
+					// leží v košíku (doskočí na svoje miesto)
+					if (it.drop < 1 || !it.inBasket) {
+						it.drop = 1;
+						if (!b.potted) {
+							m.position.set(slot.x, slot.y, slot.z); // bez pádu (stav načítaný naraz)
+						}
+					}
+					it.inBasket = true;
+					const f = Math.min(1, dt * 10);
+					m.position.x += (slot.x - m.position.x) * f;
+					m.position.y += (slot.y - m.position.y) * f;
+					m.position.z += (slot.z - m.position.z) * f;
+				} else {
+					m.visible = false;
+				}
+			}
+			if (b.on) {
+				it.inBasket = false;
 			}
 		}
 	}

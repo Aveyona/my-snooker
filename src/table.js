@@ -11,6 +11,35 @@ const MG = 0.052; // polovica medzery pri strednej jamke
 const RAIL = 0.05; // šírka mantinelu (gumy)
 const FRAME = 0.12; // šírka dreveného rámu
 const CUSHION_H = 0.037; // výška nosa mantinelu nad súknom
+/** Košík pod jamkou: horný okraj (pod rámom), polomer hore a hĺbka. Gule v ňom ukladá BallViews. */
+export const BASKET = { y: -0.022, top: 0.072, depth: 0.2 };
+
+/** Sieťka košíka: kosoštvorcové oká z tmavej šnúry, medzi nimi priehľadne. */
+function netTexture() {
+	const n = 128;
+	const c = document.createElement('canvas');
+	c.width = c.height = n;
+	const g = c.getContext('2d');
+	g.clearRect(0, 0, n, n);
+	g.strokeStyle = '#ffffff';
+	g.lineWidth = 7;
+	g.beginPath();
+	g.moveTo(0, 0);
+	g.lineTo(n, n);
+	g.moveTo(n, 0);
+	g.lineTo(0, n);
+	g.stroke();
+	g.fillStyle = '#ffffff';
+	for (const [x, y] of [[0, 0], [n, 0], [0, n], [n, n], [n / 2, n / 2]]) {
+		g.beginPath();
+		g.arc(x, y, 7, 0, Math.PI * 2); // uzlíky
+		g.fill();
+	}
+	const tex = new THREE.CanvasTexture(c);
+	tex.wrapS = tex.wrapT = THREE.RepeatWrapping;
+	tex.repeat.set(14, 6);
+	return tex;
+}
 
 /** Textúra súkna: zelená s jemnou štruktúrou, čiara baulk, D a spoty. detail = smer vlasu a tenšie čiary. */
 function clothTexture(maxAniso, base = '#1d6b34', detail = false) {
@@ -462,8 +491,9 @@ export function buildTable(renderer) {
 
 	// Teleso stola (zaoblené rohy ako rám) a nohy
 	const body = new THREE.Shape();
-	const bx = outX - 0.03;
-	const bz = outZ - 0.03;
+	// skriňa stola je pod rámom zapustená dovnútra, aby pod jamkami viseli košíky (sieťky) s guľami
+	const bx = hx - 0.05;
+	const bz = hz - 0.05;
 	const R1 = 0.05;
 	body.moveTo(-bx + R1, -bz);
 	body.lineTo(bx - R1, -bz);
@@ -489,13 +519,31 @@ export function buildTable(renderer) {
 		}
 	}
 
-	// Jamky: čierny otvor v súkne, tmavá šachta a kožený lem po okraji výrezu v ráme
+	// Jamky: čierny otvor v súkne, kožený lem po okraji výrezu v ráme a pod ním košík zo sieťky
 	const holeMat = new THREE.MeshBasicMaterial({ color: 0x050505 });
-	const leatherMat = new THREE.MeshStandardMaterial({ color: 0x1c1c1c, roughness: 0.55, metalness: 0.15 });
+	const leatherMat = new THREE.MeshStandardMaterial({ color: 0x1c1c1c, roughness: 0.55, metalness: 0.15, side: THREE.DoubleSide });
+	const netMat = new THREE.MeshStandardMaterial({ map: netTexture(), color: 0x2a1c12, roughness: 0.9, alphaTest: 0.35, side: THREE.DoubleSide });
+	const prof = [
+		[BASKET.top, 0],
+		[BASKET.top + 0.006, -0.04],
+		[BASKET.top + 0.002, -0.09],
+		[BASKET.top - 0.012, -0.14],
+		[0.04, -BASKET.depth + 0.012],
+		[0.001, -BASKET.depth],
+	].map(([r, y]) => new THREE.Vector2(r, y));
+	const basketGeo = new THREE.LatheGeometry(prof, 36);
 	for (const p of pocketCut) {
-		const well = new THREE.Mesh(new THREE.CylinderGeometry(p.r, p.r * 0.8, 0.16, 40, 1, true), holeMat);
-		well.position.set(p.x, -0.08, p.z);
+		// krátka kožená výstelka jamky a pod rámom košík zo sieťky (spadnuté gule v ňom ostávajú vidieť)
+		const well = new THREE.Mesh(new THREE.CylinderGeometry(p.r * 0.85, BASKET.top, 0.03, 40, 1, true), leatherMat);
+		well.position.set(p.x, -0.012, p.z);
 		group.add(well);
+		const bag = new THREE.Mesh(basketGeo, netMat);
+		bag.position.set(p.x, BASKET.y, p.z);
+		group.add(bag);
+		const ring = new THREE.Mesh(new THREE.TorusGeometry(BASKET.top, 0.006, 8, 40), leatherMat);
+		ring.rotation.x = Math.PI / 2;
+		ring.position.set(p.x, BASKET.y, p.z);
+		group.add(ring);
 		const floorCap = new THREE.Mesh(new THREE.CircleGeometry(p.r, 40), holeMat);
 		floorCap.rotation.x = -Math.PI / 2;
 		floorCap.position.set(p.x, -0.003, p.z);
