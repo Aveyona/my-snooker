@@ -42,8 +42,8 @@ export class CameraRig {
 		if (this.mode !== 'top' && this.aimPoint && this._panBase) {
 			// za tágom s mierenou guľou: myš doľava a doprava krúži okolo gule, hore priblíži ku guli, dole oddiali
 			this.panDist = Math.max(0.15, Math.min(2.5, (this.panDist || 1) * Math.exp(dy * 0.004)));
-			// výška ako predtým: myš hore kamera stúpa, dole klesá (rovnaká rýchlosť ako pôvodný posun pohľadu)
-			this.panLift = Math.max(-0.15, Math.min(1.5, (this.panLift || 0) - m[5] * dy * k));
+			// k tomu mierne stúpanie (myš hore) a klesanie (myš dole), nezávislé od sklonu kamery
+			this.panLift = Math.max(-0.15, Math.min(0.8, (this.panLift || 0) - dy * k * 0.5));
 			this.panOffset.x += m[0] * dx * k;
 			this.panOffset.z += m[2] * dx * k;
 			const b = this._panBase.clone().sub(this.aimPoint); // kamera voči guli za tágom
@@ -51,11 +51,12 @@ export class CameraRig {
 			const p = this._panBase.clone().add(this.panOffset).sub(this.aimPoint);
 			const hp = Math.hypot(p.x, p.z);
 			if (hp > 1e-6) {
-				// vodorovne: rovnaká vzdialenosť pri krúžení, krát priblíženie; výška: stúpa a klesá ako pôvodný posun
+				// priblíženie po priamke pohľadu (vzdialenosť aj výška v rovnakom pomere, uhol pohľadu na guľu
+				// sa nemení, obraz neťahá dole), krúženie v rovnakej vzdialenosti, navrch mierne stúpanie
 				const hr = Math.max(0.1, h0 * this.panDist) / hp;
 				p.x *= hr;
 				p.z *= hr;
-				p.y = b.y + this.panLift;
+				p.y = b.y * this.panDist + this.panLift;
 				p.y = Math.max(0.05, p.y); // nie pod úroveň gule (do súkna)
 				this.panOffset.copy(this.aimPoint).add(p).sub(this._panBase);
 			}

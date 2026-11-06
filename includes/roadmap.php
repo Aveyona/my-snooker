@@ -131,6 +131,7 @@ function mysn_roadmap() {
 /** Denník zmien (najnovšie hore). */
 function mysn_changelog() {
 	return array(
+		array( '0.6.64', '6. 11. 2026', 'Pohľad pravým tlačidlom: myš hore približuje ku guli po priamke pohľadu (uhol sa nemení, obraz už neťahá dole) a kamera pritom mierne stúpa.' ),
 		array( '0.6.63', '6. 11. 2026', 'Ruky pri tágu odstránené; ruky ostávajú len vo voľnej kamere a sú menšie.' ),
 		array( '0.6.62', '6. 11. 2026', 'Ruky hráča: vo voľnej kamere ruky pred kamerou namiesto tága, pri mierení ľavá ruka ako most na súkne a pravá na konci tága. Oprava: priblíženie kolieskom pri pravom tlačidle už neberie stúpanie pohľadu (mení len vzdialenosť od gule, výška ostáva).' ),
 		array( '0.6.61', '6. 11. 2026', 'Priblíženie kolieskom je zvlášť za tágom a zvlášť pri držanom pravom tlačidle (pohľad na mierenú guľu); obe sa pamätajú aj po obnovení hry.' ),
