@@ -702,7 +702,19 @@ export function buildStadium(scene, quality, clock = 45) {
 		glow.rotation.x = -Math.PI / 2;
 		glow.visible = false;
 		stand.add(glow);
-		return { stand, glow, cues: [] };
+		// podsvietenie stojana (F2 výber tága): LED lišta v hornom držiaku a bodové svetlo spredu na tágá
+		const ledMat = new THREE.MeshBasicMaterial({ color: 0x2a2620 });
+		add(new THREE.BoxGeometry(0.96, 0.018, 0.02), ledMat, 0, 1.092, 0.0, stand);
+		const ledLow = new THREE.MeshBasicMaterial({ color: 0x2a2620 });
+		add(new THREE.BoxGeometry(0.96, 0.014, 0.02), ledLow, 0, 0.068, 0.15, stand);
+		const lit = new THREE.SpotLight(0xfff0d0, 0, 4, 0.75, 0.55, 1.2);
+		lit.position.set(0, 2.0, 1.1);
+		lit.target.position.set(0, 0.62, -0.1);
+		stand.add(lit, lit.target);
+		const back = new THREE.PointLight(0xffe6b8, 0, 1.6, 1.5); // jemné svetlo na zadnej doske medzi tágami
+		back.position.set(0, 0.75, 0.12);
+		stand.add(back);
+		return { stand, glow, cues: [], light: { on: false, k: 0, ledMat, ledLow, lit, back } };
 	});
 	/** Stojan hráča (side 0 alebo 1): specs = tágá do zápasu, inHand = tágo v ruke (chýba), sel = zvýraznené (F2). */
 	const setRack = (side, specs, inHand, sel) => {
@@ -728,6 +740,24 @@ export function buildStadium(scene, quality, clock = 45) {
 			st.stand.add(g);
 			st.cues.push(g);
 		});
+	};
+	/** Podsvietenie stojana hráča (F2 výber tága): vidia ho aj súper a diváci. */
+	const setRackLight = (side, on) => {
+		stands[side ? 1 : 0].light.on = !!on;
+	};
+	const rackLightTick = (dt) => {
+		for (const st of stands) {
+			const L = st.light;
+			const k = L.k + ((L.on ? 1 : 0) - L.k) * Math.min(1, dt * 6); // plynulé rozsvietenie a zhasnutie
+			if (Math.abs(k - L.k) < 1e-4 && (k === 0 || k === 1)) {
+				continue;
+			}
+			L.k = Math.abs(k - (L.on ? 1 : 0)) < 0.002 ? (L.on ? 1 : 0) : k;
+			L.lit.intensity = 22 * L.k;
+			L.back.intensity = 3 * L.k;
+			L.ledMat.color.setRGB(0.16 + 0.84 * L.k, 0.15 + 0.8 * L.k, 0.12 + 0.6 * L.k);
+			L.ledLow.color.copy(L.ledMat.color);
+		}
 	};
 	// pohľady hráča podľa strany: F7 z kresla na stôl, F2 na stojan s tágami
 	const sideViews = PL.map((p) => {
@@ -894,6 +924,7 @@ export function buildStadium(scene, quality, clock = 45) {
 		setNames,
 		/** Stojan hráča pri stole: side 0 alebo 1, specs = tágá do zápasu, inHand = id tága v ruke. */
 		setRack,
+		setRackLight,
 		/** Bodové svetlá (lúče reflektorov a škvrny): svietia pred partiou, F12 na ťahu. */
 		setBeams(on) {
 			for (const b of beams) {
@@ -907,6 +938,7 @@ export function buildStadium(scene, quality, clock = 45) {
 		 */
 		update(dt, cueBall, dir = null, moving = false, aimBall = null) {
 			updateFans(fans, dt, cueBall);
+			rackLightTick(dt);
 			confetti.update(dt);
 			spotUpdate(dt);
 			if (cueBall && root.visible) {

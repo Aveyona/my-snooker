@@ -532,8 +532,10 @@ export function start(root, config = {}) {
 		const specs = myCues.selected.map((id) => specFor(id));
 		stadium.setRack(mySide(), specs, view === 'rack' ? null : cueSpec.id, view === 'rack' ? cueSpec.id : null); // F2: vybraté tágo je na stojane zvýraznené
 		stadium.setRack(1 - mySide(), oppRack ? oppRack.specs : [], oppRack ? oppRack.inHand : null, null);
+		stadium.setRackLight(mySide(), view === 'rack'); // F2: stojan sa rozsvieti
+		stadium.setRackLight(1 - mySide(), !!(oppRack && oppRack.lit));
 		if (online && game.match && game.match.league) {
-			online.sendRack({ side: mySide(), specs, inHand: cueSpec.id }); // súper a diváci vidia moje tágá na mojom stojane
+			online.sendRack({ side: mySide(), specs, inHand: cueSpec.id, lit: view === 'rack' ? 1 : 0 }); // súper a diváci vidia moje tágá aj podsvietenie stojana
 		}
 	};
 	// --- miesto online diváka: výber zhora (seatPick), potom pohľad zo stoličky alebo z miesta pri stene (seat) ---
@@ -3309,8 +3311,9 @@ export function start(root, config = {}) {
 				if (!game.match || !d || !Array.isArray(d.specs)) {
 					return;
 				}
-				oppRack = { specs: d.specs.slice(0, 4), inHand: d.inHand };
+				oppRack = { specs: d.specs.slice(0, 4), inHand: d.inHand, lit: !!d.lit };
 				stadium.setRack(1 - mySide(), oppRack.specs, oppRack.inHand, null);
+				stadium.setRackLight(1 - mySide(), oppRack.lit); // súper vyberá tágo (F2): jeho stojan svieti
 			},
 			// súper zapol alebo zhasol bodové svetlá na štadióne
 			lights: (on) => {
@@ -3384,6 +3387,7 @@ export function start(root, config = {}) {
 				} else if (m.k === 'w-rack') {
 					if (Array.isArray(m.specs)) {
 						stadium.setRack(m.side ? 1 : 0, m.specs.slice(0, 4), m.inHand, null); // stojan hráča
+						stadium.setRackLight(m.side ? 1 : 0, !!m.lit); // hráč vyberá tágo (F2)
 					}
 				} else if (m.k === 'w-spot' || m.k === 'w-lcd') {
 					flagApply(m);
