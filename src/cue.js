@@ -119,8 +119,6 @@ export class Cue {
 		const tipY = base + gap * Math.tan(tilt);
 		this.pivot.position.set(tipX, tipY, tipZ);
 		// os tága (+y skupiny) má smerovať dozadu a hore
-		// poloha pre ruky (most na súkne bez odtiahnutia, pravá ruka sa posúva s tágom)
-		this.handPose = { dx, dz, rx, rz, tilt, restX, restZ, restY: base + GAP0 * Math.tan(tilt), tipX, tipY, tipZ };
 		const back = new THREE.Vector3(-dx * Math.cos(tilt), Math.sin(tilt), -dz * Math.cos(tilt));
 		this.pivot.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), back);
 	}

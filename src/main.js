@@ -152,7 +152,7 @@ export function start(root, config = {}) {
 	};
 	let cueSpec = specFor(settings.cue);
 	const cue = new Cue(scene, cueSpec);
-	let hands = null; // ruky hráča (most a pravá ruka pri tágu, vo voľnej kamere pred kamerou)
+	let hands = null; // ruky hráča vo voľnej kamere
 	room.selectCue(cueSpec.id, cueSpec.base);
 	const guide = new AimGuide(scene);
 	const rig = new CameraRig(renderer);
@@ -2593,7 +2593,6 @@ export function start(root, config = {}) {
 		if (!hands) {
 			hands = new Hands(scene, rig.camera);
 		}
-		hands.updateCue(cue, cue.pivot.visible && view !== 'chalk');
 		hands.updateFree(view === 'free', dt, freeVel.length());
 		if (chalkT >= 0) {
 			// kriedovanie: tágo sa zdvihne a odtiahne, krieda sa nasadí dierou na špičku, pootáča sa a odíde
