@@ -353,50 +353,119 @@ export function buildStadium(scene, quality, clock = 45) {
 		add(new THREE.CylinderGeometry(0.035, 0.03, 0.12, 20, 1, true), glass, gx, FY + 0.82, BZ - 0.55).castShadow = false;
 		add(new THREE.CylinderGeometry(0.031, 0.029, 0.075, 20), water, gx, FY + 0.76 + 0.04, BZ - 0.55).castShadow = false;
 	}
-	// F1: papier s krátkym návodom na klávesy, leží na stolíku medzi pohármi (text čitateľný od stola)
+	// F1: blok (notes so špirálou) s klávesmi a ovládaním, leží na stolíku medzi pohármi (text čitateľný od stola)
 	const PAPER = { x: 2.6, z: BZ - 0.55, w: 0.3, h: 0.4 };
-	const paper = canvasTex(600, 800, (g, w, h) => {
-		g.fillStyle = '#f7f4ea';
+	const paper = canvasTex(900, 1200, (g, w, h) => {
+		// papier s jemným tieňovaním, linajkami a červeným okrajom
+		const bg = g.createLinearGradient(0, 0, w, h);
+		bg.addColorStop(0, '#fbf8ef');
+		bg.addColorStop(1, '#efe9d8');
+		g.fillStyle = bg;
 		g.fillRect(0, 0, w, h);
-		g.fillStyle = '#1d3f8f';
-		g.fillRect(0, 0, w, 86);
-		g.fillStyle = '#ffffff';
-		g.font = 'bold 40px Arial, sans-serif';
-		g.textAlign = 'center';
-		g.fillText('Klávesy na štadióne', w / 2, 57);
-		const rows = [
-			['F1', 'tento návod'],
-			['F2', 'môj stojan s tágami'],
-			['F3', 'krieda na tágo'],
-			['F4', 'skóre na obrazovke'],
-			['F7', 'moje kreslo'],
-			['F12', 'bodové svetlá (na ťahu)'],
-			['Tab', 'pohľad zhora'],
-			['Ctrl', 'voľná myš'],
-			['Esc', 'menu'],
-			['F5', 'obnoviť stránku'],
-			['F11', 'celá obrazovka'],
-		];
+		g.strokeStyle = '#bcd3ea';
+		g.lineWidth = 2;
+		for (let y = 200; y < h - 20; y += 44) {
+			g.beginPath();
+			g.moveTo(0, y);
+			g.lineTo(w, y);
+			g.stroke();
+		}
+		g.strokeStyle = '#e59a9a';
+		g.lineWidth = 3;
+		g.beginPath();
+		g.moveTo(96, 90);
+		g.lineTo(96, h);
+		g.stroke();
+		// špirála hore
+		g.fillStyle = '#1f2a44';
+		g.fillRect(0, 0, w, 52);
+		for (let x = 40; x < w - 20; x += 46) {
+			g.fillStyle = '#efe9d8';
+			g.beginPath();
+			g.arc(x, 70, 9, 0, Math.PI * 2);
+			g.fill();
+			const rg = g.createLinearGradient(x - 8, 0, x + 8, 0);
+			rg.addColorStop(0, '#8d939c');
+			rg.addColorStop(0.5, '#f3f5f8');
+			rg.addColorStop(1, '#7c828b');
+			g.strokeStyle = rg;
+			g.lineWidth = 7;
+			g.beginPath();
+			g.ellipse(x, 44, 8, 30, 0, Math.PI * 0.5, Math.PI * 1.5, true);
+			g.stroke();
+		}
+		// hlavička
 		g.textAlign = 'left';
-		rows.forEach(([k, t], i) => {
-			const y = 140 + i * 56;
-			g.fillStyle = '#1d3f8f';
-			g.font = 'bold 34px Arial, sans-serif';
-			g.fillText(k, 46, y);
-			g.fillStyle = '#20242c';
-			g.font = '32px Arial, sans-serif';
-			g.fillText(t, 150, y);
-		});
-		g.fillStyle = '#6a7080';
-		g.font = 'italic 24px Arial, sans-serif';
-		g.textAlign = 'center';
 		g.fillStyle = '#b3121f';
-		g.font = 'bold 26px Arial, sans-serif';
-		g.fillText(`Na úder máš ${clock} sekúnd, inak faul.`, w / 2, h - 70);
-		g.fillStyle = '#6a7080';
-		g.font = 'italic 24px Arial, sans-serif';
-		g.fillText('F1 alebo Esc: späť do hry', w / 2, h - 30);
+		g.font = 'bold 22px Arial, sans-serif';
+		g.fillText('MY SNOOKER · ŠTADIÓN', 120, 118);
+		g.fillStyle = '#1d3f8f';
+		g.font = 'bold 50px Georgia, serif';
+		g.fillText('Klávesy a ovládanie', 120, 172);
+		let y = 240;
+		const head = (t) => {
+			g.fillStyle = '#b3121f';
+			g.font = 'bold 30px Georgia, serif';
+			g.fillText(t, 120, y);
+			y += 44;
+		};
+		const row = (k, t) => {
+			g.fillStyle = '#1d3f8f';
+			g.font = 'bold 27px Arial, sans-serif';
+			g.fillText(k, 120, y - 8);
+			g.fillStyle = '#23262e';
+			g.font = '27px Arial, sans-serif';
+			g.fillText(t, 325, y - 8);
+			y += 44;
+		};
+		head('Klávesy');
+		row('F1', 'tento blok, pravidlá snookeru a ligy');
+		row('F2', 'môj stojan s tágami');
+		row('F3', 'krieda a nádstavce');
+		row('F4', 'skóre na veľkej obrazovke');
+		row('F7', 'moje kreslo');
+		row('F12', 'bodové svetlá (na ťahu)');
+		row('Tab', 'pohľad zhora');
+		row('Medzerník', 'voľná kamera');
+		row('Ctrl', 'voľná myš, klik na predmety');
+		row('Esc', 'menu  ·  F5 obnoviť  ·  F11 celá obrazovka');
+		y += 10;
+		head('Myš');
+		row('Pohyb', 'mierenie (Shift jemnejšie)');
+		row('Ľavé drž', 'odtiahni tágo a pošli ho dopredu');
+		row('Koliesko drž', 'miesto úderu na bielej (falša)');
+		row('Pravé drž', 'posun pohľadu okolo gule');
+		row('Koliesko', 'priblíženie a oddialenie');
+		// upozornenie na čas
+		y += 14;
+		g.fillStyle = '#fde8e8';
+		g.strokeStyle = '#b3121f';
+		g.lineWidth = 3;
+		g.beginPath();
+		g.roundRect(118, y - 40, w - 160, 64, 10);
+		g.fill();
+		g.stroke();
+		g.fillStyle = '#b3121f';
+		g.font = 'bold 30px Arial, sans-serif';
+		g.textAlign = 'center';
+		g.fillText(`Na úder máš ${clock} sekúnd, inak faul za čas.`, 118 + (w - 160) / 2, y + 2);
+		g.fillStyle = '#5c6270';
+		g.font = 'italic 25px Georgia, serif';
+		g.fillText('Vľavo pravidlá snookeru, vpravo body ligy', w / 2 + 40, h - 72);
+		g.fillText('F1 alebo Esc: späť do hry', w / 2 + 40, h - 32);
 	});
+	// pero vedľa bloku
+	const pen = new THREE.Group();
+	const penBody = new THREE.Mesh(new THREE.CylinderGeometry(0.0055, 0.0055, 0.14, 14), new THREE.MeshStandardMaterial({ color: 0x14223f, roughness: 0.3, metalness: 0.4 }));
+	penBody.rotation.z = Math.PI / 2;
+	pen.add(penBody);
+	const penTip = new THREE.Mesh(new THREE.ConeGeometry(0.0055, 0.018, 14), new THREE.MeshStandardMaterial({ color: 0xc9a54a, roughness: 0.3, metalness: 0.8 }));
+	penTip.rotation.z = Math.PI / 2;
+	penTip.position.x = 0.079;
+	pen.add(penTip);
+	pen.position.set(PAPER.x - PAPER.w / 2 - 0.03, FY + 0.767, PAPER.z + 0.02);
+	pen.rotation.y = Math.PI / 2 - 0.25;
+	root.add(pen);
 	const paperMesh = add(new THREE.PlaneGeometry(PAPER.w, PAPER.h), new THREE.MeshStandardMaterial({ map: paper.t, roughness: 0.85 }), PAPER.x, FY + 0.762, PAPER.z);
 	paperMesh.rotation.set(-Math.PI / 2, 0, Math.PI); // horný okraj ďalej od stola (+z)
 	paperMesh.castShadow = false;

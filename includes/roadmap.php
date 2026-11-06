@@ -131,6 +131,7 @@ function mysn_roadmap() {
 /** Denník zmien (najnovšie hore). */
 function mysn_changelog() {
 	return array(
+		array( '0.7.30', '6. 11. 2026', 'Štadión F1: namiesto papiera pekný blok so špirálou, linajkami a perom, podrobnejší (klávesy, ovládanie myšou, čas na úder). Vľavo panel so stručnými pravidlami snookeru, vpravo panel s pravidlami počítania bodov ligy.' ),
 		array( '0.7.29', '6. 11. 2026', 'Rozhodca: k mierenej guli sa vyberie až po 2,5 sekundy mierenia na tú istú guľu a pri nej ostane aspoň 10 sekúnd, aj keď sa mierenie zmení; skôr odíde len vtedy, keď by zavadzal tágu.' ),
 		array( '0.7.28', '6. 11. 2026', 'Štadión: rozhodca pomaly kráča ku guli, na ktorú hráč mieri bielou (zvyčajne červená), na najbližšie miesto okolo stola, kde nezavadzia tágu. Keď sa na guľu nemieri, presúva sa na stanovištia ako doteraz.' ),
 		array( '0.7.27', '6. 11. 2026', 'Liga: čas na ťah sa nastavuje pri sezóne ligy (administrácia, Sezóna ligy, Nastavenia sezóny, 15 až 120 sekúnd) a teraz je 45 sekúnd namiesto 30. Platí hneď aj pre rozohrané zápasy sezóny, nová sezóna ho preberá. Časomiera hráča, divákov, obrazovka štadióna aj návod na stolíku idú podľa neho.' ),

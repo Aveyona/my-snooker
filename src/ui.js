@@ -596,7 +596,7 @@ export class UI {
 	}
 
 	/** Kancelária F4: panel vpravo s pravidlami bodovania ligy (k tabuli výsledkov sezóny). */
-	openLeagueRules(on) {
+	openLeagueRules(on, foot = 'F4 alebo Esc: späť za stôl') {
 		if (!this.rulesEl) {
 			const li = (b, t) => `<li><b>${b}</b><span>${t}</span></li>`;
 			this.rulesEl = h(
@@ -611,7 +611,7 @@ export class UI {
 					li('Symbolická výhra', 'Keď má porazený 0 alebo menej, víťaz dostane +1 a porazený stratí 1 (môže ísť do mínusu).') +
 					li('Ligy', 'Podľa poradia: 1. liga horných 10 % hráčov, 2. liga ďalších 20 %, 3. liga ďalších 30 %, 4. liga zvyšok (v každej aspoň jeden). Nad 70 hráčov: top 10, 11. až 30., 31. až 70., ostatní.') +
 					li('Sezóna', 'Trvá rok, potom sa uložia konečné výsledky a začína sa znova.') +
-					'</ul><p class="mysn-rules-foot">F4 alebo Esc: späť za stôl</p>',
+					'</ul><p class="mysn-rules-foot"></p>',
 			);
 			for (const ev of ['mousedown', 'keydown', 'wheel']) {
 				this.rulesEl.addEventListener(ev, (e) => e.stopPropagation());
@@ -619,6 +619,36 @@ export class UI {
 			this.root.appendChild(this.rulesEl);
 		}
 		this.rulesEl.classList.toggle('mysn-hidden', !on);
+		this.rulesEl.querySelector('.mysn-rules-foot').textContent = foot;
+	}
+
+	/** Štadión F1: panel vľavo so stručnými pravidlami snookeru (k bloku na stolíku). */
+	openSnookerRules(on, clock = 45) {
+		if (!this.snRulesEl) {
+			this.snRulesEl = h('div', 'mysn-rules mysn-rules-left mysn-hidden');
+			for (const ev of ['mousedown', 'keydown', 'wheel']) {
+				this.snRulesEl.addEventListener(ev, (e) => e.stopPropagation());
+			}
+			this.root.appendChild(this.snRulesEl);
+		}
+		if (on) {
+			const li = (b, t) => `<li><b>${b}</b><span>${t}</span></li>`;
+			const ball = (c, n) => `<i class="mysn-ball" style="background:${c}"></i>${n}`;
+			this.snRulesEl.innerHTML =
+				'<h3>Pravidlá snookeru</h3><ul>' +
+				li('Cieľ', 'Nahrať vo frame viac bodov ako súper.') +
+				li('Hodnoty gúľ', `<span class="mysn-balls">${ball('#b3121f', 1)} ${ball('#f2c418', 2)} ${ball('#0f7a3a', 3)} ${ball('#6b3a1e', 4)} ${ball('#1747b5', 5)} ${ball('#f08aa8', 6)} ${ball('#111', 7)}</span>`) +
+				li('Poradie', 'Striedavo červená a ľubovoľná farba. Farba sa vracia na svoj spot, kým sú na stole červené. Potom farby po poradí od žltej po čiernu.') +
+				li('Prvý dotyk', 'Biela musí ako prvú trafiť guľu, ktorá je na rade.') +
+				li('Faul', 'Zlá guľa, žiadny dotyk, spadnutá biela alebo guľa, ktorá nie je na rade. Súper dostane 4 body alebo hodnotu gule, ak je vyššia (najviac 7), a je na rade.') +
+				li('Biela v ruke', 'Po spadnutí bielej ju súper položí kdekoľvek do D.') +
+				li('Voľná guľa', 'Keď je hráč po faule zasnookrovaný, môže hrať ľubovoľnú farbu ako guľu na rade.') +
+				li('Séria (brejk)', 'Kým hráč potápa, pokračuje. Keď nič nespadne, je na rade súper.') +
+				li('Čas na úder', `V lige ${clock} sekúnd, inak faul za čas.`) +
+				li('Koniec frame', 'Keď spadne posledná čierna. Vyhráva hráč s viac bodmi.') +
+				'</ul><p class="mysn-rules-foot">F1 alebo Esc: späť do hry</p>';
+		}
+		this.snRulesEl.classList.toggle('mysn-hidden', !on);
 	}
 
 	/** Kancelária F7: panel Moje zápasy vpravo (história ligových zápasov a detail zápasu). */

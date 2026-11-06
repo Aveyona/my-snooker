@@ -1491,6 +1491,14 @@ export function start(root, config = {}) {
 			ui.openLeague(false);
 		}
 		view = name;
+		// štadión F1 (blok na stolíku): vľavo pravidlá snookeru, vpravo body ligy
+		if (venue === 'league' && name === 'board') {
+			ui.openSnookerRules(true, config.clock || 45);
+			ui.openLeagueRules(true, 'F1 alebo Esc: späť do hry');
+		} else if (ui.snRulesEl && !ui.snRulesEl.classList.contains('mysn-hidden')) {
+			ui.openSnookerRules(false);
+			ui.openLeagueRules(false);
+		}
 		room.setRackView(name === 'rack');
 		if (venue === 'league') {
 			stadiumRack();
@@ -1556,6 +1564,10 @@ export function start(root, config = {}) {
 			rig.snapNext = true; // späť za tágo hneď, bez preletu (rovnako ako skok do voľnej kamery)
 		}
 		view = null;
+		if (was === 'board') {
+			ui.openSnookerRules(false);
+			ui.openLeagueRules(false);
+		}
 		room.setRackView(false);
 		if (venue === 'league') {
 			stadiumRack();
