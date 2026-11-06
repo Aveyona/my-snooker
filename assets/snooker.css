@@ -530,6 +530,9 @@ body.mysn-page { font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans
 .mysn-cp-pros b, .mysn-cp-pros span { display: block; }
 .mysn-cp-pros .mysn-pro { color: #7ee08a; }
 .mysn-cp-pros .mysn-con { color: #f08a8a; }
+.mysn-q { position: relative; display: inline-flex; align-items: center; justify-content: center; width: 15px; height: 15px; margin-left: 5px; border-radius: 50%; background: #FACC15; color: #111; font: 700 11px/1 Arial, sans-serif; font-style: normal; cursor: help; vertical-align: 1px; }
+.mysn-tipbox { position: absolute; z-index: 30; width: 280px; padding: 10px 12px; border-radius: 9px; background: #10151ef7; border: 1px solid #FACC15aa; box-shadow: 0 8px 24px #000b; color: #e6eae2; font: 400 13px/1.45 Arial, sans-serif; pointer-events: none; }
+.mysn-tipbox.mysn-hidden { display: none; }
 .mysn-cp-budget { font-size: 12.5px; color: #c5ccd8; padding: 6px 10px; border-radius: 8px; background: #FACC1514; border: 1px solid #FACC1540; }
 .mysn-cp-budget b { color: #FACC15; }
 .mysn-tip { margin: 2px 0 4px; padding: 10px 12px; border-radius: 10px; background: #ffffff0d; border: 1px solid #ffffff1a; display: flex; flex-direction: column; gap: 6px; font-size: 13px; }

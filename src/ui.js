@@ -1941,6 +1941,26 @@ export class UI {
 		}
 	}
 
+	/** Bublina s vysvetlením vedľa ikonky (vľavo od nej, mimo panela; panel ju neoreže). null = skryť. */
+	showTip(el, text) {
+		if (!this.tipEl) {
+			this.tipEl = h('div', 'mysn-tipbox mysn-hidden');
+			this.root.appendChild(this.tipEl);
+		}
+		if (!el) {
+			this.tipEl.classList.add('mysn-hidden');
+			return;
+		}
+		this.tipEl.textContent = text;
+		this.tipEl.classList.remove('mysn-hidden');
+		const r = el.getBoundingClientRect();
+		const box = this.root.getBoundingClientRect();
+		const w = this.tipEl.offsetWidth;
+		const hh = this.tipEl.offsetHeight;
+		this.tipEl.style.left = `${Math.max(8, r.left - box.left - w - 12)}px`;
+		this.tipEl.style.top = `${Math.max(8, Math.min(box.height - hh - 8, r.top - box.top + r.height / 2 - hh / 2))}px`;
+	}
+
 	/** Zdroj údajov o špiciach: fn(spec) => { kind, strokes, wear, no, total, replaced, guest }. */
 	setTipSource(fn) {
 		this._tipSrc = fn;
@@ -2025,6 +2045,7 @@ export class UI {
 		}
 		const P = this.cuePanel;
 		P.classList.remove('mysn-hidden');
+		this.showTip(null); // panel sa prekresľuje: bublina by ostala visieť
 		P.innerHTML = '';
 		if (!c) {
 			return;
@@ -2074,15 +2095,15 @@ export class UI {
 				left.innerHTML = `Rozpočet úprav: zostáva <b>${rest} %</b>${rest <= 0 ? ' (čo pridáš, inde sa ubere)' : ''}`;
 			};
 			const ADJ_ROWS = [
-				['power', 'Sila'],
-				['len', 'Dĺžka'],
-				['grip', 'Falše'],
-				['weight', 'Hmotnosť'],
-				['tipd', 'Priemer špice'],
-				['stiff', 'Tuhosť drievka'],
-				['bal', 'Vyváženie (mimo rozpočtu)'],
+				['power', 'Sila', 'Najväčšia rýchlosť bielej pri plnom ťahu. Plus: silnejšie údery (rozbitie, dlhé údery). Mínus: slabšie, ale pri rovnakom pohybe myšou jemnejšie dávkovanie sily. Na mierenie nemá vplyv.'],
+				['len', 'Dĺžka', 'Dlhšie tágo treba ťahať myšou ďalej na rovnakú silu, takže sila sa dávkuje jemnejšie a presnejšie. Kratšie tágo stačí potiahnuť menej, je rýchlejšie, ale sila sa ľahšie prestrelí. Mierenie nemení.'],
+				['grip', 'Falše', 'Ako silno sa prenesie miesto úderu na bielu (horná, spodná a bočná falša). Plus: výraznejšie falše a rotácia bielej. Mínus: falše slabšie, biela ide skôr rovno. Smer úderu nemení.'],
+				['weight', 'Hmotnosť', '510 až 600 g. Ťažšie tágo dá až o 5 % viac sily a stačí kratšie ťahanie, ale sila sa dávkuje hrubšie. Ľahšie tágo je slabšie, zato jemnejšie na dávkovanie. Mierenie nemení.'],
+				['tipd', 'Priemer špice', '9 až 10,5 mm. Menšia špica dá až o 10 % viac falše, ale opotrebovaná sa ľahšie šmykne a je nepresnejšia. Väčšia špica je odpustivejšia a stabilnejšia, falše má o niečo menej.'],
+				['stiff', 'Tuhosť drievka', 'Pri bočnej falši biela trochu uhne opačne ako falša (odklon, asi 0,7° pri plnej falši). Plus: tuhšie drievko, menší odklon, biela ide presnejšie tam, kam mieriš. Mínus: väčší odklon, pri bočnej falši treba mieriť s korekciou.'],
+				['bal', 'Vyváženie (mimo rozpočtu)', 'Ťažisko tága. Plus (vpredu): tágo reaguje na ťahanie myšou pomalšie, silu treba ťahať dlhšie, je pokojnejšie. Mínus (vzadu): reaguje rýchlejšie, kratší ťah. Nie je v rozpočte úprav.'],
 			];
-			for (const [k, lab] of ADJ_ROWS) {
+			for (const [k, lab, tip] of ADJ_ROWS) {
 				const r = document.createElement('input');
 				r.type = 'range';
 				r.min = '-0.1';
@@ -2109,6 +2130,12 @@ export class UI {
 					this.opts.onAction('cueOwnSet', { id: c.own, k: 'adj', v: ch });
 				});
 				const l = row(k === 'bal' ? lab : `${lab} (±10 %)`, r);
+				// otáznik s vysvetlením vplyvu na mierenie a úder (pri prejdení myšou)
+				const q = h('i', 'mysn-q', '?');
+				q.addEventListener('mouseenter', () => this.showTip(q, tip));
+				q.addEventListener('mouseleave', () => this.showTip(null));
+				q.addEventListener('click', (e) => e.preventDefault()); // klik na otáznik nepohne posuvníkom
+				l.querySelector('span').appendChild(q);
 				l.appendChild(val);
 				P.appendChild(l);
 			}
