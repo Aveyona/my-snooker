@@ -131,6 +131,7 @@ function mysn_roadmap() {
 /** Denník zmien (najnovšie hore). */
 function mysn_changelog() {
 	return array(
+		array( '0.6.93', '6. 11. 2026', 'Štadión: pri kresle každého hráča okrúhly stolík s pohárom vody a menovkou s menom hráča (admin má pod menom ADMIN). Na stolíku rozhodcu ostal jeden pohár vody.' ),
 		array( '0.6.92', '6. 11. 2026', 'Výkon: kreslí sa len miestnosť, v ktorej hráč je. Kancelária už nevisí za herňou ani na štadióne, v kancelárii sa nekreslí herňa ani stôl; skryté miestnosti nemajú ani svetlá. Admin v prehliadke vidí všetko.' ),
 		array( '0.6.91', '6. 11. 2026', 'Mapa miestností (M) funguje aj v kancelárii.' ),
 		array( '0.6.90', '6. 11. 2026', 'Mapa miestností (kláves M alebo tlačidlo v menu): pôdorys s herňou, kanceláriou a štadiónom, klik na miestnosť ukáže popis a tlačidlo Vstúpiť. Štadión je pre hráčov zamknutý (hrá sa tam len liga, otvorí sa pri nájdenom zápase), admin tam môže trénovať a má aj Prehliadku voľnou kamerou (presunutá z Nastavení). Miestnosti sú v jednom zozname, ďalšie sa pridajú ľahko.' ),

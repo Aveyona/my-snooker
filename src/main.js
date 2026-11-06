@@ -896,6 +896,7 @@ export function start(root, config = {}) {
 		}, 350);
 	};
 	let watchScreen = null; // divák: skóre sledovaného ligového zápasu (prichádza od hráča)
+	let watchPeers = []; // divák: id hráčov sledovaného zápasu (pre menovky)
 	let watchTurnAt = 0; // divák: začiatok ťahu v sledovanom ligovom zápase
 	let clockSec = -1; // časomiera: naposledy zobrazená sekunda
 	const SHOT_CLOCK = 30;
@@ -1401,6 +1402,7 @@ export function start(root, config = {}) {
 			setVenue(r.type === 'match' && r.kind === 'league' ? 'league' : 'home'); // priateľskú partiu (sleduje len správa hry) v herni
 			rig.setMode('cue');
 			online.watchStart(r.type, r.id, r.peers || [r.id]);
+			watchPeers = r.peers || [r.id];
 			watchCtx = (r.type === 'match' ? 'm' : 'r') + r.id;
 			seatList = [];
 			refreshMenu();
@@ -3129,6 +3131,20 @@ export function start(root, config = {}) {
 		// po údere: keď gule zastanú a som na rade, mierim zo smeru, z ktorého sa kamera práve pozerá na bielu
 		// (kamera sa neotáča, len sa plynulo spustí za tágo); v partii aj po súperovom údere
 		sceneCull(); // kreslí sa len miestnosť, v ktorej som
+		if (venue === 'league') {
+			// menovky na stolíkoch pri kreslách: mená hráčov zápasu; admin má pod menom ADMIN
+			const adm = (id) => ((config.admins || []).includes(id) ? 'ADMIN' : '');
+			if (game.match && game.match.players) {
+				const pl = game.match.players;
+				stadium.setNames([pl[0] && pl[0].name, pl[1] && pl[1].name], [adm(pl[0] && pl[0].id), adm(pl[1] && pl[1].id)]);
+			} else if (game.spectating) {
+				const nm = (watchScreen && watchScreen.names) || [];
+				stadium.setNames(nm, [adm(watchPeers[0]), adm(watchPeers[1])]);
+			} else if (user) {
+				// tréning na štadióne (admin): moja menovka, druhý stolík prázdny
+				stadium.setNames([user.name, ''], [config.role === 'admin' ? 'ADMIN' : '', '']);
+			}
+		}
 		hotTick(dt); // Ctrl: rozsvietenie klikateľných predmetov pod kurzorom
 		// FPS: priemer za posledné snímky, ukáže sa pri držanom Ctrl
 		const fpsNow = performance.now();

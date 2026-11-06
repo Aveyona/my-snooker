@@ -198,9 +198,9 @@ export function buildStadium(scene, quality) {
 		add(new THREE.BoxGeometry(0.04, 0.72, 0.4), wood, 2.6 + sx * 0.42, FY + 0.36, BZ - 0.55);
 	}
 	const glass = new THREE.MeshStandardMaterial({ color: 0xe8f4ff, transparent: true, opacity: 0.25, roughness: 0.05, depthWrite: false });
-	// dva poháre s vodou na krajoch stolíka
+	// jeden pohár s vodou na kraji stolíka (hráči majú vodu na svojich stolíkoch pri kreslách)
 	const water = new THREE.MeshStandardMaterial({ color: 0x9fd4ff, transparent: true, opacity: 0.55, roughness: 0.05, metalness: 0 });
-	for (const gx of [2.24, 2.96]) {
+	for (const gx of [2.96]) {
 		add(new THREE.CylinderGeometry(0.035, 0.03, 0.12, 20, 1, true), glass, gx, FY + 0.82, BZ - 0.55).castShadow = false;
 		add(new THREE.CylinderGeometry(0.031, 0.029, 0.075, 20), water, gx, FY + 0.76 + 0.04, BZ - 0.55).castShadow = false;
 	}
@@ -271,6 +271,70 @@ export function buildStadium(scene, quality) {
 			add(new THREE.BoxGeometry(0.1, 0.24, 0.6), leather, cx + sx * 0.33, FY + 0.44, cz); // opierky rúk
 		}
 	}
+	// stolík pri kresle každého hráča: pohár vody a menovka (stojaca kartička z oboch strán s menom hráča)
+	const plates = PL.map((p) => {
+		const [cx, cz] = p.chair;
+		const tx = cx - Math.sign(cx) * 0.62; // bližšie k stredu (k stolu)
+		const top = FY + 0.56;
+		add(new THREE.CylinderGeometry(0.24, 0.24, 0.03, 28), wood, tx, top - 0.015, cz);
+		add(new THREE.CylinderGeometry(0.03, 0.05, top - FY - 0.03, 12), wood, tx, FY + (top - FY - 0.03) / 2, cz);
+		add(new THREE.CylinderGeometry(0.16, 0.18, 0.02, 24), wood, tx, FY + 0.01, cz);
+		add(new THREE.CylinderGeometry(0.035, 0.03, 0.12, 20, 1, true), glass, tx + 0.11, top + 0.06, cz - p.dz * 0.06).castShadow = false;
+		add(new THREE.CylinderGeometry(0.031, 0.029, 0.075, 20), water, tx + 0.11, top + 0.04, cz - p.dz * 0.06).castShadow = false;
+		// menovka: dve šikmé kartičky (strecha), text z oboch strán
+		const card = canvasTex(512, 160, (g, w, h) => {
+			g.fillStyle = '#f7f4ea';
+			g.fillRect(0, 0, w, h);
+		});
+		const cardMat = new THREE.MeshStandardMaterial({ map: card.t, roughness: 0.7 });
+		const tent = new THREE.Group();
+		tent.position.set(tx - 0.06, top + 0.001, cz + p.dz * 0.04);
+		tent.rotation.y = p.dz > 0 ? Math.PI : 0; // čelom k stolu
+		for (const sgn of [-1, 1]) {
+			const m = new THREE.Mesh(new THREE.PlaneGeometry(0.24, 0.075), cardMat);
+			m.position.set(0, 0.034, sgn * 0.0135);
+			m.rotation.set(sgn * -0.37, sgn > 0 ? 0 : Math.PI, 0);
+			tent.add(m);
+		}
+		root.add(tent);
+		return { card, cardMat, key: '' };
+	});
+	/** Menovky hráčov na stolíkoch: names [strana 0, strana 1], roles ('admin' = pod menom nápis ADMIN). */
+	const setNames = (names, roles = []) => {
+		plates.forEach((pl, i) => {
+			const name = (names && names[i]) || '';
+			const role = roles[i] || '';
+			const key = name + '|' + role;
+			if (key === pl.key) {
+				return;
+			}
+			pl.key = key;
+			const g = pl.card.g;
+			const w = pl.card.c.width;
+			const h = pl.card.c.height;
+			g.fillStyle = '#f7f4ea';
+			g.fillRect(0, 0, w, h);
+			g.strokeStyle = '#b8923e';
+			g.lineWidth = 6;
+			g.strokeRect(8, 8, w - 16, h - 16);
+			g.fillStyle = '#1b1e26';
+			g.textAlign = 'center';
+			g.textBaseline = 'middle';
+			let fs = 64;
+			g.font = `700 ${fs}px Georgia, serif`;
+			while (fs > 26 && g.measureText(name).width > w - 50) {
+				fs -= 4;
+				g.font = `700 ${fs}px Georgia, serif`;
+			}
+			g.fillText(name || '', w / 2, role ? h / 2 - 14 : h / 2);
+			if (role) {
+				g.fillStyle = '#b8923e';
+				g.font = '700 30px Arial, sans-serif';
+				g.fillText(role, w / 2, h / 2 + 40);
+			}
+			pl.card.t.needsUpdate = true;
+		});
+	};
 	const stands = PL.map((p) => {
 		const stand = new THREE.Group();
 		stand.position.set(p.stand[0], FY, p.stand[1]);
@@ -418,6 +482,7 @@ export function buildStadium(scene, quality) {
 			reactFans(fans, kind);
 		},
 		setScreen: drawScreen,
+		setNames,
 		/** Stojan hráča pri stole: side 0 alebo 1, specs = tágá do zápasu, inHand = id tága v ruke. */
 		setRack,
 		/** Bodové svetlá (lúče reflektorov a škvrny): svietia pred partiou, F12 na ťahu. */

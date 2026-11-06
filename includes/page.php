@@ -95,6 +95,8 @@ function mysn_render( $preview ) {
 		// rola (admin alebo mod = správca hry) a id všetkých správcov: hra prijme ich neviditeľné sledovanie
 		'role'     => $user ? mysn_role() : '',
 		'staff'    => mysn_staff_ids(),
+		// admini (správcovia webu): na menovke pri kresle na štadióne majú pod menom ADMIN
+		'admins'   => array_map( 'intval', (array) get_users( array( 'fields' => 'ID', 'capability' => 'manage_options', 'number' => 50 ) ) ),
 	);
 	?>
 <!doctype html>
