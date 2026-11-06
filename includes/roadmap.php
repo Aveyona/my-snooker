@@ -118,7 +118,7 @@ function mysn_roadmap() {
 				array( 'ELO sila hráča ako v šachu, nový hráč začína na 1350', 0 ),
 				array( 'Mobil: úder ťahaním prstom, priblíženie dvoma prstami; chat (Enter)', 0 ),
 				array( 'Klik na predmety v scéne (vo voľnom pohľade s Ctrl) ako ich klávesy F2, F4, F8 a ďalšie', 0 ),
-				array( 'Ochrana proti podvádzaniu: súper ako rozhodca (porovná výsledok úderu), kontrola rozumnosti bodov na serveri, overenie skóre v hre o skóre, označenie podozrivo presných hráčov', 0 ),
+				array( 'Ochrana proti podvádzaniu (až pred dokončením hry): súper ako rozhodca (porovná výsledok úderu), kontrola rozumnosti bodov na serveri, overenie skóre v hre o skóre, označenie podozrivo presných hráčov', 0 ),
 				array( 'TURN server pre priame spojenie (WebRTC): odložené, zatiaľ netreba (spojenie po 0.6.44 funguje)', 0 ),
 				array( 'Klávesy F8, F9 a F10 na štadióne (zatiaľ nerobia nič)', 0 ),
 				array( 'Doladenie podľa skúšania (svetlá, citlivosť ovládania, rýchlosť súkna)', 0 ),
@@ -130,6 +130,7 @@ function mysn_roadmap() {
 /** Denník zmien (najnovšie hore). */
 function mysn_changelog() {
 	return array(
+		array( '0.6.51', '6. 11. 2026', 'Plán vývoja: ochrana proti podvádzaniu sa robí až pred dokončením hry.' ),
 		array( '0.6.50', '6. 11. 2026', 'Role admin a správca hry: administrácia My Snooker, Hráči (zoznam hráčov, nastavenie roly správca hry), v hre tlačidlo Správa hry (bežiace zápasy, herne, hráči online, neviditeľné sledovanie, zmena prezývky; admin aj ukončenie alebo zrušenie zápasu, zákaz ligy, vynulovanie bodov). Voľná kamera: návrat za tágo je okamžitý, bez preletu; koliesko plynulo posúva kameru hore a dole, držané pravé tlačidlo približuje na predmet, na ktorý sa pozeráš.' ),
 		array( '0.6.49', '6. 11. 2026', 'Voľná kamera si pamätá polohu a smer pohľadu (v tej istej miestnosti sa k nim vráti), pohyb je plynulý (rozbeh a dobeh, pohľad bez oneskorenia). Úder klávesom zrušený: udiera sa len myšou (ťahaním tága alebo ukazovateľom sily), Enter bude neskôr chat.' ),
 		array( '0.6.48', '6. 11. 2026', 'Voľná kamera: medzerník prepína voľný pohľad a pohľad za tágo aj počas hry (herňa a štadión). Myš rozhliadanie, šípky alebo W A S D posun, Q a E dole a hore, Shift rýchlejšie, koliesko priblíženie, Ctrl zastaví kameru, Esc späť; keď v zápase prídeš na rad, kamera sa vráti za tágo. Úder klávesom je teraz na Entere (drž a pusť). Administrácia: v menu My Snooker odkaz Dokumentácia (návod v My Help).' ),
