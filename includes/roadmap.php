@@ -112,7 +112,7 @@ function mysn_roadmap() {
 				array( 'Šatník v kancelárii: výber oblečenia na zápas, ktoré uvidí súper a diváci', 0 ),
 				array( 'Časomiera v ligovom zápase: 30 sekúnd na úder, posledných 5 s odpočet, inak faul za čas', 1 ),
 				array( 'Pozvánka na partiu cez odkaz', 0 ),
-				array( 'Voľná kamera na medzerníku pre hráčov (medzerník prepína voľný pohľad a tágo, Ctrl zastaví kameru a uvoľní kurzor; pre divákov zatiaľ nie), úder klávesom na Enter', 0 ),
+				array( 'Voľná kamera na medzerníku pre hráčov (medzerník prepína voľný pohľad a tágo, Ctrl zastaví kameru a uvoľní kurzor; pre divákov zatiaľ nie), úder klávesom na Enter', 1 ),
 				array( 'Role admin a správca hry: zoznam hráčov s nastavením roly v administrácii, panel Správa hry v hre podľa práv (práva v dokumentácii), odkaz Dokumentácia v menu My Snooker', 0 ),
 				array( 'Prehľad hráčov v administrácii (účty, odohrané hry, výhry, liga, aktivita), rovnaké údaje aj pre hráča', 0 ),
 				array( 'ELO sila hráča ako v šachu, nový hráč začína na 1350', 0 ),
@@ -129,6 +129,7 @@ function mysn_roadmap() {
 /** Denník zmien (najnovšie hore). */
 function mysn_changelog() {
 	return array(
+		array( '0.6.48', '6. 11. 2026', 'Voľná kamera: medzerník prepína voľný pohľad a pohľad za tágo aj počas hry (herňa a štadión). Myš rozhliadanie, šípky alebo W A S D posun, Q a E dole a hore, Shift rýchlejšie, koliesko priblíženie, Ctrl zastaví kameru, Esc späť; keď v zápase prídeš na rad, kamera sa vráti za tágo. Úder klávesom je teraz na Entere (drž a pusť). Administrácia: v menu My Snooker odkaz Dokumentácia (návod v My Help).' ),
 		array( '0.6.47', '6. 11. 2026', 'Plán vývoja: ELO sila hráča (štart 1350), klik na predmety v scéne vo voľnom pohľade, upresnená voľná kamera (medzerník prepína, Ctrl zastaví kameru).' ),
 		array( '0.6.46', '6. 11. 2026', 'Plán vývoja: role admin a správca hry schválené (zoznam hráčov s nastavením roly, panel Správa hry, odkaz Dokumentácia), voľná kamera schválená, TURN server odložený.' ),
 		array( '0.6.45', '6. 11. 2026', 'Plán vývoja: doplnená ochrana proti podvádzaniu (súper ako rozhodca, kontrola bodov na serveri, overenie skóre v hre o skóre).' ),

@@ -8,6 +8,8 @@ add_action( 'admin_menu', function () {
 	add_menu_page( 'My Snooker', 'My Snooker', 'manage_options', 'my-snooker', 'mysn_admin_page', 'dashicons-games', '26.43' );
 	add_submenu_page( 'my-snooker', 'My Snooker: Hra', 'Hra', 'manage_options', 'my-snooker', 'mysn_admin_page' );
 	add_submenu_page( 'my-snooker', 'My Snooker: Plán vývoja', 'Plán vývoja', 'manage_options', 'my-snooker-plan', 'mysn_admin_plan' );
+	// Dokumentácia: návod hry v My Help (presmerovanie, aby bol návod na jednom mieste)
+	add_submenu_page( 'my-snooker', 'My Snooker: Dokumentácia', 'Dokumentácia', 'manage_options', 'my-snooker-docs', '__return_null' );
 } );
 
 function mysn_admin_head( $sub ) {
@@ -189,3 +191,19 @@ function mysn_admin_plan() {
 	</div>
 	<?php
 }
+
+/* Menu My Snooker, Dokumentácia: otvorí návod hry v My Help (bez My Help ukáže krátku správu). */
+add_action(
+	'admin_init',
+	function () {
+		if ( ! isset( $_GET['page'] ) || 'my-snooker-docs' !== $_GET['page'] || ! current_user_can( 'manage_options' ) ) { // phpcs:ignore WordPress.Security.NonceVerification
+			return;
+		}
+		$url = function_exists( 'myhelp_doc_url' ) ? myhelp_doc_url( 'my-snooker' ) : '';
+		if ( $url ) {
+			wp_safe_redirect( $url );
+			exit;
+		}
+		wp_die( 'Dokumentácia hry je v doplnku My Help, ktorý nie je aktívny.', 'My Snooker: Dokumentácia', array( 'back_link' => true ) );
+	}
+);
