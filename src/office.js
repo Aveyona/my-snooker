@@ -187,8 +187,76 @@ export function buildOffice(scene) {
 		bulb.material.color.setHex(on ? 0xfff1c8 : 0x3a3528);
 	};
 	// notebook s mojím miestom v lige
-	const nb = tex(512, 320);
+	const nb = tex(1024, 640);
 	add(new THREE.BoxGeometry(0.36, 0.015, 0.25), dark, -0.15, DT + 0.008, DZ - 0.1);
+	// klávesnica na spodnej časti notebooku: výrazné šípky vľavo a vpravo ovládajú prehrávač partie
+	const kb = tex(720, 500);
+	const kbMesh = add(new THREE.PlaneGeometry(0.36, 0.25), new THREE.MeshStandardMaterial({ map: kb.t, roughness: 0.55, metalness: 0.15 }), -0.15, DT + 0.0157, DZ - 0.1);
+	kbMesh.rotation.x = -Math.PI / 2;
+	let kbOn = false; // šípky svietia (prehrávač je zapnutý)
+	let kbFlash = '';
+	let kbFlashT = 0;
+	const drawKb = () => {
+		const g = kb.g;
+		g.fillStyle = '#1b1c21';
+		g.fillRect(0, 0, 720, 500);
+		const U = 44;
+		const X0 = 30;
+		let y = 26;
+		const key = (x, yy, w, h, label, hot) => {
+			g.fillStyle = hot === 'flash' ? '#fff6c2' : hot ? '#3a3216' : '#0d0e11';
+			g.beginPath();
+			g.roundRect(x + 2, yy + 2, w - 4, h - 4, 5);
+			g.fill();
+			if (hot) {
+				g.strokeStyle = '#FACC15';
+				g.lineWidth = 3;
+				g.stroke();
+			}
+			if (label) {
+				g.fillStyle = hot === 'flash' ? '#1b1c21' : hot ? '#FACC15' : '#8b8f9a';
+				g.font = hot ? 'bold 30px Arial, sans-serif' : '15px Arial, sans-serif';
+				g.textAlign = 'center';
+				g.textBaseline = 'middle';
+				g.fillText(label, x + w / 2, yy + h / 2 + 1);
+			}
+		};
+		const row = (h, ks) => {
+			let x = X0;
+			for (const [w, l] of ks) {
+				key(x, y, w * U, h, l);
+				x += w * U;
+			}
+			y += h;
+		};
+		const ones = (str) => [...str].map((c) => [1, c]);
+		row(28, [[1, 'Esc'], ...Array.from({ length: 12 }, (_, i) => [1, 'F' + (i + 1)]), [1, 'Ins'], [1, 'Del']]);
+		row(U, [...ones('`1234567890='), [1, ''], [2, '⌫']]);
+		row(U, [[1.5, 'Tab'], ...ones('QWERTZUIOPÚ'), [1, ''], [1.5, '']]);
+		row(U, [[1.75, 'Caps'], ...ones('ASDFGHJKLÔ'), [1, ''], [2.25, 'Enter']]);
+		row(U, [[2.25, 'Shift'], ...ones('YXCVBNM,.-'), [2.75, 'Shift']]);
+		// spodný rad: medzerník a šípky (obrátené T)
+		let x = X0;
+		for (const [w, l] of [[1.25, 'Ctrl'], [1, 'Fn'], [1, ''], [1.25, 'Alt'], [5.5, ''], [1, 'Alt'], [1, 'Ctrl']]) {
+			key(x, y, w * U, U, l);
+			x += w * U;
+		}
+		const fl = (d) => (kbFlash === d && kbFlashT > 0 ? 'flash' : kbOn);
+		key(x, y, U, U, '◀', fl('left'));
+		key(x + U, y, U, U / 2, '▲');
+		key(x + U, y + U / 2, U, U / 2, '▼');
+		key(x + 2 * U, y, U, U, '▶', fl('right'));
+		// touchpad
+		g.fillStyle = '#25262c';
+		g.beginPath();
+		g.roundRect(230, 335, 260, 145, 10);
+		g.fill();
+		g.strokeStyle = '#33353d';
+		g.lineWidth = 2;
+		g.stroke();
+		kb.t.needsUpdate = true;
+	};
+	drawKb();
 	// veko so zadným pántom, obrazovka otočená k hráčovi (+z)
 	const lid = new THREE.Group();
 	lid.position.set(-0.15, DT + 0.015, DZ - 0.225);
@@ -691,6 +759,30 @@ export function buildOffice(scene) {
 	const sign = add(new THREE.PlaneGeometry(0.5, 0.125), new THREE.MeshBasicMaterial({ map: doorSign.t }), 1.9, FY + 1.75, RZo - 0.06);
 	sign.rotation.y = Math.PI;
 
+	let lastBoards = null;
+	let nbBusy = false; // na obrazovke notebooku beží prehrávač partie
+	const drawNb = () => {
+		const d = lastBoards;
+		const g = nb.g;
+		g.save();
+		g.scale(2, 2);
+		g.fillStyle = '#0c1a33';
+		g.fillRect(0, 0, 512, 320);
+		g.fillStyle = '#FACC15';
+		g.font = 'bold 34px Arial, sans-serif';
+		g.textAlign = 'center';
+		g.fillText('MOJA LIGA', 256, 60);
+		g.fillStyle = '#fff';
+		g.font = 'bold 64px Arial, sans-serif';
+		g.fillText(d && d.me ? `${d.me.league}. liga` : 'bez registrácie', 256, 150);
+		g.font = '32px Arial, sans-serif';
+		g.fillText(d && d.me ? `${d.me.rank}. miesto · ${d.me.points} b.` : '', 256, 210);
+		g.fillStyle = '#9fb3d9';
+		g.font = '26px Arial, sans-serif';
+		g.fillText(d && d.me ? `V ${d.me.wins} · P ${d.me.losses} · séria ${d.me.best}` : '', 256, 260);
+		g.restore();
+		nb.t.needsUpdate = true;
+	};
 	const drawBoards = (d, champions) => {
 		// výsledková tabuľa
 		let g = res.g;
@@ -736,22 +828,10 @@ export function buildOffice(scene) {
 		g.fillText(d && d.me ? `Ty: ${d.me.rank}. miesto v ${d.me.league}. lige · ${d.me.points} bodov · výhry ${d.me.wins}, prehry ${d.me.losses}` : 'Body: víťaz získa, koľko nahral; porazený ich stratí', 1024, 880);
 		res.t.needsUpdate = true;
 		// notebook
-		g = nb.g;
-		g.fillStyle = '#0c1a33';
-		g.fillRect(0, 0, 512, 320);
-		g.fillStyle = '#FACC15';
-		g.font = 'bold 34px Arial, sans-serif';
-		g.textAlign = 'center';
-		g.fillText('MOJA LIGA', 256, 60);
-		g.fillStyle = '#fff';
-		g.font = 'bold 64px Arial, sans-serif';
-		g.fillText(d && d.me ? `${d.me.league}. liga` : 'bez registrácie', 256, 150);
-		g.font = '32px Arial, sans-serif';
-		g.fillText(d && d.me ? `${d.me.rank}. miesto · ${d.me.points} b.` : '', 256, 210);
-		g.fillStyle = '#9fb3d9';
-		g.font = '26px Arial, sans-serif';
-		g.fillText(d && d.me ? `V ${d.me.wins} · P ${d.me.losses} · séria ${d.me.best}` : '', 256, 260);
-		nb.t.needsUpdate = true;
+		lastBoards = d;
+		if (!nbBusy) {
+			drawNb();
+		}
 		// kalendár
 		g = cal.g;
 		g.fillStyle = '#fbf7ec';
@@ -927,9 +1007,39 @@ export function buildOffice(scene) {
 			map: { pos: new THREE.Vector3(OX - RXo + 2.7, MAP.y, 0), look: new THREE.Vector3(OX - RXo, MAP.y, 0) },
 			rack: { pos: new THREE.Vector3(OX + RXo - 3.3, FY + 1.1, -0.2), look: new THREE.Vector3(OX + RXo, FY + 0.62, -0.2) },
 			notebook: { pos: new THREE.Vector3(OX - 0.15, DT + 0.36, DZ + 0.2), look: new THREE.Vector3(OX - 0.15, DT + 0.12, DZ - 0.2) },
+			// prehrávač partie: bližšie k obrazovke, notebook vľavo od panela histórie
+			notebookPlay: { pos: new THREE.Vector3(OX - 0.03, DT + 0.3, DZ + 0.12), look: new THREE.Vector3(OX - 0.03, DT + 0.1, DZ - 0.22) },
 		},
 		results: resMesh,
 		setBoards: drawBoards,
+		/** Obrazovka notebooku pre prehrávač partie: draw(g, w, h) kreslí do plátna 1024 x 640, null vráti Moju ligu. */
+		notebookDraw(draw) {
+			nbBusy = !!draw;
+			if (draw) {
+				draw(nb.g, 1024, 640);
+				nb.t.needsUpdate = true;
+			} else {
+				drawNb();
+			}
+		},
+		/** Šípky na klávesnici notebooku: on = svietia (prehrávač), press = 'left' alebo 'right' krátko zabliká. */
+		notebookKeys(on, press) {
+			kbOn = !!on;
+			if (press) {
+				kbFlash = press;
+				kbFlashT = 0.18;
+			}
+			drawKb();
+		},
+		/** Zhasnutie bliknutej šípky (volá sa v každom snímku). */
+		notebookTick(dt) {
+			if (kbFlashT > 0) {
+				kbFlashT -= dt;
+				if (kbFlashT <= 0) {
+					drawKb();
+				}
+			}
+		},
 		setMap: drawMap,
 		setRack,
 		/** Bod na mape (svetové súradnice priesečníka) prepočíta na zemepisnú dĺžku a šírku. */

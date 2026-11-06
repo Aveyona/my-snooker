@@ -23,6 +23,7 @@ import { Online } from './online.js';
 import { remaining } from './rules.js';
 import { aimTrace, R, L, W, snapshot, restore, createRack } from './physics.js';
 import { buildRackTriangle, rackLayout } from './rackTriangle.js';
+import { Replay } from './replay.js';
 import { CUES, cueById, ownCueSpec } from './cues.js';
 
 const STORE = 'mySnookerSettings';
@@ -446,6 +447,7 @@ export function start(root, config = {}) {
 	// pohľady, v ktorých sa myšou rozhliada (Ctrl drž = voľná myš)
 	const LOOK = new Set(['chair', 'bar', 'office', 'seat', 'free']); // seat = divák na svojom mieste, free = voľná kamera
 	let officeFocusNow = '';
+	let replay = null; // prehrávač partie na notebooku (F7, detail zápasu)
 	const OFFICE_KEYS = 'Kancelária: F1 nástenka s klávesmi za tebou, F8 vizitka (registrácia), F9 alebo dvere ŠTADIÓN: vyhľadať zápas, F12 lampa (zhasnutá = nie si online). Esc späť do herne.';
 	let venue = 'home';
 	const fadeEl = document.createElement('div');
@@ -1563,6 +1565,7 @@ export function start(root, config = {}) {
 		rig.setViewZoom(1);
 		if (was === 'office') {
 			radio.setSpeakers(null);
+			actions.replayStop();
 			ui.openHistory(false);
 			ui.openLeagueRules(false);
 			officeFocusNow = '';
@@ -1881,9 +1884,69 @@ export function start(root, config = {}) {
 					ui.setFree(true);
 					actions.historyLoad();
 				} else {
+					actions.replayStop();
 					actions.officeLook();
 				}
 			}
+		},
+		// prehrávač partie: údery sa prehrajú na obrazovke notebooku, šípky ← → na klávesnici, medzerník prehrávanie
+		replayStart: async (id) => {
+			const d = await online.net.call('history/replay?id=' + id, null, 'GET').catch((e) => ({ error: e.message }));
+			if (!ui.historyOpen()) {
+				return;
+			}
+			if (!d || d.error || !d.moves) {
+				ui.toast((d && d.error) || 'Záznam partie sa nedá načítať.');
+				return;
+			}
+			if (!d.moves.length) {
+				ui.toast('V partii nie je zaznamenaný žiadny úder.');
+				return;
+			}
+			replay = new Replay(d);
+			office.notebookKeys(true);
+			// bližší pohľad na obrazovku notebooku
+			const v = office.views.notebookPlay;
+			rig.setView(v.pos.clone(), v.look.clone());
+			ui.replayBar(true, false);
+			replay.toggle();
+			ui.replayBar(true, replay.playing);
+		},
+		replayStop: () => {
+			if (!replay) {
+				return;
+			}
+			replay = null;
+			office.notebookDraw(null);
+			office.notebookKeys(false);
+			ui.replayBar(false);
+			if (officeFocusNow === 'notebook') {
+				const v = office.views.notebook;
+				rig.setView(v.pos.clone(), v.look.clone());
+			}
+		},
+		replayKey: (k) => {
+			if (!replay) {
+				return false;
+			}
+			if (k === 'prev') {
+				replay.prev();
+				office.notebookKeys(true, 'left');
+			} else if (k === 'next') {
+				replay.next();
+				office.notebookKeys(true, 'right');
+			} else if (k === 'first') {
+				replay.first();
+			} else if (k === 'last') {
+				replay.last();
+			} else if (k === 'toggle') {
+				replay.toggle();
+			} else if (k === 'speed') {
+				replay.speed = replay.speed >= 2 ? 0.5 : replay.speed * 2;
+				ui.toast(`Rýchlosť prehrávania ${String(replay.speed).replace('.', ',')}×`);
+			}
+			ui.replayBar(true, replay.playing, replay.speed);
+			return true;
 		},
 		historyLoad: async () => {
 			const d = online ? await online.net.call('history', null, 'GET').catch((e) => ({ error: e.message })) : null;
@@ -1913,7 +1976,10 @@ export function start(root, config = {}) {
 			}
 			ui.renderHistoryMatch(d);
 		},
-		historyBack: () => actions.historyLoad(),
+		historyBack: () => {
+			actions.replayStop();
+			actions.historyLoad();
+		},
 		// vyhľadávanie ligového zápasu: ✕ v pásiku, okno nájdeného zápasu
 		seekCancel: async () => {
 			if (online && online.queueing) {
@@ -2783,6 +2849,13 @@ export function start(root, config = {}) {
 				}
 				if (lk !== 'm' && lk !== 'f5' && lk !== 'f11') {
 					return true;
+				}
+			}
+			if (replay && view === 'office' && officeFocusNow === 'notebook') {
+				// prehrávač partie na notebooku: ← → úder, medzerník prehrávať, Home a End začiatok a koniec, R rýchlosť
+				const rk = { arrowleft: 'prev', arrowright: 'next', space: 'toggle', home: 'first', end: 'last', r: 'speed' }[lk];
+				if (rk) {
+					return actions.replayKey(rk);
 				}
 			}
 			if (ui.toolsOpen()) {
@@ -3797,6 +3870,12 @@ export function start(root, config = {}) {
 		}
 		updateFelt();
 		office.updateWindow(dt);
+		office.notebookTick(dt);
+		if (replay) {
+			replay.tick(dt);
+			office.notebookDraw((g, w, h) => replay.draw(g, w, h));
+			ui.replayBar(true, replay.playing, replay.speed);
+		}
 		rig.cueTilt = cue.pivot.visible ? cue.tilt || 0 : 0;
 		// po údere: keď gule zastanú a som na rade, mierim zo smeru, z ktorého sa kamera práve pozerá na bielu
 		// (kamera sa neotáča, len sa plynulo spustí za tágo); v partii aj po súperovom údere

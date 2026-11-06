@@ -180,12 +180,74 @@ function mysn_rest_history_match( $req ) {
 	);
 }
 
+/**
+ * GET /history/replay?id=ID: údery partie na prehranie (prehrávač na notebooku v kancelárii a v administrácii).
+ * Hráč vidí svoje ligové zápasy, administrátor každú partiu cez internet. Pri každom údere je úder
+ * (biela, smer, sila, falše) a stav stola po ňom: prehrávač úder znova nasimuluje a na konci gule položí presne
+ * podľa uloženého stavu.
+ */
+function mysn_rest_history_replay( $req ) {
+	global $wpdb;
+	$uid   = get_current_user_id();
+	$admin = current_user_can( 'manage_options' );
+	$m     = mysn_get_match( (int) $req->get_param( 'id' ) );
+	$mine  = $m && ( (int) $m['p1'] === $uid || (int) $m['p2'] === $uid ) && $m['league'];
+	if ( ! $m || ( ! $mine && ! $admin ) ) {
+		return mysn_err( 'Zápas sa nenašiel.', 404 );
+	}
+	$ids   = array( (int) $m['p1'], (int) $m['p2'] );
+	$rows  = $wpdb->get_results( $wpdb->prepare( 'SELECT seq, user_id, shot, after, points, foul FROM ' . mysn_table( 'moves' ) . ' WHERE match_id = %d ORDER BY seq ASC LIMIT 600', (int) $m['id'] ), ARRAY_A ); // phpcs:ignore
+	$moves = array();
+	foreach ( $rows as $mv ) {
+		$st   = json_decode( (string) $mv['after'], true );
+		$shot = json_decode( (string) $mv['shot'], true );
+		$b    = array();
+		if ( isset( $st['balls'] ) && is_array( $st['balls'] ) ) {
+			foreach ( $st['balls'] as $x ) {
+				$b[ (int) $x['id'] ] = array( round( (float) $x['x'], 4 ), round( (float) $x['z'], 4 ), empty( $x['on'] ) ? 0 : 1 );
+			}
+			ksort( $b );
+		}
+		$sh = null;
+		if ( is_array( $shot ) && empty( $shot['timeout'] ) && isset( $shot['dir'] ) ) {
+			$sh = array(
+				'cx'    => (float) $shot['cx'],
+				'cz'    => (float) $shot['cz'],
+				'dir'   => (float) $shot['dir'],
+				'power' => (float) $shot['power'],
+				'side'  => isset( $shot['side'] ) ? (float) $shot['side'] : 0,
+				'top'   => isset( $shot['top'] ) ? (float) $shot['top'] : 0,
+			);
+		}
+		$moves[] = array(
+			'seq'    => (int) $mv['seq'],
+			'side'   => (int) $mv['user_id'] === $ids[0] ? 0 : 1,
+			'shot'   => $sh,
+			'b'      => array_values( $b ),
+			'scores' => isset( $st['rules']['scores'] ) ? array( (int) $st['rules']['scores'][0], (int) $st['rules']['scores'][1] ) : null,
+			'turn'   => isset( $st['rules']['turn'] ) ? (int) $st['rules']['turn'] : null,
+			'points' => (int) $mv['points'],
+			'foul'   => (int) $mv['foul'],
+			'msg'    => isset( $st['msg'] ) ? wp_strip_all_tags( (string) $st['msg'] ) : '',
+		);
+	}
+	return array(
+		'id'      => (int) $m['id'],
+		'league'  => (int) $m['league'],
+		'players' => array( mysn_hist_who( $ids[0] ), mysn_hist_who( $ids[1] ) ),
+		'scores'  => array( (int) $m['score1'], (int) $m['score2'] ),
+		'date'    => (int) $m['created'],
+		'moves'   => $moves,
+	);
+}
+
 add_action(
 	'rest_api_init',
 	function () {
 		foreach ( array(
 			'/history'       => 'mysn_rest_history',
 			'/history/match' => 'mysn_rest_history_match',
+			'/history/replay' => 'mysn_rest_history_replay',
 		) as $route => $cb ) {
 			register_rest_route(
 				'my-snooker/v1',

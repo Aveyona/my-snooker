@@ -7,6 +7,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 add_action( 'admin_menu', function () {
 	add_menu_page( 'My Snooker', 'My Snooker', 'manage_options', 'my-snooker', 'mysn_admin_page', 'dashicons-games', '26.43' );
 	add_submenu_page( 'my-snooker', 'My Snooker: Hra', 'Hra', 'manage_options', 'my-snooker', 'mysn_admin_page' );
+	add_submenu_page( 'my-snooker', 'My Snooker: Partie', 'Partie', 'manage_options', 'my-snooker-matches', 'mysn_admin_matches_page' );
 	add_submenu_page( 'my-snooker', 'My Snooker: Plán vývoja', 'Plán vývoja', 'manage_options', 'my-snooker-plan', 'mysn_admin_plan' );
 	// Dokumentácia: návod hry v My Help (presmerovanie, aby bol návod na jednom mieste)
 	add_submenu_page( 'my-snooker', 'My Snooker: Dokumentácia', 'Dokumentácia', 'manage_options', 'my-snooker-docs', '__return_null' );
@@ -82,7 +83,7 @@ function mysn_admin_page() {
 			</table>
 			<?php submit_button( 'Uložiť' ); ?>
 		</form>
-		<?php mysn_admin_matches(); ?>
+		<p><a href="<?php echo esc_url( admin_url( 'admin.php?page=my-snooker-matches' ) ); ?>">Partie cez internet a prehrávač partií</a> sú v záložke Partie.</p>
 	</div>
 	<?php
 }
@@ -104,9 +105,46 @@ function mysn_admin_delta( $m ) {
 	return mysn_user( $w )['name'] . ' +' . $d . ', ' . mysn_user( $l )['name'] . ' −' . $d;
 }
 
+/** Záložka Partie: partie cez internet a prehrávač partie (údery sa prehrajú v plátne). */
+function mysn_admin_matches_page() {
+	if ( ! current_user_can( 'manage_options' ) ) {
+		return;
+	}
+	wp_enqueue_script( 'mysn-replay', MYSN_URL . 'assets/replay.js', array(), MYSN_VERSION, true );
+	wp_add_inline_script(
+		'mysn-replay',
+		'window.mysnReplay = ' . wp_json_encode(
+			array(
+				'rest'  => esc_url_raw( rest_url( 'my-snooker/v1/' ) ),
+				'nonce' => wp_create_nonce( 'wp_rest' ),
+			)
+		) . ';',
+		'before'
+	);
+	?>
+	<div class="wrap">
+		<?php mysn_admin_head( 'Partie cez internet a prehrávač partie. Gombík Prehrať pri partii prehrá všetky údery tak, ako ich hráči zahrali.' ); ?>
+		<div id="mysn-replay" hidden style="max-width:1024px;margin:10px 0 22px;background:#0b1424;border-radius:10px;padding:10px">
+			<h2 id="mysn-replay-title" style="color:#fff;margin:4px 6px 10px"></h2>
+			<canvas id="mysn-replay-canvas" width="1024" height="640" style="width:100%;height:auto;display:block;border-radius:6px"></canvas>
+			<div id="mysn-replay-bar" style="display:flex;flex-wrap:wrap;gap:6px;justify-content:center;margin-top:10px">
+				<button type="button" class="button" data-k="first" title="Začiatok partie (Home)">⏮</button>
+				<button type="button" class="button" data-k="prev" title="Predchádzajúci úder (šípka vľavo)">◀</button>
+				<button type="button" class="button button-primary" data-k="toggle" title="Prehrávať a zastaviť (medzerník)">▶ Prehrať</button>
+				<button type="button" class="button" data-k="next" title="Ďalší úder (šípka vpravo)">▶</button>
+				<button type="button" class="button" data-k="last" title="Koniec partie (End)">⏭</button>
+				<button type="button" class="button" data-k="speed" title="Rýchlosť prehrávania (R)">1×</button>
+				<button type="button" class="button" data-k="close" title="Zavrieť prehrávač (Esc)">Zavrieť</button>
+			</div>
+		</div>
+		<?php mysn_admin_matches( 60 ); ?>
+	</div>
+	<?php
+}
+
 /** Prehľad partií cez internet (tabuľka my_snooker_matches, záznam úderov v my_snooker_moves). */
-function mysn_admin_matches() {
-	$rows  = mysn_recent_matches( 30 );
+function mysn_admin_matches( $limit = 30 ) {
+	$rows  = mysn_recent_matches( $limit );
 	$names = array(
 		'active'   => 'rozohraná',
 		'paused'   => 'prerušená',
@@ -119,8 +157,8 @@ function mysn_admin_matches() {
 	<?php if ( ! $rows ) : ?>
 		<p>Zatiaľ žiadne partie.</p>
 	<?php else : ?>
-		<table class="widefat striped" style="max-width:1100px">
-			<thead><tr><th>Partia</th><th>Hráči</th><th>Skóre</th><th>Údery</th><th>Stav</th><th>Víťaz</th><th>Body ligy</th><th>Naposledy</th></tr></thead>
+		<table class="widefat striped" style="max-width:1200px">
+			<thead><tr><th>Partia</th><th>Hráči</th><th>Skóre</th><th>Údery</th><th>Stav</th><th>Víťaz</th><th>Body ligy</th><th>Naposledy</th><th></th></tr></thead>
 			<tbody>
 			<?php foreach ( $rows as $m ) : ?>
 				<tr>
@@ -132,6 +170,7 @@ function mysn_admin_matches() {
 					<td><?php echo $m['winner'] ? esc_html( mysn_user( $m['winner'] )['name'] ) : ''; ?></td>
 					<td><?php echo esc_html( mysn_admin_delta( $m ) ); ?></td>
 					<td><?php echo esc_html( wp_date( 'j. n. Y H:i', (int) $m['updated'] ) ); ?></td>
+					<td><?php if ( (int) $m['moves'] ) : ?><button type="button" class="button button-small" data-mysn-replay="<?php echo (int) $m['id']; ?>">▶ Prehrať</button><?php endif; ?></td>
 				</tr>
 			<?php endforeach; ?>
 			</tbody>

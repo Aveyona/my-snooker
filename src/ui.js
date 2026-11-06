@@ -626,7 +626,13 @@ export class UI {
 		if (!this.histEl) {
 			this.histEl = h('div', 'mysn-hist mysn-hidden');
 			for (const ev of ['mousedown', 'keydown', 'wheel']) {
-				this.histEl.addEventListener(ev, (e) => e.stopPropagation());
+				this.histEl.addEventListener(ev, (e) => {
+					if (ev === 'keydown' && this.replayOn && ['ArrowLeft', 'ArrowRight', ' ', 'Home', 'End'].includes(e.key)) {
+						e.preventDefault(); // klávesy prehrávača idú do hry aj keď je zameraný gombík v paneli
+						return;
+					}
+					e.stopPropagation();
+				});
 			}
 			this.root.appendChild(this.histEl);
 		}
@@ -634,6 +640,43 @@ export class UI {
 		if (on) {
 			this.histEl.innerHTML = '<div class="mysn-hist-load">Načítavam zápasy…</div>';
 		}
+	}
+
+	/** Lišta prehrávača partie pod notebookom (on, prehráva sa, rýchlosť). */
+	replayBar(on, playing, speed = 1) {
+		const key = on ? `${playing ? 1 : 0}|${speed}` : '';
+		if (key === this._rbKey) {
+			return;
+		}
+		this._rbKey = key;
+		this.replayOn = !!on;
+		if (!this.rbEl) {
+			this.rbEl = h('div', 'mysn-replay mysn-hidden');
+			for (const ev of ['mousedown', 'wheel']) {
+				this.rbEl.addEventListener(ev, (e) => e.stopPropagation());
+			}
+			this.root.appendChild(this.rbEl);
+		}
+		this.rbEl.classList.toggle('mysn-hidden', !on);
+		if (!on) {
+			return;
+		}
+		this.rbEl.innerHTML = '';
+		const b = (label, v, title) => {
+			const x = this.button(label, 'replayKey', title, v);
+			x.addEventListener('click', () => x.blur()); // medzerník potom neklikne znova na gombík
+			this.rbEl.appendChild(x);
+			return x;
+		};
+		b('⏮', 'first', 'Začiatok partie (Home)');
+		b('◀', 'prev', 'Predchádzajúci úder (šípka vľavo)');
+		b(playing ? '❚❚' : '▶ Prehrať', 'toggle', 'Prehrávať a zastaviť (medzerník)').classList.add('mysn-replay-play');
+		b('▶', 'next', 'Ďalší úder (šípka vpravo)');
+		b('⏭', 'last', 'Koniec partie (End)');
+		b(`${String(speed).replace('.', ',')}×`, 'speed', 'Rýchlosť prehrávania (R)');
+		const x = this.button('✕', 'replayStop', 'Zavrieť prehrávač');
+		x.classList.add('mysn-replay-close');
+		this.rbEl.appendChild(x);
 	}
 
 	historyOpen() {
@@ -721,6 +764,9 @@ export class UI {
 		const back = this.button('← Späť na zoznam', 'historyBack');
 		back.classList.add('mysn-hist-back');
 		el.appendChild(back);
+		const play = this.button('▶ Prehrať partiu na notebooku', 'replayStart', 'Údery sa prehrajú na obrazovke notebooku; šípky ← → na klávesnici prepínajú údery', d.id);
+		play.classList.add('mysn-hist-play');
+		el.appendChild(play);
 		const [txt, cls] = UI.histRes(d.result);
 		const P = d.players;
 		const mins = Math.max(1, Math.round(d.duration / 60));
