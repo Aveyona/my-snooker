@@ -930,6 +930,26 @@ export function start(root, config = {}) {
 		rig.camera.position.copy(p); // bez oneskorenia (pohyb je plynulý sám)
 	};
 	// krátky dvojtón pri nájdenom ligovom zápase
+	let chairBack = null; // pohľad z kresla pred mojím ťahom (liga): po ťahu sa doň vrátim
+	/** Pípnutie pri prepnutí kamery medzi kreslom a stolom (mine = idem na ťah: vyšší tón). */
+	const turnBeep = (mine) => {
+		const ctx = sound.ctx;
+		if (!ctx) {
+			return;
+		}
+		(mine ? [660, 990] : [990, 660]).forEach((f, i) => {
+			const o = ctx.createOscillator();
+			const g = ctx.createGain();
+			o.frequency.value = f;
+			const t = ctx.currentTime + i * 0.12;
+			g.gain.setValueAtTime(0.0001, t);
+			g.gain.exponentialRampToValueAtTime(0.22, t + 0.015);
+			g.gain.exponentialRampToValueAtTime(0.0001, t + 0.11);
+			o.connect(g).connect(ctx.destination);
+			o.start(t);
+			o.stop(t + 0.13);
+		});
+	};
 	const foundBeep = () => {
 		const ctx = sound.ctx;
 		if (!ctx) {
@@ -3978,6 +3998,11 @@ export function start(root, config = {}) {
 		// partia: keď prídem na rad a sedím na stoličke (F7), pohľad sa sám vráti k stolu
 		const myTurnNow = !!(game.match && game.match.turn === game.match.me && (game.state === 'aim' || game.state === 'place'));
 		if (myTurnNow && !wasMyTurn && (view === 'chair' || view === 'free')) {
+			if (view === 'chair' && venue === 'league' && game.match && game.match.league) {
+				// zapamätá sa pohľad z kresla: po mojom ťahu si hráč znova sadne a pozerá sa rovnako
+				chairBack = { yaw: chairLook.yaw, pitch: chairLook.pitch, zoom: rig.viewZoom || 1 };
+				turnBeep(true);
+			}
 			exitView();
 		}
 		if (myTurnNow && oppTop) {
@@ -3991,7 +4016,26 @@ export function start(root, config = {}) {
 		wasMyTurn = myTurnNow;
 		// Nastavenia, Kamera keď hrá súper (ligový štadión): zhora alebo zo stoličky (F7) počas celého súperovho ťahu
 		const oppTurnNow = !!(venue === 'league' && game.match && game.match.league && game.match.rules && !game.match.rules.over && game.match.turn !== game.match.me && game.state === 'watch');
-		if (oppTurnNow && !wasOppTurn && !view && !topView) {
+		if (!game.match || (game.match.rules && game.match.rules.over)) {
+			chairBack = null;
+		}
+		if (oppTurnNow && !wasOppTurn && chairBack && (!view || view === 'free') && !topView) {
+			// môj ťah skončil: späť do kresla s rovnakým pohľadom ako predtým (pípnutie)
+			const back = chairBack;
+			chairBack = null;
+			if (view === 'free') {
+				exitView();
+			}
+			enterView('chair');
+			if (view === 'chair') {
+				chairLook.yaw = back.yaw;
+				chairLook.pitch = back.pitch;
+				const c = Math.cos(back.pitch);
+				rig.setView(rig.viewPos.clone(), rig.viewPos.clone().add(new THREE.Vector3(Math.cos(back.yaw) * c, Math.sin(back.pitch), Math.sin(back.yaw) * c)));
+				rig.setViewZoom(back.zoom);
+			}
+			turnBeep(false);
+		} else if (oppTurnNow && !wasOppTurn && !view && !topView) {
 			if (settings.oppCam === 'top') {
 				oppTop = true;
 				rig.setMode('top');

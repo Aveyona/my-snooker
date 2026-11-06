@@ -131,6 +131,7 @@ function mysn_roadmap() {
 /** Denník zmien (najnovšie hore). */
 function mysn_changelog() {
 	return array(
+		array( '0.7.34', '6. 11. 2026', 'Ligový zápas, kreslo F7: keď prídeš na rad, kamera sa prepne k stolu a pípne zvuk na upozornenie. Keď tvoj ťah skončí (súper je na rade), znova si sadneš do kresla s rovnakým pohľadom a priblížením ako predtým, tiež s pípnutím.' ),
 		array( '0.7.33', '6. 11. 2026', 'Štadión F2: stojan s tágami sa pri výbere výrazne rozsvieti (LED lišty hore a dole, bodové svetlo spredu na tágá a jemné svetlo na zadnej doske). Podsvietenie sa synchronizuje cez internet, vidia ho súper aj diváci.' ),
 		array( '0.7.32', '6. 11. 2026', 'Rozhodca po každom presune postojí na novom mieste aspoň 8 sekúnd, aby sa nepresúval príliš často. Skôr odíde len vtedy, keď by zavadzal tágu. Pri mierenej guli ostáva 10 sekúnd od príchodu.' ),
 		array( '0.7.31', '6. 11. 2026', 'Rozhodca sa vyhýba dlhej strane, kde sedia skutoční diváci: nechodí tadiaľ ani tam nezastane, radšej obíde stôl cez kratšie strany. Keď musí, ide stranou s menej skutočnými divákmi. Má to prednosť pri výbere trasy aj miesta pri mierenej guli.' ),
