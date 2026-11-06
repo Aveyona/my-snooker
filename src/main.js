@@ -25,6 +25,7 @@ import { aimTrace, R, L, W, snapshot, restore, createRack } from './physics.js';
 import { buildRackTriangle, rackLayout } from './rackTriangle.js';
 import { Replay } from './replay.js';
 import { CHALKS, chalkById } from './chalks.js';
+import { ChalkMarks } from './chalkMarks.js';
 import { CUES, cueById, ownCueSpec } from './cues.js';
 
 const STORE = 'mySnookerSettings';
@@ -229,6 +230,7 @@ export function start(root, config = {}) {
 	const aimExtra = () => ({
 		rest: spiderNow ? [REST_KINDS.indexOf(restKind), +spiderNow.x.toFixed(4), +spiderNow.z.toFixed(4), +(spiderNow.y || 0).toFixed(3), +spiderNow.tilt.toFixed(4)] : 0,
 		ch: chalkT >= 0 ? +chalkT.toFixed(2) : -1,
+		cc: chalkById(settings.chalk).color, // farba mojej kriedy (stopy na súkne u súpera a divákov)
 	});
 	let remoteRest = null; // { kind, mesh } nádstavec súpera alebo sledovaného hráča
 	/**
@@ -297,6 +299,7 @@ export function start(root, config = {}) {
 	const rackTick = (dt) => {
 		const fresh = rackFresh();
 		if (fresh && !rackWasFresh) {
+			chalkMarks.clear(); // nový frame alebo nové rozostavenie: čisté súkno
 			rackT = 0; // nové rozostavenie: spusti animáciu
 		}
 		rackWasFresh = fresh;
@@ -1438,6 +1441,8 @@ export function start(root, config = {}) {
 	const CH = { s: 0.022, h: 0.0115, d: 0.009 };
 	const chalkBlue = new THREE.MeshStandardMaterial({ color: chalkById(settings.chalk).color, roughness: 0.95 }); // farba vybratej kriedy
 	let chalkZoom = false; // F2 v herni: kamera je priblížená na kriedu na poličke
+	const chalkMarks = new ChalkMarks(scene); // stopy kriedy na súkne po úderoch
+	let remoteChalk = 0x2f6fd6; // farba kriedy súpera alebo sledovaného hráča (z jeho mierenia)
 	const chalkMesh = new THREE.Group();
 	{
 		const white = new THREE.MeshStandardMaterial({ color: 0xf4f2ea, roughness: 0.8 });
@@ -1835,12 +1840,14 @@ export function start(root, config = {}) {
 			officeMode = officeMode === 'cues' ? '' : 'cues';
 			if (officeMode) {
 				officeCue = officeCue || myCues.selected[0] || CUES[0].id;
+				ui.openChalks(true, chalkById(settings.chalk).id, false, true); // kancelária: výber kriedy do ligy
 				if (officeFocusNow !== 'rack') {
 					actions.officeFocus('rack');
 				}
 				freeMouse = true;
 				controls.uncapture();
 			} else {
+				ui.openChalks(false);
 				if (officeFocusNow === 'rack') {
 					actions.officeFocus('rack');
 				}
@@ -2407,6 +2414,15 @@ export function start(root, config = {}) {
 		// F2 v herni: výber kriedy z poličky (kamera sa na ňu priblíži), druhý klik alebo Späť na stojan vráti pohľad
 		chalkPick: (i) => {
 			const ch = CHALKS[i];
+			if (ch && officeMode === 'cues') {
+				// kancelária: vždy je vybratá jedna krieda (do ligového zápasu)
+				settings.chalk = ch.id;
+				saveSettings(settings);
+				chalkBlue.color.setHex(ch.color);
+				ui.openChalks(true, ch.id, false, true);
+				ui.toast(`Krieda do zápasu: ${ch.name}.`);
+				return;
+			}
 			if (!ch || view !== 'rack') {
 				return;
 			}
@@ -3495,6 +3511,9 @@ export function start(root, config = {}) {
 					stadium.setBeams(beamsOn);
 				} else if (m.k === 'w-aim') {
 					online.setRemoteCue(m.a && m.a.cue); // tágo hráča, ktorý mieri
+				if (m.a && typeof m.a.cc === 'number') {
+					remoteChalk = m.a.cc; // farba kriedy hráča (stopy na súkne)
+				}
 					if (!moving && m.a && m.a.seq === watchInfo.seq) {
 						online.aimTarget = m.a; // tágo hráča pri mierení
 					}
@@ -3628,6 +3647,11 @@ export function start(root, config = {}) {
 
 	// pri kladení bielej do D sa kamera za tágom dočasne prepne zhora (bielu je tak lepšie vidieť)
 	game.on((type, d) => {
+		if (type === 'shot' && d && d.shot && typeof d.shot.cx === 'number') {
+			// stopa kriedy na súkne pod bielou: moja krieda, pri súperovi a sledovanom hráčovi jeho krieda
+			const remote = !!d.remote || !!game.spectating;
+			chalkMarks.add(d.shot.cx, d.shot.cz, d.shot.dir, remote ? (game.spectating ? remoteChalk : (online && online.remoteChalk) || remoteChalk) : chalkById(settings.chalk).color, remote ? 0.7 : chalk / CHALK_SHOTS);
+		}
 		if (!game.spectating && !game.match && homeDoorOpen && (type === 'shot' || type === 'settle')) {
 			roomBroadcast(type, d);
 		} else if (!game.spectating && !game.match && homeDoorOpen && type === 'change' && game.state !== 'moving') {

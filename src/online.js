@@ -451,6 +451,9 @@ export class Online {
 			}
 		} else if (m.k === 'aim') {
 			this.setRemoteCue(m.a && m.a.cue); // tágo súpera (model), aby sme videli rovnaké
+			if (m.a && typeof m.a.cc === 'number') {
+				this.remoteChalk = m.a.cc; // farba kriedy súpera (stopy na súkne)
+			}
 			if (m.a && g.state === 'watch' && m.a.seq === g.match.seq) {
 				this.aimTarget = m.a;
 			}

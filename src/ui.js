@@ -624,7 +624,7 @@ export class UI {
 	}
 
 	/** Herňa F2: panel vľavo s kriedami z poličky nad stojanom (sel = vybratá, zoom = kamera je pri kriede). */
-	openChalks(on, sel, zoom) {
+	openChalks(on, sel, zoom, office = false) {
 		if (!this.chalkEl) {
 			this.chalkEl = h('div', 'mysn-chalks mysn-hidden');
 			for (const ev of ['mousedown', 'keydown', 'wheel']) {
@@ -637,7 +637,9 @@ export class UI {
 			return;
 		}
 		const hex = (n) => '#' + n.toString(16).padStart(6, '0');
-		this.chalkEl.innerHTML = '<h3>Kriedy</h3><p class="mysn-chalks-sub">Vyber kriedu, kamera sa na ňu priblíži na poličke. Vybratou kriedou kriedueš tágo (F3).</p>';
+		this.chalkEl.innerHTML = office
+			? '<h3>Krieda do zápasu</h3><p class="mysn-chalks-sub">Vyber jednu kriedu: ňou kriedueš tágo v lige (F3) a jej farbu vidia súper aj diváci, aj na stopách na súkne.</p>'
+			: '<h3>Kriedy</h3><p class="mysn-chalks-sub">Vyber kriedu, kamera sa na ňu priblíži na poličke. Vybratou kriedou kriedueš tágo (F3), ostávajú po nej jemné stopy na súkne.</p>';
 		const list = h('div', 'mysn-chalk-list');
 		CHALKS.forEach((c, i) => {
 			const b = h(

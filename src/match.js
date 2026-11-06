@@ -274,7 +274,7 @@ export class Game extends Training {
 		}
 		this.state = 'moving';
 		this.message = '';
-		this.emit('shot', { power: shot.power });
+		this.emit('shot', { power: shot.power, shot, remote: !own });
 	}
 
 	/** Sledovanie cudzej partie (Pozerať hru): uloží moju rozohranú hru, divák sa len pozerá. info = { type, id, title, kind } */
