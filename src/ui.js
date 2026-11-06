@@ -112,6 +112,22 @@ export class UI {
 			ssens.addEventListener(t, (e) => e.stopPropagation());
 		}
 		tools.appendChild(ssens);
+		// citlivosť pohľadu pravým tlačidlom myši (krúženie okolo mierenej gule a priblíženie, všetky smery)
+		const psens = h('label', 'mysn-group mysn-sens', '<span>Pravé tlačidlo</span><input type="range" min="0.3" max="3" step="0.1"><b></b>');
+		const pi = psens.querySelector('input');
+		const pb = psens.querySelector('b');
+		const p0 = Number((opts.settings && opts.settings.panSens) || 1);
+		pi.value = String(p0);
+		pb.textContent = p0.toFixed(1) + '×';
+		pi.addEventListener('input', () => {
+			const v = Number(pi.value);
+			pb.textContent = v.toFixed(1) + '×';
+			this.opts.onAction('panSens', v);
+		});
+		for (const t of ['pointerdown', 'mousedown', 'click', 'wheel', 'keydown']) {
+			psens.addEventListener(t, (e) => e.stopPropagation());
+		}
+		tools.appendChild(psens);
 		root.appendChild(tools);
 
 		this.menu = this.buildMenu();

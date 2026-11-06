@@ -283,7 +283,8 @@ export class Controls {
 			return;
 		}
 		if (this.panning) {
-			this.rig.pan(e.movementX || 0, e.movementY || 0);
+			const ps = this.panSens || 1; // šúpatko Pravé tlačidlo: citlivosť vo všetkých smeroch (krúženie, priblíženie)
+			this.rig.pan((e.movementX || 0) * ps, (e.movementY || 0) * ps);
 			return;
 		}
 		// divák (Pozerať hru): pohyb myši bez tlačidla vždy otáča pohľad okolo stola
