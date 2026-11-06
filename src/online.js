@@ -763,7 +763,7 @@ export class Online {
 		// mierenie posielam, keď som na rade (súper a diváci vidia moje tágo)
 		this._aimT += step;
 		if (aim && g.myTurn && (g.state === 'aim' || g.state === 'place') && this._aimT >= AIM_MS) {
-			const a = { seq: g.match.seq, dir: +aim.dir.toFixed(4), cx: +aim.cx.toFixed(4), cz: +aim.cz.toFixed(4), pull: +aim.pull.toFixed(3), side: +aim.side.toFixed(2), top: +aim.top.toFixed(2), place: g.state === 'place' ? 1 : 0 };
+			const a = { seq: g.match.seq, dir: +aim.dir.toFixed(4), cx: +aim.cx.toFixed(4), cz: +aim.cz.toFixed(4), pull: +aim.pull.toFixed(3), side: +aim.side.toFixed(2), top: +aim.top.toFixed(2), place: g.state === 'place' ? 1 : 0, rest: aim.rest || 0, ch: aim.ch === undefined ? -1 : aim.ch }; // rest = nádstavec, ch = kriedovanie
 			const key = JSON.stringify(a);
 			if (key !== this._aimSent) {
 				this._aimT = 0;

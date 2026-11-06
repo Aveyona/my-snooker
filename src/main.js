@@ -221,6 +221,13 @@ export function start(root, config = {}) {
 		scene.add(spiderMesh);
 	};
 	const restSpot = () => spiderSpot(game.cue, game.dir, game.balls, RESTS[restKind].tilt, restKind);
+	const REST_KINDS = Object.keys(RESTS);
+	/** K mieraniu pre súpera a divákov: nádstavec na stole (druh, poloha, sklon) a kriedovanie (čas animácie). */
+	const aimExtra = () => ({
+		rest: spiderNow ? [REST_KINDS.indexOf(restKind), +spiderNow.x.toFixed(4), +spiderNow.z.toFixed(4), +(spiderNow.y || 0).toFixed(3), +spiderNow.tilt.toFixed(4)] : 0,
+		ch: chalkT >= 0 ? +chalkT.toFixed(2) : -1,
+	});
+	let remoteRest = null; // { kind, mesh } nádstavec súpera alebo sledovaného hráča
 	const HANG_X = L / 2 - 0.05 + 0.012; // čelo skrine stola (pod rámom)
 	const spiderHang = buildSpider(0, 0); // zavesený pod stolom na strane baulku (palica vodorovne pozdĺž čela skrine)
 	spiderHang.userData.setHeight(0.1);
@@ -2821,7 +2828,7 @@ export function start(root, config = {}) {
 			// otvorená partia: mierenie tága divákom priamo asi 20-krát za sekundu (len keď sa zmenilo)
 			roomAimT += dt;
 			if (roomAimT >= 0.05) {
-				const a = { seq: roomSeq, dir: +game.dir.toFixed(4), cx: +game.cue.p.x.toFixed(4), cz: +game.cue.p.z.toFixed(4), pull: +(controls.stroking ? Math.max(0, controls.strokePull) : controls.power || 0).toFixed(3), side: +spin.side.toFixed(2), top: +spin.top.toFixed(2), place: game.state === 'place' ? 1 : 0 };
+				const a = { seq: roomSeq, dir: +game.dir.toFixed(4), cx: +game.cue.p.x.toFixed(4), cz: +game.cue.p.z.toFixed(4), pull: +(controls.stroking ? Math.max(0, controls.strokePull) : controls.power || 0).toFixed(3), side: +spin.side.toFixed(2), top: +spin.top.toFixed(2), place: game.state === 'place' ? 1 : 0, ...aimExtra() };
 				const key = JSON.stringify(a);
 				if (key !== roomAimKey) {
 					roomAimT = 0;
@@ -2836,7 +2843,7 @@ export function start(root, config = {}) {
 			online.hooks.watch(m);
 		}
 		if (online) {
-			online.update(dt, game.myTurn ? { dir: game.dir, cx: game.cue.p.x, cz: game.cue.p.z, pull: controls.stroking ? Math.max(0, controls.strokePull) : 0, side: spin.side, top: spin.top } : null);
+			online.update(dt, game.myTurn ? { dir: game.dir, cx: game.cue.p.x, cz: game.cue.p.z, pull: controls.stroking ? Math.max(0, controls.strokePull) : 0, side: spin.side, top: spin.top, ...aimExtra() } : null);
 		}
 		if (controls.stroking) {
 			pull = Math.max(0, controls.strokePull); // tágo ide presne s rukou
@@ -2922,7 +2929,35 @@ export function start(root, config = {}) {
 				ui.spinNote('');
 			}
 		}
-		cue.place(game.cue, game.dir, pull, watchAim ? watchAim.side || 0 : spin.side, watchAim ? watchAim.top || 0 : spin.top, (aiming || view === 'chalk' || (watchAim && !watchAim.place)) && game.cue.on, game.balls, spiderNow);
+		// nádstavec súpera alebo sledovaného hráča (prichádza s mierením)
+		let restRemote = null;
+		const ra = watchAim && Array.isArray(watchAim.rest) ? watchAim.rest : null;
+		if (ra && REST_KINDS[ra[0]]) {
+			const kind = REST_KINDS[ra[0]];
+			if (!remoteRest || remoteRest.kind !== kind) {
+				if (remoteRest) {
+					scene.remove(remoteRest.mesh);
+				}
+				remoteRest = { kind, mesh: buildSpider(0.22, 0.16, kind) };
+				remoteRest.mesh.userData.h = 0;
+				scene.add(remoteRest.mesh);
+			}
+			restRemote = { x: ra[1], z: ra[2], y: ra[3], tilt: ra[4] };
+			remoteRest.mesh.visible = true;
+			remoteRest.mesh.position.set(ra[1], ra[3], ra[2]);
+			remoteRest.mesh.rotation.set(0, -game.dir, 0);
+		} else if (remoteRest) {
+			remoteRest.mesh.visible = false;
+		}
+		cue.place(game.cue, game.dir, pull, watchAim ? watchAim.side || 0 : spin.side, watchAim ? watchAim.top || 0 : spin.top, (aiming || view === 'chalk' || (watchAim && !watchAim.place)) && game.cue.on, game.balls, spiderNow || restRemote);
+		if (restRemote) {
+			const tp = cue.pivot.position;
+			const hh = tp.y + Math.hypot(restRemote.x - tp.x, restRemote.z - tp.z) * Math.tan(cue.tilt || 0) - restRemote.y;
+			if (Math.abs(hh - remoteRest.mesh.userData.h) > 0.0005) {
+				remoteRest.mesh.userData.h = hh;
+				remoteRest.mesh.userData.setHeight(hh);
+			}
+		}
 		if (spiderNow) {
 			// výška drážky podľa skutočnej polohy tága (miesto úderu hore a dole mení výšku špičky), aby tágo
 			// ležalo v drážke a neprechádzalo cez nádstavec; model sa prestavia len pri zmene o viac ako 0,5 mm
@@ -2938,21 +2973,30 @@ export function start(root, config = {}) {
 			hands = new Hands(scene, rig.camera);
 		}
 		hands.updateFree(view === 'free' && !!settings.freeHands, dt, freeVel.length(), cueSpec);
-		if (chalkT >= 0) {
+		// kriedovanie súpera alebo sledovaného hráča: rovnaká animácia podľa času, ktorý posiela
+		const chRemote = chalkT < 0 && watchAim && watchAim.ch >= 0 && !watchAim.place ? watchAim.ch : -1;
+		if (chalkT < 0) {
+			chalkMesh.visible = chRemote >= 0;
+		}
+		if (chalkT >= 0 || chRemote >= 0) {
 			// kriedovanie: tágo sa zdvihne a odtiahne, krieda sa nasadí dierou na špičku, pootáča sa a odíde
-			chalkT = debug.chalkFreeze !== null ? debug.chalkFreeze : (performance.now() - chalkStart) / 1000; // podľa skutočného času
+			const local = chalkT >= 0;
+			const chalkT2 = local ? (debug.chalkFreeze !== null ? debug.chalkFreeze : (performance.now() - chalkStart) / 1000) : chRemote; // podľa skutočného času
+			if (local) {
+				chalkT = chalkT2;
+			}
 			const dx = Math.cos(game.dir);
 			const dz = Math.sin(game.dir);
 			const T = 2.8;
 			const ease = (x) => x * x * (3 - 2 * x);
-			const lift = ease(Math.min(1, chalkT / 0.45, Math.max(0, (T - chalkT) / 0.45)));
+			const lift = ease(Math.min(1, chalkT2 / 0.45, Math.max(0, (T - chalkT2) / 0.45)));
 			cue.pivot.position.x -= dx * LIFT.back * lift;
 			cue.pivot.position.z -= dz * LIFT.back * lift;
 			cue.pivot.position.y += LIFT.up * lift;
 			const tip = cue.pivot.position;
-			const near = ease(Math.min(1, Math.max(0, (chalkT - 0.45) / 0.35), Math.max(0, (T - 0.45 - chalkT) / 0.35)));
-			const rub = chalkT > 0.8 && chalkT < T - 0.8 ? 1 : 0;
-			const a = chalkT * 12;
+			const near = ease(Math.min(1, Math.max(0, (chalkT2 - 0.45) / 0.35), Math.max(0, (T - 0.45 - chalkT2) / 0.35)));
+			const rub = chalkT2 > 0.8 && chalkT2 < T - 0.8 ? 1 : 0;
+			const a = chalkT2 * 12;
 			const r = 0.0012 * rub;
 			// diera kriedy sedí na špičke: stred kocky je pol kocky mínus hĺbka diery pred špičkou
 			const ahead = CH.s / 2 - CH.d + (1 - near) * 0.1;
@@ -2963,7 +3007,7 @@ export function start(root, config = {}) {
 			);
 			// krieda sa pri šúchaní pootáča okolo osi tága
 			chalkMesh.rotation.set(rub * Math.sin(a * 0.5) * 0.5, -game.dir, 0);
-			if (chalkT >= T) {
+			if (local && chalkT >= T) {
 				chalk = CHALK_SHOTS;
 				ui.setChalk(chalk);
 				updateScore();
