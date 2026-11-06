@@ -131,6 +131,7 @@ function mysn_roadmap() {
 /** Denník zmien (najnovšie hore). */
 function mysn_changelog() {
 	return array(
+		array( '0.7.19', '6. 11. 2026', 'Liga: symbolická výhra. Keď má porazený 0 alebo menej bodov, víťaz dostane +1 a porazený stratí 1 bod (môže ísť do mínusu). Porazený s kladnými bodmi klesne ako doteraz najviac na 0.' ),
 		array( '0.7.18', '6. 11. 2026', 'Trojuholník na gule je čierny plastový so zaoblenými rohmi a nízkym lemom (visí pod stolom). Pri každom novom rozostavení (nový frame, nová partia, F3 Nové postavenie v tréningu) sa objaví okolo červených, chvíľu stojí a potom sa vznesie hore a zmizne.' ),
 		array( '0.7.17', '6. 11. 2026', 'Obrazovky nad stolom: raz za minútu ukážu na 5 sekúnd reklamu (striedavo HEDLAJNER a MY SNOOKER) a potom na 3 sekundy skóre zápasu. Všetci to vidia naraz.' ),
 		array( '0.7.16', '6. 11. 2026', 'Štadión: nad stolom je už len jedno svietidlo. Svietidlo s obrazovkami visí nižšie, vo výške pôvodných lámp, a nahrádza ich zelené tienidlá; svetlo na stôl ostáva rovnaké. V pohľadoch zhora (výber sedadla, Tab) sa svietidlo nekreslí, aby nezakrylo stôl. Ukážka od diváka: F6 zmena sedadla funguje.' ),

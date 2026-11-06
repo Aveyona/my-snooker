@@ -20,7 +20,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-const MYSN_DB_VERSION = '10';
+const MYSN_DB_VERSION = '11';
 
 function mysn_table( $name ) {
 	global $wpdb;
@@ -120,7 +120,7 @@ KEY status (status)
 		'CREATE TABLE ' . mysn_table( 'league' ) . " (
 season_id bigint(20) unsigned NOT NULL,
 user_id bigint(20) unsigned NOT NULL,
-points int(10) unsigned NOT NULL DEFAULT 147,
+points int(10) NOT NULL DEFAULT 147,
 wins int(10) unsigned NOT NULL DEFAULT 0,
 losses int(10) unsigned NOT NULL DEFAULT 0,
 best int(10) unsigned NOT NULL DEFAULT 0,

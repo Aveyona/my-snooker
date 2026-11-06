@@ -3,8 +3,8 @@
  * My Snooker: liga. Sezóna trvá približne rok, potom sa uložia konečné výsledky a začne nová sezóna.
  *
  * Body ligy: každý hráč začína so 147 bodmi (najviac, čo sa dá nahrať v jednom frame). Víťaz ligovej partie
- * získa toľko bodov, koľko nahral, a presne toľko stratí porazený (body sa len presúvajú). Porazený neklesne
- * pod 0. Výhra nad hráčom z vyššej ligy a prehra so slabším sa rátajú 1,5-krát. Pri vzdaní dostane víťaz
+ * získa toľko bodov, koľko nahral, a presne toľko stratí porazený (body sa len presúvajú). Porazený s kladnými
+ * bodmi klesne najviac na 0; keď už má 0 alebo menej, je to symbolická výhra: víťaz +1, porazený -1 (aj do mínusu). Výhra nad hráčom z vyššej ligy a prehra so slabším sa rátajú 1,5-krát. Pri vzdaní dostane víťaz
  * najmenej 30 bodov. S tým istým súperom sa rátajú najviac 3 ligové partie za deň.
  *
  * Ligy podľa poradia: 1. liga top 10, 2. liga 11. až 30., 3. liga 31. až 70., 4. liga ostatní.
@@ -18,6 +18,7 @@ const MYSN_LEAGUE_BONUS = 1.5;
 const MYSN_LEAGUE_DAILY = 0; // 0 = bez limitu (kým je hráčov málo)
 const MYSN_LEAGUE_OPEN = true; // true = každý registrovaný hráč môže hrať s každým (bez ohľadu na ligu)
 const MYSN_LEAGUE_RESIGN_MIN = 30;
+const MYSN_LEAGUE_SYMBOLIC = 1; // výhra nad hráčom s 0 a menej bodmi
 
 /** Liga podľa poradia (1 = najlepšia). */
 function mysn_league_of_rank( $rank ) {
@@ -204,7 +205,11 @@ function mysn_league_apply( $m, $winner, $points, $resign = false, $best = array
 	if ( (int) $rw['league'] > (int) $rl['league'] ) {
 		$pts = (int) round( $pts * MYSN_LEAGUE_BONUS );
 	}
-	$pts = min( $pts, (int) $rl['points'] );
+	if ( (int) $rl['points'] <= 0 ) {
+		$pts = MYSN_LEAGUE_SYMBOLIC; // porazený nemá čo stratiť: symbolická výhra, víťaz +1 a porazený -1 (môže ísť do mínusu)
+	} else {
+		$pts = min( $pts, (int) $rl['points'] ); // nad 0 klesne najviac na 0
+	}
 	$now = time();
 	$wi  = (int) $winner === (int) $m['p1'] ? 0 : 1;
 	$wpdb->query( $wpdb->prepare( "UPDATE $lt SET points = points + %d, wins = wins + 1, best = GREATEST(best, %d), updated = %d WHERE season_id = %d AND user_id = %d", $pts, (int) ( $best[ $wi ] ?? 0 ), $now, $sid, $winner ) ); // phpcs:ignore
