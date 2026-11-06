@@ -206,7 +206,10 @@ export class CameraRig {
 			if (this.aimPoint) {
 				look.copy(this.aimPoint);
 				// koliesko pri držanom pravom tlačidle: vlastné priblíženie ku guli
-				pos.sub(this.aimPoint).divideScalar(this.panZoom || 1).add(this.aimPoint);
+				// (len vodorovne: výška nad guľou, ktorú dáva myš hore a dole, ostáva)
+				const pz = this.panZoom || 1;
+				pos.x = this.aimPoint.x + (pos.x - this.aimPoint.x) / pz;
+				pos.z = this.aimPoint.z + (pos.z - this.aimPoint.z) / pz;
 				pos.y = Math.max(this.aimPoint.y + 0.04, pos.y);
 			} else {
 				look.add(this.panOffset);

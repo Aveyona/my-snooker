@@ -13,6 +13,7 @@ import { Crowd } from './fans.js';
 import { COUNTRIES, countryByCode } from './countries.js';
 import { BallViews } from './balls.js';
 import { Cue, AimGuide } from './cue.js';
+import { Hands } from './hands.js';
 import { CameraRig } from './camera.js';
 import { Controls } from './controls.js';
 import { Sound } from './audio.js';
@@ -151,6 +152,7 @@ export function start(root, config = {}) {
 	};
 	let cueSpec = specFor(settings.cue);
 	const cue = new Cue(scene, cueSpec);
+	let hands = null; // ruky hráča (most a pravá ruka pri tágu, vo voľnej kamere pred kamerou)
 	room.selectCue(cueSpec.id, cueSpec.base);
 	const guide = new AimGuide(scene);
 	const rig = new CameraRig(renderer);
@@ -617,7 +619,7 @@ export function start(root, config = {}) {
 		hotT = 0.1;
 		hotRay.setFromCamera(hotMouse, rig.camera);
 		hotRay.far = 25;
-		const hit = hotRay.intersectObjects(scene.children, true).find((x) => x.object.isMesh && shown(x.object));
+		const hit = hotRay.intersectObjects(scene.children, true).find((x) => x.object.isMesh && !x.object.userData.hand && shown(x.object));
 		let best = null;
 		if (hit) {
 			for (const h of hotSpots()) {
@@ -2588,6 +2590,11 @@ export function start(root, config = {}) {
 			pull += ((watchAim.pull || 0) - pull) * Math.min(1, dt * 18);
 		}
 		cue.place(game.cue, game.dir, pull, watchAim ? watchAim.side || 0 : spin.side, watchAim ? watchAim.top || 0 : spin.top, (aiming || view === 'chalk' || (watchAim && !watchAim.place)) && game.cue.on, game.balls);
+		if (!hands) {
+			hands = new Hands(scene, rig.camera);
+		}
+		hands.updateCue(cue, cue.pivot.visible && view !== 'chalk');
+		hands.updateFree(view === 'free', dt, freeVel.length());
 		if (chalkT >= 0) {
 			// kriedovanie: tágo sa zdvihne a odtiahne, krieda sa nasadí dierou na špičku, pootáča sa a odíde
 			chalkT = debug.chalkFreeze !== null ? debug.chalkFreeze : (performance.now() - chalkStart) / 1000; // podľa skutočného času
