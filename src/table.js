@@ -702,10 +702,12 @@ export function buildRoom(scene, quality) {
 	const hoodMat = new THREE.MeshStandardMaterial({ color: 0x0e4a26, roughness: 0.5, metalness: 0.2, side: THREE.DoubleSide });
 	const glowMat = new THREE.MeshBasicMaterial({ color: 0xfff1d2 });
 	const cordMat = new THREE.MeshBasicMaterial({ color: 0x111111 });
+	const lampParts = []; // tienidlá a lanká (na štadióne ich nahrádza svietidlo s obrazovkami)
 	const addLampPart = (mesh) => {
 		// tienidlá lámp sú vo vrstve 1: pohľad zhora (a kamera nad lampami) ich nekreslí
 		mesh.layers.set(1);
 		scene.add(mesh);
+		lampParts.push(mesh);
 		return mesh;
 	};
 	for (const x of [-1.1, 0, 1.1]) {
@@ -746,4 +748,5 @@ export function buildRoom(scene, quality) {
 		key.shadow.bias = -0.0003;
 		scene.add(key);
 	}
+	return { lampParts };
 }

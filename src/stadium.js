@@ -214,12 +214,12 @@ export function buildStadium(scene, quality) {
 	// svietidlo nad stolom s dvoma obrazovkami (moderný kužeľ: dole užší, hore širší), obrazovky šikmo k tribúnam;
 	// spodná strana je svetelný panel, ktorý svieti na stôl
 	const lcdBox = new THREE.Group();
-	lcdBox.position.set(0, 2.55, 0);
+	lcdBox.position.set(0, 1.6, 0); // spodok vo výške pôvodných lámp nad stolom (svetlá ostávajú)
 	root.add(lcdBox);
 	const LW = 3.3; // dĺžka pozdĺž stola
-	const BH = 0.17; // polovičná hrúbka dole
-	const TH = 0.52; // polovičná hrúbka hore
-	const HH = 1.95; // výška
+	const BH = 0.26; // polovičná hrúbka dole (šírka svetelného panelu ako pôvodné tienidlá)
+	const TH = 0.62; // polovičná hrúbka hore
+	const HH = 1.55; // výška
 	{
 		const sh = new THREE.Shape();
 		sh.moveTo(-BH, 0);
@@ -230,7 +230,7 @@ export function buildStadium(scene, quality) {
 		const geo = new THREE.ExtrudeGeometry(sh, { depth: LW, bevelEnabled: true, bevelThickness: 0.025, bevelSize: 0.025, bevelSegments: 2 });
 		geo.translate(0, 0, -LW / 2);
 		geo.rotateY(Math.PI / 2); // tvar v rovine z-y, dĺžka pozdĺž x
-		const body = new THREE.Mesh(geo, new THREE.MeshStandardMaterial({ color: 0x101217, roughness: 0.35, metalness: 0.75 }));
+		const body = new THREE.Mesh(geo, new THREE.MeshStandardMaterial({ color: 0x101217, roughness: 0.35, metalness: 0.75, side: THREE.DoubleSide }));
 		body.castShadow = false;
 		lcdBox.add(body);
 		// svetelný panel dole (svieti na stôl)
@@ -260,8 +260,11 @@ export function buildStadium(scene, quality) {
 	for (const sd of [-1, 1]) {
 		const scr = new THREE.Mesh(new THREE.PlaneGeometry(lcdH * (16 / 9), lcdH), lcdOffMat);
 		const off = 0.03; // kúsok pred stenou
-		scr.position.set(0, HH / 2, sd * ((BH + TH) / 2 + Math.cos(lcdTilt) * off));
-		scr.rotation.set(lcdTilt, sd > 0 ? 0 : Math.PI, 0, 'YXZ');
+		// stred šikmej steny a jej normála (von a mierne dole); obrazovka kúsok pred stenou, natočená po normále
+		const n = new THREE.Vector3(0, -Math.sin(lcdTilt), sd * Math.cos(lcdTilt));
+		scr.position.set(0, HH / 2, sd * (BH + TH) / 2).addScaledVector(n, off + 0.025);
+		scr.up.set(0, 1, 0);
+		scr.lookAt(scr.position.clone().add(n)); // predná strana roviny (+z) hľadí po normále
 		scr.castShadow = false;
 		lcdBox.add(scr);
 		lcds.push(scr);

@@ -84,7 +84,7 @@ export function start(root, config = {}) {
 	root.appendChild(renderer.domElement);
 
 	const scene = new THREE.Scene();
-	buildRoom(scene, settings.quality);
+	const roomBase = buildRoom(scene, settings.quality);
 	const preShell = new Set(scene.children);
 	const room = buildRoomShell(scene, settings.quality, { news: config.news, rss: config.rss, site: config.site, user: config.user });
 	room.setWallLamps(settings.wallLamps !== false);
@@ -335,6 +335,9 @@ export function start(root, config = {}) {
 		}
 		stadium.root.visible = showStadium;
 		office.root.visible = showOffice;
+		for (const o of roomBase.lampParts) {
+			o.visible = !lg || roam; // na štadióne svietia na stôl tie isté svetlá, ale tienidlá nahrádza svietidlo s obrazovkami
+		}
 		table.group.visible = !inOffice || roam;
 		room.setRackHidden(!showHome || (lg && !roam)); // tágá stojana herne (vybraté tágo sa skryje správne)
 	};
@@ -495,7 +498,7 @@ export function start(root, config = {}) {
 	let seatHover = -1;
 	let seatScore = false; // F4: pohľad zo stoličky na skóre
 	const seatCtxNow = () => (game.spectating ? watchCtx : game.match && game.match.league && online && online.matchId ? 'm' + online.matchId : roomOpen() && user ? 'r' + user.id : '');
-	const seatStadium = () => watchCtx[0] === 'm';
+	const seatStadium = () => specDemo || watchCtx[0] === 'm'; // ukážka od diváka je vždy na štadióne
 	const renderCrowd = () => {
 		const ctx = seatCtxNow();
 		const uid = user ? user.id : 0;
@@ -525,7 +528,7 @@ export function start(root, config = {}) {
 		seatHover = -1;
 	};
 	const seatPick = () => {
-		if (!game.spectating || !watchCtx) {
+		if (!specDemo && (!game.spectating || !watchCtx)) {
 			return;
 		}
 		ui.showMenu(false);
@@ -566,6 +569,11 @@ export function start(root, config = {}) {
 		const taken = seatList.some((x) => x.seat === seat && (!user || x.uid !== user.id)) || (seatStadium() && stadium.reserved.has(seat));
 		if (taken) {
 			ui.toast('Toto miesto je obsadené, vyber si iné.');
+			return;
+		}
+		if (specDemo) {
+			sit(seat); // ukážka: bez servera
+			controls.capture();
 			return;
 		}
 		try {
@@ -1139,7 +1147,10 @@ export function start(root, config = {}) {
 	const lcdOrbit = new THREE.Object3D(); // krúžiaca kamera, keď nie je koho ukázať (poloha voči stolu)
 	let lcdTick = 0;
 	let lcdInit = false;
+	// svietidlo s obrazovkami nekresliť v pohľadoch zhora (zakrylo by stôl), ako tienidlá lámp v herni
+	const lcdBoxVis = () => view !== 'seatPick' && rig.mode !== 'top';
 	const lcdRender = () => {
+		stadium.lcdBox.visible = lcdBoxVis();
 		const vis = venue === 'league' && stadium.root.visible && flagOn('w-lcd');
 		let src = null;
 		if (vis) {
@@ -1188,7 +1199,7 @@ export function start(root, config = {}) {
 		renderer.render(scene, lcdCam);
 		renderer.setRenderTarget(null);
 		renderer.shadowMap.autoUpdate = sh;
-		stadium.lcdBox.visible = true;
+		stadium.lcdBox.visible = lcdBoxVis();
 		stadium.setLcd(true, lcdRT.texture);
 	};
 	let pcInit = false;
@@ -2686,7 +2697,7 @@ export function start(root, config = {}) {
 				return true;
 			}
 			if (specView() && (view === 'seat' || view === 'seatPick')) {
-				if (specDemo && lk === 'escape') {
+				if (specDemo && lk === 'escape' && !(view === 'seatPick' && mySeat >= 0)) {
 					actions.spectDemoEnd();
 					return true;
 				}
