@@ -497,6 +497,29 @@ export function buildRoomShell(scene, quality, opts = {}) {
 	add(new THREE.BoxGeometry(rackW, 1.85, 0.03), darkWood, RACK.x, FY + 0.15 + 0.925, -RZ + 0.05);
 	add(new THREE.BoxGeometry(rackW + 0.05, 0.06, 0.16), woodMat, RACK.x, FY + 0.12, -RZ + 0.11); // spodná lišta s miskami
 	add(new THREE.BoxGeometry(rackW + 0.05, 0.05, 0.12), woodMat, RACK.x, FY + 1.35, -RZ + 0.1); // horný držiak
+	// polička na kriedy nad tágami (pri hornom okraji stojana): doska s lemom, konzoly a modré kriedy
+	{
+		const SY = FY + 1.86;
+		add(new THREE.BoxGeometry(rackW + 0.05, 0.025, 0.12), woodMat, RACK.x, SY, -RZ + 0.125);
+		for (const sx of [-1, 1]) {
+			add(new THREE.BoxGeometry(0.02, 0.07, 0.1), woodMat, RACK.x + sx * (rackW / 2 - 0.03), SY - 0.045, -RZ + 0.115); // konzola
+		}
+		const blue = new THREE.MeshStandardMaterial({ color: 0x2f6fd6, roughness: 0.95 });
+		const wrap = new THREE.MeshStandardMaterial({ color: 0xf2efe4, roughness: 0.8 });
+		const n = 9;
+		for (let i = 0; i < n; i++) {
+			const x = RACK.x - rackW / 2 + 0.12 + (i * (rackW - 0.24)) / (n - 1);
+			const c = new THREE.Group();
+			const cube = new THREE.Mesh(new THREE.BoxGeometry(0.025, 0.018, 0.025), wrap); // papierový obal
+			cube.position.y = 0.009;
+			const top = new THREE.Mesh(new THREE.BoxGeometry(0.0255, 0.008, 0.0255), blue); // modrá krieda hore
+			top.position.y = 0.021;
+			c.add(cube, top);
+			c.position.set(x + Math.sin(i * 2.3) * 0.01, SY + 0.0125, -RZ + 0.165 + Math.cos(i * 1.7) * 0.008);
+			c.rotation.y = Math.sin(i * 3.1) * 0.5;
+			scene.add(c);
+		}
+	}
 	const rackCues = [];
 	CUES.forEach((spec, i) => {
 		const x = RACK.x + (i - (CUES.length - 1) / 2) * spacing;
@@ -1142,7 +1165,7 @@ export function buildRoomShell(scene, quality, opts = {}) {
 		markSpots,
 		pick: { pos: new THREE.Vector3(0, FY + 9.5, 0.6), look: new THREE.Vector3(0, FY, 0) },
 		board: { pos: new THREE.Vector3(BOARD.x, BOARD.y, -RZ + 1.62), look: new THREE.Vector3(BOARD.x, BOARD.y, -RZ) },
-		rack: { pos: new THREE.Vector3(RACK.x, FY + 1.15, -RZ + 3.3), look: new THREE.Vector3(RACK.x, FY + 0.6, -RZ) },
+		rack: { pos: new THREE.Vector3(RACK.x + 0.3, FY + 1.2, -RZ + 3.3), look: new THREE.Vector3(RACK.x + 0.3, FY + 0.78, -RZ), zoom: 0.84 }, // celý stojan aj s poličkou na kriedy
 		score: { pos: new THREE.Vector3(-RX + 1.55, SCORE.y, 0), look: new THREE.Vector3(-RX, SCORE.y, 0) },
 		// F10: pohľad z baru (sediaci na stoličke), v popredí telefón a poháre s vodou, za nimi herňa
 		bar: { pos: new THREE.Vector3(bx - 0.4, FY + 1.5, bz + 0.38), look: new THREE.Vector3(bx + 0.62, FY + 0.72, bz - 0.6) },

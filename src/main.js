@@ -1552,10 +1552,10 @@ export function start(root, config = {}) {
 			rig.setView(v.pos, v.look.clone());
 			if (venue === 'league' && stadium.views[sname]) {
 				rig.noClamp = true; // štadión je väčší ako herňa (kamera sa nesmie obmedziť stenami herne)
-				if (v.zoom) {
-					rig.minViewZoom = v.zoom; // širší záber (F2: celý stojan so všetkými tágami)
-					rig.setViewZoom(v.zoom);
-				}
+			}
+			if (v.zoom) {
+				rig.minViewZoom = v.zoom; // širší záber (F2: celý stojan so všetkými tágami, v herni aj polička s kriedami)
+				rig.setViewZoom(v.zoom);
 			}
 			if (name === 'office') {
 				// kancelária stojí mimo herne: kamera sa presunie hneď (bez letu cez steny)
