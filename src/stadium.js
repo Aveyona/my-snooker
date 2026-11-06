@@ -690,6 +690,32 @@ export function buildStadium(scene, quality, clock = 45) {
 		referee.position.set(p.x, FY, p.z);
 	};
 	placeRef();
+	/**
+	 * Podsvietenie stojana (F2), varianty: 1 teplé LED lišty (mäkké svetlo z horného držiaka dole po tágach),
+	 * 2 reflektor zhora (široký mäkký kužeľ zo stropu), 3 bočné svetlá (dva šikmé lúče zľava a sprava),
+	 * 4 podsvietená zadná doska (tágá sa rysujú proti teplému panelu) s jemným svetlom spredu.
+	 */
+	const RACK_STYLES = {
+		1: { led: 1, spots: [{ p: [0, 1.16, 0.22], t: [0, 0.1, 0.02], i: 7, a: 1.2 }], panel: 0 },
+		2: { led: 0.35, spots: [{ p: [0, 3.4, 1.0], t: [0, 0.55, -0.05], i: 45, a: 0.4 }], panel: 0 },
+		3: { led: 0.35, spots: [{ p: [-0.95, 1.7, 0.85], t: [0.15, 0.6, -0.1], i: 10, a: 0.55 }, { p: [0.95, 1.7, 0.85], t: [-0.15, 0.6, -0.1], i: 10, a: 0.55 }], panel: 0 },
+		4: { led: 0.6, spots: [{ p: [0, 2.2, 1.6], t: [0, 0.6, -0.1], i: 4, a: 0.6 }], panel: 0.5 },
+	};
+	let rackStyle = 2; // vybraté: reflektor zhora
+	const applyRackStyle = (L) => {
+		const S = RACK_STYLES[rackStyle];
+		L.spots.forEach((l, i) => {
+			const d = S.spots[i];
+			l.userData.max = d ? d.i : 0;
+			if (d) {
+				l.position.set(...d.p);
+				l.target.position.set(...d.t);
+				l.angle = d.a;
+			}
+		});
+		L.style = S;
+		L.k = -1; // prepočítať
+	};
 	const stands = PL.map((p) => {
 		const stand = new THREE.Group();
 		stand.position.set(p.stand[0], FY, p.stand[1]);
@@ -707,14 +733,31 @@ export function buildStadium(scene, quality, clock = 45) {
 		add(new THREE.BoxGeometry(0.96, 0.018, 0.02), ledMat, 0, 1.092, 0.0, stand);
 		const ledLow = new THREE.MeshBasicMaterial({ color: 0x2a2620 });
 		add(new THREE.BoxGeometry(0.96, 0.014, 0.02), ledLow, 0, 0.068, 0.15, stand);
-		const lit = new THREE.SpotLight(0xfff0d0, 0, 4, 0.75, 0.55, 1.2);
-		lit.position.set(0, 2.0, 1.1);
-		lit.target.position.set(0, 0.62, -0.1);
-		stand.add(lit, lit.target);
-		const back = new THREE.PointLight(0xffe6b8, 0, 1.6, 1.5); // jemné svetlo na zadnej doske medzi tágami
-		back.position.set(0, 0.75, 0.12);
-		stand.add(back);
-		return { stand, glow, cues: [], light: { on: false, k: 0, ledMat, ledLow, lit, back } };
+		const mkSpot = () => {
+			const l = new THREE.SpotLight(0xffe7c2, 0, 5, 0.6, 1, 1.2);
+			stand.add(l, l.target);
+			return l;
+		};
+		const spots = [mkSpot(), mkSpot()]; // najviac dve svetlá (variant 3 má dve)
+		// panel za tágami (podsvietená zadná doska): teplý prechod od stredu do strán
+		const pc = document.createElement('canvas');
+		pc.width = 256;
+		pc.height = 256;
+		const pg = pc.getContext('2d');
+		const gr = pg.createRadialGradient(128, 110, 10, 128, 128, 170);
+		gr.addColorStop(0, 'rgba(255,190,110,0.9)');
+		gr.addColorStop(0.6, 'rgba(230,130,50,0.4)');
+		gr.addColorStop(1, 'rgba(200,100,40,0)');
+		pg.fillStyle = gr;
+		pg.fillRect(0, 0, 256, 256);
+		const ptex = new THREE.CanvasTexture(pc);
+		ptex.colorSpace = THREE.SRGBColorSpace;
+		const panelMat = new THREE.MeshBasicMaterial({ map: ptex, transparent: true, opacity: 0, depthWrite: false, blending: THREE.AdditiveBlending });
+		const panel = add(new THREE.PlaneGeometry(0.98, 1.08), panelMat, 0, 0.6, -0.108, stand);
+		panel.visible = false;
+		const L = { on: false, k: 0, ledMat, ledLow, spots, panel, panelMat };
+		applyRackStyle(L);
+		return { stand, glow, cues: [], light: L };
 	});
 	/** Stojan hráča (side 0 alebo 1): specs = tágá do zápasu, inHand = tágo v ruke (chýba), sel = zvýraznené (F2). */
 	const setRack = (side, specs, inHand, sel) => {
@@ -748,14 +791,18 @@ export function buildStadium(scene, quality, clock = 45) {
 	const rackLightTick = (dt) => {
 		for (const st of stands) {
 			const L = st.light;
-			const k = L.k + ((L.on ? 1 : 0) - L.k) * Math.min(1, dt * 6); // plynulé rozsvietenie a zhasnutie
+			const k = Math.max(0, L.k) + ((L.on ? 1 : 0) - Math.max(0, L.k)) * Math.min(1, dt * 6); // plynulé rozsvietenie a zhasnutie
 			if (Math.abs(k - L.k) < 1e-4 && (k === 0 || k === 1)) {
 				continue;
 			}
 			L.k = Math.abs(k - (L.on ? 1 : 0)) < 0.002 ? (L.on ? 1 : 0) : k;
-			L.lit.intensity = 22 * L.k;
-			L.back.intensity = 3 * L.k;
-			L.ledMat.color.setRGB(0.16 + 0.84 * L.k, 0.15 + 0.8 * L.k, 0.12 + 0.6 * L.k);
+			for (const l of L.spots) {
+				l.intensity = l.userData.max * L.k;
+			}
+			L.panel.visible = L.style.panel > 0 && L.k > 0.01;
+			L.panelMat.opacity = L.style.panel * L.k;
+			const e = L.style.led * L.k;
+			L.ledMat.color.setRGB(0.16 + 0.84 * e, 0.15 + 0.78 * e, 0.12 + 0.55 * e);
 			L.ledLow.color.copy(L.ledMat.color);
 		}
 	};
@@ -925,6 +972,14 @@ export function buildStadium(scene, quality, clock = 45) {
 		/** Stojan hráča pri stole: side 0 alebo 1, specs = tágá do zápasu, inHand = id tága v ruke. */
 		setRack,
 		setRackLight,
+		/** Variant podsvietenia stojana (1 až 4). */
+		setRackStyle(n) {
+			rackStyle = RACK_STYLES[n] ? n : 1;
+			for (const st of stands) {
+				applyRackStyle(st.light);
+			}
+		},
+		rackLightTick,
 		/** Bodové svetlá (lúče reflektorov a škvrny): svietia pred partiou, F12 na ťahu. */
 		setBeams(on) {
 			for (const b of beams) {
