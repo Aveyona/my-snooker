@@ -111,7 +111,7 @@ function clothTexture(maxAniso, base = '#1d6b34', detail = false) {
 }
 
 /** Maska súkna: biela = súkno, čierna = otvor jamky (cez otvor vidieť do košíka). */
-function pocketHoles() {
+function pocketHoles(cc = 0.071, cm = 0.065) {
 	const w = 1024;
 	const h = Math.round((w * (W + 2 * RAIL)) / (L + 2 * RAIL));
 	const c = document.createElement('canvas');
@@ -124,7 +124,7 @@ function pocketHoles() {
 	g.fillStyle = '#000000';
 	for (const p of POCKETS) {
 		g.beginPath();
-		g.arc((p.x + L / 2 + RAIL) * sx, (p.z + W / 2 + RAIL) * sx, (p.corner ? 0.063 : 0.058) * sx, 0, Math.PI * 2);
+		g.arc((p.x + L / 2 + RAIL) * sx, (p.z + W / 2 + RAIL) * sx, ((p.corner ? cc : cm) - 0.008) * sx, 0, Math.PI * 2);
 		g.fill();
 	}
 	return new THREE.CanvasTexture(c);
@@ -237,12 +237,13 @@ function woodTexture() {
 	return tex;
 }
 
-export function buildTable(renderer) {
+export function buildTable(renderer, opts = {}) {
+	const PK = Object.assign({ cutCorner: 0.071, cutMid: 0.065, rimR: 0.013, rim: 0xd8b47e, rimMetal: 0.05, rimRough: 0.5, liner: null }, opts.pocket || {});
 	const group = new THREE.Group();
 	const aniso = renderer.capabilities.getMaxAnisotropy();
 
 	// Súkno (hracia plocha aj pod mantinelmi)
-	const holes = pocketHoles();
+	const holes = pocketHoles(PK.cutCorner, PK.cutMid);
 	const clothSimple = new THREE.MeshStandardMaterial({ map: clothTexture(aniso), roughness: 0.92, metalness: 0, alphaMap: holes, alphaTest: 0.5 });
 	const weave = weaveNormal();
 	weave.repeat.set((L + 2 * RAIL) / 0.04, (W + 2 * RAIL) / 0.04);
@@ -287,7 +288,7 @@ export function buildTable(renderer) {
 	}
 	const ROUND = 0.016; // polomer zaoblenia nosa mantinelu pri jamke
 	// výrezy jamiek v ráme (viac dreva okolo jamky, užší otvor): na ich okraji končia aj mantinely
-	const CUTS = POCKETS.map((p) => ({ x: p.x, z: p.z, r: p.corner ? 0.071 : 0.065, corner: p.corner }));
+	const CUTS = POCKETS.map((p) => ({ x: p.x, z: p.z, r: p.corner ? PK.cutCorner : PK.cutMid, corner: p.corner }));
 	// Prierez mantinelu ako na skutočnom stole (d = vzdialenosť od nosa dozadu, y = výška): spodok je
 	// podrezaný, nos v 2/3 výšky gule, vrch sa zošikmí a plynulo prejde k drevenému rámu. Žiadna kolmá stena.
 	const PROFILE = [
@@ -525,7 +526,8 @@ export function buildTable(renderer) {
 	// Jamky: čierny otvor v súkne, kožený lem po okraji výrezu v ráme a pod ním košík zo sieťky
 	const leatherMat = new THREE.MeshStandardMaterial({ color: 0x1c1c1c, roughness: 0.55, metalness: 0.15, side: THREE.DoubleSide });
 	const netMat = new THREE.MeshStandardMaterial({ map: netTexture(), color: 0xf2efe6, roughness: 0.95, alphaTest: 0.35, side: THREE.DoubleSide }); // biela sieťka
-	const plateMat = new THREE.MeshStandardMaterial({ color: 0xd8b47e, roughness: 0.5, metalness: 0.05 }); // obruba jamky ako na turnajových stoloch
+	const plateMat = new THREE.MeshStandardMaterial({ color: PK.rim, roughness: PK.rimRough, metalness: PK.rimMetal });
+	const linerMat = PK.liner == null ? plateMat : new THREE.MeshStandardMaterial({ color: PK.liner, roughness: 0.6, metalness: 0.05 }); // obruba jamky ako na turnajových stoloch
 	const prof = [
 		[BASKET.top, 0],
 		[BASKET.top + 0.006, -0.04],
@@ -546,7 +548,7 @@ export function buildTable(renderer) {
 		const oz = Math.sign(p.z);
 		const span = p.corner ? Math.PI * 1.0 : Math.PI * 0.9;
 		const phi = Math.atan2(ox, oz);
-		const liner = new THREE.Mesh(new THREE.CylinderGeometry(p.r - 0.0075, p.r - 0.0075, fy + 0.02, 40, 1, true, phi - span / 2, span), plateMat);
+		const liner = new THREE.Mesh(new THREE.CylinderGeometry(p.r - 0.0075, p.r - 0.0075, fy + 0.02, 40, 1, true, phi - span / 2, span), linerMat);
 		liner.material.side = THREE.DoubleSide;
 		liner.position.set(p.x, (fy - 0.02) / 2, p.z);
 		group.add(liner);
@@ -561,7 +563,7 @@ export function buildTable(renderer) {
 	}
 	for (const pts of rims) {
 		const curve = new THREE.CatmullRomCurve3(pts.map((q) => new THREE.Vector3(q.x, fy - 0.004, q.z)));
-		const rim = new THREE.Mesh(new THREE.TubeGeometry(curve, 48, 0.013, 12, false), plateMat); // svetlá kožená obruba jamky
+		const rim = new THREE.Mesh(new THREE.TubeGeometry(curve, 48, PK.rimR, 12, false), plateMat); // svetlá kožená obruba jamky
 		rim.castShadow = true;
 		group.add(rim);
 	}
