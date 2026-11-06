@@ -209,3 +209,77 @@ export class Crowd {
 		}
 	}
 }
+
+/**
+ * Rozhodca: stojí bokom pri stole, biela košeľa, čierna vesta a nohavice, motýlik, biele rukavice,
+ * ruky zopäté pred sebou. Lokálne +z = dopredu (k stolu). userData.head = hlava (sleduje bielu).
+ */
+export function buildReferee() {
+	const r = new THREE.Group();
+	const mat = (color, rough = 0.6, metal = 0) => new THREE.MeshStandardMaterial({ color, roughness: rough, metalness: metal });
+	const skin = mat(0xe2b592, 0.65);
+	const shirt = mat(0xf4f4f2, 0.7);
+	const vest = mat(0x14151a, 0.55);
+	const trousers = mat(0x15161b, 0.7);
+	const shoe = mat(0x0a0a0a, 0.25, 0.2);
+	const glove = mat(0xffffff, 0.8);
+	const hair = mat(0x4a4a4f, 0.9);
+	const dark = mat(0x111111, 0.4);
+	const add = (geo, m, x, y, z, parent = r) => {
+		const o = new THREE.Mesh(geo, m);
+		o.position.set(x, y, z);
+		o.castShadow = true;
+		parent.add(o);
+		return o;
+	};
+	// nohy a topánky
+	for (const sx of [-0.095, 0.095]) {
+		add(new THREE.CapsuleGeometry(0.062, 0.36, 6, 12), trousers, sx, 0.68, 0); // stehno
+		add(new THREE.CapsuleGeometry(0.052, 0.36, 6, 12), trousers, sx, 0.27, 0); // lýtko
+		const s = add(new THREE.CapsuleGeometry(0.045, 0.14, 6, 10), shoe, sx, 0.045, 0.045);
+		s.rotation.x = Math.PI / 2;
+		s.scale.set(1.1, 1, 0.7);
+	}
+	add(new THREE.CylinderGeometry(0.17, 0.165, 0.16, 18), trousers, 0, 0.9, 0); // boky
+	// trup: košeľa a na nej vesta (o kúsok väčšia, spredu s výstrihom do V)
+	const torso = add(new THREE.CylinderGeometry(0.175, 0.17, 0.5, 20), shirt, 0, 1.22, 0);
+	torso.scale.z = 0.72;
+	const vestM = add(new THREE.CylinderGeometry(0.182, 0.176, 0.44, 20, 1, true, Math.PI * 0.62, Math.PI * 1.76), vest, 0, 1.19, 0);
+	vestM.scale.z = 0.74;
+	vestM.material.side = THREE.DoubleSide;
+	for (let i = 0; i < 4; i++) {
+		add(new THREE.SphereGeometry(0.008, 8, 6), dark, 0.0, 1.03 + i * 0.06, 0.13); // gombíky
+	}
+	add(new THREE.CylinderGeometry(0.1, 0.17, 0.08, 18), shirt, 0, 1.5, 0).scale.z = 0.75; // ramená
+	// golier a motýlik
+	add(new THREE.CylinderGeometry(0.055, 0.06, 0.06, 14), shirt, 0, 1.57, 0);
+	for (const sx of [-1, 1]) {
+		const w = add(new THREE.ConeGeometry(0.022, 0.05, 4), dark, sx * 0.024, 1.545, 0.058);
+		w.rotation.z = (sx * Math.PI) / 2;
+	}
+	add(new THREE.SphereGeometry(0.009, 8, 6), dark, 0, 1.545, 0.06);
+	// ruky: ramená pozdĺž tela, predlaktia dopredu, dlane v rukaviciach zopäté pred bruchom
+	for (const sx of [-1, 1]) {
+		const upper = add(new THREE.CapsuleGeometry(0.045, 0.26, 6, 10), shirt, sx * 0.215, 1.33, 0.01);
+		upper.rotation.z = sx * 0.12;
+		const fore = add(new THREE.CapsuleGeometry(0.04, 0.22, 6, 10), shirt, sx * 0.17, 1.07, 0.09);
+		fore.rotation.set(-0.9, 0, -sx * 0.55);
+		add(new THREE.SphereGeometry(0.045, 12, 10), glove, sx * 0.05, 1.0, 0.16).scale.set(1, 0.8, 1.15);
+	}
+	// hlava: krk, tvár, uši, nos, oči, vlasy
+	add(new THREE.CylinderGeometry(0.045, 0.05, 0.08, 12), skin, 0, 1.61, 0);
+	const head = new THREE.Group();
+	head.position.set(0, 1.72, 0);
+	r.add(head);
+	add(new THREE.SphereGeometry(0.105, 24, 18), skin, 0, 0, 0, head).scale.set(0.9, 1.08, 1);
+	for (const sx of [-1, 1]) {
+		add(new THREE.SphereGeometry(0.022, 10, 8), skin, sx * 0.095, 0, -0.005, head).scale.set(0.5, 1, 0.8); // uši
+		add(new THREE.SphereGeometry(0.011, 8, 6), dark, sx * 0.035, 0.018, 0.093, head); // oči
+	}
+	const nose = add(new THREE.ConeGeometry(0.014, 0.04, 8), skin, 0, -0.005, 0.105, head);
+	nose.rotation.x = Math.PI / 2;
+	const hairM = add(new THREE.SphereGeometry(0.109, 24, 14, 0, Math.PI * 2, 0, Math.PI * 0.55), hair, 0, 0.012, -0.008, head);
+	hairM.scale.set(0.93, 1.06, 1.03);
+	r.userData.head = head;
+	return r;
+}

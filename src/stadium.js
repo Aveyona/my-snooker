@@ -6,7 +6,7 @@
  */
 import * as THREE from 'three';
 import { buildCueMesh } from './cues.js';
-import { buildFan, reactFans, updateFans } from './fans.js';
+import { buildFan, reactFans, updateFans, buildReferee } from './fans.js';
 
 const FY = -0.86; // podlaha (rovnako ako v herni)
 
@@ -335,6 +335,13 @@ export function buildStadium(scene, quality) {
 			pl.card.t.needsUpdate = true;
 		});
 	};
+	// rozhodca: stojí bokom pri dlhej strane stola (medzi stolom a hľadiskom), hlavou sleduje bielu
+	const referee = buildReferee();
+	referee.position.set(0.9, FY, BZ - 1.05);
+	referee.rotation.y = Math.PI; // čelom k stolu (-z)
+	root.add(referee);
+	const refHead = referee.userData.head;
+	refHead.rotation.order = 'YXZ'; // najprv otočenie do strany, potom sklon dole
 	const stands = PL.map((p) => {
 		const stand = new THREE.Group();
 		stand.position.set(p.stand[0], FY, p.stand[1]);
@@ -495,6 +502,14 @@ export function buildStadium(scene, quality) {
 		/** Každý snímok: hlavy sledujú bielu, animácie tlieskania, faulu a vstávania. */
 		update(dt, cueBall) {
 			updateFans(fans, dt, cueBall);
+			if (cueBall && root.visible) {
+				// rozhodca otáča hlavu za bielou (plynulo, najviac o 70 stupňov do strán)
+				const dx = cueBall.p.x - referee.position.x;
+				const dz = cueBall.p.z - referee.position.z;
+				const yaw = Math.max(-1.2, Math.min(1.2, Math.atan2(dx, -dz) * -1));
+				refHead.rotation.y += (yaw - refHead.rotation.y) * Math.min(1, dt * 3);
+				refHead.rotation.x = 0.35; // pozerá dole na stôl
+			}
 		},
 		/** Stoličky pre online divákov: počet, obsadené kulisou, miesto, oči diváka a výber zhora. */
 		seatCount: 350,
