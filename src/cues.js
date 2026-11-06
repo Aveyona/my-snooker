@@ -114,6 +114,23 @@ export const TIP_COLORS = {
 };
 
 const DERIVED = new Map();
+/**
+ * Nepresnosť opotrebovanej špice (stupne, najväčšia náhodná odchýlka smeru úderu pri strednej sile): do 80 %
+ * opotrebenia nič, do 95 % rastie na 0,6°, potom prudko až na 2,5° pri 100 % (tágo štrká celkom krivo).
+ * Mäkká špica je presnejšia (×0,8), tvrdá menej (×1,2), menšia špica (tipd plus) až o 20 % menej presná.
+ */
+export function tipInaccuracy(wear, kind, spec) {
+	let d = 0;
+	if (wear > 0.95) {
+		d = 0.6 + ((Math.min(1, wear) - 0.95) / 0.05) * 1.9;
+	} else if (wear > 0.8) {
+		d = ((wear - 0.8) / 0.15) * 0.6;
+	}
+	const k = kind === 'soft' ? 0.8 : kind === 'hard' ? 1.2 : 1;
+	const t = 1 + 2 * ((spec && spec.adj && spec.adj.tipd) || 0);
+	return d * k * t;
+}
+
 /** Výhody a nedostatky tág 1 až 10 (panel na stojane F2). */
 export const CUE_PROS = {
 	club: ['vyvážené, spoľahlivé falše, ľahko sa ovláda', 'slabšia sila, bez jemného mierenia so Shift'],

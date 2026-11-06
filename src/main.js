@@ -26,7 +26,7 @@ import { buildRackTriangle, rackLayout } from './rackTriangle.js';
 import { Replay } from './replay.js';
 import { CHALKS, chalkById } from './chalks.js';
 import { ChalkMarks } from './chalkMarks.js';
-import { CUES, cueById, ownCueSpec, TIP_COLORS } from './cues.js';
+import { CUES, cueById, ownCueSpec, TIP_COLORS, tipInaccuracy } from './cues.js';
 
 const STORE = 'mySnookerSettings';
 const AIM_AHEAD = 0.5; // posun pohľadu bez mierenej gule: kamera sa pozerá 50 cm pred bielu
@@ -1749,6 +1749,11 @@ export function start(root, config = {}) {
 		const dir0 = game.dir;
 		if (!miscue && side) {
 			game.dir -= side * sq;
+		}
+		// nepresnosť opotrebovanej špice (od 80 %): náhodná odchýlka smeru, silnejší úder viac
+		const inacc = tipInaccuracy(tip.wear, tip.kind, cueSpec) * (0.75 + 0.5 * power);
+		if (inacc > 0) {
+			game.dir += ((Math.random() * 2 - 1) * inacc * Math.PI) / 180;
 		}
 		const shot = game.shoot(power, side, top);
 		if (!shot) {

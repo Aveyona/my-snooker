@@ -131,6 +131,7 @@ function mysn_roadmap() {
 /** Denník zmien (najnovšie hore). */
 function mysn_changelog() {
 	return array(
+		array( '0.7.47', '6. 11. 2026', 'Nepresnosť opotrebovanej špice: od 80 % opotrebenia biela náhodne uhne od smeru mierenia, do 95 % najviac o 0,6°, potom prudko až o 2,5° pri 100 % (tágo štrká celkom krivo). Silnejší úder je nepresnejší, mäkká špica presnejšia, tvrdá menej, menšia špica menej presná. Hodnota nepresnosti je pri špici na stojane F2.' ),
 		array( '0.7.46', '6. 11. 2026', 'Stojan F2: v paneli vpravo dole zoznam tág 1 až 10 s výhodami (zelene) a nedostatkami (červeno), šablóna vybraného tága je zvýraznená.' ),
 		array( '0.7.45', '6. 11. 2026', 'Vlastné tágo: rozpočet úprav (súčet sily, dĺžky, falší, hmotnosti, priemeru špice a tuhosti najviac 0 %, čo pridáš, inde sa ubere, ostatné posuvníky sa samé znížia). Nové úpravy: hmotnosť (510 až 600 g), priemer špice (9 až 10,5 mm), tuhosť drievka (odklon bielej pri bočnej falši, nová fyzika pre všetky tágá) a vyváženie mimo rozpočtu. Server rozpočet overuje.' ),
 		array( '0.7.44', '6. 11. 2026', 'Farba špice je vidno aj na tágach na nástennom stojane v herni (hneď po výbere farby aj po načítaní hry).' ),
