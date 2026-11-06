@@ -131,6 +131,7 @@ function mysn_roadmap() {
 /** Denník zmien (najnovšie hore). */
 function mysn_changelog() {
 	return array(
+		array( '0.6.96', '6. 11. 2026', 'Rozhodca chodí: stojí na jednom z 8 stanovíšť okolo stola, a keď by zavadzal tágu (pás za bielou, miesto hráča a kamery), obíde stôl na najbližšie voľné miesto (asi 1 m/s, nohy pri chôdzi kráčajú). Kým sa gule hýbu, stojí. Pohyb vidia rovnako obaja hráči aj diváci (počíta sa z mierenia).' ),
 		array( '0.6.95', '6. 11. 2026', 'Jamky: mantinely končia presne na okraji výrezu jamky (už netrčia do jamky), okolo jamky viac dreva a užší otvor v súkne.' ),
 		array( '0.6.94', '6. 11. 2026', 'Štadión: rozhodca stojí bokom pri dlhej strane stola (biela košeľa, čierna vesta s gombíkmi, motýlik, biele rukavice, ruky zopäté) a hlavou sleduje bielu guľu.' ),
 		array( '0.6.93', '6. 11. 2026', 'Štadión: pri kresle každého hráča okrúhly stolík s pohárom vody a menovkou s menom hráča (admin má pod menom ADMIN). Na stolíku rozhodcu ostal jeden pohár vody.' ),

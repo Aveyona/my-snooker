@@ -2900,7 +2900,8 @@ export function start(root, config = {}) {
 				lastSeqSeen = m.seq;
 				updateStadiumScreen();
 			}
-			stadium.update(dt, game.cue);
+			// rozhodca uhýba tágu: smer mierenia (aj súpera a sledovaného hráča), kým sa gule nehýbu
+			stadium.update(dt, game.cue, game.state === 'aim' || game.state === 'watch' || game.state === 'place' ? game.dir : null, game.state === 'moving');
 			crowdLg.update(dt, game.cue);
 		} else {
 			crowdHome.update(dt, game.cue);

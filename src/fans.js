@@ -232,14 +232,20 @@ export function buildReferee() {
 		parent.add(o);
 		return o;
 	};
-	// nohy a topánky
+	// nohy a topánky: každá noha je skupina s kĺbom v bedre (pri chôdzi sa kýve)
+	const legs = [];
 	for (const sx of [-0.095, 0.095]) {
-		add(new THREE.CapsuleGeometry(0.062, 0.36, 6, 12), trousers, sx, 0.68, 0); // stehno
-		add(new THREE.CapsuleGeometry(0.052, 0.36, 6, 12), trousers, sx, 0.27, 0); // lýtko
-		const s = add(new THREE.CapsuleGeometry(0.045, 0.14, 6, 10), shoe, sx, 0.045, 0.045);
+		const leg = new THREE.Group();
+		leg.position.set(sx, 0.88, 0);
+		r.add(leg);
+		add(new THREE.CapsuleGeometry(0.062, 0.36, 6, 12), trousers, 0, -0.2, 0, leg); // stehno
+		add(new THREE.CapsuleGeometry(0.052, 0.36, 6, 12), trousers, 0, -0.61, 0, leg); // lýtko
+		const s = add(new THREE.CapsuleGeometry(0.045, 0.14, 6, 10), shoe, 0, -0.835, 0.045, leg);
 		s.rotation.x = Math.PI / 2;
 		s.scale.set(1.1, 1, 0.7);
+		legs.push(leg);
 	}
+	r.userData.legs = legs;
 	add(new THREE.CylinderGeometry(0.17, 0.165, 0.16, 18), trousers, 0, 0.9, 0); // boky
 	// trup: košeľa a na nej vesta (o kúsok väčšia, spredu s výstrihom do V)
 	const torso = add(new THREE.CylinderGeometry(0.175, 0.17, 0.5, 20), shirt, 0, 1.22, 0);

@@ -335,13 +335,85 @@ export function buildStadium(scene, quality) {
 			pl.card.t.needsUpdate = true;
 		});
 	};
-	// rozhodca: stojí bokom pri dlhej strane stola (medzi stolom a hľadiskom), hlavou sleduje bielu
+	// rozhodca: stojí na jednom z 8 stanovíšť okolo stola a hlavou sleduje bielu; keď by zavadzal tágu
+	// (alebo stál medzi kamerou za tágom a stolom), obíde stôl na najbližšie voľné stanovište
+	const RX0 = 2.85; // obdĺžnik, po ktorom chodí okolo stola (asi meter od rámu)
+	const RZ0 = 2.0;
+	const PER = 4 * (RX0 + RZ0); // obvod
+	/** Bod na obvode podľa vzdialenosti s (0 = roh -x,-z, ide po -z strane k +x, potom +x koniec...). */
+	const perPoint = (sv) => {
+		let t = ((sv % PER) + PER) % PER;
+		if (t < 2 * RX0) {
+			return { x: -RX0 + t, z: -RZ0 };
+		}
+		t -= 2 * RX0;
+		if (t < 2 * RZ0) {
+			return { x: RX0, z: -RZ0 + t };
+		}
+		t -= 2 * RZ0;
+		if (t < 2 * RX0) {
+			return { x: RX0 - t, z: RZ0 };
+		}
+		t -= 2 * RX0;
+		return { x: -RX0, z: RZ0 - t };
+	};
+	const perS = (x, z) => {
+		if (Math.abs(z + RZ0) < 1e-3) {
+			return x + RX0;
+		}
+		if (Math.abs(x - RX0) < 1e-3) {
+			return 2 * RX0 + z + RZ0;
+		}
+		if (Math.abs(z - RZ0) < 1e-3) {
+			return 2 * RX0 + 2 * RZ0 + RX0 - x;
+		}
+		return 4 * RX0 + 2 * RZ0 + RZ0 - z;
+	};
+	// stanovištia: po tri na dlhých stranách, po jednom na koncoch (side = uprednostniť pohľad zboku)
+	const REF_SPOTS = [
+		[-1.1, RZ0, 1], [0.2, RZ0, 1], [1.3, RZ0, 1],
+		[-1.3, -RZ0, 1], [-0.2, -RZ0, 1], [1.1, -RZ0, 1],
+		[RX0, 0, 0], [-RX0, 0, 0],
+	].map(([x, z, side]) => ({ x, z, side, s: perS(x, z) }));
 	const referee = buildReferee();
-	referee.position.set(0.9, FY, BZ - 1.05);
-	referee.rotation.y = Math.PI; // čelom k stolu (-z)
 	root.add(referee);
 	const refHead = referee.userData.head;
 	refHead.rotation.order = 'YXZ'; // najprv otočenie do strany, potom sklon dole
+	const ref = { s: REF_SPOTS[1].s, target: REF_SPOTS[1].s, walk: 0, yaw: Math.PI };
+	/** Zavadzia rozhodca na mieste (x, z) tágu? Pás za bielou v smere tága (aj miesto hráča a kamery). */
+	const refBlocked = (x, z, cb, dir) => {
+		const dx = Math.cos(dir);
+		const dz = Math.sin(dir);
+		const vx = x - cb.p.x;
+		const vz = z - cb.p.z;
+		const behind = -(vx * dx + vz * dz); // dozadu od bielej (kde je tágo, hráč a kamera)
+		const lat = Math.abs(vx * dz - vz * dx);
+		return behind > -0.3 && behind < 2.4 && lat < 0.85;
+	};
+	/** Najbližšie voľné stanovište (po obvode); rovnaký výpočet u všetkých hráčov aj divákov. */
+	const refChoose = (cb, dir) => {
+		const cur = perPoint(ref.target);
+		if (!refBlocked(cur.x, cur.z, cb, dir)) {
+			return ref.target;
+		}
+		let best = null;
+		for (const sp of REF_SPOTS) {
+			if (refBlocked(sp.x, sp.z, cb, dir)) {
+				continue;
+			}
+			let d = Math.abs(sp.s - ref.s) % PER;
+			d = Math.min(d, PER - d) - sp.side * 0.6; // miesta zboku majú prednosť
+			if (!best || d < best.d) {
+				best = { d, s: sp.s };
+			}
+		}
+		return best ? best.s : ref.target;
+	};
+	const placeRef = () => {
+		const p = perPoint(ref.s);
+		referee.position.set(p.x, FY, p.z);
+	};
+	placeRef();
 	const stands = PL.map((p) => {
 		const stand = new THREE.Group();
 		stand.position.set(p.stand[0], FY, p.stand[1]);
@@ -500,15 +572,48 @@ export function buildStadium(scene, quality) {
 			lensMat.color.setHex(on ? 0xf2f6ff : 0x3a3f4a);
 		},
 		/** Každý snímok: hlavy sledujú bielu, animácie tlieskania, faulu a vstávania. */
-		update(dt, cueBall) {
+		update(dt, cueBall, dir = null, moving = false) {
 			updateFans(fans, dt, cueBall);
 			if (cueBall && root.visible) {
-				// rozhodca otáča hlavu za bielou (plynulo, najviac o 70 stupňov do strán)
+				// kým sa gule nehýbu a mieri sa: uhne z cesty tága (obíde stôl po obvode)
+				if (dir !== null && !moving && cueBall.on) {
+					ref.target = refChoose(cueBall, dir);
+				}
+				let d = (ref.target - ref.s) % PER;
+				if (d > PER / 2) {
+					d -= PER;
+				} else if (d < -PER / 2) {
+					d += PER;
+				}
+				const walking = Math.abs(d) > 0.01;
+				if (walking) {
+					const step = Math.sign(d) * Math.min(Math.abs(d), dt * 1.0); // asi 1 m/s
+					const a = perPoint(ref.s);
+					ref.s += step;
+					const b = perPoint(ref.s);
+					placeRef();
+					ref.yaw = Math.atan2(b.x - a.x, b.z - a.z); // čelom v smere chôdze
+					ref.walk += dt * 7;
+				} else {
+					// stojí: čelom k stolu (k bielej), nohy spolu
+					ref.yaw = Math.atan2(cueBall.p.x - referee.position.x, cueBall.p.z - referee.position.z);
+					ref.walk = 0;
+				}
+				let dy = ref.yaw - referee.rotation.y;
+				dy = Math.atan2(Math.sin(dy), Math.cos(dy));
+				referee.rotation.y += dy * Math.min(1, dt * (walking ? 8 : 3));
+				const sw = walking ? Math.sin(ref.walk) * 0.45 : 0;
+				const [l0, l1] = referee.userData.legs;
+				l0.rotation.x += (sw - l0.rotation.x) * Math.min(1, dt * 12);
+				l1.rotation.x += (-sw - l1.rotation.x) * Math.min(1, dt * 12);
+				referee.position.y = FY + (walking ? Math.abs(Math.cos(ref.walk)) * 0.015 : 0);
+				// hlava sleduje bielu (plynulo, najviac o 70 stupňov do strán voči telu)
 				const dx = cueBall.p.x - referee.position.x;
 				const dz = cueBall.p.z - referee.position.z;
-				const yaw = Math.max(-1.2, Math.min(1.2, Math.atan2(dx, -dz) * -1));
-				refHead.rotation.y += (yaw - refHead.rotation.y) * Math.min(1, dt * 3);
-				refHead.rotation.x = 0.35; // pozerá dole na stôl
+				let hy = Math.atan2(dx, dz) - referee.rotation.y;
+				hy = Math.max(-1.2, Math.min(1.2, Math.atan2(Math.sin(hy), Math.cos(hy))));
+				refHead.rotation.y += (hy - refHead.rotation.y) * Math.min(1, dt * 3);
+				refHead.rotation.x = walking ? 0.15 : 0.35; // pozerá dole na stôl
 			}
 		},
 		/** Stoličky pre online divákov: počet, obsadené kulisou, miesto, oči diváka a výber zhora. */
