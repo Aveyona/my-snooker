@@ -112,7 +112,7 @@ function mysn_roadmap() {
 				array( 'Šatník v kancelárii: výber oblečenia na zápas, ktoré uvidí súper a diváci', 0 ),
 				array( 'Časomiera v ligovom zápase: 30 sekúnd na úder, posledných 5 s odpočet, inak faul za čas', 1 ),
 				array( 'Pozvánka na partiu cez odkaz', 0 ),
-				array( 'Voľná kamera na medzerníku (aj pre divákov), úder klávesom na Enter', 0 ),
+				array( 'Voľná kamera na medzerníku pre hráčov (pre divákov zatiaľ nie), úder klávesom na Enter', 0 ),
 				array( 'Role admin a správca hry: panel Správa hry v hre (prehľad živej hry, neviditeľné sledovanie, sporné zápasy, zásahy podľa práv)', 0 ),
 				array( 'Prehľad hráčov v administrácii (účty, odohrané hry, výhry, liga, aktivita), rovnaké údaje aj pre hráča', 0 ),
 				array( 'Ochrana proti podvádzaniu: súper ako rozhodca (porovná výsledok úderu), kontrola rozumnosti bodov na serveri, overenie skóre v hre o skóre, označenie podozrivo presných hráčov', 0 ),
