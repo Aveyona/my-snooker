@@ -1767,6 +1767,10 @@ export function start(root, config = {}) {
 			}
 		},
 		viewDown: (e) => {
+			if (e.button === 2 && view && !['free', 'seat', 'seatPick', 'office', 'chalk'].includes(view) && !game.spectating) {
+				exitView(); // pravé tlačidlo v pohľade na predmet (stojan, nástenka, skóre, kreslo...): späť za tágo
+				return;
+			}
 			if (view === 'free' && !freeMouse && (e.button === 2 || e.button === 0)) {
 				// voľná kamera: drž pravé tlačidlo = hore, ľavé = dole (s Ctrl fungujú tlačidlá normálne, klik na predmety)
 				if (e.button === 2) {
