@@ -996,7 +996,7 @@ export function start(root, config = {}) {
 		}
 		ui.showView(name, name === 'rack' ? rackNow() : allCues(), cueSpec.id, name === 'office' ? officeData() : name === 'rack' ? rackInfoNow() : name === 'mixer' ? { radio } : name === 'magazine' ? room.rssItems : name === 'chair' ? (venue === 'league' ? null : { news: room.newsItems, rss: room.rssItems }) : room.newsItems);
 	};
-	const exitView = () => {
+	const exitView = (keepFree = false) => {
 		if (!view) {
 			return;
 		}
@@ -1028,7 +1028,9 @@ export function start(root, config = {}) {
 		chalkMesh.visible = false;
 		rig.setMode(game.state === 'place' || topView ? 'top' : 'cue');
 		ui.showView(null);
-		controls.capture();
+		if (!keepFree) {
+			controls.capture(); // s držaným Ctrl (keepFree) ostáva myš voľná
+		}
 	};
 	const pickCue = (id) => {
 		cueSpec = specFor(id);
@@ -1842,7 +1844,12 @@ export function start(root, config = {}) {
 		},
 		viewDown: (e) => {
 			if (e.button === 2 && view && !['free', 'seat', 'seatPick', 'office', 'chalk'].includes(view) && !game.spectating) {
-				exitView(); // pravé tlačidlo v pohľade na predmet (stojan, nástenka, skóre, kreslo...): späť za tágo
+				exitView(!!e.ctrlKey); // pravé tlačidlo v pohľade na predmet (stojan, nástenka, skóre, kreslo...): späť za tágo
+				if (e.ctrlKey) {
+					// Ctrl je stále stlačený: myš ostáva voľná (kurzor, rozsvietenie predmetov), nezachytí sa na tágo
+					freeMouse = true;
+					ui.setFree(true, false);
+				}
 				return;
 			}
 			if (view === 'free' && !freeMouse && (e.button === 2 || e.button === 0)) {

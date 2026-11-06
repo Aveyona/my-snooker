@@ -131,6 +131,7 @@ function mysn_roadmap() {
 /** Denník zmien (najnovšie hore). */
 function mysn_changelog() {
 	return array(
+		array( '0.6.77', '6. 11. 2026', 'Oprava: návrat z pohľadu na predmet pravým tlačidlom pri držanom Ctrl nechá myš voľnú (kurzor ostane, predmety sa ďalej rozsvecujú).' ),
 		array( '0.6.76', '6. 11. 2026', 'Vypínač na stene vľavo od dverí herne: s Ctrl a kliknutím zhasne alebo rozsvieti nástenné lampy, potom svieti len nad stolom. Pamätá sa.' ),
 		array( '0.6.75', '6. 11. 2026', 'Admin: v Nastaveniach Prehliadka (Herňa, Štadión, Kancelária), voľná kamera bez hraníc miestností.' ),
 		array( '0.6.74', '6. 11. 2026', 'Nová podlaha herne: tmavý parket s bordovým kobercom so zlatým lemom pod stolom, nakreslená ako celok bez viditeľných švov textúry.' ),
