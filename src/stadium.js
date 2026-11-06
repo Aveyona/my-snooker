@@ -8,8 +8,9 @@ import * as THREE from 'three';
 import { buildCueMesh } from './cues.js';
 import { buildFan, reactFans, updateFans, buildReferee } from './fans.js';
 import { Confetti } from './confetti.js';
+import { stadiumFloorTexture } from './stadiumFloors.js';
 
-const FY = -0.86; // podlaha (rovnako ako v herni)
+const FY = -0.815; // podlaha (rovnako ako v herni)
 
 const canvasTex = (w, h, draw) => {
 	const c = document.createElement('canvas');
@@ -45,7 +46,9 @@ export function buildStadium(scene, quality) {
 	const floor = add(new THREE.PlaneGeometry(40, 30), new THREE.MeshStandardMaterial({ color: 0x07080b, roughness: 0.25, metalness: 0.5 }), 0, FY, 0);
 	floor.rotation.x = -Math.PI / 2;
 	floor.castShadow = false;
-	const carpet = add(new THREE.PlaneGeometry(7.4, 5.2), new THREE.MeshStandardMaterial({ color: 0x14244a, roughness: 0.9 }), 0, FY + 0.002, 0);
+	// podlaha vnútri mantinelov: čierna lesklá s tmavosivým kobercom pod stolom a svietiacim modrým LED pásom
+	const ledFloor = stadiumFloorTexture('led', 8.4, 6.2, quality);
+	const carpet = add(new THREE.PlaneGeometry(8.4, 6.2), new THREE.MeshStandardMaterial({ map: ledFloor.map, emissive: 0xffffff, emissiveMap: ledFloor.emissive, emissiveIntensity: 1.2, roughness: 0.35, metalness: 0.3 }), 0, FY + 0.002, 0);
 	carpet.rotation.x = -Math.PI / 2;
 	carpet.castShadow = false;
 

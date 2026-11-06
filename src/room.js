@@ -11,8 +11,8 @@ import { buildNewspaper, buildMagazine } from './newspaper.js';
 export const ROOM = {
 	x: 5, // polovica dĺžky miestnosti (10 m)
 	z: 3.75, // polovica šírky (7,5 m)
-	floor: -0.86, // podlaha (súkno je vo výške 0)
-	ceil: -0.86 + 3, // strop 3 m nad podlahou
+	floor: -0.815, // podlaha (súkno je vo výške 0, stôl v turnajovej výške)
+	ceil: -0.815 + 3, // strop 3 m nad podlahou
 };
 export const PANEL_H = 1.0; // výška dreveného obloženia
 

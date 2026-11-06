@@ -190,8 +190,32 @@ KEY user_id (user_id)
 add_action(
 	'plugins_loaded',
 	function () {
+		mysn_fix_match30();
 		if ( get_option( 'mysn_db' ) !== MYSN_DB_VERSION ) {
 			mysn_db_install();
 		}
 	}
 );
+
+/**
+ * Jednorazová oprava (6. 11. 2026): partia #30 (Rugent nad Pet Matom) sa zapísala ako +1, ale presunulo sa 0 bodov
+ * (Pet Mat mal 0). Podľa pravidla symbolickej výhry sa dopíše Rugent +1 a Pet Mat -1. Spustí sa len raz.
+ */
+function mysn_fix_match30() {
+	if ( get_option( 'mysn_fix_m30' ) ) {
+		return;
+	}
+	global $wpdb;
+	$m = $wpdb->get_row( 'SELECT id, p1, p2, winner, season_id, league FROM ' . mysn_table( 'matches' ) . ' WHERE id = 30', ARRAY_A ); // phpcs:ignore
+	if ( ! $m || empty( $m['league'] ) || ! $m['winner'] ) {
+		update_option( 'mysn_fix_m30', 'skip', true );
+		return;
+	}
+	$w  = (int) $m['winner'];
+	$l  = $w === (int) $m['p1'] ? (int) $m['p2'] : (int) $m['p1'];
+	$lt = mysn_table( 'league' );
+	$sid = (int) $m['season_id'];
+	$wpdb->query( $wpdb->prepare( "UPDATE $lt SET points = points + 1 WHERE season_id = %d AND user_id = %d", $sid, $w ) ); // phpcs:ignore
+	$wpdb->query( $wpdb->prepare( "UPDATE $lt SET points = points - 1 WHERE season_id = %d AND user_id = %d", $sid, $l ) ); // phpcs:ignore
+	update_option( 'mysn_fix_m30', time(), true );
+}

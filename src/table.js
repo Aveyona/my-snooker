@@ -691,7 +691,7 @@ export function buildRoom(scene, quality) {
 	const floorTex = floorTexture('carpet', 2 * ROOM.x, 2 * ROOM.z, quality);
 	const floor = new THREE.Mesh(new THREE.PlaneGeometry(2 * ROOM.x, 2 * ROOM.z), new THREE.MeshStandardMaterial({ map: floorTex, roughness: 0.7, metalness: 0 }));
 	floor.rotation.x = -Math.PI / 2;
-	floor.position.y = -0.86;
+	floor.position.y = -0.815;
 	floor.receiveShadow = true;
 	scene.add(floor);
 

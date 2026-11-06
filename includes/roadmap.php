@@ -131,6 +131,7 @@ function mysn_roadmap() {
 /** Denník zmien (najnovšie hore). */
 function mysn_changelog() {
 	return array(
+		array( '0.7.24', '6. 11. 2026', 'Stôl má turnajovú výšku (o 4,5 cm nižší voči podlahe herne, kancelárie aj štadióna). Štadión: nová podlaha vnútri mantinelov, čierna lesklá s tmavosivým kobercom pod stolom a svietiacim modrým LED pásom. Liga: aj výhra s 0 nahratými bodmi (napríklad súperovi vypršal čas) dá aspoň symbolický +1; partia #30 dopísaná spätne (Rugent +1, Pet Mat -1). Nádstavce ostávajú v lige povolené.' ),
 		array( '0.7.23', '6. 11. 2026', 'Ligy podľa podielu hráčov, kým ich je najviac 70: 1. liga horných 10 %, 2. liga ďalších 20 %, 3. liga ďalších 30 %, 4. liga zvyšok (v každej aspoň jeden hráč). Pri 7 hráčoch: 1. liga 1 hráč, 2. liga 1, 3. liga 2, 4. liga 3. Výhra nad hráčom z vyššej ligy sa tak ráta 1,5-krát aj pri malom počte hráčov. Nad 70 hráčov platia pevné hranice.' ),
 		array( '0.7.22', '6. 11. 2026', 'Kancelária F4 (výsledky sezóny ligy): vpravo panel s pravidlami, ako sa počítajú body (štart, výhra, vzdanie, silnejší súper, spodok, symbolická výhra, ligy, sezóna), výrazným väčším písmom.' ),
 		array( '0.7.21', '6. 11. 2026', 'Liga: poistka proti dvojitému započítaniu bodov, keď koniec ligovej partie príde naraz viacerými cestami (koniec framu, čas, odchod hráča). Body sa pripočítajú vždy len raz.' ),

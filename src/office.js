@@ -12,7 +12,7 @@ import { feature } from 'topojson-client';
 import { countryByCode, ISO_NUM } from './countries.js';
 
 export const OX = 40; // kancelária je 40 m od herne
-const FY = -0.86;
+const FY = -0.815; // podlaha (stôl je o 4,5 cm nižší, ako turnajový)
 const RXo = 3.2; // polovičná šírka (x)
 const RZo = 2.6; // polovičná hĺbka (z)
 const H = 3.0;

@@ -229,6 +229,9 @@ function mysn_league_apply( $m, $winner, $points, $resign = false, $best = array
 	} else {
 		$pts = min( $pts, (int) $rl['points'] ); // nad 0 klesne najviac na 0
 	}
+	if ( $pts <= 0 ) {
+		$pts = MYSN_LEAGUE_SYMBOLIC; // výhra s 0 nahratými bodmi (napríklad súperovi vypršal čas): aspoň symbolický bod
+	}
 	$now = time();
 	$wi  = (int) $winner === (int) $m['p1'] ? 0 : 1;
 	$wpdb->query( $wpdb->prepare( "UPDATE $lt SET points = points + %d, wins = wins + 1, best = GREATEST(best, %d), updated = %d WHERE season_id = %d AND user_id = %d", $pts, (int) ( $best[ $wi ] ?? 0 ), $now, $sid, $winner ) ); // phpcs:ignore
