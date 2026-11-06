@@ -65,22 +65,22 @@ export function spiderSpot(cue, dir, balls, tilt = SPIDER_TILT, kind = 'spider')
 			if (kind !== 'cross') {
 				return null; // pavúky pri mantineli nie
 			}
-			// krížik pri mantineli: položí sa na drevený rám za mantinelom, tágo pôjde strmšie
-			for (let e = d; e <= d + 0.4; e += 0.01) {
+			// krížik pri mantineli: položí sa na drevený rám za mantinelom čo najďalej k vonkajšiemu okraju
+			// (čím ďalej od bielej, tým menší sklon tága)
+			let best = null;
+			for (let e = d; e <= d + 0.4; e += 0.005) {
 				const rx = tipX - dx * e;
 				const rz = tipZ - dz * e;
-				const ax = Math.abs(rx) - L / 2;
-				const az = Math.abs(rz) - W / 2;
-				const out = Math.max(ax, az);
-				if (out > 0.05 + foot * 0.6 && out < OUTER - 0.03) {
+				const out = Math.max(Math.abs(rx) - L / 2, Math.abs(rz) - W / 2);
+				if (out > 0.05 + foot * 0.6 && out < OUTER - 0.012) {
 					const h = Math.max(tipY + e * tan, EDGE_H + 0.032);
-					return { x: rx, z: rz, d: e, h, y: EDGE_H, tilt: Math.atan((h - tipY) / e) };
+					best = { x: rx, z: rz, d: e, h, y: EDGE_H, tilt: Math.atan((h - tipY) / e) };
 				}
-				if (out >= OUTER - 0.03) {
+				if (out >= OUTER - 0.012) {
 					break;
 				}
 			}
-			return null;
+			return best;
 		}
 		let free = true;
 		for (const b of balls || []) {

@@ -131,6 +131,7 @@ function mysn_roadmap() {
 /** Denník zmien (najnovšie hore). */
 function mysn_changelog() {
 	return array(
+		array( '0.6.85', '6. 11. 2026', 'Krížik pri mantineli sa kladie na rám čo najďalej k vonkajšiemu okraju stola, tágo má menší sklon.' ),
 		array( '0.6.84', '6. 11. 2026', 'Tréning si pamätá rozloženie gúľ a štatistiku aj po obnovení stránky (F5) a po návrate z hry o skóre; ukladá sa po každom údere a po Späť, Biela do ruky, Hotovo a Nové rozostavenie.' ),
 		array( '0.6.83', '6. 11. 2026', 'Krížik sa dá použiť aj pri mantineli: ak za bielou nie je miesto na súkne, položí sa na drevený rám za mantinelom (tágo ide strmšie). Pavúky pri mantineli ostávajú zakázané.' ),
 		array( '0.6.82', '6. 11. 2026', 'Oprava: trojuholník pod stolom už netrčí do stola (visí nižšie pod rámom).' ),
