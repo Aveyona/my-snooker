@@ -7,6 +7,7 @@
 import * as THREE from 'three';
 import { buildCueMesh } from './cues.js';
 import { buildFan, reactFans, updateFans, buildReferee } from './fans.js';
+import { Confetti } from './confetti.js';
 
 const FY = -0.86; // podlaha (rovnako ako v herni)
 
@@ -486,6 +487,25 @@ export function buildStadium(scene, quality) {
 		fans.push(fan);
 	});
 
+	// konfety: dážď zo stropu po zápase, dávky od divákov (kulisa aj online diváci, F7)
+	const confetti = new Confetti(root, FY);
+	/** Dávka konfiet od kulisových divákov (dvaja: jeden na každej strane). */
+	const fanConfetti = (sec = 10) => {
+		for (const i of [1, 3]) {
+			const f = fans[i] && fans[i].f;
+			if (f) {
+				confetti.burst(f.position.x, f.position.y + 1.1, f.position.z, sec);
+			}
+		}
+	};
+	/** Dávka konfiet z miesta online diváka (číslo stoličky). */
+	const seatConfetti = (seat, sec = 15) => {
+		const p = seatPlace(seat);
+		if (p) {
+			confetti.burst(p.x, p.y + 1.1, p.z, sec);
+		}
+	};
+
 	// výber stoličky (pohľad zhora): voľné zelené, obsadené sivé, moja zlatá, pod myšou svetlá
 	const pickMats = {
 		free: new THREE.MeshStandardMaterial({ color: 0x2f9e4f, emissive: 0x1d6b34, emissiveIntensity: 0.6, roughness: 0.6 }),
@@ -513,7 +533,27 @@ export function buildStadium(scene, quality) {
 			g.font = 'bold 40px Arial, sans-serif';
 			g.textAlign = 'center';
 			g.fillText((d && d.title) || 'MY SNOOKER LIGA', W2 / 2, 50);
-			if (d && d.names) {
+			if (d && d.winner) {
+				// po zápase: víťaz, skóre, najvyššie série a výhry v sezóne
+				g.textAlign = 'center';
+				g.fillStyle = '#FACC15';
+				g.font = 'bold 46px Arial, sans-serif';
+				g.fillText('🏆 VÍŤAZ 🏆', W2 / 2, 135);
+				g.fillStyle = '#ffffff';
+				let fs = 92;
+				g.font = `bold ${fs}px Arial, sans-serif`;
+				while (fs > 44 && g.measureText(d.winner).width > W2 - 60) {
+					fs -= 6;
+					g.font = `bold ${fs}px Arial, sans-serif`;
+				}
+				g.fillText(d.winner, W2 / 2, 235);
+				g.fillStyle = '#e8ecf3';
+				g.font = 'bold 44px Arial, sans-serif';
+				g.fillText(d.result || '', W2 / 2, 315);
+				g.fillStyle = '#9fb3d9';
+				g.font = '32px Arial, sans-serif';
+				(d.lines || []).slice(0, 2).forEach((t, i) => g.fillText(t, W2 / 2, 370 + i * 42));
+			} else if (d && d.names) {
 				g.font = 'bold 52px Arial, sans-serif';
 				g.textAlign = 'left';
 				d.names.forEach((n, i) => {
@@ -561,6 +601,9 @@ export function buildStadium(scene, quality) {
 			reactFans(fans, kind);
 		},
 		setScreen: drawScreen,
+		confetti,
+		fanConfetti,
+		seatConfetti,
 		setNames,
 		/** Stojan hráča pri stole: side 0 alebo 1, specs = tágá do zápasu, inHand = id tága v ruke. */
 		setRack,
@@ -574,6 +617,7 @@ export function buildStadium(scene, quality) {
 		/** Každý snímok: hlavy sledujú bielu, animácie tlieskania, faulu a vstávania. */
 		update(dt, cueBall, dir = null, moving = false) {
 			updateFans(fans, dt, cueBall);
+			confetti.update(dt);
 			if (cueBall && root.visible) {
 				// kým sa gule nehýbu a mieri sa: uhne z cesty tága (obíde stôl po obvode)
 				if (dir !== null && !moving && cueBall.on) {

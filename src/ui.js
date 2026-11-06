@@ -1588,6 +1588,9 @@ export class UI {
 				if (r.tour) {
 					card.appendChild(this.button('Prehliadka (voľná kamera, admin)', 'roomGo', 'Voľná kamera bez hraníc miestností', { id: r.id, mode: 'tour' }));
 				}
+				for (const x of r.extra || []) {
+					card.appendChild(this.button(x.label, x.act, x.title || ''));
+				}
 			}
 			const foot = h('div', 'mysn-lobby-foot');
 			foot.appendChild(this.button('Zavrieť (M)', 'roomMapClose'));
@@ -1600,6 +1603,39 @@ export class UI {
 			}
 		};
 		draw();
+	}
+
+	/** Telefón diváka (F1): pomocník s klávesmi a tlačidlá (konfety, miesto, skóre, odchod). */
+	openSpectPhone(on, o = {}) {
+		if (!this.spBox) {
+			this.spBox = h('div', 'mysn-panel mysn-spphone mysn-hidden');
+			for (const t of ['pointerdown', 'mousedown', 'click', 'wheel']) {
+				this.spBox.addEventListener(t, (e) => e.stopPropagation());
+			}
+			this.root.appendChild(this.spBox);
+		}
+		const B = this.spBox;
+		B.classList.toggle('mysn-hidden', !on);
+		this._spOpen = !!on;
+		if (!on) {
+			return;
+		}
+		const rows = [
+			['F1', 'telefón (pomocník)'],
+			['F4', 'pohľad na skóre'],
+			['F6', 'zmena miesta'],
+			['F7', `konfety (zostáva ${o.confLeft}×, 15 s)`],
+			['Myš', 'rozhliadanie, koliesko priblíženie'],
+			['Esc', 'menu (Prestať sledovať)'],
+		];
+		B.innerHTML = `<div class="mysn-spphone-top">📱 Divák</div><h3>Pomocník</h3><div class="mysn-sp-keys">${rows.map(([k, t]) => `<div><b>${k}</b><span>${esc(t)}</span></div>`).join('')}</div>`;
+		const conf = this.button(`🎉 Konfety (${o.confLeft}×)`, 'spectConfetti', 'F7');
+		conf.disabled = !o.stadium || o.confLeft <= 0;
+		B.append(conf, this.button('Zmeniť miesto (F6)', 'seatChange'), this.button('Prestať sledovať', 'watchStop'), this.button('Zavrieť (F1)', 'spectPhoneClose'));
+	}
+
+	spectPhoneOpen() {
+		return !!this._spOpen;
 	}
 
 	roomMapOpen() {

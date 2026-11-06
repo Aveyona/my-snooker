@@ -252,6 +252,13 @@ export class Online {
 		return this.rtc.broadcast('watch', msg, (p) => !p.offerer);
 	}
 
+	/** Divák: správa hráčom, ktorých partiu sledujem (napríklad konfety F7). */
+	watchSend(msg) {
+		for (const p of this.rtc.list('watch', (x) => x.offerer)) {
+			this.rtc.send(p, msg);
+		}
+	}
+
 	wsendTo(p, msg) {
 		return this.rtc.send(p, msg);
 	}
@@ -382,6 +389,8 @@ export class Online {
 		if (p.tag === 'watch') {
 			if (p.offerer && this.watching && this.hooks.watch) {
 				this.hooks.watch(m);
+			} else if (!p.offerer && m.k === 'w-conf' && this.hooks.watcherConf) {
+				this.hooks.watcherConf(m); // konfety od môjho diváka (F7)
 			}
 			return;
 		}
@@ -818,6 +827,17 @@ export class Online {
 			this.lastLeague = !!m.league;
 			this.stopMatchText = lg;
 			const wi = m.players.findIndex((p) => p.id === m.winner);
+			if (m.league && wi >= 0) {
+				// koniec ligového zápasu na štadióne: tabuľa s víťazom a konfety (aj divákom)
+				const best = (g.match && g.match.best) || [0, 0];
+				this.lastFiesta = {
+					winner: m.players[wi].name,
+					result: `${m.players[0].name} ${m.scores[0]} : ${m.scores[1]} ${m.players[1].name}`,
+					lines: [m.result === 'resign' ? `${m.players[1 - wi].name} sa vzdal partie` : m.result === 'disconnect' ? `${m.players[1 - wi].name} stratil spojenie` : m.result === 'timeout' ? 'rozhodol čas' : `Najvyššia séria: ${Math.max(best[0] || 0, best[1] || 0)}`, `Liga: víťaz +${Math.max(0, m.delta || 0)} bodov`],
+					winId: m.winner,
+				};
+				this.wsend({ k: 'w-over', f: this.lastFiesta });
+			}
 			const wtext = wi < 0 ? 'Zápas skončil.' : m.result === 'disconnect' ? `${m.players[1 - wi].name} stratil spojenie, víťaz ${m.players[wi].name}.` : m.result === 'resign' ? `${m.players[1 - wi].name} sa vzdáva partie, víťaz ${m.players[wi].name}.` : `Zápas skončil, víťaz ${m.players[wi].name}, skóre ${m.scores[wi]} : ${m.scores[1 - wi]}.`;
 			this.stopMatch(m.result === 'disconnect' ? (won ? `${opp.name} stratil spojenie a zápas prehral. Víťazstvo je tvoje!` : 'Stratil si spojenie so zápasom a zápas je prehratý.') : m.result === 'resign' ? (won ? `${opp.name} sa vzdáva partie. Víťazstvo je tvoje!` : 'Partia je vzdaná.') : won ? `Víťazstvo je tvoje! Skóre ${m.scores[m.me]} : ${m.scores[1 - m.me]}.` : `Víťaz partie: ${opp.name}, skóre ${m.scores[1 - m.me]} : ${m.scores[m.me]}.`, wtext);
 			return;

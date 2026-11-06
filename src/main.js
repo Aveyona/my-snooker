@@ -894,6 +894,9 @@ export function start(root, config = {}) {
 			return;
 		}
 		fadeEl.classList.add('mysn-on');
+		if (v !== 'league') {
+			stopFiesta();
+		}
 		setTimeout(() => {
 			venue = v;
 			const lg = v === 'league';
@@ -923,6 +926,7 @@ export function start(root, config = {}) {
 	};
 	let watchScreen = null; // divák: skóre sledovaného ligového zápasu (prichádza od hráča)
 	let watchPeers = []; // divák: id hráčov sledovaného zápasu (pre menovky)
+	let watchFiesta = null; // divák: koniec zápasu prišiel od hráča (čaká na w-end)
 	let watchTurnAt = 0; // divák: začiatok ťahu v sledovanom ligovom zápase
 	let clockSec = -1; // časomiera: naposledy zobrazená sekunda
 	const SHOT_CLOCK = 30;
@@ -941,7 +945,39 @@ export function start(root, config = {}) {
 		}
 		return null;
 	};
+	// koniec ligového zápasu: na štadióne tabuľa s víťazom, konfety zo stropu (stále) a od dvoch divákov (chvíľu)
+	let fiesta = null;
+	const startFiesta = (f) => {
+		fiesta = f;
+		stadium.confetti.setRain(true);
+		stadium.fanConfetti(12);
+		updateStadiumScreen();
+	};
+	const stopFiesta = () => {
+		if (!fiesta) {
+			return;
+		}
+		fiesta = null;
+		stadium.confetti.clear();
+		updateStadiumScreen();
+	};
+	let confLeft = 3; // divák: konfety F7 najviac 3-krát za zápas
+	const confSeen = new Set(); // id dávok konfiet (prídu od oboch hráčov naraz)
+	const playConf = (m) => {
+		if (!m || !m.id || confSeen.has(m.id)) {
+			return false;
+		}
+		confSeen.add(m.id);
+		if (venue === 'league') {
+			stadium.seatConfetti(m.seat, Math.min(15, Number(m.sec) || 15));
+		}
+		return true;
+	};
 	const updateStadiumScreen = () => {
+		if (fiesta) {
+			stadium.setScreen({ title: 'KONIEC ZÁPASU', winner: fiesta.winner, result: fiesta.result, lines: fiesta.lines, footer: 'My Snooker liga' });
+			return;
+		}
 		const m = game.match;
 		const ld = leagueData;
 		const footer = ld && ld.season ? `${ld.season.name} · do konca ${ld.season.daysLeft} dní` : 'My Snooker liga';
@@ -1251,7 +1287,7 @@ export function start(root, config = {}) {
 		return [
 			{ id: 'home', name: 'Herňa', desc: 'Tréning, Hrať o najlepšie skóre, partie s priateľmi. Stôl s červeným súknom pri tréningu, zeleným v partii.', map: [4, 30, 46, 64], here: here === 'home', locked: false, play: 'Vstúpiť a hrať' },
 			{ id: 'office', name: 'Kancelária', desc: 'Liga: registrácia, tabuľky líg, mapa hráčov, moje tágá, vyhľadanie ligového zápasu.', map: [4, 4, 46, 22], here: here === 'office', locked: !user, lockNote: 'Kancelária je pre prihlásených hráčov.', play: 'Vstúpiť' },
-			{ id: 'league', name: 'Štadión', desc: 'Ligové zápasy pred divákmi, modré súkno, svetlá na stôl.', map: [56, 4, 40, 90], here: here === 'league', locked: !admin, lockNote: 'Štadión sa otvorí, keď nájdeš ligový zápas (Kancelária, Vyhľadať zápas). Hrá sa tu len liga.', play: admin ? 'Vstúpiť a trénovať (admin)' : 'Vstúpiť' },
+			{ id: 'league', name: 'Štadión', desc: 'Ligové zápasy pred divákmi, modré súkno, svetlá na stôl.', map: [56, 4, 40, 90], here: here === 'league', locked: !admin, lockNote: 'Štadión sa otvorí, keď nájdeš ligový zápas (Kancelária, Vyhľadať zápas). Hrá sa tu len liga.', play: admin ? 'Vstúpiť a trénovať (admin)' : 'Vstúpiť', extra: admin ? [{ label: 'Ukážka konca zápasu (admin)', act: 'fiestaDemo', title: 'Tabuľa s víťazom a konfety na kontrolu' }] : [] },
 		].map((r) => ({ ...r, tour: admin }));
 	};
 
@@ -1429,6 +1465,9 @@ export function start(root, config = {}) {
 			rig.setMode('cue');
 			online.watchStart(r.type, r.id, r.peers || [r.id]);
 			watchPeers = r.peers || [r.id];
+			confLeft = 3; // konfety F7: 3-krát za zápas
+			watchFiesta = null;
+			stopFiesta();
 			watchCtx = (r.type === 'match' ? 'm' : 'r') + r.id;
 			seatList = [];
 			refreshMenu();
@@ -1441,7 +1480,8 @@ export function start(root, config = {}) {
 			setTimeout(seatPick, 420); // po prechode na štadión (alebo hneď v herni) výber miesta zhora
 		},
 		seatChange: () => seatPick(),
-		watchStop: () => {
+		watchStop: (keepVenue = false) => {
+			ui.openSpectPhone(false);
 			if (!game.spectating) {
 				return;
 			}
@@ -1449,7 +1489,9 @@ export function start(root, config = {}) {
 			online.aimTarget = null;
 			game.spectateEnd();
 			seatLeave();
-			setVenue('home');
+			if (keepVenue !== true) {
+				setVenue('home');
+			}
 			refreshMenu();
 			ui.showMenu(false);
 			controls.capture();
@@ -1926,6 +1968,61 @@ export function start(root, config = {}) {
 				controls.capture();
 			}
 		},
+		// divák F7: dávka konfiet zo svojho miesta (najviac 3-krát za zápas, 15 sekúnd); vidia ju všetci
+		spectConfetti: () => {
+			if (!game.spectating || venue !== 'league') {
+				ui.toast('Konfety sa dajú púšťať na štadióne pri sledovaní ligového zápasu.');
+				return;
+			}
+			if (mySeat < 0) {
+				ui.toast('Najprv si vyber miesto (F6).');
+				return;
+			}
+			if (confLeft <= 0) {
+				ui.toast('Konfety si v tomto zápase už minul (3-krát).');
+				return;
+			}
+			confLeft--;
+			const m = { k: 'w-conf', seat: mySeat, sec: 15, id: (user ? user.id : 0) + ':' + Date.now() };
+			playConf(m);
+			online.watchSend(m);
+			ui.toast(`Konfety! Zostáva ešte ${confLeft}×.`);
+			if (ui.spectPhoneOpen()) {
+				actions.spectPhone(true);
+			}
+		},
+		// divák F1: telefón s pomocníkom (klávesy) a tlačidlami
+		spectPhone: (refresh) => {
+			if (ui.spectPhoneOpen() && refresh !== true) {
+				ui.openSpectPhone(false);
+				controls.capture();
+				return;
+			}
+			controls.uncapture();
+			ui.openSpectPhone(true, { confLeft, stadium: venue === 'league' });
+		},
+		spectPhoneClose: () => {
+			ui.openSpectPhone(false);
+			controls.capture();
+		},
+		// admin: ukážka konca zápasu na štadióne (tabuľa s víťazom a konfety) na kontrolu
+		fiestaDemo: () => {
+			if (config.role !== 'admin' || game.match || game.spectating) {
+				return;
+			}
+			ui.openRoomMap(false);
+			const go = () => {
+				startFiesta({ winner: user ? user.name : 'Admin', result: `${user ? user.name : 'Admin'} 76 : 40 Súper`, lines: ['Najvyššia séria: 54', 'Liga: víťaz +12 bodov (ukážka)'] });
+				ui.toast('Ukážka konca zápasu: tabuľa s víťazom a konfety. Späť do herne v menu ich vypne.');
+			};
+			if (venue !== 'league') {
+				setVenue('league');
+				setTimeout(go, 450);
+			} else {
+				go();
+			}
+			controls.capture();
+		},
 		help: () => enterView('board'),
 		board: () => enterView('board'),
 		rack: () => enterView('rack'),
@@ -2327,6 +2424,14 @@ export function start(root, config = {}) {
 					seatLookScore();
 					return true;
 				}
+				if (lk === 'f7') {
+					actions.spectConfetti();
+					return true;
+				}
+				if (lk === 'f1') {
+					actions.spectPhone();
+					return true;
+				}
 				return lk !== 'f5' && lk !== 'f11'; // F5 obnoví stránku, F11 celá obrazovka; ostatné klávesy divák nepoužíva
 			}
 			if (lk === 'space') {
@@ -2657,7 +2762,26 @@ export function start(root, config = {}) {
 				if (!sp || !watchInfo) {
 					return;
 				}
+				if (m.k === 'w-over') {
+					watchFiesta = m.f || null; // koniec zápasu: tabuľa s víťazom a konfety
+					return;
+				}
+				if (m.k === 'w-conf') {
+					playConf(m);
+					return;
+				}
 				if (m.k === 'w-end') {
+					if (watchFiesta && venue === 'league') {
+						// divák ostáva na štadióne, kým sa oslavuje (Späť do herne v menu)
+						const f = watchFiesta;
+						watchFiesta = null;
+						actions.watchStop(true);
+						startFiesta(f);
+						ui.showMenu(true, true);
+						ui.menuNote(m.text || 'Zápas skončil.');
+						controls.uncapture();
+						return;
+					}
 					actions.watchStop();
 					ui.toast(m.text || 'Partia už nie je otvorená.');
 					return;
@@ -2740,6 +2864,7 @@ export function start(root, config = {}) {
 				}
 			},
 			started: (m) => {
+				stopFiesta();
 				if (!m.league && online.watchers().length) {
 					online.closeWatchers('Hráč začal partiu so súperom.'); // ligový zápas sa sledovať dá, ostatné nie
 				}
@@ -2761,13 +2886,25 @@ export function start(root, config = {}) {
 			},
 			ended: async (text) => {
 				exitView();
-				// po zápase (aj ligovom zo štadióna) späť doma v herni, v menu je vybraný Tréning
+				// po ligovom zápase: ostávam na štadióne, tabuľa s víťazom a konfety (Späť do herne v menu);
+				// inak späť doma v herni, v menu je vybraný Tréning
 				ui.trainingFirst = true;
-				setVenue('home');
+				const fz = online && online.lastFiesta;
+				if (online) {
+					online.lastFiesta = null;
+				}
+				if (fz && venue === 'league') {
+					startFiesta(fz);
+				} else {
+					setVenue('home');
+				}
 				if (online && online.lastLeague) {
 					online.lastLeague = false;
 					leagueData = (await online.league()) || leagueData;
 					room.setLeague(leagueData);
+					if (fiesta && user && fz && fz.winId === user.id && leagueData && leagueData.me) {
+						fiesta.lines = [fiesta.lines[0], `Výhry v sezóne: ${leagueData.me.wins} · ${leagueData.me.league}. liga, ${leagueData.me.rank}. miesto`];
+					}
 					updateStadiumScreen();
 				}
 				refreshMenu();
@@ -2779,6 +2916,12 @@ export function start(root, config = {}) {
 				updateScore();
 			},
 			status: () => ui.setNet(online ? online.statusText() : ''),
+			// konfety od môjho diváka: zahrám a pošlem všetkým divákom (aj súper ich dostane priamo od diváka)
+			watcherConf: (m) => {
+				if (playConf(m)) {
+					online.wsend(m);
+				}
+			},
 			stats: (st) => office.setNotes(st),
 			// obsadené miesta divákov partie, ktorú hrám alebo sledujem
 			seats: (ctx, list) => {
