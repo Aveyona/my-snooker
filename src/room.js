@@ -478,7 +478,7 @@ export function buildRoomShell(scene, quality, opts = {}) {
 	setWallLamps(true);
 
 	// Nástenka s nápovedou (F1) na zadnej stene vľavo
-	const BOARD = { x: -2.6, y: FY + 1.5, w: 1.6, h: 1.1 };
+	const BOARD = { x: -3.05, y: FY + 1.62, w: 2.6, h: 1.15 }; // väčšia nástenka (pod nástennou lampou, vedľa poličky s pohármi)
 	const boardMesh = add(new THREE.PlaneGeometry(BOARD.w, BOARD.h), new THREE.MeshStandardMaterial({ map: boardTexture(), roughness: 0.85 }), BOARD.x, BOARD.y, -RZ + 0.045);
 	boardMesh.castShadow = false;
 	for (const [x, y, w, h] of [
@@ -1168,7 +1168,7 @@ export function buildRoomShell(scene, quality, opts = {}) {
 		spotMeshes,
 		markSpots,
 		pick: { pos: new THREE.Vector3(0, FY + 9.5, 0.6), look: new THREE.Vector3(0, FY, 0) },
-		board: { pos: new THREE.Vector3(BOARD.x, BOARD.y, -RZ + 1.62), look: new THREE.Vector3(BOARD.x, BOARD.y, -RZ) },
+		board: { pos: new THREE.Vector3(BOARD.x, BOARD.y, -RZ + 2.05), look: new THREE.Vector3(BOARD.x, BOARD.y, -RZ) },
 		rack: { pos: new THREE.Vector3(RACK.x + 0.3, FY + 1.2, -RZ + 3.3), look: new THREE.Vector3(RACK.x + 0.3, FY + 0.78, -RZ), zoom: 0.84 }, // celý stojan aj s poličkou na kriedy
 		score: { pos: new THREE.Vector3(-RX + 1.55, SCORE.y, 0), look: new THREE.Vector3(-RX, SCORE.y, 0) },
 		// F10: pohľad z baru (sediaci na stoličke), v popredí telefón a poháre s vodou, za nimi herňa
