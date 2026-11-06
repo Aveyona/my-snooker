@@ -505,7 +505,7 @@ export function start(root, config = {}) {
 		rig.setView(pos, pos.clone().add(dir));
 		rig.jump();
 		ui.showView(null);
-		ui.toast('Voľná kamera: myš rozhliadanie, šípky alebo W A S D posun, koliesko alebo Q a E hore a dole, pravé tlačidlo drž: priblíženie, Shift rýchlejšie, Ctrl zastaví kameru. Medzerník alebo Esc: späť za tágo.');
+		ui.toast('Voľná kamera: myš rozhliadanie, šípky alebo W A S D posun, koliesko alebo Q a E hore a dole, pravé tlačidlo drž: priblíženie, Shift rýchlejšie, Ctrl zastaví kameru. Medzerník: späť za tágo.');
 	};
 	/** Odchod z voľnej kamery: zapamätá si polohu a smer pohľadu. */
 	const freeLeave = () => {
@@ -1601,7 +1601,7 @@ export function start(root, config = {}) {
 				freeMouse = false;
 				ui.setFree(false);
 				ui.showMenu(false);
-			} else if (finePointer && (!view || view === 'seat') && !freeMouse && !ui.partyOpen() && performance.now() - escClosedAt > 1500) {
+			} else if (finePointer && (!view || view === 'seat' || view === 'free') && !freeMouse && !ui.partyOpen() && performance.now() - escClosedAt > 1500) {
 				ui.showMenu(true, started);
 			}
 		},
@@ -1922,6 +1922,17 @@ export function start(root, config = {}) {
 				}
 				if (lk === 'escape' && ui.readerOpen()) {
 					ui.toggleReader(null);
+					return true;
+				}
+				if (lk === 'escape' && view === 'free') {
+					// voľná kamera: Esc pohľad neprepína, len uvoľní myš a otvorí menu (späť za tágo je medzerník)
+					if (ui.menuOpen() && performance.now() - (ui._menuAt || 0) > 300) {
+						ui.showMenu(false);
+						ui.toast('Klikni do hry, myš sa zachytí.');
+					} else if (!ui.menuOpen()) {
+						controls.uncapture();
+						ui.showMenu(true);
+					}
 					return true;
 				}
 				if ((lk === 'escape' || lk === 'enter') && view !== 'chalk') {

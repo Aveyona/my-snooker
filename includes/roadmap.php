@@ -115,7 +115,8 @@ function mysn_roadmap() {
 				array( 'Voľná kamera na medzerníku pre hráčov (medzerník prepína voľný pohľad a tágo, Ctrl zastaví kameru a uvoľní kurzor; pre divákov zatiaľ nie), úder len myšou', 1 ),
 				array( 'Role admin a správca hry: zoznam hráčov s nastavením roly v administrácii, panel Správa hry v hre podľa práv (práva v dokumentácii), odkaz Dokumentácia v menu My Snooker', 1 ),
 				array( 'Prehľad hráčov v administrácii (účty, odohrané hry, výhry, liga, aktivita), rovnaké údaje aj pre hráča', 0 ),
-				array( 'ELO sila hráča ako v šachu, nový hráč začína na 1350', 0 ),
+				array( 'ELO sila hráča ako v šachu (len ligové zápasy), nový hráč začína na 1350', 0 ),
+				array( 'Voľná kamera: Tab zobrazí mini náhľad stola ako ďalšiu kameru', 0 ),
 				array( 'Mobil: úder ťahaním prstom, priblíženie dvoma prstami; chat (Enter)', 0 ),
 				array( 'Klik na predmety v scéne (vo voľnom pohľade s Ctrl) ako ich klávesy F2, F4, F8 a ďalšie', 0 ),
 				array( 'Ochrana proti podvádzaniu (až pred dokončením hry): súper ako rozhodca (porovná výsledok úderu), kontrola rozumnosti bodov na serveri, overenie skóre v hre o skóre, označenie podozrivo presných hráčov', 0 ),
@@ -130,6 +131,7 @@ function mysn_roadmap() {
 /** Denník zmien (najnovšie hore). */
 function mysn_changelog() {
 	return array(
+		array( '0.6.52', '6. 11. 2026', 'Voľná kamera: Esc pohľad neprepína, len uvoľní myš a otvorí menu (späť za tágo je medzerník). Plán: mini náhľad stola na Tab vo voľnom pohľade, ELO len z ligových zápasov.' ),
 		array( '0.6.51', '6. 11. 2026', 'Plán vývoja: ochrana proti podvádzaniu sa robí až pred dokončením hry.' ),
 		array( '0.6.50', '6. 11. 2026', 'Role admin a správca hry: administrácia My Snooker, Hráči (zoznam hráčov, nastavenie roly správca hry), v hre tlačidlo Správa hry (bežiace zápasy, herne, hráči online, neviditeľné sledovanie, zmena prezývky; admin aj ukončenie alebo zrušenie zápasu, zákaz ligy, vynulovanie bodov). Voľná kamera: návrat za tágo je okamžitý, bez preletu; koliesko plynulo posúva kameru hore a dole, držané pravé tlačidlo približuje na predmet, na ktorý sa pozeráš.' ),
 		array( '0.6.49', '6. 11. 2026', 'Voľná kamera si pamätá polohu a smer pohľadu (v tej istej miestnosti sa k nim vráti), pohyb je plynulý (rozbeh a dobeh, pohľad bez oneskorenia). Úder klávesom zrušený: udiera sa len myšou (ťahaním tága alebo ukazovateľom sily), Enter bude neskôr chat.' ),
