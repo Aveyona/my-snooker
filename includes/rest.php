@@ -233,7 +233,7 @@ function mysn_match_out( $m, $uid ) {
 		'league'  => (int) ( $m['league'] ?? 0 ),
 		'tier'    => ! empty( $m['league'] ) ? mysn_match_tier( $m ) : 0, // číslo ligy (1 až 4) pre mantinel na štadióne
 		'training' => 'training' === ( $m['kind'] ?? '' ),
-		'delta'   => (int) ( $m['delta'] ?? 0 ),
+		'delta'   => max( 0, (int) ( $m['delta'] ?? 0 ) ),
 	);
 }
 

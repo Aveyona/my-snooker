@@ -180,7 +180,7 @@ function mysn_league_can_play( $a, $b ) {
  */
 function mysn_league_apply( $m, $winner, $points, $resign = false, $best = array( 0, 0 ) ) {
 	global $wpdb;
-	if ( empty( $m['league'] ) || (int) $m['delta'] > 0 ) {
+	if ( empty( $m['league'] ) || 0 !== (int) $m['delta'] ) { // už započítaná (delta > 0 body, -1 = bez presunu)
 		return 0;
 	}
 	$loser = (int) $winner === (int) $m['p1'] ? (int) $m['p2'] : (int) $m['p1'];
@@ -209,7 +209,7 @@ function mysn_league_apply( $m, $winner, $points, $resign = false, $best = array
 	$wi  = (int) $winner === (int) $m['p1'] ? 0 : 1;
 	$wpdb->query( $wpdb->prepare( "UPDATE $lt SET points = points + %d, wins = wins + 1, best = GREATEST(best, %d), updated = %d WHERE season_id = %d AND user_id = %d", $pts, (int) ( $best[ $wi ] ?? 0 ), $now, $sid, $winner ) ); // phpcs:ignore
 	$wpdb->query( $wpdb->prepare( "UPDATE $lt SET points = points - %d, losses = losses + 1, best = GREATEST(best, %d), updated = %d WHERE season_id = %d AND user_id = %d", $pts, (int) ( $best[ 1 - $wi ] ?? 0 ), $now, $sid, $loser ) ); // phpcs:ignore
-	$wpdb->update( mysn_table( 'matches' ), array( 'delta' => max( 1, $pts ) ), array( 'id' => (int) $m['id'] ) );
+	$wpdb->update( mysn_table( 'matches' ), array( 'delta' => $pts > 0 ? $pts : -1 ), array( 'id' => (int) $m['id'] ) ); // -1: započítaná, ale porazený nemal čo stratiť
 	return $pts;
 }
 

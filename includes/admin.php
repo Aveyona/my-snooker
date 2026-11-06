@@ -87,6 +87,23 @@ function mysn_admin_page() {
 	<?php
 }
 
+/** Body ligy partie: koľko získal víťaz a koľko stratil porazený. */
+function mysn_admin_delta( $m ) {
+	if ( empty( $m['league'] ) ) {
+		return '';
+	}
+	$d = (int) $m['delta'];
+	if ( ! $m['winner'] || 0 === $d ) {
+		return 'ligová, nezapočítaná';
+	}
+	$w = (int) $m['winner'];
+	$l = $w === (int) $m['p1'] ? (int) $m['p2'] : (int) $m['p1'];
+	if ( $d < 0 ) {
+		return mysn_user( $w )['name'] . ' +0, ' . mysn_user( $l )['name'] . ' −0 (porazený nemal body)';
+	}
+	return mysn_user( $w )['name'] . ' +' . $d . ', ' . mysn_user( $l )['name'] . ' −' . $d;
+}
+
 /** Prehľad partií cez internet (tabuľka my_snooker_matches, záznam úderov v my_snooker_moves). */
 function mysn_admin_matches() {
 	$rows  = mysn_recent_matches( 30 );
@@ -102,8 +119,8 @@ function mysn_admin_matches() {
 	<?php if ( ! $rows ) : ?>
 		<p>Zatiaľ žiadne partie.</p>
 	<?php else : ?>
-		<table class="widefat striped" style="max-width:900px">
-			<thead><tr><th>Partia</th><th>Hráči</th><th>Skóre</th><th>Údery</th><th>Stav</th><th>Víťaz</th><th>Naposledy</th></tr></thead>
+		<table class="widefat striped" style="max-width:1100px">
+			<thead><tr><th>Partia</th><th>Hráči</th><th>Skóre</th><th>Údery</th><th>Stav</th><th>Víťaz</th><th>Body ligy</th><th>Naposledy</th></tr></thead>
 			<tbody>
 			<?php foreach ( $rows as $m ) : ?>
 				<tr>
@@ -113,6 +130,7 @@ function mysn_admin_matches() {
 					<td><?php echo (int) $m['moves']; ?></td>
 					<td><?php echo esc_html( ( $names[ $m['status'] ] ?? $m['status'] ) . ( 'resign' === $m['result'] ? ', vzdaná' : '' ) ); ?></td>
 					<td><?php echo $m['winner'] ? esc_html( mysn_user( $m['winner'] )['name'] ) : ''; ?></td>
+					<td><?php echo esc_html( mysn_admin_delta( $m ) ); ?></td>
 					<td><?php echo esc_html( wp_date( 'j. n. Y H:i', (int) $m['updated'] ) ); ?></td>
 				</tr>
 			<?php endforeach; ?>

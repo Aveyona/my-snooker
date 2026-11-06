@@ -131,6 +131,7 @@ function mysn_roadmap() {
 /** Denník zmien (najnovšie hore). */
 function mysn_changelog() {
 	return array(
+		array( '0.7.10', '6. 11. 2026', 'Administrácia, Partie cez internet: nový stĺpec Body ligy (koľko bodov získal víťaz a koľko stratil porazený). Ligová partia, v ktorej porazený nemal žiadne body, sa zapíše ako +0 a nie ako +1.' ),
 		array( '0.7.9', '6. 11. 2026', 'Rozhodca stojí pri kratších stranách stola, aby nezavadzal divákom na tribúnach. Na dlhú stranu pred divákov ide len vtedy, keď by pri oboch koncoch zavadzal tágu.' ),
 		array( '0.7.8', '6. 11. 2026', 'Štadión: horný rad sedadiel na dlhých tribúnach je odobratý, nezasahuje do LCD obrazovky. Tribúna má 6 radov (300 miest pre divákov).' ),
 		array( '0.7.7', '6. 11. 2026', 'Štadión: mantinel s nápisom LIGA ukazuje číslo ligy zápasu (napríklad 1. LIGA), vidia to hráči aj diváci. Liga zápasu je lepšia z líg oboch hráčov.' ),

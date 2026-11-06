@@ -60,7 +60,7 @@ function mysn_rest_history( $req ) {
 			'my'     => (int) ( 0 === $me ? $m['score1'] : $m['score2'] ),
 			'their'  => (int) ( 0 === $me ? $m['score2'] : $m['score1'] ),
 			'result' => $res,
-			'delta'  => $won ? (int) $m['delta'] : ( $lost ? -(int) $m['delta'] : 0 ),
+			'delta'  => $won ? max( 0, (int) $m['delta'] ) : ( $lost ? -max( 0, (int) $m['delta'] ) : 0 ),
 		);
 	}
 	$out = array(
@@ -170,7 +170,7 @@ function mysn_rest_history_match( $req ) {
 		'players'  => array( mysn_hist_who( $ids[0] ), mysn_hist_who( $ids[1] ) ),
 		'scores'   => array( (int) $m['score1'], (int) $m['score2'] ),
 		'result'   => $res,
-		'delta'    => $won ? (int) $m['delta'] : ( $lost ? -(int) $m['delta'] : 0 ),
+		'delta'    => $won ? max( 0, (int) $m['delta'] ) : ( $lost ? -max( 0, (int) $m['delta'] ) : 0 ),
 		'season'   => (string) $season,
 		'date'     => (int) $m['created'],
 		'duration' => max( 0, $last - $first ),
