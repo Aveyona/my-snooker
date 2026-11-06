@@ -62,7 +62,25 @@ export function spiderSpot(cue, dir, balls, tilt = SPIDER_TILT, kind = 'spider')
 		const x = tipX - dx * d;
 		const z = tipZ - dz * d;
 		if (Math.abs(x) > L / 2 - foot - 0.004 || Math.abs(z) > W / 2 - foot - 0.004) {
-			return null; // za mantinel sa nádstavec nepoloží (krížik sa zmestí bližšie k mantinelu)
+			if (kind !== 'cross') {
+				return null; // pavúky pri mantineli nie
+			}
+			// krížik pri mantineli: položí sa na drevený rám za mantinelom, tágo pôjde strmšie
+			for (let e = d; e <= d + 0.4; e += 0.01) {
+				const rx = tipX - dx * e;
+				const rz = tipZ - dz * e;
+				const ax = Math.abs(rx) - L / 2;
+				const az = Math.abs(rz) - W / 2;
+				const out = Math.max(ax, az);
+				if (out > 0.05 + foot * 0.6 && out < OUTER - 0.03) {
+					const h = Math.max(tipY + e * tan, EDGE_H + 0.032);
+					return { x: rx, z: rz, d: e, h, y: EDGE_H, tilt: Math.atan((h - tipY) / e) };
+				}
+				if (out >= OUTER - 0.03) {
+					break;
+				}
+			}
+			return null;
 		}
 		let free = true;
 		for (const b of balls || []) {
@@ -72,7 +90,7 @@ export function spiderSpot(cue, dir, balls, tilt = SPIDER_TILT, kind = 'spider')
 			}
 		}
 		if (free) {
-			return { x, z, d, h: tipY + d * tan, tilt };
+			return { x, z, d, h: tipY + d * tan, tilt, y: 0 };
 		}
 	}
 	return null;

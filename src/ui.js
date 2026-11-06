@@ -1556,7 +1556,7 @@ export class UI {
 		if (o.rack) {
 			row(5, o.rack, 'rackNew', true);
 		}
-		B.appendChild(h('p', 'mysn-note', 'Klávesy 1 až 5, Esc alebo F3 zavrie. Krížik je nízky a zmestí sa aj bližšie k mantinelu. Pavúk a trojuholník visia pod stolom (Ctrl a klik).'));
+		B.appendChild(h('p', 'mysn-note', 'Klávesy 1 až 5, Esc alebo F3 zavrie. Krížik sa dá použiť aj pri mantineli (položí sa na rám), pavúky nie. Pavúk a trojuholník visia pod stolom (Ctrl a klik).'));
 	}
 
 	toolsOpen() {

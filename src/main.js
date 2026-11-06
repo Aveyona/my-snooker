@@ -2824,9 +2824,9 @@ export function start(root, config = {}) {
 		spiderMesh.visible = !!spiderNow;
 		spiderHang.visible = !spiderOn;
 		if (spiderNow) {
-			spiderMesh.position.set(spiderNow.x, 0, spiderNow.z);
+			spiderMesh.position.set(spiderNow.x, spiderNow.y || 0, spiderNow.z); // krížik pri mantineli stojí na ráme
 			spiderMesh.rotation.set(0, -game.dir, 0);
-			spiderMesh.userData.setHeight(spiderNow.h);
+			spiderMesh.userData.setHeight(spiderNow.h - (spiderNow.y || 0));
 		}
 		// pri mantineli: úder automaticky vyššie na bielu (menej zdvihnuté tágo); hráč to môže doladiť
 		// na guli Miesto úderu, sklon tága (a s ním kamera) sa potom prispôsobí
