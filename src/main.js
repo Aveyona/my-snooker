@@ -2287,7 +2287,8 @@ export function start(root, config = {}) {
 				}
 				return true;
 			}
-			if (lk === 'm' && (!view || view === 'free') && !game.spectating && !ui.menuOpen()) {
+			const typing = document.activeElement && /input|select|textarea/i.test(document.activeElement.tagName);
+			if (lk === 'm' && !typing && (!view || view === 'free' || (view === 'office' && !officeMode)) && !game.spectating && !ui.menuOpen()) {
 				actions.roomMap(); // mapa miestností
 				return true;
 			}
