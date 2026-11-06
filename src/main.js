@@ -26,7 +26,7 @@ import { buildRackTriangle, rackLayout } from './rackTriangle.js';
 import { Replay } from './replay.js';
 import { CHALKS, chalkById } from './chalks.js';
 import { ChalkMarks } from './chalkMarks.js';
-import { CUES, cueById, ownCueSpec, TIP_COLORS, tipInaccuracy, cueReach, CUE_EXTS } from './cues.js';
+import { CUES, cueById, ownCueSpec, TIP_COLORS, tipInaccuracy, cueGrip, REACH, CUE_EXTS } from './cues.js';
 
 const STORE = 'mySnookerSettings';
 const AIM_AHEAD = 0.5; // posun pohľadu bez mierenej gule: kamera sa pozerá 50 cm pred bielu
@@ -1745,24 +1745,36 @@ export function start(root, config = {}) {
 		}
 		online.net.call('tips/stroke', { cue: spec.id, power: +p.toFixed(3), def: tipDef(spec) }).then(tipApply).catch(() => null);
 	};
-	/** Vzdialenosť od bielej dozadu v smere tága po okraj stola (tam stojí hráč). */
-	const reachNeed = () => {
+	/** Ako ďaleko je bod od najbližšieho mantinelu (0 = za mantinelom, mimo hracej plochy). */
+	const railDist = (x, z) => {
+		const ax = L / 2 - Math.abs(x);
+		const az = W / 2 - Math.abs(z);
+		return ax <= 0 || az <= 0 ? 0 : Math.min(ax, az);
+	};
+	/**
+	 * Dosiahne hráč na bielu? Mostík (30 cm za bielou) najviac 95 cm od mantinelu, rukoväť (3/4 tága za bielou,
+	 * s predĺžením ďalej) najviac 55 cm od mantinelu; s nádstavcom len rukoväť (skoro celé tágo za bielou).
+	 * Vráti { ok, part: 'bridge' | 'grip', d, max }.
+	 */
+	const reachInfo = () => {
 		const c = game.cue.p;
 		const dx = -Math.cos(game.dir);
 		const dz = -Math.sin(game.dir);
-		const X = L / 2 + 0.2; // vonkajší okraj rámu
-		const Z = W / 2 + 0.2;
-		const tx = dx > 1e-6 ? (X - c.x) / dx : dx < -1e-6 ? (-X - c.x) / dx : Infinity;
-		const tz = dz > 1e-6 ? (Z - c.z) / dz : dz < -1e-6 ? (-Z - c.z) / dz : Infinity;
-		return Math.max(0, Math.min(tx, tz) - 0.2); // od okraja mantinelu (hráč sa opiera o rám)
+		const rest = !!spiderOn;
+		if (!rest) {
+			const b = railDist(c.x + dx * REACH.bridge, c.z + dz * REACH.bridge);
+			if (b > REACH.bridgeMax) {
+				return { ok: false, part: 'bridge', d: b, max: REACH.bridgeMax };
+			}
+		}
+		const g = cueGrip(cueSpec, rest);
+		const gd = railDist(c.x + dx * g, c.z + dz * g);
+		return { ok: gd <= REACH.gripMax, part: 'grip', d: gd, max: REACH.gripMax };
 	};
-	/** Dosiahne hráč na bielu (dĺžka tága, predĺženie, nádstavec)? Vráti { ok, need, reach }. */
-	const reachInfo = () => {
-		const need = reachNeed();
-		const reach = cueReach(cueSpec, !!spiderOn);
-		return { ok: need <= reach, need, reach };
-	};
-	const reachMsg = (r) => `Nedosiahneš: biela je ${Math.round(r.need * 100)} cm od okraja, dosah ${Math.round(r.reach * 100)} cm. Použi nádstavec alebo predĺženie (F3).`;
+	const reachMsg = (r) =>
+		r.part === 'bridge'
+			? `Nedosiahneš: ruka na mostíku by bola ${Math.round(r.d * 100)} cm od mantinelu (najviac ${Math.round(r.max * 100)} cm). Použi nádstavec (F3).`
+			: `Nedosiahneš: ruka na rukoväti by bola ${Math.round(r.d * 100)} cm od mantinelu (najviac ${Math.round(r.max * 100)} cm). Použi nádstavec alebo predĺženie (F3).`;
 	const doShoot = (rawPower) => {
 		if (!game.spectating && game.cue.on) {
 			const r = reachInfo();
@@ -2590,7 +2602,7 @@ export function start(root, config = {}) {
 				restNote: !mine ? 'Nádstavec sa dá vziať, keď mieriš.' : Object.values(can).some(Boolean) ? '' : 'Za bielou nie je miesto na nádstavec (mantinel alebo guľa tesne za bielou).',
 				rack: !game.match ? (game.solo ? 'Nový frame' : 'Nové postavenie gúľ') : '',
 				ext: Math.round((settings.cueExt || 0) * 100),
-				reach: mine && game.cue.on ? (() => { const r = reachInfo(); return { ok: r.ok, need: Math.round(r.need * 100), reach: Math.round(r.reach * 100) }; })() : null,
+				reach: mine && game.cue.on ? (() => { const r = reachInfo(); return { ok: r.ok, text: r.ok ? 'Dosiahneš na bielu (mostík do 95 cm, rukoväť do 55 cm od mantinelu).' : reachMsg(r) }; })() : null,
 			});
 		},
 		// predĺženie tága (F3, 6): 0, 15, 30, 45 cm dookola; ostáva nasadené, kým ho nezmeníš

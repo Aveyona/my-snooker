@@ -262,12 +262,14 @@ export function buildCueMesh(spec, castShadow = true) {
 }
 
 /**
- * Dosah hráča: ako ďaleko od okraja stola (kde hráč stojí) dosiahne na bielu. Bez nádstavca asi polovica
- * tága a naklonenie sa cez stôl, s krížikom alebo pavúkom celé tágo a ruka za rámom; predĺženie sa pripočíta celé.
+ * Dosah hráča: hráč stojí kdekoľvek pri stole. Ruka na mostíku (30 cm za bielou) siaha cez stôl najviac 95 cm
+ * od mantinelu, ruka na rukoväti (asi 3/4 tága za bielou, s predĺžením ďalej) musí byť pri tele, najviac 55 cm
+ * od mantinelu alebo už za ním. S krížikom alebo pavúkom mostík netreba, hráč drží len koniec tága.
  */
-export function cueReach(spec, rest) {
+export const REACH = { bridge: 0.3, bridgeMax: 0.95, gripMax: 0.55 };
+export function cueGrip(spec, rest) {
 	const len = spec.len || 1.45;
-	return (rest ? len + 0.3 : len * 0.5 + 0.38) + (spec.ext || 0); // s nádstavcom drží hráč koniec tága, ruka asi 30 cm za rámom
+	return (rest ? len * 0.95 : len * 0.75) + (spec.ext || 0);
 }
 
 /** Predĺženia tága (metre). */

@@ -1728,7 +1728,7 @@ export class UI {
 		const next = { 0: 15, 15: 30, 30: 45, 45: 0 }[o.ext || 0];
 		row(6, `Predĺženie tága: ${o.ext ? o.ext + ' cm' : 'žiadne'} → ${next ? next + ' cm' : 'dať dole'}`, 'cueExt', true);
 		if (o.reach) {
-			B.appendChild(h('p', 'mysn-note' + (o.reach.ok ? '' : ' mysn-warn'), o.reach.ok ? `Dosah: biela je ${o.reach.need} cm od okraja, dosiahneš ${o.reach.reach} cm.` : `Nedosiahneš: biela je ${o.reach.need} cm od okraja, dosah ${o.reach.reach} cm. Vezmi nádstavec (krížik, pavúk) alebo predĺženie.`));
+			B.appendChild(h('p', 'mysn-note' + (o.reach.ok ? '' : ' mysn-warn'), esc(o.reach.text)));
 		}
 		B.appendChild(h('p', 'mysn-note', 'Klávesy 1 až 6, Esc alebo F3 zavrie. Predĺženie ostáva nasadené, kým ho nedáš dole. Krížik sa dá použiť aj pri mantineli (položí sa na rám), pavúky nie. Pavúk a trojuholník visia pod stolom (Ctrl a klik).'));
 	}
