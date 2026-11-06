@@ -131,6 +131,7 @@ function mysn_roadmap() {
 /** Denník zmien (najnovšie hore). */
 function mysn_changelog() {
 	return array(
+		array( '0.6.55', '6. 11. 2026', 'Rozsvietenie a klik na predmety s Ctrl funguje aj za tágom počas hry, nielen vo voľnej kamere.' ),
 		array( '0.6.54', '6. 11. 2026', 'Voľná kamera: s držaným Ctrl sa predmet pod kurzorom jemne rozsvieti a klik urobí to isté ako jeho kláves (nástenka, stojan, skóre, kreslo, poháre, bar, nástenka ligy; na štadióne návod, stojan, obrazovka, kreslo).' ),
 		array( '0.6.53', '6. 11. 2026', 'Voľná kamera: Esc pohľad neprepína, len uvoľní myš a otvorí menu (späť za tágo je medzerník). Koliesko približuje a odďaľuje, pravé tlačidlo myši hore, ľavé dole; s Ctrl fungujú tlačidlá normálne. Plán: mini náhľad stola na Tab vo voľnom pohľade, ELO len z ligových zápasov.' ),
 		array( '0.6.51', '6. 11. 2026', 'Plán vývoja: ochrana proti podvádzaniu sa robí až pred dokončením hry.' ),

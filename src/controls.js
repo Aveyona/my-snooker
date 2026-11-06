@@ -82,6 +82,9 @@ export class Controls {
 
 	down(e) {
 		this.hooks.unlock();
+		if (this.hooks.hotClick && this.hooks.hotClick(e)) {
+			return; // Ctrl + klik na rozsvietený predmet (stojan, skóre a podobne)
+		}
 		const g = this.game;
 		if (this.blocked) {
 			if (this.hooks.viewDown) {

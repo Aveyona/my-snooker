@@ -603,8 +603,10 @@ export function start(root, config = {}) {
 		}
 	};
 	/** Raz za 0,1 s: ktorý predmet je pod kurzorom (len vo voľnej kamere s držaným Ctrl). */
+	// predmety svietia s držaným Ctrl za tágom (hráč) aj vo voľnej kamere
+	const hotOn = () => (view === 'free' || (!view && !game.spectating && user)) && venue !== 'office';
 	const hotTick = (dt) => {
-		if (view !== 'free' || !freeMouse || !hotMouseOk) {
+		if (!hotOn() || !freeMouse || !hotMouseOk) {
 			hotSet(null);
 			return;
 		}
@@ -1734,6 +1736,18 @@ export function start(root, config = {}) {
 				rig.setViewZoom((rig.viewZoom || 1) * Math.pow(0.85, steps));
 			}
 		},
+		// Ctrl + klik na rozsvietený predmet (za tágom aj vo voľnej kamere): to isté ako jeho kláves
+		hotClick: (e) => {
+			if (!hotNow || !freeMouse || e.button !== 0 || !hotOn()) {
+				return false;
+			}
+			const k = hotNow.key;
+			hotSet(null);
+			freeMouse = false;
+			ui.setFree(false);
+			controls.hooks.key(k);
+			return true;
+		},
 		viewUp: (e) => {
 			if (e.button === 2) {
 				freeUp = 0;
@@ -1743,15 +1757,6 @@ export function start(root, config = {}) {
 			}
 		},
 		viewDown: (e) => {
-			if (view === 'free' && freeMouse && e.button === 0 && hotNow) {
-				// Ctrl + klik na predmet: to isté ako jeho kláves (stojan F2, skóre F4 a podobne)
-				const k = hotNow.key;
-				hotSet(null);
-				freeMouse = false;
-				ui.setFree(false);
-				controls.hooks.key(k);
-				return;
-			}
 			if (view === 'free' && !freeMouse && (e.button === 2 || e.button === 0)) {
 				// voľná kamera: drž pravé tlačidlo = hore, ľavé = dole (s Ctrl fungujú tlačidlá normálne, klik na predmety)
 				if (e.button === 2) {
@@ -1858,6 +1863,7 @@ export function start(root, config = {}) {
 					return true;
 				}
 				if (lk === 'ctrl-down' && controls.captured) {
+					hotCache.clear(); // predmety sa mohli zmeniť (tágá v stojane)
 					freeMouse = true;
 					controls.uncapture();
 				} else if (lk === 'ctrl-up' && freeMouse && (ui.phoneOpen() || ui.cardOpen())) {
@@ -2609,9 +2615,7 @@ export function start(root, config = {}) {
 		rig.cueTilt = cue.pivot.visible ? cue.tilt || 0 : 0;
 		// po údere: keď gule zastanú a som na rade, mierim zo smeru, z ktorého sa kamera práve pozerá na bielu
 		// (kamera sa neotáča, len sa plynulo spustí za tágo); v partii aj po súperovom údere
-		if (view !== 'free' && hotNow) {
-			hotSet(null);
-		}
+		hotTick(dt); // Ctrl: rozsvietenie klikateľných predmetov pod kurzorom
 		if (view === 'free') {
 			if (freeMouse) {
 				freeVel.set(0, 0, 0); // Ctrl: kamera stojí
@@ -2620,7 +2624,6 @@ export function start(root, config = {}) {
 			} else {
 				freeMove(Math.min(0.05, dt));
 			}
-			hotTick(dt);
 			// priblíženie kolieskom: plynulo k cieľu
 			const zt = freeZoomTo;
 			const zc = rig.viewZoom || 1;
