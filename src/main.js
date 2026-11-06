@@ -1430,6 +1430,7 @@ export function start(root, config = {}) {
 	const CHALK_SPIN = 0.2; // bez kriedy má miesto úderu len pätinu účinku (s kriedou 5x viac)
 	let chalk = 0;
 	let chalkT = -1; // priebeh kriedovania (sekundy), -1 = nekriedi sa
+	let chairChalkEnd = 0; // kriedovanie v kresle: kedy skončí (performance.now), 0 = nekriedi sa
 	let chalkStart = 0;
 	const debug = { chalkFreeze: null }; // na testy: zastaví animáciu kriedovania v danom čase
 	// kocka kriedy: zvonku biely obal, na jednej stene štvorcová diera s modrou kriedou na špičku tága
@@ -2367,6 +2368,10 @@ export function start(root, config = {}) {
 		},
 		// F3: ponuka kriedy, pavúka a nového postavenia gúľ
 		tools: () => {
+			if (view === 'chair' && venue === 'league' && !game.spectating) {
+				actions.chairChalk(); // F3 v kresle: nakriedovať tágo na ďalší ťah
+				return;
+			}
 			if (ui.toolsOpen()) {
 				ui.openTools(false);
 				if (!freeMouse) {
@@ -2387,6 +2392,18 @@ export function start(root, config = {}) {
 				restNote: !mine ? 'Nádstavec sa dá vziať, keď mieriš.' : Object.values(can).some(Boolean) ? '' : 'Za bielou nie je miesto na nádstavec (mantinel alebo guľa tesne za bielou).',
 				rack: !game.match ? (game.solo ? 'Nový frame' : 'Nové postavenie gúľ') : '',
 			});
+		},
+		// kriedovanie v kresle: animácia pri kresle (vidia ju súper aj diváci), potom má tágo kriedu na ďalšie údery
+		chairChalk: () => {
+			if (chairChalkEnd) {
+				return;
+			}
+			stadium.chairChalk(mySide(), cueSpec);
+			chairChalkEnd = performance.now() + stadium.CHALK_T * 1000;
+			sound.unlock && sound.unlock();
+			if (online && game.match && game.match.league) {
+				online.sendChalk({ side: mySide(), spec: cueSpec });
+			}
 		},
 		toolChalk: () => {
 			ui.openTools(false);
@@ -3331,6 +3348,11 @@ export function start(root, config = {}) {
 			invite: (inv) => !ui.menuOpen() && ui.toast(`Boli ste vyzvaný! ${inv.from.name} ťa vyzýva ${inv.training ? 'na spoločný tréning' : inv.league ? 'na ligovú partiu' : 'na partiu'}.${controls.captured ? ' Esc alebo Ctrl uvoľní myš.' : ''}`, inv),
 			toast: (t) => ui.toast(t),
 			// tágá súpera na jeho stojane na štadióne
+			chalk: (d) => {
+				if (game.match && d && d.spec) {
+					stadium.chairChalk(1 - mySide(), d.spec); // súper kriedi v kresle
+				}
+			},
 			rack: (d) => {
 				if (!game.match || !d || !Array.isArray(d.specs)) {
 					return;
@@ -3408,6 +3430,10 @@ export function start(root, config = {}) {
 					game.spectateSet(m.before);
 					game.playRemote(m.shot, false);
 					watchInfo.seq = m.seq;
+				} else if (m.k === 'w-chalk') {
+					if (m.spec) {
+						stadium.chairChalk(m.side ? 1 : 0, m.spec); // hráč kriedi v kresle
+					}
 				} else if (m.k === 'w-rack') {
 					if (Array.isArray(m.specs)) {
 						stadium.setRack(m.side ? 1 : 0, m.specs.slice(0, 4), m.inHand, null); // stojan hráča
@@ -3922,6 +3948,13 @@ export function start(root, config = {}) {
 		updateFelt();
 		office.updateWindow(dt);
 		office.notebookTick(dt);
+		if (chairChalkEnd && performance.now() >= chairChalkEnd) {
+			chairChalkEnd = 0;
+			chalk = CHALK_SHOTS; // nakriedované v kresle: platí na ďalšie údery
+			ui.setChalk(chalk);
+			updateScore();
+			ui.toast('Tágo je nakriedované.');
+		}
 		if (replay) {
 			replay.tick(dt);
 			office.notebookDraw((g, w, h) => replay.draw(g, w, h));

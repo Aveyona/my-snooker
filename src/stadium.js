@@ -807,6 +807,74 @@ export function buildStadium(scene, quality, clock = 45) {
 		}
 	};
 	// pohľady hráča podľa strany: F7 z kresla na stôl, F2 na stojan s tágami
+	// kriedovanie v kresle (F3 počas F7): hráč drží tágo šikmo pred kreslom a krieda sa šúcha o špičku; vidia všetci
+	const CHALK_T = 2.8;
+	const chalkCube = () => {
+		const g = new THREE.Group();
+		g.add(new THREE.Mesh(new THREE.BoxGeometry(0.022, 0.022, 0.022), new THREE.MeshStandardMaterial({ color: 0xf4f2ea, roughness: 0.8 })));
+		const blue = new THREE.Mesh(new THREE.PlaneGeometry(0.012, 0.012), new THREE.MeshStandardMaterial({ color: 0x2f6fd6, roughness: 0.95 }));
+		blue.position.y = -0.0111;
+		blue.rotation.x = Math.PI / 2; // modrá krieda dole, na špičke
+		g.add(blue);
+		return g;
+	};
+	const chairChalks = PL.map((p) => {
+		const [cx, cz] = p.chair;
+		// smer od kresla k stolu a kolmica (tágo trochu bokom, aby nezakrylo stôl)
+		const d = new THREE.Vector2(-cx * 0.7, -cz).normalize();
+		const side = new THREE.Vector2(-d.y, d.x);
+		const tip = new THREE.Vector3(cx + d.x * 0.5 + side.x * 0.34, FY + 1.12, cz + d.y * 0.5 + side.y * 0.34);
+		const butt = new THREE.Vector3(cx + d.x * 0.85 + side.x * 0.42, FY + 0.02, cz + d.y * 0.85 + side.y * 0.42);
+		const g = new THREE.Group();
+		g.position.copy(tip);
+		g.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), butt.clone().sub(tip).normalize());
+		g.visible = false;
+		root.add(g);
+		const cube = chalkCube();
+		cube.visible = false;
+		root.add(cube);
+		return { g, cube, tip, axis: tip.clone().sub(butt).normalize(), t: -1, specId: '' };
+	});
+	/** Hráč (side) začne kriedovať tágo spec v kresle; animácia trvá CHALK_T sekúnd. */
+	const chairChalk = (side, spec) => {
+		const c = chairChalks[side ? 1 : 0];
+		if (spec && spec.id !== c.specId) {
+			c.g.clear();
+			c.g.add(buildCueMesh(spec, false));
+			c.specId = spec.id;
+		}
+		if (c.g.children.length) {
+			c.t = 0;
+		}
+	};
+	const chairChalkTick = (dt) => {
+		for (const c of chairChalks) {
+			if (c.t < 0) {
+				continue;
+			}
+			c.t += dt;
+			const t = c.t;
+			if (t >= CHALK_T) {
+				c.t = -1;
+				c.g.visible = false;
+				c.cube.visible = false;
+				continue;
+			}
+			const ease = (x) => x * x * (3 - 2 * x);
+			const show = ease(Math.min(1, t / 0.35, (CHALK_T - t) / 0.35));
+			c.g.visible = true;
+			c.g.position.copy(c.tip).y -= (1 - show) * 0.3; // tágo sa zdvihne pred kreslo a na konci odloží
+			const near = ease(Math.min(1, Math.max(0, (t - 0.45) / 0.35), Math.max(0, (CHALK_T - 0.45 - t) / 0.35)));
+			const rub = t > 0.8 && t < CHALK_T - 0.8 ? 1 : 0;
+			const a = t * 12;
+			c.cube.visible = near > 0.01;
+			c.cube.position.copy(c.g.position).addScaledVector(c.axis, 0.011 + (1 - near) * 0.08);
+			c.cube.position.x += Math.cos(a) * 0.0015 * rub;
+			c.cube.position.z += Math.sin(a) * 0.0015 * rub;
+			c.cube.quaternion.setFromUnitVectors(new THREE.Vector3(0, -1, 0), c.axis.clone().negate());
+			c.cube.rotateY(rub * Math.sin(a * 0.5) * 0.6); // krieda sa pri šúchaní pootáča
+		}
+	};
 	const sideViews = PL.map((p) => {
 		const [cx, cz] = p.chair;
 		const [sx, sz] = p.stand;
@@ -972,6 +1040,8 @@ export function buildStadium(scene, quality, clock = 45) {
 		/** Stojan hráča pri stole: side 0 alebo 1, specs = tágá do zápasu, inHand = id tága v ruke. */
 		setRack,
 		setRackLight,
+		chairChalk,
+		CHALK_T,
 		/** Variant podsvietenia stojana (1 až 4). */
 		setRackStyle(n) {
 			rackStyle = RACK_STYLES[n] ? n : 1;
@@ -994,6 +1064,7 @@ export function buildStadium(scene, quality, clock = 45) {
 		update(dt, cueBall, dir = null, moving = false, aimBall = null) {
 			updateFans(fans, dt, cueBall);
 			rackLightTick(dt);
+			chairChalkTick(dt);
 			confetti.update(dt);
 			spotUpdate(dt);
 			if (cueBall && root.visible) {

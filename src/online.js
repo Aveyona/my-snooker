@@ -476,6 +476,10 @@ export class Online {
 			if (this.hooks.rack) {
 				this.hooks.rack(m);
 			}
+		} else if (m.k === 'chalk') {
+			if (this.hooks.chalk) {
+				this.hooks.chalk(m); // súper kriedi tágo v kresle
+			}
 		} else if (m.k === 'lights') {
 			// súper zapol alebo zhasol bodové svetlá na štadióne: aj u mňa a u mojich divákov
 			this.wsend({ k: 'w-lights', on: !!m.on });
@@ -764,6 +768,15 @@ export class Online {
 		}
 		this.rtcSendOpp({ k: 'rack', ...r });
 		this.wsend({ k: 'w-rack', ...r });
+	}
+
+	/** Kriedovanie v kresle (F3 v F7): súperovi a mojim divákom. */
+	sendChalk(c) {
+		if (!this.matchId) {
+			return;
+		}
+		this.rtcSendOpp({ k: 'chalk', ...c });
+		this.wsend({ k: 'w-chalk', ...c });
 	}
 
 	/** Bodové svetlá na štadióne (F12): súperovi a divákom. */
