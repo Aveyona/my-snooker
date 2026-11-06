@@ -1538,6 +1538,12 @@ export function start(root, config = {}) {
 		staffMatch: (d) => staffDo('staff/match', d, d.do === 'annul' ? 'Zápas je zrušený.' : 'Zápas je ukončený.'),
 		staffBan: (d) => staffDo('staff/ban', d, d.on ? 'Hráč má zakázanú ligu.' : 'Hráč môže znova hrať ligu.'),
 		staffReset: (d) => staffDo('staff/reset', d, 'Body hráča sú vynulované.'),
+		// šúpatko Otáčanie myšou (Ctrl): rýchlosť otáčania kamery a mierenia myšou
+		mouseSens: (v) => {
+			settings.mouseSens = Math.min(3, Math.max(0.3, Number(v) || 1));
+			controls.sens = settings.mouseSens;
+			saveSettings(settings);
+		},
 		help: () => enterView('board'),
 		board: () => enterView('board'),
 		rack: () => enterView('rack'),
@@ -1721,7 +1727,7 @@ export function start(root, config = {}) {
 			if (!LOOK.has(view) || freeMouse || (view === 'seat' && seatScore)) {
 				return;
 			}
-			const k = 0.0025 / (rig.viewZoom || 1); // pri priblížení jemnejšie
+			const k = (0.0025 * (settings.mouseSens || 1)) / (rig.viewZoom || 1); // pri priblížení jemnejšie; šúpatko Otáčanie myšou
 			chairLook.yaw += dx * k;
 			chairLook.pitch = Math.max(-1.2, Math.min(0.9, chairLook.pitch - dy * k));
 			const c = Math.cos(chairLook.pitch);
@@ -1738,6 +1744,10 @@ export function start(root, config = {}) {
 		},
 		// Ctrl + klik na rozsvietený predmet (za tágom aj vo voľnej kamere): to isté ako jeho kláves
 		hotClick: (e) => {
+			if (view === 'free' && freeMouse && e.button === 2) {
+				freeZoomTo = 1; // Ctrl + pravé tlačidlo: zruší priblíženie (plynulo späť)
+				return true;
+			}
 			if (!hotNow || !freeMouse || e.button !== 0 || !hotOn()) {
 				return false;
 			}
@@ -1875,7 +1885,7 @@ export function start(root, config = {}) {
 					ui.showMenu(false);
 					controls.capture();
 				}
-				ui.setFree(freeMouse);
+				ui.setFree(freeMouse, view === 'free');
 				return true;
 			}
 			if (game.spectating && (view === 'seat' || view === 'seatPick')) {
@@ -2090,6 +2100,8 @@ export function start(root, config = {}) {
 			return false;
 		},
 	});
+	controls.sens = settings.mouseSens || 1; // šúpatko Otáčanie myšou
+
 
 	if (!user) {
 		controls.blocked = true;

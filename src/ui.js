@@ -78,6 +78,22 @@ export class UI {
 		this.btnPlace.classList.add('mysn-primary');
 		acts.append(this.btnPlace, this.btnUndo, this.btnHand, this.btnSkip, this.btnReset);
 		tools.appendChild(acts);
+		// rýchlosť otáčania kamery myšou (za tágom aj vo voľnej kamere); zobrazí sa s ostatnými tlačidlami pri držanom Ctrl
+		const sens = h('label', 'mysn-group mysn-sens', '<span>Otáčanie myšou</span><input type="range" min="0.3" max="3" step="0.1"><b></b>');
+		this.sensInput = sens.querySelector('input');
+		this.sensVal = sens.querySelector('b');
+		const sv = Number((opts.settings && opts.settings.mouseSens) || 1);
+		this.sensInput.value = String(sv);
+		this.sensVal.textContent = sv.toFixed(1) + '×';
+		this.sensInput.addEventListener('input', () => {
+			const v = Number(this.sensInput.value);
+			this.sensVal.textContent = v.toFixed(1) + '×';
+			this.opts.onAction('mouseSens', v);
+		});
+		for (const t of ['pointerdown', 'mousedown', 'click', 'wheel', 'keydown']) {
+			sens.addEventListener(t, (e) => e.stopPropagation());
+		}
+		tools.appendChild(sens);
 		root.appendChild(tools);
 
 		this.menu = this.buildMenu();
@@ -1484,9 +1500,17 @@ export class UI {
 	}
 
 	/** Voľná myš (Ctrl): kurzor je vidieť, dá sa klikať. */
-	setFree(on) {
+	setFree(on, freeCam) {
 		this._free = on;
 		this._hintText();
+		this.setCtrl(on, freeCam);
+	}
+
+	/** Ctrl drž: zobrazia sa spodné tlačidlá a šúpatko otáčania (vo voľnej kamere len šúpatko). */
+	setCtrl(on, freeCam) {
+		this._freeCam = !!freeCam;
+		this.root.classList.toggle('mysn-ctrl', !!on);
+		this.root.classList.toggle('mysn-ctrl-free', !!on && !!freeCam);
 	}
 
 	/** Koľko úderov ešte vydrží krieda na špičke. */

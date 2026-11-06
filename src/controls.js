@@ -21,7 +21,8 @@ export class Controls {
 		this.dom = dom;
 		this.rig = rig;
 		this.game = game;
-		this.hooks = hooks; // { shoot(power), changed() }
+		this.hooks = hooks;
+		this.sens = 1; // rýchlosť otáčania myšou (šúpatko pri Ctrl) // { shoot(power), changed() }
 		this.power = 0; // aktuálne nabitie (0..1)
 		this.charging = false;
 		this.fine = false;
@@ -280,12 +281,12 @@ export class Controls {
 		}
 		// divák (Pozerať hru): pohyb myši bez tlačidla vždy otáča pohľad okolo stola
 		if (g.spectating && this.rig.mode === 'cue' && (e.buttons & 3) === 0) {
-			this.rig.turn(e.movementX || 0, e.movementY || 0);
+			this.rig.turn((e.movementX || 0) * this.sens, (e.movementY || 0) * this.sens);
 			return;
 		}
 		// po údere: pohyb myši bez tlačidla otáča pohľad okolo bielej
 		if (g.state === 'moving' && this.rig.mode === 'cue' && (e.buttons & 3) === 0) {
-			this.rig.turn(e.movementX || 0, e.movementY || 0);
+			this.rig.turn((e.movementX || 0) * this.sens, (e.movementY || 0) * this.sens);
 			return;
 		}
 		if (this.spinning) {
@@ -310,7 +311,7 @@ export class Controls {
 		const fine = e.shiftKey && this.cueSpec.fine > 0;
 		const base = fine ? this.cueSpec.fine : 0.0005; // radiány na pixel (0,0005 = asi 0,03 stupňa)
 		const accel = fine ? 1 : 1 + Math.min(6, Math.abs(dx) / 6);
-		g.dir += dx * base * accel;
+		g.dir += dx * base * accel * (fine ? 1 : this.sens); // šúpatko Otáčanie myšou (jemné mierenie ostáva)
 	}
 
 	/** Posun bielej v D podľa pohybu myši (v smere obrazovky). */

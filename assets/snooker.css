@@ -461,3 +461,14 @@ body.mysn-page { font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans
 .mysn-btn.mysn-danger { background: #b32d2e; border-color: #b32d2e; color: #fff; }
 .mysn-staff-nick { width: 130px; padding: 5px 8px; border-radius: 8px; border: 1px solid #ffffff33; background: #0006; color: inherit; font: inherit; font-size: 12px; }
 .mysn-btn.mysn-staff-btn { border-color: #d4a72c; }
+/* Ctrl drž: spodné tlačidlá a šúpatko Otáčanie myšou (inak skryté; Hotovo pri kladení bielej ostáva) */
+@media (hover: hover) and (pointer: fine) {
+	/* len s myšou (na dotykovej obrazovke Ctrl nie je, tlačidlá ostávajú) */
+	.mysn-ui:not(.mysn-ctrl) .mysn-tools { background: none; pointer-events: none; }
+	.mysn-ui:not(.mysn-ctrl) .mysn-tools .mysn-btn:not(.mysn-primary), .mysn-ui:not(.mysn-ctrl) .mysn-sens { display: none; }
+	.mysn-ui:not(.mysn-ctrl) .mysn-tools .mysn-primary { pointer-events: auto; }
+}
+.mysn-ui.mysn-ctrl-free .mysn-tools .mysn-group:not(.mysn-sens) { display: none; }
+.mysn-sens { display: flex; align-items: center; gap: 8px; font-size: 13px; color: #e8ecf2; }
+.mysn-sens input { width: 160px; accent-color: #d4a72c; }
+.mysn-sens b { min-width: 34px; font-weight: 600; }
