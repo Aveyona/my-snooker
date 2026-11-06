@@ -505,27 +505,20 @@ export function start(root, config = {}) {
 		rig.setView(pos, pos.clone().add(dir));
 		rig.jump();
 		ui.showView(null);
-		ui.toast('Voľná kamera: myš rozhliadanie, šípky alebo W A S D posun, koliesko alebo Q a E hore a dole, pravé tlačidlo drž: priblíženie, Shift rýchlejšie, Ctrl zastaví kameru. Medzerník: späť za tágo.');
+		ui.toast('Voľná kamera: myš rozhliadanie, šípky alebo W A S D posun, koliesko priblíženie, pravé alebo ľavé tlačidlo myši (aj E a Q) hore a dole, Shift rýchlejšie, Ctrl zastaví kameru. Medzerník: späť za tágo.');
 	};
 	/** Odchod z voľnej kamery: zapamätá si polohu a smer pohľadu. */
 	const freeLeave = () => {
 		freeMem = { venue, pos: rig.viewPos.clone(), yaw: chairLook.yaw, pitch: chairLook.pitch };
 		rig.viewSnap = false;
 		freeVel.set(0, 0, 0);
-		freeLift = 0;
-		freeZoomTo = 0;
+		freeZoomTo = 1;
+		freeUp = 0;
+		freeDown = 0;
 	};
-	let freeLift = 0; // voľná kamera: zvyšok posunu hore a dole od kolieska (m)
-	let freeZoomTo = 0; // voľná kamera: priblíženie pri držaní pravého tlačidla (0 = nepribližuje)
-	const freeRay = new THREE.Raycaster();
-	/** Priblíženie na predmet v strede pohľadu (alebo na bod 2 m pred kamerou): čím ďalej, tým viac. */
-	const freeZoomTarget = () => {
-		freeRay.setFromCamera(new THREE.Vector2(0, 0), rig.camera);
-		freeRay.far = 30;
-		const hit = freeRay.intersectObjects(scene.children, true).find((h) => h.object.visible && h.object.isMesh);
-		const dist = hit ? hit.distance : 2;
-		return Math.min(5, Math.max(1.6, dist / 0.7));
-	};
+	let freeZoomTo = 1; // voľná kamera: priblíženie kolieskom (plynulo k cieľu)
+	let freeUp = 0; // voľná kamera: držané tlačidlo myši (pravé = hore, ľavé = dole)
+	let freeDown = 0;
 	const freeKeys = (k) => controls._keys.has(k) || controls._keys.has(k.toUpperCase());
 	const freeMove = (dt) => {
 		const f = new THREE.Vector3(Math.cos(chairLook.yaw), 0, Math.sin(chairLook.yaw));
@@ -543,10 +536,10 @@ export function start(root, config = {}) {
 		if (freeKeys('a') || controls._keys.has('ArrowLeft')) {
 			m.sub(r);
 		}
-		if (freeKeys('e')) {
+		if (freeKeys('e') || freeUp) {
 			m.y += 1;
 		}
-		if (freeKeys('q')) {
+		if (freeKeys('q') || freeDown) {
 			m.y -= 1;
 		}
 		// plynulý rozbeh a dobeh (rýchlosť sa mení postupne)
@@ -554,14 +547,10 @@ export function start(root, config = {}) {
 			m.normalize().multiplyScalar(controls._keys.has('Shift') ? 6 : 2.2);
 		}
 		freeVel.lerp(m, 1 - Math.exp(-dt * 9));
-		// koliesko: plynulý posun hore a dole (zvyšok posunu sa dobehne postupne)
-		const lift = freeLift * (1 - Math.exp(-dt * 7));
-		freeLift -= lift;
-		if (freeVel.lengthSq() < 1e-6 && Math.abs(lift) < 1e-5) {
+		if (freeVel.lengthSq() < 1e-6) {
 			return;
 		}
 		const p = rig.viewPos.clone().addScaledVector(freeVel, dt);
-		p.y += lift;
 		// kamera ostáva v miestnosti (herňa) alebo v aréne (štadión)
 		const lg = venue === 'league';
 		const bx = lg ? 9.5 : ROOM.x - 0.25;
@@ -1618,7 +1607,7 @@ export function start(root, config = {}) {
 		},
 		viewWheel: (steps) => {
 			if (view === 'free') {
-				freeLift = Math.max(-3, Math.min(3, freeLift - steps * 0.3)); // koliesko hore = kamera hore
+				freeZoomTo = Math.min(5, Math.max(1, freeZoomTo * Math.pow(0.85, steps))); // koliesko: plynulé priblíženie a oddialenie
 				return;
 			}
 			if (LOOK.has(view)) {
@@ -1627,12 +1616,20 @@ export function start(root, config = {}) {
 		},
 		viewUp: (e) => {
 			if (e.button === 2) {
-				freeZoomTo = 0; // pustené pravé tlačidlo: priblíženie sa plynulo vráti
+				freeUp = 0;
+			}
+			if (e.button === 0) {
+				freeDown = 0;
 			}
 		},
 		viewDown: (e) => {
-			if (view === 'free' && e.button === 2 && !freeMouse) {
-				freeZoomTo = freeZoomTarget(); // drž pravé tlačidlo: priblíženie na predmet, na ktorý sa pozerám
+			if (view === 'free' && !freeMouse && (e.button === 2 || e.button === 0)) {
+				// voľná kamera: drž pravé tlačidlo = hore, ľavé = dole (s Ctrl fungujú tlačidlá normálne, klik na predmety)
+				if (e.button === 2) {
+					freeUp = 1;
+				} else {
+					freeDown = 1;
+				}
 				return;
 			}
 			if (view === 'seatPick' && e.button === 0) {
@@ -2486,11 +2483,13 @@ export function start(root, config = {}) {
 		if (view === 'free') {
 			if (freeMouse) {
 				freeVel.set(0, 0, 0); // Ctrl: kamera stojí
+				freeUp = 0;
+				freeDown = 0;
 			} else {
 				freeMove(Math.min(0.05, dt));
 			}
-			// priblíženie pravým tlačidlom: plynulo k cieľu a po pustení späť (ako priblíženie na guľu za tágom)
-			const zt = freeZoomTo || 1;
+			// priblíženie kolieskom: plynulo k cieľu
+			const zt = freeZoomTo;
 			const zc = rig.viewZoom || 1;
 			if (Math.abs(zt - zc) > 0.002) {
 				rig.setViewZoom(zc + (zt - zc) * (1 - Math.exp(-Math.min(0.05, dt) * 6)));

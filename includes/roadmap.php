@@ -131,7 +131,7 @@ function mysn_roadmap() {
 /** Denník zmien (najnovšie hore). */
 function mysn_changelog() {
 	return array(
-		array( '0.6.52', '6. 11. 2026', 'Voľná kamera: Esc pohľad neprepína, len uvoľní myš a otvorí menu (späť za tágo je medzerník). Plán: mini náhľad stola na Tab vo voľnom pohľade, ELO len z ligových zápasov.' ),
+		array( '0.6.53', '6. 11. 2026', 'Voľná kamera: Esc pohľad neprepína, len uvoľní myš a otvorí menu (späť za tágo je medzerník). Koliesko približuje a odďaľuje, pravé tlačidlo myši hore, ľavé dole; s Ctrl fungujú tlačidlá normálne. Plán: mini náhľad stola na Tab vo voľnom pohľade, ELO len z ligových zápasov.' ),
 		array( '0.6.51', '6. 11. 2026', 'Plán vývoja: ochrana proti podvádzaniu sa robí až pred dokončením hry.' ),
 		array( '0.6.50', '6. 11. 2026', 'Role admin a správca hry: administrácia My Snooker, Hráči (zoznam hráčov, nastavenie roly správca hry), v hre tlačidlo Správa hry (bežiace zápasy, herne, hráči online, neviditeľné sledovanie, zmena prezývky; admin aj ukončenie alebo zrušenie zápasu, zákaz ligy, vynulovanie bodov). Voľná kamera: návrat za tágo je okamžitý, bez preletu; koliesko plynulo posúva kameru hore a dole, držané pravé tlačidlo približuje na predmet, na ktorý sa pozeráš.' ),
 		array( '0.6.49', '6. 11. 2026', 'Voľná kamera si pamätá polohu a smer pohľadu (v tej istej miestnosti sa k nim vráti), pohyb je plynulý (rozbeh a dobeh, pohľad bez oneskorenia). Úder klávesom zrušený: udiera sa len myšou (ťahaním tága alebo ukazovateľom sily), Enter bude neskôr chat.' ),
