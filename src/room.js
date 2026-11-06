@@ -326,7 +326,9 @@ export function buildRoomShell(scene, quality, opts = {}) {
 		[-RX, 0, Math.PI / 2],
 		[RX, -1.5, -Math.PI / 2],
 	];
-	scene.add(new THREE.AmbientLight(0xffe6c8, high ? 0.22 : 0.4));
+	const ambient = new THREE.AmbientLight(0xffe6c8, high ? 0.22 : 0.4);
+	scene.add(ambient);
+	const sconceLights = [];
 	for (const [sx, sz, rot] of sconces) {
 		const g = new THREE.Group();
 		g.position.set(sx, SY, sz);
@@ -347,8 +349,31 @@ export function buildRoomShell(scene, quality, opts = {}) {
 			const light = new THREE.PointLight(0xffb866, 5, 4.5, 1.5);
 			light.position.set(sx + Math.sin(rot) * 0.3, SY + 0.05, sz + Math.cos(rot) * 0.3);
 			scene.add(light);
+			sconceLights.push(light);
 		}
 	}
+
+	// Vypínač nástenných svietidiel na stene vľavo od dverí (klik s Ctrl): zhasne lampy, svieti len nad stolom
+	const SW = { x: RX - 0.012, y: FY + 1.45, z: DOOR.at - DOOR.w / 2 - 0.28 };
+	const swGroup = new THREE.Group();
+	swGroup.position.set(SW.x, SW.y, SW.z);
+	swGroup.rotation.y = -Math.PI / 2; // predok do herne (-x)
+	const ivory = new THREE.MeshStandardMaterial({ color: 0xefe8d8, roughness: 0.4 });
+	swGroup.add(new THREE.Mesh(new THREE.BoxGeometry(0.085, 0.12, 0.012), ivory));
+	const rocker = new THREE.Mesh(new THREE.BoxGeometry(0.035, 0.06, 0.016), ivory);
+	rocker.position.z = 0.01;
+	swGroup.add(rocker);
+	scene.add(swGroup);
+	const ambientOn = ambient.intensity;
+	const setWallLamps = (on) => {
+		for (const l of sconceLights) {
+			l.visible = on;
+		}
+		shadeMat.emissiveIntensity = on ? 1.2 : 0.04;
+		ambient.intensity = on ? ambientOn : ambientOn * 0.35; // zhasnuté: svieti len nad stolom
+		rocker.rotation.x = on ? -0.25 : 0.25; // kolíska vypínača hore alebo dole
+	};
+	setWallLamps(true);
 
 	// Nástenka s nápovedou (F1) na zadnej stene vľavo
 	const BOARD = { x: -2.6, y: FY + 1.5, w: 1.6, h: 1.1 };
@@ -1002,6 +1027,9 @@ export function buildRoomShell(scene, quality, opts = {}) {
 
 	return {
 		/** Miesta na státie pre online divákov: počet, miesto, oči diváka, výber zhora. */
+		/** Vypínač nástenných svietidiel: poloha (klik s Ctrl) a zapnutie alebo zhasnutie. */
+		lightSwitch: new THREE.Vector3(SW.x, SW.y, SW.z),
+		setWallLamps,
 		spotCount: SPOTS.length,
 		spotPlace,
 		spotEye(i) {

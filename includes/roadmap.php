@@ -131,6 +131,7 @@ function mysn_roadmap() {
 /** Denník zmien (najnovšie hore). */
 function mysn_changelog() {
 	return array(
+		array( '0.6.76', '6. 11. 2026', 'Vypínač na stene vľavo od dverí herne: s Ctrl a kliknutím zhasne alebo rozsvieti nástenné lampy, potom svieti len nad stolom. Pamätá sa.' ),
 		array( '0.6.75', '6. 11. 2026', 'Admin: v Nastaveniach Prehliadka (Herňa, Štadión, Kancelária), voľná kamera bez hraníc miestností.' ),
 		array( '0.6.74', '6. 11. 2026', 'Nová podlaha herne: tmavý parket s bordovým kobercom so zlatým lemom pod stolom, nakreslená ako celok bez viditeľných švov textúry.' ),
 		array( '0.6.73', '6. 11. 2026', 'Rádio si pamätá, či hralo: po obnovení stránky (F5) sa zapne samo pri prvom kliknutí alebo klávese (prehliadač zvuk skôr nedovolí).' ),

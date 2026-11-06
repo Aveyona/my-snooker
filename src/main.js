@@ -87,6 +87,7 @@ export function start(root, config = {}) {
 	buildRoom(scene, settings.quality);
 	const preShell = new Set(scene.children);
 	const room = buildRoomShell(scene, settings.quality, { news: config.news, rss: config.rss, site: config.site, user: config.user });
+	room.setWallLamps(settings.wallLamps !== false);
 	const shellObjs = scene.children.filter((o) => !preShell.has(o)); // herňa (steny, nábytok, svetlá)
 	const table = buildTable(renderer);
 	table.setDetail(settings.tableDetail !== 'simple'); // Nastavenia: Vzhľad stola (predvolene podrobný)
@@ -565,6 +566,7 @@ export function start(root, config = {}) {
 			// rádio na komode aj mixpult robia to isté: F9 (rádio, stanice a hlasitosť)
 			{ id: 'radio', key: 'f9', pos: new THREE.Vector3(RADIO.radio.x, RADIO.radio.top + 0.11, RADIO.radio.z), r: 0.3 },
 			{ id: 'mixer', key: 'f9', pos: new THREE.Vector3(RADIO.desk.x, RADIO.desk.top + 0.06, RADIO.desk.z), r: 0.45 },
+			{ id: 'switch', act: 'wallLamps', pos: room.lightSwitch, r: 0.13 }, // vypínač lámp pri dverách (len myšou)
 		];
 	};
 	const shown = (o) => {
@@ -1601,6 +1603,13 @@ export function start(root, config = {}) {
 				go();
 			}
 		},
+		// vypínač pri dverách (Ctrl a klik): nástenné lampy zhasnúť alebo rozsvietiť, pamätá sa
+		wallLamps: () => {
+			settings.wallLamps = settings.wallLamps === false;
+			room.setWallLamps(settings.wallLamps);
+			saveSettings(settings);
+			sound.cue && sound.cue(0.05); // krátke cvaknutie
+		},
 		help: () => enterView('board'),
 		board: () => enterView('board'),
 		rack: () => enterView('rack'),
@@ -1812,6 +1821,11 @@ export function start(root, config = {}) {
 				return false;
 			}
 			const k = hotNow.key;
+			const act = hotNow.act;
+			if (act) {
+				actions[act](); // vypínač a podobne: myš ostáva voľná (Ctrl je stále stlačený)
+				return true;
+			}
 			hotSet(null);
 			freeMouse = false;
 			ui.setFree(false);
