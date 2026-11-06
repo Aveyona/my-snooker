@@ -131,6 +131,7 @@ function mysn_roadmap() {
 /** Denník zmien (najnovšie hore). */
 function mysn_changelog() {
 	return array(
+		array( '0.7.51', '7. 11. 2026', 'Nové šúpatko Ťahanie tága (pri držanom Ctrl vedľa Otáčania myšou, 0,3× až 3×): rýchlosť ťahania tága myšou hore a dole. Vyššia hodnota = na plné odtiahnutie a silný úder stačí menší pohyb myši, nižšia = jemnejšie dávkovanie sily. Pamätá sa.' ),
 		array( '0.7.50', '7. 11. 2026', 'Krieda na špici: po nakriedovaní je spodná polovica špice tága vo farbe kriedy, ktorou si kriedoval. S každým úderom slabne (plná, výrazná, slabá) a po 3 úderoch zmizne. Súper a diváci ju vidia na tvojom tágu.' ),
 		array( '0.7.49', '7. 11. 2026', 'Vlastné tágo: pri každej úprave (sila, dĺžka, falše, hmotnosť, priemer špice, tuhosť drievka, vyváženie) je žltý otáznik. Po prejdení myšou vysvetlí, aký vplyv má úprava na mierenie a úder.' ),
 		array( '0.7.48', '6. 11. 2026', 'Vzhľad opotrebovanej špice: s opotrebením je špica na tágu nižšia (sploštená), tmavšia, trochu rozpučená do strán a od 30 % má odretý svetlý okraj a tmavé odreté miesta. Mení sa po 5 % (v ruke, na stojanoch aj u súpera), nová špica vyzerá znova ako nová.' ),

@@ -96,6 +96,22 @@ export class UI {
 			sens.addEventListener(t, (e) => e.stopPropagation());
 		}
 		tools.appendChild(sens);
+		// rýchlosť ťahania tága myšou hore a dole (koľko pohybu myši treba na plné odtiahnutie a úder)
+		const ssens = h('label', 'mysn-group mysn-sens', '<span>Ťahanie tága</span><input type="range" min="0.3" max="3" step="0.1"><b></b>');
+		const si = ssens.querySelector('input');
+		const sb = ssens.querySelector('b');
+		const s0 = Number((opts.settings && opts.settings.strokeSens) || 1);
+		si.value = String(s0);
+		sb.textContent = s0.toFixed(1) + '×';
+		si.addEventListener('input', () => {
+			const v = Number(si.value);
+			sb.textContent = v.toFixed(1) + '×';
+			this.opts.onAction('strokeSens', v);
+		});
+		for (const t of ['pointerdown', 'mousedown', 'click', 'wheel', 'keydown']) {
+			ssens.addEventListener(t, (e) => e.stopPropagation());
+		}
+		tools.appendChild(ssens);
 		root.appendChild(tools);
 
 		this.menu = this.buildMenu();

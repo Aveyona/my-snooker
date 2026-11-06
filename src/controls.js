@@ -376,7 +376,7 @@ export class Controls {
 		}
 		const now = performance.now();
 		const prev = this.strokePull;
-		this.strokePull = Math.max(-0.02, Math.min(1, prev + dy / this.strokePx));
+		this.strokePull = Math.max(-0.02, Math.min(1, prev + (dy * (this.strokeSens || 1)) / this.strokePx)); // šúpatko Ťahanie tága
 		this._max = Math.max(this._max, this.strokePull);
 		this._hist.push({ t: now, p: this.strokePull });
 		while (this._hist.length > 2 && now - this._hist[0].t > 80) {
