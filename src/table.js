@@ -124,7 +124,7 @@ function pocketHoles() {
 	g.fillStyle = '#000000';
 	for (const p of POCKETS) {
 		g.beginPath();
-		g.arc((p.x + L / 2 + RAIL) * sx, (p.z + W / 2 + RAIL) * sx, (p.corner ? 0.07 : 0.064) * sx, 0, Math.PI * 2);
+		g.arc((p.x + L / 2 + RAIL) * sx, (p.z + W / 2 + RAIL) * sx, (p.corner ? 0.068 : 0.062) * sx, 0, Math.PI * 2);
 		g.fill();
 	}
 	return new THREE.CanvasTexture(c);
@@ -286,6 +286,8 @@ export function buildTable(renderer) {
 		cushions.push({ long: false, a, b, ab: jawEnd(a.x, a.z, sx * 1, -1), bb: jawEnd(b.x, b.z, sx * 1, 1) });
 	}
 	const ROUND = 0.016; // polomer zaoblenia nosa mantinelu pri jamke
+	// výrezy jamiek v ráme (viac dreva okolo jamky, užší otvor): na ich okraji končia aj mantinely
+	const CUTS = POCKETS.map((p) => ({ x: p.x, z: p.z, r: p.corner ? 0.077 : 0.07, corner: p.corner }));
 	// Prierez mantinelu ako na skutočnom stole (d = vzdialenosť od nosa dozadu, y = výška): spodok je
 	// podrezaný, nos v 2/3 výšky gule, vrch sa zošikmí a plynulo prejde k drevenému rámu. Žiadna kolmá stena.
 	const PROFILE = [
@@ -357,6 +359,18 @@ export function buildTable(renderer) {
 				pos.push(path[i].x + ox * d, y, path[i].z + oz * d);
 			}
 		}
+		// koniec mantinelu pri jamke: guma končí na okraji výrezu jamky (nie vo vnútri jamky)
+		for (let v = 0; v < pos.length; v += 3) {
+			for (const q of CUTS) {
+				const ox = pos[v] - q.x;
+				const oz = pos[v + 2] - q.z;
+				const dd = Math.hypot(ox, oz);
+				if (dd < q.r && dd > 1e-6) {
+					pos[v] = q.x + (ox / dd) * q.r;
+					pos[v + 2] = q.z + (oz / dd) * q.r;
+				}
+			}
+		}
 		const P = PROFILE.length;
 		const idx = [];
 		for (let i = 0; i < path.length - 1; i++) {
@@ -381,7 +395,7 @@ export function buildTable(renderer) {
 	}
 
 	// Výrezy jamiek v ráme: rohové a stredné, zaoblené
-	const pocketCut = POCKETS.map((p) => ({ x: p.x, z: p.z, r: p.corner ? 0.088 : 0.078, corner: p.corner }));
+	const pocketCut = CUTS;
 	// Vnútorný okraj rámu (zadná strana mantinelov) spolu s výrezmi jamiek ako jeden obrys
 	const ix = hx + RAIL;
 	const iz = hz + RAIL;
@@ -522,7 +536,7 @@ export function buildTable(renderer) {
 	const basketGeo = new THREE.LatheGeometry(prof, 36);
 	for (const p of pocketCut) {
 		// krátka kožená výstelka jamky a pod rámom košík zo sieťky (spadnuté gule v ňom ostávajú vidieť)
-		const well = new THREE.Mesh(new THREE.CylinderGeometry(p.r * 0.85, BASKET.top, 0.03, 40, 1, true), leatherMat);
+		const well = new THREE.Mesh(new THREE.CylinderGeometry(p.r * 0.9, BASKET.top, 0.03, 40, 1, true), leatherMat);
 		well.position.set(p.x, -0.012, p.z);
 		group.add(well);
 		const bag = new THREE.Mesh(basketGeo, netMat);
