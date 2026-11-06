@@ -24,14 +24,69 @@ export const CUES = [
 ];
 
 /**
- * Vlastné tágo hráča zo šablóny: vzhľad voľne, sila, dĺžka a falše najviac ±10 % od šablóny.
+ * Úpravy vlastného tága (každá ±10 %). Rozpočet: súčet úprav v BUDGET_KEYS môže byť najviac 0, čo sa niekde
+ * pridá, musí sa inde ubrať. Vyváženie (bal) je mimo rozpočtu.
+ *  power sila, len dĺžka (citlivosť ťahania), grip falše, weight hmotnosť (510 až 600 g: ťažšie silnejšie, ale
+ *  sila sa dávkuje menej jemne), tipd priemer špice (menšia špica viac falše, ľahšie sa šmykne), stiff tuhosť
+ *  drievka (plus = menší odklon bielej pri bočnej falši), bal vyváženie (vpredu = pomalšia reakcia na ťahanie).
+ */
+export const ADJ_KEYS = ['power', 'len', 'grip', 'weight', 'tipd', 'stiff', 'bal'];
+export const BUDGET_KEYS = ['power', 'len', 'grip', 'weight', 'tipd', 'stiff'];
+const SQUIRT = 0.012; // odklon bielej pri plnej bočnej falši (radiány), šablóny
+
+/** Úpravy vyrovnané na rozpočet: keď je súčet nad 0, ubere sa rovnomerne z ostatných (kľúč keep sa nemení). */
+export function balanceAdj(adj, keep = null) {
+	const a = {};
+	for (const k of ADJ_KEYS) {
+		a[k] = Math.max(-0.1, Math.min(0.1, +adj[k] || 0));
+	}
+	for (let it = 0; it < 10; it++) {
+		const over = BUDGET_KEYS.reduce((s, k) => s + a[k], 0);
+		if (over <= 1e-6) {
+			break;
+		}
+		// staré tágo (bez meneného kľúča): uberie sa najprv zo sily, dĺžky a falší, nové parametre ostanú na 0
+		let pool = keep === null ? ['power', 'len', 'grip'].filter((k) => a[k] > -0.1 + 1e-6) : [];
+		if (!pool.length) {
+			pool = BUDGET_KEYS.filter((k) => k !== keep && a[k] > -0.1 + 1e-6);
+		}
+		if (!pool.length) {
+			a[keep] -= over; // nedá sa ubrať inde: ubere sa z meneného
+			break;
+		}
+		const each = over / pool.length;
+		for (const k of pool) {
+			a[k] = Math.max(-0.1, a[k] - each);
+		}
+	}
+	for (const k of ADJ_KEYS) {
+		a[k] = Math.round(a[k] * 1000) / 1000;
+	}
+	return a;
+}
+
+/** Odvodené vlastnosti tága (aj šablóny): hmotnosť, priemer špice, odklon, citlivosť ťahania, šmyk. */
+function derive(spec, a) {
+	return {
+		...spec,
+		massG: Math.round(555 + (a.weight || 0) * 450),
+		tipMm: Math.round((9.75 - (a.tipd || 0) * 7.5) * 10) / 10,
+		squirt: SQUIRT * (1 - 5 * (a.stiff || 0)),
+		strokeK: (1 - (a.weight || 0)) * (1 + 0.5 * (a.bal || 0)),
+		miscueK: Math.max(0.5, 1 + 3 * (a.tipd || 0)),
+	};
+}
+
+/**
+ * Vlastné tágo hráča zo šablóny: vzhľad voľne, úpravy najviac ±10 % od šablóny v rámci rozpočtu (balanceAdj).
  * row = { id, base, name, data: { shaft, butt, power, len, grip } } (z tabuľky my_snooker_cues).
  */
 export function ownCueSpec(row) {
 	const base = cueById(row.base);
 	const d = row.data || {};
+	const a = balanceAdj(d);
 	const lim = (v) => Math.max(-0.1, Math.min(0.1, +v || 0));
-	return {
+	return derive({
 		...base,
 		id: 'u' + row.id,
 		own: row.id,
@@ -39,13 +94,13 @@ export function ownCueSpec(row) {
 		name: (row.name || base.name + ' (moje)').slice(0, 30),
 		category: 'Vlastné',
 		note: `Podľa šablóny ${base.name}.`,
-		power: Math.min(1, base.power * (1 + lim(d.power))),
-		len: +(base.len * (1 + lim(d.len))).toFixed(3),
-		grip: base.grip * (1 + lim(d.grip)),
-		adj: { power: lim(d.power), len: lim(d.len), grip: lim(d.grip) },
+		power: Math.min(1, base.power * (1 + lim(a.power)) * (1 + 0.5 * a.weight)),
+		len: +(base.len * (1 + lim(a.len))).toFixed(3),
+		grip: base.grip * (1 + lim(a.grip)) * (1 + a.tipd),
+		adj: a,
 		rackOn: !!d.rack,
 		colors: { shaft: d.shaft || base.colors.shaft, butt: d.butt || base.colors.butt },
-	};
+	}, a);
 }
 
 /** Farby špice (stojan F2): modrá predvolená a niekoľko základných. */
@@ -58,13 +113,18 @@ export const TIP_COLORS = {
 	violet: { name: 'fialová', hex: '#7b3fb5' },
 };
 
+const DERIVED = new Map();
 export function cueById(id) {
-	return CUES.find((x) => x.id === id) || CUES[0];
+	const c = CUES.find((x) => x.id === id) || CUES[0];
+	if (!DERIVED.has(c.id)) {
+		DERIVED.set(c.id, derive(c, {})); // šablóna: predvolená hmotnosť, špica, odklon
+	}
+	return DERIVED.get(c.id);
 }
 
 /** Pixely ťahania myšou na plné odtiahnutie tága (dlhšie tágo = viac). */
 export function strokePx(spec) {
-	return 380 * Math.pow(spec.len / 1.45, 1.6);
+	return 380 * Math.pow(spec.len / 1.45, 1.6) * (spec.strokeK || 1); // hmotnosť a vyváženie menia citlivosť
 }
 
 /** Textúra tága po dĺžke (hore na plátne je koniec rukoväte, dole špička). */

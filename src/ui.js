@@ -2,7 +2,7 @@
  * My Snooker: rozhranie nad 3D scénou (štatistiky, sila, falše, tlačidlá, nastavenia, pomoc).
  */
 import { CHALKS } from './chalks.js';
-import { TIP_COLORS } from './cues.js';
+import { TIP_COLORS, BUDGET_KEYS, balanceAdj } from './cues.js';
 import { R, COLOURS, POCKETS } from './physics.js';
 
 const esc = (t) => String(t || '').replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
@@ -2000,7 +2000,10 @@ export class UI {
 	}
 
 	cueStats(c) {
-		return `<span>Sila <b>${Math.round(c.power * 100)} %</b></span><span>Dĺžka <b>${Math.round(c.len * 100)} cm</b></span><span>Falše <b>${Math.round(c.grip * 100)} %</b></span><span>Špička <b>${esc(c.tip)}</b></span><span>Shift <b>${c.fine > 0 ? 'áno' : 'nie'}</b></span>`;
+		return (
+			`<span>Sila <b>${Math.round(c.power * 100)} %</b></span><span>Dĺžka <b>${Math.round(c.len * 100)} cm</b></span><span>Falše <b>${Math.round(c.grip * 100)} %</b></span><span>Špička <b>${esc(c.tip)}</b></span><span>Shift <b>${c.fine > 0 ? 'áno' : 'nie'}</b></span>` +
+			(c.massG ? `<span>Hmotnosť <b>${c.massG} g</b></span><span>Priemer špice <b>${String(c.tipMm).replace('.', ',')} mm</b></span><span>Odklon <b>${Math.round((c.squirt / 0.012) * 100)} %</b></span>` : '')
+		);
 	}
 
 	/**
@@ -2053,22 +2056,58 @@ export class UI {
 				col.addEventListener('input', () => set(k, col.value));
 				P.appendChild(row(lab, col));
 			}
-			for (const [k, lab] of [['power', 'Sila'], ['len', 'Dĺžka'], ['grip', 'Falše']]) {
+			// úpravy s rozpočtom: súčet (okrem vyváženia) najviac 0 %, čo pridáš, inde sa ubere
+			const adj = { ...c.adj };
+			const sliders = {};
+			const fmt = (k, v) =>
+				k === 'weight' ? `${Math.round(555 + v * 450)} g` : k === 'tipd' ? `${(9.75 - v * 7.5).toFixed(1).replace('.', ',')} mm` : `${v > 0 ? '+' : ''}${Math.round(v * 100)} %`;
+			const left = h('div', 'mysn-cp-budget');
+			const showLeft = () => {
+				const sum = BUDGET_KEYS.reduce((s, k) => s + (adj[k] || 0), 0);
+				const rest = Math.round(-sum * 100);
+				left.innerHTML = `Rozpočet úprav: zostáva <b>${rest} %</b>${rest <= 0 ? ' (čo pridáš, inde sa ubere)' : ''}`;
+			};
+			const ADJ_ROWS = [
+				['power', 'Sila'],
+				['len', 'Dĺžka'],
+				['grip', 'Falše'],
+				['weight', 'Hmotnosť'],
+				['tipd', 'Priemer špice'],
+				['stiff', 'Tuhosť drievka'],
+				['bal', 'Vyváženie (mimo rozpočtu)'],
+			];
+			for (const [k, lab] of ADJ_ROWS) {
 				const r = document.createElement('input');
 				r.type = 'range';
 				r.min = '-0.1';
 				r.max = '0.1';
 				r.step = '0.01';
-				r.value = String(c.adj[k] || 0);
-				const val = h('em', 'mysn-cp-val', `${Math.round((c.adj[k] || 0) * 100)} %`);
+				r.value = String(adj[k] || 0);
+				const val = h('em', 'mysn-cp-val', fmt(k, adj[k] || 0));
+				sliders[k] = { r, val };
 				r.addEventListener('input', () => {
-					val.textContent = `${Math.round(parseFloat(r.value) * 100)} %`;
-					set(k, parseFloat(r.value));
+					adj[k] = parseFloat(r.value);
+					const b = balanceAdj(adj, k);
+					const ch = {};
+					for (const j of Object.keys(sliders)) {
+						if (b[j] !== (c.adj[j] || 0) || j === k) {
+							ch[j] = b[j];
+						}
+						adj[j] = b[j];
+						if (j !== k) {
+							sliders[j].r.value = String(b[j]);
+						}
+						sliders[j].val.textContent = fmt(j, b[j]);
+					}
+					showLeft();
+					this.opts.onAction('cueOwnSet', { id: c.own, k: 'adj', v: ch });
 				});
-				const l = row(`${lab} (±10 %)`, r);
+				const l = row(k === 'bal' ? lab : `${lab} (±10 %)`, r);
 				l.appendChild(val);
 				P.appendChild(l);
 			}
+			showLeft();
+			P.appendChild(left);
 			const del = this.button('Zmazať tágo', 'cueOwnDelete', 'Zmaže toto vlastné tágo', c.own);
 			del.classList.add('mysn-cp-del');
 			P.appendChild(del);

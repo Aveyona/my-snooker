@@ -1734,7 +1734,7 @@ export function start(root, config = {}) {
 		const k = cueSpec.grip * (chalk > 0 ? 1 : CHALK_SPIN) * TK.spin * wearK;
 		let side = spin.side * k;
 		let top = spin.top * k;
-		const missChance = tip.wear >= 1 ? 0.3 : tip.wear >= 0.9 ? 0.1 : 0;
+		const missChance = (tip.wear >= 1 ? 0.3 : tip.wear >= 0.9 ? 0.1 : 0) * (cueSpec.miscueK || 1); // menšia špica sa šmýka ľahšie
 		let miscue = false;
 		if (missChance && Math.hypot(spin.side, spin.top) > 0.25 && Math.random() < missChance) {
 			// šmyk tága: špica skĺzne po bielej, úder je slabý, mierne vybočí a bez falše
@@ -1744,7 +1744,18 @@ export function start(root, config = {}) {
 			side = 0;
 			top = 0;
 		}
-		if (game.shoot(power, side, top)) {
+		// odklon bielej pri bočnej falši (squirt): biela uhne opačne ako falša, tuhšie drievko menej
+		const sq = cueSpec.squirt !== undefined ? cueSpec.squirt : 0.012;
+		const dir0 = game.dir;
+		if (!miscue && side) {
+			game.dir -= side * sq;
+		}
+		const shot = game.shoot(power, side, top);
+		if (!shot) {
+			game.dir = dir0;
+		}
+		if (shot) {
+			game.dir = dir0; // smer mierenia ostáva (odklon platí len pre tento úder)
 			tipStroke(cueSpec, power);
 			if (miscue) {
 				ui.toast('Šmyk tága! Špica je opotrebovaná, vymeň ju na stojane (F2).');
@@ -2824,6 +2835,8 @@ export function start(root, config = {}) {
 			}
 			if (k === 'name') {
 				row.name = String(v).slice(0, 30);
+			} else if (k === 'adj') {
+				row.data = { ...(row.data || {}), ...v }; // viac úprav naraz (rozpočet: ostatné sa znížili)
 			} else {
 				row.data = { ...(row.data || {}), [k]: v };
 			}

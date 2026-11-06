@@ -21,14 +21,35 @@ function mysn_cue_clean( $d ) {
 	$lim = function ( $v ) {
 		return round( max( -0.1, min( 0.1, (float) $v ) ), 3 );
 	};
-	return array(
-		'shaft' => $hex( $d['shaft'] ?? '' ),
-		'butt'  => $hex( $d['butt'] ?? '' ),
-		'power' => $lim( $d['power'] ?? 0 ),
-		'len'   => $lim( $d['len'] ?? 0 ),
-		'grip'  => $lim( $d['grip'] ?? 0 ),
-		'rack'  => empty( $d['rack'] ) ? 0 : 1, // tágo je na stojane namiesto svojej šablóny
+	$out = array(
+		'shaft'  => $hex( $d['shaft'] ?? '' ),
+		'butt'   => $hex( $d['butt'] ?? '' ),
+		'power'  => $lim( $d['power'] ?? 0 ),
+		'len'    => $lim( $d['len'] ?? 0 ),
+		'grip'   => $lim( $d['grip'] ?? 0 ),
+		'weight' => $lim( $d['weight'] ?? 0 ), // hmotnosť
+		'tipd'   => $lim( $d['tipd'] ?? 0 ), // priemer špice (plus = menšia)
+		'stiff'  => $lim( $d['stiff'] ?? 0 ), // tuhosť drievka (plus = menší odklon)
+		'bal'    => $lim( $d['bal'] ?? 0 ), // vyváženie (mimo rozpočtu)
+		'rack'   => empty( $d['rack'] ) ? 0 : 1, // tágo je na stojane namiesto svojej šablóny
 	);
+	// rozpočet: súčet úprav (okrem vyváženia) najviac 0, plusové sa pomerne znížia
+	$keys = array( 'power', 'len', 'grip', 'weight', 'tipd', 'stiff' );
+	$sum  = 0;
+	$pos  = 0;
+	foreach ( $keys as $k ) {
+		$sum += $out[ $k ];
+		$pos += max( 0, $out[ $k ] );
+	}
+	if ( $sum > 0.0005 && $pos > 0 ) {
+		$f = ( $pos - $sum ) / $pos;
+		foreach ( $keys as $k ) {
+			if ( $out[ $k ] > 0 ) {
+				$out[ $k ] = round( $out[ $k ] * $f, 3 );
+			}
+		}
+	}
+	return $out;
 }
 
 function mysn_cue_row( $r ) {
