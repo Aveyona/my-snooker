@@ -114,6 +114,20 @@ export const TIP_COLORS = {
 };
 
 const DERIVED = new Map();
+/** Výhody a nedostatky tág 1 až 10 (panel na stojane F2). */
+export const CUE_PROS = {
+	club: ['vyvážené, spoľahlivé falše, ľahko sa ovláda', 'slabšia sila, bez jemného mierenia so Shift'],
+	short: ['silné údery, krátke a rýchle ťahanie myšou', 'horšie drží falše, sila sa dávkuje hrubšie'],
+	compact: ['najrýchlejšie ťahanie, hodí sa na malú podložku', 'najslabšie údery, hrubé dávkovanie sily'],
+	break: ['plná sila, ideálne na rozbitie a dlhé údery', 'falše skoro nedrží, na jemnú hru nevhodné'],
+	soft: ['najlepšie falše, jemné údery okolo čiernej, Shift', 'slabá sila, mäkká špica sa pri silných úderoch rýchlo ničí'],
+	long: ['veľmi jemné dávkovanie sily, Shift', 'treba dlhé ťahanie myšou, pomalšie údery'],
+	ebony: ['vyvážené na všetko, silné aj presné, Shift', 'v ničom nie je najlepšie'],
+	master: ['plná sila, plné falše a najjemnejšie mierenie so Shift', 'plná sila neodpúšťa chyby v dávkovaní'],
+	tour: ['silné a presné údery, Shift', 'falše o niečo slabšie, tvrdá špica'],
+	touch: ['najjemnejšie dávkovanie sily a mierenie', 'slabé údery, najdlhšie ťahanie, mäkká špica sa ničí rýchlo'],
+};
+
 export function cueById(id) {
 	const c = CUES.find((x) => x.id === id) || CUES[0];
 	if (!DERIVED.has(c.id)) {

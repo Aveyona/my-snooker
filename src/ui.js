@@ -2,7 +2,7 @@
  * My Snooker: rozhranie nad 3D scénou (štatistiky, sila, falše, tlačidlá, nastavenia, pomoc).
  */
 import { CHALKS } from './chalks.js';
-import { TIP_COLORS, BUDGET_KEYS, balanceAdj } from './cues.js';
+import { TIP_COLORS, BUDGET_KEYS, balanceAdj, CUES, CUE_PROS } from './cues.js';
 import { R, COLOURS, POCKETS } from './physics.js';
 
 const esc = (t) => String(t || '').replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
@@ -2112,7 +2112,7 @@ export class UI {
 			del.classList.add('mysn-cp-del');
 			P.appendChild(del);
 		} else {
-			P.appendChild(h('p', 'mysn-cp-note', 'Šablóna sa nemení. Vyrob si z nej vlastné tágo: názov a farby si nastavíš voľne, silu, dĺžku a falše o ±10 %.'));
+			P.appendChild(h('p', 'mysn-cp-note', 'Šablóna sa nemení. Vyrob si z nej vlastné tágo: názov a farby si nastavíš voľne a úpravy (sila, dĺžka, falše, hmotnosť, priemer špice, tuhosť, vyváženie) v rámci rozpočtu.'));
 			const b = this.button('Vytvoriť vlastné tágo', 'cueNew', 'Nové vlastné tágo z tejto šablóny', c.id);
 			b.classList.add('mysn-primary');
 			if (!info.user) {
@@ -2141,6 +2141,17 @@ export class UI {
 				P.appendChild(r);
 			}
 		}
+		// tágá 1 až 10: výhody a nedostatky (zvýraznená šablóna vybraného tága)
+		P.appendChild(h('div', 'mysn-cp-head', 'Tágá 1 až 10'));
+		const pros = h('ol', 'mysn-cp-pros');
+		for (const t of CUES) {
+			const p = CUE_PROS[t.id];
+			if (!p) {
+				continue;
+			}
+			pros.appendChild(h('li', (c.base || c.id) === t.id ? 'mysn-on' : '', `<b>${esc(t.name)}</b><span class="mysn-pro">+ ${esc(p[0])}</span><span class="mysn-con">− ${esc(p[1])}</span>`));
+		}
+		P.appendChild(pros);
 	}
 
 	cardOpen() {

@@ -131,6 +131,7 @@ function mysn_roadmap() {
 /** Denník zmien (najnovšie hore). */
 function mysn_changelog() {
 	return array(
+		array( '0.7.46', '6. 11. 2026', 'Stojan F2: v paneli vpravo dole zoznam tág 1 až 10 s výhodami (zelene) a nedostatkami (červeno), šablóna vybraného tága je zvýraznená.' ),
 		array( '0.7.45', '6. 11. 2026', 'Vlastné tágo: rozpočet úprav (súčet sily, dĺžky, falší, hmotnosti, priemeru špice a tuhosti najviac 0 %, čo pridáš, inde sa ubere, ostatné posuvníky sa samé znížia). Nové úpravy: hmotnosť (510 až 600 g), priemer špice (9 až 10,5 mm), tuhosť drievka (odklon bielej pri bočnej falši, nová fyzika pre všetky tágá) a vyváženie mimo rozpočtu. Server rozpočet overuje.' ),
 		array( '0.7.44', '6. 11. 2026', 'Farba špice je vidno aj na tágach na nástennom stojane v herni (hneď po výbere farby aj po načítaní hry).' ),
 		array( '0.7.43', '6. 11. 2026', 'Farba špice: na stojane F2 v sekcii Špica sa dá vybrať farba špice (modrá predvolená, červená, zelená, čierna, oranžová, fialová). Ukladá sa do databázy pri tágu, ostáva aj po výmene špice a súper ju vidí na tvojom tágu.' ),
