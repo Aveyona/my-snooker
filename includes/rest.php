@@ -189,6 +189,25 @@ function mysn_is_live( $uid ) {
 	return $row && (int) $row['seen'] >= time() - MYSN_LIVE && 'away' !== $row['state'];
 }
 
+/** Liga zápasu: lepšia z líg oboch hráčov v aktuálnej sezóne (1 = najlepšia). */
+function mysn_match_tier( $m ) {
+	static $map = null;
+	if ( null === $map ) {
+		$map = array();
+		if ( function_exists( 'mysn_season_current' ) ) {
+			$s = mysn_season_current();
+			if ( $s ) {
+				foreach ( mysn_league_ranked( (int) $s['id'] ) as $r ) {
+					$map[ (int) $r['user_id'] ] = (int) $r['league'];
+				}
+			}
+		}
+	}
+	$a = $map[ (int) $m['p1'] ] ?? 0;
+	$b = $map[ (int) $m['p2'] ] ?? 0;
+	return $a && $b ? min( $a, $b ) : max( $a, $b );
+}
+
 /** Súhrn partie pre klienta. */
 function mysn_match_out( $m, $uid ) {
 	$me  = mysn_side( $m, $uid );
@@ -212,6 +231,7 @@ function mysn_match_out( $m, $uid ) {
 		'result'  => $m['result'],
 		'updated' => (int) $m['updated'],
 		'league'  => (int) ( $m['league'] ?? 0 ),
+		'tier'    => ! empty( $m['league'] ) ? mysn_match_tier( $m ) : 0, // číslo ligy (1 až 4) pre mantinel na štadióne
 		'training' => 'training' === ( $m['kind'] ?? '' ),
 		'delta'   => (int) ( $m['delta'] ?? 0 ),
 	);

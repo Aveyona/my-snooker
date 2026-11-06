@@ -72,6 +72,20 @@ export function buildStadium(scene, quality) {
 		[BX, 0, Math.PI / 2, 2 * BZ],
 		[-BX, 0, -Math.PI / 2, 2 * BZ],
 	];
+	const adPanels = [];
+	let adTier = -1;
+	/** Mantinel s nápisom LIGA: číslo ligy zápasu (1. LIGA), 0 = len LIGA. */
+	const setLeague = (n) => {
+		n = n | 0;
+		if (n === adTier || !adPanels[2]) {
+			return;
+		}
+		adTier = n;
+		const old = adPanels[2].material.map;
+		adPanels[2].material.map = adTex(n > 0 ? `${n}. LIGA` : 'LIGA', 2);
+		adPanels[2].material.needsUpdate = true;
+		old && old.dispose();
+	};
 	boards.forEach(([x, z, rot, len], i) => {
 		const g = new THREE.Group();
 		g.position.set(x, FY, z);
@@ -79,6 +93,7 @@ export function buildStadium(scene, quality) {
 		root.add(g);
 		add(new THREE.BoxGeometry(len, 0.42, 0.06), dark, 0, 0.21, 0, g);
 		const panel = add(new THREE.PlaneGeometry(len - 0.1, 0.3), new THREE.MeshBasicMaterial({ map: adTex(ads[i], i) }), 0, 0.22, -0.032, g);
+		adPanels[i] = panel;
 		panel.rotation.y = Math.PI; // reklama otočená k stolu
 		panel.castShadow = false;
 	});
@@ -633,6 +648,7 @@ export function buildStadium(scene, quality) {
 		},
 		setScreen: drawScreen,
 		setLcd,
+		setLeague,
 		lcds,
 		confetti,
 		fanConfetti,

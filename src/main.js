@@ -3545,6 +3545,8 @@ export function start(root, config = {}) {
 				// tréning na štadióne (admin): moja menovka, druhý stolík prázdny
 				stadium.setNames([user.name, ''], [config.role === 'admin' ? 'ADMIN' : '', '']);
 			}
+			// mantinel s nápisom LIGA: číslo ligy zápasu (1. LIGA)
+			stadium.setLeague(game.spectating ? (watchScreen && watchScreen.tier) || 0 : (game.match && game.match.tier) || 0);
 		}
 		hotTick(dt); // Ctrl: rozsvietenie klikateľných predmetov pod kurzorom
 		// FPS: priemer za posledné snímky, ukáže sa pri držanom Ctrl

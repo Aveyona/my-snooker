@@ -176,7 +176,7 @@ export class Game extends Training {
 		if (this.solo) {
 			this.stopSolo();
 		}
-		this.match = { id: info.id, me: info.me, seq: -1, turn: 0, rules: null, inHand: false, players: info.players, status: info.status, league: !!info.league, training: !!info.training, best: [0, 0] };
+		this.match = { id: info.id, me: info.me, seq: -1, turn: 0, rules: null, inHand: false, players: info.players, status: info.status, league: !!info.league, tier: info.tier | 0, training: !!info.training, best: [0, 0] };
 		this.history = [];
 		this.remote = false;
 		this.applyState(info.state, info.seq);
