@@ -21,7 +21,7 @@ import { UI } from './ui.js';
 import { Game, fmtTime } from './match.js';
 import { Online } from './online.js';
 import { remaining } from './rules.js';
-import { aimTrace, R, L, snapshot } from './physics.js';
+import { aimTrace, R, L, snapshot, restore } from './physics.js';
 import { CUES, cueById, ownCueSpec } from './cues.js';
 
 const STORE = 'mySnookerSettings';
@@ -96,7 +96,55 @@ export function start(root, config = {}) {
 	const game = new Game();
 	const user = config.user || null; // hrať môžu len prihlásení
 	game.respot = !!settings.respot;
-	game.aimAtNearest();
+	// tréning: rozloženie gúľ a štatistika prežijú obnovenie stránky (F5); ukladá sa po údere a po zásahu hráča
+	const TRAIN_KEY = 'mySnookerTraining';
+	let trainSaveT = 0;
+	const saveTraining = () => {
+		clearTimeout(trainSaveT);
+		trainSaveT = setTimeout(() => {
+			if (game.solo || game.match || game.spectating || game.state === 'moving') {
+				return;
+			}
+			try {
+				window.localStorage.setItem(TRAIN_KEY, JSON.stringify({ balls: snapshot(game.balls), stats: game.stats, place: game.state === 'place', dir: game.dir }));
+			} catch (e) {
+				/* úložisko nemusí byť dostupné */
+			}
+		}, 200);
+	};
+	const restoreTraining = () => {
+		let t = null;
+		try {
+			t = JSON.parse(window.localStorage.getItem(TRAIN_KEY) || 'null');
+		} catch (e) {
+			t = null;
+		}
+		if (!t || !Array.isArray(t.balls) || t.balls.length !== game.balls.length) {
+			return false;
+		}
+		restore(game.balls, t.balls);
+		game.history = [];
+		if (t.stats) {
+			game.stats = { ...game.stats, ...t.stats };
+		}
+		game.dir = Number(t.dir) || 0;
+		if (t.place || !game.cue.on) {
+			game.startPlace();
+		} else {
+			game.state = 'aim';
+		}
+		game.message = 'Pokračuješ v tréningu tam, kde si skončil.';
+		game.emit('change');
+		return true;
+	};
+	game.on((type) => {
+		if (type === 'settle' && !game.solo && !game.match && !game.spectating) {
+			saveTraining();
+		}
+	});
+	if (!restoreTraining()) {
+		game.aimAtNearest();
+	}
 	// odrazy okolia na guliach (mäkké svetlo zo všetkých strán, spodok gúľ nie je čierny)
 	const pmrem = new THREE.PMREMGenerator(renderer);
 	const env = pmrem.fromScene(new RoomEnvironment(), 0.04).texture;
@@ -1148,8 +1196,14 @@ export function start(root, config = {}) {
 	const actions = {
 		unlock: () => sound.unlock(),
 		camera: (m) => setCamera(m),
-		undo: () => game.undo(),
-		hand: () => game.ballInHand(),
+		undo: () => {
+			game.undo();
+			saveTraining();
+		},
+		hand: () => {
+			game.ballInHand();
+			saveTraining();
+		},
 		fine: (d) => {
 			if (game.state === 'aim') {
 				game.dir += (d * 0.05 * Math.PI) / 180;
@@ -1165,10 +1219,12 @@ export function start(root, config = {}) {
 		reset: () => {
 			game.reset();
 			game.aimAtNearest();
+			saveTraining();
 		},
 		place: () => {
 			game.confirmPlace();
 			game.aimAtNearest();
+			saveTraining();
 		},
 		// neprihlásený návštevník: voľný tréning
 		guestTraining: () => {
@@ -1191,7 +1247,9 @@ export function start(root, config = {}) {
 		soloNew: () => startSolo(true),
 		training: () => {
 			game.stopSolo();
-			game.aimAtNearest();
+			if (!restoreTraining()) {
+				game.aimAtNearest();
+			}
 			refreshMenu();
 			ui.showMenu(false);
 			controls.capture();

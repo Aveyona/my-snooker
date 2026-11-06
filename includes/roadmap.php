@@ -131,6 +131,7 @@ function mysn_roadmap() {
 /** Denník zmien (najnovšie hore). */
 function mysn_changelog() {
 	return array(
+		array( '0.6.84', '6. 11. 2026', 'Tréning si pamätá rozloženie gúľ a štatistiku aj po obnovení stránky (F5) a po návrate z hry o skóre; ukladá sa po každom údere a po Späť, Biela do ruky, Hotovo a Nové rozostavenie.' ),
 		array( '0.6.83', '6. 11. 2026', 'Krížik sa dá použiť aj pri mantineli: ak za bielou nie je miesto na súkne, položí sa na drevený rám za mantinelom (tágo ide strmšie). Pavúky pri mantineli ostávajú zakázané.' ),
 		array( '0.6.82', '6. 11. 2026', 'Oprava: trojuholník pod stolom už netrčí do stola (visí nižšie pod rámom).' ),
 		array( '0.6.81', '6. 11. 2026', 'Nádstavce na teleskopickej tyči s drevenou rukoväťou: krížik (nízky, zmestí sa aj bližšie k mantinelu), pavúk (mosadzný oblúk s korunkou a žliabkami) a vysoký pavúk (U). Výber v ponuke F3 (2 až 4, 5 nové postavenie gúľ), každý drží tágo v inom sklone. Oprava: F3 už neotvorí hlavné menu.' ),
