@@ -45,8 +45,18 @@ export class CameraRig {
 		if (this.mode === 'top') {
 			this.panOffset.y = 0;
 		}
+		if (this.mode !== 'top' && this.aimPoint && this._panBase) {
+			// krúženie okolo gule, na ktorú sa mieri: vzdialenosť od gule ostáva rovnaká (posun po priamke by ju
+			// pri každom kroku trochu zväčšil a pri otočení dookola by sa kamera po špirále vzďaľovala)
+			const r = this._panBase.distanceTo(this.aimPoint);
+			const p = this._panBase.clone().add(this.panOffset).sub(this.aimPoint);
+			if (p.lengthSq() > 1e-8) {
+				p.setLength(r);
+				this.panOffset.copy(this.aimPoint).add(p).sub(this._panBase);
+			}
+		}
 		this.panOffset.y = Math.max(-0.15, Math.min(1.5, this.panOffset.y));
-		this.panOffset.clampLength(0, 3);
+		this.panOffset.clampLength(0, this.aimPoint && this.mode !== 'top' ? 8 : 3); // okolo vzdialenej gule až na druhú stranu
 	}
 
 	resetPan() {
@@ -168,11 +178,14 @@ export class CameraRig {
 			this.resetPan();
 		}
 		this._wasMoving = moving;
+		if (this.mode !== 'top' && !moving && this.mode !== 'view') {
+			(this._panBase || (this._panBase = new THREE.Vector3())).copy(pos); // pre krúženie okolo gule (pan)
+		}
 		if (this.mode === 'top') {
 			pos.add(this.panOffset);
 			look.add(this.panOffset);
 		} else if (!moving && this.mode !== 'view' && this.panOffset.lengthSq() > 1e-8) {
-			// posun kolieskom za tágom: kamera sa posunie a otočí tak, aby sa stále pozerala na guľu, na ktorú sa mieri
+			// posun pravým tlačidlom za tágom: kamera krúži okolo gule, na ktorú sa mieri, a stále sa na ňu pozerá
 			pos.add(this.panOffset);
 			if (this.aimPoint) {
 				look.copy(this.aimPoint);
