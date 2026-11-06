@@ -254,6 +254,16 @@ export class Online {
 		return this.rtc.broadcast('watch', msg, (p) => !p.offerer);
 	}
 
+	/** Kamera hráča pre divákov (F8): poloha voči stolu, natočenie, zorný uhol, vrstvy. Najviac 10-krát za sekundu. */
+	sendCam(c) {
+		const now = performance.now();
+		if (!this.matchId || now - (this._camAt || 0) < 100 || !this.rtc.list('watch', (p) => !p.offerer).length) {
+			return;
+		}
+		this._camAt = now;
+		this.wsend({ k: 'w-cam', t: this.game.myTurn ? 1 : 0, ...c });
+	}
+
 	/** Divák: správa hráčom, ktorých partiu sledujem (napríklad konfety F7). */
 	watchSend(msg) {
 		for (const p of this.rtc.list('watch', (x) => x.offerer)) {

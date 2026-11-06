@@ -1062,19 +1062,61 @@ export function start(root, config = {}) {
 	const miniFrame = document.createElement('div');
 	miniFrame.className = 'mysn-minitable mysn-hidden';
 	renderer.domElement.parentNode.appendChild(miniFrame);
+	// divák F8: kamera hráča (presne to, čo vidí hráč), kreslí sa vpravo hore, malý stôl pod ňou
+	const playerCam = { p: new THREE.Vector3(), q: new THREE.Quaternion(), f: 45, l: 1, at: 0, turnAt: 0 };
+	const pcCam = new THREE.PerspectiveCamera(45, 16 / 9, 0.01, 40);
+	let pcInit = false;
+	const pcFrame = document.createElement('div');
+	pcFrame.className = 'mysn-minitable mysn-playercam mysn-hidden';
+	pcFrame.innerHTML = '<span>Pohľad hráča (F8)</span>';
+	renderer.domElement.parentNode.appendChild(pcFrame);
 	const miniTable = () => {
-		const on = !!(settings.specMini && game.spectating);
+		renderer.getSize(miniSize);
+		let top = 64;
+		const sh = renderer.shadowMap.autoUpdate;
+		const camOn = !!(settings.specCam !== false && game.spectating && playerCam.at && performance.now() - playerCam.at < 15000);
+		pcFrame.classList.toggle('mysn-hidden', !camOn);
+		if (!camOn) {
+			pcInit = false;
+		} else {
+			const w = Math.round(Math.min(440, Math.max(220, miniSize.x * 0.27)));
+			const h = Math.round((w * 9) / 16);
+			const x = miniSize.x - w - 14;
+			pcFrame.style.cssText = `width:${w}px;height:${h}px;right:14px;top:${top}px`;
+			table.group.getWorldPosition(miniPos);
+			const tp = playerCam.p.clone().add(miniPos);
+			if (!pcInit) {
+				pcCam.position.copy(tp);
+				pcCam.quaternion.copy(playerCam.q);
+				pcInit = true;
+			} else {
+				pcCam.position.lerp(tp, 0.35); // plynulo medzi správami (10-krát za sekundu)
+				pcCam.quaternion.slerp(playerCam.q, 0.35);
+			}
+			pcCam.fov = playerCam.f;
+			pcCam.aspect = w / h;
+			pcCam.layers.mask = playerCam.l;
+			pcCam.updateProjectionMatrix();
+			renderer.shadowMap.autoUpdate = false;
+			renderer.setScissorTest(true);
+			renderer.setViewport(x, miniSize.y - top - h, w, h);
+			renderer.setScissor(x, miniSize.y - top - h, w, h);
+			renderer.render(scene, pcCam);
+			renderer.setScissorTest(false);
+			renderer.setViewport(0, 0, miniSize.x, miniSize.y);
+			renderer.shadowMap.autoUpdate = sh;
+			top += h + 10;
+		}
+		const on = !!(settings.specMini !== false && game.spectating);
 		miniFrame.classList.toggle('mysn-hidden', !on);
 		if (!on) {
 			return;
 		}
-		renderer.getSize(miniSize);
 		const hw = L / 2 + 0.2; // hracia plocha s mantinelmi a rámom
 		const hh = W / 2 + 0.2;
 		const w = Math.round(Math.min(380, Math.max(200, miniSize.x * 0.24)));
 		const h = Math.round((w * hh) / hw);
 		const x = miniSize.x - w - 14;
-		const top = 64;
 		miniFrame.style.cssText = `width:${w}px;height:${h}px;right:14px;top:${top}px`;
 		table.group.getWorldPosition(miniPos);
 		miniCam.left = -hw;
@@ -1085,7 +1127,6 @@ export function start(root, config = {}) {
 		miniCam.up.set(0, 0, -1);
 		miniCam.lookAt(miniPos.x, miniPos.y, miniPos.z);
 		miniCam.updateProjectionMatrix();
-		const sh = renderer.shadowMap.autoUpdate;
 		renderer.shadowMap.autoUpdate = false; // tiene sa druhýkrát nepočítajú
 		renderer.setScissorTest(true);
 		renderer.setViewport(x, miniSize.y - top - h, w, h);
@@ -2475,8 +2516,16 @@ export function start(root, config = {}) {
 					actions.spectPhone();
 					return true;
 				}
+				if (lk === 'f8') {
+					settings.specCam = settings.specCam === false; // kamera hráča vpravo hore (predvolene zapnutá)
+					saveSettings(settings);
+					if (ui.spectPhoneOpen()) {
+						actions.spectPhone(true);
+					}
+					return true;
+				}
 				if (lk === 'tab') {
-					settings.specMini = !settings.specMini; // malý stôl zhora vpravo hore
+					settings.specMini = settings.specMini === false; // malý stôl zhora vpravo hore (predvolene zapnutý)
 					saveSettings(settings);
 					if (ui.spectPhoneOpen()) {
 						actions.spectPhone(true);
@@ -2873,6 +2922,19 @@ export function start(root, config = {}) {
 				} else if (m.k === 'w-rack') {
 					if (Array.isArray(m.specs)) {
 						stadium.setRack(m.side ? 1 : 0, m.specs.slice(0, 4), m.inHand, null); // stojan hráča
+					}
+				} else if (m.k === 'w-cam') {
+					// kamera hráča (F8): prednosť má hráč na rade, druhý hráč len keď ten na rade dlho nič neposlal
+					const now = performance.now();
+					if (Array.isArray(m.p) && Array.isArray(m.q) && (m.t || now - playerCam.turnAt > 3000)) {
+						if (m.t) {
+							playerCam.turnAt = now;
+						}
+						playerCam.p.set(+m.p[0] || 0, +m.p[1] || 0, +m.p[2] || 0);
+						playerCam.q.set(+m.q[0] || 0, +m.q[1] || 0, +m.q[2] || 0, +m.q[3] || 1).normalize();
+						playerCam.f = Math.max(10, Math.min(100, +m.f || 45));
+						playerCam.l = (m.l | 0) || 1;
+						playerCam.at = now;
 					}
 				} else if (m.k === 'w-lights') {
 					beamsOn = !!m.on; // hráč zapol alebo zhasol bodové svetlá
@@ -3490,6 +3552,13 @@ export function start(root, config = {}) {
 			}
 		}
 		rig.update(dt, game.cue, game.dir, game.state === 'moving');
+		if (online && game.match && !game.spectating) {
+			// diváci vidia (F8) presne to, čo ja: kamera voči stolu
+			table.group.getWorldPosition(miniPos);
+			const c = rig.camera;
+			const f = (v) => +v.toFixed(3);
+			online.sendCam({ p: [f(c.position.x - miniPos.x), f(c.position.y - miniPos.y), f(c.position.z - miniPos.z)], q: [f(c.quaternion.x), f(c.quaternion.y), f(c.quaternion.z), f(c.quaternion.w)], f: f(c.fov), l: c.layers.mask });
+		}
 		renderer.render(scene, rig.camera);
 		miniTable();
 		requestAnimationFrame(frame);
