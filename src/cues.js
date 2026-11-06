@@ -218,6 +218,13 @@ function cueTexture(spec) {
 	const tc = new THREE.Color(spec.tipColor || '#2f6fd6').lerp(new THREE.Color(0x2a2118), 0.65 * wear);
 	g.fillStyle = '#' + tc.getHexString(); // farba špice (vyberá sa na stojane, predvolená modrá)
 	g.fillRect(0, H - tipH - 1, W, tipH + 1);
+	if (spec.chalkTint && spec.chalkLevel > 0) {
+		// nakriedovaná špica: spodná polovica (dotyk s bielou) vo farbe kriedy, slabne s každým úderom
+		g.globalAlpha = Math.min(1, spec.chalkLevel);
+		g.fillStyle = '#' + new THREE.Color(spec.chalkTint).getHexString();
+		g.fillRect(0, H - tipH / 2 - 1, W, tipH / 2 + 1);
+		g.globalAlpha = 1;
+	}
 	if (wear > 0.3) {
 		// rozstrapkaný okraj kože a odreté miesta
 		g.fillStyle = `rgba(200,180,150,${0.35 * wear})`;

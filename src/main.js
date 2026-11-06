@@ -160,6 +160,7 @@ export function start(root, config = {}) {
 	let ownCues = [];
 	const tipColors = {}; // farba špice podľa tága (z databázy špíc)
 	const tipWears = {}; // opotrebenie špice podľa tága po 5 % (vzhľad špice na modeli)
+	const chalkTip = { color: 0, level: 0 }; // krieda na špici tága v ruke (farba a sila podľa zostávajúcich úderov)
 	const specFor = (id) => {
 		let s = cueById(id);
 		if (typeof id === 'string' && id[0] === 'u') {
@@ -168,7 +169,12 @@ export function start(root, config = {}) {
 				s = ownCueSpec(row);
 			}
 		}
-		return withTip(s);
+		const t = withTip(s);
+		// tágo v ruke: spodná polovica špice vo farbe kriedy, kým krieda vydrží
+		if (chalkTip.level > 0 && t.id === settings.cue) {
+			return { ...t, chalkTint: chalkTip.color, chalkLevel: chalkTip.level };
+		}
+		return t;
 	};
 	/** Tágo s farbou špice z databázy (na ruke, na stojanoch v herni aj na štadióne). */
 	function withTip(s) {
@@ -1657,6 +1663,7 @@ export function start(root, config = {}) {
 	const pickCue = (id) => {
 		cueSpec = specFor(id);
 		settings.cue = cueSpec.id;
+		cueSpec = specFor(cueSpec.id); // s kriedou na špici (platí pre tágo v ruke)
 		saveSettings(settings);
 		cue.setSpec(cueSpec);
 		stadiumRack();
@@ -4160,6 +4167,16 @@ export function start(root, config = {}) {
 		updateFelt();
 		office.updateWindow(dt);
 		office.notebookTick(dt);
+		// krieda na špici: po nakriedovaní, údere alebo zmene kriedy sa tágo v ruke prekreslí (súper ho vidí tiež)
+		const lvl = chalk >= 3 ? 1 : chalk === 2 ? 0.75 : chalk === 1 ? 0.45 : 0;
+		const ccol = chalkById(settings.chalk).color;
+		if (lvl !== chalkTip.level || (lvl > 0 && ccol !== chalkTip.color)) {
+			chalkTip.level = lvl;
+			chalkTip.color = ccol;
+			if (cueSpec) {
+				cueSpec = specFor(cueSpec.id);
+			}
+		}
 		if (chairChalkEnd && performance.now() >= chairChalkEnd) {
 			chairChalkEnd = 0;
 			chalk = CHALK_SHOTS; // nakriedované v kresle: platí na ďalšie údery
