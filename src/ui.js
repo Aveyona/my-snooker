@@ -1634,7 +1634,7 @@ export class UI {
 		B.innerHTML = `<div class="mysn-spphone-top">📱 Divák</div><h3>Pomocník</h3><div class="mysn-sp-keys">${rows.map(([k, t]) => `<div><b>${k}</b><span>${esc(t)}</span></div>`).join('')}</div>`;
 		const conf = this.button(`🎉 Konfety (${o.confLeft}×)`, 'spectConfetti', 'F7');
 		conf.disabled = !o.stadium || o.confLeft <= 0;
-		B.append(conf, this.button(`📺 LCD ${o.lcd ? 'vypnúť' : 'zapnúť'} (F9)`, 'spectLcd'), this.button('Zmeniť miesto (F6)', 'seatChange'), this.button('Prestať sledovať', 'watchStop'), this.button('Zavrieť (F1)', 'spectPhoneClose'));
+		B.append(conf, this.button(`📺 LCD ${o.lcd ? 'vypnúť' : 'zapnúť'} (F9)`, 'spectLcd'), ...(o.demo ? [this.button('Ukončiť ukážku (Esc)', 'spectDemoEnd')] : [this.button('Zmeniť miesto (F6)', 'seatChange'), this.button('Prestať sledovať', 'watchStop')]), this.button('Zavrieť (F1)', 'spectPhoneClose'));
 	}
 
 	spectPhoneOpen() {

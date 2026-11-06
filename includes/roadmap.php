@@ -131,6 +131,7 @@ function mysn_roadmap() {
 /** Denník zmien (najnovšie hore). */
 function mysn_changelog() {
 	return array(
+		array( '0.7.11', '6. 11. 2026', 'Admin: v mape miestností pri štadióne pribudla Ukážka od diváka (sedíš na tribúne, fungujú F1 telefón, F7 konfety, F8, F9 LCD a Tab, Esc ukážku ukončí). LCD obrazovky: keď nie je koho ukázať, kamera pomaly krúži okolo stola.' ),
 		array( '0.7.10', '6. 11. 2026', 'Administrácia, Partie cez internet: nový stĺpec Body ligy (koľko bodov získal víťaz a koľko stratil porazený). Ligová partia, v ktorej porazený nemal žiadne body, sa zapíše ako +0 a nie ako +1.' ),
 		array( '0.7.9', '6. 11. 2026', 'Rozhodca stojí pri kratších stranách stola, aby nezavadzal divákom na tribúnach. Na dlhú stranu pred divákov ide len vtedy, keď by pri oboch koncoch zavadzal tágu.' ),
 		array( '0.7.8', '6. 11. 2026', 'Štadión: horný rad sedadiel na dlhých tribúnach je odobratý, nezasahuje do LCD obrazovky. Tribúna má 6 radov (300 miest pre divákov).' ),

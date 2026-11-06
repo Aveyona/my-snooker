@@ -1055,6 +1055,8 @@ export function start(root, config = {}) {
 	let view = null;
 	const chairLook = { yaw: 0, pitch: 0 };
 	let topView = false; // Tab: pohľad na stôl zhora
+	let specDemo = false; // admin: ukážka od diváka (sedí na tribúne bez zápasu)
+	const specView = () => game.spectating || specDemo; // pohľad diváka (aj ukážka)
 	// divák Tab: malý stôl zhora vpravo hore (druhá kamera nad stolom, kreslí sa do rohu obrazu)
 	const miniCam = new THREE.OrthographicCamera(-1, 1, 1, -1, 0.01, 0.9);
 	const miniPos = new THREE.Vector3();
@@ -1086,6 +1088,7 @@ export function start(root, config = {}) {
 	const lcdRT = new THREE.WebGLRenderTarget(960, 540, { samples: 2 });
 	lcdRT.texture.colorSpace = THREE.SRGBColorSpace;
 	const lcdCam = new THREE.PerspectiveCamera(60, 16 / 9, 0.01, 40);
+	const lcdOrbit = new THREE.Object3D(); // krúžiaca kamera pre LCD (poloha voči stolu)
 	let lcdTick = 0;
 	let lcdInit = false;
 	const lcdApply = (m) => {
@@ -1100,13 +1103,22 @@ export function start(root, config = {}) {
 		const vis = venue === 'league' && stadium.root.visible && lcdOn;
 		let src = null;
 		if (vis) {
-			if (!game.spectating && (!game.match || game.myTurn)) {
+			if (!specView() && (!game.match || game.myTurn)) {
 				table.group.getWorldPosition(miniPos);
 				const c = rig.camera;
 				src = { p: c.position.clone().sub(miniPos), q: c.quaternion, f: c.fov, l: c.layers.mask };
 			} else if (playerCam.at && performance.now() - playerCam.at < 15000) {
 				src = playerCam;
 			}
+		}
+		if (!src && vis) {
+			// nikto na zobrazenie: kamera pomaly krúži okolo stola
+			const a = performance.now() / 1000 * 0.12;
+			const c = lcdOrbit;
+			c.position.set(Math.cos(a) * 3.4, 1.35, Math.sin(a) * 2.4);
+			c.lookAt(0, -0.15, 0);
+			src = { p: c.position, q: c.quaternion, f: 46, l: 1 | 2 };
+			lcdInit = false;
 		}
 		if (!src) {
 			lcdInit = false;
@@ -1152,7 +1164,7 @@ export function start(root, config = {}) {
 		renderer.getSize(miniSize);
 		let top = 64;
 		const sh = renderer.shadowMap.autoUpdate;
-		const camOn = !!(settings.specCam !== false && game.spectating && playerCam.at && performance.now() - playerCam.at < 15000);
+		const camOn = !!(settings.specCam !== false && specView() && playerCam.at && performance.now() - playerCam.at < 15000);
 		pcFrame.classList.toggle('mysn-hidden', !camOn);
 		if (!camOn) {
 			pcInit = false;
@@ -1185,7 +1197,7 @@ export function start(root, config = {}) {
 			renderer.shadowMap.autoUpdate = sh;
 			top += h + 10;
 		}
-		const on = !!(settings.specMini !== false && game.spectating);
+		const on = !!(settings.specMini !== false && specView());
 		miniFrame.classList.toggle('mysn-hidden', !on);
 		if (!on) {
 			return;
@@ -1446,7 +1458,7 @@ export function start(root, config = {}) {
 		return [
 			{ id: 'home', name: 'Herňa', desc: 'Tréning, Hrať o najlepšie skóre, partie s priateľmi. Stôl s červeným súknom pri tréningu, zeleným v partii.', map: [4, 30, 46, 64], here: here === 'home', locked: false, play: 'Vstúpiť a hrať' },
 			{ id: 'office', name: 'Kancelária', desc: 'Liga: registrácia, tabuľky líg, mapa hráčov, moje tágá, vyhľadanie ligového zápasu.', map: [4, 4, 46, 22], here: here === 'office', locked: !user, lockNote: 'Kancelária je pre prihlásených hráčov.', play: 'Vstúpiť' },
-			{ id: 'league', name: 'Štadión', desc: 'Ligové zápasy pred divákmi, modré súkno, svetlá na stôl.', map: [56, 4, 40, 90], here: here === 'league', locked: !admin, lockNote: 'Štadión sa otvorí, keď nájdeš ligový zápas (Kancelária, Vyhľadať zápas). Hrá sa tu len liga.', play: admin ? 'Vstúpiť a trénovať (admin)' : 'Vstúpiť', extra: admin ? [{ label: 'Ukážka konca zápasu (admin)', act: 'fiestaDemo', title: 'Tabuľa s víťazom a konfety na kontrolu' }] : [] },
+			{ id: 'league', name: 'Štadión', desc: 'Ligové zápasy pred divákmi, modré súkno, svetlá na stôl.', map: [56, 4, 40, 90], here: here === 'league', locked: !admin, lockNote: 'Štadión sa otvorí, keď nájdeš ligový zápas (Kancelária, Vyhľadať zápas). Hrá sa tu len liga.', play: admin ? 'Vstúpiť a trénovať (admin)' : 'Vstúpiť', extra: admin ? [{ label: 'Ukážka konca zápasu (admin)', act: 'fiestaDemo', title: 'Tabuľa s víťazom a konfety na kontrolu' }, { label: 'Ukážka od diváka (admin)', act: 'spectDemo', title: 'Sedíš na tribúne ako divák: LCD, malý stôl, konfety' }] : [] },
 		].map((r) => ({ ...r, tour: admin }));
 	};
 
@@ -2133,7 +2145,7 @@ export function start(root, config = {}) {
 		},
 		// divák F7: dávka konfiet zo svojho miesta (najviac 3-krát za zápas, 15 sekúnd); vidia ju všetci
 		spectConfetti: () => {
-			if (!game.spectating || venue !== 'league') {
+			if (!specView() || venue !== 'league') {
 				ui.toast('Konfety sa dajú púšťať na štadióne pri sledovaní ligového zápasu.');
 				return;
 			}
@@ -2148,7 +2160,9 @@ export function start(root, config = {}) {
 			confLeft--;
 			const m = { k: 'w-conf', seat: mySeat, sec: 15, id: (user ? user.id : 0) + ':' + Date.now() };
 			playConf(m);
-			online.watchSend(m);
+			if (game.spectating) {
+				online.watchSend(m);
+			}
 			ui.toast(`Konfety! Zostáva ešte ${confLeft}×.`);
 			if (ui.spectPhoneOpen()) {
 				actions.spectPhone(true);
@@ -2156,13 +2170,15 @@ export function start(root, config = {}) {
 		},
 		// divák F9: veľké LCD nad tribúnami zapne alebo vypne (pre všetkých)
 		spectLcd: () => {
-			if (!game.spectating || venue !== 'league') {
+			if (!specView() || venue !== 'league') {
 				ui.toast('LCD obrazovky sú len na štadióne pri ligovom zápase.');
 				return;
 			}
 			const m = { k: 'w-lcd', on: !lcdOn, id: (user ? user.id : 0) + ':' + Date.now() };
 			lcdApply(m);
-			online.watchSend(m);
+			if (game.spectating) {
+				online.watchSend(m);
+			}
 			ui.toast(lcdOn ? 'LCD obrazovky sú zapnuté (pohľad hráča na rade), vidia to všetci.' : 'LCD obrazovky sú vypnuté pre všetkých.');
 			if (ui.spectPhoneOpen()) {
 				actions.spectPhone(true);
@@ -2176,13 +2192,57 @@ export function start(root, config = {}) {
 				return;
 			}
 			controls.uncapture();
-			ui.openSpectPhone(true, { confLeft, lcd: lcdOn, stadium: venue === 'league' });
+			ui.openSpectPhone(true, { confLeft, lcd: lcdOn, demo: specDemo, stadium: venue === 'league' });
 		},
 		spectPhoneClose: () => {
 			ui.openSpectPhone(false);
 			controls.capture();
 		},
 		// admin: ukážka konca zápasu na štadióne (tabuľa s víťazom a konfety) na kontrolu
+		// admin: ukážka od diváka, sedí na tribúne (rad 3, stred) bez zápasu; Esc ukážku ukončí
+		spectDemo: () => {
+			if (config.role !== 'admin' || game.match || game.spectating) {
+				return;
+			}
+			ui.openRoomMap(false);
+			const go = () => {
+				specDemo = true;
+				lcdOn = true;
+				confLeft = 3;
+				const seat = 2 * 25 + 12; // strana +z, 3. rad, stred
+				mySeat = seat;
+				view = 'seat';
+				seatScore = false;
+				controls.blocked = true;
+				const eye = stadium.seatEye(seat);
+				const target = new THREE.Vector3(0, -0.1, 0);
+				rig.noClamp = true;
+				rig.minViewZoom = 1;
+				rig.setViewZoom(1);
+				rig.setView(eye, target.clone());
+				const d = target.clone().sub(eye);
+				chairLook.yaw = Math.atan2(d.z, d.x);
+				chairLook.pitch = Math.atan2(d.y, Math.hypot(d.x, d.z));
+				controls.capture();
+				ui.toast('Ukážka od diváka: sedíš na tribúne. F1 telefón, F7 konfety, F8 pohľad hráča, F9 LCD, Tab malý stôl. Esc ukážku ukončí.');
+			};
+			if (venue !== 'league') {
+				setVenue('league');
+				setTimeout(go, 450);
+			} else {
+				go();
+			}
+		},
+		spectDemoEnd: () => {
+			if (!specDemo) {
+				return;
+			}
+			specDemo = false;
+			mySeat = -1;
+			ui.openSpectPhone(false);
+			exitView();
+			ui.toast('Ukážka od diváka skončila.');
+		},
 		fiestaDemo: () => {
 			if (config.role !== 'admin' || game.match || game.spectating) {
 				return;
@@ -2576,7 +2636,11 @@ export function start(root, config = {}) {
 				ui.setFree(freeMouse, view === 'free');
 				return true;
 			}
-			if (game.spectating && (view === 'seat' || view === 'seatPick')) {
+			if (specView() && (view === 'seat' || view === 'seatPick')) {
+				if (specDemo && lk === 'escape') {
+					actions.spectDemoEnd();
+					return true;
+				}
 				// divák: len zo svojho miesta (otáčanie myšou, koliesko približuje); F4 skóre, F6 zmena miesta
 				if (lk === 'escape') {
 					if (ui.menuOpen() && performance.now() - (ui._menuAt || 0) < 300) {
