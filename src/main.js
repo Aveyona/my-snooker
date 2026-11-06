@@ -947,11 +947,28 @@ export function start(root, config = {}) {
 	};
 	// koniec ligového zápasu: na štadióne tabuľa s víťazom, konfety zo stropu (stále) a od dvoch divákov (chvíľu)
 	let fiesta = null;
+	// koniec zápasu: vždy len jedna pevná kamera (z rohu pri +x, tribúna vľavo, tabuľa s víťazom vpravo hore)
+	const fiestaCam = () => {
+		if (!fiesta || venue !== 'league') {
+			return;
+		}
+		ui.openSpectPhone(false);
+		table.group.getWorldPosition(miniPos);
+		view = 'fiesta';
+		seatScore = false;
+		controls.blocked = true;
+		rig.noClamp = true;
+		rig.minViewZoom = 1;
+		rig.setViewZoom(1);
+		rig.setView(new THREE.Vector3(3.3, 1.05, -2.05).add(miniPos), new THREE.Vector3(-2.0, 0.12, 0.95).add(miniPos));
+		rig.snapNext = true;
+	};
 	const startFiesta = (f) => {
 		fiesta = f;
 		stadium.confetti.setRain(true);
 		stadium.fanConfetti(12);
 		updateStadiumScreen();
+		fiestaCam();
 	};
 	const stopFiesta = () => {
 		if (!fiesta) {
@@ -960,6 +977,9 @@ export function start(root, config = {}) {
 		fiesta = null;
 		stadium.confetti.clear();
 		updateStadiumScreen();
+		if (view === 'fiesta') {
+			exitView();
+		}
 	};
 	let confLeft = 3; // divák: konfety F7 najviac 3-krát za zápas
 	const confSeen = new Set(); // id dávok konfiet (prídu od oboch hráčov naraz)
@@ -1164,7 +1184,7 @@ export function start(root, config = {}) {
 		renderer.getSize(miniSize);
 		let top = 64;
 		const sh = renderer.shadowMap.autoUpdate;
-		const camOn = !!(settings.specCam !== false && specView() && playerCam.at && performance.now() - playerCam.at < 15000);
+		const camOn = !!(settings.specCam !== false && specView() && view !== 'fiesta' && playerCam.at && performance.now() - playerCam.at < 15000);
 		pcFrame.classList.toggle('mysn-hidden', !camOn);
 		if (!camOn) {
 			pcInit = false;
@@ -1197,7 +1217,7 @@ export function start(root, config = {}) {
 			renderer.shadowMap.autoUpdate = sh;
 			top += h + 10;
 		}
-		const on = !!(settings.specMini !== false && specView());
+		const on = !!(settings.specMini !== false && specView() && view !== 'fiesta');
 		miniFrame.classList.toggle('mysn-hidden', !on);
 		if (!on) {
 			return;
@@ -2584,6 +2604,17 @@ export function start(root, config = {}) {
 		},
 		key: (k) => {
 			const lk = k.toLowerCase();
+			if (view === 'fiesta') {
+				// koniec zápasu: jedna pevná kamera, medzerník ani iné pohľady sa nepoužívajú; Esc menu, M mapa
+				if (lk === 'escape') {
+					controls.uncapture();
+					ui.showMenu(true, true);
+					return true;
+				}
+				if (lk !== 'm' && lk !== 'f5' && lk !== 'f11') {
+					return true;
+				}
+			}
 			if (ui.toolsOpen()) {
 				// ponuka F3: 1 krieda, 2 pavúk, 3 nové postavenie, Esc alebo F3 zavrie
 				const pick = { 1: ['toolChalk'], 2: ['spiderPick', 'cross'], 3: ['spiderPick', 'spider'], 4: ['spiderPick', 'high'], 5: ['rackNew'] }[lk];
@@ -3715,6 +3746,9 @@ export function start(root, config = {}) {
 			} else if (game.state !== 'watch') {
 				followSeen = false; // biela do D (pohľad zhora), koniec partie
 			}
+		}
+		if (fiesta && venue === 'league' && !view) {
+			fiestaCam(); // koniec zápasu: vždy len pevná kamera
 		}
 		rig.update(dt, game.cue, game.dir, game.state === 'moving');
 		if (online && game.match && !game.spectating) {
