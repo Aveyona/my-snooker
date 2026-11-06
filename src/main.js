@@ -26,7 +26,7 @@ import { buildRackTriangle, rackLayout } from './rackTriangle.js';
 import { Replay } from './replay.js';
 import { CHALKS, chalkById } from './chalks.js';
 import { ChalkMarks } from './chalkMarks.js';
-import { CUES, cueById, ownCueSpec } from './cues.js';
+import { CUES, cueById, ownCueSpec, TIP_COLORS } from './cues.js';
 
 const STORE = 'mySnookerSettings';
 const AIM_AHEAD = 0.5; // posun pohľadu bez mierenej gule: kamera sa pozerá 50 cm pred bielu
@@ -158,14 +158,17 @@ export function start(root, config = {}) {
 	const myCues = Object.assign({ selected: ['club', 'short', 'break', 'soft'], def: 'club', custom: {} }, settings.myCues || {});
 	// vlastné tágá hráča (tabuľka my_snooker_cues), každé zo šablóny; id 'u' + číslo
 	let ownCues = [];
+	const tipColors = {}; // farba špice podľa tága (z databázy špíc)
 	const specFor = (id) => {
+		let s = cueById(id);
 		if (typeof id === 'string' && id[0] === 'u') {
 			const row = ownCues.find((r) => 'u' + r.id === id);
 			if (row) {
-				return ownCueSpec(row);
+				s = ownCueSpec(row);
 			}
 		}
-		return cueById(id);
+		const tc = TIP_COLORS[tipColors[s.id]];
+		return tc && tc.hex !== s.tipColor ? { ...s, tipColor: tc.hex } : s;
 	};
 	const allCues = () => [...CUES, ...ownCues.map(ownCueSpec)];
 	// stojan: vždy 10 miest, na mieste šablóny môže byť moje vlastné tágo (data.rack)
@@ -1661,9 +1664,25 @@ export function start(root, config = {}) {
 	let tipData = { tips: {}, total: 0, replaced: 0 };
 	const tipOf = (spec) => tipData.tips[spec.id] || { kind: tipDef(spec), strokes: 0, wear: 0, no: 1 };
 	const tipStep = (kind, p) => (kind === 'soft' ? 0.5 + 1.5 * p * p : kind === 'hard' ? 0.85 + 0.25 * p * p : 0.7 + 0.8 * p * p) / 1000;
+	/** Farby špíc z databázy do tág (moje tágo v ruke a stojany sa prekreslia). */
+	const tipColorsSync = () => {
+		let changed = false;
+		for (const [id, t] of Object.entries(tipData.tips)) {
+			if (t.color && tipColors[id] !== t.color) {
+				tipColors[id] = t.color;
+				changed = true;
+			}
+		}
+		if (changed && cueSpec) {
+			cueSpec = specFor(cueSpec.id);
+			cue.setSpec(cueSpec);
+			stadiumRack();
+		}
+	};
 	const tipApply = (r) => {
 		if (r && r.cue && r.tip) {
 			tipData.tips[r.cue] = r.tip;
+			tipColorsSync();
 			tipData.total = r.total | 0;
 			tipData.replaced = r.replaced | 0;
 			ui.renderTip();
@@ -1676,6 +1695,7 @@ export function start(root, config = {}) {
 		const r = await online.net.call('tips', null, 'GET').catch(() => null);
 		if (r && r.tips) {
 			tipData = { tips: { ...r.tips }, total: r.total | 0, replaced: r.replaced | 0 };
+			tipColorsSync();
 			ui.renderTip();
 		}
 	};
@@ -2471,6 +2491,18 @@ export function start(root, config = {}) {
 				restNote: !mine ? 'Nádstavec sa dá vziať, keď mieriš.' : Object.values(can).some(Boolean) ? '' : 'Za bielou nie je miesto na nádstavec (mantinel alebo guľa tesne za bielou).',
 				rack: !game.match ? (game.solo ? 'Nový frame' : 'Nové postavenie gúľ') : '',
 			});
+		},
+		// farba špice (F2 stojan): niekoľko základných farieb, ukladá sa do databázy
+		tipColor: async (v) => {
+			if (!online || !user || !v || !v.cue || !TIP_COLORS[v.color]) {
+				return;
+			}
+			const r = await online.net.call('tips/color', { cue: v.cue, color: v.color, def: tipDef(specFor(v.cue)) }).catch((e) => ({ error: e.message }));
+			if (!r || r.error) {
+				ui.toast((r && r.error) || 'Farba špice sa nedá zmeniť.');
+				return;
+			}
+			tipApply(r);
 		},
 		// výmena špice na tágu (F2 stojan): druh mäkká, stredná alebo tvrdá; údery starej sa pripočítajú do celku
 		tipReplace: async (v) => {

@@ -2,6 +2,7 @@
  * My Snooker: rozhranie nad 3D scénou (štatistiky, sila, falše, tlačidlá, nastavenia, pomoc).
  */
 import { CHALKS } from './chalks.js';
+import { TIP_COLORS } from './cues.js';
 import { R, COLOURS, POCKETS } from './physics.js';
 
 const esc = (t) => String(t || '').replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
@@ -1972,6 +1973,23 @@ export class UI {
 				'<li>Pri 90 % príde upozornenie, že treba vymeniť špicu. Špica vydrží približne 1000 úderov, mäkká sa pri silných úderoch ničí rýchlejšie.</li>' +
 				'</ul>'
 		);
+		if (!t.guest) {
+			// farba špice: niekoľko základných farieb (predvolená modrá)
+			const row = h('div', 'mysn-tip-colors', '<span>Farba špice</span>');
+			for (const [k, col] of Object.entries(TIP_COLORS)) {
+				const b = h('button', 'mysn-tip-col' + ((t.color || 'blue') === k ? ' mysn-on' : ''));
+				b.type = 'button';
+				b.title = col.name;
+				b.style.background = col.hex;
+				b.addEventListener('click', (e) => {
+					e.stopPropagation();
+					b.blur();
+					this.opts.onAction('tipColor', { cue: c.id, color: k });
+				});
+				row.appendChild(b);
+			}
+			el.querySelector('.mysn-tip-state').after(row);
+		}
 		const nw = el.querySelector('.mysn-tip-new');
 		if (nw) {
 			for (const k of ['soft', 'medium', 'hard']) {

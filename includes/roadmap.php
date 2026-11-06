@@ -131,6 +131,7 @@ function mysn_roadmap() {
 /** Denník zmien (najnovšie hore). */
 function mysn_changelog() {
 	return array(
+		array( '0.7.43', '6. 11. 2026', 'Farba špice: na stojane F2 v sekcii Špica sa dá vybrať farba špice (modrá predvolená, červená, zelená, čierna, oranžová, fialová). Ukladá sa do databázy pri tágu, ostáva aj po výmene špice a súper ju vidí na tvojom tágu.' ),
 		array( '0.7.42', '6. 11. 2026', 'Stojan F2, sekcia Špica: malým písmom vysvetlenie, ako špice fungujú (mäkká a tvrdá, slabnutie falší od 70 %, šmyk nad 90 %, upozornenie, asi 1000 úderov).' ),
 		array( '0.7.41', '6. 11. 2026', 'Špice tág (v databáze): každé tágo má nasadenú špicu (mäkká, stredná, tvrdá), počíta sa počet úderov a opotrebenie (asi 1000 úderov; mäkká sa pri silných úderoch ničí rýchlejšie, tvrdá silné údery znáša). Opotrebovaná špica slabšie drží falše a nad 90 % sa tágo môže šmyknúť. Na stojane F2 sa dá špica vymeniť za novú a vybrať jej druh; údery starej sa pripočítajú k celkovému počtu úderov a k počtu vymenených špíc.' ),
 		array( '0.7.40', '6. 11. 2026', 'Stopy kriedy na súkne: po každom údere ostane pod bielou jemná škvrna vo farbe kriedy hráča (súpera aj sledovaného hráča v jeho farbe), nový frame ich zmaže. Kreslí sa jedným ťahom pre všetky stopy, hra nezasekáva. Kancelária: pri výbere tág do ligy (F2) aj výber jednej kriedy do zápasu.' ),

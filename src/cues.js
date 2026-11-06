@@ -48,6 +48,16 @@ export function ownCueSpec(row) {
 	};
 }
 
+/** Farby špice (stojan F2): modrá predvolená a niekoľko základných. */
+export const TIP_COLORS = {
+	blue: { name: 'modrá', hex: '#2f6fd6' },
+	red: { name: 'červená', hex: '#c62828' },
+	green: { name: 'zelená', hex: '#2e9d55' },
+	black: { name: 'čierna', hex: '#1b1b1b' },
+	orange: { name: 'oranžová', hex: '#e8781e' },
+	violet: { name: 'fialová', hex: '#7b3fb5' },
+};
+
 export function cueById(id) {
 	return CUES.find((x) => x.id === id) || CUES[0];
 }
@@ -112,7 +122,7 @@ function cueTexture(spec) {
 	// objímka (slonovinová) a špička (koža s modrou kriedou)
 	g.fillStyle = '#f3efe4';
 	g.fillRect(0, y(0.03), W, H * 0.017);
-	g.fillStyle = '#2f6fd6';
+	g.fillStyle = spec.tipColor || '#2f6fd6'; // farba špice (vyberá sa na stojane, predvolená modrá)
 	g.fillRect(0, y(0.013), W, H * 0.013 + 1);
 	const t = new THREE.CanvasTexture(cv);
 	t.colorSpace = THREE.SRGBColorSpace;

@@ -20,7 +20,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-const MYSN_DB_VERSION = '13';
+const MYSN_DB_VERSION = '14';
 
 function mysn_table( $name ) {
 	global $wpdb;
@@ -194,6 +194,7 @@ kind varchar(8) NOT NULL DEFAULT 'medium',
 strokes int(10) unsigned NOT NULL DEFAULT 0,
 wear float NOT NULL DEFAULT 0,
 tipno int(10) unsigned NOT NULL DEFAULT 1,
+color varchar(8) NOT NULL DEFAULT 'blue',
 installed int(10) unsigned NOT NULL DEFAULT 0,
 updated int(10) unsigned NOT NULL DEFAULT 0,
 PRIMARY KEY  (user_id,cue_id)

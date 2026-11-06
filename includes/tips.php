@@ -11,7 +11,8 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-const MYSN_TIP_KINDS = array( 'soft', 'medium', 'hard' );
+const MYSN_TIP_KINDS  = array( 'soft', 'medium', 'hard' );
+const MYSN_TIP_COLORS = array( 'blue', 'red', 'green', 'black', 'orange', 'violet' );
 
 /** Opotrebenie jedného úderu v promile (priemerný úder asi 0,8 až 1, teda okolo 1000 úderov na špicu). */
 function mysn_tip_wear_step( $kind, $p ) {
@@ -36,6 +37,7 @@ function mysn_tip_out( $r ) {
 		'strokes' => (int) $r['strokes'],
 		'wear'    => round( min( 1000, (float) $r['wear'] ) / 1000, 4 ),
 		'no'      => (int) $r['tipno'],
+		'color'   => isset( $r['color'] ) && in_array( $r['color'], MYSN_TIP_COLORS, true ) ? $r['color'] : 'blue',
 	);
 }
 
@@ -130,6 +132,27 @@ function mysn_rest_tip_replace( $req ) {
 	return array( 'cue' => $cue, 'tip' => mysn_tip_out( $r ) ) + mysn_tip_sum( $uid );
 }
 
+/** POST /tips/color: farba špice na tágu cue (ostáva aj po výmene špice). */
+function mysn_rest_tip_color( $req ) {
+	global $wpdb;
+	$uid   = get_current_user_id();
+	$cue   = mysn_tip_cue_id( $req->get_param( 'cue' ) );
+	$color = (string) $req->get_param( 'color' );
+	if ( ! $cue || ! in_array( $color, MYSN_TIP_COLORS, true ) ) {
+		return mysn_err( 'Farba špice sa nedá zmeniť.' );
+	}
+	mysn_tip_row( $uid, $cue, (string) $req->get_param( 'def' ) );
+	$wpdb->update(
+		mysn_table( 'tips' ),
+		array( 'color' => $color ),
+		array(
+			'user_id' => $uid,
+			'cue_id'  => $cue,
+		)
+	);
+	return array( 'cue' => $cue, 'tip' => mysn_tip_out( mysn_tip_row( $uid, $cue, '' ) ) ) + mysn_tip_sum( $uid );
+}
+
 add_action(
 	'rest_api_init',
 	function () {
@@ -140,6 +163,7 @@ add_action(
 			array( '/tips', 'GET', 'mysn_rest_tips' ),
 			array( '/tips/stroke', 'POST', 'mysn_rest_tip_stroke' ),
 			array( '/tips/replace', 'POST', 'mysn_rest_tip_replace' ),
+			array( '/tips/color', 'POST', 'mysn_rest_tip_color' ),
 		) as $r ) {
 			register_rest_route(
 				'my-snooker/v1',
