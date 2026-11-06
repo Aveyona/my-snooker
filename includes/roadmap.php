@@ -112,9 +112,11 @@ function mysn_roadmap() {
 				array( 'Šatník v kancelárii: výber oblečenia na zápas, ktoré uvidí súper a diváci', 0 ),
 				array( 'Časomiera v ligovom zápase: 30 sekúnd na úder, posledných 5 s odpočet, inak faul za čas', 1 ),
 				array( 'Pozvánka na partiu cez odkaz', 0 ),
-				array( 'Voľná kamera na medzerníku pre hráčov (pre divákov zatiaľ nie), úder klávesom na Enter', 0 ),
+				array( 'Voľná kamera na medzerníku pre hráčov (medzerník prepína voľný pohľad a tágo, Ctrl zastaví kameru a uvoľní kurzor; pre divákov zatiaľ nie), úder klávesom na Enter', 0 ),
 				array( 'Role admin a správca hry: zoznam hráčov s nastavením roly v administrácii, panel Správa hry v hre podľa práv (práva v dokumentácii), odkaz Dokumentácia v menu My Snooker', 0 ),
 				array( 'Prehľad hráčov v administrácii (účty, odohrané hry, výhry, liga, aktivita), rovnaké údaje aj pre hráča', 0 ),
+				array( 'ELO sila hráča ako v šachu, nový hráč začína na 1350', 0 ),
+				array( 'Klik na predmety v scéne (vo voľnom pohľade s Ctrl) ako ich klávesy F2, F4, F8 a ďalšie', 0 ),
 				array( 'Ochrana proti podvádzaniu: súper ako rozhodca (porovná výsledok úderu), kontrola rozumnosti bodov na serveri, overenie skóre v hre o skóre, označenie podozrivo presných hráčov', 0 ),
 				array( 'TURN server pre priame spojenie (WebRTC): odložené, zatiaľ netreba (spojenie po 0.6.44 funguje)', 0 ),
 				array( 'Klávesy F8, F9 a F10 na štadióne (zatiaľ nerobia nič)', 0 ),
@@ -127,6 +129,7 @@ function mysn_roadmap() {
 /** Denník zmien (najnovšie hore). */
 function mysn_changelog() {
 	return array(
+		array( '0.6.47', '6. 11. 2026', 'Plán vývoja: ELO sila hráča (štart 1350), klik na predmety v scéne vo voľnom pohľade, upresnená voľná kamera (medzerník prepína, Ctrl zastaví kameru).' ),
 		array( '0.6.46', '6. 11. 2026', 'Plán vývoja: role admin a správca hry schválené (zoznam hráčov s nastavením roly, panel Správa hry, odkaz Dokumentácia), voľná kamera schválená, TURN server odložený.' ),
 		array( '0.6.45', '6. 11. 2026', 'Plán vývoja: doplnená ochrana proti podvádzaniu (súper ako rozhodca, kontrola bodov na serveri, overenie skóre v hre o skóre).' ),
 		array( '0.6.44', '5. 11. 2026', 'Priame spojenie hráčov (WebRTC): zakolísané spojenie sa opraví bez nového nadväzovania (ICE restart), chyba pri odosielaní signálu sa skúsi znova, zastaraná ponuka nezhodí živé spojenie, kontrolný signál každé 2 s (bez odozvy 6 s spustí opravu, nie keď je hra v pozadí), limit signálov zvlášť pre každé spojenie, menej požiadaviek na server, po návrate z inej karty sa hneď načíta stav partie. Administrácia: nová stránka Diagnostika spojení (výpadky a opravy, príčina, cesta spojenia, sieť, prehliadač, záznam udalostí).' ),
