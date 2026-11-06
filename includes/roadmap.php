@@ -112,6 +112,7 @@ function mysn_roadmap() {
 				array( 'Šatník v kancelárii: výber oblečenia na zápas, ktoré uvidí súper a diváci', 0 ),
 				array( 'Časomiera v ligovom zápase: 30 sekúnd na úder, posledných 5 s odpočet, inak faul za čas', 1 ),
 				array( 'Pozvánka na partiu cez odkaz', 0 ),
+				array( 'Ochrana proti podvádzaniu: súper ako rozhodca (porovná výsledok úderu), kontrola rozumnosti bodov na serveri, overenie skóre v hre o skóre, označenie podozrivo presných hráčov', 0 ),
 				array( 'TURN server pre priame spojenie (WebRTC): hráči zo sietí, ktoré priame spojenie nedovolia (mobilné dáta, firemné siete), sa spoja cez prepojovací server (riešiť neskôr)', 0 ),
 				array( 'Klávesy F8, F9 a F10 na štadióne (zatiaľ nerobia nič)', 0 ),
 				array( 'Doladenie podľa skúšania (svetlá, citlivosť ovládania, rýchlosť súkna)', 0 ),
@@ -123,6 +124,7 @@ function mysn_roadmap() {
 /** Denník zmien (najnovšie hore). */
 function mysn_changelog() {
 	return array(
+		array( '0.6.45', '6. 11. 2026', 'Plán vývoja: doplnená ochrana proti podvádzaniu (súper ako rozhodca, kontrola bodov na serveri, overenie skóre v hre o skóre).' ),
 		array( '0.6.44', '5. 11. 2026', 'Priame spojenie hráčov (WebRTC): zakolísané spojenie sa opraví bez nového nadväzovania (ICE restart), chyba pri odosielaní signálu sa skúsi znova, zastaraná ponuka nezhodí živé spojenie, kontrolný signál každé 2 s (bez odozvy 6 s spustí opravu, nie keď je hra v pozadí), limit signálov zvlášť pre každé spojenie, menej požiadaviek na server, po návrate z inej karty sa hneď načíta stav partie. Administrácia: nová stránka Diagnostika spojení (výpadky a opravy, príčina, cesta spojenia, sieť, prehliadač, záznam udalostí).' ),
 		array( '0.6.43', '5. 11. 2026', 'Plán vývoja: doplnený TURN server pre priame spojenie hráčov (riešiť neskôr).' ),
 		array( '0.6.42', '5. 11. 2026', 'Spojenie so súperom: krátky výpadok siete už priame spojenie (WebRTC) hneď neruší, počká sa 15 sekúnd, či sa samo neobnoví (predtým 4 s). V ligovom zápase je pri výpadku správny text: partia pokračuje, stav stola sa berie zo servera, súper bez spojenia prehrá po 2 minútach.' ),
