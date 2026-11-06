@@ -584,7 +584,9 @@ export function buildStadium(scene, quality, clock = 45) {
 		}
 		return best ? best.s : null;
 	};
-	const refAim = { id: -1, t: 0 }; // mierená guľa a ako dlho sa na ňu mieri
+	const refAim = { id: -1, t: 0, lock: 0, s: 0 }; // mierená guľa, ako dlho sa na ňu mieri; lock = koľko ešte ostane pri guli
+	const REF_WAIT = 2.5; // sekundy mierenia na tú istú guľu, kým sa rozhodca rozhodne ísť k nej
+	const REF_STAY = 10; // pri guli ostane aspoň toľko sekúnd (aj keď sa mierenie zmení), kým nezavadzia tágu
 	const placeRef = () => {
 		const p = perPoint(ref.s);
 		referee.position.set(p.x, FY, p.z);
@@ -806,6 +808,7 @@ export function buildStadium(scene, quality, clock = 45) {
 				let slow = false;
 				if (dir !== null && !moving && cueBall.on) {
 					// mieri sa na guľu (zvyčajne červenú): po chvíli mierenia na ňu rozhodca pomaly prejde k nej
+					// a ostane tam aspoň REF_STAY sekúnd, aj keď sa mierenie zmení (kým nezavadzia tágu)
 					if (aimBall && aimBall.on) {
 						if (refAim.id !== aimBall.id) {
 							refAim.id = aimBall.id;
@@ -816,12 +819,23 @@ export function buildStadium(scene, quality, clock = 45) {
 						refAim.id = -1;
 						refAim.t = 0;
 					}
-					const near = refAim.t > 0.7 ? refNear(aimBall, cueBall, dir) : null;
-					if (near !== null) {
-						ref.target = near;
-						slow = !refBlocked(referee.position.x, referee.position.z, cueBall, dir);
-					} else if (refAim.id < 0 || refBlocked(referee.position.x, referee.position.z, cueBall, dir)) {
-						ref.target = refChoose(cueBall, dir); // nemieri sa na guľu alebo zavadzia tágu: ako doteraz
+					refAim.lock = Math.max(0, refAim.lock - dt);
+					const lockPt = perPoint(refAim.s);
+					if (refAim.lock > 0 && !refBlocked(lockPt.x, lockPt.z, cueBall, dir)) {
+						ref.target = refAim.s; // drží sa miesta pri guli
+						slow = true;
+					} else {
+						const near = refAim.t > REF_WAIT ? refNear(aimBall, cueBall, dir) : null;
+						if (near !== null) {
+							ref.target = near;
+							refAim.s = near;
+							refAim.lock = REF_STAY + Math.abs(near - ref.s) / 0.45; // 10 s od príchodu (plus cesta)
+							refAim.t = 0;
+							slow = true;
+						} else if (refAim.lock > 0 || refAim.id < 0 || refBlocked(referee.position.x, referee.position.z, cueBall, dir)) {
+							refAim.lock = 0;
+							ref.target = refChoose(cueBall, dir); // nemieri sa na guľu alebo zavadzia tágu: ako doteraz
+						}
 					}
 				} else {
 					refAim.id = -1;
