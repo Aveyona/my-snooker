@@ -131,6 +131,7 @@ function mysn_roadmap() {
 /** Denník zmien (najnovšie hore). */
 function mysn_changelog() {
 	return array(
+		array( '0.7.36', '6. 11. 2026', 'Štadión F2: oddialenejší a širší pohľad na stojan, vidno celé tágá od rukovätí po hroty.' ),
 		array( '0.7.35', '6. 11. 2026', 'Štadión F2: decentnejšie podsvietenie stojana. Namiesto bielej svetelnej škvrny v strede ho osvetľuje široký mäkký reflektor zhora (vybraté zo štyroch variantov), tágá sú rovnomerne osvetlené.' ),
 		array( '0.7.34', '6. 11. 2026', 'Ligový zápas, kreslo F7: keď prídeš na rad, kamera sa prepne k stolu a pípne zvuk na upozornenie. Keď tvoj ťah skončí (súper je na rade), znova si sadneš do kresla s rovnakým pohľadom a priblížením ako predtým, tiež s pípnutím.' ),
 		array( '0.7.33', '6. 11. 2026', 'Štadión F2: stojan s tágami sa pri výbere výrazne rozsvieti (LED lišty hore a dole, bodové svetlo spredu na tágá a jemné svetlo na zadnej doske). Podsvietenie sa synchronizuje cez internet, vidia ho súper aj diváci.' ),
