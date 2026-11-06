@@ -101,7 +101,7 @@ export function buildStadium(scene, quality) {
 	// tribúny na dlhých stranách (rady stupňov so sedadlami, stúpajú dozadu do tmy)
 	// číslo stoličky: strana (0 = +z, 1 = -z) × 175 + rad × 25 + (miesto + 12); rovnaké číslovanie má server
 	const seatMeshes = []; // [sedadlo, operadlo] podľa čísla stoličky (výber miesta divákom)
-	const ROWS = 6; // radov sedadiel na dlhej tribúne (číslovanie počíta so 7 radmi, horný rad bol odobratý kvôli LCD)
+	const ROWS = 7; // radov sedadiel na dlhej tribúne
 	for (const side of [-1, 1]) {
 		for (let row = 0; row < ROWS; row++) {
 			const z = side * (BZ + 0.9 + row * 0.75);
@@ -211,35 +211,60 @@ export function buildStadium(scene, quality) {
 	scr2.castShadow = false;
 	add(new THREE.BoxGeometry(0.12, 1.75, 3.35), dark, BX + 3.68, FY + 3.6, 0);
 
-	// veľké moderné LCD obrazovky nad dlhými tribúnami (tvárou k stolu): pohľad hráča na rade (zapína a vypína divák)
-	const lcdOff = new THREE.MeshStandardMaterial({ color: 0x050608, roughness: 0.12, metalness: 0.6 });
-	const lcdOn = new THREE.MeshBasicMaterial({ color: 0xffffff, toneMapped: false });
-	const lcdBezel = new THREE.MeshStandardMaterial({ color: 0x15171c, roughness: 0.3, metalness: 0.7 });
-	const lcds = [];
-	for (const side of [-1, 1]) {
-		const z = side * 9.15;
-		const y = FY + 4.75;
-		const back = add(new THREE.BoxGeometry(6.0, 3.42, 0.14), lcdBezel, 0, y, z + side * 0.08);
-		back.castShadow = false;
-		const panel = add(new THREE.PlaneGeometry(5.76, 3.24), lcdOff, 0, y, z);
-		panel.rotation.y = side > 0 ? Math.PI : 0;
-		panel.castShadow = false;
-		panel.receiveShadow = false;
-		// tenký svetlý pásik dole (logo výrobcu nie, len LED pás)
-		const led = add(new THREE.BoxGeometry(5.9, 0.03, 0.02), new THREE.MeshBasicMaterial({ color: 0x3d8bff }), 0, y - 1.7, z - side * 0.01);
-		led.castShadow = false;
-		lcds.push(panel);
+	// otočný zelený reflektor na konštrukcii (zapína divák F12): úzky lúč pomaly krúži po hale, stôl obchádza
+	// poloha lúča sa počíta z času (Date.now), takže ho všetci vidia na rovnakom mieste
+	const SPOT_SRC = new THREE.Vector3(0, trussY - 0.25, -2.4);
+	const SPOT_ANG = 0.075; // polovičný uhol kužeľa (asi 4,3°)
+	const spotHead = add(new THREE.CylinderGeometry(0.09, 0.13, 0.26, 16), metal, SPOT_SRC.x, SPOT_SRC.y, SPOT_SRC.z);
+	spotHead.castShadow = false;
+	const spotLight = new THREE.SpotLight(0x39ff6a, 0, 22, SPOT_ANG, 0.35, 1.2);
+	spotLight.position.copy(SPOT_SRC);
+	root.add(spotLight, spotLight.target);
+	const spotGeo = new THREE.CylinderGeometry(1, 1, 1, 24, 1, true);
+	spotGeo.translate(0, -0.5, 0); // vrchol kužeľa v reflektore, lúč ide po -y
+	{
+		const pos = spotGeo.attributes.position;
+		for (let i = 0; i < pos.count; i++) {
+			const t = -pos.getY(i); // 0 pri reflektore, 1 na konci
+			const r = 0.04 + t; // úzky pri šošovke, rozširuje sa
+			pos.setX(i, pos.getX(i) * r);
+			pos.setZ(i, pos.getZ(i) * r);
+		}
 	}
-	/** LCD: on = zapnuté, tex = textúra s pohľadom hráča (null = čierny obraz). */
-	const setLcd = (on, tex) => {
-		const want = on && tex ? tex : null;
-		if (lcdOn.map !== want) {
-			lcdOn.map = want;
-			lcdOn.needsUpdate = true;
+	const spotBeam = new THREE.Mesh(spotGeo, new THREE.MeshBasicMaterial({ color: 0x39ff6a, transparent: true, opacity: 0.09, depthWrite: false, side: THREE.DoubleSide, blending: THREE.AdditiveBlending }));
+	spotBeam.castShadow = false;
+	spotBeam.visible = false;
+	spotBeam.renderOrder = 2;
+	root.add(spotBeam);
+	let spotWant = false;
+	let spotK = 0; // plynulé rozsvietenie a zhasnutie
+	const spotDown = new THREE.Vector3(0, -1, 0);
+	const spotT = new THREE.Vector3();
+	/** Reflektor zapnutý alebo vypnutý. */
+	const setSpot = (on) => {
+		spotWant = !!on;
+	};
+	const spotUpdate = (dt) => {
+		spotK = Math.max(0, Math.min(1, spotK + (spotWant ? dt : -dt) * 2));
+		spotBeam.visible = spotK > 0.01;
+		spotLight.intensity = spotK * 160;
+		if (!spotBeam.visible) {
+			return;
 		}
-		for (const p of lcds) {
-			p.material = want ? lcdOn : lcdOff;
-		}
+		// elipsa po hale: tribúny, kratšie konce a podlaha za mantinelmi, stôl (|x| < 2,1, |z| < 1,2) nikdy
+		const a = ((Date.now() / 1000) * Math.PI * 2) / 40; // jedno kolo za 40 s
+		const ex = 6.2 + Math.sin(a * 3) * 0.6;
+		const ez = 5.0 + Math.sin(a * 2) * 0.8;
+		spotT.set(Math.cos(a) * ex, FY + 1.1 + Math.sin(a * 5) * 0.4, Math.sin(a) * ez);
+		spotLight.target.position.copy(spotT);
+		const d = spotT.clone().sub(SPOT_SRC);
+		const len = d.length();
+		spotBeam.position.copy(SPOT_SRC);
+		spotBeam.quaternion.setFromUnitVectors(spotDown, d.normalize());
+		const r = Math.tan(SPOT_ANG) * len;
+		spotBeam.scale.set(r, len, r);
+		spotBeam.material.opacity = 0.12 * spotK;
+		spotHead.quaternion.copy(spotBeam.quaternion);
 	};
 
 	// stolík rozhodcu a stoličky hráčov
@@ -654,9 +679,8 @@ export function buildStadium(scene, quality) {
 			reactFans(fans, kind);
 		},
 		setScreen: drawScreen,
-		setLcd,
+		setSpot,
 		setLeague,
-		lcds,
 		confetti,
 		fanConfetti,
 		seatConfetti,
@@ -674,6 +698,7 @@ export function buildStadium(scene, quality) {
 		update(dt, cueBall, dir = null, moving = false) {
 			updateFans(fans, dt, cueBall);
 			confetti.update(dt);
+			spotUpdate(dt);
 			if (cueBall && root.visible) {
 				// kým sa gule nehýbu a mieri sa: uhne z cesty tága (obíde stôl po obvode)
 				if (dir !== null && !moving && cueBall.on) {

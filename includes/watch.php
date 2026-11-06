@@ -125,7 +125,7 @@ function mysn_rest_seat( $req ) {
 	if ( ! $limit ) {
 		return mysn_err( 'Táto partia sa už nedá sledovať.', 404 );
 	}
-	if ( $seat >= $limit || ( 'm' === $ctx[0] && ( in_array( $seat, MYSN_SEATS_DECOR, true ) || intdiv( $seat % 175, 25 ) >= 6 ) ) ) { // horný (7.) rad na štadióne už nie je
+	if ( $seat >= $limit || ( 'm' === $ctx[0] && in_array( $seat, MYSN_SEATS_DECOR, true ) ) ) {
 		return mysn_err( 'Toto miesto je obsadené, vyber si iné.', 409 );
 	}
 	$wpdb->query( $wpdb->prepare( "DELETE FROM $t WHERE ctx = %s AND seen < %d", $ctx, $now - MYSN_SEAT_TTL ) ); // phpcs:ignore

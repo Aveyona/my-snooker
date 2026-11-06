@@ -1626,7 +1626,7 @@ export class UI {
 			['F6', 'zmena miesta'],
 			['F7', `konfety (zostáva ${o.confLeft}×, 15 s)`],
 			['F8', 'pohľad hráča vpravo hore'],
-			['F9', 'veľké LCD nad tribúnou zap. a vyp. (pre všetkých)'],
+			['F12', 'zelený reflektor zap. a vyp. (pre všetkých)'],
 			['Tab', 'malý stôl zhora vpravo hore'],
 			['Myš', 'rozhliadanie, koliesko priblíženie'],
 			['Esc', 'menu (Prestať sledovať)'],
@@ -1634,7 +1634,7 @@ export class UI {
 		B.innerHTML = `<div class="mysn-spphone-top">📱 Divák</div><h3>Pomocník</h3><div class="mysn-sp-keys">${rows.map(([k, t]) => `<div><b>${k}</b><span>${esc(t)}</span></div>`).join('')}</div>`;
 		const conf = this.button(`🎉 Konfety (${o.confLeft}×)`, 'spectConfetti', 'F7');
 		conf.disabled = !o.stadium || o.confLeft <= 0;
-		B.append(conf, this.button(`📺 LCD ${o.lcd ? 'vypnúť' : 'zapnúť'} (F9)`, 'spectLcd'), ...(o.demo ? [this.button('Ukončiť ukážku (Esc)', 'spectDemoEnd')] : [this.button('Zmeniť miesto (F6)', 'seatChange'), this.button('Prestať sledovať', 'watchStop')]), this.button('Zavrieť (F1)', 'spectPhoneClose'));
+		B.append(conf, this.button(`💡 Reflektor ${o.spot ? 'zhasnúť' : 'zapnúť'} (F12)`, 'spectSpot'), ...(o.demo ? [this.button('Ukončiť ukážku (Esc)', 'spectDemoEnd')] : [this.button('Zmeniť miesto (F6)', 'seatChange'), this.button('Prestať sledovať', 'watchStop')]), this.button('Zavrieť (F1)', 'spectPhoneClose'));
 	}
 
 	spectPhoneOpen() {

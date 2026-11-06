@@ -258,7 +258,7 @@ export class Online {
 	sendCam(c) {
 		const now = performance.now();
 		const g = this.game;
-		const toOpp = !!(g.match && g.match.league && g.myTurn); // súper ho potrebuje pre LCD na štadióne
+		const toOpp = false; // súperovi netreba (LCD na štadióne zatiaľ nie je)
 		const toW = this.rtc.list('watch', (p) => !p.offerer).length > 0;
 		if (!this.matchId || now - (this._camAt || 0) < 100 || (!toOpp && !toW)) {
 			return;
@@ -272,13 +272,13 @@ export class Online {
 		}
 	}
 
-	/** LCD na štadióne zapnuté alebo vypnuté (prepína divák): stav si pamätám a pošlem súperovi aj svojim divákom. */
-	sendLcd(m) {
-		this.lcd = { k: 'w-lcd', on: !!m.on, id: String(m.id || '') };
+	/** Reflektor na štadióne zapnutý alebo vypnutý (prepína divák): stav si pamätám a pošlem súperovi aj svojim divákom. */
+	sendSpot(m) {
+		this.lcd = { k: 'w-spot', on: !!m.on, id: String(m.id || '') };
 		if (!this.matchId) {
 			return;
 		}
-		this.rtcSendOpp({ k: 'lcd', on: this.lcd.on, id: this.lcd.id });
+		this.rtcSendOpp({ k: 'spot', on: this.lcd.on, id: this.lcd.id });
 		this.wsend(this.lcd);
 	}
 
@@ -424,8 +424,8 @@ export class Online {
 				this.hooks.watch(m);
 			} else if (!p.offerer && m.k === 'w-conf' && this.hooks.watcherConf) {
 				this.hooks.watcherConf(m); // konfety od môjho diváka (F7)
-			} else if (!p.offerer && m.k === 'w-lcd' && this.hooks.lcd) {
-				this.hooks.lcd(m, true); // divák zapol alebo vypol LCD
+			} else if (!p.offerer && m.k === 'w-spot' && this.hooks.spot) {
+				this.hooks.spot(m, true); // divák zapol alebo vypol reflektor
 			}
 			return;
 		}
@@ -459,9 +459,9 @@ export class Online {
 			if (this.hooks.cam) {
 				this.hooks.cam(m); // pohľad súpera na rade (LCD na štadióne)
 			}
-		} else if (m.k === 'lcd') {
-			if (this.hooks.lcd) {
-				this.hooks.lcd({ k: 'w-lcd', on: !!m.on, id: String(m.id || '') }, false);
+		} else if (m.k === 'spot') {
+			if (this.hooks.spot) {
+				this.hooks.spot({ k: 'w-spot', on: !!m.on, id: String(m.id || '') }, false);
 			}
 		} else if (m.k === 'rack') {
 			if (this.hooks.rack) {
