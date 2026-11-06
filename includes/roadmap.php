@@ -131,6 +131,7 @@ function mysn_roadmap() {
 /** Denník zmien (najnovšie hore). */
 function mysn_changelog() {
 	return array(
+		array( '0.6.67', '6. 11. 2026', 'Voľná kamera: ruky s tágom sa zapínajú a vypínajú klávesom F3, predvolene sú vypnuté.' ),
 		array( '0.6.66', '6. 11. 2026', 'Pravé tlačidlo: samotné stlačenie pohľad nezmení, k mierenej guli sa pohľad otáča až s pohybom myši; koliesko pri držanom pravom tlačidle platí len počas držania.' ),
 		array( '0.6.65', '6. 11. 2026', 'Voľná kamera: menšie ruky, v pravej ruke vybraté tágo; ku stene herne sa dá ísť len na dĺžku rúk.' ),
 		array( '0.6.64', '6. 11. 2026', 'Pohľad pravým tlačidlom: myš hore približuje ku guli po priamke pohľadu (uhol sa nemení, obraz už neťahá dole) a kamera pritom mierne stúpa.' ),

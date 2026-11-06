@@ -508,7 +508,7 @@ export function start(root, config = {}) {
 		rig.setView(pos, pos.clone().add(dir));
 		rig.jump();
 		ui.showView(null);
-		ui.toast('Voľná kamera: myš rozhliadanie, šípky alebo W A S D posun, koliesko priblíženie, pravé alebo ľavé tlačidlo myši (aj E a Q) hore a dole, Shift rýchlejšie, Ctrl zastaví kameru. Medzerník: späť za tágo.');
+		ui.toast('Voľná kamera: myš rozhliadanie, šípky alebo W A S D posun, koliesko priblíženie, pravé alebo ľavé tlačidlo myši (aj E a Q) hore a dole, Shift rýchlejšie, Ctrl zastaví kameru. F3 ruky. Medzerník: späť za tágo.');
 	};
 	/** Odchod z voľnej kamery: zapamätá si polohu a smer pohľadu. */
 	const freeLeave = () => {
@@ -1931,6 +1931,13 @@ export function start(root, config = {}) {
 				}
 				return true;
 			}
+			if (view === 'free' && lk === 'f3') {
+				// F3 vo voľnej kamere: ruky s tágom zapnúť a vypnúť (predvolene vypnuté, pamätá sa)
+				settings.freeHands = !settings.freeHands;
+				saveSettings(settings);
+				ui.toast(settings.freeHands ? 'Ruky s tágom zapnuté (F3).' : 'Ruky s tágom vypnuté (F3).');
+				return true;
+			}
 			if (view === 'free' && /^(w|a|s|d|q|e|arrowup|arrowdown|arrowleft|arrowright|shift)$/.test(lk)) {
 				return true; // pohyb voľnej kamery rieši snímok
 			}
@@ -2592,7 +2599,7 @@ export function start(root, config = {}) {
 		if (!hands) {
 			hands = new Hands(scene, rig.camera);
 		}
-		hands.updateFree(view === 'free', dt, freeVel.length(), cueSpec);
+		hands.updateFree(view === 'free' && !!settings.freeHands, dt, freeVel.length(), cueSpec);
 		if (chalkT >= 0) {
 			// kriedovanie: tágo sa zdvihne a odtiahne, krieda sa nasadí dierou na špičku, pootáča sa a odíde
 			chalkT = debug.chalkFreeze !== null ? debug.chalkFreeze : (performance.now() - chalkStart) / 1000; // podľa skutočného času
