@@ -213,6 +213,11 @@ export class UI {
 					<option value="high">Vysoká (tiene)</option>
 					<option value="low">Nízka (pre slabšie zariadenia)</option>
 				</select></label>
+			<label>Vzhľad stola
+				<select data-k="tableDetail">
+					<option value="fine">Podrobný (lesk súkna, lakované drevo)</option>
+					<option value="simple">Jednoduchý (pre slabšie zariadenia)</option>
+				</select></label>
 			<label>Hlasitosť <input type="range" min="0" max="1" step="0.05" data-k="volume"></label>
 			<label>Detail dotyku pri mierení
 				<select data-k="contactPos">

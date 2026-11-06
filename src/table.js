@@ -12,8 +12,8 @@ const RAIL = 0.05; // šírka mantinelu (gumy)
 const FRAME = 0.12; // šírka dreveného rámu
 const CUSHION_H = 0.037; // výška nosa mantinelu nad súknom
 
-/** Textúra súkna: zelená s jemnou štruktúrou, čiara baulk, D a spoty. */
-function clothTexture(maxAniso, base = '#1d6b34') {
+/** Textúra súkna: zelená s jemnou štruktúrou, čiara baulk, D a spoty. detail = smer vlasu a tenšie čiary. */
+function clothTexture(maxAniso, base = '#1d6b34', detail = false) {
 	const w = 2048;
 	const h = Math.round((w * (W + 2 * RAIL)) / (L + 2 * RAIL));
 	const c = document.createElement('canvas');
@@ -31,6 +31,25 @@ function clothTexture(maxAniso, base = '#1d6b34') {
 		img.data[i + 2] += n;
 	}
 	g.putImageData(img, 0, 0);
+	if (detail) {
+		// smer vlasu: súkno kefované od baulku k čiernej, pri baulku o odtieň svetlejšie
+		const nap = g.createLinearGradient(0, 0, w, 0);
+		nap.addColorStop(0, 'rgba(255,255,255,0.07)');
+		nap.addColorStop(1, 'rgba(0,0,0,0.05)');
+		g.fillStyle = nap;
+		g.fillRect(0, 0, w, h);
+		// jemné pozdĺžne vlákna
+		for (let i = 0; i < 2600; i++) {
+			const y = Math.random() * h;
+			const x = Math.random() * w;
+			g.strokeStyle = Math.random() < 0.5 ? 'rgba(255,255,255,0.035)' : 'rgba(0,0,0,0.05)';
+			g.lineWidth = 1;
+			g.beginPath();
+			g.moveTo(x, y);
+			g.lineTo(x + 20 + Math.random() * 60, y + (Math.random() - 0.5) * 1.5);
+			g.stroke();
+		}
+	}
 	// svetlejší stred (ako pod lampami)
 	const grad = g.createRadialGradient(w / 2, h / 2, h * 0.1, w / 2, h / 2, w * 0.6);
 	grad.addColorStop(0, 'rgba(255,255,255,0.06)');
@@ -40,8 +59,8 @@ function clothTexture(maxAniso, base = '#1d6b34') {
 	const sx = w / (L + 2 * RAIL);
 	const X = (x) => (x + L / 2 + RAIL) * sx;
 	const Z = (z) => (z + W / 2 + RAIL) * sx;
-	g.strokeStyle = 'rgba(255,255,255,0.75)';
-	g.lineWidth = Math.max(2, sx * 0.003);
+	g.strokeStyle = detail ? 'rgba(255,255,255,0.8)' : 'rgba(255,255,255,0.75)';
+	g.lineWidth = detail ? Math.max(1.5, sx * 0.0018) : Math.max(2, sx * 0.003); // podrobne: tenká čiara ako kriedou
 	g.beginPath();
 	g.moveTo(X(BAULK_X), Z(-W / 2));
 	g.lineTo(X(BAULK_X), Z(W / 2));
@@ -52,13 +71,95 @@ function clothTexture(maxAniso, base = '#1d6b34') {
 	g.fillStyle = 'rgba(255,255,255,0.8)';
 	for (const k of Object.keys(SPOTS)) {
 		g.beginPath();
-		g.arc(X(SPOTS[k].x), Z(SPOTS[k].z), sx * 0.005, 0, Math.PI * 2);
+		g.arc(X(SPOTS[k].x), Z(SPOTS[k].z), sx * (detail ? 0.0035 : 0.005), 0, Math.PI * 2);
 		g.fill();
 	}
 	const tex = new THREE.CanvasTexture(c);
 	tex.colorSpace = THREE.SRGBColorSpace;
 	tex.anisotropy = maxAniso;
 	return tex;
+}
+
+/** Normálová mapa tkaniny súkna (opakuje sa, asi 4 cm na dlaždicu): drobná väzba vlákien. */
+function weaveNormal() {
+	const n = 256;
+	const hgt = new Float32Array(n * n);
+	for (let y = 0; y < n; y++) {
+		for (let x = 0; x < n; x++) {
+			// väzba: striedanie útku a osnovy + šum
+			const a = Math.sin((x / n) * Math.PI * 64) * Math.sin((y / n) * Math.PI * 64);
+			hgt[y * n + x] = a * 0.35 + (Math.random() - 0.5) * 0.9;
+		}
+	}
+	const c = document.createElement('canvas');
+	c.width = c.height = n;
+	const g = c.getContext('2d');
+	const img = g.createImageData(n, n);
+	const at = (x, y) => hgt[((y + n) % n) * n + ((x + n) % n)];
+	for (let y = 0; y < n; y++) {
+		for (let x = 0; x < n; x++) {
+			const dx = at(x + 1, y) - at(x - 1, y);
+			const dy = at(x, y + 1) - at(x, y - 1);
+			const i = (y * n + x) * 4;
+			img.data[i] = 128 - dx * 40;
+			img.data[i + 1] = 128 - dy * 40;
+			img.data[i + 2] = 255;
+			img.data[i + 3] = 255;
+		}
+	}
+	g.putImageData(img, 0, 0);
+	const tex = new THREE.CanvasTexture(c);
+	tex.wrapS = tex.wrapT = THREE.RepeatWrapping;
+	return tex;
+}
+
+/** Podrobné drevo (mahagón): jemné letokruhy, póry a odtiene pozdĺž rámu. Vráti farbu a normálovú mapu. */
+function woodDetail() {
+	const w = 2048;
+	const h = 256;
+	const c = document.createElement('canvas');
+	c.width = w;
+	c.height = h;
+	const g = c.getContext('2d');
+	const base = g.createLinearGradient(0, 0, 0, h);
+	base.addColorStop(0, '#5e2a12');
+	base.addColorStop(0.5, '#6a3216');
+	base.addColorStop(1, '#552510');
+	g.fillStyle = base;
+	g.fillRect(0, 0, w, h);
+	// letokruhy: dlhé vlnité pásy, rôzne tmavé
+	for (let i = 0; i < 220; i++) {
+		const y0 = Math.random() * h;
+		const amp = 1 + Math.random() * 5;
+		const fr = 80 + Math.random() * 200;
+		const ph = Math.random() * 10;
+		const dark = Math.random() < 0.6;
+		g.strokeStyle = dark ? `rgba(35,12,4,${0.08 + Math.random() * 0.2})` : `rgba(150,80,40,${0.05 + Math.random() * 0.1})`;
+		g.lineWidth = 0.6 + Math.random() * 2.2;
+		g.beginPath();
+		for (let x = 0; x <= w; x += 16) {
+			const y = y0 + Math.sin(x / fr + ph) * amp + Math.sin(x / (fr * 0.31) + ph * 2) * amp * 0.3;
+			if (x === 0) {
+				g.moveTo(x, y);
+			} else {
+				g.lineTo(x, y);
+			}
+		}
+		g.stroke();
+	}
+	// póry: drobné tmavé čiarky pozdĺž vlákna
+	for (let i = 0; i < 9000; i++) {
+		const x = Math.random() * w;
+		const y = Math.random() * h;
+		g.fillStyle = `rgba(20,6,2,${0.15 + Math.random() * 0.25})`;
+		g.fillRect(x, y, 2 + Math.random() * 5, 0.8);
+	}
+	const map = new THREE.CanvasTexture(c);
+	map.colorSpace = THREE.SRGBColorSpace;
+	map.wrapS = map.wrapT = THREE.RepeatWrapping;
+	map.repeat.set(3, 1);
+	map.anisotropy = 8;
+	return map;
 }
 
 function woodTexture() {
@@ -135,10 +236,12 @@ export function buildTable(renderer) {
 	const aniso = renderer.capabilities.getMaxAnisotropy();
 
 	// Súkno (hracia plocha aj pod mantinelmi)
-	const cloth = new THREE.Mesh(
-		new THREE.PlaneGeometry(L + 2 * RAIL, W + 2 * RAIL),
-		new THREE.MeshStandardMaterial({ map: clothTexture(aniso), roughness: 0.92, metalness: 0 })
-	);
+	const clothSimple = new THREE.MeshStandardMaterial({ map: clothTexture(aniso), roughness: 0.92, metalness: 0 });
+	const weave = weaveNormal();
+	weave.repeat.set((L + 2 * RAIL) / 0.04, (W + 2 * RAIL) / 0.04);
+	// podrobné súkno: lesk látky (sheen) ako zamat, tkanina v normálovej mape
+	const clothDetail = new THREE.MeshPhysicalMaterial({ roughness: 0.95, metalness: 0, sheen: 0.3, sheenRoughness: 0.7, sheenColor: new THREE.Color(0x4fae6a), normalMap: weave, normalScale: new THREE.Vector2(0.35, 0.35) });
+	const cloth = new THREE.Mesh(new THREE.PlaneGeometry(L + 2 * RAIL, W + 2 * RAIL), clothSimple);
 	cloth.rotation.x = -Math.PI / 2;
 	cloth.receiveShadow = true;
 	cloth.name = 'cloth';
@@ -151,7 +254,9 @@ export function buildTable(renderer) {
 	const outZ = hz + RAIL + FRAME;
 
 	// Mantinely: guma v tvare skutočných mantinelov, konce zaoblené a zrezané do jamiek (ako čeľuste)
-	const railMat = new THREE.MeshStandardMaterial({ color: 0x17602f, roughness: 0.88, side: THREE.DoubleSide });
+	const railSimple = new THREE.MeshStandardMaterial({ color: 0x17602f, roughness: 0.88, side: THREE.DoubleSide });
+	const railDetail = new THREE.MeshPhysicalMaterial({ color: 0x17602f, roughness: 0.92, side: THREE.DoubleSide, sheen: 0.3, sheenRoughness: 0.7, sheenColor: new THREE.Color(0x4fae6a) });
+	const railMat = railSimple; // podrobný vzhľad: railDetail (setDetail)
 	const jawEnd = (nx, nz, ox, oz) => ({ x: nx + ox * RAIL, z: nz + oz * RAIL }); // bod na zadnej strane mantinelu
 	const cushions = [];
 	for (const sz of [-1, 1]) {
@@ -344,6 +449,8 @@ export function buildTable(renderer) {
 	hole.closePath();
 	frame.holes.push(hole);
 	const wood = new THREE.MeshStandardMaterial({ map: woodTexture(), roughness: 0.4, metalness: 0.05 });
+	// podrobné drevo: mahagón pod lakom (odlesky lámp)
+	const woodFine = new THREE.MeshPhysicalMaterial({ map: woodDetail(), roughness: 0.5, metalness: 0, clearcoat: 1, clearcoatRoughness: 0.12 });
 	const BEV = 0.008;
 	const frameGeo = new THREE.ExtrudeGeometry(frame, { depth: fy + 0.02 - 2 * BEV, bevelEnabled: true, bevelThickness: BEV, bevelSize: BEV * 0.8, bevelSegments: 4, curveSegments: 16 });
 	const frameMesh = new THREE.Mesh(frameGeo, wood);
@@ -407,29 +514,80 @@ export function buildTable(renderer) {
 	}
 
 	// Kovové značky (diamanty) na ráme
-	const mark = new THREE.MeshStandardMaterial({ color: 0xd9c38a, metalness: 0.8, roughness: 0.3 });
+	const markSimple = new THREE.MeshStandardMaterial({ color: 0xd9c38a, metalness: 0.8, roughness: 0.3 });
+	const markPearl = new THREE.MeshPhysicalMaterial({ color: 0xf3eee4, metalness: 0, roughness: 0.2, iridescence: 0.8, iridescenceIOR: 1.6, clearcoat: 1 });
+	const mark = markSimple;
+	const marks = [];
 	for (const fx of [-3, -1, 1, 3]) {
 		for (const s of [-1, 1]) {
 			const d = new THREE.Mesh(new THREE.CircleGeometry(0.008, 12), mark);
 			d.rotation.x = -Math.PI / 2;
 			d.position.set((fx * L) / 8, fy + 0.0015, s * (outZ - FRAME / 2));
 			group.add(d);
+			marks.push(d);
 		}
 	}
 
 	// súkno: zelené v herni (Hrať, partia), červené pri tréningu, modré na štadióne (liga)
-	const felts = { green: { cloth: null, rail: 0x17602f, base: '#1d6b34' }, red: { cloth: null, rail: 0x5a1016, base: '#6a121a' }, blue: { cloth: null, rail: 0x1b4a96, base: '#1f56b0' } };
-	felts.green.cloth = cloth.material.map;
-	const setFelt = (name) => {
-		const f = felts[name] || felts.green;
-		if (!f.cloth) {
-			f.cloth = clothTexture(aniso, f.base);
-		}
-		cloth.material.map = f.cloth;
-		cloth.material.needsUpdate = true;
-		railMat.color.setHex(f.rail);
+	// sheen = farba lesku látky pri podrobnom vzhľade (svetlejší odtieň súkna)
+	const felts = {
+		green: { cloth: null, fine: null, rail: 0x17602f, base: '#1d6b34', sheen: 0x4fae6a },
+		red: { cloth: null, fine: null, rail: 0x5a1016, base: '#6a121a', sheen: 0xb8424c },
+		blue: { cloth: null, fine: null, rail: 0x1b4a96, base: '#1f56b0', sheen: 0x5f93e6 },
 	};
-	return { group, cloth, surfaceY: 0, ballY: R, setFelt };
+	felts.green.cloth = clothSimple.map;
+	const woodMeshes = [];
+	const railMeshes = [];
+	group.traverse((o) => {
+		if (o.isMesh && o.material === wood) {
+			woodMeshes.push(o);
+		}
+		if (o.isMesh && o.material === railSimple) {
+			railMeshes.push(o);
+		}
+	});
+	let felt = 'green';
+	let detail = false;
+	const apply = () => {
+		const f = felts[felt] || felts.green;
+		if (detail) {
+			if (!f.fine) {
+				f.fine = clothTexture(aniso, f.base, true);
+			}
+			clothDetail.map = f.fine;
+			clothDetail.sheenColor.setHex(f.sheen);
+			clothDetail.needsUpdate = true;
+			railDetail.color.setHex(f.rail);
+			railDetail.sheenColor.setHex(f.sheen);
+		} else {
+			if (!f.cloth) {
+				f.cloth = clothTexture(aniso, f.base);
+			}
+			clothSimple.map = f.cloth;
+			clothSimple.needsUpdate = true;
+			railSimple.color.setHex(f.rail);
+		}
+		cloth.material = detail ? clothDetail : clothSimple;
+		for (const m of railMeshes) {
+			m.material = detail ? railDetail : railSimple;
+		}
+		for (const m of woodMeshes) {
+			m.material = detail ? woodFine : wood;
+		}
+		for (const m of marks) {
+			m.material = detail ? markPearl : markSimple;
+		}
+	};
+	const setFelt = (name) => {
+		felt = felts[name] ? name : 'green';
+		apply();
+	};
+	/** Vzhľad stola (Nastavenia): podrobný = lesk súkna, tkanina, lakovaný mahagón, perleťové značky. */
+	const setDetail = (on) => {
+		detail = !!on;
+		apply();
+	};
+	return { group, cloth, surfaceY: 0, ballY: R, setFelt, setDetail };
 }
 
 /** Miestnosť: tmavá podlaha a tri lampy nad stolom. */

@@ -29,7 +29,7 @@ const AIM_AHEAD = 0.5; // posun pohľadu bez mierenej gule: kamera sa pozerá 50
 
 function loadSettings() {
 	const mobile = /Android|iPhone|iPad|Mobile/i.test(navigator.userAgent);
-	const def = { lines: false, quality: mobile ? 'low' : 'high', volume: 0.8, respot: true, contact: true, contactPos: 'center', afterShot: 'follow', oppCam: 'follow', camera: 'cue', cue: 'club' };
+	const def = { tableDetail: 'fine', lines: false, quality: mobile ? 'low' : 'high', volume: 0.8, respot: true, contact: true, contactPos: 'center', afterShot: 'follow', oppCam: 'follow', camera: 'cue', cue: 'club' };
 	try {
 		const raw = window.localStorage.getItem(STORE);
 		if (raw) {
@@ -89,6 +89,7 @@ export function start(root, config = {}) {
 	const room = buildRoomShell(scene, settings.quality, { news: config.news, rss: config.rss, site: config.site, user: config.user });
 	const shellObjs = scene.children.filter((o) => !preShell.has(o)); // herňa (steny, nábytok, svetlá)
 	const table = buildTable(renderer);
+	table.setDetail(settings.tableDetail !== 'simple'); // Nastavenia: Vzhľad stola (predvolene podrobný)
 	scene.add(table.group);
 
 	const game = new Game();
@@ -1674,6 +1675,9 @@ export function start(root, config = {}) {
 			}
 			if (k === 'respot') {
 				game.respot = !!v;
+			}
+			if (k === 'tableDetail') {
+				table.setDetail(v !== 'simple');
 			}
 			if (k === 'contactPos') {
 				settings.contact = v !== 'off';
