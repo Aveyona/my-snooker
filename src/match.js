@@ -176,7 +176,7 @@ export class Game extends Training {
 		if (this.solo) {
 			this.stopSolo();
 		}
-		this.match = { id: info.id, me: info.me, seq: -1, turn: 0, rules: null, inHand: false, players: info.players, status: info.status, league: !!info.league, tier: info.tier | 0, training: !!info.training, best: [0, 0] };
+		this.match = { id: info.id, me: info.me, seq: -1, turn: 0, rules: null, inHand: false, players: info.players, status: info.status, league: !!info.league, tier: info.tier | 0, clock: info.clock | 0, training: !!info.training, best: [0, 0] };
 		this.history = [];
 		this.remote = false;
 		this.applyState(info.state, info.seq);
@@ -411,7 +411,7 @@ export class Game extends Training {
 		return { state, points, foul: false, penalty: 0, respot, inHand: white, msg };
 	}
 
-	/** Faul za čas (ligový zápas): stav po faule hráča na rade, ktorý do 30 sekúnd neudrel. */
+	/** Faul za čas (ligový zápas): stav po faule hráča na rade, ktorý do času na ťah (podľa sezóny ligy) neudrel. */
 	timeFoulState() {
 		const m = this.match;
 		const off = m.rules.turn;

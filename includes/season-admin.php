@@ -39,6 +39,7 @@ function mysn_season_restart( $test, $months ) {
 			'started' => $now,
 			'ends'    => $end,
 			'status'  => 'active',
+			'clock'   => mysn_clock_last(),
 		)
 	);
 	$id = (int) $wpdb->insert_id;
@@ -69,6 +70,10 @@ add_action(
 				$msg = 'err-date';
 			} else {
 				$data = array( 'ends' => $ts );
+				$clk  = isset( $_POST['clock'] ) ? (int) $_POST['clock'] : 0;
+				if ( $clk >= 15 && $clk <= 120 ) {
+					$data['clock'] = $clk;
+				}
 				if ( '' !== $name ) {
 					$data['name'] = mb_substr( $name, 0, 60 );
 				}
@@ -120,6 +125,7 @@ function mysn_admin_season() {
 			<table class="widefat striped" style="border:0">
 				<tr><td>Začiatok</td><td><b><?php echo esc_html( wp_date( 'j. n. Y', (int) $s['started'] ) ); ?></b></td></tr>
 				<tr><td>Koniec</td><td><b><?php echo esc_html( wp_date( 'j. n. Y H:i', (int) $s['ends'] ) ); ?></b> (o <?php echo esc_html( $left ); ?> dní)</td></tr>
+				<tr><td>Čas na ťah</td><td><b><?php echo esc_html( mysn_shot_clock() ); ?> s</b></td></tr>
 				<tr><td>Hráči v sezóne</td><td><b><?php echo esc_html( $pl ); ?></b></td></tr>
 				<tr><td>Dohraté ligové zápasy</td><td><b><?php echo esc_html( $ma ); ?></b></td></tr>
 				<tr><td>Prvé miesto</td><td><b><?php echo $top ? esc_html( mysn_user( $top['user_id'] )['name'] . ' (' . (int) $top['points'] . ' b.)' ) : 'zatiaľ nikto'; ?></b></td></tr>
@@ -127,13 +133,14 @@ function mysn_admin_season() {
 			<p class="description">Keď uplynie dátum konca, sezóna sa pri najbližšom otvorení ligy sama uzavrie (majster a konečné poradie) a začne nová na jeden rok.</p>
 		</div>
 		<div class="card" style="margin:0;max-width:none">
-			<h2 style="margin-top:8px">Posunúť koniec sezóny</h2>
+			<h2 style="margin-top:8px">Nastavenia sezóny</h2>
 			<form method="post" action="<?php echo $post; // phpcs:ignore ?>">
 				<?php wp_nonce_field( 'mysn_season' ); ?>
 				<input type="hidden" name="action" value="mysn_season"><input type="hidden" name="do" value="end">
 				<p><label>Nový dátum konca<br><input type="date" name="ends" required min="<?php echo esc_attr( wp_date( 'Y-m-d', time() + DAY_IN_SECONDS ) ); ?>" value="<?php echo esc_attr( wp_date( 'Y-m-d', (int) $s['ends'] ) ); ?>"></label></p>
 				<p><label>Názov sezóny (nepovinné)<br><input type="text" name="name" class="regular-text" maxlength="60" value="<?php echo esc_attr( $s['name'] ); ?>"></label></p>
-				<p class="description">Sezóna sa skončí v zvolený deň o 23:59. Body ani poradie sa nemenia.</p>
+				<p><label>Čas na ťah (sekundy)<br><input type="number" name="clock" min="15" max="120" step="1" required value="<?php echo esc_attr( mysn_shot_clock() ); ?>"></label></p>
+				<p class="description">Sezóna sa skončí v zvolený deň o 23:59. Body ani poradie sa nemenia. Čas na ťah: koľko sekúnd má hráč v ligovom zápase na úder, potom je faul za čas (15 až 120 s, platí hneď aj pre rozohrané zápasy tejto sezóny, nová sezóna ho preberá).</p>
 				<p><button class="button button-primary">Uložiť</button></p>
 			</form>
 		</div>

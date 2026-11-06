@@ -6,7 +6,7 @@
  * {prefix}my_snooker_matches   partie: hráči, stav, kto je na rade, poradie úderu, uložený stav stola a skóre,
  *                              rozohraný úder, mierenie hráča na rade, posledný signál každého hráča, výsledok
  * {prefix}my_snooker_moves     záznam partie: každý úder s parametrami, stavom po údere, bodmi a faulom
- * {prefix}my_snooker_seasons   sezóny ligy (približne rok): názov, začiatok, koniec, stav, majster sezóny
+ * {prefix}my_snooker_seasons   sezóny ligy (približne rok): názov, začiatok, koniec, stav, majster sezóny, čas na ťah
  * {prefix}my_snooker_league    body ligy hráčov v sezóne, výhry, prehry, najvyššia séria, konečné poradie a liga
  * {prefix}my_snooker_rooms     otvorené partie pre zoznam Pozerať hru (dvere otvorené F6): druh hry a krátky popis
  * {prefix}my_snooker_cues      vlastné tágá hráčov: šablóna, názov, farby a herné úpravy v medziach ±10 %
@@ -20,7 +20,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-const MYSN_DB_VERSION = '11';
+const MYSN_DB_VERSION = '12';
 
 function mysn_table( $name ) {
 	global $wpdb;
@@ -112,6 +112,7 @@ started int(10) unsigned NOT NULL DEFAULT 0,
 ends int(10) unsigned NOT NULL DEFAULT 0,
 status varchar(12) NOT NULL DEFAULT 'active',
 champion bigint(20) unsigned NOT NULL DEFAULT 0,
+clock smallint(5) unsigned NOT NULL DEFAULT 45,
 PRIMARY KEY  (id),
 KEY status (status)
 ) $c;"

@@ -110,7 +110,7 @@ function mysn_roadmap() {
 			'items'  => array(
 				array( 'Zvuky online diváka: F1 nápoveda zvukov, F2 potlesk, F3 jooooj, ďalšie od F7', 0 ),
 				array( 'Šatník v kancelárii: výber oblečenia na zápas, ktoré uvidí súper a diváci', 0 ),
-				array( 'Časomiera v ligovom zápase: 30 sekúnd na úder, posledných 5 s odpočet, inak faul za čas', 1 ),
+				array( 'Časomiera v ligovom zápase: čas na ťah podľa sezóny (predvolene 45 sekúnd), posledných 5 s odpočet, inak faul za čas', 1 ),
 				array( 'Pozvánka na partiu cez odkaz', 0 ),
 				array( 'Voľná kamera na medzerníku pre hráčov (medzerník prepína voľný pohľad a tágo, Ctrl zastaví kameru a uvoľní kurzor; pre divákov zatiaľ nie), úder len myšou', 1 ),
 				array( 'Role admin a správca hry: zoznam hráčov s nastavením roly v administrácii, panel Správa hry v hre podľa práv (práva v dokumentácii), odkaz Dokumentácia v menu My Snooker', 1 ),
@@ -131,6 +131,7 @@ function mysn_roadmap() {
 /** Denník zmien (najnovšie hore). */
 function mysn_changelog() {
 	return array(
+		array( '0.7.27', '6. 11. 2026', 'Liga: čas na ťah sa nastavuje pri sezóne ligy (administrácia, Sezóna ligy, Nastavenia sezóny, 15 až 120 sekúnd) a teraz je 45 sekúnd namiesto 30. Platí hneď aj pre rozohrané zápasy sezóny, nová sezóna ho preberá. Časomiera hráča, divákov, obrazovka štadióna aj návod na stolíku idú podľa neho.' ),
 		array( '0.7.26', '6. 11. 2026', 'Biela v ruke (začiatok frame aj po spadnutí bielej) sa kladie z pohľadu za tágom, nie zhora: klik zachytí myš, pohybom myši sa biela posúva v D a ľavé tlačidlo ju položí. Hra o skóre (Hrať): Nové rozostavenie je dostupné, začne nový frame s časom a bodmi od nuly a gule sa postavia s trojuholníkom (trojuholník sa ukáže aj pri opakovanom stlačení).' ),
 		array( '0.7.25', '6. 11. 2026', 'Prehrávač partie. Kancelária F7, detail zápasu: gombík Prehrať partiu na notebooku prehrá všetky údery zhora na obrazovke notebooku (rovnaká fyzika ako v hre, na konci úderu presný uložený stav stola, skóre, hráč na rade, smer nasledujúceho úderu, správa rozhodcu). Notebook má skutočnú klávesnicu so zvýraznenými šípkami: vľavo predchádzajúci, vpravo ďalší úder, medzerník prehrávanie, Home a End, R rýchlosť. Administrácia: nová záložka Partie s tabuľkou partií cez internet a prehrávačom (presunutá zo stránky Hra).' ),
 		array( '0.7.24', '6. 11. 2026', 'Stôl má turnajovú výšku (o 4,5 cm nižší voči podlahe herne, kancelárie aj štadióna). Štadión: nová podlaha vnútri mantinelov, čierna lesklá s tmavosivým kobercom pod stolom a svietiacim modrým LED pásom. Liga: aj výhra s 0 nahratými bodmi (napríklad súperovi vypršal čas) dá aspoň symbolický +1; partia #30 dopísaná spätne (Rugent +1, Pet Mat -1). Nádstavce ostávajú v lige povolené.' ),

@@ -354,7 +354,7 @@ export function start(root, config = {}) {
 		}
 	}
 	homeObjs.push(...room.rackObjects()); // tágá stojana v herni na štadióne nevisia vo vzduchu
-	const stadium = buildStadium(scene, settings.quality);
+	const stadium = buildStadium(scene, settings.quality, config.clock || 45);
 	const office = buildOffice(scene);
 	office.root.add(new THREE.AmbientLight(0xffe6c8, settings.quality === 'high' ? 0.22 : 0.4)); // herňa je v kancelárii skrytá (aj jej svetlo)
 	/*
@@ -984,7 +984,8 @@ export function start(root, config = {}) {
 	let watchFiesta = null; // divák: koniec zápasu prišiel od hráča (čaká na w-end)
 	let watchTurnAt = 0; // divák: začiatok ťahu v sledovanom ligovom zápase
 	let clockSec = -1; // časomiera: naposledy zobrazená sekunda
-	const SHOT_CLOCK = 30;
+	// čas na ťah podľa sezóny ligy (admin, Sezóna ligy): zo zápasu, divák zo skóre sledovaného zápasu, inak z nastavení stránky
+	const clockOf = (c) => c || config.clock || 45;
 	/** Časomiera ligového zápasu: { left, mine } alebo null (nebeží: úder, koniec, nie liga). */
 	const shotClock = () => {
 		// čas beží len pri mierení, kladení bielej a čakaní na súpera; po údere (aj kým sa dohráva) nie
@@ -993,10 +994,10 @@ export function start(root, config = {}) {
 		}
 		const m = game.match;
 		if (m && m.league && m.rules && !m.rules.over && m.turnAt && !game.spectating) {
-			return { left: SHOT_CLOCK - (Date.now() - m.turnAt) / 1000, mine: m.turn === m.me };
+			return { left: clockOf(m.clock) - (Date.now() - m.turnAt) / 1000, mine: m.turn === m.me };
 		}
 		if (game.spectating && watchScreen && watchTurnAt && watchScreen.turn >= 0 && game.spectating.kind === 'league') {
-			return { left: SHOT_CLOCK - (Date.now() - watchTurnAt) / 1000, mine: false };
+			return { left: clockOf(watchScreen.clock) - (Date.now() - watchTurnAt) / 1000, mine: false };
 		}
 		return null;
 	};
@@ -3928,7 +3929,7 @@ export function start(root, config = {}) {
 				rig.setViewZoom(zc + (zt - zc) * (1 - Math.exp(-Math.min(0.05, dt) * 6)));
 			}
 		}
-		// časomiera ligového zápasu: 30 s na úder, posledných 5 s veľký odpočet, potom faul za čas
+		// časomiera ligového zápasu: čas na ťah podľa sezóny (predvolene 45 s), posledných 5 s veľký odpočet, potom faul za čas
 		const clk = shotClock();
 		if (clk) {
 			const sec = Math.max(0, Math.ceil(clk.left));

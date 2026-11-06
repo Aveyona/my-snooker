@@ -232,6 +232,7 @@ function mysn_match_out( $m, $uid ) {
 		'updated' => (int) $m['updated'],
 		'league'  => (int) ( $m['league'] ?? 0 ),
 		'tier'    => ! empty( $m['league'] ) ? mysn_match_tier( $m ) : 0, // číslo ligy (1 až 4) pre mantinel na štadióne
+		'clock'   => ! empty( $m['league'] ) ? mysn_shot_clock( $m ) : 0, // čas na ťah (sekundy) podľa sezóny
 		'training' => 'training' === ( $m['kind'] ?? '' ),
 		'delta'   => max( 0, (int) ( $m['delta'] ?? 0 ) ),
 	);
@@ -540,10 +541,10 @@ function mysn_rest_settle( $req ) {
 	);
 }
 
-const MYSN_SHOT_CLOCK = 30; // ligový zápas: sekundy na úder
+const MYSN_CLOCK_DEFAULT = 45; // ligový zápas: predvolený čas na ťah (sekundy), nastavuje sa pri sezóne ligy
 
 /**
- * Faul za čas (ligový zápas): hráč na rade do MYSN_SHOT_CLOCK sekúnd neudrel. Pošle ho hráč na rade, alebo
+ * Faul za čas (ligový zápas): hráč na rade do času na ťah (mysn_shot_clock, podľa sezóny) neudrel. Pošle ho hráč na rade, alebo
  * (keď má hru zatvorenú) súper o pár sekúnd neskôr; server overí čas od začiatku ťahu a stav zapíše.
  */
 function mysn_rest_timeout( $req ) {
@@ -561,7 +562,8 @@ function mysn_rest_timeout( $req ) {
 		return mysn_err( 'Faul za čas sa nedá zapísať.', 409 );
 	}
 	$off  = (int) $m['turn']; // kto nestihol
-	$need = $off === $me ? MYSN_SHOT_CLOCK - 1 : MYSN_SHOT_CLOCK + 2;
+	$clk  = mysn_shot_clock( $m );
+	$need = $off === $me ? $clk - 1 : $clk + 2;
 	if ( ! (int) $m['turnat'] || time() - (int) $m['turnat'] < $need ) {
 		return mysn_err( 'Čas na úder ešte nevypršal.', 409 );
 	}

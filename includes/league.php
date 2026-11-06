@@ -53,6 +53,29 @@ function mysn_season_name( $start, $end ) {
 }
 
 /** Aktuálna sezóna; po uplynutí sa uzavrie (konečné výsledky) a založí nová. */
+/** Čas na ťah poslednej sezóny (nová sezóna ho preberá), predvolene MYSN_CLOCK_DEFAULT sekúnd. */
+function mysn_clock_last() {
+	global $wpdb;
+	$c = (int) $wpdb->get_var( 'SELECT clock FROM ' . mysn_table( 'seasons' ) . ' ORDER BY id DESC LIMIT 1' ); // phpcs:ignore
+	return $c >= 15 ? $c : MYSN_CLOCK_DEFAULT;
+}
+
+/** Čas na ťah v ligovom zápase (sekundy): podľa sezóny zápasu, inak aktuálnej sezóny. */
+function mysn_shot_clock( $m = null ) {
+	global $wpdb;
+	static $cache = array();
+	$sid = $m && ! empty( $m['season_id'] ) ? (int) $m['season_id'] : 0;
+	if ( ! $sid ) {
+		$cur = mysn_season_current();
+		$sid = (int) $cur['id'];
+	}
+	if ( ! isset( $cache[ $sid ] ) ) {
+		$c              = (int) $wpdb->get_var( $wpdb->prepare( 'SELECT clock FROM ' . mysn_table( 'seasons' ) . ' WHERE id = %d', $sid ) ); // phpcs:ignore
+		$cache[ $sid ] = $c >= 15 ? $c : MYSN_CLOCK_DEFAULT;
+	}
+	return $cache[ $sid ];
+}
+
 function mysn_season_current() {
 	global $wpdb;
 	static $cur = null;
@@ -77,6 +100,7 @@ function mysn_season_current() {
 				'started' => $start,
 				'ends'    => $end,
 				'status'  => 'active',
+				'clock'   => mysn_clock_last(),
 			)
 		);
 		$id = (int) $wpdb->insert_id;
