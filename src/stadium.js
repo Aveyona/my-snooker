@@ -101,8 +101,9 @@ export function buildStadium(scene, quality) {
 	// tribúny na dlhých stranách (rady stupňov so sedadlami, stúpajú dozadu do tmy)
 	// číslo stoličky: strana (0 = +z, 1 = -z) × 175 + rad × 25 + (miesto + 12); rovnaké číslovanie má server
 	const seatMeshes = []; // [sedadlo, operadlo] podľa čísla stoličky (výber miesta divákom)
+	const ROWS = 6; // radov sedadiel na dlhej tribúne (číslovanie počíta so 7 radmi, horný rad bol odobratý kvôli LCD)
 	for (const side of [-1, 1]) {
-		for (let row = 0; row < 7; row++) {
+		for (let row = 0; row < ROWS; row++) {
 			const z = side * (BZ + 0.9 + row * 0.75);
 			const y = FY + 0.25 + row * 0.42;
 			add(new THREE.BoxGeometry(10, 0.42 + row * 0.42, 0.75), stepMat, 0, FY + (0.42 + row * 0.42) / 2, z);
@@ -124,6 +125,9 @@ export function buildStadium(scene, quality) {
 		const side = i < 175 ? 1 : -1;
 		const r = i % 175;
 		const row = Math.floor(r / 25);
+		if (row >= ROWS) {
+			return null;
+		}
 		return { x: ((r % 25) - 12) * 0.4, y: FY + 0.25 + row * 0.42 + 0.24, z: side * (BZ + 0.9 + row * 0.75), rot: side > 0 ? Math.PI : 0, standing: false, row, side };
 	};
 	const seatOf = (x, side, row) => (side > 0 ? 0 : 175) + row * 25 + Math.round(x / 0.4) + 12;
