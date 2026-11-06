@@ -41,13 +41,20 @@ export class CameraRig {
 		if (this.mode !== 'top' && this.aimPoint && this._panBase) {
 			// za tágom s mierenou guľou: myš doľava a doprava krúži okolo gule, hore priblíži ku guli, dole oddiali
 			this.panDist = Math.max(0.15, Math.min(2.5, (this.panDist || 1) * Math.exp(dy * 0.004)));
+			// výška ako predtým: myš hore kamera stúpa, dole klesá (rovnaká rýchlosť ako pôvodný posun pohľadu)
+			this.panLift = Math.max(-0.15, Math.min(1.5, (this.panLift || 0) - m[5] * dy * k));
 			this.panOffset.x += m[0] * dx * k;
 			this.panOffset.z += m[2] * dx * k;
-			const r0 = this._panBase.distanceTo(this.aimPoint);
-			const r = Math.max(0.12, r0 * this.panDist);
+			const b = this._panBase.clone().sub(this.aimPoint); // kamera voči guli za tágom
+			const h0 = Math.hypot(b.x, b.z);
 			const p = this._panBase.clone().add(this.panOffset).sub(this.aimPoint);
-			if (p.lengthSq() > 1e-8) {
-				p.setLength(r);
+			const hp = Math.hypot(p.x, p.z);
+			if (hp > 1e-6) {
+				// vodorovne: rovnaká vzdialenosť pri krúžení, krát priblíženie; výška: stúpa a klesá ako pôvodný posun
+				const hr = Math.max(0.1, h0 * this.panDist) / hp;
+				p.x *= hr;
+				p.z *= hr;
+				p.y = b.y + this.panLift;
 				p.y = Math.max(0.05, p.y); // nie pod úroveň gule (do súkna)
 				this.panOffset.copy(this.aimPoint).add(p).sub(this._panBase);
 			}
@@ -67,7 +74,8 @@ export class CameraRig {
 
 	resetPan() {
 		this.panOffset.set(0, 0, 0);
-		this.panDist = 1; // vzdialenosť od mierenej gule pri posune pravým tlačidlom (1 = ako za tágom)
+		this.panDist = 1;
+		this.panLift = 0; // vzdialenosť od mierenej gule pri posune pravým tlačidlom (1 = ako za tágom)
 	}
 
 	/** Po údere: otáčanie pohľadu okolo bielej pohybom myši. */
