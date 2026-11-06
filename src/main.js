@@ -153,6 +153,9 @@ export function start(root, config = {}) {
 	};
 	let cueSpec = specFor(settings.cue);
 	const cue = new Cue(scene, cueSpec);
+	let fpsAvg = 60; // snímky za sekundu (Ctrl)
+	let fpsT = 0;
+	let fpsLast = 0;
 	let hands = null; // ruky hráča vo voľnej kamere
 	room.selectCue(cueSpec.id, cueSpec.base);
 	const guide = new AimGuide(scene);
@@ -2661,6 +2664,16 @@ export function start(root, config = {}) {
 		// po údere: keď gule zastanú a som na rade, mierim zo smeru, z ktorého sa kamera práve pozerá na bielu
 		// (kamera sa neotáča, len sa plynulo spustí za tágo); v partii aj po súperovom údere
 		hotTick(dt); // Ctrl: rozsvietenie klikateľných predmetov pod kurzorom
+		// FPS: priemer za posledné snímky, ukáže sa pri držanom Ctrl
+		const fpsNow = performance.now();
+		const fdt = Math.max(1, fpsNow - (fpsLast || fpsNow - 16)) / 1000; // skutočný čas snímky (dt je obmedzené)
+		fpsLast = fpsNow;
+		fpsAvg += (1 / fdt - fpsAvg) * 0.05;
+		fpsT += fdt;
+		if (fpsT > 0.25) {
+			fpsT = 0;
+			ui.setFps(fpsAvg);
+		}
 		if (view === 'free') {
 			if (freeMouse) {
 				freeVel.set(0, 0, 0); // Ctrl: kamera stojí

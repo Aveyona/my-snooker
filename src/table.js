@@ -109,6 +109,26 @@ function clothTexture(maxAniso, base = '#1d6b34', detail = false) {
 	return tex;
 }
 
+/** Maska súkna: biela = súkno, čierna = otvor jamky (cez otvor vidieť do košíka). */
+function pocketHoles() {
+	const w = 1024;
+	const h = Math.round((w * (W + 2 * RAIL)) / (L + 2 * RAIL));
+	const c = document.createElement('canvas');
+	c.width = w;
+	c.height = h;
+	const g = c.getContext('2d');
+	g.fillStyle = '#ffffff';
+	g.fillRect(0, 0, w, h);
+	const sx = w / (L + 2 * RAIL);
+	g.fillStyle = '#000000';
+	for (const p of POCKETS) {
+		g.beginPath();
+		g.arc((p.x + L / 2 + RAIL) * sx, (p.z + W / 2 + RAIL) * sx, (p.corner ? 0.07 : 0.064) * sx, 0, Math.PI * 2);
+		g.fill();
+	}
+	return new THREE.CanvasTexture(c);
+}
+
 /** Normálová mapa tkaniny súkna (opakuje sa, asi 4 cm na dlaždicu): drobná väzba vlákien. */
 function weaveNormal() {
 	const n = 256;
@@ -265,11 +285,12 @@ export function buildTable(renderer) {
 	const aniso = renderer.capabilities.getMaxAnisotropy();
 
 	// Súkno (hracia plocha aj pod mantinelmi)
-	const clothSimple = new THREE.MeshStandardMaterial({ map: clothTexture(aniso), roughness: 0.92, metalness: 0 });
+	const holes = pocketHoles();
+	const clothSimple = new THREE.MeshStandardMaterial({ map: clothTexture(aniso), roughness: 0.92, metalness: 0, alphaMap: holes, alphaTest: 0.5 });
 	const weave = weaveNormal();
 	weave.repeat.set((L + 2 * RAIL) / 0.04, (W + 2 * RAIL) / 0.04);
 	// podrobné súkno: lesk látky (sheen) ako zamat, tkanina v normálovej mape
-	const clothDetail = new THREE.MeshPhysicalMaterial({ roughness: 0.95, metalness: 0, sheen: 0.3, sheenRoughness: 0.7, sheenColor: new THREE.Color(0x4fae6a), normalMap: weave, normalScale: new THREE.Vector2(0.35, 0.35) });
+	const clothDetail = new THREE.MeshPhysicalMaterial({ alphaMap: holes, alphaTest: 0.5, roughness: 0.95, metalness: 0, sheen: 0.3, sheenRoughness: 0.7, sheenColor: new THREE.Color(0x4fae6a), normalMap: weave, normalScale: new THREE.Vector2(0.35, 0.35) });
 	const cloth = new THREE.Mesh(new THREE.PlaneGeometry(L + 2 * RAIL, W + 2 * RAIL), clothSimple);
 	cloth.rotation.x = -Math.PI / 2;
 	cloth.receiveShadow = true;
@@ -520,7 +541,6 @@ export function buildTable(renderer) {
 	}
 
 	// Jamky: čierny otvor v súkne, kožený lem po okraji výrezu v ráme a pod ním košík zo sieťky
-	const holeMat = new THREE.MeshBasicMaterial({ color: 0x050505 });
 	const leatherMat = new THREE.MeshStandardMaterial({ color: 0x1c1c1c, roughness: 0.55, metalness: 0.15, side: THREE.DoubleSide });
 	const netMat = new THREE.MeshStandardMaterial({ map: netTexture(), color: 0x2a1c12, roughness: 0.9, alphaTest: 0.35, side: THREE.DoubleSide });
 	const prof = [
@@ -544,15 +564,7 @@ export function buildTable(renderer) {
 		ring.rotation.x = Math.PI / 2;
 		ring.position.set(p.x, BASKET.y, p.z);
 		group.add(ring);
-		const floorCap = new THREE.Mesh(new THREE.CircleGeometry(p.r, 40), holeMat);
-		floorCap.rotation.x = -Math.PI / 2;
-		floorCap.position.set(p.x, -0.003, p.z);
-		group.add(floorCap);
-		const pk = POCKETS.find((q) => q.x === p.x && q.z === p.z);
-		const cap = new THREE.Mesh(new THREE.CircleGeometry(pk.corner ? 0.072 : 0.066, 40), holeMat);
-		cap.rotation.x = -Math.PI / 2;
-		cap.position.set(p.x, 0.0008, p.z);
-		group.add(cap);
+		// otvor v súkne robí maska súkna (pocketHoles), cez neho vidieť do košíka
 	}
 	for (const pts of rims) {
 		const curve = new THREE.CatmullRomCurve3(pts.map((q) => new THREE.Vector3(q.x, fy - 0.004, q.z)));

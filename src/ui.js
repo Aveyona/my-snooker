@@ -1511,6 +1511,21 @@ export class UI {
 		this.setCtrl(on, freeCam);
 	}
 
+	/** FPS (snímky za sekundu): výrazne vľavo hore, len pri držanom Ctrl. */
+	setFps(fps) {
+		if (!this.fpsBox) {
+			this.fpsBox = h('div', 'mysn-fps');
+			this.root.appendChild(this.fpsBox);
+		}
+		const v = Math.round(fps);
+		if (this._fpsShown !== v) {
+			this._fpsShown = v;
+			this.fpsBox.textContent = v + ' FPS';
+			this.fpsBox.classList.toggle('mysn-fps-low', v < 30);
+			this.fpsBox.classList.toggle('mysn-fps-mid', v >= 30 && v < 50);
+		}
+	}
+
 	/** Ctrl drž: zobrazia sa spodné tlačidlá a šúpatko otáčania (vo voľnej kamere len šúpatko). */
 	setCtrl(on, freeCam) {
 		this._freeCam = !!freeCam;
