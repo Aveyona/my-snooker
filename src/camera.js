@@ -38,6 +38,22 @@ export class CameraRig {
 	pan(dx, dy) {
 		const m = this.camera.matrixWorld.elements;
 		const k = 0.0018 * (this.mode === 'top' ? 2 : 1);
+		if (this.mode !== 'top' && this.aimPoint && this._panBase) {
+			// za tágom s mierenou guľou: myš doľava a doprava krúži okolo gule, hore priblíži ku guli, dole oddiali
+			this.panDist = Math.max(0.15, Math.min(2.5, (this.panDist || 1) * Math.exp(dy * 0.004)));
+			this.panOffset.x += m[0] * dx * k;
+			this.panOffset.z += m[2] * dx * k;
+			const r0 = this._panBase.distanceTo(this.aimPoint);
+			const r = Math.max(0.12, r0 * this.panDist);
+			const p = this._panBase.clone().add(this.panOffset).sub(this.aimPoint);
+			if (p.lengthSq() > 1e-8) {
+				p.setLength(r);
+				p.y = Math.max(0.05, p.y); // nie pod úroveň gule (do súkna)
+				this.panOffset.copy(this.aimPoint).add(p).sub(this._panBase);
+			}
+			this.panOffset.clampLength(0, 8);
+			return;
+		}
 		// pravá os kamery a horná os kamery
 		this.panOffset.x += (m[0] * dx - m[4] * dy) * k;
 		this.panOffset.y += (m[1] * dx - m[5] * dy) * k;
@@ -45,22 +61,13 @@ export class CameraRig {
 		if (this.mode === 'top') {
 			this.panOffset.y = 0;
 		}
-		if (this.mode !== 'top' && this.aimPoint && this._panBase) {
-			// krúženie okolo gule, na ktorú sa mieri: vzdialenosť od gule ostáva rovnaká (posun po priamke by ju
-			// pri každom kroku trochu zväčšil a pri otočení dookola by sa kamera po špirále vzďaľovala)
-			const r = this._panBase.distanceTo(this.aimPoint);
-			const p = this._panBase.clone().add(this.panOffset).sub(this.aimPoint);
-			if (p.lengthSq() > 1e-8) {
-				p.setLength(r);
-				this.panOffset.copy(this.aimPoint).add(p).sub(this._panBase);
-			}
-		}
 		this.panOffset.y = Math.max(-0.15, Math.min(1.5, this.panOffset.y));
-		this.panOffset.clampLength(0, this.aimPoint && this.mode !== 'top' ? 8 : 3); // okolo vzdialenej gule až na druhú stranu
+		this.panOffset.clampLength(0, 3);
 	}
 
 	resetPan() {
 		this.panOffset.set(0, 0, 0);
+		this.panDist = 1; // vzdialenosť od mierenej gule pri posune pravým tlačidlom (1 = ako za tágom)
 	}
 
 	/** Po údere: otáčanie pohľadu okolo bielej pohybom myši. */
