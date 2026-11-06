@@ -510,3 +510,5 @@ body.mysn-page { font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans
 .mysn-sp-keys { display: flex; flex-direction: column; gap: 4px; font-size: 13px; }
 .mysn-sp-keys div { display: flex; gap: 10px; }
 .mysn-sp-keys b { min-width: 40px; color: #d4a72c; }
+/* divák Tab: malý stôl zhora vpravo hore (kreslí ho druhá kamera do rohu plátna, toto je len rámik) */
+.mysn-minitable { position: absolute; z-index: 4; pointer-events: none; box-sizing: border-box; border: 2px solid rgba(255, 255, 255, 0.55); border-radius: 6px; box-shadow: 0 4px 18px rgba(0, 0, 0, 0.55); }

@@ -1625,6 +1625,7 @@ export class UI {
 			['F4', 'pohľad na skóre'],
 			['F6', 'zmena miesta'],
 			['F7', `konfety (zostáva ${o.confLeft}×, 15 s)`],
+			['Tab', 'malý stôl zhora vpravo hore'],
 			['Myš', 'rozhliadanie, koliesko priblíženie'],
 			['Esc', 'menu (Prestať sledovať)'],
 		];

@@ -21,7 +21,7 @@ import { UI } from './ui.js';
 import { Game, fmtTime } from './match.js';
 import { Online } from './online.js';
 import { remaining } from './rules.js';
-import { aimTrace, R, L, snapshot, restore } from './physics.js';
+import { aimTrace, R, L, W, snapshot, restore } from './physics.js';
 import { CUES, cueById, ownCueSpec } from './cues.js';
 
 const STORE = 'mySnookerSettings';
@@ -1055,6 +1055,46 @@ export function start(root, config = {}) {
 	let view = null;
 	const chairLook = { yaw: 0, pitch: 0 };
 	let topView = false; // Tab: pohľad na stôl zhora
+	// divák Tab: malý stôl zhora vpravo hore (druhá kamera nad stolom, kreslí sa do rohu obrazu)
+	const miniCam = new THREE.OrthographicCamera(-1, 1, 1, -1, 0.01, 0.9);
+	const miniPos = new THREE.Vector3();
+	const miniSize = new THREE.Vector2();
+	const miniFrame = document.createElement('div');
+	miniFrame.className = 'mysn-minitable mysn-hidden';
+	renderer.domElement.parentNode.appendChild(miniFrame);
+	const miniTable = () => {
+		const on = !!(settings.specMini && game.spectating);
+		miniFrame.classList.toggle('mysn-hidden', !on);
+		if (!on) {
+			return;
+		}
+		renderer.getSize(miniSize);
+		const hw = L / 2 + 0.2; // hracia plocha s mantinelmi a rámom
+		const hh = W / 2 + 0.2;
+		const w = Math.round(Math.min(380, Math.max(200, miniSize.x * 0.24)));
+		const h = Math.round((w * hh) / hw);
+		const x = miniSize.x - w - 14;
+		const top = 64;
+		miniFrame.style.cssText = `width:${w}px;height:${h}px;right:14px;top:${top}px`;
+		table.group.getWorldPosition(miniPos);
+		miniCam.left = -hw;
+		miniCam.right = hw;
+		miniCam.top = hh;
+		miniCam.bottom = -hh;
+		miniCam.position.set(miniPos.x, miniPos.y + 0.6, miniPos.z); // pod lampami: kamera vidí len stôl, gule a tágo
+		miniCam.up.set(0, 0, -1);
+		miniCam.lookAt(miniPos.x, miniPos.y, miniPos.z);
+		miniCam.updateProjectionMatrix();
+		const sh = renderer.shadowMap.autoUpdate;
+		renderer.shadowMap.autoUpdate = false; // tiene sa druhýkrát nepočítajú
+		renderer.setScissorTest(true);
+		renderer.setViewport(x, miniSize.y - top - h, w, h);
+		renderer.setScissor(x, miniSize.y - top - h, w, h);
+		renderer.render(scene, miniCam);
+		renderer.setScissorTest(false);
+		renderer.setViewport(0, 0, miniSize.x, miniSize.y);
+		renderer.shadowMap.autoUpdate = sh;
+	};
 	const CHALK_SHOTS = 3; // nakriedovaná špička vydrží 3 údery
 	const CHALK_SPIN = 0.2; // bez kriedy má miesto úderu len pätinu účinku (s kriedou 5x viac)
 	let chalk = 0;
@@ -2435,6 +2475,14 @@ export function start(root, config = {}) {
 					actions.spectPhone();
 					return true;
 				}
+				if (lk === 'tab') {
+					settings.specMini = !settings.specMini; // malý stôl zhora vpravo hore
+					saveSettings(settings);
+					if (ui.spectPhoneOpen()) {
+						actions.spectPhone(true);
+					}
+					return true;
+				}
 				return lk !== 'f5' && lk !== 'f11'; // F5 obnoví stránku, F11 celá obrazovka; ostatné klávesy divák nepoužíva
 			}
 			if (lk === 'space') {
@@ -3443,6 +3491,7 @@ export function start(root, config = {}) {
 		}
 		rig.update(dt, game.cue, game.dir, game.state === 'moving');
 		renderer.render(scene, rig.camera);
+		miniTable();
 		requestAnimationFrame(frame);
 	};
 	requestAnimationFrame(frame);
