@@ -106,6 +106,107 @@ function wallpaperTexture() {
 	return t;
 }
 
+/** Obraz zatmenia: kind 'sun' = úplné zatmenie Slnka nad krajinou, 'moon' = červený Mesiac pri zatmení. */
+function eclipseTexture(kind) {
+	const c = document.createElement('canvas');
+	c.width = 512;
+	c.height = 370;
+	const g = c.getContext('2d');
+	const sun = kind === 'sun';
+	const sky = g.createLinearGradient(0, 0, 0, 300);
+	sky.addColorStop(0, sun ? '#0b1026' : '#05070f');
+	sky.addColorStop(1, sun ? '#3a3f63' : '#1b1a33');
+	g.fillStyle = sky;
+	g.fillRect(0, 0, 512, 370);
+	// hviezdy
+	for (let i = 0; i < (sun ? 40 : 140); i++) {
+		g.fillStyle = `rgba(255,255,255,${0.3 + Math.random() * 0.6})`;
+		g.fillRect(Math.random() * 512, Math.random() * 230, 1.6, 1.6);
+	}
+	const cx = sun ? 300 : 210;
+	const cy = 110;
+	if (sun) {
+		// koróna okolo tmavého Mesiaca a diamantový prsteň
+		const cor = g.createRadialGradient(cx, cy, 36, cx, cy, 120);
+		cor.addColorStop(0, 'rgba(255,250,235,0.95)');
+		cor.addColorStop(0.25, 'rgba(255,236,190,0.45)');
+		cor.addColorStop(1, 'rgba(255,220,160,0)');
+		g.fillStyle = cor;
+		g.beginPath();
+		g.arc(cx, cy, 120, 0, Math.PI * 2);
+		g.fill();
+		g.strokeStyle = 'rgba(255,245,220,0.35)';
+		for (let i = 0; i < 26; i++) {
+			const a = (i / 26) * Math.PI * 2;
+			const l = 60 + Math.random() * 55;
+			g.lineWidth = 1 + Math.random() * 2;
+			g.beginPath();
+			g.moveTo(cx + Math.cos(a) * 38, cy + Math.sin(a) * 38);
+			g.lineTo(cx + Math.cos(a) * l, cy + Math.sin(a) * l);
+			g.stroke();
+		}
+		g.fillStyle = '#05060a';
+		g.beginPath();
+		g.arc(cx, cy, 37, 0, Math.PI * 2);
+		g.fill();
+		const ring = g.createRadialGradient(cx + 28, cy - 24, 0, cx + 28, cy - 24, 16);
+		ring.addColorStop(0, 'rgba(255,255,255,1)');
+		ring.addColorStop(1, 'rgba(255,255,255,0)');
+		g.fillStyle = ring;
+		g.beginPath();
+		g.arc(cx + 28, cy - 24, 16, 0, Math.PI * 2);
+		g.fill();
+	} else {
+		// krvavý Mesiac (úplné zatmenie), tmavšia strana a jemný svetlejší okraj
+		const mg = g.createRadialGradient(cx - 12, cy - 12, 4, cx, cy, 46);
+		mg.addColorStop(0, '#d0603a');
+		mg.addColorStop(0.7, '#8e2e1c');
+		mg.addColorStop(1, '#4a140c');
+		g.fillStyle = mg;
+		g.beginPath();
+		g.arc(cx, cy, 46, 0, Math.PI * 2);
+		g.fill();
+		g.fillStyle = 'rgba(60,15,10,0.35)';
+		for (const [x, y, r] of [[-14, -8, 10], [12, 10, 8], [4, -18, 6], [-6, 16, 7]]) {
+			g.beginPath();
+			g.arc(cx + x, cy + y, r, 0, Math.PI * 2);
+			g.fill();
+		}
+		const glow = g.createRadialGradient(cx, cy, 46, cx, cy, 80);
+		glow.addColorStop(0, 'rgba(200,80,50,0.35)');
+		glow.addColorStop(1, 'rgba(200,80,50,0)');
+		g.fillStyle = glow;
+		g.beginPath();
+		g.arc(cx, cy, 80, 0, Math.PI * 2);
+		g.fill();
+	}
+	// tmavá krajina s kopcami a jazerom
+	for (const [y, col, amp] of [[235, sun ? '#20253b' : '#151525', 30], [270, sun ? '#141829' : '#0d0d18', 22]]) {
+		g.fillStyle = col;
+		g.beginPath();
+		g.moveTo(0, 370);
+		for (let x = 0; x <= 512; x += 16) {
+			g.lineTo(x, y - Math.sin(x / 80 + (sun ? 1 : 3)) * amp - Math.sin(x / 23) * 5);
+		}
+		g.lineTo(512, 370);
+		g.fill();
+	}
+	g.fillStyle = sun ? '#262c48' : '#1a1830';
+	g.fillRect(0, 305, 512, 65);
+	// odraz na hladine
+	g.fillStyle = sun ? 'rgba(255,240,210,0.25)' : 'rgba(210,90,60,0.3)';
+	for (let i = 0; i < 9; i++) {
+		g.fillRect(cx - 30 + Math.random() * 60 - i * 2, 312 + i * 6, 30 + Math.random() * 30, 2);
+	}
+	for (let i = 0; i < 1200; i++) {
+		g.fillStyle = `rgba(${Math.random() * 255},${Math.random() * 255},${Math.random() * 255},0.025)`;
+		g.fillRect(Math.random() * 512, Math.random() * 370, 6, 2);
+	}
+	const t = new THREE.CanvasTexture(c);
+	t.colorSpace = THREE.SRGBColorSpace;
+	return t;
+}
+
 /** Obraz do rámu: vymyslená krajina (kopce, jazero, nebo). */
 function paintingTexture(seed) {
 	const c = document.createElement('canvas');
@@ -893,9 +994,10 @@ export function buildRoomShell(scene, quality, opts = {}) {
 	scene.add(magMesh);
 
 	// Obrazy na prednej stene
-	for (const [x, seed] of [[-2.8, 0], [2.8, 1]]) {
+	// vľavo (z pohľadu od stola, x = 2,8) zatmenie Slnka, vpravo (x = -2,8) zatmenie Mesiaca; Ctrl a klik ich priblíži
+	for (const [x, kind] of [[-2.8, 'moon'], [2.8, 'sun']]) {
 		// obraz pred prednou plochou rámu (inak by sa s rámom „bili“ a blikali)
-		const pic = add(new THREE.PlaneGeometry(0.86, 0.62), new THREE.MeshStandardMaterial({ map: paintingTexture(seed), roughness: 0.7 }), x, FY + 1.75, RZ - 0.046);
+		const pic = add(new THREE.PlaneGeometry(0.86, 0.62), new THREE.MeshStandardMaterial({ map: eclipseTexture(kind), roughness: 0.7 }), x, FY + 1.75, RZ - 0.046);
 		pic.rotation.y = Math.PI;
 		pic.castShadow = false;
 		add(new THREE.BoxGeometry(1.0, 0.76, 0.04), new THREE.MeshStandardMaterial({ color: 0x8a6a2a, metalness: 0.6, roughness: 0.4 }), x, FY + 1.75, RZ - 0.02);
@@ -1051,6 +1153,9 @@ export function buildRoomShell(scene, quality, opts = {}) {
 		setLeague,
 		// F8: polica s pohármi troch najlepších a tabuľka 4. až 10. miesta
 		trophies: { pos: new THREE.Vector3(-0.17, FY + 1.62, -RZ + 2.05), look: new THREE.Vector3(-0.17, FY + 1.6, -RZ) },
+		// obrazy na prednej stene (Ctrl a klik): zatmenie Slnka a zatmenie Mesiaca
+		paintSun: { pos: new THREE.Vector3(2.8, FY + 1.72, RZ - 1.3), look: new THREE.Vector3(2.8, FY + 1.75, RZ) },
+		paintMoon: { pos: new THREE.Vector3(-2.8, FY + 1.72, RZ - 1.3), look: new THREE.Vector3(-2.8, FY + 1.75, RZ) },
 		// F7: pohľad z kresla vpravo (sediaci) na stôl, v popredí noviny na stolíku
 		chair: { pos: new THREE.Vector3(1.0, FY + 1.12, RZ - 0.8), look: new THREE.Vector3(-0.2, FY + 0.62, 0.3) },
 		// F8: čítanie novín zhora

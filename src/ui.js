@@ -2212,6 +2212,8 @@ export class UI {
 			mixer: 'Mixpult: šípky vľavo a vpravo menia stanicu, hore a dole hlasitosť, P zapne alebo vypne rádio. Zvuk ide z reproduktorov v herni. F9, Enter alebo Esc: späť do hry.',
 			trophies: 'Rebríček o najlepšie skóre: poháre pre troch najlepších, vpravo 4. až 10. miesto (body a celkový čas). F8, Enter alebo Esc: späť do hry.',
 			chalk: 'Kriedujem špičku tága. Falše budú 3 údery 5x silnejšie.',
+			paintSun: 'Obraz: úplné zatmenie Slnka nad jazerom. Enter, Esc alebo pravé tlačidlo myši: späť do hry.',
+			paintMoon: 'Obraz: zatmenie Mesiaca (krvavý Mesiac) nad jazerom. Enter, Esc alebo pravé tlačidlo myši: späť do hry.',
 		};
 		foot.appendChild(h('span', '', texts[name] || ''));
 		if (name !== 'chalk' && name !== 'office') {

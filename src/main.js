@@ -782,6 +782,8 @@ export function start(root, config = {}) {
 			{ id: 'radio', key: 'f9', pos: new THREE.Vector3(RADIO.radio.x, RADIO.radio.top + 0.11, RADIO.radio.z), r: 0.3 },
 			{ id: 'mixer', key: 'f9', pos: new THREE.Vector3(RADIO.desk.x, RADIO.desk.top + 0.06, RADIO.desk.z), r: 0.45 },
 			{ id: 'switch', act: 'wallLamps', pos: room.lightSwitch, r: 0.13 }, // vypínač lámp pri dverách (len myšou)
+			{ id: 'paintSun', act: 'paintSun', pos: room.paintSun.look, r: 0.55 }, // obrazy (len myšou)
+			{ id: 'paintMoon', act: 'paintMoon', pos: room.paintMoon.look, r: 0.55 },
 			...tableSpots(),
 		];
 	};
@@ -2474,6 +2476,18 @@ export function start(root, config = {}) {
 			rig.setMode(topView || game.state === 'place' ? 'top' : 'cue');
 		},
 		back: () => exitView(),
+		paintSun: () => {
+			hotSet(null);
+			freeMouse = false;
+			ui.setFree(false);
+			enterView('paintSun');
+		},
+		paintMoon: () => {
+			hotSet(null);
+			freeMouse = false;
+			ui.setFree(false);
+			enterView('paintMoon');
+		},
 		cuePick: (id) => pickCue(id),
 		// vlastné tágo zo šablóny (stojan F2): nové, úprava, zmazanie
 		cueNew: async (baseId) => {
