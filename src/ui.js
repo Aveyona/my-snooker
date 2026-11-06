@@ -1706,7 +1706,7 @@ export class UI {
 			this._tools = null;
 			return;
 		}
-		this._tools = { toolChalk: !!o.chalk, rackNew: !!o.rack, cueExt: true };
+		this._tools = { toolChalk: !!o.chalk, rackNew: !!o.rack, cueExt: true, cueExtOff: !!o.ext };
 		B.innerHTML = '<h3>Krieda a pomôcky (F3)</h3>';
 		const row = (n, label, act, ok, value) => {
 			const b = this.button(`<b>${n}</b> ${label}`, act, '', value);
@@ -1725,12 +1725,13 @@ export class UI {
 		if (o.rack) {
 			row(5, o.rack, 'rackNew', true);
 		}
-		const next = { 0: 15, 15: 30, 30: 45, 45: 0 }[o.ext || 0];
-		row(6, `Predĺženie tága: ${o.ext ? o.ext + ' cm' : 'žiadne'} → ${next ? next + ' cm' : 'dať dole'}`, 'cueExt', true);
+		const next = { 0: 15, 15: 30, 30: 45, 45: 15 }[o.ext || 0];
+		row(6, o.ext ? `Predĺženie tága: ${o.ext} cm → ${next} cm` : 'Nasadiť predĺženie tága 15 cm', 'cueExt', true);
+		row(7, o.ext ? `Dať predĺženie dole (${o.ext} cm)` : 'Dať predĺženie dole', 'cueExtOff', !!o.ext);
 		if (o.reach) {
 			B.appendChild(h('p', 'mysn-note' + (o.reach.ok ? '' : ' mysn-warn'), esc(o.reach.text)));
 		}
-		B.appendChild(h('p', 'mysn-note', 'Klávesy 1 až 6, Esc alebo F3 zavrie. Predĺženie ostáva nasadené, kým ho nedáš dole. Krížik sa dá použiť aj pri mantineli (položí sa na rám), pavúky nie. Pavúk a trojuholník visia pod stolom (Ctrl a klik).'));
+		B.appendChild(h('p', 'mysn-note', 'Klávesy 1 až 7, Esc alebo F3 zavrie. Predĺženie ostáva nasadené, kým ho nedáš dole (7). Krížik sa dá použiť aj pri mantineli (položí sa na rám), pavúky nie. Pavúk a trojuholník visia pod stolom (Ctrl a klik).'));
 	}
 
 	/** Mapa miestností: pôdorys zhora, klik na miestnosť ukáže kartu s tlačidlami. */

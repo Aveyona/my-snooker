@@ -2606,9 +2606,9 @@ export function start(root, config = {}) {
 			});
 		},
 		// predĺženie tága (F3, 6): 0, 15, 30, 45 cm dookola; ostáva nasadené, kým ho nezmeníš
-		cueExt: () => {
+		cueExt: (off) => {
 			const i = CUE_EXTS.indexOf(settings.cueExt || 0);
-			settings.cueExt = CUE_EXTS[(i + 1) % CUE_EXTS.length];
+			settings.cueExt = off === true ? 0 : CUE_EXTS[i >= CUE_EXTS.length - 1 ? 1 : i + 1]; // 15, 30, 45 dookola; dole je zvlášť (7)
 			saveSettings(settings);
 			cueSpec = specFor(cueSpec.id);
 			controls.setCue(cueSpec);
@@ -2618,6 +2618,7 @@ export function start(root, config = {}) {
 			}
 			ui.toast(settings.cueExt ? `Predĺženie tága ${Math.round(settings.cueExt * 100)} cm je nasadené (dosah ďalej, ťahanie dlhšie).` : 'Predĺženie tága je dole.');
 		},
+		cueExtOff: () => actions.cueExt(true),
 		// farba špice (F2 stojan): niekoľko základných farieb, ukladá sa do databázy
 		tipColor: async (v) => {
 			if (!online || !user || !v || !v.cue || !TIP_COLORS[v.color]) {
@@ -3220,7 +3221,7 @@ export function start(root, config = {}) {
 			}
 			if (ui.toolsOpen()) {
 				// ponuka F3: 1 krieda, 2 pavúk, 3 nové postavenie, Esc alebo F3 zavrie
-				const pick = { 1: ['toolChalk'], 2: ['spiderPick', 'cross'], 3: ['spiderPick', 'spider'], 4: ['spiderPick', 'high'], 5: ['rackNew'], 6: ['cueExt'] }[lk];
+				const pick = { 1: ['toolChalk'], 2: ['spiderPick', 'cross'], 3: ['spiderPick', 'spider'], 4: ['spiderPick', 'high'], 5: ['rackNew'], 6: ['cueExt'], 7: ['cueExtOff'] }[lk];
 				if (pick && ui.toolEnabled(pick[1] || pick[0])) {
 					actions[pick[0]](pick[1]);
 					return true;

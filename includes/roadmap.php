@@ -131,6 +131,7 @@ function mysn_roadmap() {
 /** Denník zmien (najnovšie hore). */
 function mysn_changelog() {
 	return array(
+		array( '0.7.56', '7. 11. 2026', 'Ponuka F3: predĺženie tága má dve tlačidlá. Kláves 6 nasadí predĺženie 15 cm a ďalej mení 15, 30, 45 cm; kláves 7 Dať predĺženie dole je samostatné tlačidlo.' ),
 		array( '0.7.55', '7. 11. 2026', 'Dosah tága opravený: hráč stojí kdekoľvek pri stole, rozhoduje vzdialenosť rúk od najbližšieho mantinelu. Ruka na mostíku (30 cm za bielou) najviac 95 cm, ruka na rukoväti (3/4 tága za bielou, s predĺžením ďalej) najviac 55 cm od mantinelu alebo už za ním. S krížikom alebo pavúkom len rukoväť (skoro celé tágo za bielou). Úder popri mantineli pozdĺž stola je teda povolený.' ),
 		array( '0.7.54', '7. 11. 2026', 'Dosah tága: hráč stojí mimo stola a na bielu dosiahne len podľa dĺžky tága (bez nádstavca asi polovica tága a naklonenie, pri 145 cm asi 1,1 m od okraja stola; s krížikom alebo pavúkom celé tágo a 30 cm, asi 1,75 m). Keď nedosiahne, úder sa nedá zahrať a pri mierení je upozornenie. Predĺženie tága 15, 30 alebo 45 cm (F3, kláves 6): dosah ďalej, ťahanie dlhšie, vidno ho na tágu aj u súpera. Platí všade, aj v lige.' ),
 		array( '0.7.53', '7. 11. 2026', 'Tágá s jemným mierením (Shift): na stojane F2 voľba Jemné mierenie vždy zapnuté. Pri zapnutej mieriš stále presne a Shift naopak prepne na rýchle mierenie. Nastavuje sa pri každom tágu zvlášť a pamätá sa.' ),
