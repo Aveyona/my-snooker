@@ -155,7 +155,7 @@ export function cueById(id) {
 
 /** Pixely ťahania myšou na plné odtiahnutie tága (dlhšie tágo = viac). */
 export function strokePx(spec) {
-	return 380 * Math.pow(spec.len / 1.45, 1.6) * (spec.strokeK || 1); // hmotnosť a vyváženie menia citlivosť
+	return 380 * Math.pow(spec.len / 1.45, 1.6) * (spec.strokeK || 1) * (1 + (spec.ext || 0)); // hmotnosť, vyváženie a predĺženie menia citlivosť
 }
 
 /** Textúra tága po dĺžke (hore na plátne je koniec rukoväte, dole špička). */
@@ -248,5 +248,27 @@ export function buildCueMesh(spec, castShadow = true) {
 	mesh.position.y = spec.len / 2;
 	mesh.castShadow = castShadow;
 	group.add(mesh);
+	if (spec.ext > 0) {
+		// predĺženie tága nasadené na koniec rukoväte: čierna trubka s mosadzným krúžkom
+		const ex = new THREE.Mesh(new THREE.CylinderGeometry(0.0148, 0.0146, spec.ext, 20, 1), new THREE.MeshStandardMaterial({ color: 0x141414, roughness: 0.4, metalness: 0.3 }));
+		ex.position.y = spec.len + spec.ext / 2;
+		ex.castShadow = castShadow;
+		group.add(ex);
+		const ring = new THREE.Mesh(new THREE.CylinderGeometry(0.0152, 0.0152, 0.012, 20, 1), new THREE.MeshStandardMaterial({ color: 0xc9a24a, roughness: 0.3, metalness: 0.8 }));
+		ring.position.y = spec.len + 0.006;
+		group.add(ring);
+	}
 	return group;
 }
+
+/**
+ * Dosah hráča: ako ďaleko od okraja stola (kde hráč stojí) dosiahne na bielu. Bez nádstavca asi polovica
+ * tága a naklonenie sa cez stôl, s krížikom alebo pavúkom celé tágo a ruka za rámom; predĺženie sa pripočíta celé.
+ */
+export function cueReach(spec, rest) {
+	const len = spec.len || 1.45;
+	return (rest ? len + 0.3 : len * 0.5 + 0.38) + (spec.ext || 0); // s nádstavcom drží hráč koniec tága, ruka asi 30 cm za rámom
+}
+
+/** Predĺženia tága (metre). */
+export const CUE_EXTS = [0, 0.15, 0.3, 0.45];

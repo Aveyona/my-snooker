@@ -1706,7 +1706,7 @@ export class UI {
 			this._tools = null;
 			return;
 		}
-		this._tools = { toolChalk: !!o.chalk, rackNew: !!o.rack };
+		this._tools = { toolChalk: !!o.chalk, rackNew: !!o.rack, cueExt: true };
 		B.innerHTML = '<h3>Krieda a pomôcky (F3)</h3>';
 		const row = (n, label, act, ok, value) => {
 			const b = this.button(`<b>${n}</b> ${label}`, act, '', value);
@@ -1725,7 +1725,12 @@ export class UI {
 		if (o.rack) {
 			row(5, o.rack, 'rackNew', true);
 		}
-		B.appendChild(h('p', 'mysn-note', 'Klávesy 1 až 5, Esc alebo F3 zavrie. Krížik sa dá použiť aj pri mantineli (položí sa na rám), pavúky nie. Pavúk a trojuholník visia pod stolom (Ctrl a klik).'));
+		const next = { 0: 15, 15: 30, 30: 45, 45: 0 }[o.ext || 0];
+		row(6, `Predĺženie tága: ${o.ext ? o.ext + ' cm' : 'žiadne'} → ${next ? next + ' cm' : 'dať dole'}`, 'cueExt', true);
+		if (o.reach) {
+			B.appendChild(h('p', 'mysn-note' + (o.reach.ok ? '' : ' mysn-warn'), o.reach.ok ? `Dosah: biela je ${o.reach.need} cm od okraja, dosiahneš ${o.reach.reach} cm.` : `Nedosiahneš: biela je ${o.reach.need} cm od okraja, dosah ${o.reach.reach} cm. Vezmi nádstavec (krížik, pavúk) alebo predĺženie.`));
+		}
+		B.appendChild(h('p', 'mysn-note', 'Klávesy 1 až 6, Esc alebo F3 zavrie. Predĺženie ostáva nasadené, kým ho nedáš dole. Krížik sa dá použiť aj pri mantineli (položí sa na rám), pavúky nie. Pavúk a trojuholník visia pod stolom (Ctrl a klik).'));
 	}
 
 	/** Mapa miestností: pôdorys zhora, klik na miestnosť ukáže kartu s tlačidlami. */
@@ -1831,6 +1836,19 @@ export class UI {
 	}
 
 	/** Poznámka pod guľou Miesto úderu (napríklad automaticky vyšší úder pri mantineli). */
+	/** Upozornenie pri mierení, keď hráč nedosiahne na bielu (prázdny text = skryť). */
+	reachNote(text) {
+		if (!this.reachEl) {
+			this.reachEl = h('div', 'mysn-reach');
+			this.root.appendChild(this.reachEl);
+		}
+		if (this._reach !== text) {
+			this._reach = text;
+			this.reachEl.textContent = text;
+			this.reachEl.style.display = text ? '' : 'none';
+		}
+	}
+
 	spinNote(text) {
 		if (!this.spinNoteEl) {
 			this.spinNoteEl = h('div', 'mysn-spin-note');

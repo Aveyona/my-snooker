@@ -352,6 +352,9 @@ export class Controls {
 		if (!this.game.canShoot()) {
 			return;
 		}
+		if (this.hooks.canStroke && !this.hooks.canStroke()) {
+			return; // nedosiahne na bielu: tágo sa neodtiahne
+		}
 		this.stroking = true;
 		this._ignoreUntil = performance.now() + 60;
 		this.strokePull = 0;

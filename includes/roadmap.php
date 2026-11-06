@@ -131,6 +131,7 @@ function mysn_roadmap() {
 /** Denník zmien (najnovšie hore). */
 function mysn_changelog() {
 	return array(
+		array( '0.7.54', '7. 11. 2026', 'Dosah tága: hráč stojí mimo stola a na bielu dosiahne len podľa dĺžky tága (bez nádstavca asi polovica tága a naklonenie, pri 145 cm asi 1,1 m od okraja stola; s krížikom alebo pavúkom celé tágo a 30 cm, asi 1,75 m). Keď nedosiahne, úder sa nedá zahrať a pri mierení je upozornenie. Predĺženie tága 15, 30 alebo 45 cm (F3, kláves 6): dosah ďalej, ťahanie dlhšie, vidno ho na tágu aj u súpera. Platí všade, aj v lige.' ),
 		array( '0.7.53', '7. 11. 2026', 'Tágá s jemným mierením (Shift): na stojane F2 voľba Jemné mierenie vždy zapnuté. Pri zapnutej mieriš stále presne a Shift naopak prepne na rýchle mierenie. Nastavuje sa pri každom tágu zvlášť a pamätá sa.' ),
 		array( '0.7.52', '7. 11. 2026', 'Nové šúpatko Pravé tlačidlo (pri držanom Ctrl, 0,3× až 3×): citlivosť pohľadu pravým tlačidlom myši vo všetkých smeroch (krúženie okolo mierenej gule doľava a doprava, priblíženie a oddialenie hore a dole). Pamätá sa.' ),
 		array( '0.7.51', '7. 11. 2026', 'Nové šúpatko Ťahanie tága (pri držanom Ctrl vedľa Otáčania myšou, 0,3× až 3×): rýchlosť ťahania tága myšou hore a dole. Vyššia hodnota = na plné odtiahnutie a silný úder stačí menší pohyb myši, nižšia = jemnejšie dávkovanie sily. Pamätá sa.' ),

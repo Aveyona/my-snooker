@@ -26,7 +26,7 @@ import { buildRackTriangle, rackLayout } from './rackTriangle.js';
 import { Replay } from './replay.js';
 import { CHALKS, chalkById } from './chalks.js';
 import { ChalkMarks } from './chalkMarks.js';
-import { CUES, cueById, ownCueSpec, TIP_COLORS, tipInaccuracy } from './cues.js';
+import { CUES, cueById, ownCueSpec, TIP_COLORS, tipInaccuracy, cueReach, CUE_EXTS } from './cues.js';
 
 const STORE = 'mySnookerSettings';
 const AIM_AHEAD = 0.5; // posun pohľadu bez mierenej gule: kamera sa pozerá 50 cm pred bielu
@@ -169,10 +169,15 @@ export function start(root, config = {}) {
 				s = ownCueSpec(row);
 			}
 		}
-		const t = withTip(s);
-		// tágo v ruke: spodná polovica špice vo farbe kriedy, kým krieda vydrží
-		if (chalkTip.level > 0 && t.id === settings.cue) {
-			return { ...t, chalkTint: chalkTip.color, chalkLevel: chalkTip.level };
+		let t = withTip(s);
+		// tágo v ruke: spodná polovica špice vo farbe kriedy, kým krieda vydrží; nasadené predĺženie
+		if (t.id === settings.cue) {
+			if (chalkTip.level > 0) {
+				t = { ...t, chalkTint: chalkTip.color, chalkLevel: chalkTip.level };
+			}
+			if (settings.cueExt > 0) {
+				t = { ...t, ext: settings.cueExt };
+			}
 		}
 		return t;
 	};
@@ -1740,7 +1745,32 @@ export function start(root, config = {}) {
 		}
 		online.net.call('tips/stroke', { cue: spec.id, power: +p.toFixed(3), def: tipDef(spec) }).then(tipApply).catch(() => null);
 	};
+	/** Vzdialenosť od bielej dozadu v smere tága po okraj stola (tam stojí hráč). */
+	const reachNeed = () => {
+		const c = game.cue.p;
+		const dx = -Math.cos(game.dir);
+		const dz = -Math.sin(game.dir);
+		const X = L / 2 + 0.2; // vonkajší okraj rámu
+		const Z = W / 2 + 0.2;
+		const tx = dx > 1e-6 ? (X - c.x) / dx : dx < -1e-6 ? (-X - c.x) / dx : Infinity;
+		const tz = dz > 1e-6 ? (Z - c.z) / dz : dz < -1e-6 ? (-Z - c.z) / dz : Infinity;
+		return Math.max(0, Math.min(tx, tz) - 0.2); // od okraja mantinelu (hráč sa opiera o rám)
+	};
+	/** Dosiahne hráč na bielu (dĺžka tága, predĺženie, nádstavec)? Vráti { ok, need, reach }. */
+	const reachInfo = () => {
+		const need = reachNeed();
+		const reach = cueReach(cueSpec, !!spiderOn);
+		return { ok: need <= reach, need, reach };
+	};
+	const reachMsg = (r) => `Nedosiahneš: biela je ${Math.round(r.need * 100)} cm od okraja, dosah ${Math.round(r.reach * 100)} cm. Použi nádstavec alebo predĺženie (F3).`;
 	const doShoot = (rawPower) => {
+		if (!game.spectating && game.cue.on) {
+			const r = reachInfo();
+			if (!r.ok) {
+				ui.toast(reachMsg(r));
+				return;
+			}
+		}
 		// nasadená špica: druh mení silu a falše, opotrebovaná (od 70 %) slabšie drží falše, nad 90 % sa môže šmyknúť
 		const tip = tipOf(cueSpec);
 		const TK = TIP_KINDS[tip.kind] || TIP_KINDS.medium;
@@ -2559,7 +2589,22 @@ export function start(root, config = {}) {
 				rests: Object.keys(RESTS).map((k) => ({ kind: k, name: RESTS[k].name, ok: can[k], on: spiderOn && restKind === k })),
 				restNote: !mine ? 'Nádstavec sa dá vziať, keď mieriš.' : Object.values(can).some(Boolean) ? '' : 'Za bielou nie je miesto na nádstavec (mantinel alebo guľa tesne za bielou).',
 				rack: !game.match ? (game.solo ? 'Nový frame' : 'Nové postavenie gúľ') : '',
+				ext: Math.round((settings.cueExt || 0) * 100),
+				reach: mine && game.cue.on ? (() => { const r = reachInfo(); return { ok: r.ok, need: Math.round(r.need * 100), reach: Math.round(r.reach * 100) }; })() : null,
 			});
+		},
+		// predĺženie tága (F3, 6): 0, 15, 30, 45 cm dookola; ostáva nasadené, kým ho nezmeníš
+		cueExt: () => {
+			const i = CUE_EXTS.indexOf(settings.cueExt || 0);
+			settings.cueExt = CUE_EXTS[(i + 1) % CUE_EXTS.length];
+			saveSettings(settings);
+			cueSpec = specFor(cueSpec.id);
+			controls.setCue(cueSpec);
+			ui.openTools(false);
+			if (!freeMouse) {
+				controls.capture();
+			}
+			ui.toast(settings.cueExt ? `Predĺženie tága ${Math.round(settings.cueExt * 100)} cm je nasadené (dosah ďalej, ťahanie dlhšie).` : 'Predĺženie tága je dole.');
 		},
 		// farba špice (F2 stojan): niekoľko základných farieb, ukladá sa do databázy
 		tipColor: async (v) => {
@@ -2980,6 +3025,8 @@ export function start(root, config = {}) {
 	const controls = new Controls(renderer.domElement, rig, game, {
 		unlock: () => sound.unlock(),
 		shoot: doShoot,
+		// dosah tága: keď hráč nedosiahne na bielu, tágo sa neodtiahne (upozornenie je pri mierení)
+		canStroke: () => game.spectating || !game.cue.on || reachInfo().ok,
 		spinReset: () => ui.setSpin(0, 0),
 		spin: (dx, dy) => ui.setSpin(Math.max(-1, Math.min(1, ui.side + dx)), Math.max(-1, Math.min(1, ui.top + dy))),
 		lock: (on) => {
@@ -3161,7 +3208,7 @@ export function start(root, config = {}) {
 			}
 			if (ui.toolsOpen()) {
 				// ponuka F3: 1 krieda, 2 pavúk, 3 nové postavenie, Esc alebo F3 zavrie
-				const pick = { 1: ['toolChalk'], 2: ['spiderPick', 'cross'], 3: ['spiderPick', 'spider'], 4: ['spiderPick', 'high'], 5: ['rackNew'] }[lk];
+				const pick = { 1: ['toolChalk'], 2: ['spiderPick', 'cross'], 3: ['spiderPick', 'spider'], 4: ['spiderPick', 'high'], 5: ['rackNew'], 6: ['cueExt'] }[lk];
 				if (pick && ui.toolEnabled(pick[1] || pick[0])) {
 					actions[pick[0]](pick[1]);
 					return true;
@@ -4200,6 +4247,13 @@ export function start(root, config = {}) {
 		updateFelt();
 		office.updateWindow(dt);
 		office.notebookTick(dt);
+		// dosah: pri mierení upozornenie, keď hráč nedosiahne na bielu (dĺžka tága, predĺženie, nádstavec)
+		if (game.state === 'aim' && !game.spectating && game.cue.on && !view) {
+			const r = reachInfo();
+			ui.reachNote(r.ok ? '' : reachMsg(r));
+		} else {
+			ui.reachNote('');
+		}
 		// krieda na špici: po nakriedovaní, údere alebo zmene kriedy sa tágo v ruke prekreslí (súper ho vidí tiež)
 		const lvl = chalk >= 3 ? 1 : chalk === 2 ? 0.75 : chalk === 1 ? 0.45 : 0;
 		const ccol = chalkById(settings.chalk).color;
