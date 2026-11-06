@@ -289,6 +289,32 @@ export function start(root, config = {}) {
 	homeObjs.push(...room.rackObjects()); // tágá stojana v herni na štadióne nevisia vo vzduchu
 	const stadium = buildStadium(scene, settings.quality);
 	const office = buildOffice(scene);
+	office.root.add(new THREE.AmbientLight(0xffe6c8, settings.quality === 'high' ? 0.22 : 0.4)); // herňa je v kancelárii skrytá (aj jej svetlo)
+	/*
+	 * Všetky miestnosti sú v jednej scéne vedľa seba (herňa, kancelária za ňou, štadión). Kreslí sa len tá,
+	 * v ktorej som: ostatné sú skryté (nekreslia sa a ich svetlá sa nepočítajú). Admin v prehliadke vidí všetko.
+	 */
+	let sceneShown = null;
+	const sceneCull = () => {
+		const roam = view === 'free' && adminRoam;
+		const lg = venue === 'league';
+		const inOffice = view === 'office';
+		const showHome = roam || (!lg && !inOffice);
+		const showStadium = roam || lg;
+		const showOffice = roam || inOffice;
+		const key = `${showHome}${showStadium}${showOffice}`;
+		if (key === sceneShown) {
+			return;
+		}
+		sceneShown = key;
+		for (const o of homeObjs) {
+			o.visible = showHome;
+		}
+		stadium.root.visible = showStadium;
+		office.root.visible = showOffice;
+		table.group.visible = !inOffice || roam;
+		room.setRackHidden(!showHome || (lg && !roam)); // tágá stojana herne (vybraté tágo sa skryje správne)
+	};
 	// online diváci: na štadióne sedia na stoličkách, v herni stoja pri stenách
 	const crowdLg = new Crowd(stadium.root);
 	const crowdHome = new Crowd(scene);
@@ -845,10 +871,7 @@ export function start(root, config = {}) {
 		setTimeout(() => {
 			venue = v;
 			const lg = v === 'league';
-			for (const o of homeObjs) {
-				o.visible = !lg;
-			}
-			stadium.root.visible = lg;
+			sceneShown = null; // viditeľnosť miestností nastaví sceneCull v najbližšom snímku
 			room.setRackHidden(lg);
 			if (lg) {
 				oppRack = null;
@@ -3105,6 +3128,7 @@ export function start(root, config = {}) {
 		rig.cueTilt = cue.pivot.visible ? cue.tilt || 0 : 0;
 		// po údere: keď gule zastanú a som na rade, mierim zo smeru, z ktorého sa kamera práve pozerá na bielu
 		// (kamera sa neotáča, len sa plynulo spustí za tágo); v partii aj po súperovom údere
+		sceneCull(); // kreslí sa len miestnosť, v ktorej som
 		hotTick(dt); // Ctrl: rozsvietenie klikateľných predmetov pod kurzorom
 		// FPS: priemer za posledné snímky, ukáže sa pri držanom Ctrl
 		const fpsNow = performance.now();
