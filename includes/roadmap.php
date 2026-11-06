@@ -131,6 +131,8 @@ function mysn_roadmap() {
 /** Denník zmien (najnovšie hore). */
 function mysn_changelog() {
 	return array(
+		array( '0.6.81', '6. 11. 2026', 'Nádstavce na teleskopickej tyči s drevenou rukoväťou: krížik (nízky, zmestí sa aj bližšie k mantinelu), pavúk (mosadzný oblúk s korunkou a žliabkami) a vysoký pavúk (U). Výber v ponuke F3 (2 až 4, 5 nové postavenie gúľ), každý drží tágo v inom sklone. Oprava: F3 už neotvorí hlavné menu.' ),
+		array( '0.6.80', '6. 11. 2026', 'Pavúk ako skutočná pomôcka: dlhá drevená palica a na jej konci mosadzná hlava v tvare oblúka s dvoma nohami a tromi drážkami, palica ide dozadu k ruke ponad mantinel. Pod stolom visí vodorovne pozdĺž čela skrine.' ),
 		array( '0.6.79', '6. 11. 2026', 'Zlatý krúžok pod vybratým tágom pri stojane sa ukazuje len v pohľade F2.' ),
 		array( '0.6.78', '6. 11. 2026', 'Pavúk (spider) a ponuka F3: F3 otvorí ponuku Nakriedovať, Pavúk a Nové postavenie gúľ. Pavúk sa položí sám za bielu na najbližšie voľné miesto, tágo na ňom leží vždy v rovnakom sklone, platí na jeden úder. Pri mantineli nefunguje. Pod stolom visí pavúk (strana baulku) a na druhom konci trojuholník, oba sa dajú vziať Ctrl a klikom. Pri mantineli sa úder automaticky posunie vyššie na bielu (tágo sa menej zdvíha), dá sa doladiť na guli Miesto úderu, sklon tága a kamera sa prispôsobia.' ),
 		array( '0.6.77', '6. 11. 2026', 'Oprava: návrat z pohľadu na predmet pravým tlačidlom pri držanom Ctrl nechá myš voľnú (kurzor ostane, predmety sa ďalej rozsvecujú).' ),

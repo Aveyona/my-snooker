@@ -12,7 +12,7 @@ import { buildOffice } from './office.js';
 import { Crowd } from './fans.js';
 import { COUNTRIES, countryByCode } from './countries.js';
 import { BallViews } from './balls.js';
-import { Cue, AimGuide, spiderSpot, cushionTop, buildSpider, SPIDER_TILT } from './cue.js';
+import { Cue, AimGuide, spiderSpot, cushionTop, buildSpider, RESTS } from './cue.js';
 import { Hands } from './hands.js';
 import { CameraRig } from './camera.js';
 import { Controls } from './controls.js';
@@ -155,14 +155,28 @@ export function start(root, config = {}) {
 	let cueSpec = specFor(settings.cue);
 	const cue = new Cue(scene, cueSpec);
 	// --- pavúk (F3 alebo Ctrl a klik pod stolom): na jeden úder, potom sa sám odloží ---
-	const spiderMesh = buildSpider();
+	let restKind = RESTS[settings.restKind] ? settings.restKind : 'spider'; // nádstavec: krížik, pavúk, vysoký pavúk
+	let spiderMesh = buildSpider(0.22, 0.16, restKind);
 	spiderMesh.visible = false;
 	scene.add(spiderMesh);
+	const setRest = (kind) => {
+		if (kind === restKind) {
+			return;
+		}
+		restKind = kind;
+		settings.restKind = kind;
+		saveSettings(settings);
+		scene.remove(spiderMesh);
+		spiderMesh = buildSpider(0.22, 0.16, kind);
+		spiderMesh.visible = false;
+		scene.add(spiderMesh);
+	};
+	const restSpot = () => spiderSpot(game.cue, game.dir, game.balls, RESTS[restKind].tilt, restKind);
 	const HANG_X = L / 2 - 0.05 + 0.012; // čelo skrine stola (pod rámom)
-	const spiderHang = buildSpider(); // zavesený pod stolom na strane baulku
-	spiderHang.userData.setHeight(0.12);
-	spiderHang.rotation.set(0, 0, Math.PI / 2); // naležato na čele skrine, nohy k stene skrine
-	spiderHang.position.set(-HANG_X - 0.004, -0.17, 0.25);
+	const spiderHang = buildSpider(0, 0); // zavesený pod stolom na strane baulku (palica vodorovne pozdĺž čela skrine)
+	spiderHang.userData.setHeight(0.1);
+	spiderHang.rotation.set(0, Math.PI / 2, 0); // palica pozdĺž čela skrine (po z), hlava na jednom konci
+	spiderHang.position.set(-HANG_X - 0.03, -0.24, -0.62);
 	table.group.add(spiderHang);
 	// trojuholník na gule zavesený na druhom konci stola (nové postavenie gúľ)
 	const triangle = new THREE.Group();
@@ -584,7 +598,7 @@ export function start(root, config = {}) {
 	const below = (v, dy) => v.clone().add(new THREE.Vector3(0, -dy, 0));
 	/** Pod stolom: zavesený pavúk (strana baulku) a trojuholník (druhý koniec). */
 	const tableSpots = () => [
-		{ id: 'spider', act: 'spiderPick', pos: new THREE.Vector3(-HANG_X - 0.06, -0.17, 0.25), r: 0.16 },
+		{ id: 'spider', act: 'spiderPick', pos: new THREE.Vector3(-HANG_X - 0.03, -0.2, 0.05), r: 0.45 },
 		{ id: 'triangle', act: 'rackNew', pos: new THREE.Vector3(HANG_X, -0.15, 0), r: 0.2 },
 	];
 	/** Klikateľné miesta podľa miestnosti: stred, polomer a kláves, ktorý klik urobí. */
@@ -1671,11 +1685,16 @@ export function start(root, config = {}) {
 				return;
 			}
 			const mine = game.state === 'aim' && !game.spectating;
-			const sp = mine && game.cue.on ? spiderSpot(game.cue, game.dir, game.balls) : null;
+			const sp = mine && game.cue.on;
 			controls.uncapture(); // kurzor na výber v ponuke (alebo klávesy 1 až 3)
+			const can = {};
+			for (const k of Object.keys(RESTS)) {
+				can[k] = sp && !!spiderSpot(game.cue, game.dir, game.balls, RESTS[k].tilt, k);
+			}
 			ui.openTools(true, {
 				chalk: mine,
-				spider: spiderOn ? 'on' : sp ? 'ok' : mine ? 'Pri mantineli alebo s guľou tesne za bielou sa pavúk nedá položiť.' : 'Pavúk sa dá vziať, keď mieriš.',
+				rests: Object.keys(RESTS).map((k) => ({ kind: k, name: RESTS[k].name, ok: can[k], on: spiderOn && restKind === k })),
+				restNote: !mine ? 'Nádstavec sa dá vziať, keď mieriš.' : Object.values(can).some(Boolean) ? '' : 'Za bielou nie je miesto na nádstavec (mantinel alebo guľa tesne za bielou).',
 				rack: !game.match ? (game.solo ? 'Nový frame' : 'Nové postavenie gúľ') : '',
 			});
 		},
@@ -1683,26 +1702,30 @@ export function start(root, config = {}) {
 			ui.openTools(false);
 			enterView('chalk');
 		},
-		spiderPick: () => {
+		spiderPick: (kind) => {
 			ui.openTools(false);
+			if (typeof kind === 'string' && RESTS[kind] && !(spiderOn && kind === restKind)) {
+				spiderOn = false;
+				setRest(kind);
+			}
 			if (spiderOn) {
 				spiderOn = false; // druhé vybratie: pavúk späť pod stôl
-				ui.toast('Pavúk je odložený.');
+				ui.toast(RESTS[restKind].name + ' je odložený.');
 				return;
 			}
 			if (game.state !== 'aim' || game.spectating || !game.cue.on) {
 				ui.toast('Pavúk sa dá vziať, keď mieriš.');
 				return;
 			}
-			if (!spiderSpot(game.cue, game.dir, game.balls)) {
-				ui.toast('Pavúk sa sem nedá položiť: biela je pri mantineli alebo je tesne za ňou guľa.');
+			if (!restSpot()) {
+				ui.toast(RESTS[restKind].name + ' sa sem nedá položiť: biela je pri mantineli alebo je tesne za ňou guľa.');
 				return;
 			}
 			spiderOn = true;
 			if (!freeMouse) {
 				controls.capture();
 			}
-			ui.toast('Pavúk: tágo leží vždy v rovnakej výške nad bielou. Po údere sa sám odloží.');
+			ui.toast(RESTS[restKind].name + ': tágo leží vždy v rovnakom sklone nad bielou. Po údere sa sám odloží.');
 		},
 		rackNew: () => {
 			ui.openTools(false);
@@ -1896,7 +1919,7 @@ export function start(root, config = {}) {
 				freeMouse = false;
 				ui.setFree(false);
 				ui.showMenu(false);
-			} else if (finePointer && (!view || view === 'seat' || view === 'free') && !freeMouse && !ui.partyOpen() && performance.now() - escClosedAt > 1500) {
+			} else if (finePointer && (!view || view === 'seat' || view === 'free') && !freeMouse && !ui.partyOpen() && !ui.toolsOpen() && performance.now() - escClosedAt > 1500) {
 				ui.showMenu(true, started);
 			}
 		},
@@ -2045,9 +2068,9 @@ export function start(root, config = {}) {
 			const lk = k.toLowerCase();
 			if (ui.toolsOpen()) {
 				// ponuka F3: 1 krieda, 2 pavúk, 3 nové postavenie, Esc alebo F3 zavrie
-				const pick = { 1: 'toolChalk', 2: 'spiderPick', 3: 'rackNew' }[lk];
-				if (pick && ui.toolEnabled(pick)) {
-					actions[pick]();
+				const pick = { 1: ['toolChalk'], 2: ['spiderPick', 'cross'], 3: ['spiderPick', 'spider'], 4: ['spiderPick', 'high'], 5: ['rackNew'] }[lk];
+				if (pick && ui.toolEnabled(pick[1] || pick[0])) {
+					actions[pick[0]](pick[1]);
 					return true;
 				}
 				if (lk === 'escape' || lk === 'f3') {
@@ -2793,10 +2816,10 @@ export function start(root, config = {}) {
 			pull += ((watchAim.pull || 0) - pull) * Math.min(1, dt * 18);
 		}
 		// pavúk: stojí za bielou na najbližšom voľnom mieste, kým mierim (po údere sa odloží)
-		spiderNow = spiderOn && aiming && game.cue.on ? spiderSpot(game.cue, game.dir, game.balls) : null;
+		spiderNow = spiderOn && aiming && game.cue.on ? restSpot() : null;
 		if (spiderOn && aiming && !spiderNow && performance.now() - spiderWarnT > 4000) {
 			spiderWarnT = performance.now();
-			ui.toast('Pavúk sa v tomto smere nedá položiť (mantinel alebo guľa tesne za bielou).');
+			ui.toast(RESTS[restKind].name + ' sa v tomto smere nedá položiť (mantinel alebo guľa tesne za bielou).');
 		}
 		spiderMesh.visible = !!spiderNow;
 		spiderHang.visible = !spiderOn;

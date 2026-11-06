@@ -24,6 +24,12 @@ function toEdge(x, z, ux, uz, hx, hz) {
 /* ---------- Pavúk (spider) a mierenie pri mantineli ---------- */
 
 export const SPIDER_TILT = THREE.MathUtils.degToRad(14); // tágo na pavúkovi: vždy rovnaký sklon nad bielou
+/** Nádstavce na teleskopickú tyč: krížik (nízko), pavúk, vysoký pavúk (U); každý drží tágo v inom sklone. */
+export const RESTS = {
+	cross: { name: 'Krížik', tilt: THREE.MathUtils.degToRad(7) },
+	spider: { name: 'Pavúk', tilt: SPIDER_TILT },
+	high: { name: 'Vysoký pavúk', tilt: THREE.MathUtils.degToRad(22) },
+};
 const SPIDER_FOOT = 0.065; // polomer nôh pavúka (nesmie zavadiť o guľu)
 const GAP_REST = 0.012;
 
@@ -31,13 +37,14 @@ const GAP_REST = 0.012;
  * Miesto pre pavúka za bielou v smere tága: najbližšia voľná vzdialenosť, kde nohy nezavadia o guľu, sú na
  * hracej ploche (nie pri mantineli) a tágo pod sklonom SPIDER_TILT prejde ponad gule. Vráti { x, z, d, h } alebo null.
  */
-export function spiderSpot(cue, dir, balls) {
+export function spiderSpot(cue, dir, balls, tilt = SPIDER_TILT, kind = 'spider') {
+	const foot = kind === 'cross' ? 0.048 : kind === 'high' ? 0.05 : SPIDER_FOOT; // krížik je malý: zmestí sa aj k mantinelu
 	const dx = Math.cos(dir);
 	const dz = Math.sin(dir);
 	const tipX = cue.p.x - dx * (R + GAP_REST);
 	const tipZ = cue.p.z - dz * (R + GAP_REST);
 	const tipY = R;
-	const tan = Math.tan(SPIDER_TILT);
+	const tan = Math.tan(tilt);
 	// tágo nad guľami medzi bielou a pavúkom
 	for (const b of balls || []) {
 		if (b === cue || !b.on) {
@@ -51,21 +58,21 @@ export function spiderSpot(cue, dir, balls) {
 			return null; // guľa tesne za bielou: ani pavúk nepomôže
 		}
 	}
-	for (let d = 0.2; d <= 0.75; d += 0.01) {
+	for (let d = kind === 'cross' ? 0.1 : 0.2; d <= 0.75; d += 0.01) {
 		const x = tipX - dx * d;
 		const z = tipZ - dz * d;
-		if (Math.abs(x) > L / 2 - SPIDER_FOOT - 0.01 || Math.abs(z) > W / 2 - SPIDER_FOOT - 0.01) {
-			return null; // pri mantineli pavúk nefunguje
+		if (Math.abs(x) > L / 2 - foot - 0.004 || Math.abs(z) > W / 2 - foot - 0.004) {
+			return null; // za mantinel sa nádstavec nepoloží (krížik sa zmestí bližšie k mantinelu)
 		}
 		let free = true;
 		for (const b of balls || []) {
-			if (b.on && Math.hypot(b.p.x - x, b.p.z - z) < R + SPIDER_FOOT) {
+			if (b.on && Math.hypot(b.p.x - x, b.p.z - z) < R + foot) {
 				free = false;
 				break;
 			}
 		}
 		if (free) {
-			return { x, z, d, h: tipY + d * tan };
+			return { x, z, d, h: tipY + d * tan, tilt };
 		}
 	}
 	return null;
@@ -93,47 +100,123 @@ export function cushionTop(cue, dir, len = 1.45) {
 	return Math.max(0, Math.min(0.8, need));
 }
 
-/** Model pavúka: nohy, stĺpik a hlava s drážkami; h = výška drážky nad súknom (mení sa stĺpikom). */
-export function buildSpider() {
+/**
+ * Model pavúka (spider): mosadzná plochá hlava v tvare oblúka s dvoma nohami (čierne gumové koncovky),
+ * navrchu korunka so žliabkami, v strede dva otvory; na teleskopickej kovovej tyči s drevenou rukoväťou.
+ * Lokálne: hlava stojí v počiatku na súkne (plát v rovine yz, naprieč tága), tágo ide po +x (k bielej),
+ * tyč smeruje dozadu (-x) a mierne doľava (shaftYaw) a stúpa k ruke (rise).
+ * userData.setHeight(h) = výška osi tága v strednom žliabku.
+ */
+export function buildSpider(shaftYaw = 0.22, rise = 0.16, kind = 'spider') {
 	const g = new THREE.Group();
-	const chrome = new THREE.MeshStandardMaterial({ color: 0xc9ced6, metalness: 0.9, roughness: 0.25 });
-	const brass = new THREE.MeshStandardMaterial({ color: 0xc8a050, metalness: 0.85, roughness: 0.3 });
-	const rubber = new THREE.MeshStandardMaterial({ color: 0x151515, roughness: 0.8 });
-	const hub = new THREE.Group();
-	for (let i = 0; i < 4; i++) {
-		const a = (i / 4) * Math.PI * 2 + Math.PI / 4;
-		const fx = Math.cos(a) * SPIDER_FOOT;
-		const fz = Math.sin(a) * SPIDER_FOOT;
-		const leg = new THREE.Mesh(new THREE.CylinderGeometry(0.0035, 0.0035, 1, 8), chrome);
-		const from = new THREE.Vector3(fx, 0.004, fz);
-		const to = new THREE.Vector3(0, 0.035, 0);
-		leg.scale.y = from.distanceTo(to);
-		leg.position.copy(from).add(to).multiplyScalar(0.5);
-		leg.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), to.clone().sub(from).normalize());
-		hub.add(leg);
-		const foot = new THREE.Mesh(new THREE.SphereGeometry(0.007, 10, 8), rubber);
-		foot.position.copy(from);
-		hub.add(foot);
+	const brass = new THREE.MeshStandardMaterial({ color: 0xd8b04a, metalness: 0.95, roughness: 0.22, side: THREE.DoubleSide });
+	const chrome = new THREE.MeshStandardMaterial({ color: 0xcfd4da, metalness: 0.95, roughness: 0.2 });
+	const wood = new THREE.MeshStandardMaterial({ color: 0x7a2a16, roughness: 0.4 });
+	const black = new THREE.MeshStandardMaterial({ color: 0x111111, roughness: 0.7 });
+	let plate = null;
+	const tips = [];
+	for (let i = 0; i < 2; i++) {
+		const tip = new THREE.Mesh(new THREE.CylinderGeometry(0.0065, 0.0065, 0.014, 12), black);
+		g.add(tip);
+		tips.push(tip);
 	}
-	g.add(hub);
-	const post = new THREE.Mesh(new THREE.CylinderGeometry(0.0045, 0.0045, 1, 10), chrome);
-	g.add(post);
-	const head = new THREE.Group();
-	const bar = new THREE.Mesh(new THREE.BoxGeometry(0.012, 0.02, 0.09), brass);
-	head.add(bar);
-	for (const z of [-0.03, 0, 0.03]) {
-		const notch = new THREE.Mesh(new THREE.BoxGeometry(0.014, 0.008, 0.012), rubber);
-		notch.position.set(0, 0.009, z);
-		head.add(notch);
-	}
-	g.add(head);
-	g.userData.setHeight = (h) => {
-		const top = Math.max(0.05, h - 0.022);
-		post.scale.y = top - 0.03;
-		post.position.y = 0.03 + (top - 0.03) / 2;
-		head.position.y = top + 0.01;
+	const tubes = [0.0075, 0.0068, 0.006].map((r) => {
+		const m = new THREE.Mesh(new THREE.CylinderGeometry(r, r, 1, 14), chrome);
+		g.add(m);
+		return m;
+	});
+	const handle = new THREE.Mesh(new THREE.CylinderGeometry(0.013, 0.015, 1, 16), wood);
+	const ring = new THREE.Mesh(new THREE.CylinderGeometry(0.0135, 0.0135, 0.02, 16), black);
+	const cap = new THREE.Mesh(new THREE.CylinderGeometry(0.015, 0.015, 0.012, 16), black);
+	g.add(handle, ring, cap);
+	const place = (m, a, b) => {
+		m.position.copy(a).add(b).multiplyScalar(0.5);
+		m.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), b.clone().sub(a).normalize());
+		return a.distanceTo(b);
 	};
-	g.userData.setHeight(0.1);
+	/** Obrys plátu (z doprava, y hore): nohy, ramená, korunka so žliabkami, oblúk a dva otvory. */
+	const plateShape = (ty) => {
+		const sh = new THREE.Shape();
+		const narrow = kind === 'high'; // vysoký pavúk: užší oblúk v tvare U
+		const W = narrow ? 0.044 : 0.062;
+		const legW = narrow ? 0.01 : 0.012;
+		const ah = Math.max(0.025, ty * 0.5); // výška oblúka medzi nohami
+		sh.moveTo(-W, 0.006);
+		sh.lineTo(-W + legW, 0.006);
+		sh.lineTo(-W + legW, ah - 0.012);
+		sh.quadraticCurveTo(-W + legW, ah + 0.006, -0.03, ah + 0.006);
+		sh.lineTo(0.03, ah + 0.006);
+		sh.quadraticCurveTo(W - legW, ah + 0.006, W - legW, ah - 0.012);
+		sh.lineTo(W - legW, 0.006);
+		sh.lineTo(W, 0.006);
+		sh.lineTo(W, ty - 0.012);
+		// korunka: hroty a žliabky (stredný žliabok v z = 0 vo výške ty)
+		const crown = narrow
+			? [[0.04, ty + 0.004], [0.03, ty + 0.016], [0.016, ty + 0.014], [0, ty], [-0.016, ty + 0.014], [-0.03, ty + 0.016], [-0.04, ty + 0.004]]
+			: [[0.056, ty + 0.004], [0.046, ty + 0.014], [0.032, ty], [0.016, ty + 0.014], [0, ty], [-0.016, ty + 0.014], [-0.032, ty], [-0.046, ty + 0.014], [-0.056, ty + 0.004]];
+		for (const [z, y] of crown) {
+			sh.lineTo(z, y);
+		}
+		sh.lineTo(-W, ty - 0.012);
+		sh.lineTo(-W, 0.006);
+		for (const sx of [-1, 1]) {
+			const hole = new THREE.Path();
+			hole.absellipse(sx * (narrow ? 0.022 : 0.03), (ah + ty) / 2 + 0.002, narrow ? 0.007 : 0.011, Math.max(0.005, (ty - ah) * 0.22), 0, Math.PI * 2, false, 0);
+			sh.holes.push(hole);
+		}
+		return sh;
+	};
+	g.userData.setHeight = (h) => {
+		const ty = Math.max(0.045, h - 0.012); // spodok tága leží v strednom žliabku
+		if (plate) {
+			g.remove(plate);
+			plate.traverse((o) => o.geometry && o.geometry.dispose());
+		}
+		if (kind === 'cross') {
+			// krížik: dve prekrížené tyčky naprieč tága, tágo leží v hornom V
+			plate = new THREE.Group();
+			const c = Math.max(0.018, ty - 0.008); // stred kríža
+			const a = Math.min(0.045, c);
+			for (const sx of [-1, 1]) {
+				const bar = new THREE.Mesh(new THREE.CylinderGeometry(0.005, 0.005, 1, 10), brass);
+				bar.scale.y = place(bar, new THREE.Vector3(0, 0.008, sx * a), new THREE.Vector3(0, 2 * c - 0.008, -sx * a));
+				plate.add(bar);
+				const top = new THREE.Mesh(new THREE.CylinderGeometry(0.006, 0.006, 0.012, 10), black);
+				place(top, new THREE.Vector3(0, 2 * c - 0.012, -sx * a * 0.94), new THREE.Vector3(0, 2 * c - 0.002, -sx * a * 1.0));
+				plate.add(top);
+			}
+			const hub = new THREE.Mesh(new THREE.CylinderGeometry(0.008, 0.008, 0.02, 14), brass);
+			hub.rotation.z = Math.PI / 2;
+			hub.position.set(-0.006, c, 0);
+			plate.add(hub);
+			g.add(plate);
+			tips.forEach((t, i) => t.position.set(0, 0.007, (i ? 1 : -1) * a));
+		} else {
+			const geo = new THREE.ExtrudeGeometry(plateShape(ty), { depth: 0.005, bevelEnabled: true, bevelThickness: 0.001, bevelSize: 0.001, bevelSegments: 1, curveSegments: 10 });
+			geo.translate(0, 0, -0.0025);
+			plate = new THREE.Mesh(geo, brass);
+			plate.rotation.y = Math.PI / 2; // plát naprieč tága (rovina yz)
+			plate.castShadow = true;
+			g.add(plate);
+			const fz = kind === 'high' ? 0.038 : 0.056;
+			tips.forEach((t, i) => t.position.set(0, 0.007, (i ? 1 : -1) * fz));
+		}
+		// tyč: od stredu plátu dozadu, doľava a hore; tri teleskopické diely a drevená rukoväť
+		const back = new THREE.Vector3(-Math.cos(shaftYaw), 0, -Math.sin(shaftYaw));
+		const start = new THREE.Vector3(-0.004, kind === 'cross' ? Math.max(0.018, ty - 0.008) : ty * 0.62, 0);
+		const dirv = back.clone().multiplyScalar(1).add(new THREE.Vector3(0, rise / 1.35, 0)).normalize();
+		let p = start.clone();
+		for (const [i, len] of [0.26, 0.26, 0.25].entries()) {
+			const q = p.clone().addScaledVector(dirv, len);
+			tubes[i].scale.y = place(tubes[i], p, q);
+			p = q;
+		}
+		const hEnd = p.clone().addScaledVector(dirv, 0.58);
+		handle.scale.y = place(handle, p, hEnd);
+		place(ring, p, p.clone().addScaledVector(dirv, 0.02));
+		place(cap, hEnd, hEnd.clone().addScaledVector(dirv, 0.012));
+	};
+	g.userData.setHeight(0.09);
 	g.traverse((o) => {
 		if (o.isMesh) {
 			o.castShadow = true;
@@ -227,7 +310,7 @@ export class Cue {
 			}
 			return true;
 		};
-		let want = spider ? SPIDER_TILT : TILT;
+		let want = spider ? spider.tilt || SPIDER_TILT : TILT;
 		for (; !spider && want < MAX_TILT; want += 0.005) {
 			const ok = [d1, d2].every((sd) => sd > len || base + sd * Math.sin(want) >= EDGE_H + rad(sd) / Math.cos(want));
 			if (ok && clear(want)) {

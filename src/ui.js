@@ -1520,8 +1520,8 @@ export class UI {
 	}
 
 	/**
-	 * Ponuka F3: 1 Nakriedovať, 2 Pavúk, 3 Nové postavenie gúľ. o.spider = 'ok' | 'on' | text prečo nie,
-	 * o.rack = názov alebo '' (v partii nie).
+	 * Ponuka F3: 1 Nakriedovať, 2 až 4 nádstavce na teleskopickú tyč (krížik, pavúk, vysoký pavúk),
+	 * 5 Nové postavenie gúľ. o.rests = [{ kind, name, ok, on }], o.rack = názov alebo '' (v partii nie).
 	 */
 	openTools(on, o = {}) {
 		if (!this.toolsBox) {
@@ -1537,22 +1537,26 @@ export class UI {
 			this._tools = null;
 			return;
 		}
-		this._tools = { toolChalk: !!o.chalk, spiderPick: o.spider === 'ok' || o.spider === 'on', rackNew: !!o.rack };
+		this._tools = { toolChalk: !!o.chalk, rackNew: !!o.rack };
 		B.innerHTML = '<h3>Krieda a pomôcky (F3)</h3>';
-		const row = (n, label, act, ok, note) => {
-			const b = this.button(`<b>${n}</b> ${label}`, act, note || '');
+		const row = (n, label, act, ok, value) => {
+			const b = this.button(`<b>${n}</b> ${label}`, act, '', value);
 			b.disabled = !ok;
 			B.appendChild(b);
-			if (note && !ok) {
-				B.appendChild(h('p', 'mysn-note', esc(note)));
-			}
 		};
 		row(1, 'Nakriedovať tágo', 'toolChalk', !!o.chalk);
-		row(2, o.spider === 'on' ? 'Odložiť pavúka' : 'Pavúk (na jeden úder)', 'spiderPick', this._tools.spiderPick, o.spider === 'ok' || o.spider === 'on' ? '' : o.spider);
-		if (o.rack) {
-			row(3, o.rack, 'rackNew', true);
+		B.appendChild(h('p', 'mysn-note', 'Nádstavec na teleskopickej tyči, na jeden úder:'));
+		(o.rests || []).forEach((r, i) => {
+			this._tools[r.kind] = r.ok || r.on;
+			row(i + 2, r.on ? `Odložiť: ${esc(r.name)}` : esc(r.name), 'spiderPick', r.ok || r.on, r.kind);
+		});
+		if (o.restNote) {
+			B.appendChild(h('p', 'mysn-note', esc(o.restNote)));
 		}
-		B.appendChild(h('p', 'mysn-note', 'Klávesy 1 až 3, Esc alebo F3 zavrie. Pavúk aj trojuholník visia pod stolom (Ctrl a klik).'));
+		if (o.rack) {
+			row(5, o.rack, 'rackNew', true);
+		}
+		B.appendChild(h('p', 'mysn-note', 'Klávesy 1 až 5, Esc alebo F3 zavrie. Krížik je nízky a zmestí sa aj bližšie k mantinelu. Pavúk a trojuholník visia pod stolom (Ctrl a klik).'));
 	}
 
 	toolsOpen() {
