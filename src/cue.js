@@ -185,7 +185,7 @@ export function buildSpider(shaftYaw = 0.22, rise = 0.16, kind = 'spider') {
 		return sh;
 	};
 	g.userData.setHeight = (h) => {
-		const ty = Math.max(0.045, h - 0.012); // spodok tága leží v strednom žliabku
+		const ty = Math.max(0.045, h - 0.007); // spodok tága (polomer asi 6 mm) leží v strednom žliabku
 		if (plate) {
 			g.remove(plate);
 			plate.traverse((o) => o.geometry && o.geometry.dispose());
@@ -193,7 +193,7 @@ export function buildSpider(shaftYaw = 0.22, rise = 0.16, kind = 'spider') {
 		if (kind === 'cross') {
 			// krížik: dve prekrížené tyčky naprieč tága, tágo leží v hornom V
 			plate = new THREE.Group();
-			const c = Math.max(0.018, ty - 0.008); // stred kríža
+			const c = Math.max(0.018, h - 0.016); // stred kríža: tágo leží v hornom V, tesne nad prekrížením
 			const a = Math.min(0.045, c);
 			for (const sx of [-1, 1]) {
 				const bar = new THREE.Mesh(new THREE.CylinderGeometry(0.005, 0.005, 1, 10), brass);
@@ -221,7 +221,7 @@ export function buildSpider(shaftYaw = 0.22, rise = 0.16, kind = 'spider') {
 		}
 		// tyč: od stredu plátu dozadu, doľava a hore; tri teleskopické diely a drevená rukoväť
 		const back = new THREE.Vector3(-Math.cos(shaftYaw), 0, -Math.sin(shaftYaw));
-		const start = new THREE.Vector3(-0.004, kind === 'cross' ? Math.max(0.018, ty - 0.008) : ty * 0.62, 0);
+		const start = new THREE.Vector3(-0.004, kind === 'cross' ? Math.max(0.018, h - 0.016) : ty * 0.62, 0);
 		const dirv = back.clone().multiplyScalar(1).add(new THREE.Vector3(0, rise / 1.35, 0)).normalize();
 		let p = start.clone();
 		for (const [i, len] of [0.26, 0.26, 0.25].entries()) {

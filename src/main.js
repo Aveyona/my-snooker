@@ -216,6 +216,7 @@ export function start(root, config = {}) {
 		saveSettings(settings);
 		scene.remove(spiderMesh);
 		spiderMesh = buildSpider(0.22, 0.16, kind);
+		spiderMesh.userData.h = 0;
 		spiderMesh.visible = false;
 		scene.add(spiderMesh);
 	};
@@ -2884,7 +2885,6 @@ export function start(root, config = {}) {
 		if (spiderNow) {
 			spiderMesh.position.set(spiderNow.x, spiderNow.y || 0, spiderNow.z); // krížik pri mantineli stojí na ráme
 			spiderMesh.rotation.set(0, -game.dir, 0);
-			spiderMesh.userData.setHeight(spiderNow.h - (spiderNow.y || 0));
 		}
 		// pri mantineli: úder automaticky vyššie na bielu (menej zdvihnuté tágo); hráč to môže doladiť
 		// na guli Miesto úderu, sklon tága (a s ním kamera) sa potom prispôsobí
@@ -2914,6 +2914,17 @@ export function start(root, config = {}) {
 			}
 		}
 		cue.place(game.cue, game.dir, pull, watchAim ? watchAim.side || 0 : spin.side, watchAim ? watchAim.top || 0 : spin.top, (aiming || view === 'chalk' || (watchAim && !watchAim.place)) && game.cue.on, game.balls, spiderNow);
+		if (spiderNow) {
+			// výška drážky podľa skutočnej polohy tága (miesto úderu hore a dole mení výšku špičky), aby tágo
+			// ležalo v drážke a neprechádzalo cez nádstavec; model sa prestavia len pri zmene o viac ako 0,5 mm
+			const tp = cue.pivot.position;
+			const dist = Math.hypot(spiderNow.x - tp.x, spiderNow.z - tp.z);
+			const hh = tp.y + dist * Math.tan(cue.tilt || 0) - (spiderNow.y || 0);
+			if (Math.abs(hh - (spiderMesh.userData.h || 0)) > 0.0005) {
+				spiderMesh.userData.h = hh;
+				spiderMesh.userData.setHeight(hh);
+			}
+		}
 		if (!hands) {
 			hands = new Hands(scene, rig.camera);
 		}
