@@ -477,3 +477,8 @@ body.mysn-page { font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans
 .mysn-fps.mysn-fps-mid { color: #ffd34d; border-color: #ffd34d66; }
 .mysn-fps.mysn-fps-low { color: #ff6b6b; border-color: #ff6b6b66; }
 .mysn-ui.mysn-ctrl .mysn-fps { display: block; }
+/* Nastavenia: prehliadka miestností (len admin) */
+.mysn-tour { margin: 6px 0 10px; padding: 10px; border: 1px solid #d4a72c66; border-radius: 10px; display: flex; flex-direction: column; gap: 6px; }
+.mysn-tour span { font-size: 12px; opacity: .75; }
+.mysn-tour div { display: flex; gap: 6px; flex-wrap: wrap; }
+.mysn-tour .mysn-btn { width: auto; flex: 1; }

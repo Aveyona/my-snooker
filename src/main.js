@@ -485,16 +485,21 @@ export function start(root, config = {}) {
 	// --- voľná kamera (medzerník): z aktuálneho pohľadu, pohyb klávesmi, myšou rozhliadanie ---
 	let freeMem = null; // posledná poloha voľnej kamery (v tej istej miestnosti sa k nej vráti)
 	const freeVel = new THREE.Vector3();
-	const freeCam = () => {
+	const freeCam = (at = null) => {
 		if (view) {
 			exitView();
 		}
 		let pos = rig.camera.position.clone();
 		const dir = new THREE.Vector3();
 		rig.camera.getWorldDirection(dir);
+		if (at) {
+			// prehliadka admina: kamera na zadané miesto a smer
+			pos = at.pos.clone();
+			dir.copy(at.look).sub(at.pos).normalize();
+		}
 		chairLook.yaw = Math.atan2(dir.z, dir.x);
 		chairLook.pitch = Math.max(-1.2, Math.min(0.9, Math.asin(Math.max(-1, Math.min(1, dir.y)))));
-		if (freeMem && freeMem.venue === venue) {
+		if (!at && freeMem && freeMem.venue === venue) {
 			pos = freeMem.pos.clone();
 			chairLook.yaw = freeMem.yaw;
 			chairLook.pitch = freeMem.pitch;
@@ -522,7 +527,9 @@ export function start(root, config = {}) {
 		freeZoomTo = 1;
 		freeUp = 0;
 		freeDown = 0;
+		adminRoam = false;
 	};
+	let adminRoam = false; // admin: prehliadka miestností (Nastavenia), voľná kamera bez hraníc miestnosti
 	let freeZoomTo = 1; // voľná kamera: priblíženie kolieskom (plynulo k cieľu)
 	let freeUp = 0; // voľná kamera: držané tlačidlo myši (pravé = hore, ľavé = dole)
 	let freeDown = 0;
@@ -683,8 +690,10 @@ export function start(root, config = {}) {
 		// od stien najmenej na dĺžku rúk (ruky ani kamera nevojdú do steny)
 		const bx = lg ? 9.5 : ROOM.x - 0.6;
 		const bz = lg ? 9.5 : ROOM.z - 0.6;
-		p.x = Math.max(-bx, Math.min(bx, p.x));
-		p.z = Math.max(-bz, Math.min(bz, p.z));
+		if (!adminRoam) {
+			p.x = Math.max(-bx, Math.min(bx, p.x));
+			p.z = Math.max(-bz, Math.min(bz, p.z));
+		}
 		p.y = Math.max(ROOM.floor + 0.25, Math.min(lg ? ROOM.floor + 9 : ROOM.ceil - 0.15, p.y));
 		const d = rig.viewLook.clone().sub(rig.viewPos);
 		rig.viewPos.copy(p);
@@ -1565,6 +1574,32 @@ export function start(root, config = {}) {
 			settings.mouseSens = Math.min(3, Math.max(0.3, Number(v) || 1));
 			controls.sens = settings.mouseSens;
 			saveSettings(settings);
+		},
+		// admin (Nastavenia, Prehliadka): voľná kamera v herni, na štadióne alebo v kancelárii, bez hraníc miestností
+		adminTour: (where) => {
+			if (config.role !== 'admin') {
+				return;
+			}
+			if (game.match || game.spectating) {
+				ui.toast('Počas partie alebo sledovania sa prehliadka nedá.');
+				return;
+			}
+			ui.closeSettings && ui.closeSettings();
+			ui.showMenu(false);
+			const go = () => {
+				adminRoam = true;
+				const at = where === 'office' ? office.seat : where === 'league' ? { pos: new THREE.Vector3(-6, ROOM.floor + 2.2, 4.5), look: new THREE.Vector3(0, ROOM.floor + 0.8, 0) } : { pos: new THREE.Vector3(-3.8, ROOM.floor + 1.7, 2.6), look: new THREE.Vector3(0, ROOM.floor + 0.8, 0) };
+				freeCam(at);
+				controls.capture();
+				ui.toast('Prehliadka (admin): voľná kamera bez hraníc. Nastavenia: iná miestnosť. Medzerník: späť za tágo.');
+			};
+			const want = where === 'league' ? 'league' : 'home';
+			if (venue !== want) {
+				setVenue(want);
+				setTimeout(go, 450); // po prechode (stmavnutie)
+			} else {
+				go();
+			}
 		},
 		help: () => enterView('board'),
 		board: () => enterView('board'),

@@ -239,6 +239,7 @@ export class UI {
 				</select></label>
 			<label class="mysn-check"><input type="checkbox" data-k="respot"> Vracať farebné gule na spoty</label>
 			<p class="mysn-note">Zmena kvality sa prejaví po obnovení stránky.</p>
+			${this.opts.role === 'admin' ? '<div class="mysn-tour"><b>Prehliadka (admin)</b><span>Voľná kamera bez hraníc miestností</span><div><button type="button" class="mysn-btn" data-tour="home">Herňa</button><button type="button" class="mysn-btn" data-tour="league">Štadión</button><button type="button" class="mysn-btn" data-tour="office">Kancelária</button></div></div>' : ''}
 			<button type="button" class="mysn-btn mysn-primary" data-close>Zavrieť</button>`;
 		for (const el of p.querySelectorAll('[data-k]')) {
 			const k = el.dataset.k;
@@ -253,6 +254,13 @@ export class UI {
 			});
 		}
 		p.querySelector('[data-close]').addEventListener('click', () => p.classList.add('mysn-hidden'));
+		for (const b of p.querySelectorAll('[data-tour]')) {
+			b.addEventListener('click', (e) => {
+				e.stopPropagation();
+				p.classList.add('mysn-hidden');
+				this.opts.onAction('adminTour', b.dataset.tour);
+			});
+		}
 		return p;
 	}
 
