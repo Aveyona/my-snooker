@@ -192,6 +192,37 @@ export function buildStadium(scene, quality) {
 	scr2.castShadow = false;
 	add(new THREE.BoxGeometry(0.12, 1.75, 3.35), dark, BX + 3.68, FY + 3.6, 0);
 
+	// veľké moderné LCD obrazovky nad dlhými tribúnami (tvárou k stolu): pohľad hráča na rade (zapína a vypína divák)
+	const lcdOff = new THREE.MeshStandardMaterial({ color: 0x050608, roughness: 0.12, metalness: 0.6 });
+	const lcdOn = new THREE.MeshBasicMaterial({ color: 0xffffff, toneMapped: false });
+	const lcdBezel = new THREE.MeshStandardMaterial({ color: 0x15171c, roughness: 0.3, metalness: 0.7 });
+	const lcds = [];
+	for (const side of [-1, 1]) {
+		const z = side * 9.15;
+		const y = FY + 4.75;
+		const back = add(new THREE.BoxGeometry(6.0, 3.42, 0.14), lcdBezel, 0, y, z + side * 0.08);
+		back.castShadow = false;
+		const panel = add(new THREE.PlaneGeometry(5.76, 3.24), lcdOff, 0, y, z);
+		panel.rotation.y = side > 0 ? Math.PI : 0;
+		panel.castShadow = false;
+		panel.receiveShadow = false;
+		// tenký svetlý pásik dole (logo výrobcu nie, len LED pás)
+		const led = add(new THREE.BoxGeometry(5.9, 0.03, 0.02), new THREE.MeshBasicMaterial({ color: 0x3d8bff }), 0, y - 1.7, z - side * 0.01);
+		led.castShadow = false;
+		lcds.push(panel);
+	}
+	/** LCD: on = zapnuté, tex = textúra s pohľadom hráča (null = čierny obraz). */
+	const setLcd = (on, tex) => {
+		const want = on && tex ? tex : null;
+		if (lcdOn.map !== want) {
+			lcdOn.map = want;
+			lcdOn.needsUpdate = true;
+		}
+		for (const p of lcds) {
+			p.material = want ? lcdOn : lcdOff;
+		}
+	};
+
 	// stolík rozhodcu a stoličky hráčov
 	const wood = new THREE.MeshStandardMaterial({ color: 0x2a1508, roughness: 0.4 });
 	add(new THREE.BoxGeometry(0.9, 0.04, 0.45), wood, 2.6, FY + 0.74, BZ - 0.55);
@@ -601,6 +632,8 @@ export function buildStadium(scene, quality) {
 			reactFans(fans, kind);
 		},
 		setScreen: drawScreen,
+		setLcd,
+		lcds,
 		confetti,
 		fanConfetti,
 		seatConfetti,

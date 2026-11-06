@@ -131,6 +131,7 @@ function mysn_roadmap() {
 /** Denník zmien (najnovšie hore). */
 function mysn_changelog() {
 	return array(
+		array( '0.7.6', '6. 11. 2026', 'Štadión: veľké moderné LCD obrazovky nad oboma dlhými tribúnami. Ukazujú pohľad hráča na rade so širším zorným uhlom, všetci (hráči aj diváci) vidia to isté. Ktorýkoľvek divák ich zapne alebo vypne klávesom F9 alebo v telefóne F1, zmena platí pre všetkých. Nový zápas začína so zapnutými.' ),
 		array( '0.7.5', '6. 11. 2026', 'Divák: F8 pohľad hráča vpravo hore (presne to, čo vidí hráč na rade, plynulo 10-krát za sekundu), pod ním malý stôl zhora (Tab). Obe okná sú predvolene zapnuté a hra si pamätá, ktoré si vypol.' ),
 		array( '0.7.4', '6. 11. 2026', 'Divák: kláves Tab zapne alebo vypne malý stôl zhora vpravo hore (vidno rozostavenie gúľ a tágo hráča). Hra si nastavenie pamätá.' ),
 		array( '0.7.3', '6. 11. 2026', 'Tágo v online partii: súper a diváci vidia na stole tágo, ktoré má hráč na rade naozaj v ruke (aj vlastné upravené tágo). Doteraz každý videl pri každom ťahu svoje vlastné tágo.' ),

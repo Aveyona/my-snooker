@@ -257,11 +257,29 @@ export class Online {
 	/** Kamera hráča pre divákov (F8): poloha voči stolu, natočenie, zorný uhol, vrstvy. Najviac 10-krát za sekundu. */
 	sendCam(c) {
 		const now = performance.now();
-		if (!this.matchId || now - (this._camAt || 0) < 100 || !this.rtc.list('watch', (p) => !p.offerer).length) {
+		const g = this.game;
+		const toOpp = !!(g.match && g.match.league && g.myTurn); // súper ho potrebuje pre LCD na štadióne
+		const toW = this.rtc.list('watch', (p) => !p.offerer).length > 0;
+		if (!this.matchId || now - (this._camAt || 0) < 100 || (!toOpp && !toW)) {
 			return;
 		}
 		this._camAt = now;
-		this.wsend({ k: 'w-cam', t: this.game.myTurn ? 1 : 0, ...c });
+		if (toW) {
+			this.wsend({ k: 'w-cam', t: g.myTurn ? 1 : 0, ...c });
+		}
+		if (toOpp) {
+			this.rtcSendOpp({ k: 'cam', ...c });
+		}
+	}
+
+	/** LCD na štadióne zapnuté alebo vypnuté (prepína divák): stav si pamätám a pošlem súperovi aj svojim divákom. */
+	sendLcd(m) {
+		this.lcd = { k: 'w-lcd', on: !!m.on, id: String(m.id || '') };
+		if (!this.matchId) {
+			return;
+		}
+		this.rtcSendOpp({ k: 'lcd', on: this.lcd.on, id: this.lcd.id });
+		this.wsend(this.lcd);
 	}
 
 	/** Divák: správa hráčom, ktorých partiu sledujem (napríklad konfety F7). */
@@ -330,6 +348,9 @@ export class Online {
 			this.rtc.send(p, this.matchWState());
 			if (this.myRack) {
 				this.rtc.send(p, { k: 'w-rack', ...this.myRack });
+			}
+			if (this.lcd) {
+				this.rtc.send(p, this.lcd);
 			}
 			this.hooks.status();
 		} else if (this.hooks.watcherOpen) {
@@ -403,6 +424,8 @@ export class Online {
 				this.hooks.watch(m);
 			} else if (!p.offerer && m.k === 'w-conf' && this.hooks.watcherConf) {
 				this.hooks.watcherConf(m); // konfety od môjho diváka (F7)
+			} else if (!p.offerer && m.k === 'w-lcd' && this.hooks.lcd) {
+				this.hooks.lcd(m, true); // divák zapol alebo vypol LCD
 			}
 			return;
 		}
@@ -432,6 +455,14 @@ export class Online {
 			this.applyInfo({ ...(this.info || {}), id: this.matchId, status: 'active', seq: m.seq, state: m.state, shot: null, players: g.match.players, me: g.match.me });
 		} else if (m.k === 'info' && m.m) {
 			this.applyInfo({ ...m.m, me: 1 - m.m.me });
+		} else if (m.k === 'cam') {
+			if (this.hooks.cam) {
+				this.hooks.cam(m); // pohľad súpera na rade (LCD na štadióne)
+			}
+		} else if (m.k === 'lcd') {
+			if (this.hooks.lcd) {
+				this.hooks.lcd({ k: 'w-lcd', on: !!m.on, id: String(m.id || '') }, false);
+			}
 		} else if (m.k === 'rack') {
 			if (this.hooks.rack) {
 				this.hooks.rack(m);
@@ -650,6 +681,7 @@ export class Online {
 
 	/** text0 pre mňa, wtext pre divákov (bez „ty“, rovnaký od oboch hráčov). */
 	stopMatch(text0, wtext) {
+		this.lcd = null;
 		this.remoteCue = null;
 		this._rcKey = '';
 		const text = (text0 || '') + (this.stopMatchText || '');
