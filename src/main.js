@@ -673,8 +673,9 @@ export function start(root, config = {}) {
 		const p = rig.viewPos.clone().addScaledVector(freeVel, dt);
 		// kamera ostáva v miestnosti (herňa) alebo v aréne (štadión)
 		const lg = venue === 'league';
-		const bx = lg ? 9.5 : ROOM.x - 0.25;
-		const bz = lg ? 9.5 : ROOM.z - 0.25;
+		// od stien najmenej na dĺžku rúk (ruky ani kamera nevojdú do steny)
+		const bx = lg ? 9.5 : ROOM.x - 0.6;
+		const bz = lg ? 9.5 : ROOM.z - 0.6;
 		p.x = Math.max(-bx, Math.min(bx, p.x));
 		p.z = Math.max(-bz, Math.min(bz, p.z));
 		p.y = Math.max(ROOM.floor + 0.25, Math.min(lg ? ROOM.floor + 9 : ROOM.ceil - 0.15, p.y));
@@ -2108,12 +2109,10 @@ export function start(root, config = {}) {
 	});
 	let zoomSaveT = 0;
 	controls.sens = settings.mouseSens || 1; // šúpatko Otáčanie myšou
-	// priblíženie kolieskom: za tágom a pri držanom pravom tlačidle zvlášť, obe sa pamätajú
+	// priblíženie kolieskom za tágom sa pamätá (pri držanom pravom tlačidle platí koliesko len počas držania)
 	rig.zoom = Math.min(6, Math.max(0.3, Number(settings.zoom) || 1));
-	rig.panZoom = Math.min(6, Math.max(0.3, Number(settings.panZoom) || 1));
 	controls.hooks.zoomed = (z, pz) => {
 		settings.zoom = +z.toFixed(3);
-		settings.panZoom = +pz.toFixed(3);
 		clearTimeout(zoomSaveT);
 		zoomSaveT = setTimeout(() => saveSettings(settings), 400);
 	};
@@ -2593,7 +2592,7 @@ export function start(root, config = {}) {
 		if (!hands) {
 			hands = new Hands(scene, rig.camera);
 		}
-		hands.updateFree(view === 'free', dt, freeVel.length());
+		hands.updateFree(view === 'free', dt, freeVel.length(), cueSpec);
 		if (chalkT >= 0) {
 			// kriedovanie: tágo sa zdvihne a odtiahne, krieda sa nasadí dierou na špičku, pootáča sa a odíde
 			chalkT = debug.chalkFreeze !== null ? debug.chalkFreeze : (performance.now() - chalkStart) / 1000; // podľa skutočného času

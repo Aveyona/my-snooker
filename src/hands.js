@@ -3,6 +3,7 @@
  * Jednoduché tvary (kapsule a zaoblené kvádre), bez textúr.
  */
 import * as THREE from 'three';
+import { buildCueMesh } from './cues.js';
 
 const SKIN = new THREE.MeshStandardMaterial({ color: 0xd8a283, roughness: 0.62, metalness: 0 });
 const SLEEVE = new THREE.MeshStandardMaterial({ color: 0xeceef2, roughness: 0.85, metalness: 0 }); // biela košeľa
@@ -93,8 +94,8 @@ export class Hands {
 			g.add(h);
 			const a = forearm(0.4);
 			g.add(a);
-			g.scale.setScalar(0.7); // menšie, aby nezakrývali výhľad
-			g.position.set(0.15 * s, -0.12, -0.42); // dole v rohoch obrazu
+			g.scale.setScalar(0.45); // malé, aby nezakrývali výhľad
+			g.position.set(0.13 * s, -0.11, -0.4); // dole v rohoch obrazu
 			g.rotation.set(-0.15, Math.PI + 0.35 * s, 0.2 * s); // prsty dopredu a mierne dovnútra
 			this.fp.add(g);
 		}
@@ -103,12 +104,38 @@ export class Hands {
 		scene.add(shadowless(this.fp));
 	}
 
+	/** Vybraté tágo v pravej ruke (šikmo dopredu doľava hore, špička mimo obraz vľavo hore). */
+	setCue(spec) {
+		if (!spec || (this.cueSpec && this.cueSpec.id === spec.id && this.cueSpec.base === spec.base)) {
+			return;
+		}
+		this.cueSpec = spec;
+		if (this.cueMesh) {
+			this.fp.remove(this.cueMesh);
+			this.cueMesh.traverse((o) => {
+				if (o.geometry) {
+					o.geometry.dispose();
+				}
+			});
+		}
+		const g = buildCueMesh(spec); // špička v (0, 0, 0), koniec tága po +y
+		const len = spec.len || 1.45;
+		const hold = new THREE.Vector3(0.13, -0.105, -0.39); // pravá ruka
+		const u = new THREE.Vector3(-0.8, 0.5, -1).normalize(); // od ruky k špičke
+		const tip = hold.clone().addScaledVector(u, len - 0.32); // ruka drží tágo 32 cm od konca
+		g.position.copy(tip);
+		g.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), u.clone().negate());
+		this.fp.add(shadowless(g));
+		this.cueMesh = g;
+	}
+
 	/** Voľná kamera: ruky pred kamerou, pri pohybe sa jemne pohupujú. */
-	updateFree(on, dt, speed) {
+	updateFree(on, dt, speed, spec) {
 		this.fp.visible = !!on;
 		if (!on) {
 			return;
 		}
+		this.setCue(spec);
 		this.fpT += dt * (1.5 + Math.min(4, speed) * 2);
 		const bob = Math.sin(this.fpT) * 0.006 * (0.3 + Math.min(1, speed));
 		this.fp.position.copy(this.camera.position);

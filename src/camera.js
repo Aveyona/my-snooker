@@ -41,6 +41,8 @@ export class CameraRig {
 		const k = 0.0018 * (this.mode === 'top' ? 2 : 1);
 		if (this.mode !== 'top' && this.aimPoint && this._panBase) {
 			// za tágom s mierenou guľou: myš doľava a doprava krúži okolo gule, hore priblíži ku guli, dole oddiali
+			// pohľad sa k mierenej guli otáča postupne s pohybom myši (stlačenie tlačidla nič nezmení)
+			this.panBlend = Math.min(1, (this.panBlend || 0) + (Math.abs(dx) + Math.abs(dy)) * 0.006);
 			this.panDist = Math.max(0.15, Math.min(2.5, (this.panDist || 1) * Math.exp(dy * 0.004)));
 			// k tomu mierne stúpanie (myš hore) a klesanie (myš dole), nezávislé od sklonu kamery
 			this.panLift = Math.max(-0.15, Math.min(0.8, (this.panLift || 0) - dy * k * 0.5));
@@ -76,8 +78,10 @@ export class CameraRig {
 
 	resetPan() {
 		this.panOffset.set(0, 0, 0);
-		this.panDist = 1;
-		this.panLift = 0; // vzdialenosť od mierenej gule pri posune pravým tlačidlom (1 = ako za tágom)
+		this.panDist = 1; // vzdialenosť od mierenej gule pri posune pravým tlačidlom (1 = ako za tágom)
+		this.panLift = 0;
+		this.panBlend = 0; // ako veľmi sa pohľad už otočil na mierenú guľu (0 = ako za tágom)
+		this.panZoom = 1; // koliesko pri držanom pravom tlačidle platí len počas držania
 	}
 
 	/** Po údere: otáčanie pohľadu okolo bielej pohybom myši. */
@@ -205,7 +209,7 @@ export class CameraRig {
 			// posun pravým tlačidlom za tágom: kamera krúži okolo gule, na ktorú sa mieri, a stále sa na ňu pozerá
 			pos.add(this.panOffset);
 			if (this.aimPoint) {
-				look.copy(this.aimPoint);
+				look.lerp(this.aimPoint, this.panBlend || 0);
 				// koliesko pri držanom pravom tlačidle: vlastné priblíženie ku guli
 				// (len vodorovne: výška nad guľou, ktorú dáva myš hore a dole, ostáva)
 				const pz = this.panZoom || 1;

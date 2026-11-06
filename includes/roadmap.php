@@ -131,6 +131,8 @@ function mysn_roadmap() {
 /** Denník zmien (najnovšie hore). */
 function mysn_changelog() {
 	return array(
+		array( '0.6.66', '6. 11. 2026', 'Pravé tlačidlo: samotné stlačenie pohľad nezmení, k mierenej guli sa pohľad otáča až s pohybom myši; koliesko pri držanom pravom tlačidle platí len počas držania.' ),
+		array( '0.6.65', '6. 11. 2026', 'Voľná kamera: menšie ruky, v pravej ruke vybraté tágo; ku stene herne sa dá ísť len na dĺžku rúk.' ),
 		array( '0.6.64', '6. 11. 2026', 'Pohľad pravým tlačidlom: myš hore približuje ku guli po priamke pohľadu (uhol sa nemení, obraz už neťahá dole) a kamera pritom mierne stúpa.' ),
 		array( '0.6.63', '6. 11. 2026', 'Ruky pri tágu odstránené; ruky ostávajú len vo voľnej kamere a sú menšie.' ),
 		array( '0.6.62', '6. 11. 2026', 'Ruky hráča: vo voľnej kamere ruky pred kamerou namiesto tága, pri mierení ľavá ruka ako most na súkne a pravá na konci tága. Oprava: priblíženie kolieskom pri pravom tlačidle už neberie stúpanie pohľadu (mení len vzdialenosť od gule, výška ostáva).' ),
