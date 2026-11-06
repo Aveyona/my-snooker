@@ -595,6 +595,32 @@ export class UI {
 		return !!(this.foundEl && !this.foundEl.classList.contains('mysn-hidden'));
 	}
 
+	/** Kancelária F4: panel vľavo s pravidlami bodovania ligy (k tabuli výsledkov sezóny). */
+	openLeagueRules(on) {
+		if (!this.rulesEl) {
+			const li = (b, t) => `<li><b>${b}</b><span>${t}</span></li>`;
+			this.rulesEl = h(
+				'div',
+				'mysn-rules mysn-hidden',
+				'<h3>Ako sa počítajú body</h3><ul>' +
+					li('Štart', 'Každý hráč začína sezónu so 147 bodmi.') +
+					li('Výhra', 'Víťaz dostane toľko bodov, koľko nahral vo frame. Porazený presne toľko stratí.') +
+					li('Vzdanie', 'Keď súper vzdá alebo stratí spojenie, víťaz dostane najmenej 30 bodov.') +
+					li('Silnejší súper', 'Výhra hráča z nižšej ligy nad hráčom z vyššej ligy sa ráta 1,5-krát.') +
+					li('Spodok', 'Porazený s kladnými bodmi klesne najviac na 0.') +
+					li('Symbolická výhra', 'Keď má porazený 0 alebo menej, víťaz dostane +1 a porazený stratí 1 (môže ísť do mínusu).') +
+					li('Ligy', '1. liga 1. až 10. miesto, 2. liga 11. až 30., 3. liga 31. až 70., 4. liga ostatní.') +
+					li('Sezóna', 'Trvá rok, potom sa uložia konečné výsledky a začína sa znova.') +
+					'</ul><p class="mysn-rules-foot">F4 alebo Esc: späť za stôl</p>',
+			);
+			for (const ev of ['mousedown', 'keydown', 'wheel']) {
+				this.rulesEl.addEventListener(ev, (e) => e.stopPropagation());
+			}
+			this.root.appendChild(this.rulesEl);
+		}
+		this.rulesEl.classList.toggle('mysn-hidden', !on);
+	}
+
 	/** Kancelária F7: panel Moje zápasy vpravo (história ligových zápasov a detail zápasu). */
 	openHistory(on) {
 		if (!this.histEl) {

@@ -1522,6 +1522,7 @@ export function start(root, config = {}) {
 				rig.noClamp = true;
 				rig.jump();
 				officeFocusNow = '';
+				ui.openLeagueRules(false);
 				radio.setSpeakers(office.speakers); // rádio hrá z reproduktorov v strope kancelárie
 				rig.minViewZoom = 0.85;
 				rig.setViewZoom(0.85); // širší pohľad: stôl s kalendárom aj celá tabuľa
@@ -1563,6 +1564,7 @@ export function start(root, config = {}) {
 		if (was === 'office') {
 			radio.setSpeakers(null);
 			ui.openHistory(false);
+			ui.openLeagueRules(false);
 			officeFocusNow = '';
 			rig.noClamp = false;
 			rig.snapNext = true; // z kancelárie späť do herne hneď
@@ -1868,6 +1870,7 @@ export function start(root, config = {}) {
 			chairLook.yaw = Math.atan2(d.z, d.x);
 			chairLook.pitch = Math.atan2(d.y, Math.hypot(d.x, d.z));
 			rig.setViewZoom(officeFocusNow ? 1 : 0.85);
+			ui.openLeagueRules(officeFocusNow === 'results'); // F4: vľavo pravidlá bodovania
 			// F7 notebook: vpravo panel Moje zápasy v lige (myš voľná na klikanie)
 			if (name === 'notebook' || ui.historyOpen()) {
 				const on = officeFocusNow === 'notebook';

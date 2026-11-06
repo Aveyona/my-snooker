@@ -513,3 +513,10 @@ body.mysn-page { font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans
 /* divák Tab: malý stôl zhora vpravo hore (kreslí ho druhá kamera do rohu plátna, toto je len rámik) */
 .mysn-minitable { position: absolute; z-index: 4; pointer-events: none; box-sizing: border-box; border: 2px solid rgba(255, 255, 255, 0.55); border-radius: 6px; box-shadow: 0 4px 18px rgba(0, 0, 0, 0.55); }
 .mysn-playercam span { position: absolute; left: 6px; top: 4px; font-size: 11px; font-weight: 600; color: #fff; background: rgba(0, 0, 0, 0.5); padding: 1px 6px; border-radius: 4px; }
+/* kancelária F4: pravidlá bodovania ligy vľavo (výrazné, väčšie písmo) */
+.mysn-rules { position: absolute; top: 56px; left: 14px; bottom: 14px; width: min(400px, calc(100% - 28px)); z-index: 6; overflow-y: auto; background: #10151ef2; border: 1px solid #c9a54a; border-radius: 14px; padding: 18px 20px; box-shadow: 0 8px 30px #000b; color: #eef2ea; }
+.mysn-rules h3 { margin: 0 0 14px; color: #f2d48a; font-size: 24px; }
+.mysn-rules ul { list-style: none; margin: 0; padding: 0; }
+.mysn-rules li { margin: 0 0 13px; font-size: 18px; line-height: 1.4; }
+.mysn-rules li b { display: block; color: #FACC15; font-size: 19px; margin-bottom: 2px; }
+.mysn-rules-foot { margin: 14px 0 0; color: #9aa4b2; font-size: 14px; }

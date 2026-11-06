@@ -131,6 +131,7 @@ function mysn_roadmap() {
 /** Denník zmien (najnovšie hore). */
 function mysn_changelog() {
 	return array(
+		array( '0.7.22', '6. 11. 2026', 'Kancelária F4 (výsledky sezóny ligy): vľavo panel s pravidlami, ako sa počítajú body (štart, výhra, vzdanie, silnejší súper, spodok, symbolická výhra, ligy, sezóna), výrazným väčším písmom.' ),
 		array( '0.7.21', '6. 11. 2026', 'Liga: poistka proti dvojitému započítaniu bodov, keď koniec ligovej partie príde naraz viacerými cestami (koniec framu, čas, odchod hráča). Body sa pripočítajú vždy len raz.' ),
 		array( '0.7.20', '6. 11. 2026', 'Herňa: nové obrazy na prednej stene, vľavo úplné zatmenie Slnka, vpravo zatmenie Mesiaca (krvavý Mesiac). S podržaným Ctrl sa dajú kliknúť a priblížiť, späť Enter, Esc alebo pravé tlačidlo myši.' ),
 		array( '0.7.19', '6. 11. 2026', 'Liga: symbolická výhra. Keď má porazený 0 alebo menej bodov, víťaz dostane +1 a porazený stratí 1 bod (môže ísť do mínusu). Porazený s kladnými bodmi klesne ako doteraz najviac na 0.' ),
