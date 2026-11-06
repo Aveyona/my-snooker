@@ -131,6 +131,7 @@ function mysn_roadmap() {
 /** Denník zmien (najnovšie hore). */
 function mysn_changelog() {
 	return array(
+		array( '0.6.90', '6. 11. 2026', 'Mapa miestností (kláves M alebo tlačidlo v menu): pôdorys s herňou, kanceláriou a štadiónom, klik na miestnosť ukáže popis a tlačidlo Vstúpiť. Štadión je pre hráčov zamknutý (hrá sa tam len liga, otvorí sa pri nájdenom zápase), admin tam môže trénovať a má aj Prehliadku voľnou kamerou (presunutá z Nastavení). Miestnosti sú v jednom zozname, ďalšie sa pridajú ľahko.' ),
 		array( '0.6.89', '6. 11. 2026', 'Oprava: tmavé „praskliny“ na koncoch mantinelov pri jamkách (prierez gumy sa v zaoblení prekladal cez seba).' ),
 		array( '0.6.88', '6. 11. 2026', 'Online: súper a diváci vidia nádstavec (krížik, pavúk, vysoký pavúk) aj kriedovanie tága druhého hráča, posiela sa spolu s mierením.' ),
 		array( '0.6.87', '6. 11. 2026', 'Oprava: po zatvorení ponuky F3 (F3 alebo Esc) a po nakriedovaní sa myš znova zachytí v hre.' ),

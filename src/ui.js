@@ -239,7 +239,7 @@ export class UI {
 				</select></label>
 			<label class="mysn-check"><input type="checkbox" data-k="respot"> Vracať farebné gule na spoty</label>
 			<p class="mysn-note">Zmena kvality sa prejaví po obnovení stránky.</p>
-			${this.opts.role === 'admin' ? '<div class="mysn-tour"><b>Prehliadka (admin)</b><span>Voľná kamera bez hraníc miestností</span><div><button type="button" class="mysn-btn" data-tour="home">Herňa</button><button type="button" class="mysn-btn" data-tour="league">Štadión</button><button type="button" class="mysn-btn" data-tour="office">Kancelária</button></div></div>' : ''}
+
 			<button type="button" class="mysn-btn mysn-primary" data-close>Zavrieť</button>`;
 		for (const el of p.querySelectorAll('[data-k]')) {
 			const k = el.dataset.k;
@@ -254,13 +254,6 @@ export class UI {
 			});
 		}
 		p.querySelector('[data-close]').addEventListener('click', () => p.classList.add('mysn-hidden'));
-		for (const b of p.querySelectorAll('[data-tour]')) {
-			b.addEventListener('click', (e) => {
-				e.stopPropagation();
-				p.classList.add('mysn-hidden');
-				this.opts.onAction('adminTour', b.dataset.tour);
-			});
-		}
 		return p;
 	}
 
@@ -328,7 +321,7 @@ export class UI {
 			b.classList.add('mysn-staff-btn');
 			return b;
 		};
-		const common = () => [...(this.opts.role ? [staffBtn()] : []), this.button('Účet', 'account', 'Môj účet v My Snooker: údaje, liga, partie a skóre'), this.button('Nastavenia', 'settings')];
+		const common = () => [this.button('Mapa miestností', 'roomMap', 'M: herňa, kancelária, štadión'), ...(this.opts.role ? [staffBtn()] : []), this.button('Účet', 'account', 'Môj účet v My Snooker: údaje, liga, partie a skóre'), this.button('Nastavenia', 'settings')];
 		if (kind === 'watch') {
 			// divák sleduje cudziu partiu
 			this.menuMode.textContent = `Sledujem: ${label}`;
@@ -1557,6 +1550,60 @@ export class UI {
 			row(5, o.rack, 'rackNew', true);
 		}
 		B.appendChild(h('p', 'mysn-note', 'Klávesy 1 až 5, Esc alebo F3 zavrie. Krížik sa dá použiť aj pri mantineli (položí sa na rám), pavúky nie. Pavúk a trojuholník visia pod stolom (Ctrl a klik).'));
+	}
+
+	/** Mapa miestností: pôdorys zhora, klik na miestnosť ukáže kartu s tlačidlami. */
+	openRoomMap(on, rooms = []) {
+		if (!this.mapBox) {
+			this.mapBox = h('div', 'mysn-panel mysn-roommap mysn-hidden');
+			for (const t of ['pointerdown', 'mousedown', 'click', 'wheel', 'keydown']) {
+				this.mapBox.addEventListener(t, (e) => e.stopPropagation());
+			}
+			this.root.appendChild(this.mapBox);
+		}
+		const B = this.mapBox;
+		B.classList.toggle('mysn-hidden', !on);
+		this._mapOpen = !!on;
+		if (!on) {
+			return;
+		}
+		let sel = (rooms.find((r) => r.here) || rooms[0] || {}).id;
+		const draw = () => {
+			const svg = rooms
+				.map((r) => {
+					const [x, y, w, hh] = r.map;
+					const cls = ['mysn-mr', r.id === sel ? 'sel' : '', r.here ? 'here' : '', r.locked ? 'locked' : ''].join(' ');
+					return `<g class="${cls}" data-room="${r.id}"><rect x="${x}" y="${y}" width="${w}" height="${hh}" rx="2"></rect><text x="${x + w / 2}" y="${y + hh / 2}">${esc(r.name)}</text>${r.locked ? `<text class="lock" x="${x + w / 2}" y="${y + hh / 2 + 7}">zamknuté</text>` : ''}${r.here ? `<text class="lock" x="${x + w / 2}" y="${y + hh / 2 + 7}">si tu</text>` : ''}</g>`;
+				})
+				.join('');
+			const r = rooms.find((x) => x.id === sel) || rooms[0];
+			B.innerHTML = `<h3>Mapa miestností</h3><div class="mysn-map-wrap"><svg viewBox="0 0 100 100" class="mysn-map"><rect class="mysn-corr" x="50" y="10" width="6" height="80"></rect><rect class="mysn-corr" x="27" y="26" width="6" height="4"></rect>${svg}</svg><div class="mysn-map-card"></div></div>`;
+			const card = B.querySelector('.mysn-map-card');
+			if (r) {
+				card.innerHTML = `<b>${esc(r.name)}</b><p>${esc(r.desc)}</p>${r.locked ? `<p class="mysn-note">🔒 ${esc(r.lockNote || 'Zamknuté.')}</p>` : ''}`;
+				const go = this.button(r.here ? 'Si tu' : r.play, 'roomGo', '', { id: r.id, mode: 'play' });
+				go.classList.add('mysn-primary');
+				go.disabled = r.locked || r.here;
+				card.appendChild(go);
+				if (r.tour) {
+					card.appendChild(this.button('Prehliadka (voľná kamera, admin)', 'roomGo', 'Voľná kamera bez hraníc miestností', { id: r.id, mode: 'tour' }));
+				}
+			}
+			const foot = h('div', 'mysn-lobby-foot');
+			foot.appendChild(this.button('Zavrieť (M)', 'roomMapClose'));
+			B.appendChild(foot);
+			for (const g of B.querySelectorAll('[data-room]')) {
+				g.addEventListener('click', () => {
+					sel = g.dataset.room;
+					draw();
+				});
+			}
+		};
+		draw();
+	}
+
+	roomMapOpen() {
+		return !!this._mapOpen;
 	}
 
 	toolsOpen() {

@@ -1191,6 +1191,20 @@ export function start(root, config = {}) {
 		ui.sync(game, rig.mode);
 	};
 
+	/**
+	 * Miestnosti na mape (pribúdať budú ďalšie): id = miesto v hre, map = obdĺžnik na pôdoryse (x, y, w, h v %),
+	 * locked = zamknutá pre hráča (štadión sa hrá len v lige, admin ho má otvorený na tréning).
+	 */
+	const mapRooms = () => {
+		const admin = config.role === 'admin';
+		const here = view === 'office' ? 'office' : venue;
+		return [
+			{ id: 'home', name: 'Herňa', desc: 'Tréning, Hrať o najlepšie skóre, partie s priateľmi. Stôl s červeným súknom pri tréningu, zeleným v partii.', map: [4, 30, 46, 64], here: here === 'home', locked: false, play: 'Vstúpiť a hrať' },
+			{ id: 'office', name: 'Kancelária', desc: 'Liga: registrácia, tabuľky líg, mapa hráčov, moje tágá, vyhľadanie ligového zápasu.', map: [4, 4, 46, 22], here: here === 'office', locked: !user, lockNote: 'Kancelária je pre prihlásených hráčov.', play: 'Vstúpiť' },
+			{ id: 'league', name: 'Štadión', desc: 'Ligové zápasy pred divákmi, modré súkno, svetlá na stôl.', map: [56, 4, 40, 90], here: here === 'league', locked: !admin, lockNote: 'Štadión sa otvorí, keď nájdeš ligový zápas (Kancelária, Vyhľadať zápas). Hrá sa tu len liga.', play: admin ? 'Vstúpiť a trénovať (admin)' : 'Vstúpiť' },
+		].map((r) => ({ ...r, tour: admin }));
+	};
+
 	/** Zásah zo Správy hry: pošle na server a prehľad sa obnoví. */
 	const staffDo = async (path, d, ok) => {
 		try {
@@ -1711,6 +1725,53 @@ export function start(root, config = {}) {
 			controls.sens = settings.mouseSens;
 			saveSettings(settings);
 		},
+		// Mapa miestností (M alebo menu): výber miestnosti; štadión len počas ligy, admin kedykoľvek
+		roomMap: () => {
+			if (ui.roomMapOpen()) {
+				ui.openRoomMap(false);
+				if (!freeMouse) {
+					controls.capture();
+				}
+				return;
+			}
+			ui.showMenu(false);
+			controls.uncapture();
+			ui.openRoomMap(true, mapRooms());
+		},
+		roomMapClose: () => {
+			ui.openRoomMap(false);
+			if (!freeMouse) {
+				controls.capture();
+			}
+		},
+		roomGo: ({ id, mode }) => {
+			const r = mapRooms().find((x) => x.id === id);
+			if (!r || (r.locked && mode !== 'tour')) {
+				return;
+			}
+			if (game.match || game.spectating) {
+				ui.toast('Počas partie alebo sledovania sa miestnosť meniť nedá.');
+				return;
+			}
+			ui.openRoomMap(false);
+			if (mode === 'tour') {
+				actions.adminTour(id);
+				return;
+			}
+			if (id === 'office') {
+				actions.league(); // kancelária ligy
+				return;
+			}
+			if (view) {
+				exitView();
+			}
+			if (venue !== id) {
+				setVenue(id);
+				ui.toast(id === 'league' ? 'Štadión: tréning pri ligovom stole (admin).' : 'Herňa.');
+			}
+			ui.showMenu(false);
+			controls.capture();
+		},
 		// admin (Nastavenia, Prehliadka): voľná kamera v herni, na štadióne alebo v kancelárii, bez hraníc miestností
 		adminTour: (where) => {
 			if (config.role !== 'admin') {
@@ -1727,7 +1788,7 @@ export function start(root, config = {}) {
 				const at = where === 'office' ? office.seat : where === 'league' ? { pos: new THREE.Vector3(-6, ROOM.floor + 2.2, 4.5), look: new THREE.Vector3(0, ROOM.floor + 0.8, 0) } : { pos: new THREE.Vector3(-3.8, ROOM.floor + 1.7, 2.6), look: new THREE.Vector3(0, ROOM.floor + 0.8, 0) };
 				freeCam(at);
 				controls.capture();
-				ui.toast('Prehliadka (admin): voľná kamera bez hraníc. Nastavenia: iná miestnosť. Medzerník: späť za tágo.');
+				ui.toast('Prehliadka (admin): voľná kamera bez hraníc. M: mapa miestností. Medzerník: späť za tágo.');
 			};
 			const want = where === 'league' ? 'league' : 'home';
 			if (venue !== want) {
@@ -1991,7 +2052,7 @@ export function start(root, config = {}) {
 				freeMouse = false;
 				ui.setFree(false);
 				ui.showMenu(false);
-			} else if (finePointer && (!view || view === 'seat' || view === 'free') && !freeMouse && !ui.partyOpen() && !ui.toolsOpen() && performance.now() - escClosedAt > 1500) {
+			} else if (finePointer && (!view || view === 'seat' || view === 'free') && !freeMouse && !ui.partyOpen() && !ui.toolsOpen() && !ui.roomMapOpen() && performance.now() - escClosedAt > 1500) {
 				ui.showMenu(true, started);
 			}
 		},
@@ -2224,6 +2285,14 @@ export function start(root, config = {}) {
 				} else if (venue !== 'office' && view !== 'office') {
 					freeCam();
 				}
+				return true;
+			}
+			if (lk === 'm' && (!view || view === 'free') && !game.spectating && !ui.menuOpen()) {
+				actions.roomMap(); // mapa miestností
+				return true;
+			}
+			if (ui.roomMapOpen() && lk === 'escape') {
+				actions.roomMapClose();
 				return true;
 			}
 			if (view === 'free' && lk === 'f3') {
