@@ -561,6 +561,30 @@ export function buildStadium(scene, quality, clock = 45) {
 		}
 		return best ? best.s : ref.target;
 	};
+	/**
+	 * Miesto pri gule, na ktorú sa mieri: najbližší bod obvodu (okolo celého stola) k mierenej guli, ktorý
+	 * nezavadzia tágu. null = taký bod nie je (rozhodca ostane podľa stanovíšť).
+	 */
+	const refNear = (ball, cb, dir) => {
+		const cands = [
+			{ x: Math.max(-RX0, Math.min(RX0, ball.p.x)), z: -RZ0 },
+			{ x: Math.max(-RX0, Math.min(RX0, ball.p.x)), z: RZ0 },
+			{ x: -RX0, z: Math.max(-RZ0, Math.min(RZ0, ball.p.z)) },
+			{ x: RX0, z: Math.max(-RZ0, Math.min(RZ0, ball.p.z)) },
+		];
+		let best = null;
+		for (const c of cands) {
+			if (refBlocked(c.x, c.z, cb, dir)) {
+				continue;
+			}
+			const d = Math.hypot(c.x - ball.p.x, c.z - ball.p.z);
+			if (!best || d < best.d) {
+				best = { d, s: perS(c.x, c.z) };
+			}
+		}
+		return best ? best.s : null;
+	};
+	const refAim = { id: -1, t: 0 }; // mierená guľa a ako dlho sa na ňu mieri
 	const placeRef = () => {
 		const p = perPoint(ref.s);
 		referee.position.set(p.x, FY, p.z);
@@ -769,15 +793,39 @@ export function buildStadium(scene, quality, clock = 45) {
 			}
 			lensMat.color.setHex(on ? 0xf2f6ff : 0x3a3f4a);
 		},
-		/** Každý snímok: hlavy sledujú bielu, animácie tlieskania, faulu a vstávania. */
-		update(dt, cueBall, dir = null, moving = false) {
+		/**
+		 * Každý snímok: hlavy sledujú bielu, animácie tlieskania, faulu a vstávania. aimBall = guľa, na ktorú
+		 * sa práve mieri (rozhodca k nej pomaly kráča), null = nemieri sa.
+		 */
+		update(dt, cueBall, dir = null, moving = false, aimBall = null) {
 			updateFans(fans, dt, cueBall);
 			confetti.update(dt);
 			spotUpdate(dt);
 			if (cueBall && root.visible) {
 				// kým sa gule nehýbu a mieri sa: uhne z cesty tága (obíde stôl po obvode)
+				let slow = false;
 				if (dir !== null && !moving && cueBall.on) {
-					ref.target = refChoose(cueBall, dir);
+					// mieri sa na guľu (zvyčajne červenú): po chvíli mierenia na ňu rozhodca pomaly prejde k nej
+					if (aimBall && aimBall.on) {
+						if (refAim.id !== aimBall.id) {
+							refAim.id = aimBall.id;
+							refAim.t = 0;
+						}
+						refAim.t += dt;
+					} else {
+						refAim.id = -1;
+						refAim.t = 0;
+					}
+					const near = refAim.t > 0.7 ? refNear(aimBall, cueBall, dir) : null;
+					if (near !== null) {
+						ref.target = near;
+						slow = !refBlocked(referee.position.x, referee.position.z, cueBall, dir);
+					} else if (refAim.id < 0 || refBlocked(referee.position.x, referee.position.z, cueBall, dir)) {
+						ref.target = refChoose(cueBall, dir); // nemieri sa na guľu alebo zavadzia tágu: ako doteraz
+					}
+				} else {
+					refAim.id = -1;
+					refAim.t = 0;
 				}
 				let d = (ref.target - ref.s) % PER;
 				if (d > PER / 2) {
@@ -787,13 +835,13 @@ export function buildStadium(scene, quality, clock = 45) {
 				}
 				const walking = Math.abs(d) > 0.01;
 				if (walking) {
-					const step = Math.sign(d) * Math.min(Math.abs(d), dt * 1.0); // asi 1 m/s
+					const step = Math.sign(d) * Math.min(Math.abs(d), dt * (slow ? 0.45 : 1.0)); // k mierenej guli pomaly, z cesty tága asi 1 m/s
 					const a = perPoint(ref.s);
 					ref.s += step;
 					const b = perPoint(ref.s);
 					placeRef();
 					ref.yaw = Math.atan2(b.x - a.x, b.z - a.z); // čelom v smere chôdze
-					ref.walk += dt * 7;
+					ref.walk += dt * (slow ? 4.5 : 7);
 				} else {
 					// stojí: čelom k stolu (k bielej), nohy spolu
 					ref.yaw = Math.atan2(cueBall.p.x - referee.position.x, cueBall.p.z - referee.position.z);
