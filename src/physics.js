@@ -48,17 +48,17 @@ export const SPOTS = {
 
 /* ---------- Jamky a mantinely ---------- */
 
-const CG = 0.062; // medzera mantinelu pri rohovej jamke (od rohu po koniec mantinelu)
-const MG = 0.052; // polovica medzery pri strednej jamke
+const CG = 0.057; // medzera mantinelu pri rohovej jamke (od rohu po koniec mantinelu); turnajové, užšie jamky
+const MG = 0.048; // polovica medzery pri strednej jamke
 
 /** Jamky: stred, polomer zachytenia (keď sa doň dostane stred gule, guľa padne). */
 export const POCKETS = [
-	{ x: -L / 2 - 0.012, z: -W / 2 - 0.012, r: 0.058, corner: true },
-	{ x: -L / 2 - 0.012, z: W / 2 + 0.012, r: 0.058, corner: true },
-	{ x: L / 2 + 0.012, z: -W / 2 - 0.012, r: 0.058, corner: true },
-	{ x: L / 2 + 0.012, z: W / 2 + 0.012, r: 0.058, corner: true },
-	{ x: 0, z: -W / 2 - 0.034, r: 0.056, corner: false },
-	{ x: 0, z: W / 2 + 0.034, r: 0.056, corner: false },
+	{ x: -L / 2 - 0.012, z: -W / 2 - 0.012, r: 0.054, corner: true },
+	{ x: -L / 2 - 0.012, z: W / 2 + 0.012, r: 0.054, corner: true },
+	{ x: L / 2 + 0.012, z: -W / 2 - 0.012, r: 0.054, corner: true },
+	{ x: L / 2 + 0.012, z: W / 2 + 0.012, r: 0.054, corner: true },
+	{ x: 0, z: -W / 2 - 0.034, r: 0.052, corner: false },
+	{ x: 0, z: W / 2 + 0.034, r: 0.052, corner: false },
 ];
 
 /** Úsečky mantinelov (nos mantinelu) vrátane čeľustí jamiek. Normála ukazuje do stola. */

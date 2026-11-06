@@ -131,6 +131,7 @@ function mysn_roadmap() {
 /** Denník zmien (najnovšie hore). */
 function mysn_changelog() {
 	return array(
+		array( '0.6.98', '6. 11. 2026', 'Jamky ako na turnajových stoloch (na všetkých stoloch): užšie ústie (rohové asi 81 mm, stredné asi 96 mm, aj vo fyzike), svetlá kožená obruba a výstelka jamky, biela sieťka košíka.' ),
 		array( '0.6.97', '6. 11. 2026', 'Voľná kamera na štadióne je uzavretá v priestore pri stole po mantinely s reklamami (po divákov), najviac 3,2 m nad podlahu. Admin v prehliadke ostáva bez hraníc.' ),
 		array( '0.6.96', '6. 11. 2026', 'Rozhodca chodí: stojí na jednom z 8 stanovíšť okolo stola, a keď by zavadzal tágu (pás za bielou, miesto hráča a kamery), obíde stôl na najbližšie voľné miesto (asi 1 m/s, nohy pri chôdzi kráčajú). Kým sa gule hýbu, stojí. Pohyb vidia rovnako obaja hráči aj diváci (počíta sa z mierenia).' ),
 		array( '0.6.95', '6. 11. 2026', 'Jamky: mantinely končia presne na okraji výrezu jamky (už netrčia do jamky), okolo jamky viac dreva a užší otvor v súkne.' ),

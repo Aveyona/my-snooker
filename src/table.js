@@ -6,14 +6,14 @@ import { L, W, R, BAULK_X, D_R, SPOTS, POCKETS } from './physics.js';
 import { ROOM } from './room.js';
 import { floorTexture } from './floors.js';
 
-const CG = 0.062; // ako vo fyzike: medzera mantinelu pri rohovej jamke
-const MG = 0.052; // polovica medzery pri strednej jamke
+const CG = 0.057; // ako vo fyzike: medzera mantinelu pri rohovej jamke
+const MG = 0.048; // polovica medzery pri strednej jamke
 
 const RAIL = 0.05; // šírka mantinelu (gumy)
 const FRAME = 0.12; // šírka dreveného rámu
 const CUSHION_H = 0.037; // výška nosa mantinelu nad súknom
 /** Košík pod jamkou: horný okraj (pod rámom), polomer hore a hĺbka. Gule v ňom ukladá BallViews. */
-export const BASKET = { y: -0.022, top: 0.072, depth: 0.2 };
+export const BASKET = { y: -0.022, top: 0.068, depth: 0.2 };
 
 /** Sieťka košíka: kosoštvorcové oká z tmavej šnúry, medzi nimi priehľadne. */
 function netTexture() {
@@ -124,7 +124,7 @@ function pocketHoles() {
 	g.fillStyle = '#000000';
 	for (const p of POCKETS) {
 		g.beginPath();
-		g.arc((p.x + L / 2 + RAIL) * sx, (p.z + W / 2 + RAIL) * sx, (p.corner ? 0.068 : 0.062) * sx, 0, Math.PI * 2);
+		g.arc((p.x + L / 2 + RAIL) * sx, (p.z + W / 2 + RAIL) * sx, (p.corner ? 0.063 : 0.058) * sx, 0, Math.PI * 2);
 		g.fill();
 	}
 	return new THREE.CanvasTexture(c);
@@ -287,7 +287,7 @@ export function buildTable(renderer) {
 	}
 	const ROUND = 0.016; // polomer zaoblenia nosa mantinelu pri jamke
 	// výrezy jamiek v ráme (viac dreva okolo jamky, užší otvor): na ich okraji končia aj mantinely
-	const CUTS = POCKETS.map((p) => ({ x: p.x, z: p.z, r: p.corner ? 0.077 : 0.07, corner: p.corner }));
+	const CUTS = POCKETS.map((p) => ({ x: p.x, z: p.z, r: p.corner ? 0.071 : 0.065, corner: p.corner }));
 	// Prierez mantinelu ako na skutočnom stole (d = vzdialenosť od nosa dozadu, y = výška): spodok je
 	// podrezaný, nos v 2/3 výšky gule, vrch sa zošikmí a plynulo prejde k drevenému rámu. Žiadna kolmá stena.
 	const PROFILE = [
@@ -524,7 +524,8 @@ export function buildTable(renderer) {
 
 	// Jamky: čierny otvor v súkne, kožený lem po okraji výrezu v ráme a pod ním košík zo sieťky
 	const leatherMat = new THREE.MeshStandardMaterial({ color: 0x1c1c1c, roughness: 0.55, metalness: 0.15, side: THREE.DoubleSide });
-	const netMat = new THREE.MeshStandardMaterial({ map: netTexture(), color: 0x2a1c12, roughness: 0.9, alphaTest: 0.35, side: THREE.DoubleSide });
+	const netMat = new THREE.MeshStandardMaterial({ map: netTexture(), color: 0xf2efe6, roughness: 0.95, alphaTest: 0.35, side: THREE.DoubleSide }); // biela sieťka
+	const plateMat = new THREE.MeshStandardMaterial({ color: 0xd8b47e, roughness: 0.5, metalness: 0.05 }); // obruba jamky ako na turnajových stoloch
 	const prof = [
 		[BASKET.top, 0],
 		[BASKET.top + 0.006, -0.04],
@@ -539,6 +540,16 @@ export function buildTable(renderer) {
 		const well = new THREE.Mesh(new THREE.CylinderGeometry(p.r * 0.9, BASKET.top, 0.03, 40, 1, true), leatherMat);
 		well.position.set(p.x, -0.012, p.z);
 		group.add(well);
+		// svetlá kožená výstelka steny výrezu (od rámu po súkno), ako na turnajových stoloch
+		// len oblúk na strane rámu (k stolu je ústie jamky otvorené)
+		const ox = p.corner ? Math.sign(p.x) : 0;
+		const oz = Math.sign(p.z);
+		const span = p.corner ? Math.PI * 1.0 : Math.PI * 0.9;
+		const phi = Math.atan2(ox, oz);
+		const liner = new THREE.Mesh(new THREE.CylinderGeometry(p.r - 0.0075, p.r - 0.0075, fy + 0.02, 40, 1, true, phi - span / 2, span), plateMat);
+		liner.material.side = THREE.DoubleSide;
+		liner.position.set(p.x, (fy - 0.02) / 2, p.z);
+		group.add(liner);
 		const bag = new THREE.Mesh(basketGeo, netMat);
 		bag.position.set(p.x, BASKET.y, p.z);
 		group.add(bag);
@@ -550,7 +561,7 @@ export function buildTable(renderer) {
 	}
 	for (const pts of rims) {
 		const curve = new THREE.CatmullRomCurve3(pts.map((q) => new THREE.Vector3(q.x, fy - 0.004, q.z)));
-		const rim = new THREE.Mesh(new THREE.TubeGeometry(curve, 48, 0.011, 10, false), leatherMat);
+		const rim = new THREE.Mesh(new THREE.TubeGeometry(curve, 48, 0.013, 12, false), plateMat); // svetlá kožená obruba jamky
 		rim.castShadow = true;
 		group.add(rim);
 	}
