@@ -547,6 +547,8 @@ export function start(root, config = {}) {
 	const renderCrowd = () => {
 		const ctx = seatCtxNow();
 		const uid = user ? user.id : 0;
+		// rozhodca sa vyhýba dlhej strane, kde sedia skutoční diváci (stolička < 175 je strana +z)
+		stadium.setRealSides(ctx[0] === 'm' ? seatList.filter((x) => x.seat < 175).length : 0, ctx[0] === 'm' ? seatList.filter((x) => x.seat >= 175).length : 0);
 		if (ctx[0] === 'm') {
 			crowdLg.set(seatList, stadium.seatPlace, uid);
 			crowdHome.clear();

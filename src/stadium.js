@@ -623,7 +623,7 @@ export function buildStadium(scene, quality, clock = 45) {
 				continue;
 			}
 			let d = Math.abs(sp.s - ref.s) % PER;
-			d = Math.min(d, PER - d) + sp.side * 20; // kratšie strany majú prednosť, dlhé strany (pred divákmi) len v núdzi
+			d = Math.min(d, PER - d) + sp.side * 20 + sidePen(sp.x, sp.z) * 3; // kratšie strany majú prednosť, dlhé strany (pred divákmi) len v núdzi, so skutočnými divákmi až nakoniec
 			if (!best || d < best.d) {
 				best = { d, s: sp.s };
 			}
@@ -646,12 +646,40 @@ export function buildStadium(scene, quality, clock = 45) {
 			if (refBlocked(c.x, c.z, cb, dir)) {
 				continue;
 			}
-			const d = Math.hypot(c.x - ball.p.x, c.z - ball.p.z);
+			const d = Math.hypot(c.x - ball.p.x, c.z - ball.p.z) + sidePen(c.x, c.z);
 			if (!best || d < best.d) {
 				best = { d, s: perS(c.x, c.z) };
 			}
 		}
 		return best ? best.s : null;
+	};
+	// skutoční diváci na dlhých stranách (+z a -z): rozhodca tadiaľ nechodí, a keď musí, ide stranou s menej ľuďmi
+	const realSide = { pos: 0, neg: 0 };
+	/** Postih miesta na obvode (x, z): dlhá strana so skutočnými divákmi je drahá, viac ľudí = drahšia. */
+	const sidePen = (x, z) => {
+		if (Math.abs(Math.abs(z) - RZ0) > 0.01 || Math.abs(x) > RX0 - 0.01) {
+			return 0; // kratšia strana alebo roh
+		}
+		const n = z > 0 ? realSide.pos : realSide.neg;
+		return n > 0 ? 6 + n * 0.5 : 0;
+	};
+	/** Smer chôdze po obvode k cieľu (+1 alebo -1): kratšia cesta, ale strana so skutočnými divákmi sa obchádza. */
+	const refRoute = (from, to) => {
+		let best = 1;
+		let bestC = Infinity;
+		for (const sg of [1, -1]) {
+			let len = (((to - from) * sg) % PER + PER) % PER;
+			let c = len;
+			for (let t = 0.1; t < len; t += 0.1) {
+				const p = perPoint(from + sg * t);
+				c += sidePen(p.x, p.z) * 0.1;
+			}
+			if (c < bestC) {
+				bestC = c;
+				best = sg;
+			}
+		}
+		return best;
 	};
 	const refAim = { id: -1, t: 0, lock: 0, s: 0 }; // mierená guľa, ako dlho sa na ňu mieri; lock = koľko ešte ostane pri guli
 	const REF_WAIT = 2.5; // sekundy mierenia na tú istú guľu, kým sa rozhodca rozhodne ísť k nej
@@ -847,6 +875,14 @@ export function buildStadium(scene, quality, clock = 45) {
 			reactFans(fans, kind);
 		},
 		setScreen: drawScreen,
+		/** Počet skutočných divákov na dlhej strane +z a -z (rozhodca sa im vyhýba). */
+		setRealSides(pos, neg) {
+			if (realSide.pos !== pos || realSide.neg !== neg) {
+				realSide.pos = pos;
+				realSide.neg = neg;
+				ref.routeTo = null; // prepočítať trasu
+			}
+		},
 		setSpot,
 		setLcd,
 		lcdBox,
@@ -915,6 +951,16 @@ export function buildStadium(scene, quality, clock = 45) {
 					d -= PER;
 				} else if (d < -PER / 2) {
 					d += PER;
+				}
+				if (Math.abs(d) > 0.01) {
+					// trasa: okolo strany so skutočnými divákmi radšej dlhšou cestou (smer sa počíta len pri zmene cieľa)
+					if (ref.routeTo !== ref.target) {
+						ref.routeTo = ref.target;
+						ref.route = refRoute(ref.s, ref.target);
+					}
+					if (Math.sign(d) !== ref.route) {
+						d = d > 0 ? d - PER : d + PER;
+					}
 				}
 				const walking = Math.abs(d) > 0.01;
 				if (walking) {
