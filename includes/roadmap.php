@@ -131,6 +131,7 @@ function mysn_roadmap() {
 /** Denník zmien (najnovšie hore). */
 function mysn_changelog() {
 	return array(
+		array( '0.7.9', '6. 11. 2026', 'Rozhodca stojí pri kratších stranách stola, aby nezavadzal divákom na tribúnach. Na dlhú stranu pred divákov ide len vtedy, keď by pri oboch koncoch zavadzal tágu.' ),
 		array( '0.7.8', '6. 11. 2026', 'Štadión: horný rad sedadiel na dlhých tribúnach je odobratý, nezasahuje do LCD obrazovky. Tribúna má 6 radov (300 miest pre divákov).' ),
 		array( '0.7.7', '6. 11. 2026', 'Štadión: mantinel s nápisom LIGA ukazuje číslo ligy zápasu (napríklad 1. LIGA), vidia to hráči aj diváci. Liga zápasu je lepšia z líg oboch hráčov.' ),
 		array( '0.7.6', '6. 11. 2026', 'Štadión: veľké moderné LCD obrazovky nad oboma dlhými tribúnami. Ukazujú pohľad hráča na rade so širším zorným uhlom, všetci (hráči aj diváci) vidia to isté. Ktorýkoľvek divák ich zapne alebo vypne klávesom F9 alebo v telefóne F1, zmena platí pre všetkých. Nový zápas začína so zapnutými.' ),

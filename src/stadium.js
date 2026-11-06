@@ -386,7 +386,7 @@ export function buildStadium(scene, quality) {
 			pl.card.t.needsUpdate = true;
 		});
 	};
-	// rozhodca: stojí na jednom z 8 stanovíšť okolo stola a hlavou sleduje bielu; keď by zavadzal tágu
+	// rozhodca: stojí na jednom z 12 stanovíšť okolo stola a hlavou sleduje bielu; keď by zavadzal tágu
 	// (alebo stál medzi kamerou za tágom a stolom), obíde stôl na najbližšie voľné stanovište
 	const RX0 = 2.85; // obdĺžnik, po ktorom chodí okolo stola (asi meter od rámu)
 	const RZ0 = 2.0;
@@ -420,17 +420,19 @@ export function buildStadium(scene, quality) {
 		}
 		return 4 * RX0 + 2 * RZ0 + RZ0 - z;
 	};
-	// stanovištia: po tri na dlhých stranách, po jednom na koncoch (side = uprednostniť pohľad zboku)
+	// stanovištia: po tri pri kratších stranách (prednosť), po tri na dlhých stranách (side = 1, len v núdzi)
 	const REF_SPOTS = [
+		// pri kratších stranách stola (nezavadzia divákom na dlhých tribúnach); dlhé strany len v núdzi
+		[RX0, 0, 0], [RX0, 0.55, 0], [RX0, -0.55, 0],
+		[-RX0, 0, 0], [-RX0, 0.55, 0], [-RX0, -0.55, 0],
 		[-1.1, RZ0, 1], [0.2, RZ0, 1], [1.3, RZ0, 1],
 		[-1.3, -RZ0, 1], [-0.2, -RZ0, 1], [1.1, -RZ0, 1],
-		[RX0, 0, 0], [-RX0, 0, 0],
 	].map(([x, z, side]) => ({ x, z, side, s: perS(x, z) }));
 	const referee = buildReferee();
 	root.add(referee);
 	const refHead = referee.userData.head;
 	refHead.rotation.order = 'YXZ'; // najprv otočenie do strany, potom sklon dole
-	const ref = { s: REF_SPOTS[1].s, target: REF_SPOTS[1].s, walk: 0, yaw: Math.PI };
+	const ref = { s: REF_SPOTS[0].s, target: REF_SPOTS[0].s, walk: 0, yaw: Math.PI };
 	/** Zavadzia rozhodca na mieste (x, z) tágu? Pás za bielou v smere tága (aj miesto hráča a kamery). */
 	const refBlocked = (x, z, cb, dir) => {
 		const dx = Math.cos(dir);
@@ -444,7 +446,8 @@ export function buildStadium(scene, quality) {
 	/** Najbližšie voľné stanovište (po obvode); rovnaký výpočet u všetkých hráčov aj divákov. */
 	const refChoose = (cb, dir) => {
 		const cur = perPoint(ref.target);
-		if (!refBlocked(cur.x, cur.z, cb, dir)) {
+		const curEnd = Math.abs(Math.abs(cur.x) - RX0) < 0.05; // stojí pri kratšej strane
+		if (curEnd && !refBlocked(cur.x, cur.z, cb, dir)) {
 			return ref.target;
 		}
 		let best = null;
@@ -453,7 +456,7 @@ export function buildStadium(scene, quality) {
 				continue;
 			}
 			let d = Math.abs(sp.s - ref.s) % PER;
-			d = Math.min(d, PER - d) - sp.side * 0.6; // miesta zboku majú prednosť
+			d = Math.min(d, PER - d) + sp.side * 20; // kratšie strany majú prednosť, dlhé strany (pred divákmi) len v núdzi
 			if (!best || d < best.d) {
 				best = { d, s: sp.s };
 			}
