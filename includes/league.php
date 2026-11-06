@@ -197,6 +197,12 @@ function mysn_league_apply( $m, $winner, $points, $resign = false, $best = array
 	if ( ! $rw || ! $rl ) {
 		return 0;
 	}
+	// partiu si "zaberie" len jedna požiadavka: koniec môže prísť naraz viacerými cestami (frame, čas, odchod),
+	// body sa nesmú pripočítať dvakrát
+	$claimed = $wpdb->query( $wpdb->prepare( 'UPDATE ' . mysn_table( 'matches' ) . ' SET delta = -1 WHERE id = %d AND delta = 0', (int) $m['id'] ) ); // phpcs:ignore
+	if ( ! $claimed ) {
+		return 0;
+	}
 	$pts = max( 0, (int) $points );
 	if ( $resign ) {
 		$pts = max( $pts, MYSN_LEAGUE_RESIGN_MIN );
