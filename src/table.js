@@ -4,6 +4,7 @@
 import * as THREE from 'three';
 import { L, W, R, BAULK_X, D_R, SPOTS, POCKETS } from './physics.js';
 import { ROOM } from './room.js';
+import { floorTexture } from './floors.js';
 
 const CG = 0.062; // ako vo fyzike: medzera mantinelu pri rohovej jamke
 const MG = 0.052; // polovica medzery pri strednej jamke
@@ -233,50 +234,6 @@ function woodTexture() {
 	tex.colorSpace = THREE.SRGBColorSpace;
 	tex.wrapS = tex.wrapT = THREE.RepeatWrapping;
 	tex.repeat.set(6, 1);
-	return tex;
-}
-
-/** Drevené dosky podlahy: 4 x 4 m na textúru, dosky široké 16 cm, rôzne dlhé a rôzne tmavé, so škárami. */
-function plankTexture() {
-	const S = 1024;
-	const c = document.createElement('canvas');
-	c.width = c.height = S;
-	const g = c.getContext('2d');
-	const rows = 25; // 4 m / 0,16 m
-	const rh = S / rows;
-	let seed = 7;
-	const rnd = () => ((seed = (seed * 16807) % 2147483647) / 2147483647);
-	for (let r = 0; r < rows; r++) {
-		let x = -rnd() * S * 0.4;
-		while (x < S) {
-			const len = S * (0.3 + rnd() * 0.25);
-			const base = 70 + rnd() * 40;
-			g.fillStyle = `rgb(${base + 40},${base * 0.62 + 12},${base * 0.36})`;
-			g.fillRect(x, r * rh, len, rh);
-			// letokruhy
-			for (let i = 0; i < 9; i++) {
-				g.strokeStyle = `rgba(${40 + rnd() * 30},${20 + rnd() * 12},6,${0.12 + rnd() * 0.18})`;
-				g.lineWidth = 0.6 + rnd() * 1.6;
-				g.beginPath();
-				const y0 = r * rh + rnd() * rh;
-				g.moveTo(x, y0);
-				for (let k = 0; k <= 8; k++) {
-					g.lineTo(x + (len * k) / 8, y0 + Math.sin(k * 0.9 + i) * rh * 0.12);
-				}
-				g.stroke();
-			}
-			// škára na konci dosky
-			g.fillStyle = 'rgba(15,8,3,0.85)';
-			g.fillRect(x + len - 1.5, r * rh, 1.5, rh);
-			x += len;
-		}
-		// škára medzi radmi
-		g.fillStyle = 'rgba(15,8,3,0.9)';
-		g.fillRect(0, r * rh, S, 1.5);
-	}
-	const tex = new THREE.CanvasTexture(c);
-	tex.colorSpace = THREE.SRGBColorSpace;
-	tex.wrapS = tex.wrapT = THREE.RepeatWrapping;
 	return tex;
 }
 
@@ -654,10 +611,9 @@ export function buildTable(renderer) {
 export function buildRoom(scene, quality) {
 	scene.background = new THREE.Color(0x0c0f14);
 	// Podlaha z drevených dosiek po steny herne (textúra = 4 x 4 m)
-	const floorTex = plankTexture();
-	floorTex.repeat.set((2 * ROOM.x) / 4, (2 * ROOM.z) / 4);
-	floorTex.anisotropy = 8;
-	const floor = new THREE.Mesh(new THREE.PlaneGeometry(2 * ROOM.x, 2 * ROOM.z), new THREE.MeshStandardMaterial({ map: floorTex, roughness: 0.72, metalness: 0 }));
+	// tmavý parket s bordovým kobercom pod stolom, nakreslený ako celok (bez opakovania a švov textúry)
+	const floorTex = floorTexture('carpet', 2 * ROOM.x, 2 * ROOM.z, quality);
+	const floor = new THREE.Mesh(new THREE.PlaneGeometry(2 * ROOM.x, 2 * ROOM.z), new THREE.MeshStandardMaterial({ map: floorTex, roughness: 0.7, metalness: 0 }));
 	floor.rotation.x = -Math.PI / 2;
 	floor.position.y = -0.86;
 	floor.receiveShadow = true;

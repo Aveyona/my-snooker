@@ -131,6 +131,7 @@ function mysn_roadmap() {
 /** Denník zmien (najnovšie hore). */
 function mysn_changelog() {
 	return array(
+		array( '0.6.74', '6. 11. 2026', 'Nová podlaha herne: tmavý parket s bordovým kobercom so zlatým lemom pod stolom, nakreslená ako celok bez viditeľných švov textúry.' ),
 		array( '0.6.73', '6. 11. 2026', 'Rádio si pamätá, či hralo: po obnovení stránky (F5) sa zapne samo pri prvom kliknutí alebo klávese (prehliadač zvuk skôr nedovolí).' ),
 		array( '0.6.72', '6. 11. 2026', 'Jamky bez čiernych dier: cez otvor v súkne vidieť do košíka. Pri držanom Ctrl sa vľavo hore výrazne zobrazí FPS (zelené, pod 50 žlté, pod 30 červené).' ),
 		array( '0.6.71', '6. 11. 2026', 'Nohy stola posunuté pod zapustenú skriňu (netrčia von).' ),
