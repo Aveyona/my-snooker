@@ -595,7 +595,7 @@ export class UI {
 		return !!(this.foundEl && !this.foundEl.classList.contains('mysn-hidden'));
 	}
 
-	/** Kancelária F4: panel vľavo s pravidlami bodovania ligy (k tabuli výsledkov sezóny). */
+	/** Kancelária F4: panel vpravo s pravidlami bodovania ligy (k tabuli výsledkov sezóny). */
 	openLeagueRules(on) {
 		if (!this.rulesEl) {
 			const li = (b, t) => `<li><b>${b}</b><span>${t}</span></li>`;
@@ -609,7 +609,7 @@ export class UI {
 					li('Silnejší súper', 'Výhra hráča z nižšej ligy nad hráčom z vyššej ligy sa ráta 1,5-krát.') +
 					li('Spodok', 'Porazený s kladnými bodmi klesne najviac na 0.') +
 					li('Symbolická výhra', 'Keď má porazený 0 alebo menej, víťaz dostane +1 a porazený stratí 1 (môže ísť do mínusu).') +
-					li('Ligy', '1. liga 1. až 10. miesto, 2. liga 11. až 30., 3. liga 31. až 70., 4. liga ostatní.') +
+					li('Ligy', 'Podľa poradia: 1. liga horných 10 % hráčov, 2. liga ďalších 20 %, 3. liga ďalších 30 %, 4. liga zvyšok (v každej aspoň jeden). Nad 70 hráčov: top 10, 11. až 30., 31. až 70., ostatní.') +
 					li('Sezóna', 'Trvá rok, potom sa uložia konečné výsledky a začína sa znova.') +
 					'</ul><p class="mysn-rules-foot">F4 alebo Esc: späť za stôl</p>',
 			);
@@ -1207,7 +1207,7 @@ export class UI {
 		}
 		tb.appendChild(body);
 		B.appendChild(tb);
-		B.appendChild(h('p', 'mysn-note', 'Každý začína so 147 bodmi. Víťaz získa toľko bodov, koľko nahral, porazený ich stratí (najviac všetky svoje). Výhra nad hráčom z vyššej ligy sa ráta 1,5-krát. 1. liga: top 10, 2. liga: 11. až 30., 3. liga: 31. až 70., 4. liga: ostatní. Sezóna trvá rok.'));
+		B.appendChild(h('p', 'mysn-note', 'Každý začína so 147 bodmi. Víťaz získa toľko bodov, koľko nahral, porazený ich stratí (najviac všetky svoje). Výhra nad hráčom z vyššej ligy sa ráta 1,5-krát. Ligy podľa poradia: horných 10 % hráčov 1. liga, ďalších 20 % 2. liga, ďalších 30 % 3. liga, zvyšok 4. liga (nad 70 hráčov top 10, 11. až 30., 31. až 70., ostatní). Sezóna trvá rok.'));
 		const f = h('div', 'mysn-lobby-foot');
 		f.append(this.button('Minulé sezóny', 'leagueArchive'), this.button('Späť do herne', 'leagueHome'), this.button('Zavrieť', 'leagueClose'));
 		B.appendChild(f);

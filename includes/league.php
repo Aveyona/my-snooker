@@ -7,7 +7,7 @@
  * bodmi klesne najviac na 0; keď už má 0 alebo menej, je to symbolická výhra: víťaz +1, porazený -1 (aj do mínusu). Výhra nad hráčom z vyššej ligy a prehra so slabším sa rátajú 1,5-krát. Pri vzdaní dostane víťaz
  * najmenej 30 bodov. S tým istým súperom sa rátajú najviac 3 ligové partie za deň.
  *
- * Ligy podľa poradia: 1. liga top 10, 2. liga 11. až 30., 3. liga 31. až 70., 4. liga ostatní.
+ * Ligy podľa poradia: do 70 hráčov podiel (10 %, 20 %, 30 %, zvyšok), potom top 10, 11. až 30., 31. až 70., ostatní.
  */
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
@@ -20,15 +20,28 @@ const MYSN_LEAGUE_OPEN = true; // true = každý registrovaný hráč môže hra
 const MYSN_LEAGUE_RESIGN_MIN = 30;
 const MYSN_LEAGUE_SYMBOLIC = 1; // výhra nad hráčom s 0 a menej bodmi
 
-/** Liga podľa poradia (1 = najlepšia). */
-function mysn_league_of_rank( $rank ) {
-	if ( $rank <= 10 ) {
+/**
+ * Liga podľa poradia (1 = najlepšia). Do 70 hráčov podľa podielu: 1. liga horných 10 %, 2. liga ďalších 20 %,
+ * 3. liga ďalších 30 %, 4. liga zvyšok (v každej aspoň jeden hráč). Nad 70 hráčov pevné hranice: top 10,
+ * 11. až 30., 31. až 70., ostatní.
+ */
+function mysn_league_of_rank( $rank, $total = 0 ) {
+	if ( $total > 0 && $total <= 70 ) {
+		$c1 = max( 1, (int) round( $total * 0.1 ) );
+		$c2 = $c1 + max( 1, (int) round( $total * 0.2 ) );
+		$c3 = $c2 + max( 1, (int) round( $total * 0.3 ) );
+	} else {
+		$c1 = 10;
+		$c2 = 30;
+		$c3 = 70;
+	}
+	if ( $rank <= $c1 ) {
 		return 1;
 	}
-	if ( $rank <= 30 ) {
+	if ( $rank <= $c2 ) {
 		return 2;
 	}
-	if ( $rank <= 70 ) {
+	if ( $rank <= $c3 ) {
 		return 3;
 	}
 	return 4;
@@ -114,7 +127,7 @@ function mysn_league_ranked( $sid ) {
 	$rows = $wpdb->get_results( $wpdb->prepare( "SELECT * FROM $lt WHERE season_id = %d ORDER BY points DESC, seed ASC, wins DESC, user_id ASC", $sid ), ARRAY_A ); // phpcs:ignore
 	foreach ( $rows as $i => &$r ) {
 		$r['rank']   = $i + 1;
-		$r['league'] = mysn_league_of_rank( $i + 1 );
+		$r['league'] = mysn_league_of_rank( $i + 1, count( $rows ) );
 	}
 	return $rows;
 }
