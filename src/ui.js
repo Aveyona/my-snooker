@@ -1,6 +1,7 @@
 /*
  * My Snooker: rozhranie nad 3D scénou (štatistiky, sila, falše, tlačidlá, nastavenia, pomoc).
  */
+import { CHALKS } from './chalks.js';
 import { R, COLOURS, POCKETS } from './physics.js';
 
 const esc = (t) => String(t || '').replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
@@ -620,6 +621,44 @@ export class UI {
 		}
 		this.rulesEl.classList.toggle('mysn-hidden', !on);
 		this.rulesEl.querySelector('.mysn-rules-foot').textContent = foot;
+	}
+
+	/** Herňa F2: panel vľavo s kriedami z poličky nad stojanom (sel = vybratá, zoom = kamera je pri kriede). */
+	openChalks(on, sel, zoom) {
+		if (!this.chalkEl) {
+			this.chalkEl = h('div', 'mysn-chalks mysn-hidden');
+			for (const ev of ['mousedown', 'keydown', 'wheel']) {
+				this.chalkEl.addEventListener(ev, (e) => e.stopPropagation());
+			}
+			this.root.appendChild(this.chalkEl);
+		}
+		this.chalkEl.classList.toggle('mysn-hidden', !on);
+		if (!on) {
+			return;
+		}
+		const hex = (n) => '#' + n.toString(16).padStart(6, '0');
+		this.chalkEl.innerHTML = '<h3>Kriedy</h3><p class="mysn-chalks-sub">Vyber kriedu, kamera sa na ňu priblíži na poličke. Vybratou kriedou kriedueš tágo (F3).</p>';
+		const list = h('div', 'mysn-chalk-list');
+		CHALKS.forEach((c, i) => {
+			const b = h(
+				'button',
+				'mysn-chalk' + (c.id === sel ? ' mysn-on' : ''),
+				`<i class="mysn-chalk-cube" style="--c:${hex(c.color)};--w:${hex(c.wrap)}"></i><span><b>${c.name}</b><em>${c.note}</em></span>`
+			);
+			b.type = 'button';
+			b.addEventListener('click', (e) => {
+				e.stopPropagation();
+				b.blur();
+				this.opts.onAction('chalkPick', i);
+			});
+			list.appendChild(b);
+		});
+		this.chalkEl.appendChild(list);
+		if (zoom) {
+			const back = this.button('← Späť na stojan', 'chalkBack');
+			back.classList.add('mysn-chalk-back');
+			this.chalkEl.appendChild(back);
+		}
 	}
 
 	/** Štadión F1: panel vľavo so stručnými pravidlami snookeru (k bloku na stolíku). */

@@ -6,6 +6,7 @@
 import * as THREE from 'three';
 import { boardTexture } from './board.js';
 import { CUES, buildCueMesh } from './cues.js';
+import { CHALKS } from './chalks.js';
 import { buildNewspaper, buildMagazine } from './newspaper.js';
 
 export const ROOM = {
@@ -497,26 +498,29 @@ export function buildRoomShell(scene, quality, opts = {}) {
 	add(new THREE.BoxGeometry(rackW, 1.85, 0.03), darkWood, RACK.x, FY + 0.15 + 0.925, -RZ + 0.05);
 	add(new THREE.BoxGeometry(rackW + 0.05, 0.06, 0.16), woodMat, RACK.x, FY + 0.12, -RZ + 0.11); // spodná lišta s miskami
 	add(new THREE.BoxGeometry(rackW + 0.05, 0.05, 0.12), woodMat, RACK.x, FY + 1.35, -RZ + 0.1); // horný držiak
-	// polička na kriedy nad tágami (pri hornom okraji stojana): doska s lemom, konzoly a modré kriedy
+	// polička na kriedy nad tágami (pri hornom okraji stojana): doska, konzoly a kriedy (každá vlastnej farby)
+	const chalkObjs = [];
+	const CHALK_Y = FY + 1.86;
 	{
 		const SY = FY + 1.86;
 		add(new THREE.BoxGeometry(rackW + 0.05, 0.025, 0.12), woodMat, RACK.x, SY, -RZ + 0.125);
 		for (const sx of [-1, 1]) {
 			add(new THREE.BoxGeometry(0.02, 0.07, 0.1), woodMat, RACK.x + sx * (rackW / 2 - 0.03), SY - 0.045, -RZ + 0.115); // konzola
 		}
-		const blue = new THREE.MeshStandardMaterial({ color: 0x2f6fd6, roughness: 0.95 });
-		const wrap = new THREE.MeshStandardMaterial({ color: 0xf2efe4, roughness: 0.8 });
-		const n = 9;
+		const n = CHALKS.length;
 		for (let i = 0; i < n; i++) {
+			const ch = CHALKS[i];
 			const x = RACK.x - rackW / 2 + 0.12 + (i * (rackW - 0.24)) / (n - 1);
 			const c = new THREE.Group();
-			const cube = new THREE.Mesh(new THREE.BoxGeometry(0.025, 0.018, 0.025), wrap); // papierový obal
+			const cube = new THREE.Mesh(new THREE.BoxGeometry(0.025, 0.018, 0.025), new THREE.MeshStandardMaterial({ color: ch.wrap, roughness: 0.8 })); // papierový obal
 			cube.position.y = 0.009;
-			const top = new THREE.Mesh(new THREE.BoxGeometry(0.0255, 0.008, 0.0255), blue); // modrá krieda hore
+			const top = new THREE.Mesh(new THREE.BoxGeometry(0.0255, 0.008, 0.0255), new THREE.MeshStandardMaterial({ color: ch.color, roughness: 0.95 })); // krieda hore
 			top.position.y = 0.021;
 			c.add(cube, top);
 			c.position.set(x + Math.sin(i * 2.3) * 0.01, SY + 0.0125, -RZ + 0.165 + Math.cos(i * 1.7) * 0.008);
 			c.rotation.y = Math.sin(i * 3.1) * 0.5;
+			c.userData.base = c.position.clone();
+			chalkObjs.push(c);
 			scene.add(c);
 		}
 	}
@@ -1200,6 +1204,23 @@ export function buildRoomShell(scene, quality, opts = {}) {
 				rc.label.visible = !rackHidden;
 			}
 			selectCue(lastSel[0], lastSel[1]);
+		},
+		/** Pohľad zblízka na kriedu i na poličke nad stojanom. */
+		chalkView(i) {
+			const c = chalkObjs[i] || chalkObjs[0];
+			const p = c.userData.base;
+			return { pos: new THREE.Vector3(p.x, p.y + 0.16, p.z + 0.62), look: new THREE.Vector3(p.x, p.y + 0.015, p.z) };
+		},
+		/** Vybratá krieda na poličke: povysunie sa dopredu a narovná (ostatné stoja ako boli). */
+		selectChalk(i) {
+			chalkObjs.forEach((c, k) => {
+				const on = k === i;
+				c.position.copy(c.userData.base);
+				if (on) {
+					c.position.z += 0.02;
+				}
+				c.rotation.y = on ? 0 : Math.sin(k * 3.1) * 0.5;
+			});
 		},
 		/** Tágá a štítky stojana (na štadióne sa skryjú spolu s herňou). */
 		rackObjects: () => [...rackCues.flatMap((rc) => [rc.group, rc.label]), glow],

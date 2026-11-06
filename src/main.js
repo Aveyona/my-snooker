@@ -24,6 +24,7 @@ import { remaining } from './rules.js';
 import { aimTrace, R, L, W, snapshot, restore, createRack } from './physics.js';
 import { buildRackTriangle, rackLayout } from './rackTriangle.js';
 import { Replay } from './replay.js';
+import { CHALKS, chalkById } from './chalks.js';
 import { CUES, cueById, ownCueSpec } from './cues.js';
 
 const STORE = 'mySnookerSettings';
@@ -1435,10 +1436,12 @@ export function start(root, config = {}) {
 	const debug = { chalkFreeze: null }; // na testy: zastaví animáciu kriedovania v danom čase
 	// kocka kriedy: zvonku biely obal, na jednej stene štvorcová diera s modrou kriedou na špičku tága
 	const CH = { s: 0.022, h: 0.0115, d: 0.009 };
+	const chalkBlue = new THREE.MeshStandardMaterial({ color: chalkById(settings.chalk).color, roughness: 0.95 }); // farba vybratej kriedy
+	let chalkZoom = false; // F2 v herni: kamera je priblížená na kriedu na poličke
 	const chalkMesh = new THREE.Group();
 	{
 		const white = new THREE.MeshStandardMaterial({ color: 0xf4f2ea, roughness: 0.8 });
-		const blue = new THREE.MeshStandardMaterial({ color: 0x2f6fd6, roughness: 0.95 });
+		const blue = chalkBlue;
 		const box = (w, hh, dd, x, y, z, m) => {
 			const b = new THREE.Mesh(new THREE.BoxGeometry(w, hh, dd), m);
 			b.position.set(x, y, z);
@@ -1582,6 +1585,12 @@ export function start(root, config = {}) {
 			return;
 		}
 		ui.showView(name, name === 'rack' ? rackNow() : allCues(), cueSpec.id, name === 'office' ? officeData() : name === 'rack' ? rackInfoNow() : name === 'mixer' ? { radio } : name === 'magazine' ? room.rssItems : name === 'chair' ? (venue === 'league' ? null : { news: room.newsItems, rss: room.rssItems }) : room.newsItems);
+		if (name === 'rack' && venue !== 'league') {
+			// herňa F2: vľavo panel s kriedami z poličky nad stojanom
+			chalkZoom = false;
+			room.selectChalk(CHALKS.indexOf(chalkById(settings.chalk)));
+			ui.openChalks(true, chalkById(settings.chalk).id, false);
+		}
 	};
 	const exitView = (keepFree = false) => {
 		if (!view) {
@@ -1619,6 +1628,8 @@ export function start(root, config = {}) {
 		ui.openPhone(false);
 		chalkT = -1;
 		chalkMesh.visible = false;
+		ui.openChalks(false);
+		chalkZoom = false;
 		rig.setMode(topView ? 'top' : 'cue');
 		ui.showView(null);
 		if (!keepFree) {
@@ -2393,16 +2404,50 @@ export function start(root, config = {}) {
 				rack: !game.match ? (game.solo ? 'Nový frame' : 'Nové postavenie gúľ') : '',
 			});
 		},
+		// F2 v herni: výber kriedy z poličky (kamera sa na ňu priblíži), druhý klik alebo Späť na stojan vráti pohľad
+		chalkPick: (i) => {
+			const ch = CHALKS[i];
+			if (!ch || view !== 'rack') {
+				return;
+			}
+			if (chalkZoom && settings.chalk === ch.id) {
+				actions.chalkBack();
+				return;
+			}
+			settings.chalk = ch.id;
+			saveSettings(settings);
+			chalkBlue.color.setHex(ch.color);
+			room.selectChalk(i);
+			const v = room.chalkView(i);
+			rig.setView(v.pos, v.look);
+			rig.minViewZoom = 1;
+			rig.setViewZoom(1);
+			chalkZoom = true;
+			ui.openChalks(true, ch.id, true);
+		},
+		chalkBack: () => {
+			if (view !== 'rack') {
+				return;
+			}
+			const v = room.rack;
+			rig.setView(v.pos.clone(), v.look.clone());
+			if (v.zoom) {
+				rig.minViewZoom = v.zoom;
+				rig.setViewZoom(v.zoom);
+			}
+			chalkZoom = false;
+			ui.openChalks(true, chalkById(settings.chalk).id, false);
+		},
 		// kriedovanie v kresle: animácia pri kresle (vidia ju súper aj diváci), potom má tágo kriedu na ďalšie údery
 		chairChalk: () => {
 			if (chairChalkEnd) {
 				return;
 			}
-			stadium.chairChalk(mySide(), cueSpec);
+			stadium.chairChalk(mySide(), cueSpec, chalkById(settings.chalk).color);
 			chairChalkEnd = performance.now() + stadium.CHALK_T * 1000;
 			sound.unlock && sound.unlock();
 			if (online && game.match && game.match.league) {
-				online.sendChalk({ side: mySide(), spec: cueSpec });
+				online.sendChalk({ side: mySide(), spec: cueSpec, color: chalkById(settings.chalk).color });
 			}
 		},
 		toolChalk: () => {
@@ -3350,7 +3395,7 @@ export function start(root, config = {}) {
 			// tágá súpera na jeho stojane na štadióne
 			chalk: (d) => {
 				if (game.match && d && d.spec) {
-					stadium.chairChalk(1 - mySide(), d.spec); // súper kriedi v kresle
+					stadium.chairChalk(1 - mySide(), d.spec, d.color); // súper kriedi v kresle (jeho kriedou)
 				}
 			},
 			rack: (d) => {
@@ -3432,7 +3477,7 @@ export function start(root, config = {}) {
 					watchInfo.seq = m.seq;
 				} else if (m.k === 'w-chalk') {
 					if (m.spec) {
-						stadium.chairChalk(m.side ? 1 : 0, m.spec); // hráč kriedi v kresle
+						stadium.chairChalk(m.side ? 1 : 0, m.spec, m.color); // hráč kriedi v kresle
 					}
 				} else if (m.k === 'w-rack') {
 					if (Array.isArray(m.specs)) {

@@ -813,6 +813,7 @@ export function buildStadium(scene, quality, clock = 45) {
 		const g = new THREE.Group();
 		g.add(new THREE.Mesh(new THREE.BoxGeometry(0.022, 0.022, 0.022), new THREE.MeshStandardMaterial({ color: 0xf4f2ea, roughness: 0.8 })));
 		const blue = new THREE.Mesh(new THREE.PlaneGeometry(0.012, 0.012), new THREE.MeshStandardMaterial({ color: 0x2f6fd6, roughness: 0.95 }));
+		g.userData.blue = blue.material;
 		blue.position.y = -0.0111;
 		blue.rotation.x = Math.PI / 2; // modrá krieda dole, na špičke
 		g.add(blue);
@@ -836,8 +837,9 @@ export function buildStadium(scene, quality, clock = 45) {
 		return { g, cube, tip, axis: tip.clone().sub(butt).normalize(), t: -1, specId: '' };
 	});
 	/** Hráč (side) začne kriedovať tágo spec v kresle; animácia trvá CHALK_T sekúnd. */
-	const chairChalk = (side, spec) => {
+	const chairChalk = (side, spec, color) => {
 		const c = chairChalks[side ? 1 : 0];
+		c.cube.userData.blue.color.setHex(typeof color === 'number' ? color : 0x2f6fd6); // farba kriedy hráča
 		if (spec && spec.id !== c.specId) {
 			c.g.clear();
 			c.g.add(buildCueMesh(spec, false));

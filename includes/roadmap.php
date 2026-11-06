@@ -131,6 +131,7 @@ function mysn_roadmap() {
 /** Denník zmien (najnovšie hore). */
 function mysn_changelog() {
 	return array(
+		array( '0.7.39', '6. 11. 2026', 'Herňa F2: vľavo panel Kriedy s deviatimi kriedami z poličky, každá s vlastnou farbou kriedy aj obalu. Klik na kriedu ju vyberie a kamera sa na ňu priblíži na poličke. Vybratá krieda sa používa pri kriedovaní (F3) a v kresle na štadióne, jej farbu vidí súper aj diváci.' ),
 		array( '0.7.38', '6. 11. 2026', 'Herňa: nad stojanom s tágami pribudla polička s modrými kriedami v papierových obaloch. Pohľad F2 je oddialený a širší, vidno celý stojan aj poličku s kriedami.' ),
 		array( '0.7.37', '6. 11. 2026', 'Štadión, kreslo F7: F3 nakriedi tágo na ďalší ťah. Pred kreslom sa zdvihne tágo v ruke, krieda sa pošúcha o špičku a po asi 3 sekundách má tágo kriedu. Kriedovanie sa synchronizuje cez internet, vidí ho súper aj diváci.' ),
 		array( '0.7.36', '6. 11. 2026', 'Štadión F2: oddialenejší a širší pohľad na stojan, vidno celé tágá od rukovätí po hroty.' ),
