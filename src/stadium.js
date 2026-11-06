@@ -683,6 +683,7 @@ export function buildStadium(scene, quality, clock = 45) {
 	};
 	const refAim = { id: -1, t: 0, lock: 0, s: 0 }; // mierená guľa, ako dlho sa na ňu mieri; lock = koľko ešte ostane pri guli
 	const REF_WAIT = 2.5; // sekundy mierenia na tú istú guľu, kým sa rozhodca rozhodne ísť k nej
+	const REF_REST = 8; // po každom presune postojí aspoň toľko sekúnd
 	const REF_STAY = 10; // pri guli ostane aspoň toľko sekúnd (aj keď sa mierenie zmení), kým nezavadzia tágu
 	const placeRef = () => {
 		const p = perPoint(ref.s);
@@ -911,6 +912,8 @@ export function buildStadium(scene, quality, clock = 45) {
 			if (cueBall && root.visible) {
 				// kým sa gule nehýbu a mieri sa: uhne z cesty tága (obíde stôl po obvode)
 				let slow = false;
+				const prevTarget = ref.target;
+				ref.rest = Math.max(0, (ref.rest || 0) - dt);
 				if (dir !== null && !moving && cueBall.on) {
 					// mieri sa na guľu (zvyčajne červenú): po chvíli mierenia na ňu rozhodca pomaly prejde k nej
 					// a ostane tam aspoň REF_STAY sekúnd, aj keď sa mierenie zmení (kým nezavadzia tágu)
@@ -946,6 +949,10 @@ export function buildStadium(scene, quality, clock = 45) {
 					refAim.id = -1;
 					refAim.t = 0;
 				}
+				// po príchode na miesto tam postojí aspoň REF_REST sekúnd (nepresúva sa príliš často); skôr len keď zavadzia tágu
+				if (ref.rest > 0 && ref.target !== prevTarget && !(dir !== null && !moving && refBlocked(referee.position.x, referee.position.z, cueBall, dir))) {
+					ref.target = prevTarget;
+				}
 				let d = (ref.target - ref.s) % PER;
 				if (d > PER / 2) {
 					d -= PER;
@@ -973,6 +980,12 @@ export function buildStadium(scene, quality, clock = 45) {
 					ref.walk += dt * (slow ? 4.5 : 7);
 				} else {
 					// stojí: čelom k stolu (k bielej), nohy spolu
+					if (ref.walk > 0) {
+						ref.rest = REF_REST; // práve prišiel: postojí
+						if (refAim.lock > 0 && Math.abs(ref.target - refAim.s) < 1e-6) {
+							refAim.lock = Math.max(refAim.lock, REF_STAY); // pri mierenej guli 10 s od príchodu
+						}
+					}
 					ref.yaw = Math.atan2(cueBall.p.x - referee.position.x, cueBall.p.z - referee.position.z);
 					ref.walk = 0;
 				}
