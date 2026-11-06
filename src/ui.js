@@ -1940,6 +1940,38 @@ export class UI {
 		}
 	}
 
+	/** Zdroj údajov o špiciach: fn(spec) => { kind, strokes, wear, no, total, replaced, guest }. */
+	setTipSource(fn) {
+		this._tipSrc = fn;
+	}
+
+	/** Sekcia Špica v paneli tága (F2): druh, opotrebenie, údery a výmena za novú špicu. */
+	renderTip() {
+		const el = this.cuePanel && this.cuePanel.querySelector('.mysn-tip');
+		const c = this._tipCue;
+		if (!el || !c || !this._tipSrc) {
+			return;
+		}
+		const t = this._tipSrc(c);
+		const KIND = { soft: 'mäkká', medium: 'stredná', hard: 'tvrdá' };
+		const pct = Math.round(t.wear * 100);
+		const col = t.wear >= 0.9 ? '#e5484d' : t.wear >= 0.7 ? '#FACC15' : '#3fb950';
+		const state = t.wear >= 1 ? 'opotrebovaná, tágo sa šmýka pri falšiach' : t.wear >= 0.9 ? 'takmer opotrebovaná, môže sa šmyknúť' : t.wear >= 0.7 ? 'falše slabnú' : 'v poriadku';
+		el.innerHTML =
+			`<h4>Špica <span>č. ${t.no}</span></h4>` +
+			`<div class="mysn-tip-row"><span>Druh <b>${KIND[t.kind] || t.kind}</b></span><span>Údery <b>${t.strokes}</b></span></div>` +
+			`<div class="mysn-tip-bar"><i style="width:${Math.min(100, pct)}%;background:${col}"></i></div>` +
+			`<div class="mysn-tip-state">Opotrebenie <b>${pct} %</b>, ${state}</div>` +
+			(t.guest ? '<p class="mysn-cp-note">Špice sa ukladajú len prihláseným hráčom.</p>' : `<div class="mysn-tip-sum">Spolu úderov <b>${t.total}</b> · vymenených špíc <b>${t.replaced}</b></div><div class="mysn-tip-new"><span>Vymeniť za novú:</span></div>`);
+		const nw = el.querySelector('.mysn-tip-new');
+		if (nw) {
+			for (const k of ['soft', 'medium', 'hard']) {
+				const b = this.button(KIND[k], 'tipReplace', k === 'soft' ? 'Mäkká: lepšie drží falše, pri silných úderoch sa ničí rýchlejšie' : k === 'hard' ? 'Tvrdá: o niečo silnejšie údery, falše slabšie, znáša silné údery' : 'Stredná: vyvážená', { cue: c.id, kind: k });
+				nw.appendChild(b);
+			}
+		}
+	}
+
 	cueStats(c) {
 		return `<span>Sila <b>${Math.round(c.power * 100)} %</b></span><span>Dĺžka <b>${Math.round(c.len * 100)} cm</b></span><span>Falše <b>${Math.round(c.grip * 100)} %</b></span><span>Špička <b>${esc(c.tip)}</b></span><span>Shift <b>${c.fine > 0 ? 'áno' : 'nie'}</b></span>`;
 	}
@@ -1966,6 +1998,9 @@ export class UI {
 		P.appendChild(h('h3', '', esc(c.name)));
 		P.appendChild(h('div', 'mysn-cp-stats', this.cueStats(c)));
 		P.appendChild(h('p', 'mysn-cp-note', esc(c.note)));
+		P.appendChild(h('div', 'mysn-tip'));
+		this._tipCue = c;
+		this.renderTip();
 		if (info && info.league) {
 			// ligový zápas: len tágá vybraté do ligy (najviac 4), vyberajú sa v kancelárii, upravujú v herni
 			P.appendChild(h('p', 'mysn-cp-note', 'Na stojane sú len tágá, ktoré si si vybral do ligy (najviac 4). Vyberáš ich v kancelárii ligy, vlastné tágá upravuješ v herni.'));

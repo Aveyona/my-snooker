@@ -193,6 +193,7 @@ export function start(root, config = {}) {
 		if (!online) {
 			return;
 		}
+		loadTips();
 		const r = await online.net.call('cues', null, 'GET').catch(() => null);
 		if (r && Array.isArray(r.cues)) {
 			ownCues = r.cues;
@@ -1654,12 +1655,72 @@ export function start(root, config = {}) {
 		updateScore();
 	};
 
+	// špice tág (DB): druh, údery, opotrebenie; server počíta opotrebenie z úderov
+	const TIP_KINDS = { soft: { spin: 1.1, power: 0.97 }, medium: { spin: 1, power: 1 }, hard: { spin: 0.9, power: 1.03 } };
+	const tipDef = (spec) => (/stredne/.test(spec.tip) ? 'medium' : /mäkk/.test(spec.tip) ? 'soft' : /tvrd/.test(spec.tip) ? 'hard' : 'medium');
+	let tipData = { tips: {}, total: 0, replaced: 0 };
+	const tipOf = (spec) => tipData.tips[spec.id] || { kind: tipDef(spec), strokes: 0, wear: 0, no: 1 };
+	const tipStep = (kind, p) => (kind === 'soft' ? 0.5 + 1.5 * p * p : kind === 'hard' ? 0.85 + 0.25 * p * p : 0.7 + 0.8 * p * p) / 1000;
+	const tipApply = (r) => {
+		if (r && r.cue && r.tip) {
+			tipData.tips[r.cue] = r.tip;
+			tipData.total = r.total | 0;
+			tipData.replaced = r.replaced | 0;
+			ui.renderTip();
+		}
+	};
+	const loadTips = async () => {
+		if (!online || !user) {
+			return;
+		}
+		const r = await online.net.call('tips', null, 'GET').catch(() => null);
+		if (r && r.tips) {
+			tipData = { tips: { ...r.tips }, total: r.total | 0, replaced: r.replaced | 0 };
+			ui.renderTip();
+		}
+	};
+	/** Úder tágom: hneď odhad opotrebenia u mňa, presnú hodnotu vráti server (zapíše ju do DB). */
+	const tipStroke = (spec, p) => {
+		if (!online || !user || game.spectating) {
+			return;
+		}
+		const t = { ...tipOf(spec) };
+		const before = t.wear;
+		t.strokes++;
+		t.wear = Math.min(1, t.wear + tipStep(t.kind, p));
+		tipData.tips[spec.id] = t;
+		tipData.total++;
+		if (before < 0.9 && t.wear >= 0.9) {
+			ui.toast('Špica na tágu je takmer opotrebovaná, vymeň ju na stojane (F2).');
+		}
+		online.net.call('tips/stroke', { cue: spec.id, power: +p.toFixed(3), def: tipDef(spec) }).then(tipApply).catch(() => null);
+	};
 	const doShoot = (rawPower) => {
+		// nasadená špica: druh mení silu a falše, opotrebovaná (od 70 %) slabšie drží falše, nad 90 % sa môže šmyknúť
+		const tip = tipOf(cueSpec);
+		const TK = TIP_KINDS[tip.kind] || TIP_KINDS.medium;
+		const wearK = tip.wear < 0.7 ? 1 : 1 - Math.min(1, (tip.wear - 0.7) / 0.3) * 0.5;
 		// tvrdosť špičky: najväčšia sila tága; mäkká špička lepšie drží falše
-		const power = rawPower * cueSpec.power;
+		let power = Math.min(1, rawPower * cueSpec.power * TK.power);
 		// krieda: nakriedovaná špička prenesie miesto úderu (falšu) naplno, bez kriedy len pätinu
-		const k = cueSpec.grip * (chalk > 0 ? 1 : CHALK_SPIN);
-		if (game.shoot(power, spin.side * k, spin.top * k)) {
+		const k = cueSpec.grip * (chalk > 0 ? 1 : CHALK_SPIN) * TK.spin * wearK;
+		let side = spin.side * k;
+		let top = spin.top * k;
+		const missChance = tip.wear >= 1 ? 0.3 : tip.wear >= 0.9 ? 0.1 : 0;
+		let miscue = false;
+		if (missChance && Math.hypot(spin.side, spin.top) > 0.25 && Math.random() < missChance) {
+			// šmyk tága: špica skĺzne po bielej, úder je slabý, mierne vybočí a bez falše
+			miscue = true;
+			power *= 0.35;
+			game.dir += (Math.random() - 0.5) * 0.12;
+			side = 0;
+			top = 0;
+		}
+		if (game.shoot(power, side, top)) {
+			tipStroke(cueSpec, power);
+			if (miscue) {
+				ui.toast('Šmyk tága! Špica je opotrebovaná, vymeň ju na stojane (F2).');
+			}
 			spiderOn = false; // pavúk platí na jeden úder
 			if (cushAuto && !cushAuto.user) {
 				ui.setSpin(spin.side, cushAuto.prev); // automatický vyšší úder pri mantineli platil len na tento úder
@@ -2410,6 +2471,19 @@ export function start(root, config = {}) {
 				restNote: !mine ? 'Nádstavec sa dá vziať, keď mieriš.' : Object.values(can).some(Boolean) ? '' : 'Za bielou nie je miesto na nádstavec (mantinel alebo guľa tesne za bielou).',
 				rack: !game.match ? (game.solo ? 'Nový frame' : 'Nové postavenie gúľ') : '',
 			});
+		},
+		// výmena špice na tágu (F2 stojan): druh mäkká, stredná alebo tvrdá; údery starej sa pripočítajú do celku
+		tipReplace: async (v) => {
+			if (!online || !user || !v || !v.cue) {
+				return;
+			}
+			const r = await online.net.call('tips/replace', { cue: v.cue, kind: v.kind }).catch((e) => ({ error: e.message }));
+			if (!r || r.error) {
+				ui.toast((r && r.error) || 'Špica sa nedá vymeniť.');
+				return;
+			}
+			tipApply(r);
+			ui.toast(`Nová špica (${{ soft: 'mäkká', medium: 'stredná', hard: 'tvrdá' }[v.kind]}) je nasadená.`);
 		},
 		// F2 v herni: výber kriedy z poličky (kamera sa na ňu priblíži), druhý klik alebo Späť na stojan vráti pohľad
 		chalkPick: (i) => {
@@ -3638,6 +3712,7 @@ export function start(root, config = {}) {
 		online.away = !lampOn; // zhasnutá lampa v kancelárii: nie som online
 	}
 	loadTrophies();
+	ui.setTipSource((spec) => ({ ...tipOf(spec), total: tipData.total, replaced: tipData.replaced, guest: !user || !online })); // špice v paneli tága (F2)
 	loadOwn();
 
 	controls.setCue(cueSpec);

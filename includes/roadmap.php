@@ -131,6 +131,7 @@ function mysn_roadmap() {
 /** Denník zmien (najnovšie hore). */
 function mysn_changelog() {
 	return array(
+		array( '0.7.41', '6. 11. 2026', 'Špice tág (v databáze): každé tágo má nasadenú špicu (mäkká, stredná, tvrdá), počíta sa počet úderov a opotrebenie (asi 1000 úderov; mäkká sa pri silných úderoch ničí rýchlejšie, tvrdá silné údery znáša). Opotrebovaná špica slabšie drží falše a nad 90 % sa tágo môže šmyknúť. Na stojane F2 sa dá špica vymeniť za novú a vybrať jej druh; údery starej sa pripočítajú k celkovému počtu úderov a k počtu vymenených špíc.' ),
 		array( '0.7.40', '6. 11. 2026', 'Stopy kriedy na súkne: po každom údere ostane pod bielou jemná škvrna vo farbe kriedy hráča (súpera aj sledovaného hráča v jeho farbe), nový frame ich zmaže. Kreslí sa jedným ťahom pre všetky stopy, hra nezasekáva. Kancelária: pri výbere tág do ligy (F2) aj výber jednej kriedy do zápasu.' ),
 		array( '0.7.39', '6. 11. 2026', 'Herňa F2: vľavo panel Kriedy s deviatimi kriedami z poličky, každá s vlastnou farbou kriedy aj obalu. Klik na kriedu ju vyberie a kamera sa na ňu priblíži na poličke. Vybratá krieda sa používa pri kriedovaní (F3) a v kresle na štadióne, jej farbu vidí súper aj diváci.' ),
 		array( '0.7.38', '6. 11. 2026', 'Herňa: nad stojanom s tágami pribudla polička s modrými kriedami v papierových obaloch. Pohľad F2 je oddialený a širší, vidno celý stojan aj poličku s kriedami.' ),

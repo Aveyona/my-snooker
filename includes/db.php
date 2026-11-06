@@ -20,7 +20,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-const MYSN_DB_VERSION = '12';
+const MYSN_DB_VERSION = '13';
 
 function mysn_table( $name ) {
 	global $wpdb;
@@ -183,6 +183,20 @@ user_id bigint(20) unsigned NOT NULL,
 seen int(10) unsigned NOT NULL DEFAULT 0,
 PRIMARY KEY  (ctx,seat),
 KEY user_id (user_id)
+) $c;"
+	);
+	// špice tág: jedna nasadená špica na tágo hráča (druh, údery, opotrebenie v promile, poradie špice)
+	dbDelta(
+		'CREATE TABLE ' . mysn_table( 'tips' ) . " (
+user_id bigint(20) unsigned NOT NULL,
+cue_id varchar(16) NOT NULL,
+kind varchar(8) NOT NULL DEFAULT 'medium',
+strokes int(10) unsigned NOT NULL DEFAULT 0,
+wear float NOT NULL DEFAULT 0,
+tipno int(10) unsigned NOT NULL DEFAULT 1,
+installed int(10) unsigned NOT NULL DEFAULT 0,
+updated int(10) unsigned NOT NULL DEFAULT 0,
+PRIMARY KEY  (user_id,cue_id)
 ) $c;"
 	);
 	update_option( 'mysn_db', MYSN_DB_VERSION, true );

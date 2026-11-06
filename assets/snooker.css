@@ -525,6 +525,16 @@ body.mysn-page { font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans
 .mysn-rules ul { list-style: none; margin: 0; padding: 0; }
 .mysn-rules li { margin: 0 0 13px; font-size: 18px; line-height: 1.4; }
 .mysn-rules li b { display: block; color: #FACC15; font-size: 19px; margin-bottom: 2px; }
+.mysn-tip { margin: 2px 0 4px; padding: 10px 12px; border-radius: 10px; background: #ffffff0d; border: 1px solid #ffffff1a; display: flex; flex-direction: column; gap: 6px; font-size: 13px; }
+.mysn-tip h4 { margin: 0; color: #f2d48a; font-size: 15px; display: flex; justify-content: space-between; }
+.mysn-tip h4 span { color: #9aa4b2; font-weight: 400; font-size: 12px; }
+.mysn-tip-row { display: flex; gap: 14px; }
+.mysn-tip-bar { height: 8px; border-radius: 4px; background: #ffffff1f; overflow: hidden; }
+.mysn-tip-bar i { display: block; height: 100%; border-radius: 4px; }
+.mysn-tip-state, .mysn-tip-sum { color: #c5ccd8; font-size: 12px; }
+.mysn-tip-new { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+.mysn-tip-new span { width: 100%; font-size: 12px; color: #9aa4b2; }
+.mysn-tip-new .mysn-btn { flex: 1; width: auto; padding: 6px 8px; font-size: 13px; }
 .mysn-chalks { position: absolute; top: 56px; left: 14px; width: min(290px, calc(100% - 28px)); max-height: calc(100% - 330px); overflow-y: auto; z-index: 6; padding: 14px 14px 12px; border-radius: 12px; background: #0c0f14d0; border: 1px solid #ffffff22; backdrop-filter: blur(6px); color: #e6eae2; }
 .mysn-chalks h3 { margin: 0 0 4px; color: #f2d48a; font-size: 18px; }
 .mysn-chalks-sub { margin: 0 0 10px; font-size: 12px; color: #9aa4b2; }
