@@ -2087,6 +2087,15 @@ export class UI {
 		P.appendChild(h('h3', '', esc(c.name)));
 		P.appendChild(h('div', 'mysn-cp-stats', this.cueStats(c)));
 		P.appendChild(h('p', 'mysn-cp-note', esc(c.note)));
+		if (c.fine > 0) {
+			// jemné mierenie vždy zapnuté (Shift potom prepne na rýchle)
+			const st = this.opts.settings || {};
+			const lab = h('label', 'mysn-cp-fine', '<input type="checkbox"><span>Jemné mierenie vždy zapnuté <em>(Shift prepne na rýchle mierenie)</em></span>');
+			const cb = lab.querySelector('input');
+			cb.checked = !!(st.fineCues && st.fineCues[c.id]);
+			cb.addEventListener('change', () => this.opts.onAction('fineAlways', { id: c.id, on: cb.checked }));
+			P.appendChild(lab);
+		}
 		P.appendChild(h('div', 'mysn-tip'));
 		this._tipCue = c;
 		this.renderTip();

@@ -238,6 +238,8 @@ export class Controls {
 	setCue(spec) {
 		this.cueSpec = spec;
 		this.strokePx = strokePx(spec);
+		// jemné mierenie vždy zapnuté (nastavenie pri tágu so Shift); Shift potom prepne na rýchle mierenie
+		this.fineAlways = !!(this.fineMap && this.fineMap[spec.id]) && spec.fine > 0;
 	}
 
 	/** Je myš zachytená v okne hry? */
@@ -316,7 +318,7 @@ export class Controls {
 			return;
 		}
 		// jemné mierenie so Shift majú len tágá vyššej kategórie (cueSpec.fine = radiány na pixel)
-		const fine = e.shiftKey && this.cueSpec.fine > 0;
+		const fine = e.shiftKey !== !!this.fineAlways && this.cueSpec.fine > 0;
 		const base = fine ? this.cueSpec.fine : 0.0005; // radiány na pixel (0,0005 = asi 0,03 stupňa)
 		const accel = fine ? 1 : 1 + Math.min(6, Math.abs(dx) / 6);
 		g.dir += dx * base * accel * (fine ? 1 : this.sens); // šúpatko Otáčanie myšou (jemné mierenie ostáva)
@@ -503,7 +505,7 @@ export class Controls {
 	update(dt) {
 		const g = this.game;
 		if (g.state === 'aim' && !this.blocked) {
-			const fine = this._keys.has('Shift') && this.cueSpec.fine > 0;
+			const fine = this._keys.has('Shift') !== !!this.fineAlways && this.cueSpec.fine > 0;
 			const speed = fine ? 0.015 : 0.35;
 			if (this._keys.has('ArrowLeft')) {
 				g.dir -= speed * dt;

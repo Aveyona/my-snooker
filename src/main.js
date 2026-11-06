@@ -2432,6 +2432,22 @@ export function start(root, config = {}) {
 			controls.strokeSens = settings.strokeSens;
 			saveSettings(settings);
 		},
+		// tágo so Shift: jemné mierenie vždy zapnuté (Shift potom prepne na rýchle mierenie)
+		fineAlways: (v) => {
+			if (!v || !v.id) {
+				return;
+			}
+			settings.fineCues = settings.fineCues || {};
+			if (v.on) {
+				settings.fineCues[v.id] = 1;
+			} else {
+				delete settings.fineCues[v.id];
+			}
+			controls.fineMap = settings.fineCues;
+			saveSettings(settings);
+			controls.setCue(cueSpec);
+			ui.toast(v.on ? 'Jemné mierenie je pri tomto tágu vždy zapnuté. So Shift mieriš rýchlo.' : 'Jemné mierenie len so Shift.');
+		},
 		// šúpatko Pravé tlačidlo (Ctrl): citlivosť pohľadu pravým tlačidlom vo všetkých smeroch
 		panSens: (v) => {
 			settings.panSens = Math.min(3, Math.max(0.3, Number(v) || 1));
@@ -3463,6 +3479,9 @@ export function start(root, config = {}) {
 	controls.sens = settings.mouseSens || 1; // šúpatko Otáčanie myšou
 	controls.strokeSens = settings.strokeSens || 1; // šúpatko Ťahanie tága
 	controls.panSens = settings.panSens || 1; // šúpatko Pravé tlačidlo
+	settings.fineCues = settings.fineCues || {}; // tágá s jemným mierením vždy zapnutým
+	controls.fineMap = settings.fineCues;
+	controls.setCue(cueSpec);
 	// priblíženie kolieskom za tágom sa pamätá (pri držanom pravom tlačidle platí koliesko len počas držania)
 	rig.zoom = Math.min(6, Math.max(0.3, Number(settings.zoom) || 1));
 	controls.hooks.zoomed = (z, pz) => {
