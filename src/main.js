@@ -832,13 +832,16 @@ export function start(root, config = {}) {
 		// kamera ostáva v miestnosti (herňa) alebo v aréne (štadión)
 		const lg = venue === 'league';
 		// od stien najmenej na dĺžku rúk (ruky ani kamera nevojdú do steny)
-		const bx = lg ? 9.5 : ROOM.x - 0.6;
-		const bz = lg ? 9.5 : ROOM.z - 0.6;
+		// štadión: len hracia plocha vnútri mantinelov s reklamami (po prvý rad divákov), herňa: po steny
+		const bx = lg ? 3.9 : ROOM.x - 0.6;
+		const bz = lg ? 2.8 : ROOM.z - 0.6;
 		if (!adminRoam) {
 			p.x = Math.max(-bx, Math.min(bx, p.x));
 			p.z = Math.max(-bz, Math.min(bz, p.z));
 		}
-		p.y = Math.max(ROOM.floor + 0.25, Math.min(lg ? ROOM.floor + 9 : ROOM.ceil - 0.15, p.y));
+		if (!adminRoam) {
+			p.y = Math.max(ROOM.floor + 0.25, Math.min(lg ? ROOM.floor + 3.2 : ROOM.ceil - 0.15, p.y));
+		}
 		const d = rig.viewLook.clone().sub(rig.viewPos);
 		rig.viewPos.copy(p);
 		rig.viewLook.copy(p).add(d);
