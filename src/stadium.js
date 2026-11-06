@@ -211,6 +211,73 @@ export function buildStadium(scene, quality) {
 	scr2.castShadow = false;
 	add(new THREE.BoxGeometry(0.12, 1.75, 3.35), dark, BX + 3.68, FY + 3.6, 0);
 
+	// svietidlo nad stolom s dvoma obrazovkami (moderný kužeľ: dole užší, hore širší), obrazovky šikmo k tribúnam;
+	// spodná strana je svetelný panel, ktorý svieti na stôl
+	const lcdBox = new THREE.Group();
+	lcdBox.position.set(0, 2.55, 0);
+	root.add(lcdBox);
+	const LW = 3.3; // dĺžka pozdĺž stola
+	const BH = 0.17; // polovičná hrúbka dole
+	const TH = 0.52; // polovičná hrúbka hore
+	const HH = 1.95; // výška
+	{
+		const sh = new THREE.Shape();
+		sh.moveTo(-BH, 0);
+		sh.lineTo(BH, 0);
+		sh.lineTo(TH, HH);
+		sh.lineTo(-TH, HH);
+		sh.closePath();
+		const geo = new THREE.ExtrudeGeometry(sh, { depth: LW, bevelEnabled: true, bevelThickness: 0.025, bevelSize: 0.025, bevelSegments: 2 });
+		geo.translate(0, 0, -LW / 2);
+		geo.rotateY(Math.PI / 2); // tvar v rovine z-y, dĺžka pozdĺž x
+		const body = new THREE.Mesh(geo, new THREE.MeshStandardMaterial({ color: 0x101217, roughness: 0.35, metalness: 0.75 }));
+		body.castShadow = false;
+		lcdBox.add(body);
+		// svetelný panel dole (svieti na stôl)
+		const panel = new THREE.Mesh(new THREE.PlaneGeometry(LW - 0.1, BH * 2 - 0.04), new THREE.MeshBasicMaterial({ color: 0xf4f7ff }));
+		panel.rotation.x = Math.PI / 2;
+		panel.position.y = -0.028;
+		lcdBox.add(panel);
+		// tenký modrý LED pás po hornom okraji
+		for (const sd of [-1, 1]) {
+			const led = new THREE.Mesh(new THREE.BoxGeometry(LW + 0.04, 0.025, 0.025), new THREE.MeshBasicMaterial({ color: 0x3d8bff }));
+			led.position.set(0, HH + 0.02, sd * (TH + 0.02));
+			lcdBox.add(led);
+		}
+		// závesy k stropu
+		for (const x of [-1.3, 1.3]) {
+			const rod = new THREE.Mesh(new THREE.CylinderGeometry(0.012, 0.012, 1.4, 8), metal);
+			rod.position.set(x, HH + 0.7, 0);
+			lcdBox.add(rod);
+		}
+	}
+	const lcdOffMat = new THREE.MeshStandardMaterial({ color: 0x050608, roughness: 0.12, metalness: 0.6 });
+	const lcdOnMat = new THREE.MeshBasicMaterial({ color: 0xffffff, toneMapped: false });
+	const lcdTilt = Math.atan2(TH - BH, HH); // sklon steny (obrazovka hľadí šikmo dole k tribúne)
+	const lcdLen = Math.hypot(TH - BH, HH);
+	const lcdH = Math.min(lcdLen - 0.12, (LW - 0.2) * (9 / 16));
+	const lcds = [];
+	for (const sd of [-1, 1]) {
+		const scr = new THREE.Mesh(new THREE.PlaneGeometry(lcdH * (16 / 9), lcdH), lcdOffMat);
+		const off = 0.03; // kúsok pred stenou
+		scr.position.set(0, HH / 2, sd * ((BH + TH) / 2 + Math.cos(lcdTilt) * off));
+		scr.rotation.set(lcdTilt, sd > 0 ? 0 : Math.PI, 0, 'YXZ');
+		scr.castShadow = false;
+		lcdBox.add(scr);
+		lcds.push(scr);
+	}
+	/** Obrazovky: on = zapnuté, tex = textúra s pohľadom (null = čierne). */
+	const setLcd = (on, tex) => {
+		const want = on && tex ? tex : null;
+		if (lcdOnMat.map !== want) {
+			lcdOnMat.map = want;
+			lcdOnMat.needsUpdate = true;
+		}
+		for (const p of lcds) {
+			p.material = want ? lcdOnMat : lcdOffMat;
+		}
+	};
+
 	// otočný zelený reflektor na konštrukcii (zapína divák F12): úzky lúč pomaly krúži po hale, stôl obchádza
 	// poloha lúča sa počíta z času (Date.now), takže ho všetci vidia na rovnakom mieste
 	const SPOT_SRC = new THREE.Vector3(0, trussY - 0.25, -2.4);
@@ -680,6 +747,8 @@ export function buildStadium(scene, quality) {
 		},
 		setScreen: drawScreen,
 		setSpot,
+		setLcd,
+		lcdBox,
 		setLeague,
 		confetti,
 		fanConfetti,

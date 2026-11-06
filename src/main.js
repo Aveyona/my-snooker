@@ -1102,16 +1102,94 @@ export function start(root, config = {}) {
 		playerCam.l = (m.l | 0) || 1;
 		playerCam.at = now;
 	};
-	// otočný zelený reflektor na štadióne (zapína a vypína divák F12, platí pre všetkých)
-	let spotOn = false;
-	let spotId = '';
-	const spotApply = (m) => {
-		if (!m || m.k !== 'w-spot' || !m.id || m.id === spotId) {
+	// prepínače štadióna, ktoré mení divák (platia pre všetkých): w-spot zelený reflektor (F12), w-lcd obrazovky nad stolom (F9)
+	const FLAG_DEF = { 'w-spot': false, 'w-lcd': true };
+	const flags = {};
+	const flagsReset = () => {
+		for (const k of Object.keys(FLAG_DEF)) {
+			flags[k] = { on: FLAG_DEF[k], id: '' };
+		}
+	};
+	flagsReset();
+	const flagOn = (k) => !!(flags[k] && flags[k].on);
+	const flagApply = (m) => {
+		const f = m && flags[m.k];
+		if (!f || !m.id || m.id === f.id) {
 			return false;
 		}
-		spotId = m.id;
-		spotOn = !!m.on;
+		f.id = m.id;
+		f.on = !!m.on;
 		return true;
+	};
+	/** Divák prepol reflektor alebo obrazovky: u mňa a hráčom (tí to pošlú ďalej všetkým). */
+	const flagToggle = (k) => {
+		const m = { k, on: !flagOn(k), id: (user ? user.id : 0) + ':' + Date.now() };
+		flagApply(m);
+		if (game.spectating) {
+			online.watchSend(m);
+		}
+		if (ui.spectPhoneOpen()) {
+			actions.spectPhone(true);
+		}
+	};
+	// obrazovky nad stolom: pohľad hráča na rade so širším zorným uhlom, kreslí sa do textúry (každý druhý snímok)
+	const lcdRT = new THREE.WebGLRenderTarget(960, 540, { samples: 2 });
+	lcdRT.texture.colorSpace = THREE.SRGBColorSpace;
+	const lcdCam = new THREE.PerspectiveCamera(60, 16 / 9, 0.01, 40);
+	const lcdOrbit = new THREE.Object3D(); // krúžiaca kamera, keď nie je koho ukázať (poloha voči stolu)
+	let lcdTick = 0;
+	let lcdInit = false;
+	const lcdRender = () => {
+		const vis = venue === 'league' && stadium.root.visible && flagOn('w-lcd');
+		let src = null;
+		if (vis) {
+			if (!specView() && game.match && game.myTurn) {
+				table.group.getWorldPosition(miniPos);
+				const c = rig.camera;
+				src = { p: c.position.clone().sub(miniPos), q: c.quaternion, f: c.fov, l: c.layers.mask };
+			} else if ((specView() || game.match) && playerCam.at && performance.now() - playerCam.at < 15000) {
+				src = playerCam;
+			}
+		}
+		if (!src && vis) {
+			// nikto na zobrazenie: kamera pomaly krúži okolo stola
+			const a = (performance.now() / 1000) * 0.12;
+			const c = lcdOrbit;
+			c.position.set(Math.cos(a) * 3.4, 1.35, Math.sin(a) * 2.4);
+			c.lookAt(0, -0.15, 0);
+			src = { p: c.position, q: c.quaternion, f: 46, l: 1 | 2 };
+			lcdInit = false;
+		}
+		if (!src) {
+			lcdInit = false;
+			stadium.setLcd(false, null);
+			return;
+		}
+		if (lcdTick++ % 2) {
+			return;
+		}
+		table.group.getWorldPosition(miniPos);
+		const tp = src.p.clone().add(miniPos);
+		if (!lcdInit) {
+			lcdCam.position.copy(tp);
+			lcdCam.quaternion.copy(src.q);
+			lcdInit = true;
+		} else {
+			lcdCam.position.lerp(tp, 0.5);
+			lcdCam.quaternion.slerp(src.q, 0.5);
+		}
+		lcdCam.fov = Math.min(85, src.f * 1.4); // širší pohľad ako má hráč
+		lcdCam.layers.mask = src.l;
+		lcdCam.updateProjectionMatrix();
+		stadium.lcdBox.visible = false; // obrazovky nesmú byť samy v sebe
+		const sh = renderer.shadowMap.autoUpdate;
+		renderer.shadowMap.autoUpdate = false;
+		renderer.setRenderTarget(lcdRT);
+		renderer.render(scene, lcdCam);
+		renderer.setRenderTarget(null);
+		renderer.shadowMap.autoUpdate = sh;
+		stadium.lcdBox.visible = true;
+		stadium.setLcd(true, lcdRT.texture);
 	};
 	let pcInit = false;
 	const pcFrame = document.createElement('div');
@@ -1598,7 +1676,7 @@ export function start(root, config = {}) {
 			online.watchStart(r.type, r.id, r.peers || [r.id]);
 			watchPeers = r.peers || [r.id];
 			confLeft = 3; // konfety F7: 3-krát za zápas
-			spotOn = false; // reflektor: stav pošle hráč
+			flagsReset(); // reflektor a obrazovky: stav pošle hráč
 			watchFiesta = null;
 			stopFiesta();
 			watchCtx = (r.type === 'match' ? 'm' : 'r') + r.id;
@@ -2126,21 +2204,23 @@ export function start(root, config = {}) {
 				actions.spectPhone(true);
 			}
 		},
+		// divák F9: obrazovky nad stolom zapne alebo vypne (pre všetkých)
+		spectLcd: () => {
+			if (!specView() || venue !== 'league') {
+				ui.toast('Obrazovky sú len na štadióne pri ligovom zápase.');
+				return;
+			}
+			flagToggle('w-lcd');
+			ui.toast(flagOn('w-lcd') ? 'Obrazovky nad stolom sú zapnuté, vidia to všetci.' : 'Obrazovky nad stolom sú vypnuté pre všetkých.');
+		},
 		// divák F12: otočný zelený reflektor zapne alebo vypne (pre všetkých)
 		spectSpot: () => {
 			if (!specView() || venue !== 'league') {
 				ui.toast('Reflektor je len na štadióne pri ligovom zápase.');
 				return;
 			}
-			const m = { k: 'w-spot', on: !spotOn, id: (user ? user.id : 0) + ':' + Date.now() };
-			spotApply(m);
-			if (game.spectating) {
-				online.watchSend(m);
-			}
-			ui.toast(spotOn ? 'Zelený reflektor svieti a krúži po hale, vidia ho všetci.' : 'Reflektor je zhasnutý pre všetkých.');
-			if (ui.spectPhoneOpen()) {
-				actions.spectPhone(true);
-			}
+			flagToggle('w-spot');
+			ui.toast(flagOn('w-spot') ? 'Zelený reflektor svieti a krúži po hale, vidia ho všetci.' : 'Reflektor je zhasnutý pre všetkých.');
 		},
 		// divák F1: telefón s pomocníkom (klávesy) a tlačidlami
 		spectPhone: (refresh) => {
@@ -2150,7 +2230,7 @@ export function start(root, config = {}) {
 				return;
 			}
 			controls.uncapture();
-			ui.openSpectPhone(true, { confLeft, spot: spotOn, demo: specDemo, stadium: venue === 'league' });
+			ui.openSpectPhone(true, { confLeft, spot: flagOn('w-spot'), lcd: flagOn('w-lcd'), demo: specDemo, stadium: venue === 'league' });
 		},
 		spectPhoneClose: () => {
 			ui.openSpectPhone(false);
@@ -2165,7 +2245,7 @@ export function start(root, config = {}) {
 			ui.openRoomMap(false);
 			const go = () => {
 				specDemo = true;
-				spotOn = false;
+				flagsReset();
 				confLeft = 3;
 				const seat = 2 * 25 + 12; // strana +z, 3. rad, stred
 				mySeat = seat;
@@ -2182,7 +2262,7 @@ export function start(root, config = {}) {
 				chairLook.yaw = Math.atan2(d.z, d.x);
 				chairLook.pitch = Math.atan2(d.y, Math.hypot(d.x, d.z));
 				controls.capture();
-				ui.toast('Ukážka od diváka: sedíš na tribúne. F1 telefón, F7 konfety, F8 pohľad hráča, F12 reflektor, Tab malý stôl. Esc ukážku ukončí.');
+				ui.toast('Ukážka od diváka: sedíš na tribúne. F1 telefón, F7 konfety, F8 pohľad hráča, F9 obrazovky, F12 reflektor, Tab malý stôl. Esc ukážku ukončí.');
 			};
 			if (venue !== 'league') {
 				setVenue('league');
@@ -2642,6 +2722,10 @@ export function start(root, config = {}) {
 					actions.spectPhone();
 					return true;
 				}
+				if (lk === 'f9') {
+					actions.spectLcd();
+					return true;
+				}
 				if (lk === 'f12') {
 					actions.spectSpot();
 					return true;
@@ -3053,8 +3137,8 @@ export function start(root, config = {}) {
 					if (Array.isArray(m.specs)) {
 						stadium.setRack(m.side ? 1 : 0, m.specs.slice(0, 4), m.inHand, null); // stojan hráča
 					}
-				} else if (m.k === 'w-spot') {
-					spotApply(m);
+				} else if (m.k === 'w-spot' || m.k === 'w-lcd') {
+					flagApply(m);
 				} else if (m.k === 'w-cam') {
 					// kamera hráča (F8): prednosť má hráč na rade, druhý hráč len keď ten na rade dlho nič neposlal
 					camIn(m, !!m.t);
@@ -3100,8 +3184,7 @@ export function start(root, config = {}) {
 				}
 			},
 			started: (m) => {
-				spotOn = false; // reflektor: nový zápas so zhasnutým
-				spotId = '';
+				flagsReset(); // reflektor zhasnutý, obrazovky zapnuté
 				stopFiesta();
 				if (!m.league && online.watchers().length) {
 					online.closeWatchers('Hráč začal partiu so súperom.'); // ligový zápas sa sledovať dá, ostatné nie
@@ -3156,9 +3239,12 @@ export function start(root, config = {}) {
 			status: () => ui.setNet(online ? online.statusText() : ''),
 			// konfety od môjho diváka: zahrám a pošlem všetkým divákom (aj súper ich dostane priamo od diváka)
 			// reflektor prepol divák: u mňa, súperovi a mojim divákom (opakovanú správu preskočím)
-			spot: (m) => {
-				if (spotApply(m)) {
-					online.sendSpot(m);
+			// pohľad súpera na rade (obrazovky nad stolom)
+			cam: (m) => camIn(m, true),
+			// reflektor alebo obrazovky prepol divák: u mňa, súperovi a mojim divákom (opakovanú správu preskočím)
+			flag: (m) => {
+				if (flagApply(m)) {
+					online.sendFlag(m);
 				}
 			},
 			watcherConf: (m) => {
@@ -3694,7 +3780,8 @@ export function start(root, config = {}) {
 			const f = (v) => +v.toFixed(3);
 			online.sendCam({ p: [f(c.position.x - miniPos.x), f(c.position.y - miniPos.y), f(c.position.z - miniPos.z)], q: [f(c.quaternion.x), f(c.quaternion.y), f(c.quaternion.z), f(c.quaternion.w)], f: f(c.fov), l: c.layers.mask });
 		}
-		stadium.setSpot(spotOn && venue === 'league');
+		stadium.setSpot(flagOn('w-spot') && venue === 'league');
+		lcdRender();
 		renderer.render(scene, rig.camera);
 		miniTable();
 		requestAnimationFrame(frame);

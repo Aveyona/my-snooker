@@ -10,6 +10,7 @@ import { snapshot } from './physics.js';
 const PING_MS = 5000;
 const AIM_MS = 50; // mierenie cez priame spojenie asi 20-krát za sekundu (len keď sa zmenilo)
 const RETRY_MS = 3000;
+const FLAGS = new Set(['w-spot', 'w-lcd']); // prepínače štadióna, ktoré mení divák
 
 export class Net {
 	constructor(cfg) {
@@ -58,6 +59,7 @@ export class Online {
 		this.data = { live: [], invites: [], outgoing: null, paused: [] };
 		this.lobbyOpen = false;
 		this.myRack = null;
+		this.flags = {};
 		this.matchId = 0;
 		this.info = null; // posledný stav partie zo servera
 		this.queue = []; // odosielanie úderov a výsledkov (poradie sa zachová, pri výpadku sa opakuje)
@@ -258,7 +260,7 @@ export class Online {
 	sendCam(c) {
 		const now = performance.now();
 		const g = this.game;
-		const toOpp = false; // súperovi netreba (LCD na štadióne zatiaľ nie je)
+		const toOpp = !!(g.match && g.match.league && g.myTurn); // súper ho potrebuje pre obrazovky nad stolom
 		const toW = this.rtc.list('watch', (p) => !p.offerer).length > 0;
 		if (!this.matchId || now - (this._camAt || 0) < 100 || (!toOpp && !toW)) {
 			return;
@@ -272,14 +274,21 @@ export class Online {
 		}
 	}
 
-	/** Reflektor na štadióne zapnutý alebo vypnutý (prepína divák): stav si pamätám a pošlem súperovi aj svojim divákom. */
-	sendSpot(m) {
-		this.lcd = { k: 'w-spot', on: !!m.on, id: String(m.id || '') };
+	/**
+	 * Prepínače na štadióne, ktoré mení divák (w-spot reflektor, w-lcd obrazovky): stav si pamätám a pošlem
+	 * súperovi aj svojim divákom (nový divák ho dostane hneď po pripojení).
+	 */
+	sendFlag(m) {
+		if (!FLAGS.has(m.k)) {
+			return;
+		}
+		const f = { k: m.k, on: !!m.on, id: String(m.id || '') };
+		this.flags[m.k] = f;
 		if (!this.matchId) {
 			return;
 		}
-		this.rtcSendOpp({ k: 'spot', on: this.lcd.on, id: this.lcd.id });
-		this.wsend(this.lcd);
+		this.rtcSendOpp({ k: 'flag', f });
+		this.wsend(f);
 	}
 
 	/** Divák: správa hráčom, ktorých partiu sledujem (napríklad konfety F7). */
@@ -349,8 +358,8 @@ export class Online {
 			if (this.myRack) {
 				this.rtc.send(p, { k: 'w-rack', ...this.myRack });
 			}
-			if (this.lcd) {
-				this.rtc.send(p, this.lcd);
+			for (const f of Object.values(this.flags)) {
+				this.rtc.send(p, f);
 			}
 			this.hooks.status();
 		} else if (this.hooks.watcherOpen) {
@@ -424,8 +433,8 @@ export class Online {
 				this.hooks.watch(m);
 			} else if (!p.offerer && m.k === 'w-conf' && this.hooks.watcherConf) {
 				this.hooks.watcherConf(m); // konfety od môjho diváka (F7)
-			} else if (!p.offerer && m.k === 'w-spot' && this.hooks.spot) {
-				this.hooks.spot(m, true); // divák zapol alebo vypol reflektor
+			} else if (!p.offerer && FLAGS.has(m.k) && this.hooks.flag) {
+				this.hooks.flag(m); // divák prepol reflektor alebo obrazovky
 			}
 			return;
 		}
@@ -459,9 +468,9 @@ export class Online {
 			if (this.hooks.cam) {
 				this.hooks.cam(m); // pohľad súpera na rade (LCD na štadióne)
 			}
-		} else if (m.k === 'spot') {
-			if (this.hooks.spot) {
-				this.hooks.spot({ k: 'w-spot', on: !!m.on, id: String(m.id || '') }, false);
+		} else if (m.k === 'flag') {
+			if (this.hooks.flag && m.f && FLAGS.has(m.f.k)) {
+				this.hooks.flag({ k: m.f.k, on: !!m.f.on, id: String(m.f.id || '') });
 			}
 		} else if (m.k === 'rack') {
 			if (this.hooks.rack) {
@@ -681,7 +690,7 @@ export class Online {
 
 	/** text0 pre mňa, wtext pre divákov (bez „ty“, rovnaký od oboch hráčov). */
 	stopMatch(text0, wtext) {
-		this.lcd = null;
+		this.flags = {};
 		this.remoteCue = null;
 		this._rcKey = '';
 		const text = (text0 || '') + (this.stopMatchText || '');

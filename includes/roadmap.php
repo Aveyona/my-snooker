@@ -131,6 +131,7 @@ function mysn_roadmap() {
 /** Denník zmien (najnovšie hore). */
 function mysn_changelog() {
 	return array(
+		array( '0.7.14', '6. 11. 2026', 'Štadión: obrazovky sú teraz súčasťou svietidla nad stolom. Moderný kužeľ (dole užší, hore širší) visí nad stolom, na oboch šikmých stranách má obrazovku otočenú k tribúne a dole svetelný panel. Obrazovky ukazujú pohľad hráča na rade so širším záberom (inak krúžiacu kameru), divák ich zapne alebo vypne F9 alebo v telefóne F1, zmena platí pre všetkých.' ),
 		array( '0.7.13', '6. 11. 2026', 'Štadión: LCD obrazovky sú dočasne odstránené (prerobia sa na iné miesto) a horný rad sedadiel je späť. Nový otočný zelený reflektor: divák ho zapne alebo zhasne klávesom F12 (alebo v telefóne F1), úzky lúč pomaly krúži po hale a tribúnach, stôl obchádza. Vidia ho všetci na rovnakom mieste.' ),
 		array( '0.7.12', '6. 11. 2026', 'Koniec ligového zápasu: vždy len jedna pevná kamera z rohu štadióna (stôl, tribúna a tabuľa s víťazom) pre hráčov aj divákov. Medzerník ani iné pohľady sa vtedy nepoužívajú, Esc otvorí menu, M mapu. Okno pohľadu hráča a malý stôl sú vtedy skryté.' ),
 		array( '0.7.11', '6. 11. 2026', 'Admin: v mape miestností pri štadióne pribudla Ukážka od diváka (sedíš na tribúne, fungujú F1 telefón, F7 konfety, F8, F9 LCD a Tab, Esc ukážku ukončí). LCD obrazovky: keď nie je koho ukázať, kamera pomaly krúži okolo stola.' ),
