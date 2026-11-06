@@ -210,11 +210,23 @@ function cueTexture(spec) {
 	g.fillRect(0, y(0.985), W, H * 0.004);
 	g.fillStyle = '#111';
 	g.fillRect(0, 0, W, y(0.993));
-	// objímka (slonovinová) a špička (koža s modrou kriedou)
+	// objímka (slonovinová) a špička (koža s kriedou); opotrebovaná špica je nižšia (sploštená) a tmavšia
+	const wear = Math.max(0, Math.min(1, spec.tipWear || 0));
+	const tipH = H * 0.013 * (1 - 0.45 * wear);
 	g.fillStyle = '#f3efe4';
-	g.fillRect(0, y(0.03), W, H * 0.017);
-	g.fillStyle = spec.tipColor || '#2f6fd6'; // farba špice (vyberá sa na stojane, predvolená modrá)
-	g.fillRect(0, y(0.013), W, H * 0.013 + 1);
+	g.fillRect(0, y(0.03), W, H - tipH - y(0.03)); // objímka siaha až po špicu
+	const tc = new THREE.Color(spec.tipColor || '#2f6fd6').lerp(new THREE.Color(0x2a2118), 0.65 * wear);
+	g.fillStyle = '#' + tc.getHexString(); // farba špice (vyberá sa na stojane, predvolená modrá)
+	g.fillRect(0, H - tipH - 1, W, tipH + 1);
+	if (wear > 0.3) {
+		// rozstrapkaný okraj kože a odreté miesta
+		g.fillStyle = `rgba(200,180,150,${0.35 * wear})`;
+		g.fillRect(0, H - tipH - 1, W, Math.max(2, tipH * 0.25));
+		for (let i = 0; i < 18 * wear; i++) {
+			g.fillStyle = `rgba(20,14,8,${0.25 + 0.4 * wear})`;
+			g.fillRect(Math.random() * W, H - Math.random() * tipH, 2 + Math.random() * 6, 1 + Math.random() * 3);
+		}
+	}
 	const t = new THREE.CanvasTexture(cv);
 	t.colorSpace = THREE.SRGBColorSpace;
 	t.anisotropy = 4;
@@ -224,7 +236,7 @@ function cueTexture(spec) {
 /** 3D model tága: jeden zúžený kus, špička v bode (0, 0, 0), tágo ide pozdĺž osi +y. */
 export function buildCueMesh(spec, castShadow = true) {
 	const group = new THREE.Group();
-	const geo = new THREE.CylinderGeometry(0.0145, 0.0048, spec.len, 24, 1);
+	const geo = new THREE.CylinderGeometry(0.0145, 0.0048 * (1 + 0.12 * Math.max(0, Math.min(1, spec.tipWear || 0))), spec.len, 24, 1); // opotrebovaná špica sa rozpučí
 	const mesh = new THREE.Mesh(geo, new THREE.MeshStandardMaterial({ map: cueTexture(spec), roughness: 0.32, metalness: 0.04 }));
 	mesh.position.y = spec.len / 2;
 	mesh.castShadow = castShadow;

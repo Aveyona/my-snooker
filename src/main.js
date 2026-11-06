@@ -159,6 +159,7 @@ export function start(root, config = {}) {
 	// vlastné tágá hráča (tabuľka my_snooker_cues), každé zo šablóny; id 'u' + číslo
 	let ownCues = [];
 	const tipColors = {}; // farba špice podľa tága (z databázy špíc)
+	const tipWears = {}; // opotrebenie špice podľa tága po 5 % (vzhľad špice na modeli)
 	const specFor = (id) => {
 		let s = cueById(id);
 		if (typeof id === 'string' && id[0] === 'u') {
@@ -172,7 +173,11 @@ export function start(root, config = {}) {
 	/** Tágo s farbou špice z databázy (na ruke, na stojanoch v herni aj na štadióne). */
 	function withTip(s) {
 		const tc = TIP_COLORS[tipColors[s.id]];
-		return tc && tc.hex !== s.tipColor ? { ...s, tipColor: tc.hex } : s;
+		const w = tipWears[s.id] || 0;
+		if ((tc && tc.hex !== s.tipColor) || w !== (s.tipWear || 0)) {
+			return { ...s, tipColor: tc ? tc.hex : s.tipColor, tipWear: w };
+		}
+		return s;
 	}
 	const allCues = () => [...CUES, ...ownCues.map(ownCueSpec)];
 	// stojan: vždy 10 miest, na mieste šablóny môže byť moje vlastné tágo (data.rack)
@@ -1674,6 +1679,11 @@ export function start(root, config = {}) {
 		for (const [id, t] of Object.entries(tipData.tips)) {
 			if (t.color && tipColors[id] !== t.color) {
 				tipColors[id] = t.color;
+				changed = true;
+			}
+			const w = Math.round((t.wear || 0) * 20) / 20; // po 5 %: model tága sa prekreslí len občas
+			if ((tipWears[id] || 0) !== w) {
+				tipWears[id] = w;
 				changed = true;
 			}
 		}
