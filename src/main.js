@@ -21,7 +21,8 @@ import { UI } from './ui.js';
 import { Game, fmtTime } from './match.js';
 import { Online } from './online.js';
 import { remaining } from './rules.js';
-import { aimTrace, R, L, W, snapshot, restore } from './physics.js';
+import { aimTrace, R, L, W, snapshot, restore, createRack } from './physics.js';
+import { buildRackTriangle, rackLayout } from './rackTriangle.js';
 import { CUES, cueById, ownCueSpec } from './cues.js';
 
 const STORE = 'mySnookerSettings';
@@ -257,28 +258,70 @@ export function start(root, config = {}) {
 	spiderHang.rotation.set(0, Math.PI / 2, 0); // palica pozdĺž čela skrine (po z), hlava na jednom konci
 	spiderHang.position.set(-HANG_X - 0.03, -0.24, -0.62);
 	table.group.add(spiderHang);
-	// trojuholník na gule zavesený na druhom konci stola (nové postavenie gúľ)
+	// trojuholník na gule zavesený na druhom konci stola (nové postavenie gúľ): plastový, zvisle na háčiku
 	const triangle = new THREE.Group();
 	{
-		const tri = new THREE.MeshStandardMaterial({ color: 0x2a1a10, roughness: 0.45, metalness: 0.1 });
-		const side = 0.32;
-		const rr = side / Math.sqrt(3);
-		for (let i = 0; i < 3; i++) {
-			const a = (i / 3) * Math.PI * 2 + Math.PI / 2;
-			const b = ((i + 1) / 3) * Math.PI * 2 + Math.PI / 2;
-			const p1 = new THREE.Vector3(0, Math.sin(a) * rr, Math.cos(a) * rr);
-			const p2 = new THREE.Vector3(0, Math.sin(b) * rr, Math.cos(b) * rr);
-			const bar = new THREE.Mesh(new THREE.BoxGeometry(0.012, 0.022, side + 0.02), tri);
-			bar.position.copy(p1).add(p2).multiplyScalar(0.5);
-			bar.quaternion.setFromUnitVectors(new THREE.Vector3(0, 0, 1), p2.clone().sub(p1).normalize());
-			bar.castShadow = true;
-			triangle.add(bar);
-		}
+		const t = buildRackTriangle();
+		t.rotation.z = -Math.PI / 2; // zvisle: vrchol hore, pás sa dotýka čela skrine
+		t.position.set(0.02, -0.06, 0);
+		triangle.add(t);
 		const hook = new THREE.Mesh(new THREE.CylinderGeometry(0.004, 0.004, 0.03, 8), new THREE.MeshStandardMaterial({ color: 0xb08a3c, metalness: 0.85, roughness: 0.35 }));
 		hook.rotation.z = Math.PI / 2;
-		hook.position.set(-0.015, rr - 0.005, 0);
+		hook.position.set(-0.002, 0.13, 0);
 		triangle.add(hook);
 	}
+	// pri novom rozostavení: trojuholník sa objaví okolo červených, chvíľu stojí a vznesie sa hore a zmizne
+	const rackMat = new THREE.MeshStandardMaterial({ color: 0x111215, roughness: 0.35, metalness: 0.05, transparent: true, opacity: 0 });
+	const rackAnim = buildRackTriangle(rackMat);
+	rackAnim.position.set(rackLayout().cx, 0, 0);
+	rackAnim.visible = false;
+	table.group.add(rackAnim);
+	let rackT = -1; // čas animácie (s), -1 = neprebieha
+	let rackWasFresh = false;
+	const RACK_POS = createRack().filter((b) => b.kind === 'red').map((b) => b.p);
+	const rackFresh = () => {
+		const reds = game.balls.filter((b) => b.kind === 'red');
+		if (reds.length !== RACK_POS.length) {
+			return false;
+		}
+		for (let i = 0; i < reds.length; i++) {
+			const b = reds[i];
+			if (!b.on || Math.abs(b.p.x - RACK_POS[i].x) > 0.001 || Math.abs(b.p.z - RACK_POS[i].z) > 0.001) {
+				return false;
+			}
+		}
+		return true;
+	};
+	const rackTick = (dt) => {
+		const fresh = rackFresh();
+		if (fresh && !rackWasFresh) {
+			rackT = 0; // nové rozostavenie: spusti animáciu
+		}
+		rackWasFresh = fresh;
+		if (rackT < 0) {
+			rackAnim.visible = false;
+			triangle.visible = true;
+			return;
+		}
+		rackT += dt;
+		const t = rackT;
+		triangle.visible = false; // zavesený trojuholník je práve na stole
+		rackAnim.visible = true;
+		let y = 0;
+		let op = 1;
+		if (t < 0.35) {
+			op = t / 0.35; // objaví sa okolo červených
+		} else if (t > 1.15) {
+			const k = Math.min(1, (t - 1.15) / 0.8);
+			y = k * k * 0.45; // vznesie sa hore
+			op = 1 - k;
+		}
+		rackAnim.position.y = y;
+		rackMat.opacity = op;
+		if (t > 1.95 || !fresh && t < 1.15) {
+			rackT = -1; // koniec (alebo sa gule pohli skôr, napríklad rozbitie)
+		}
+	};
 	triangle.position.set(HANG_X + 0.008, -0.212, 0); // vrchol pod rámom (nesmie trčať do stola)
 	table.group.add(triangle);
 	let spiderOn = false; // hráč si vybral pavúka na najbližší úder
@@ -3757,6 +3800,7 @@ export function start(root, config = {}) {
 			// mantinel s nápisom LIGA: číslo ligy zápasu (1. LIGA)
 			stadium.setLeague(game.spectating ? (watchScreen && watchScreen.tier) || 0 : (game.match && game.match.tier) || 0);
 		}
+		rackTick(dt); // trojuholník pri novom rozostavení
 		hotTick(dt); // Ctrl: rozsvietenie klikateľných predmetov pod kurzorom
 		// FPS: priemer za posledné snímky, ukáže sa pri držanom Ctrl
 		const fpsNow = performance.now();
