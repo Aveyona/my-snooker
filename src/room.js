@@ -544,7 +544,7 @@ export function buildRoomShell(scene, quality, opts = {}) {
 	const setRackSpecs = (specs) => {
 		specs.forEach((spec, i) => {
 			const rc = rackCues[i];
-			if (!rc || rc.spec === spec || (rc.spec.id === spec.id && JSON.stringify(rc.spec.colors) === JSON.stringify(spec.colors) && rc.spec.len === spec.len)) {
+			if (!rc || rc.spec === spec || (rc.spec.id === spec.id && JSON.stringify(rc.spec.colors) === JSON.stringify(spec.colors) && rc.spec.len === spec.len && rc.spec.tipColor === spec.tipColor)) {
 				if (rc) {
 					rc.spec = spec;
 				}

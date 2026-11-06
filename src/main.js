@@ -167,15 +167,19 @@ export function start(root, config = {}) {
 				s = ownCueSpec(row);
 			}
 		}
+		return withTip(s);
+	};
+	/** Tágo s farbou špice z databázy (na ruke, na stojanoch v herni aj na štadióne). */
+	function withTip(s) {
 		const tc = TIP_COLORS[tipColors[s.id]];
 		return tc && tc.hex !== s.tipColor ? { ...s, tipColor: tc.hex } : s;
-	};
+	}
 	const allCues = () => [...CUES, ...ownCues.map(ownCueSpec)];
 	// stojan: vždy 10 miest, na mieste šablóny môže byť moje vlastné tágo (data.rack)
 	const rackList = () =>
 		CUES.map((t) => {
 			const row = ownCues.find((r) => r.base === t.id && r.data && r.data.rack);
-			return row ? ownCueSpec(row) : t;
+			return withTip(row ? ownCueSpec(row) : t);
 		});
 	// F2 na štadióne: len tágá vybraté do ligy (max 4, nastavujú sa v kancelárii)
 	const rackNow = () => (venue === 'league' && myCues.selected.length ? myCues.selected.map((id) => specFor(id)) : rackList());
@@ -1677,6 +1681,10 @@ export function start(root, config = {}) {
 			cueSpec = specFor(cueSpec.id);
 			cue.setSpec(cueSpec);
 			stadiumRack();
+			rackRefresh(); // stojan v herni: špice v novej farbe
+			if (view === 'rack') {
+				ui.showView('rack', rackNow(), cueSpec.id, rackInfoNow());
+			}
 		}
 	};
 	const tipApply = (r) => {
