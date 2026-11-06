@@ -200,7 +200,7 @@ export function start(root, config = {}) {
 		hook.position.set(-0.015, rr - 0.005, 0);
 		triangle.add(hook);
 	}
-	triangle.position.set(HANG_X + 0.008, -0.15, 0);
+	triangle.position.set(HANG_X + 0.008, -0.212, 0); // vrchol pod rámom (nesmie trčať do stola)
 	table.group.add(triangle);
 	let spiderOn = false; // hráč si vybral pavúka na najbližší úder
 	let spiderNow = null; // kde pavúk práve stojí (null = nie je na stole)
@@ -599,7 +599,7 @@ export function start(root, config = {}) {
 	/** Pod stolom: zavesený pavúk (strana baulku) a trojuholník (druhý koniec). */
 	const tableSpots = () => [
 		{ id: 'spider', act: 'spiderPick', pos: new THREE.Vector3(-HANG_X - 0.03, -0.2, 0.05), r: 0.45 },
-		{ id: 'triangle', act: 'rackNew', pos: new THREE.Vector3(HANG_X, -0.15, 0), r: 0.2 },
+		{ id: 'triangle', act: 'rackNew', pos: new THREE.Vector3(HANG_X, -0.212, 0), r: 0.2 },
 	];
 	/** Klikateľné miesta podľa miestnosti: stred, polomer a kláves, ktorý klik urobí. */
 	const hotSpots = () => {
