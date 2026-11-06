@@ -1395,6 +1395,9 @@ export function start(root, config = {}) {
 			const r = await online.net.call('league/register', form).catch((e) => ({ error: e.message }));
 			if (r && !r.error) {
 				leagueData = r;
+				if (user) {
+					user.name = String(form.nick || '').trim().slice(0, 24) || user.account || user.name; // prezývka hneď všade (inak meno účtu)
+				}
 				ui.toast(form.edit ? 'Údaje hráča sú uložené.' : 'Vitaj v lige! Začínaš so 147 bodmi.');
 				officeMode = '';
 				actions.officeLook();

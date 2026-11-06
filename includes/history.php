@@ -15,7 +15,7 @@ function mysn_hist_who( $uid ) {
 	$u = mysn_user( $uid );
 	return array(
 		'id'      => (int) $uid,
-		'name'    => $p && ! empty( $p['nick'] ) ? (string) $p['nick'] : $u['name'],
+		'name'    => $u['name'],
 		'country' => $p && ! empty( $p['country'] ) ? (string) $p['country'] : '',
 	);
 }

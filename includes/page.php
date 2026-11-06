@@ -70,7 +70,8 @@ function mysn_render( $preview ) {
 		$u    = wp_get_current_user();
 		$user = array(
 			'id'     => (int) $u->ID,
-			'name'   => $u->display_name,
+			'name'   => mysn_name( $u->ID, $u ),
+			'account' => $u->display_name,
 			'avatar' => get_avatar_url( $u->ID, array( 'size' => 64 ) ),
 		);
 	}

@@ -78,11 +78,22 @@ function mysn_err( $msg, $code = 400 ) {
 	return new WP_Error( 'mysn', $msg, array( 'status' => $code ) );
 }
 
+/** Meno hráča, ako ho vidia ostatní: prezývka z ligy (ak ju má nastavenú), inak meno účtu. */
+function mysn_name( $id, $u = null ) {
+	$p = get_user_meta( (int) $id, 'mysn_player', true );
+	if ( is_array( $p ) && ! empty( $p['nick'] ) ) {
+		return (string) $p['nick'];
+	}
+	if ( null === $u ) {
+		$u = get_userdata( (int) $id );
+	}
+	return $u ? $u->display_name : 'Hráč';
+}
+
 function mysn_user( $id ) {
-	$u = get_userdata( (int) $id );
 	return array(
 		'id'     => (int) $id,
-		'name'   => $u ? $u->display_name : 'Hráč',
+		'name'   => mysn_name( $id ),
 		'avatar' => get_avatar_url( (int) $id, array( 'size' => 64 ) ),
 	);
 }

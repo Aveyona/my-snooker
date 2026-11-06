@@ -72,7 +72,7 @@ function mysn_rest_staff_overview() {
 		$lg  = $wpdb->get_row( $wpdb->prepare( "SELECT points, wins, losses FROM $lt WHERE season_id = %d AND user_id = %d", (int) $s['id'], $uid ), ARRAY_A ); // phpcs:ignore
 		$out['players'][] = array(
 			'id'     => $uid,
-			'name'   => mysn_user( $uid )['name'],
+			'name'   => ( $wu = get_userdata( $uid ) ) ? $wu->display_name : 'Hráč', // správa hry vidí meno účtu aj prezývku
 			'nick'   => $p && ! empty( $p['nick'] ) ? (string) $p['nick'] : '',
 			'state'  => (string) $r['state'],
 			'points' => $lg ? (int) $lg['points'] : null,

@@ -1964,7 +1964,7 @@ export class UI {
 			f.append(
 				field('Krajina *', sel),
 				field('Mesto', input('city', p.city, 40, 'napríklad Ružomberok')),
-				field('Prezývka v lige', input('nick', p.nick, 24, (o.user && o.user.name) || '')),
+				field('Prezývka v lige', input('nick', p.nick, 24, (o.user && (o.user.account || o.user.name)) || '')),
 				(() => {
 					const s2 = document.createElement('select');
 					s2.name = 'hand';
