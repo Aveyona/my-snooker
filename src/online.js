@@ -257,9 +257,17 @@ export class Online {
 	}
 
 	/** Ukončí sledovanie mojej partie všetkým divákom. */
-	closeWatchers(text) {
-		this.wsend({ k: 'w-end', text: text || 'Partia už nie je otvorená.' });
-		setTimeout(() => this.rtc.closeTag('watch', (p) => !p.offerer), 300);
+	closeWatchers(text, keepStaff) {
+		const who = (p) => !p.offerer && !(keepStaff && this.isStaff(p.uid));
+		for (const p of this.rtc.list('watch', who)) {
+			this.rtc.send(p, { k: 'w-end', text: text || 'Partia už nie je otvorená.' });
+		}
+		setTimeout(() => this.rtc.closeTag('watch', who), 300);
+	}
+
+	/** Je hráč admin alebo správca hry? */
+	isStaff(uid) {
+		return (this.cfg.staff || []).includes(uid);
 	}
 
 	/* ---------- priame spojenie (WebRTC) ---------- */
@@ -270,6 +278,9 @@ export class Online {
 		}
 		if (this.watching) {
 			return false; // kým sledujem, moja partia nie je otvorená
+		}
+		if (this.isStaff(from)) {
+			return true; // admin a správca hry sledujú neviditeľne každú partiu (aj súkromnú)
 		}
 		if (this.inMatch) {
 			return !!(this.info && this.info.league); // ligový zápas sa dá sledovať vždy

@@ -194,6 +194,9 @@ export class Controls {
 	}
 
 	up(e) {
+		if (this.blocked && this.hooks.viewUp) {
+			this.hooks.viewUp(e);
+		}
 		if (e.pointerType === 'mouse' && e.button === 0 && this.stroking) {
 			this.endStroke();
 		}

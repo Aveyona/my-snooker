@@ -92,6 +92,9 @@ function mysn_render( $preview ) {
 		// REST na tej istej adrese, z ktorej sa hra načítala (hlavný web alebo subdoména)
 		'restUrl'  => (string) wp_parse_url( rest_url( 'my-snooker/v1/' ), PHP_URL_PATH ),
 		'nonce'    => $user ? wp_create_nonce( 'wp_rest' ) : '',
+		// rola (admin alebo mod = správca hry) a id všetkých správcov: hra prijme ich neviditeľné sledovanie
+		'role'     => $user ? mysn_role() : '',
+		'staff'    => mysn_staff_ids(),
 	);
 	?>
 <!doctype html>

@@ -27,6 +27,10 @@ function mysn_rtc_allowed( $from, $to, $tag ) {
 		return (bool) $wpdb->get_var( $wpdb->prepare( "SELECT id FROM $mt WHERE status = 'active' AND ((p1 = %d AND p2 = %d) OR (p1 = %d AND p2 = %d)) LIMIT 1", $from, $to, $to, $from ) ); // phpcs:ignore
 	}
 	if ( 'watch' === $tag ) {
+		// admin a správca hry smú neviditeľne sledovať každú partiu (aj súkromnú)
+		if ( mysn_role( $from ) || mysn_role( $to ) ) {
+			return true;
+		}
 		// divák k hráčovi alebo hráč odpovedá divákovi (odpoveď ide opačným smerom)
 		foreach ( array( $to, $from ) as $host ) {
 			$door = (int) $wpdb->get_var( $wpdb->prepare( 'SELECT door FROM ' . mysn_table( 'rooms' ) . ' WHERE user_id = %d', $host ) ); // phpcs:ignore

@@ -452,3 +452,12 @@ body.mysn-page { font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans
 .mysn-clock-big.mysn-clock-end { color: #ff4d4d; font-size: 110px; }
 .mysn-clock-pop { animation: mysn-clock-pop 0.9s ease-out; }
 @keyframes mysn-clock-pop { from { transform: translate(-50%, -50%) scale(1.5); opacity: 0.2; } 30% { opacity: 1; } to { transform: translate(-50%, -50%) scale(1); opacity: 0.85; } }
+/* Správa hry (admin a správca hry) */
+.mysn-staff { width: min(760px, calc(100vw - 32px)); max-height: calc(100vh - 80px); overflow: auto; }
+.mysn-staff h4 { margin: 14px 0 6px; font-size: 14px; opacity: .85; }
+.mysn-staff .mysn-live-row { flex-wrap: wrap; }
+.mysn-staff-acts { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; justify-content: flex-end; }
+.mysn-btn.mysn-btn-s { padding: 5px 10px; font-size: 12px; min-height: 0; width: auto; }
+.mysn-btn.mysn-danger { background: #b32d2e; border-color: #b32d2e; color: #fff; }
+.mysn-staff-nick { width: 130px; padding: 5px 8px; border-radius: 8px; border: 1px solid #ffffff33; background: #0006; color: inherit; font: inherit; font-size: 12px; }
+.mysn-btn.mysn-staff-btn { border-color: #d4a72c; }

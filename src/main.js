@@ -253,6 +253,9 @@ export function start(root, config = {}) {
 	let watchInfo = null;
 	const roomInfo = () => (game.solo ? `${game.soloScore} b., séria ${game.solo.rules.brk}` : `body ${game.stats.points}, séria ${game.stats.run}`);
 	const roomOpen = () => homeDoorOpen && !game.match && !game.spectating;
+	// admin alebo správca hry sleduje moju partiu neviditeľne (aj so zatvorenými dverami)
+	const staffWatch = () => !!online && (config.staff || []).length > 0 && online.watchers().some((p) => online.isStaff(p.uid));
+	const roomLive = () => (homeDoorOpen || staffWatch()) && !game.match && !game.spectating;
 	const roomState = () => ({ k: 'w-state', seq: roomSeq, ver: roomVer, balls: snapshot(game.balls), place: game.state === 'place' ? 1 : 0, info: roomInfo() });
 	const roomList = (force) => {
 		// zoznam Pozerať hru: pri otvorení a zatvorení dverí hneď, popis (body) najviac raz za 20 s
@@ -276,10 +279,12 @@ export function start(root, config = {}) {
 				online.roomPost({ door: 0, kind: game.solo ? 'solo' : 'training', seq: roomSeq });
 				roomListed = 'closed';
 			}
-			if (online.watchers().length) {
-				online.closeWatchers('Hráč zatvoril dvere, partia už nie je otvorená.');
+			if (online.watchers().some((p) => !online.isStaff(p.uid))) {
+				online.closeWatchers('Hráč zatvoril dvere, partia už nie je otvorená.', true); // správcovia sledujú ďalej
 			}
-			return;
+			if (!roomLive()) {
+				return;
+			}
 		}
 		if (what === 'shot') {
 			roomSeq++;
@@ -500,13 +505,26 @@ export function start(root, config = {}) {
 		rig.setView(pos, pos.clone().add(dir));
 		rig.jump();
 		ui.showView(null);
-		ui.toast('Voľná kamera: myš rozhliadanie, šípky alebo W A S D posun, Q a E dole a hore, Shift rýchlejšie, Ctrl zastaví kameru. Medzerník alebo Esc: späť za tágo.');
+		ui.toast('Voľná kamera: myš rozhliadanie, šípky alebo W A S D posun, koliesko alebo Q a E hore a dole, pravé tlačidlo drž: priblíženie, Shift rýchlejšie, Ctrl zastaví kameru. Medzerník alebo Esc: späť za tágo.');
 	};
 	/** Odchod z voľnej kamery: zapamätá si polohu a smer pohľadu. */
 	const freeLeave = () => {
 		freeMem = { venue, pos: rig.viewPos.clone(), yaw: chairLook.yaw, pitch: chairLook.pitch };
 		rig.viewSnap = false;
 		freeVel.set(0, 0, 0);
+		freeLift = 0;
+		freeZoomTo = 0;
+	};
+	let freeLift = 0; // voľná kamera: zvyšok posunu hore a dole od kolieska (m)
+	let freeZoomTo = 0; // voľná kamera: priblíženie pri držaní pravého tlačidla (0 = nepribližuje)
+	const freeRay = new THREE.Raycaster();
+	/** Priblíženie na predmet v strede pohľadu (alebo na bod 2 m pred kamerou): čím ďalej, tým viac. */
+	const freeZoomTarget = () => {
+		freeRay.setFromCamera(new THREE.Vector2(0, 0), rig.camera);
+		freeRay.far = 30;
+		const hit = freeRay.intersectObjects(scene.children, true).find((h) => h.object.visible && h.object.isMesh);
+		const dist = hit ? hit.distance : 2;
+		return Math.min(5, Math.max(1.6, dist / 0.7));
 	};
 	const freeKeys = (k) => controls._keys.has(k) || controls._keys.has(k.toUpperCase());
 	const freeMove = (dt) => {
@@ -536,10 +554,14 @@ export function start(root, config = {}) {
 			m.normalize().multiplyScalar(controls._keys.has('Shift') ? 6 : 2.2);
 		}
 		freeVel.lerp(m, 1 - Math.exp(-dt * 9));
-		if (freeVel.lengthSq() < 1e-6) {
+		// koliesko: plynulý posun hore a dole (zvyšok posunu sa dobehne postupne)
+		const lift = freeLift * (1 - Math.exp(-dt * 7));
+		freeLift -= lift;
+		if (freeVel.lengthSq() < 1e-6 && Math.abs(lift) < 1e-5) {
 			return;
 		}
 		const p = rig.viewPos.clone().addScaledVector(freeVel, dt);
+		p.y += lift;
 		// kamera ostáva v miestnosti (herňa) alebo v aréne (štadión)
 		const lg = venue === 'league';
 		const bx = lg ? 9.5 : ROOM.x - 0.25;
@@ -837,6 +859,7 @@ export function start(root, config = {}) {
 		const was = view;
 		if (was === 'free') {
 			freeLeave();
+			rig.snapNext = true; // späť za tágo hneď, bez preletu (rovnako ako skok do voľnej kamery)
 		}
 		view = null;
 		room.setRackView(false);
@@ -900,6 +923,16 @@ export function start(root, config = {}) {
 		ui.sync(game, rig.mode);
 	};
 
+	/** Zásah zo Správy hry: pošle na server a prehľad sa obnoví. */
+	const staffDo = async (path, d, ok) => {
+		try {
+			await online.net.call(path, d);
+			ui.toast(ok);
+		} catch (e) {
+			ui.toast(e.message || 'Nepodarilo sa.');
+		}
+		actions.staff();
+	};
 	const actions = {
 		unlock: () => sound.unlock(),
 		camera: (m) => setCamera(m),
@@ -1050,13 +1083,18 @@ export function start(root, config = {}) {
 			watchInfo = { key: '', seq: -1, played: -1, pending: null };
 			online.aimTarget = null;
 			game.spectateBegin({ type: r.type, id: r.id, title: r.title, kind: r.kind, info: r.info || '' });
-			setVenue(r.type === 'match' ? 'league' : 'home');
+			setVenue(r.type === 'match' && r.kind === 'league' ? 'league' : 'home'); // priateľskú partiu (sleduje len správa hry) v herni
 			rig.setMode('cue');
 			online.watchStart(r.type, r.id, r.peers || [r.id]);
 			watchCtx = (r.type === 'match' ? 'm' : 'r') + r.id;
 			seatList = [];
 			refreshMenu();
 			online.ping(); // obsadené miesta
+			if (r.hidden) {
+				// admin alebo správca hry: neviditeľne, bez miesta v hľadisku; Medzerník voľná kamera
+				ui.toast('Sleduješ neviditeľne (Správa hry). Hráči ťa nevidia. Medzerník: voľná kamera.');
+				return;
+			}
 			setTimeout(seatPick, 420); // po prechode na štadión (alebo hneď v herni) výber miesta zhora
 		},
 		seatChange: () => seatPick(),
@@ -1363,6 +1401,32 @@ export function start(root, config = {}) {
 				ui.showAccount(null, e.message || 'Účet sa nepodarilo načítať.');
 			}
 		},
+		// Správa hry (admin a správca hry): prehľad a zásahy; server práva overí znova
+		staff: async () => {
+			if (!online || !config.role) {
+				return;
+			}
+			ui.showMenu(false);
+			ui.openStaff(true, null);
+			try {
+				ui.openStaff(true, await online.net.call('staff/overview', null, 'GET'));
+			} catch (e) {
+				ui.openStaff(true, null, e.message || 'Prehľad sa nepodarilo načítať.');
+			}
+		},
+		staffClose: () => ui.openStaff(false),
+		staffWatch: (r) => {
+			ui.openStaff(false);
+			if (game.match) {
+				ui.toast('Počas vlastnej partie sa sledovať nedá.');
+				return;
+			}
+			actions.watchStart(r);
+		},
+		staffNick: (d) => staffDo('staff/nick', d, 'Prezývka je zmenená.'),
+		staffMatch: (d) => staffDo('staff/match', d, d.do === 'annul' ? 'Zápas je zrušený.' : 'Zápas je ukončený.'),
+		staffBan: (d) => staffDo('staff/ban', d, d.on ? 'Hráč má zakázanú ligu.' : 'Hráč môže znova hrať ligu.'),
+		staffReset: (d) => staffDo('staff/reset', d, 'Body hráča sú vynulované.'),
 		help: () => enterView('board'),
 		board: () => enterView('board'),
 		rack: () => enterView('rack'),
@@ -1502,6 +1566,7 @@ export function start(root, config = {}) {
 	const ui = new UI(overlay, {
 		homeUrl: config.homeUrl,
 		user,
+		role: user ? config.role || '' : '', // admin alebo mod (správca hry): v menu tlačidlo Správa hry
 		loginUrl: config.loginUrl,
 		auth: config.auth || null,
 		accountUrl: config.accountUrl,
@@ -1552,11 +1617,24 @@ export function start(root, config = {}) {
 			rig.viewLook.copy(rig.viewPos).add(new THREE.Vector3(Math.cos(chairLook.yaw) * c, Math.sin(chairLook.pitch), Math.sin(chairLook.yaw) * c));
 		},
 		viewWheel: (steps) => {
+			if (view === 'free') {
+				freeLift = Math.max(-3, Math.min(3, freeLift - steps * 0.3)); // koliesko hore = kamera hore
+				return;
+			}
 			if (LOOK.has(view)) {
 				rig.setViewZoom((rig.viewZoom || 1) * Math.pow(0.85, steps));
 			}
 		},
+		viewUp: (e) => {
+			if (e.button === 2) {
+				freeZoomTo = 0; // pustené pravé tlačidlo: priblíženie sa plynulo vráti
+			}
+		},
 		viewDown: (e) => {
+			if (view === 'free' && e.button === 2 && !freeMouse) {
+				freeZoomTo = freeZoomTarget(); // drž pravé tlačidlo: priblíženie na predmet, na ktorý sa pozerám
+				return;
+			}
 			if (view === 'seatPick' && e.button === 0) {
 				const sseat = seatRay(e);
 				if (sseat >= 0) {
@@ -2041,7 +2119,7 @@ export function start(root, config = {}) {
 			},
 			// môj nový divák (otvorené dvere): hneď dostane stav stola
 			watcherOpen: (p) => {
-				if (roomOpen()) {
+				if (roomLive()) {
 					online.wsendTo(p, roomState());
 				}
 			},
@@ -2274,7 +2352,7 @@ export function start(root, config = {}) {
 				game.cue.p.z += (a.cz - game.cue.p.z) * Math.min(1, dt * 18);
 			}
 		}
-		if (online && roomOpen() && (game.state === 'aim' || game.state === 'place') && online.watchers().length) {
+		if (online && roomLive() && (game.state === 'aim' || game.state === 'place') && online.watchers().length) {
 			// otvorená partia: mierenie tága divákom priamo asi 20-krát za sekundu (len keď sa zmenilo)
 			roomAimT += dt;
 			if (roomAimT >= 0.05) {
@@ -2399,6 +2477,12 @@ export function start(root, config = {}) {
 				freeVel.set(0, 0, 0); // Ctrl: kamera stojí
 			} else {
 				freeMove(Math.min(0.05, dt));
+			}
+			// priblíženie pravým tlačidlom: plynulo k cieľu a po pustení späť (ako priblíženie na guľu za tágom)
+			const zt = freeZoomTo || 1;
+			const zc = rig.viewZoom || 1;
+			if (Math.abs(zt - zc) > 0.002) {
+				rig.setViewZoom(zc + (zt - zc) * (1 - Math.exp(-Math.min(0.05, dt) * 6)));
 			}
 		}
 		// časomiera ligového zápasu: 30 s na úder, posledných 5 s veľký odpočet, potom faul za čas

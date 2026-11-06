@@ -159,6 +159,9 @@ function mysn_league_can_play( $a, $b ) {
 	if ( ! $ra || ! $rb || ! mysn_player( $a ) || ! mysn_player( $b ) ) {
 		return 'Ligovo môžu hrať len hráči registrovaní v lige (registrácia je v kancelárii).';
 	}
+	if ( mysn_league_banned( $a ) || mysn_league_banned( $b ) ) {
+		return 'Hráč má zakázanú ligu (rozhodol admin).';
+	}
 	if ( ! MYSN_LEAGUE_OPEN && abs( (int) $ra['league'] - (int) $rb['league'] ) > 1 ) {
 		return 'Ligovo sa dá hrať len s hráčmi z tvojej alebo susednej ligy.';
 	}
@@ -469,6 +472,9 @@ function mysn_rest_league_queue( $req ) {
 	}
 	if ( ! mysn_player( $uid ) ) {
 		return mysn_err( 'Najprv sa zaregistruj do ligy (červená vizitka na stole).' );
+	}
+	if ( mysn_league_banned( $uid ) ) {
+		return mysn_err( 'Máš zakázanú ligu. Ak ide o omyl, napíš správcovi hry.' );
 	}
 	if ( mysn_active_match( $uid ) ) {
 		return array( 'matched' => true );

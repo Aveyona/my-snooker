@@ -294,13 +294,18 @@ export class UI {
 			return b;
 		};
 		// tágá, nápoveda a skóre sú na klávesoch F2, F1 a F4 (v menu nie sú)
-		const common = () => [this.button('Účet', 'account', 'Môj účet v My Snooker: údaje, liga, partie a skóre'), this.button('Nastavenia', 'settings')];
+		const staffBtn = () => {
+			const b = this.button('Správa hry', 'staff', 'Admin a správca hry: hráči online, bežiace zápasy, neviditeľné sledovanie a zásahy podľa práv');
+			b.classList.add('mysn-staff-btn');
+			return b;
+		};
+		const common = () => [...(this.opts.role ? [staffBtn()] : []), this.button('Účet', 'account', 'Môj účet v My Snooker: údaje, liga, partie a skóre'), this.button('Nastavenia', 'settings')];
 		if (kind === 'watch') {
 			// divák sleduje cudziu partiu
 			this.menuMode.textContent = `Sledujem: ${label}`;
 			const back = this.button('Pokračovať v sledovaní', 'resume');
 			back.classList.add('mysn-primary');
-			box.append(back, this.button('Zmeniť miesto', 'seatChange', 'F6: výber miesta zhora'), this.button('Prestať sledovať', 'watchStop'), this.button('Iná otvorená partia', 'rooms'), this.button('Nastavenia', 'settings'), this.button('Späť na web', 'home'));
+			box.append(back, this.button('Zmeniť miesto', 'seatChange', 'F6: výber miesta zhora'), this.button('Prestať sledovať', 'watchStop'), this.button('Iná otvorená partia', 'rooms'), ...(this.opts.role ? [staffBtn()] : []), this.button('Nastavenia', 'settings'), this.button('Späť na web', 'home'));
 			this.menuFoot.textContent = 'Divák pozerá zo svojho miesta: myšou sa rozhliadaš, kolieskom približuješ. F4 skóre, F6 zmena miesta.';
 			return;
 		}
@@ -811,6 +816,130 @@ export class UI {
 		const foot = h('div', 'mysn-lobby-foot');
 		foot.appendChild(this.button('Obnoviť', 'rooms'));
 		foot.appendChild(this.button('Zavrieť', 'roomsClose'));
+		L.appendChild(foot);
+	}
+
+	/**
+	 * Správa hry (admin a správca hry): d = údaje zo staff/overview (null = načítava sa), err = chyba.
+	 * Zásahy s následkami sa potvrdzujú druhým kliknutím na to isté tlačidlo (žiadne okná prehliadača).
+	 */
+	openStaff(on, d, err) {
+		if (!this.staffBox) {
+			this.staffBox = h('div', 'mysn-panel mysn-lobby mysn-staff mysn-hidden');
+			for (const t of ['keydown', 'keyup', 'mousedown', 'pointerdown', 'wheel', 'click']) {
+				this.staffBox.addEventListener(t, (e) => e.stopPropagation());
+			}
+			this.root.appendChild(this.staffBox);
+		}
+		const L = this.staffBox;
+		L.classList.toggle('mysn-hidden', !on);
+		if (!on) {
+			return;
+		}
+		const admin = this.opts.role === 'admin';
+		L.innerHTML = `<h3>Správa hry</h3>`;
+		L.appendChild(h('p', 'mysn-lobby-sub', admin ? 'Admin: všetky práva' : 'Správca hry: prehľad, neviditeľné sledovanie, zmena prezývky'));
+		if (err) {
+			L.appendChild(h('p', 'mysn-note', esc(err)));
+		} else if (!d) {
+			L.appendChild(h('p', 'mysn-note', 'Načítavam…'));
+		}
+		const sure = (label, act, val, tip) => {
+			// dvojité potvrdenie: prvé kliknutie zmení text na Naozaj?, druhé do 4 s vykoná
+			const b = h('button', 'mysn-btn mysn-btn-s', label);
+			b.type = 'button';
+			b.title = tip || '';
+			b.addEventListener('click', (e) => {
+				e.stopPropagation();
+				if (b.dataset.armed) {
+					this.opts.onAction(act, val);
+					return;
+				}
+				b.dataset.armed = '1';
+				b.textContent = 'Naozaj?';
+				b.classList.add('mysn-danger');
+				setTimeout(() => {
+					delete b.dataset.armed;
+					b.textContent = label;
+					b.classList.remove('mysn-danger');
+				}, 4000);
+			});
+			return b;
+		};
+		const small = (label, act, val, tip) => {
+			const b = this.button(label, act, tip, val);
+			b.classList.add('mysn-btn-s');
+			return b;
+		};
+		if (d) {
+			const kinds = { league: 'Ligový zápas', friendly: 'Priateľská partia', training: 'Spoločný tréning', solo: 'O najlepšie skóre' };
+			L.appendChild(h('h4', '', `Bežiace zápasy (${d.matches.length})`));
+			const mb = h('div', 'mysn-live');
+			if (!d.matches.length) {
+				mb.appendChild(h('p', 'mysn-note', 'Teraz nebeží žiadny zápas.'));
+			}
+			for (const m of d.matches) {
+				const row = h('div', 'mysn-live-row', `<i></i><span><b>${esc(m.title)}</b><em>${esc(kinds[m.kind] || '')}, ${esc(m.score)}, ${m.minutes} min</em></span>`);
+				const acts = h('div', 'mysn-staff-acts');
+				const w = small('Sledovať', 'staffWatch', { type: 'match', id: m.id, kind: m.kind, title: m.title, info: m.score, peers: [m.p1, m.p2], hidden: 1 }, 'Neviditeľne, hráči ťa nevidia');
+				w.classList.add('mysn-primary');
+				acts.appendChild(w);
+				if (admin) {
+					const [n1, n2] = m.title.split(' : ');
+					acts.append(sure('Vyhral ' + n1, 'staffMatch', { id: m.id, do: 'end', winner: m.p1 }, 'Ukončiť zápas, víťaz ' + n1), sure('Vyhral ' + n2, 'staffMatch', { id: m.id, do: 'end', winner: m.p2 }, 'Ukončiť zápas, víťaz ' + n2), sure('Zrušiť', 'staffMatch', { id: m.id, do: 'annul' }, 'Zrušiť zápas bez bodov'));
+				}
+				row.appendChild(acts);
+				mb.appendChild(row);
+			}
+			L.appendChild(mb);
+			L.appendChild(h('h4', '', `Herne (${d.rooms.length})`));
+			const rb = h('div', 'mysn-live');
+			if (!d.rooms.length) {
+				rb.appendChild(h('p', 'mysn-note', 'Nikto teraz netrénuje.'));
+			}
+			for (const r of d.rooms) {
+				const row = h('div', 'mysn-live-row', `<i></i><span><b>${esc(r.title)}</b><em>${esc(kinds[r.kind] || 'Tréning')}${r.door ? ', dvere otvorené' : ', dvere zatvorené'}</em></span>`);
+				const w = small('Sledovať', 'staffWatch', { type: 'room', id: r.id, kind: r.kind, title: r.title, peers: [r.id], hidden: 1 }, 'Neviditeľne, hráč ťa nevidí');
+				w.classList.add('mysn-primary');
+				row.appendChild(w);
+				rb.appendChild(row);
+			}
+			L.appendChild(rb);
+			L.appendChild(h('h4', '', `Hráči online (${d.players.length})`));
+			const pb = h('div', 'mysn-live');
+			const states = { match: 'v zápase', queue: 'hľadá zápas', watch: 'sleduje', lobby: 'vyzýva', training: 'trénuje', solo: 'hrá o skóre' };
+			for (const p of d.players) {
+				const lg = p.points === null ? 'nie je v lige' : `${p.points} b, ${p.wins} : ${p.losses}`;
+				const role = p.role === 'admin' ? ', admin' : p.role === 'mod' ? ', správca hry' : '';
+				const row = h('div', 'mysn-live-row', `<i></i><span><b>${esc(p.name)}${p.nick ? ' (' + esc(p.nick) + ')' : ''}</b><em>${esc(states[p.state] || p.state)}, ${esc(lg)}${p.ban ? ', <b>zákaz ligy</b>' : ''}${role}</em></span>`);
+				const acts = h('div', 'mysn-staff-acts');
+				if (p.nick) {
+					const inp = h('input', 'mysn-staff-nick');
+					inp.value = p.nick;
+					inp.maxLength = 20;
+					inp.title = 'Nová prezývka v lige';
+					const save = this.button('Zmeniť prezývku', 'staffNick', 'Zmení nevhodnú prezývku v lige');
+					save.classList.add('mysn-btn-s');
+					save.onclick = (e) => {
+						e.stopPropagation();
+						this.opts.onAction('staffNick', { user: p.id, nick: inp.value });
+					};
+					acts.append(inp, save);
+				}
+				if (admin && p.role !== 'admin') {
+					acts.append(sure(p.ban ? 'Povoliť ligu' : 'Zakázať ligu', 'staffBan', { user: p.id, on: p.ban ? 0 : 1 }));
+					if (p.points !== null) {
+						acts.append(sure('Vynulovať body', 'staffReset', { user: p.id }, 'Body v tejto sezóne späť na začiatok, bez výhier a prehier'));
+					}
+				}
+				row.appendChild(acts);
+				pb.appendChild(row);
+			}
+			L.appendChild(pb);
+		}
+		const foot = h('div', 'mysn-lobby-foot');
+		foot.appendChild(this.button('Obnoviť', 'staff'));
+		foot.appendChild(this.button('Zavrieť', 'staffClose'));
 		L.appendChild(foot);
 	}
 
