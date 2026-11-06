@@ -131,6 +131,7 @@ function mysn_roadmap() {
 /** Denník zmien (najnovšie hore). */
 function mysn_changelog() {
 	return array(
+		array( '0.7.1', '6. 11. 2026', 'Jamky podľa miestnosti: na štadióne tesné turnajové (najmenší výrez, tenká svetlá obruba), pri Hrať klasické čierne (čierna kožená obruba a výstelka), v tréningu so širokou svetlou obrubou. Ústie jamiek a fyzika sú všade rovnaké, mení sa len vzhľad.' ),
 		array( '0.7.0', '6. 11. 2026', 'Koniec ligového zápasu na štadióne: hráči aj diváci ostanú na štadióne, veľká obrazovka ukáže víťaza (skóre, najvyššia séria, body ligy, výhry v sezóne), zo stropu stále padajú konfety a dvaja diváci ich chvíľu púšťajú; Späť do herne v menu. Divák: F1 telefón s pomocníkom, F7 konfety zo svojho miesta (3-krát za zápas, 15 sekúnd), vidia ich obaja hráči aj ostatní diváci. Admin: Mapa miestností, Štadión, Ukážka konca zápasu.' ),
 		array( '0.6.99', '6. 11. 2026', 'Rozhodca má tvár: oči s dúhovkou, obočie, okrúhle okuliare, nos, ústa, vlasy len hore a vzadu. Oprava: tyč krížika a pavúka pri mantineli už neprechádza cez mantinel a rám, stúpa strmšie ponad stôl.' ),
 		array( '0.6.98', '6. 11. 2026', 'Jamky ako na turnajových stoloch (na všetkých stoloch): užšie ústie (rohové asi 81 mm, stredné asi 96 mm, aj vo fyzike), svetlá kožená obruba a výstelka jamky, biela sieťka košíka.' ),

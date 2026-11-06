@@ -110,6 +110,17 @@ function clothTexture(maxAniso, base = '#1d6b34', detail = false) {
 	return tex;
 }
 
+/**
+ * Vzhľad jamiek podľa miestnosti (súkna): štadión tesná turnajová, Hrať klasická čierna, tréning široká svetlá obruba.
+ * Mení sa len vzhľad (výrez v ráme, obruba, výstelka), ústie a fyzika jamiek sú rovnaké.
+ */
+export const POCKET_STYLES = {
+	tight: { cutCorner: 0.058, cutMid: 0.054, rimR: 0.009, rim: 0xd8b47e, rimRough: 0.5, rimMetal: 0.05, liner: null },
+	black: { cutCorner: 0.062, cutMid: 0.058, rimR: 0.012, rim: 0x1a1a1a, rimRough: 0.45, rimMetal: 0.1, liner: 0x161616 },
+	wide: { cutCorner: 0.06, cutMid: 0.056, rimR: 0.016, rim: 0xe2c595, rimRough: 0.5, rimMetal: 0.05, liner: 0xe8d2a8 },
+};
+const FELT_POCKETS = { blue: 'tight', green: 'black', red: 'wide' };
+
 /** Maska súkna: biela = súkno, čierna = otvor jamky (cez otvor vidieť do košíka). */
 function pocketHoles(cc = 0.071, cm = 0.065) {
 	const w = 1024;
@@ -237,13 +248,12 @@ function woodTexture() {
 	return tex;
 }
 
-export function buildTable(renderer, opts = {}) {
-	const PK = Object.assign({ cutCorner: 0.071, cutMid: 0.065, rimR: 0.013, rim: 0xd8b47e, rimMetal: 0.05, rimRough: 0.5, liner: null }, opts.pocket || {});
+export function buildTable(renderer) {
 	const group = new THREE.Group();
 	const aniso = renderer.capabilities.getMaxAnisotropy();
 
 	// Súkno (hracia plocha aj pod mantinelmi)
-	const holes = pocketHoles(PK.cutCorner, PK.cutMid);
+	const holes = null; // maska otvorov jamiek sa nastaví podľa vzhľadu jamiek (setPockets)
 	const clothSimple = new THREE.MeshStandardMaterial({ map: clothTexture(aniso), roughness: 0.92, metalness: 0, alphaMap: holes, alphaTest: 0.5 });
 	const weave = weaveNormal();
 	weave.repeat.set((L + 2 * RAIL) / 0.04, (W + 2 * RAIL) / 0.04);
@@ -265,233 +275,290 @@ export function buildTable(renderer, opts = {}) {
 	const railSimple = new THREE.MeshStandardMaterial({ color: 0x17602f, roughness: 0.88, side: THREE.DoubleSide });
 	const railDetail = new THREE.MeshPhysicalMaterial({ color: 0x17602f, roughness: 0.92, side: THREE.DoubleSide, sheen: 0.3, sheenRoughness: 0.7, sheenColor: new THREE.Color(0x4fae6a) });
 	const railMat = railSimple; // podrobný vzhľad: railDetail (setDetail)
-	const jawEnd = (nx, nz, ox, oz) => ({ x: nx + ox * RAIL, z: nz + oz * RAIL }); // bod na zadnej strane mantinelu
-	const cushions = [];
-	for (const sz of [-1, 1]) {
-		for (const half of [-1, 1]) {
-			// dlhé mantinely (dve polovice pri strednej jamke)
-			const corner = { x: half * (hx - CG), z: sz * hz };
-			const middle = { x: half * MG, z: sz * hz };
-			cushions.push({
-				long: true,
-				a: corner,
-				b: middle,
-				ab: jawEnd(corner.x, corner.z, half * 1, sz * 1), // rohová čeľusť šikmo pod 45°
-				bb: jawEnd(middle.x, middle.z, -half * 0.18, sz * 1), // stredná čeľusť takmer kolmo
-			});
-		}
-	}
-	for (const sx of [-1, 1]) {
-		const a = { x: sx * hx, z: -hz + CG };
-		const b = { x: sx * hx, z: hz - CG };
-		cushions.push({ long: false, a, b, ab: jawEnd(a.x, a.z, sx * 1, -1), bb: jawEnd(b.x, b.z, sx * 1, 1) });
-	}
-	const ROUND = 0.016; // polomer zaoblenia nosa mantinelu pri jamke
-	// výrezy jamiek v ráme (viac dreva okolo jamky, užší otvor): na ich okraji končia aj mantinely
-	const CUTS = POCKETS.map((p) => ({ x: p.x, z: p.z, r: p.corner ? PK.cutCorner : PK.cutMid, corner: p.corner }));
-	// Prierez mantinelu ako na skutočnom stole (d = vzdialenosť od nosa dozadu, y = výška): spodok je
-	// podrezaný, nos v 2/3 výšky gule, vrch sa zošikmí a plynulo prejde k drevenému rámu. Žiadna kolmá stena.
-	const PROFILE = [
-		[0.012, 0],
-		[0.006, 0.016],
-		[0.001, 0.029],
-		[0, 0.034],
-		[0.003, 0.0395],
-		[0.01, 0.0435],
-		[0.024, 0.0465],
-		[0.045, 0.048],
-		[0.075, 0.048],
-	];
-	for (const c of cushions) {
-		const towards = (p, q, d) => {
-			const l = Math.hypot(q.x - p.x, q.z - p.z) || 1;
-			return { x: p.x + ((q.x - p.x) / l) * d, z: p.z + ((q.z - p.z) / l) * d };
-		};
-		const a1 = towards(c.a, c.ab, ROUND);
-		const a2 = towards(c.a, c.b, ROUND);
-		const b1 = towards(c.b, c.a, ROUND);
-		const b2 = towards(c.b, c.bb, ROUND);
-		// línia nosa: od konca čeľuste cez zaoblenie, pozdĺž mantinelu a cez druhé zaoblenie k druhej čeľusti
-		const path = [];
-		const quad = (p0, p1, p2, n) => {
-			for (let i = 1; i <= n; i++) {
-				const t = i / n;
-				const u = 1 - t;
-				path.push({ x: u * u * p0.x + 2 * u * t * p1.x + t * t * p2.x, z: u * u * p0.z + 2 * u * t * p1.z + t * t * p2.z });
-			}
-		};
-		path.push({ ...c.ab }, { ...towards(c.ab, a1, Math.hypot(a1.x - c.ab.x, a1.z - c.ab.z) * 0.5) }, { ...a1 });
-		quad(a1, c.a, a2, 10);
-		const seg = 24;
-		for (let i = 1; i < seg; i++) {
-			path.push({ x: a2.x + ((b1.x - a2.x) * i) / seg, z: a2.z + ((b1.z - a2.z) * i) / seg });
-		}
-		path.push({ ...b1 });
-		quad(b1, c.b, b2, 10);
-		path.push({ ...towards(b2, c.bb, Math.hypot(c.bb.x - b2.x, c.bb.z - b2.z) * 0.5) }, { ...c.bb });
-		// strana „dozadu“ (od stola): podľa hlavnej časti mantinelu
-		const tx = c.b.x - c.a.x;
-		const tz = c.b.z - c.a.z;
-		const mid = { x: (c.a.x + c.b.x) / 2, z: (c.a.z + c.b.z) / 2 };
-		const sgn = -tz * mid.x + tx * mid.z > 0 ? 1 : -1;
-		const pos = [];
-		const tl = Math.hypot(tx, tz) || 1;
-		const mnx = (-tz / tl) * sgn; // smer dozadu hlavnej časti mantinelu
-		const mnz = (tx / tl) * sgn;
-		for (let i = 0; i < path.length; i++) {
-			const p0 = path[Math.max(0, i - 1)];
-			const p1 = path[Math.min(path.length - 1, i + 1)];
-			let dx = p1.x - p0.x;
-			let dz = p1.z - p0.z;
-			const l = Math.hypot(dx, dz) || 1;
-			dx /= l;
-			dz /= l;
-			const nx = -dz * sgn;
-			const nz = dx * sgn;
-			for (const [d, y] of PROFILE) {
-				// nos ide po miestnej normále (zaoblenie pri jamke), zadná časť postupne po smere hlavnej časti:
-				// pri malom polomere zaoblenia sa tak prierez neprekladá cez seba (inak tmavé „praskliny“)
-				const w = Math.min(1, d / 0.012);
-				let ox = nx * (1 - w) + mnx * w;
-				let oz = nz * (1 - w) + mnz * w;
-				const ol = Math.hypot(ox, oz) || 1;
-				ox /= ol;
-				oz /= ol;
-				pos.push(path[i].x + ox * d, y, path[i].z + oz * d);
-			}
-		}
-		// koniec mantinelu pri jamke: guma končí na okraji výrezu jamky (nie vo vnútri jamky)
-		for (let v = 0; v < pos.length; v += 3) {
-			for (const q of CUTS) {
-				const ox = pos[v] - q.x;
-				const oz = pos[v + 2] - q.z;
-				const dd = Math.hypot(ox, oz);
-				if (dd < q.r && dd > 1e-6) {
-					pos[v] = q.x + (ox / dd) * q.r;
-					pos[v + 2] = q.z + (oz / dd) * q.r;
-				}
-			}
-		}
-		const P = PROFILE.length;
-		const idx = [];
-		for (let i = 0; i < path.length - 1; i++) {
-			for (let j = 0; j < P - 1; j++) {
-				const v0 = i * P + j;
-				const v1 = (i + 1) * P + j;
-				if (sgn > 0) {
-					idx.push(v0, v1, v0 + 1, v1, v1 + 1, v0 + 1);
-				} else {
-					idx.push(v0, v0 + 1, v1, v1, v0 + 1, v1 + 1);
-				}
-			}
-		}
-		const geo = new THREE.BufferGeometry();
-		geo.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
-		geo.setIndex(idx);
-		geo.computeVertexNormals();
-		const m = new THREE.Mesh(geo, railMat);
-		m.castShadow = true;
-		m.receiveShadow = true;
-		group.add(m);
-	}
-
-	// Výrezy jamiek v ráme: rohové a stredné, zaoblené
-	const pocketCut = CUTS;
-	// Vnútorný okraj rámu (zadná strana mantinelov) spolu s výrezmi jamiek ako jeden obrys
-	const ix = hx + RAIL;
-	const iz = hz + RAIL;
-	const holePts = [];
-	const arcPts = (c, from, to, n) => {
-		const out = [];
-		for (let i = 0; i <= n; i++) {
-			const a = from + ((to - from) * i) / n;
-			out.push({ x: c.x + Math.cos(a) * c.r, z: c.z + Math.sin(a) * c.r });
-		}
-		return out;
-	};
-	const rims = [];
-	const norm = (a) => {
-		while (a < 0) a += Math.PI * 2;
-		return a;
-	};
-	// obchádzame proti smeru hodinových ručičiek (v rovine x, z): horný okraj z = +iz sprava doľava atď.
-	const cTR = pocketCut.find((p) => p.corner && p.x > 0 && p.z > 0);
-	const cTL = pocketCut.find((p) => p.corner && p.x < 0 && p.z > 0);
-	const cBL = pocketCut.find((p) => p.corner && p.x < 0 && p.z < 0);
-	const cBR = pocketCut.find((p) => p.corner && p.x > 0 && p.z < 0);
-	const mT = pocketCut.find((p) => !p.corner && p.z > 0);
-	const mB = pocketCut.find((p) => !p.corner && p.z < 0);
-	const cornerArc = (c, sx, sz) => {
-		// priesečníky kruhu s okrajmi z = sz*iz (vodorovný) a x = sx*ix (zvislý)
-		const dzEdge = sz * iz - c.z;
-		const xOnZ = c.x - sx * Math.sqrt(Math.max(0, c.r * c.r - dzEdge * dzEdge));
-		const dxEdge = sx * ix - c.x;
-		const zOnX = c.z - sz * Math.sqrt(Math.max(0, c.r * c.r - dxEdge * dxEdge));
-		const aZ = Math.atan2(sz * iz - c.z, xOnZ - c.x);
-		const aX = Math.atan2(zOnX - c.z, sx * ix - c.x);
-		return { aZ, aX };
-	};
-	const middleArc = (c, sz) => {
-		const dz = sz * iz - c.z;
-		const w = Math.sqrt(Math.max(0, c.r * c.r - dz * dz));
-		return { aRight: Math.atan2(dz, w), aLeft: Math.atan2(dz, -w) };
-	};
-	const pushArc = (c, a0, a1, ccw) => {
-		let from = a0;
-		let to = a1;
-		if (ccw) {
-			while (to < from) to += Math.PI * 2;
-		} else {
-			while (to > from) to -= Math.PI * 2;
-		}
-		const pts = arcPts(c, from, to, 24);
-		holePts.push(...pts);
-		rims.push(pts);
-	};
-	{
-		const arcs = [];
-		for (const [c, sx, sz] of [[cTR, 1, 1], [cTL, -1, 1], [cBL, -1, -1], [cBR, 1, -1]]) {
-			const k = cornerArc(c, sx, sz);
-			// po smere proti hodinám: z vodorovného do zvislého okraja alebo naopak podľa kvadrantu
-			const first = sx * sz > 0 ? k.aX : k.aZ;
-			const last = sx * sz > 0 ? k.aZ : k.aX;
-			arcs.push({ c, a0: first, a1: last });
-		}
-		for (const [c, sz] of [[mT, 1], [mB, -1]]) {
-			const k = middleArc(c, sz);
-			arcs.push({ c, a0: sz > 0 ? k.aRight : k.aLeft, a1: sz > 0 ? k.aLeft : k.aRight });
-		}
-		arcs.sort((p, q) => norm(Math.atan2(p.c.z, p.c.x)) - norm(Math.atan2(q.c.z, q.c.x)));
-		for (const a of arcs) {
-			pushArc(a.c, a.a0, a.a1, true);
-		}
-	}
-	const R0 = 0.07; // zaoblenie vonkajších rohov rámu
-	const frame = new THREE.Shape();
-	frame.moveTo(-outX + R0, -outZ);
-	frame.lineTo(outX - R0, -outZ);
-	frame.quadraticCurveTo(outX, -outZ, outX, -outZ + R0);
-	frame.lineTo(outX, outZ - R0);
-	frame.quadraticCurveTo(outX, outZ, outX - R0, outZ);
-	frame.lineTo(-outX + R0, outZ);
-	frame.quadraticCurveTo(-outX, outZ, -outX, outZ - R0);
-	frame.lineTo(-outX, -outZ + R0);
-	frame.quadraticCurveTo(-outX, -outZ, -outX + R0, -outZ);
-	const hole = new THREE.Path();
-	holePts.forEach((p, i) => (i ? hole.lineTo(p.x, p.z) : hole.moveTo(p.x, p.z)));
-	hole.closePath();
-	frame.holes.push(hole);
 	const wood = new THREE.MeshStandardMaterial({ map: woodTexture(), roughness: 0.4, metalness: 0.05 });
 	// podrobné drevo: mahagón pod lakom (odlesky lámp)
 	const woodFine = new THREE.MeshPhysicalMaterial({ map: woodDetail(), roughness: 0.5, metalness: 0, clearcoat: 1, clearcoatRoughness: 0.12 });
-	const BEV = 0.008;
-	const frameGeo = new THREE.ExtrudeGeometry(frame, { depth: fy + 0.02 - 2 * BEV, bevelEnabled: true, bevelThickness: BEV, bevelSize: BEV * 0.8, bevelSegments: 4, curveSegments: 16 });
-	const frameMesh = new THREE.Mesh(frameGeo, wood);
-	frameMesh.rotation.x = Math.PI / 2;
-	frameMesh.position.y = fy - BEV;
-	frameMesh.castShadow = true;
-	frameMesh.receiveShadow = true;
-	group.add(frameMesh);
+	const leatherMat = new THREE.MeshStandardMaterial({ color: 0x1c1c1c, roughness: 0.55, metalness: 0.15, side: THREE.DoubleSide });
+	const netMat = new THREE.MeshStandardMaterial({ map: netTexture(), color: 0xf2efe6, roughness: 0.95, alphaTest: 0.35, side: THREE.DoubleSide }); // biela sieťka
+	const prof = [
+		[BASKET.top, 0],
+		[BASKET.top + 0.006, -0.04],
+		[BASKET.top + 0.002, -0.09],
+		[BASKET.top - 0.012, -0.14],
+		[0.04, -BASKET.depth + 0.012],
+		[0.001, -BASKET.depth],
+	].map(([r, y]) => new THREE.Vector2(r, y));
+	const basketGeo = new THREE.LatheGeometry(prof, 36);
+	// Jamky podľa miestnosti: mantinely, rám s výrezmi a obruby sa líšia veľkosťou výrezu, preto má každý vzhľad vlastnú sadu
+	const pocketSet = (PK) => {
+		const sg = new THREE.Group();
+		const jawEnd = (nx, nz, ox, oz) => ({ x: nx + ox * RAIL, z: nz + oz * RAIL }); // bod na zadnej strane mantinelu
+		const cushions = [];
+		for (const sz of [-1, 1]) {
+			for (const half of [-1, 1]) {
+				// dlhé mantinely (dve polovice pri strednej jamke)
+				const corner = { x: half * (hx - CG), z: sz * hz };
+				const middle = { x: half * MG, z: sz * hz };
+				cushions.push({
+					long: true,
+					a: corner,
+					b: middle,
+					ab: jawEnd(corner.x, corner.z, half * 1, sz * 1), // rohová čeľusť šikmo pod 45°
+					bb: jawEnd(middle.x, middle.z, -half * 0.18, sz * 1), // stredná čeľusť takmer kolmo
+				});
+			}
+		}
+		for (const sx of [-1, 1]) {
+			const a = { x: sx * hx, z: -hz + CG };
+			const b = { x: sx * hx, z: hz - CG };
+			cushions.push({ long: false, a, b, ab: jawEnd(a.x, a.z, sx * 1, -1), bb: jawEnd(b.x, b.z, sx * 1, 1) });
+		}
+		const ROUND = 0.016; // polomer zaoblenia nosa mantinelu pri jamke
+		// výrezy jamiek v ráme (viac dreva okolo jamky, užší otvor): na ich okraji končia aj mantinely
+		const CUTS = POCKETS.map((p) => ({ x: p.x, z: p.z, r: p.corner ? PK.cutCorner : PK.cutMid, corner: p.corner }));
+		// Prierez mantinelu ako na skutočnom stole (d = vzdialenosť od nosa dozadu, y = výška): spodok je
+		// podrezaný, nos v 2/3 výšky gule, vrch sa zošikmí a plynulo prejde k drevenému rámu. Žiadna kolmá stena.
+		const PROFILE = [
+			[0.012, 0],
+			[0.006, 0.016],
+			[0.001, 0.029],
+			[0, 0.034],
+			[0.003, 0.0395],
+			[0.01, 0.0435],
+			[0.024, 0.0465],
+			[0.045, 0.048],
+			[0.075, 0.048],
+		];
+		for (const c of cushions) {
+			const towards = (p, q, d) => {
+				const l = Math.hypot(q.x - p.x, q.z - p.z) || 1;
+				return { x: p.x + ((q.x - p.x) / l) * d, z: p.z + ((q.z - p.z) / l) * d };
+			};
+			const a1 = towards(c.a, c.ab, ROUND);
+			const a2 = towards(c.a, c.b, ROUND);
+			const b1 = towards(c.b, c.a, ROUND);
+			const b2 = towards(c.b, c.bb, ROUND);
+			// línia nosa: od konca čeľuste cez zaoblenie, pozdĺž mantinelu a cez druhé zaoblenie k druhej čeľusti
+			const path = [];
+			const quad = (p0, p1, p2, n) => {
+				for (let i = 1; i <= n; i++) {
+					const t = i / n;
+					const u = 1 - t;
+					path.push({ x: u * u * p0.x + 2 * u * t * p1.x + t * t * p2.x, z: u * u * p0.z + 2 * u * t * p1.z + t * t * p2.z });
+				}
+			};
+			path.push({ ...c.ab }, { ...towards(c.ab, a1, Math.hypot(a1.x - c.ab.x, a1.z - c.ab.z) * 0.5) }, { ...a1 });
+			quad(a1, c.a, a2, 10);
+			const seg = 24;
+			for (let i = 1; i < seg; i++) {
+				path.push({ x: a2.x + ((b1.x - a2.x) * i) / seg, z: a2.z + ((b1.z - a2.z) * i) / seg });
+			}
+			path.push({ ...b1 });
+			quad(b1, c.b, b2, 10);
+			path.push({ ...towards(b2, c.bb, Math.hypot(c.bb.x - b2.x, c.bb.z - b2.z) * 0.5) }, { ...c.bb });
+			// strana „dozadu“ (od stola): podľa hlavnej časti mantinelu
+			const tx = c.b.x - c.a.x;
+			const tz = c.b.z - c.a.z;
+			const mid = { x: (c.a.x + c.b.x) / 2, z: (c.a.z + c.b.z) / 2 };
+			const sgn = -tz * mid.x + tx * mid.z > 0 ? 1 : -1;
+			const pos = [];
+			const tl = Math.hypot(tx, tz) || 1;
+			const mnx = (-tz / tl) * sgn; // smer dozadu hlavnej časti mantinelu
+			const mnz = (tx / tl) * sgn;
+			for (let i = 0; i < path.length; i++) {
+				const p0 = path[Math.max(0, i - 1)];
+				const p1 = path[Math.min(path.length - 1, i + 1)];
+				let dx = p1.x - p0.x;
+				let dz = p1.z - p0.z;
+				const l = Math.hypot(dx, dz) || 1;
+				dx /= l;
+				dz /= l;
+				const nx = -dz * sgn;
+				const nz = dx * sgn;
+				for (const [d, y] of PROFILE) {
+					// nos ide po miestnej normále (zaoblenie pri jamke), zadná časť postupne po smere hlavnej časti:
+					// pri malom polomere zaoblenia sa tak prierez neprekladá cez seba (inak tmavé „praskliny“)
+					const w = Math.min(1, d / 0.012);
+					let ox = nx * (1 - w) + mnx * w;
+					let oz = nz * (1 - w) + mnz * w;
+					const ol = Math.hypot(ox, oz) || 1;
+					ox /= ol;
+					oz /= ol;
+					pos.push(path[i].x + ox * d, y, path[i].z + oz * d);
+				}
+			}
+			// koniec mantinelu pri jamke: guma končí na okraji výrezu jamky (nie vo vnútri jamky)
+			for (let v = 0; v < pos.length; v += 3) {
+				for (const q of CUTS) {
+					const ox = pos[v] - q.x;
+					const oz = pos[v + 2] - q.z;
+					const dd = Math.hypot(ox, oz);
+					if (dd < q.r && dd > 1e-6) {
+						pos[v] = q.x + (ox / dd) * q.r;
+						pos[v + 2] = q.z + (oz / dd) * q.r;
+					}
+				}
+			}
+			const P = PROFILE.length;
+			const idx = [];
+			for (let i = 0; i < path.length - 1; i++) {
+				for (let j = 0; j < P - 1; j++) {
+					const v0 = i * P + j;
+					const v1 = (i + 1) * P + j;
+					if (sgn > 0) {
+						idx.push(v0, v1, v0 + 1, v1, v1 + 1, v0 + 1);
+					} else {
+						idx.push(v0, v0 + 1, v1, v1, v0 + 1, v1 + 1);
+					}
+				}
+			}
+			const geo = new THREE.BufferGeometry();
+			geo.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
+			geo.setIndex(idx);
+			geo.computeVertexNormals();
+			const m = new THREE.Mesh(geo, railMat);
+			m.castShadow = true;
+			m.receiveShadow = true;
+			sg.add(m);
+		}
+
+		// Výrezy jamiek v ráme: rohové a stredné, zaoblené
+		const pocketCut = CUTS;
+		// Vnútorný okraj rámu (zadná strana mantinelov) spolu s výrezmi jamiek ako jeden obrys
+		const ix = hx + RAIL;
+		const iz = hz + RAIL;
+		const holePts = [];
+		const arcPts = (c, from, to, n) => {
+			const out = [];
+			for (let i = 0; i <= n; i++) {
+				const a = from + ((to - from) * i) / n;
+				out.push({ x: c.x + Math.cos(a) * c.r, z: c.z + Math.sin(a) * c.r });
+			}
+			return out;
+		};
+		const rims = [];
+		const norm = (a) => {
+			while (a < 0) a += Math.PI * 2;
+			return a;
+		};
+		// obchádzame proti smeru hodinových ručičiek (v rovine x, z): horný okraj z = +iz sprava doľava atď.
+		const cTR = pocketCut.find((p) => p.corner && p.x > 0 && p.z > 0);
+		const cTL = pocketCut.find((p) => p.corner && p.x < 0 && p.z > 0);
+		const cBL = pocketCut.find((p) => p.corner && p.x < 0 && p.z < 0);
+		const cBR = pocketCut.find((p) => p.corner && p.x > 0 && p.z < 0);
+		const mT = pocketCut.find((p) => !p.corner && p.z > 0);
+		const mB = pocketCut.find((p) => !p.corner && p.z < 0);
+		const cornerArc = (c, sx, sz) => {
+			// priesečníky kruhu s okrajmi z = sz*iz (vodorovný) a x = sx*ix (zvislý)
+			const dzEdge = sz * iz - c.z;
+			const xOnZ = c.x - sx * Math.sqrt(Math.max(0, c.r * c.r - dzEdge * dzEdge));
+			const dxEdge = sx * ix - c.x;
+			const zOnX = c.z - sz * Math.sqrt(Math.max(0, c.r * c.r - dxEdge * dxEdge));
+			const aZ = Math.atan2(sz * iz - c.z, xOnZ - c.x);
+			const aX = Math.atan2(zOnX - c.z, sx * ix - c.x);
+			return { aZ, aX };
+		};
+		const middleArc = (c, sz) => {
+			const dz = sz * iz - c.z;
+			const w = Math.sqrt(Math.max(0, c.r * c.r - dz * dz));
+			return { aRight: Math.atan2(dz, w), aLeft: Math.atan2(dz, -w) };
+		};
+		const pushArc = (c, a0, a1, ccw) => {
+			let from = a0;
+			let to = a1;
+			if (ccw) {
+				while (to < from) to += Math.PI * 2;
+			} else {
+				while (to > from) to -= Math.PI * 2;
+			}
+			const pts = arcPts(c, from, to, 24);
+			holePts.push(...pts);
+			rims.push(pts);
+		};
+		{
+			const arcs = [];
+			for (const [c, sx, sz] of [[cTR, 1, 1], [cTL, -1, 1], [cBL, -1, -1], [cBR, 1, -1]]) {
+				const k = cornerArc(c, sx, sz);
+				// po smere proti hodinám: z vodorovného do zvislého okraja alebo naopak podľa kvadrantu
+				const first = sx * sz > 0 ? k.aX : k.aZ;
+				const last = sx * sz > 0 ? k.aZ : k.aX;
+				arcs.push({ c, a0: first, a1: last });
+			}
+			for (const [c, sz] of [[mT, 1], [mB, -1]]) {
+				const k = middleArc(c, sz);
+				arcs.push({ c, a0: sz > 0 ? k.aRight : k.aLeft, a1: sz > 0 ? k.aLeft : k.aRight });
+			}
+			arcs.sort((p, q) => norm(Math.atan2(p.c.z, p.c.x)) - norm(Math.atan2(q.c.z, q.c.x)));
+			for (const a of arcs) {
+				pushArc(a.c, a.a0, a.a1, true);
+			}
+		}
+		const R0 = 0.07; // zaoblenie vonkajších rohov rámu
+		const frame = new THREE.Shape();
+		frame.moveTo(-outX + R0, -outZ);
+		frame.lineTo(outX - R0, -outZ);
+		frame.quadraticCurveTo(outX, -outZ, outX, -outZ + R0);
+		frame.lineTo(outX, outZ - R0);
+		frame.quadraticCurveTo(outX, outZ, outX - R0, outZ);
+		frame.lineTo(-outX + R0, outZ);
+		frame.quadraticCurveTo(-outX, outZ, -outX, outZ - R0);
+		frame.lineTo(-outX, -outZ + R0);
+		frame.quadraticCurveTo(-outX, -outZ, -outX + R0, -outZ);
+		const hole = new THREE.Path();
+		holePts.forEach((p, i) => (i ? hole.lineTo(p.x, p.z) : hole.moveTo(p.x, p.z)));
+		hole.closePath();
+		frame.holes.push(hole);
+		const BEV = 0.008;
+		const frameGeo = new THREE.ExtrudeGeometry(frame, { depth: fy + 0.02 - 2 * BEV, bevelEnabled: true, bevelThickness: BEV, bevelSize: BEV * 0.8, bevelSegments: 4, curveSegments: 16 });
+		const frameMesh = new THREE.Mesh(frameGeo, wood);
+		frameMesh.rotation.x = Math.PI / 2;
+		frameMesh.position.y = fy - BEV;
+		frameMesh.castShadow = true;
+		frameMesh.receiveShadow = true;
+		sg.add(frameMesh);
+
+		// Jamky: čierny otvor v súkne, kožený lem po okraji výrezu v ráme a pod ním košík zo sieťky
+		const plateMat = new THREE.MeshStandardMaterial({ color: PK.rim, roughness: PK.rimRough, metalness: PK.rimMetal });
+		const linerMat = PK.liner == null ? plateMat : new THREE.MeshStandardMaterial({ color: PK.liner, roughness: 0.6, metalness: 0.05 }); // obruba jamky ako na turnajových stoloch
+		for (const p of pocketCut) {
+			// krátka kožená výstelka jamky a pod rámom košík zo sieťky (spadnuté gule v ňom ostávajú vidieť)
+			const well = new THREE.Mesh(new THREE.CylinderGeometry(p.r * 0.9, BASKET.top, 0.03, 40, 1, true), leatherMat);
+			well.position.set(p.x, -0.012, p.z);
+			sg.add(well);
+			// svetlá kožená výstelka steny výrezu (od rámu po súkno), ako na turnajových stoloch
+			// len oblúk na strane rámu (k stolu je ústie jamky otvorené)
+			const ox = p.corner ? Math.sign(p.x) : 0;
+			const oz = Math.sign(p.z);
+			const span = p.corner ? Math.PI * 1.0 : Math.PI * 0.9;
+			const phi = Math.atan2(ox, oz);
+			const liner = new THREE.Mesh(new THREE.CylinderGeometry(p.r - 0.0075, p.r - 0.0075, fy + 0.02, 40, 1, true, phi - span / 2, span), linerMat);
+			liner.material.side = THREE.DoubleSide;
+			liner.position.set(p.x, (fy - 0.02) / 2, p.z);
+			sg.add(liner);
+			const bag = new THREE.Mesh(basketGeo, netMat);
+			bag.position.set(p.x, BASKET.y, p.z);
+			sg.add(bag);
+			const ring = new THREE.Mesh(new THREE.TorusGeometry(BASKET.top, 0.006, 8, 40), leatherMat);
+			ring.rotation.x = Math.PI / 2;
+			ring.position.set(p.x, BASKET.y, p.z);
+			sg.add(ring);
+			// otvor v súkne robí maska súkna (pocketHoles), cez neho vidieť do košíka
+		}
+		for (const pts of rims) {
+			const curve = new THREE.CatmullRomCurve3(pts.map((q) => new THREE.Vector3(q.x, fy - 0.004, q.z)));
+			const rim = new THREE.Mesh(new THREE.TubeGeometry(curve, 48, PK.rimR, 12, false), plateMat); // svetlá kožená obruba jamky
+			rim.castShadow = true;
+			sg.add(rim);
+		}
+		sg.userData.holes = pocketHoles(PK.cutCorner, PK.cutMid);
+		return sg;
+	};
+	const sets = {};
+	for (const k of Object.keys(POCKET_STYLES)) {
+		sets[k] = pocketSet(POCKET_STYLES[k]);
+		sets[k].visible = false;
+		group.add(sets[k]);
+	}
 
 	// Teleso stola (zaoblené rohy ako rám) a nohy
 	const body = new THREE.Shape();
@@ -521,51 +588,6 @@ export function buildTable(renderer, opts = {}) {
 			leg.castShadow = true;
 			group.add(leg);
 		}
-	}
-
-	// Jamky: čierny otvor v súkne, kožený lem po okraji výrezu v ráme a pod ním košík zo sieťky
-	const leatherMat = new THREE.MeshStandardMaterial({ color: 0x1c1c1c, roughness: 0.55, metalness: 0.15, side: THREE.DoubleSide });
-	const netMat = new THREE.MeshStandardMaterial({ map: netTexture(), color: 0xf2efe6, roughness: 0.95, alphaTest: 0.35, side: THREE.DoubleSide }); // biela sieťka
-	const plateMat = new THREE.MeshStandardMaterial({ color: PK.rim, roughness: PK.rimRough, metalness: PK.rimMetal });
-	const linerMat = PK.liner == null ? plateMat : new THREE.MeshStandardMaterial({ color: PK.liner, roughness: 0.6, metalness: 0.05 }); // obruba jamky ako na turnajových stoloch
-	const prof = [
-		[BASKET.top, 0],
-		[BASKET.top + 0.006, -0.04],
-		[BASKET.top + 0.002, -0.09],
-		[BASKET.top - 0.012, -0.14],
-		[0.04, -BASKET.depth + 0.012],
-		[0.001, -BASKET.depth],
-	].map(([r, y]) => new THREE.Vector2(r, y));
-	const basketGeo = new THREE.LatheGeometry(prof, 36);
-	for (const p of pocketCut) {
-		// krátka kožená výstelka jamky a pod rámom košík zo sieťky (spadnuté gule v ňom ostávajú vidieť)
-		const well = new THREE.Mesh(new THREE.CylinderGeometry(p.r * 0.9, BASKET.top, 0.03, 40, 1, true), leatherMat);
-		well.position.set(p.x, -0.012, p.z);
-		group.add(well);
-		// svetlá kožená výstelka steny výrezu (od rámu po súkno), ako na turnajových stoloch
-		// len oblúk na strane rámu (k stolu je ústie jamky otvorené)
-		const ox = p.corner ? Math.sign(p.x) : 0;
-		const oz = Math.sign(p.z);
-		const span = p.corner ? Math.PI * 1.0 : Math.PI * 0.9;
-		const phi = Math.atan2(ox, oz);
-		const liner = new THREE.Mesh(new THREE.CylinderGeometry(p.r - 0.0075, p.r - 0.0075, fy + 0.02, 40, 1, true, phi - span / 2, span), linerMat);
-		liner.material.side = THREE.DoubleSide;
-		liner.position.set(p.x, (fy - 0.02) / 2, p.z);
-		group.add(liner);
-		const bag = new THREE.Mesh(basketGeo, netMat);
-		bag.position.set(p.x, BASKET.y, p.z);
-		group.add(bag);
-		const ring = new THREE.Mesh(new THREE.TorusGeometry(BASKET.top, 0.006, 8, 40), leatherMat);
-		ring.rotation.x = Math.PI / 2;
-		ring.position.set(p.x, BASKET.y, p.z);
-		group.add(ring);
-		// otvor v súkne robí maska súkna (pocketHoles), cez neho vidieť do košíka
-	}
-	for (const pts of rims) {
-		const curve = new THREE.CatmullRomCurve3(pts.map((q) => new THREE.Vector3(q.x, fy - 0.004, q.z)));
-		const rim = new THREE.Mesh(new THREE.TubeGeometry(curve, 48, PK.rimR, 12, false), plateMat); // svetlá kožená obruba jamky
-		rim.castShadow = true;
-		group.add(rim);
 	}
 
 	// Kovové značky (diamanty) na ráme
@@ -633,8 +655,24 @@ export function buildTable(renderer, opts = {}) {
 			m.material = detail ? markPearl : markSimple;
 		}
 	};
+	let pockets = '';
+	/** Vzhľad jamiek (POCKET_STYLES): prepne sadu mantinelov, rámu a obrúb a masku otvorov v súkne. */
+	const setPockets = (name) => {
+		const k = sets[name] ? name : 'black';
+		if (k === pockets) {
+			return;
+		}
+		pockets = k;
+		for (const n of Object.keys(sets)) {
+			sets[n].visible = n === k;
+		}
+		clothSimple.alphaMap = clothDetail.alphaMap = sets[k].userData.holes;
+		clothSimple.needsUpdate = clothDetail.needsUpdate = true;
+	};
+	setPockets('black');
 	const setFelt = (name) => {
 		felt = felts[name] ? name : 'green';
+		setPockets(FELT_POCKETS[felt]);
 		apply();
 	};
 	/** Vzhľad stola (Nastavenia): podrobný = lesk súkna, tkanina, lakovaný mahagón, perleťové značky. */
@@ -642,7 +680,7 @@ export function buildTable(renderer, opts = {}) {
 		detail = !!on;
 		apply();
 	};
-	return { group, cloth, surfaceY: 0, ballY: R, setFelt, setDetail };
+	return { group, cloth, surfaceY: 0, ballY: R, setFelt, setDetail, setPockets };
 }
 
 /** Miestnosť: tmavá podlaha a tri lampy nad stolom. */
