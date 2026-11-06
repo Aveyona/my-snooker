@@ -61,10 +61,11 @@ export class UI {
 		this.bindPower();
 
 		// Falše
-		this.spinBox = h('div', 'mysn-spin', '<div class="mysn-spin-ball"><div class="mysn-spin-dot"></div></div><div class="mysn-spin-label">Miesto úderu</div>');
+		this.spinBox = h('div', 'mysn-spin', '<div class="mysn-spin-wrap"><svg class="mysn-spin-gauge" viewBox="0 0 100 100"><path class="mysn-g-track" d="M50 96 A46 46 0 0 1 50 4"/><path class="mysn-g-track" d="M50 96 A46 46 0 0 0 50 4"/><path class="mysn-g-tip" d="M50 96 A46 46 0 0 1 50 4" pathLength="100"/><path class="mysn-g-chalk" d="M50 96 A46 46 0 0 0 50 4" pathLength="100"/></svg><div class="mysn-spin-ball"><div class="mysn-spin-face"><i></i></div><div class="mysn-spin-dot"></div></div></div><div class="mysn-spin-label">Miesto úderu</div><div class="mysn-spin-stat"><span class="mysn-st-tip"></span><span class="mysn-st-chalk"></span></div>');
 		root.appendChild(this.spinBox);
 		this.spinBall = this.spinBox.querySelector('.mysn-spin-ball');
 		this.spinDot = this.spinBox.querySelector('.mysn-spin-dot');
+		this.spinFace = this.spinBox.querySelector('.mysn-spin-face');
 		this.bindSpin();
 
 		// Spodné tlačidlá
@@ -223,6 +224,39 @@ export class UI {
 		this.spinBall.addEventListener('pointermove', (e) => drag === e.pointerId && set(e));
 		this.spinBall.addEventListener('pointerup', () => (drag = null));
 		this.spinBall.addEventListener('dblclick', () => this.setSpin(0, 0));
+	}
+
+	/**
+	 * Stav špice a kriedy na guli Miesto úderu: v strede čelo špice (farba špice, poprášené kriedou, stmavnuté
+	 * opotrebením), okolo dva oblúky: vľavo zdravie špice, vpravo nakriedovanie. st = { wear, tip, chalk, shots, max, chalkHex }.
+	 */
+	tipState(st) {
+		const key = JSON.stringify(st);
+		if (key === this._tipKey) {
+			return;
+		}
+		this._tipKey = key;
+		const q = (c) => this.spinBox.querySelector(c);
+		const life = Math.max(0, Math.min(1, 1 - (st.wear || 0)));
+		const lc = life > 0.5 ? '#4ade80' : life > 0.2 ? '#fbbf24' : '#f87171';
+		const g1 = q('.mysn-g-tip');
+		g1.style.stroke = lc;
+		g1.style.strokeDasharray = `${life * 100} 100`;
+		const g2 = q('.mysn-g-chalk');
+		g2.style.stroke = st.chalkHex;
+		g2.style.strokeDasharray = `${st.chalk * 100} 100`;
+		this.spinFace.style.background = st.tip;
+		const dust = this.spinFace.firstChild;
+		dust.style.background = `radial-gradient(circle at 40% 35%, ${st.chalkHex} 0 45%, transparent 75%)`;
+		dust.style.opacity = st.chalk ? 0.35 + st.chalk * 0.6 : 0;
+		this.spinFace.style.filter = `brightness(${1 - (st.wear || 0) * 0.45})`;
+		const t1 = q('.mysn-st-tip');
+		t1.textContent = `Špica ${Math.round(life * 100)} %`;
+		t1.style.color = lc;
+		const t2 = q('.mysn-st-chalk');
+		t2.textContent = st.shots ? `Krieda ${st.shots}/${st.max}` : 'Bez kriedy';
+		t2.style.color = st.shots ? '#e8eefc' : '#f87171';
+		this.spinBox.title = `Špica: ${Math.round(life * 100)} % (${st.strokes || 0} úderov). Krieda: ${st.shots ? st.shots + ' z ' + st.max + ' úderov' : 'treba nakriedovať (F3)'}.`;
 	}
 
 	setSpin(side, top) {

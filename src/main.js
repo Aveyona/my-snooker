@@ -33,13 +33,19 @@ const AIM_AHEAD = 0.5; // posun pohľadu bez mierenej gule: kamera sa pozerá 50
 
 function loadSettings() {
 	const mobile = /Android|iPhone|iPad|Mobile/i.test(navigator.userAgent);
-	const def = { tableDetail: 'fine', lines: false, quality: mobile ? 'low' : 'high', volume: 0.8, respot: true, contact: true, contactPos: 'center', afterShot: 'follow', oppCam: 'follow', camera: 'cue', cue: 'club' };
+	const def = { tableDetail: 'fine', lines: false, quality: mobile ? 'low' : 'high', volume: 0.8, respot: true, contact: true, contactPos: 'right', afterShot: 'follow', oppCam: 'follow', camera: 'cue', cue: 'club' };
 	try {
 		const raw = window.localStorage.getItem(STORE);
 		if (raw) {
 			const s = { ...def, ...JSON.parse(raw) };
 			if (!s.contactPos) {
-				s.contactPos = s.contact === false ? 'off' : 'center'; // staré nastavenie: vypnutý detail dotyku
+				s.contactPos = s.contact === false ? 'off' : 'right'; // staré nastavenie: vypnutý detail dotyku
+			}
+			if (!s.contactPos2) {
+				s.contactPos2 = 1; // 0.7.58: predvolene vpravo dole (kto mal stred, presunie sa raz vpravo)
+				if (s.contactPos === 'center') {
+					s.contactPos = 'right';
+				}
 			}
 			return s;
 		}
@@ -1825,9 +1831,7 @@ export function start(root, config = {}) {
 				ui.toast('Šmyk tága! Špica je opotrebovaná, vymeň ju na stojane (F2).');
 			}
 			spiderOn = false; // pavúk platí na jeden úder
-			if (cushAuto && !cushAuto.user) {
-				ui.setSpin(spin.side, cushAuto.prev); // automatický vyšší úder pri mantineli platil len na tento úder
-			}
+			ui.setSpin(0, 0); // po údere sa Miesto úderu vráti do stredu
 			cushAuto = null;
 			ui.spinNote('');
 			if (chalk > 0) {
@@ -4269,6 +4273,11 @@ export function start(root, config = {}) {
 		}
 		// krieda na špici: po nakriedovaní, údere alebo zmene kriedy sa tágo v ruke prekreslí (súper ho vidí tiež)
 		const lvl = chalk >= 3 ? 1 : chalk === 2 ? 0.75 : chalk === 1 ? 0.45 : 0;
+		if (cueSpec) {
+			const tw = tipOf(cueSpec);
+			const tc = TIP_COLORS[tipColors[cueSpec.id]] || TIP_COLORS.blue;
+			ui.tipState({ wear: +(tw.wear || 0).toFixed(3), strokes: tw.strokes | 0, tip: tc.hex, chalk: Math.min(1, chalk / CHALK_SHOTS), shots: chalk, max: CHALK_SHOTS, chalkHex: '#' + chalkById(settings.chalk).color.toString(16).padStart(6, '0') });
+		}
 		const ccol = chalkById(settings.chalk).color;
 		if (lvl !== chalkTip.level || (lvl > 0 && ccol !== chalkTip.color)) {
 			chalkTip.level = lvl;
