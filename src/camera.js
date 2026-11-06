@@ -22,6 +22,7 @@ export class CameraRig {
 		this.orbit.enabled = false;
 		this.mode = 'cue';
 		this.zoom = 1; // priblíženie v pohľade za tágom (koliesko myši, dva prsty)
+		this.panZoom = 1; // priblíženie kolieskom pri držanom pravom tlačidle (pohľad na mierenú guľu)
 		this.height = 0.22; // výška kamery za tágom
 		this._pos = new THREE.Vector3();
 		this._look = new THREE.Vector3();
@@ -199,11 +200,14 @@ export class CameraRig {
 		if (this.mode === 'top') {
 			pos.add(this.panOffset);
 			look.add(this.panOffset);
-		} else if (!moving && this.mode !== 'view' && this.panOffset.lengthSq() > 1e-8) {
+		} else if (!moving && this.mode !== 'view' && (this.panOffset.lengthSq() > 1e-8 || (this.panActive && this.aimPoint))) {
 			// posun pravým tlačidlom za tágom: kamera krúži okolo gule, na ktorú sa mieri, a stále sa na ňu pozerá
 			pos.add(this.panOffset);
 			if (this.aimPoint) {
 				look.copy(this.aimPoint);
+				// koliesko pri držanom pravom tlačidle: vlastné priblíženie ku guli
+				pos.sub(this.aimPoint).divideScalar(this.panZoom || 1).add(this.aimPoint);
+				pos.y = Math.max(this.aimPoint.y + 0.04, pos.y);
 			} else {
 				look.add(this.panOffset);
 			}

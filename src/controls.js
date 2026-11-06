@@ -97,6 +97,7 @@ export class Controls {
 			// pravé tlačidlo drž = posúvanie pohľadu (kamera sa pozerá na mierenú guľu, inak na bod pol metra pred bielou)
 			if (this.rig.mode !== 'free') {
 				this.panning = true;
+				this.rig.panActive = true;
 				this.capture();
 			}
 			return;
@@ -210,6 +211,7 @@ export class Controls {
 		if (e.pointerType === 'mouse' && e.button === 2) {
 			// pustením pravého tlačidla sa pohľad vráti na pôvodné miesto
 			this.panning = false;
+			this.rig.panActive = false;
 			this.rig.resetPan();
 		}
 		const t = this._tap;
@@ -421,7 +423,15 @@ export class Controls {
 		e.preventDefault();
 		// rýchlejšie a vo väčšom rozsahu: jeden krok kolieska asi o 20 %, od celkového pohľadu až tesne k bielej
 		const steps = Math.max(-4, Math.min(4, e.deltaY / (e.deltaMode === 1 ? 3 : 100)));
-		this.rig.zoom = Math.min(6, Math.max(0.3, this.rig.zoom * Math.pow(0.82, steps)));
+		if (this.panning) {
+			// držané pravé tlačidlo: vlastné priblíženie pohľadu na mierenú guľu (pamätá sa zvlášť)
+			this.rig.panZoom = Math.min(6, Math.max(0.3, (this.rig.panZoom || 1) * Math.pow(0.82, steps)));
+		} else {
+			this.rig.zoom = Math.min(6, Math.max(0.3, this.rig.zoom * Math.pow(0.82, steps)));
+		}
+		if (this.hooks.zoomed) {
+			this.hooks.zoomed(this.rig.zoom, this.rig.panZoom || 1);
+		}
 	}
 
 	key(e, isDown) {

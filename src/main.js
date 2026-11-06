@@ -2104,7 +2104,17 @@ export function start(root, config = {}) {
 			return false;
 		},
 	});
+	let zoomSaveT = 0;
 	controls.sens = settings.mouseSens || 1; // šúpatko Otáčanie myšou
+	// priblíženie kolieskom: za tágom a pri držanom pravom tlačidle zvlášť, obe sa pamätajú
+	rig.zoom = Math.min(6, Math.max(0.3, Number(settings.zoom) || 1));
+	rig.panZoom = Math.min(6, Math.max(0.3, Number(settings.panZoom) || 1));
+	controls.hooks.zoomed = (z, pz) => {
+		settings.zoom = +z.toFixed(3);
+		settings.panZoom = +pz.toFixed(3);
+		clearTimeout(zoomSaveT);
+		zoomSaveT = setTimeout(() => saveSettings(settings), 400);
+	};
 
 
 	if (!user) {

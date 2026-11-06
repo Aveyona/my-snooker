@@ -131,6 +131,7 @@ function mysn_roadmap() {
 /** Denník zmien (najnovšie hore). */
 function mysn_changelog() {
 	return array(
+		array( '0.6.61', '6. 11. 2026', 'Priblíženie kolieskom je zvlášť za tágom a zvlášť pri držanom pravom tlačidle (pohľad na mierenú guľu); obe sa pamätajú aj po obnovení hry.' ),
 		array( '0.6.60', '6. 11. 2026', 'Pohľad pravým tlačidlom za tágom: myš hore priblíži pohľad ku mierenej guli (kamera pritom mierne stúpa), dole oddiali, doľava a doprava krúži okolo nej.' ),
 		array( '0.6.58', '6. 11. 2026', 'Pohľad pravým tlačidlom za tágom: kamera krúži okolo gule, na ktorú sa mieri, v rovnakej vzdialenosti (predtým sa pri otáčaní dookola po špirále vzďaľovala).' ),
 		array( '0.6.57', '6. 11. 2026', 'Pravé tlačidlo myši v pohľade na predmet (nástenka, stojan, skóre, kreslo a ďalšie) vráti pohľad za tágo.' ),
