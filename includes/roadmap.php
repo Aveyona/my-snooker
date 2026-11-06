@@ -131,6 +131,7 @@ function mysn_roadmap() {
 /** Denník zmien (najnovšie hore). */
 function mysn_changelog() {
 	return array(
+		array( '0.6.89', '6. 11. 2026', 'Oprava: tmavé „praskliny“ na koncoch mantinelov pri jamkách (prierez gumy sa v zaoblení prekladal cez seba).' ),
 		array( '0.6.88', '6. 11. 2026', 'Online: súper a diváci vidia nádstavec (krížik, pavúk, vysoký pavúk) aj kriedovanie tága druhého hráča, posiela sa spolu s mierením.' ),
 		array( '0.6.87', '6. 11. 2026', 'Oprava: po zatvorení ponuky F3 (F3 alebo Esc) a po nakriedovaní sa myš znova zachytí v hre.' ),
 		array( '0.6.86', '6. 11. 2026', 'Oprava: tágo už neprechádza cez krížik ani pavúka, leží presne v drážke (výška nádstavca sa riadi skutočnou polohou tága, aj pri údere vyššie alebo nižšie na bielu).' ),

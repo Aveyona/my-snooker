@@ -332,6 +332,9 @@ export function buildTable(renderer) {
 		const mid = { x: (c.a.x + c.b.x) / 2, z: (c.a.z + c.b.z) / 2 };
 		const sgn = -tz * mid.x + tx * mid.z > 0 ? 1 : -1;
 		const pos = [];
+		const tl = Math.hypot(tx, tz) || 1;
+		const mnx = (-tz / tl) * sgn; // smer dozadu hlavnej časti mantinelu
+		const mnz = (tx / tl) * sgn;
 		for (let i = 0; i < path.length; i++) {
 			const p0 = path[Math.max(0, i - 1)];
 			const p1 = path[Math.min(path.length - 1, i + 1)];
@@ -343,7 +346,15 @@ export function buildTable(renderer) {
 			const nx = -dz * sgn;
 			const nz = dx * sgn;
 			for (const [d, y] of PROFILE) {
-				pos.push(path[i].x + nx * d, y, path[i].z + nz * d);
+				// nos ide po miestnej normále (zaoblenie pri jamke), zadná časť postupne po smere hlavnej časti:
+				// pri malom polomere zaoblenia sa tak prierez neprekladá cez seba (inak tmavé „praskliny“)
+				const w = Math.min(1, d / 0.012);
+				let ox = nx * (1 - w) + mnx * w;
+				let oz = nz * (1 - w) + mnz * w;
+				const ol = Math.hypot(ox, oz) || 1;
+				ox /= ol;
+				oz /= ol;
+				pos.push(path[i].x + ox * d, y, path[i].z + oz * d);
 			}
 		}
 		const P = PROFILE.length;
