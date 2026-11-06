@@ -131,6 +131,7 @@ function mysn_roadmap() {
 /** Denník zmien (najnovšie hore). */
 function mysn_changelog() {
 	return array(
+		array( '0.6.71', '6. 11. 2026', 'Nohy stola posunuté pod zapustenú skriňu (netrčia von).' ),
 		array( '0.6.70', '6. 11. 2026', 'Ctrl a klik: rádio na komode aj mixpult otvoria to isté (F9, rádio).' ),
 		array( '0.6.69', '6. 11. 2026', 'Jamky s košíkmi: pod každou jamkou visí sieťka a spadnuté gule (väčšinou červené) v nej ostávajú vidieť, kým sa nevrátia na stôl. Skriňa stola je pod rámom zapustená, aby boli košíky vidieť.' ),
 		array( '0.6.68', '6. 11. 2026', 'Nastavenia: Vzhľad stola. Podrobný (predvolený): súkno s leskom látky, jemnou tkaninou, smerom vlasu a tenšími čiarami, mahagónový rám pod lakom, perleťové značky. Jednoduchý: pôvodný vzhľad pre slabšie zariadenia.' ),

@@ -513,7 +513,7 @@ export function buildTable(renderer) {
 	for (const lx of [-1, -0.33, 0.33, 1]) {
 		for (const lz of [-1, 1]) {
 			const leg = new THREE.Mesh(legGeo, wood);
-			leg.position.set(lx * (hx - 0.1), -0.58, lz * (hz - 0.06));
+			leg.position.set(lx * (hx - 0.17), -0.58, lz * (hz - 0.13)); // celé pod zapustenou skriňou
 			leg.castShadow = true;
 			group.add(leg);
 		}
