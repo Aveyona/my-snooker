@@ -3120,6 +3120,15 @@ export function start(root, config = {}) {
 		},
 		// Ctrl + klik na rozsvietený predmet (za tágom aj vo voľnej kamere): to isté ako jeho kláves
 		hotClick: (e) => {
+			if (view === 'office' && e.button === 2 && (freeMouse || e.ctrlKey)) {
+				// kancelária: Ctrl a pravé tlačidlo zruší priblíženie na predmet (späť za písací stôl)
+				if (officeMode === 'cues') {
+					actions.myCues();
+				} else if (officeFocusNow) {
+					actions.officeFocus(officeFocusNow);
+				}
+				return true;
+			}
 			if (view === 'free' && freeMouse && e.button === 2) {
 				freeZoomTo = 1; // Ctrl + pravé tlačidlo: zruší priblíženie (plynulo späť)
 				return true;
