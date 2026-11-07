@@ -141,6 +141,14 @@ const playSlot = async (slot) => {
 		tick();
 		return;
 	}
+	if (T.mode === 'raw') {
+		if (snd.has(slot)) {
+			snd.play(slot, { raw: true });
+		} else {
+			window.alert('Tento zvuk nemá zapnutý žiadny súbor (v galérii Súbory… zapni Hrá).');
+		}
+		return;
+	}
 	if (LAYERS[g] && T.mode === 'game') {
 		playGroup(g, T);
 		return;

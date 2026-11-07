@@ -300,6 +300,12 @@ export class Sound {
 		const sens = p.sens / 100;
 		const s = c.createBufferSource();
 		s.buffer = list[i];
+		if (o.raw) {
+			// pôvodný súbor bez úprav (skúška v administrácii): bez tónu, farby, priestoru a dozvuku
+			s.connect(this.master);
+			s.start();
+			return true;
+		}
 		const semis = p.pitch + (o.pitch || 0) + (Math.random() * 2 - 1) * (p.vary / 100) * 12 * 0.25;
 		s.playbackRate.value = Math.pow(2, semis / 12);
 		// farba: zápor zatlmí (dolná priepusť), plus zjasní (výšky); tvrdší úder je jasnejší

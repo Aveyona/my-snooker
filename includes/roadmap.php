@@ -133,6 +133,7 @@ function mysn_roadmap() {
 /** Denník zmien (najnovšie hore). */
 function mysn_changelog() {
 	return array(
+		array( '0.7.88', '7. 11. 2026', 'Skúška zvukov: Spôsob má tri možnosti: Pôvodný súbor (presne nahrávka, bez úprav), Súbory tohto zvuku s doladením (predvolené) a Ako v hre (prelínanie vrstiev jemný, stredný, tvrdý podľa sily). Predtým predvolené Ako v hre miešalo aj iné súbory, preto zvuk neznel ako nahrávka.' ),
 		array( '0.7.87', '7. 11. 2026', 'Administrácia Zvuky: pri každom zvuku odporúčaný názov súboru po anglicky s číslom varianty (napríklad cue-hit-soft-01.wav).' ),
 		array( '0.7.86', '7. 11. 2026', 'Základná sada zvukov: ďalších 67 voľných nahrávok (CC0 a public domain): napitie sa vody, grgnutie, prdnutie, jooooj, óóó, šepot, jasot publika, tlkot srdca, znelky začiatku a víťazstva, tiknutie, upozornenie, dvere, jemný a tvrdý náraz gúľ, jemný mantinel. Bez voľnej nahrávky ostáva pšššt, well done, drkotanie v jamke a hlas rozhodcu.' ),
 		array( '0.7.85', '7. 11. 2026', 'Body: pri každej potopenej guli vyskočí nad jamkou +1 až +7 vo farbe gule a zaznie zvuk bodov (vyšší pri hodnotnejšej guli; viac gúľ za sebou). Pri faule v partii sa ukáže Faul · súper +4 (až +7). Zvuk Body sa dá nahradiť v administrácii Zvuky (Atmosféra).' ),
