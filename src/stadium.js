@@ -517,11 +517,12 @@ export function buildStadium(scene, quality, clock = 45) {
 		root.add(tent);
 		return { card, cardMat, key: '' };
 	});
-	/** Menovky hráčov na stolíkoch: names [strana 0, strana 1], roles ('admin' = pod menom nápis ADMIN). */
-	const setNames = (names, roles = []) => {
+	/** Menovky hráčov na stolíkoch: names [strana 0, strana 1], roles ('admin' = pod menom nápis ADMIN), elos = ELO pod menom. */
+	const setNames = (names, roles = [], elos = []) => {
 		plates.forEach((pl, i) => {
 			const name = (names && names[i]) || '';
-			const role = roles[i] || '';
+			const elo = Number(elos && elos[i]) || 0;
+			const role = [roles[i] || '', elo ? 'ELO ' + elo : ''].filter(Boolean).join(' · ');
 			const key = name + '|' + role;
 			if (key === pl.key) {
 				return;

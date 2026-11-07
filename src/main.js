@@ -4777,13 +4777,13 @@ export function start(root, config = {}) {
 			const adm = (id) => ((config.admins || []).includes(id) ? 'ADMIN' : '');
 			if (game.match && game.match.players) {
 				const pl = game.match.players;
-				stadium.setNames([pl[0] && pl[0].name, pl[1] && pl[1].name], [adm(pl[0] && pl[0].id), adm(pl[1] && pl[1].id)]);
+				stadium.setNames([pl[0] && pl[0].name, pl[1] && pl[1].name], [adm(pl[0] && pl[0].id), adm(pl[1] && pl[1].id)], [pl[0] && pl[0].elo, pl[1] && pl[1].elo]);
 			} else if (game.spectating) {
 				const nm = (watchScreen && watchScreen.names) || [];
-				stadium.setNames(nm, [adm(watchPeers[0]), adm(watchPeers[1])]);
+				stadium.setNames(nm, [adm(watchPeers[0]), adm(watchPeers[1])], (watchScreen && watchScreen.elos) || []);
 			} else if (user) {
 				// tréning na štadióne (admin): moja menovka, druhý stolík prázdny
-				stadium.setNames([user.name, ''], [config.role === 'admin' ? 'ADMIN' : '', '']);
+				stadium.setNames([user.name, ''], [config.role === 'admin' ? 'ADMIN' : '', ''], [leagueData && leagueData.me ? leagueData.me.elo : 0, 0]);
 			}
 			// mantinel s nápisom LIGA: číslo ligy zápasu (1. LIGA)
 			stadium.setLeague(game.spectating ? (watchScreen && watchScreen.tier) || 0 : (game.match && game.match.tier) || 0);

@@ -548,7 +548,7 @@ export class Online {
 		const sc = (m.rules && m.rules.scores) || [0, 0];
 		// scr = údaje pre veľkú obrazovku na štadióne (mená, skóre, kto je na rade, séria, guľa na rade)
 		const r = m.rules || {};
-		const scr = { tier: m.tier || 0, clock: m.clock || 0, names: m.players.map((p) => p.name), scores: sc, turn: r.over ? -1 : r.turn, brk: r.brk || 0, on: g.onText ? g.onText() : '', left: m.league && m.turnAt ? Math.max(0, (m.clock || 45) - (Date.now() - m.turnAt) / 1000) : null };
+		const scr = { tier: m.tier || 0, clock: m.clock || 0, names: m.players.map((p) => p.name), elos: m.players.map((p) => Number(p.elo) || 0), scores: sc, turn: r.over ? -1 : r.turn, brk: r.brk || 0, on: g.onText ? g.onText() : '', left: m.league && m.turnAt ? Math.max(0, (m.clock || 45) - (Date.now() - m.turnAt) / 1000) : null };
 		return { k: 'w-state', seq: m.seq, ver: 0, balls: snapshot(g.balls), place: g.state === 'place' ? 1 : 0, info: `${m.players[0].name} ${sc[0]} : ${sc[1]} ${m.players[1].name}`, scr };
 	}
 

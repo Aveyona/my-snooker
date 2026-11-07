@@ -217,6 +217,10 @@ function mysn_match_out( $m, $uid ) {
 	$p   = array( mysn_user( $m['p1'] ), mysn_user( $m['p2'] ) );
 	$p[0]['online'] = (int) $m['seen1'] >= $now - MYSN_ONLINE;
 	$p[1]['online'] = (int) $m['seen2'] >= $now - MYSN_ONLINE;
+	if ( ! empty( $m['league'] ) && function_exists( 'mysn_elo' ) ) {
+		$p[0]['elo'] = mysn_elo( $m['p1'] ); // ELO pri mene (menovka na štadióne)
+		$p[1]['elo'] = mysn_elo( $m['p2'] );
+	}
 	return array(
 		'id'      => (int) $m['id'],
 		'status'  => $m['status'],
