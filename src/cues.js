@@ -133,7 +133,7 @@ export function tipInaccuracy(wear, kind, spec) {
 
 /** Nepresnosť od predĺženia tága (stupne, najväčší náhodný odklon pri strednom údere): dlhšie tágo sa ťažšie vedie rovno. */
 export function extInaccuracy(ext) {
-	return ext >= 0.44 ? 0.8 : ext >= 0.29 ? 0.5 : ext >= 0.14 ? 0.25 : 0; // stredne (Robo 7. 11. 2026)
+	return ext >= 0.44 ? 0.1 : ext >= 0.29 ? 0.06 : ext >= 0.14 ? 0.03 : 0; // znížené (Robo 7. 11. 2026: ±0,25° sa nedalo hrať)
 }
 
 /** Výhody a nedostatky tág 1 až 10 (panel na stojane F2). */

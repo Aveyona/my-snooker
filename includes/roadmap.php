@@ -133,6 +133,7 @@ function mysn_roadmap() {
 /** Denník zmien (najnovšie hore). */
 function mysn_changelog() {
 	return array(
+		array( '0.7.104', '7. 11. 2026', 'Predĺženie tága už presnosť skoro nekazí: biela náhodne uhne najviac o 0,03° pri 15 cm, 0,06° pri 30 cm a 0,1° pri 45 cm (predtým 0,25°, 0,5° a 0,8°, to sa nedalo hrať). Väčšina úderov ide takmer presne, plná odchýlka príde len výnimočne; silnejší úder trochu viac.' ),
 		array( '0.7.103', '7. 11. 2026', 'Voľná kamera: Tab zapne alebo vypne malý náhľad stola zhora vpravo hore (gule vidno, aj keď sa kamera pozerá inam). Nastavenie sa pamätá.' ),
 		array( '0.7.102', '7. 11. 2026', 'Zvuk gúľania gúľ po súkne je ešte o niečo tichší.' ),
 		array( '0.7.101', '7. 11. 2026', 'Animácia rozhodcu zmenená: po rozostavení rozhodca príde k čiernemu koncu stola, zoberie trojuholník zo súkna, prenesie ho cez mantinel, zvisle ho zavesí pod stôl na jeho háčik a vráti sa na svoje miesto. Admin ju spustí z mapy (M, Štadión, Rozhodca odkladá trojuholník).' ),

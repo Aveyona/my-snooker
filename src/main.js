@@ -2065,9 +2065,15 @@ export function start(root, config = {}) {
 			game.dir -= side * sq;
 		}
 		// nepresnosť opotrebovanej špice (od 80 %): náhodná odchýlka smeru, silnejší úder viac
-		const inacc = (tipInaccuracy(tip.wear, tip.kind, cueSpec) + extInaccuracy(settings.cueExt || 0) + stretchDeg) * (0.75 + 0.5 * power); // opotrebovaná špica a predĺženie tága
+		const inacc = (tipInaccuracy(tip.wear, tip.kind, cueSpec) + stretchDeg) * (0.75 + 0.5 * power); // opotrebovaná špica, natiahnutie
+		const extDeg = extInaccuracy(settings.cueExt || 0) * (0.75 + 0.5 * power); // predĺženie tága
 		if (inacc > 0) {
 			game.dir += ((Math.random() * 2 - 1) * inacc * Math.PI) / 180;
+		}
+		if (extDeg > 0) {
+			// predĺženie: väčšina úderov takmer presne, plná odchýlka len výnimočne (súčet troch náhodných čísel)
+			const r = (Math.random() + Math.random() + Math.random()) / 1.5 - 1;
+			game.dir += (r * extDeg * Math.PI) / 180;
 		}
 		const shot = game.shoot(power, side, top);
 		if (!shot) {
