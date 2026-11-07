@@ -39,17 +39,17 @@ function mysn_sound_slots() {
 		'door-creak'     => array( 'Miestnosti', 'Dvere: vŕzganie', 'Hrá pri otváraní dverí.', 'Vŕzganie pántov, 1 s.' ),
 		'door-shut'      => array( 'Miestnosti', 'Dvere: zatvorenie', 'Hrá pri zatvorení dverí.', 'Buchnutie dverí a cvaknutie zámku.' ),
 		'beep'           => array( 'Miestnosti', 'Pípnutie pred ťahom', 'Pípnutie v kresle, keď prídeš na rad (pripravujeme).', 'Krátky príjemný signál, do 0,3 s.' ),
-		'ref-foul'       => array( 'Rozhodca', 'Faul', 'Hlas rozhodcu z miesta, kde stojí (3D), pri faule. Ak sú nahraté Faul 4 až 7, hrajú namiesto tohto (pripravujeme).', 'Pokojný zreteľný hlas: Foul (alebo Faul).' ),
+		'ref-foul'       => array( 'Rozhodca', 'Faul', 'Hlas rozhodcu z miesta, kde stojí (3D), pri faule. Ak sú nahraté Faul 4 až 7, hrajú namiesto tohto (pripravujeme).', 'Pokojný zreteľný hlas po anglicky: Foul.' ),
 		'ref-foul-4'     => array( 'Rozhodca', 'Faul, 4 body', 'Faul za 4 body.', 'Foul, four.' ),
 		'ref-foul-5'     => array( 'Rozhodca', 'Faul, 5 bodov', 'Faul za 5 bodov (modrá).', 'Foul, five.' ),
 		'ref-foul-6'     => array( 'Rozhodca', 'Faul, 6 bodov', 'Faul za 6 bodov (ružová).', 'Foul, six.' ),
 		'ref-foul-7'     => array( 'Rozhodca', 'Faul, 7 bodov', 'Faul za 7 bodov (čierna).', 'Foul, seven.' ),
-		'ref-freeball'   => array( 'Rozhodca', 'Voľná guľa', 'Po faule, keď súper dostane voľnú guľu.', 'Free ball.' ),
-		'ref-again'      => array( 'Rozhodca', 'Hrá znova', 'Keď hráč po faule pošle súpera hrať znova.', 'Napríklad: Player to play again.' ),
-		'ref-time'       => array( 'Rozhodca', 'Čas', 'Keď v lige vyprší čas na úder.', 'Time.' ),
-		'ref-frame'      => array( 'Rozhodca', 'Koniec framu', 'Koniec framu (pri zápase na viac framov).', 'Frame.' ),
-		'ref-match'      => array( 'Rozhodca', 'Koniec zápasu', 'Koniec zápasu.', 'Frame and match.' ),
-		'ref-start'      => array( 'Rozhodca', 'Začiatok zápasu', 'Začiatok zápasu na štadióne.', 'Uvítanie a ohlásenie rozbíjajúceho hráča.' ),
+		'ref-freeball'   => array( 'Rozhodca', 'Voľná guľa', 'Po faule, keď súper dostane voľnú guľu.', 'Po anglicky: Free ball.' ),
+		'ref-again'      => array( 'Rozhodca', 'Hrá znova', 'Keď hráč po faule pošle súpera hrať znova.', 'Po anglicky, napríklad: Asked to play again.' ),
+		'ref-time'       => array( 'Rozhodca', 'Čas', 'Keď v lige vyprší čas na úder.', 'Po anglicky: Time.' ),
+		'ref-frame'      => array( 'Rozhodca', 'Koniec framu', 'Koniec framu (pri zápase na viac framov).', 'Po anglicky: Frame.' ),
+		'ref-match'      => array( 'Rozhodca', 'Koniec zápasu', 'Koniec zápasu.', 'Po anglicky: Frame and match.' ),
+		'ref-start'      => array( 'Rozhodca', 'Začiatok zápasu', 'Začiatok zápasu na štadióne.', 'Po anglicky, napríklad: Ladies and gentlemen, ... to break.' ),
 		'ref-steps'      => array( 'Rozhodca', 'Kroky rozhodcu', 'Kroky pri chôdzi rozhodcu okolo stola (3D).', 'Tiché kroky po koberci, slučka 3 až 5 s.' ),
 		'ref-gloves'     => array( 'Rozhodca', 'Vyberanie gule z jamky', 'Rozhodca vyberie farbu z jamky a položí na spot.', 'Guľa vybratá zo sieťky a položená na súkno.' ),
 		'player-drink'   => array( 'Hráč', 'Napitie sa vody', 'Hráč v kresle sa napije z pohára (kláves, pripravujeme). Hrá z miesta hráča (3D), počujú ho súper aj diváci.', 'Dúšok vody a položenie pohára na stolík.' ),
@@ -81,6 +81,60 @@ function mysn_sound_bundled( $slot ) {
 		$out[] = $base . 'assets/sounds/' . rawurlencode( $dir ) . '/' . rawurlencode( basename( $f ) );
 	}
 	return $out;
+}
+
+/**
+ * Odporúčaná dĺžka klipu a hlasitosť v klipe pre nahrávku: [dĺžka, hlasitosť]. Krátke údery sa merajú
+ * špičkou (dBFS, najhlasnejšie miesto), dlhšie zvuky priemernou hlasitosťou (LUFS).
+ */
+function mysn_sound_spec( $id ) {
+	$m = array(
+		'cue-soft'       => array( '0,3 až 0,6 s', 'špička okolo −18 dBFS (tichý ťuk)' ),
+		'cue-medium'     => array( '0,3 až 0,8 s', 'špička okolo −10 dBFS' ),
+		'cue-hard'       => array( '0,4 až 1 s', 'špička okolo −3 dBFS (nikdy nie 0 dBFS, aby neskreslilo)' ),
+		'cue-miscue'     => array( '0,3 až 0,8 s', 'špička okolo −8 dBFS' ),
+		'ball-soft'      => array( '0,2 až 0,6 s', 'špička okolo −20 dBFS' ),
+		'ball-medium'    => array( '0,2 až 0,6 s', 'špička okolo −10 dBFS' ),
+		'ball-hard'      => array( '0,2 až 0,8 s', 'špička okolo −3 dBFS' ),
+		'ball-kiss'      => array( '0,1 až 0,4 s', 'špička okolo −24 dBFS' ),
+		'cushion-soft'   => array( '0,2 až 0,6 s', 'špička okolo −18 dBFS' ),
+		'cushion-medium' => array( '0,3 až 0,8 s', 'špička okolo −10 dBFS' ),
+		'cushion-hard'   => array( '0,3 až 1 s', 'špička okolo −4 dBFS' ),
+		'pot-corner'     => array( '0,5 až 1,5 s', 'špička okolo −8 dBFS' ),
+		'pot-middle'     => array( '0,5 až 1,5 s', 'špička okolo −8 dBFS' ),
+		'pot-jaws'       => array( '0,3 až 1 s', 'špička okolo −8 dBFS' ),
+		'roll'           => array( '5 až 10 s (slučka)', 'priemer okolo −30 LUFS (tichý šuchot)' ),
+		'chalk'          => array( '0,5 až 1,5 s', 'priemer okolo −22 LUFS' ),
+		'place'          => array( '0,2 až 0,5 s', 'špička okolo −16 dBFS' ),
+		'rest'           => array( '0,3 až 1 s', 'špička okolo −14 dBFS' ),
+		'rack-fill'      => array( '1 až 3 s', 'priemer okolo −20 LUFS' ),
+		'rack-lift'      => array( '0,5 až 1,5 s', 'priemer okolo −22 LUFS' ),
+		'break'          => array( '1 až 2,5 s', 'špička okolo −1 dBFS, priemer okolo −14 LUFS' ),
+		'amb-herna'      => array( '60 až 90 s (slučka, koniec plynulo nadväzuje na začiatok)', 'priemer okolo −34 LUFS (len tiché pozadie)' ),
+		'amb-office'     => array( '60 až 90 s (slučka)', 'priemer okolo −36 LUFS' ),
+		'amb-stadium'    => array( '60 až 120 s (slučka)', 'priemer okolo −28 LUFS' ),
+		'door-creak'     => array( '0,8 až 1,5 s', 'priemer okolo −20 LUFS' ),
+		'door-shut'      => array( '0,5 až 1,2 s', 'špička okolo −6 dBFS' ),
+		'beep'           => array( '0,1 až 0,3 s', 'priemer okolo −20 LUFS' ),
+		'ref-steps'      => array( '3 až 5 s (slučka)', 'priemer okolo −32 LUFS' ),
+		'ref-gloves'     => array( '1 až 2 s', 'priemer okolo −24 LUFS' ),
+		'applause-small' => array( '2 až 4 s', 'priemer okolo −20 LUFS' ),
+		'applause-big'   => array( '3 až 6 s', 'priemer okolo −16 LUFS' ),
+		'ovation'        => array( '5 až 8 s', 'priemer okolo −14 LUFS' ),
+		'crowd-ooh'      => array( '1 až 2,5 s', 'priemer okolo −18 LUFS' ),
+		'crowd-wow'      => array( '1 až 2,5 s', 'priemer okolo −18 LUFS' ),
+		'laugh'          => array( '1,5 až 4 s', 'priemer okolo −20 LUFS' ),
+		'whistle'        => array( '0,5 až 2 s', 'priemer okolo −18 LUFS' ),
+		'cough'          => array( '0,4 až 1,5 s', 'priemer okolo −22 LUFS' ),
+		'shush'          => array( '0,5 až 1,5 s', 'priemer okolo −22 LUFS' ),
+	);
+	if ( isset( $m[ $id ] ) ) {
+		return $m[ $id ];
+	}
+	if ( 0 === strpos( $id, 'ref-' ) ) {
+		return array( '0,5 až 2 s (len hlas, bez pauzy navyše)', 'priemer okolo −18 LUFS, zreteľný hlas' );
+	}
+	return array( '0,5 až 2 s', 'priemer okolo −18 LUFS' ); // hráč
 }
 
 /** Predvolené doladenie slotu. */
@@ -223,7 +277,7 @@ function mysn_admin_sounds_page() {
 		<style>
 			.mysn-snd table{border-collapse:collapse;width:100%;background:#fff;margin:0 0 22px}
 			.mysn-snd th,.mysn-snd td{border-bottom:1px solid #e2e4e7;padding:8px;vertical-align:top;text-align:left}
-			.mysn-snd td.n{width:340px}.mysn-snd td.n b{display:block}.mysn-snd td.n small{display:block;color:#50575e;margin-top:3px}.mysn-snd td.n small.rec{color:#2271b1}.mysn-snd td.n small.rec b{display:inline}
+			.mysn-snd td.n{width:340px}.mysn-snd td.n b{display:block}.mysn-snd td.n small{display:block;color:#50575e;margin-top:3px}.mysn-snd td.n small.rec{color:#2271b1}.mysn-snd td.n small.spec{color:#8a5a00}.mysn-snd td.n small.spec b{display:inline}.mysn-snd td.n small.rec b{display:inline}
 			.mysn-snd .files{min-width:200px}.mysn-snd .files span{display:inline-block;background:#f0f0f1;border-radius:3px;padding:1px 6px;margin:0 4px 4px 0;font-size:12px}
 			.mysn-snd .files span a{color:#b32d2e;text-decoration:none;margin-left:4px}
 			.mysn-snd .p{display:grid;grid-template-columns:repeat(3,minmax(150px,1fr));gap:4px 14px}
@@ -237,8 +291,9 @@ function mysn_admin_sounds_page() {
 				<li><b>Formát:</b> WAV (48 kHz, 24 bitov) alebo MP3 (320 kbps), aj OGG. Nahraj do Médií a vyber tlačidlom Vybrať súbory.</li>
 				<li><b>Kvalita:</b> profesionálne nahrávky, minimálne stereo. Zvuky stola sa v hre umiestnia do priestoru (3D na slúchadlách, výrazné stereo na reproduktoroch); ambient a diváci hrajú v plnom sterei.</li>
 				<li><b>Čisté nahrávky:</b> bez ozveny miestnosti (dozvuk pridá hra podľa miestnosti), bez šumu, krátke ticho na začiatku a konci (do 50 ms).</li>
+				<li><b>Jazyk:</b> hlas rozhodcu aj hlasy divákov sú po anglicky (ako v skutočnom snookri): Foul, four. Free ball. Frame and match. Well done.</li>
 				<li><b>Varianty:</b> pri každom zvuku 3 až 6 súborov, hra ich strieda náhodne, aby rovnaké údery nezneli ako stroj.</li>
-				<li><b>Hlasitosť:</b> podobná úroveň všetkých súborov (okolo −18 LUFS); jemné a tvrdé vrstvy nahraj prirodzene, hra ich prelína podľa sily.</li>
+				<li><b>Dĺžka a hlasitosť:</b> pri každom zvuku je odporúčaná dĺžka klipu a hlasitosť v klipe. Krátke údery sa merajú <b>špičkou v dBFS</b> (najhlasnejšie miesto klipu, 0 dBFS je strop, nad ktorým zvuk skreslí; −10 dBFS je zreteľne pod ním). Dlhšie zvuky (ambient, diváci, hlas) sa merajú <b>priemernou hlasitosťou v LUFS</b> (meria ju väčšina strihových programov, napríklad Audacity: Analýza, Merač hlasitosti). Jemné a tvrdé vrstvy nahraj prirodzene, tichší úder má byť naozaj tichší; hra ich prelína podľa sily. Odchýlku doladíš posuvníkom Hlasitosť.</li>
 				<li>Zvuky môžeš dopĺňať postupne. Kým k zvuku nevyberieš vlastné súbory, hrá <b>základná sada</b> (voľné zvuky CC0, zdroje v assets/sounds/LICENSES.txt), a kde nie je ani tá, generovaná náhrada. Keď budú všetky hotové, spravíme kompiláciu (zjednotenie hlasitosti, orezanie, menšie súbory).</li>
 			</ul>
 		</div>
@@ -264,7 +319,7 @@ function mysn_admin_sounds_page() {
 				endif;
 				?>
 				<tr data-slot="<?php echo esc_attr( $id ); ?>">
-					<td class="n"><b><?php echo esc_html( $x[1] ); ?></b><small><?php echo esc_html( $x[2] ); ?></small><small class="rec"><b>Nahrávka:</b> <?php echo esc_html( $x[3] ); ?></small></td>
+					<td class="n"><b><?php echo esc_html( $x[1] ); ?></b><small><?php echo esc_html( $x[2] ); ?></small><small class="rec"><b>Nahrávka:</b> <?php echo esc_html( $x[3] ); ?></small><?php $sp = mysn_sound_spec( $id ); ?><small class="spec"><b>Dĺžka klipu:</b> <?php echo esc_html( $sp[0] ); ?><br><b>Hlasitosť v klipe:</b> <?php echo esc_html( $sp[1] ); ?></small></td>
 					<td class="files">
 						<input type="hidden" name="snd[<?php echo esc_attr( $id ); ?>][ids]" value="<?php echo esc_attr( implode( ',', array_map( 'intval', (array) $s['ids'] ) ) ); ?>">
 						<div class="list"></div>
