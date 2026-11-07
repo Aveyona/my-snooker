@@ -9,6 +9,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 function mysn_roadmap() {
 	return array(
+		array( '0.7.64', '7. 11. 2026', 'Priblíženie na mierenú guľu (pravé tlačidlo, myš hore) ide po oblúku: do polovice priblíženia kamera stúpa, potom pomaly klesá až ku guli.' ),
 		array( '0.7.63', '7. 11. 2026', 'Kancelária s držaným Ctrl ako herňa: predmety pod kurzorom sa jemne rozsvietia a klik ich otvorí (nástenka F1, stojan F2, kalendár F3, tabuľa líg F4, notebook F7, vizitka F8, dvere F9, lampa F12, mapa hráčov so špendlíkmi). Tréning z menu v kancelárii neotvorí menu znova.' ),
 		array( '0.7.62', '7. 11. 2026', 'Menu v kancelárii: Tréning a Hrať ťa prenesú z kancelárie do herne (predtým sa nič nestalo).' ),
 		array( '0.7.61', '7. 11. 2026', 'Kancelária: Esc otvorí menu (predtým presunul do herne). Druhé Esc menu zavrie a ostávaš v kancelárii.' ),
