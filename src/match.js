@@ -209,7 +209,11 @@ export class Game extends Training {
 		if (m.seq !== seq) {
 			m.turnAt = Date.now(); // začiatok ťahu (časomiera ligového zápasu)
 		}
+		const fresh = m.seq >= 0 && seq > m.seq; // seq −1 = práve začatý alebo obnovený zápas: staré hlásenie sa neopakuje
 		m.seq = seq;
+		if (fresh && st.call) {
+			this.emit('call', st.call); // nové hlásenie rozhodcu (nie pri obnovení starého stavu)
+		}
 		m.rules = { ...st.rules, scores: [...st.rules.scores] };
 		m.turn = m.rules.turn;
 		m.inHand = !!st.inHand;
@@ -391,6 +395,8 @@ export class Game extends Training {
 				return b;
 			})(),
 		};
+		// hlásenie rozhodcu (všetci klienti ho dostanú so stavom): faul a body, voľná guľa, koniec framu a zápasu
+		st.call = { foul: res.foul ? res.penalty : 0, free: !!res.state.free && !res.state.over, frame: !!fr, over: !!res.state.over };
 		if (fr) {
 			// zápas na viac framov: frame skončil, ale zápas ešte nie (nové rozostavenie, rozbíja sa striedavo)
 			st.frames = fr.frames;
@@ -457,6 +463,7 @@ export class Game extends Training {
 			inHand: !!m.inHand,
 			frames: m.frames || undefined,
 			msg: `${names[m.me]} posiela ${names[off]} hrať znova z miesta, kde gule ostali. Na rade je ${names[off]}.`,
+			call: { again: true },
 			last: m.last || null,
 			best: [...(m.best || [0, 0])],
 		};
@@ -512,6 +519,7 @@ export class Game extends Training {
 			rules: res.state,
 			inHand: !!m.inHand || !this.cue.on, // biela v ruke ostáva súperovi
 			frames: m.frames || undefined,
+			call: { foul: res.penalty || 4, time: true, over: !!res.state.over },
 			msg: `${names[off]}: ${why}` + (res.state.over ? ` Koniec partie, víťaz: ${names[res.state.winner]}.` : ` Na rade je ${names[res.state.turn]}, rozhodne, či hrá sám, alebo pošle súpera hrať znova.`),
 			last: { by: off, points: 0, foul: true, penalty: res.penalty, brk: 0, timeout: true },
 			best: [...(m.best || [0, 0])],

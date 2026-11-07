@@ -1008,6 +1008,8 @@ export function buildStadium(scene, quality, clock = 45) {
 
 	return {
 		root,
+		/** Poloha rozhodcu (zvuk jeho hlasu a krokov). */
+		refPos: () => ({ x: referee.position.x, y: FY + 1.6, z: referee.position.z }),
 		/** Pohľady na štadióne: F4 skóre = veľká obrazovka nad tribúnou za kratšou stranou. */
 		views: {
 			board: { pos: new THREE.Vector3(2.6, FY + 1.28, BZ - 0.55 - 0.16), look: new THREE.Vector3(2.6, FY + 0.76, BZ - 0.55 + 0.005) }, // F1 návod na stolíku

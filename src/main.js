@@ -388,6 +388,8 @@ export function start(root, config = {}) {
 		sound.setGroupVolume(g, settings[k] === undefined ? 1 : +settings[k]);
 	}
 	const ballPos = (b) => (b ? { x: b.p.x, y: R, z: b.p.z } : null); // stôl je v strede scény, gule = poloha zvuku
+	// priebeh úderu pre reakcie divákov: ktoré gule narazili do mantinelu, ktoré spadli
+	const shotTrack = { cush: new Set(), pots: [], lead: 0, brk0: 0, active: false };
 
 	// rádio v herni: stanice z My Player, priestorový zvuk z dvoch reproduktorov, mixpult (F9)
 	const preRadio = new Set(scene.children);
@@ -3991,7 +3993,101 @@ export function start(root, config = {}) {
 	updateScore();
 
 	// pri kladení bielej do D sa kamera za tágom dočasne prepne zhora (bielu je tak lepšie vidieť)
+	/** Hlasitosť publika: štadión vždy, herňa len keď sedia skutoční diváci, inak ticho. */
+	const crowdGain = () => (venue === 'league' ? 1 : seatList.length ? 0.45 : 0);
+	/** Hlásenie rozhodcu (nahrávky po anglicky; bez nahrávky ticho). Hlas ide z miesta rozhodcu na štadióne. */
+	const refCall = (c) => {
+		const pos = venue === 'league' ? stadium.refPos() : null;
+		const say = (slot, delay = 0) => setTimeout(() => sound.fx(slot, { pos, room: 0.8 }), delay);
+		let t = 350;
+		if (c.time) {
+			say('ref-time', t);
+			t += 900;
+		}
+		if (c.foul) {
+			say(sound.has('ref-foul-' + c.foul) ? 'ref-foul-' + c.foul : 'ref-foul', t);
+			t += 1300;
+		}
+		if (c.free) {
+			say('ref-freeball', t);
+		}
+		if (c.again) {
+			say('ref-again', t);
+		}
+		if (c.over) {
+			say('ref-match', t + 200);
+		} else if (c.frame) {
+			say('ref-frame', t + 200);
+		}
+		if ((c.over || c.frame) && crowdGain()) {
+			setTimeout(() => sound.fx('ovation', { gain: crowdGain() }), t + 900);
+		}
+	};
+	/**
+	 * Diváci reagujú sami po údere: potlesk po potopenej guli (silnejší pri dlhej sérii), ovácie pri stovke,
+	 * óóó pri ťažkom údere (guľa po mantineli do jamky), jooooj keď guľa ostane na hrane jamky, smiech keď
+	 * vedúci hráč nič netrafí alebo zafauluje bez potopenia.
+	 */
+	const crowdReact = () => {
+		const g = crowdGain();
+		if (!g) {
+			return;
+		}
+		const m = game.match;
+		const pots = shotTrack.pots.filter((id) => game.balls[id] && game.balls[id].kind !== 'white');
+		const whitePot = shotTrack.pots.some((id) => game.balls[id] && game.balls[id].kind === 'white');
+		const brk = m && m.rules ? m.rules.brk : game.stats.run || 0;
+		const turnKept = m ? m.rules.turn === shotTrack.shooter : true;
+		if (pots.length && turnKept && !whitePot) {
+			if (shotTrack.brk0 < 100 && brk >= 100) {
+				sound.fx('ovation', { gain: g });
+				return;
+			}
+			if (pots.some((id) => shotTrack.cush.has(id))) {
+				sound.fx('crowd-wow', { gain: g * 0.9 });
+				setTimeout(() => sound.fx('applause-big', { gain: g }), 700);
+				return;
+			}
+			sound.fx(brk >= 30 ? 'applause-big' : 'applause-small', { gain: g * (brk >= 30 ? 0.8 : 0.6) });
+			return;
+		}
+		// guľa ostala na hrane jamky
+		const edge = game.balls.some((b) => b.on && b.kind !== 'white' && POCKETS.some((p) => Math.hypot(b.p.x - p.x, b.p.z - p.z) < (p.corner ? 0.085 : 0.075)));
+		if (!pots.length && edge) {
+			sound.fx('crowd-ooh', { gain: g });
+			return;
+		}
+		// somarina vedúceho hráča: faul bez potopenia, keď vedie aspoň o 20 bodov
+		if (m && !pots.length && shotTrack.lead >= 20 && shotTrack.foul) {
+			sound.fx('laugh', { gain: g * 0.8 });
+		}
+	};
+	// občasné zakašľanie na štadióne, keď je ticho
+	setInterval(() => {
+		if (venue === 'league' && game.state === 'aim' && Math.random() < 0.35) {
+			sound.fx('cough', { gain: 0.5, pos: { x: (Math.random() * 2 - 1) * 6, y: 2.5, z: (Math.random() < 0.5 ? -1 : 1) * (4 + Math.random() * 3) } });
+		}
+	}, 45000);
 	game.on((type, d) => {
+		if (type === 'call' && d) {
+			shotTrack.foul = d.foul || 0;
+			refCall(d);
+		}
+		if (type === 'shot') {
+			shotTrack.cush.clear();
+			shotTrack.pots = [];
+			shotTrack.foul = 0;
+			shotTrack.active = true;
+			const m = game.match;
+			const me = m ? m.rules.turn : 0;
+			shotTrack.lead = m && m.rules ? m.rules.scores[me] - m.rules.scores[1 - me] : 0; // náskok hráča na ťahu
+			shotTrack.brk0 = m && m.rules ? m.rules.brk : game.stats.run || 0;
+			shotTrack.shooter = me;
+		}
+		if (type === 'settle' && shotTrack.active) {
+			shotTrack.active = false;
+			setTimeout(crowdReact, 250);
+		}
 		if ((type === 'spot' || type === 'placed') && d && d.p) {
 			sound.fx('place', { pos: ballPos(d), delay: type === 'spot' ? 0.15 + Math.random() * 0.25 : 0 }); // guľa položená na súkno
 		}
@@ -4087,6 +4183,11 @@ export function start(root, config = {}) {
 		sound.roll(game.state === 'moving' ? game.balls.filter((b) => b.on && b.moving) : []); // šuchot gúľajúcich sa gúľ
 		if (game.state === 'moving') {
 			for (const e of game.tick(dt)) {
+				if (e.type === 'cushion') {
+					shotTrack.cush.add(e.a);
+				} else if (e.type === 'pot') {
+					shotTrack.pots.push(e.a);
+				}
 				if (e.type === 'ball') {
 					const a = game.balls[e.a];
 					const b = game.balls[e.b];
@@ -4099,10 +4200,8 @@ export function start(root, config = {}) {
 					if (venue === 'league' && game.balls[e.a] && game.balls[e.a].kind !== 'white') {
 						stadium.react('clap'); // diváci tlieskajú pri potopenej guli
 						crowdLg.react('clap');
-						sound.fx('applause-small', { gain: 0.7 }); // potlesk z tribún (stereo, zo všetkých strán)
 					} else if (venue !== 'league' && game.balls[e.a] && game.balls[e.a].kind !== 'white') {
 						crowdHome.react('clap');
-						sound.fx('applause-small', { gain: 0.35, room: 0.5 });
 					}
 				}
 			}
