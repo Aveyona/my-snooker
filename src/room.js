@@ -394,10 +394,10 @@ export function buildRoomShell(scene, quality, opts = {}) {
 			add(new THREE.BoxGeometry(2.4, 2.6, 2.2), corrMat, 0, 1.3, -0.05, corr);
 			const corrFloor = add(new THREE.PlaneGeometry(2.4, 2.2), new THREE.MeshStandardMaterial({ color: 0x3b2a1c, roughness: 0.8 }), 0, 0.005, -0.05, corr);
 			corrFloor.rotation.x = -Math.PI / 2;
-			const corrLight = new THREE.PointLight(0xffd8a0, high ? 2.2 : 1.4, 4, 1.6);
+			const corrLight = new THREE.PointLight(0xffd8a0, high ? 0.9 : 0.6, 4, 1.6); // tlmené (Robo 7. 11.: nesmie biť do očí)
 			corrLight.position.set(0, 2.2, -0.4);
 			corr.add(corrLight);
-			const bulb = add(new THREE.SphereGeometry(0.05, 12, 8), new THREE.MeshBasicMaterial({ color: 0xfff0d0 }), 0, 2.45, -0.4, corr);
+			const bulb = add(new THREE.SphereGeometry(0.05, 12, 8), new THREE.MeshBasicMaterial({ color: 0xb8a888 }), 0, 2.45, -0.4, corr);
 			bulb.castShadow = false;
 			// svietiace cedule zavesené na zadnej stene chodby (vidno ich cez otvorené dvere)
 			const sign = (id, text, arrow, x, y) => {
@@ -417,14 +417,14 @@ export function buildRoomShell(scene, quality, opts = {}) {
 				g.fillText(arrow === 'l' ? '\u2190 ' + text : text + ' \u2192', 256, 84);
 				const t = new THREE.CanvasTexture(c);
 				t.colorSpace = THREE.SRGBColorSpace;
-				const mat = new THREE.MeshStandardMaterial({ map: t, emissive: 0xffffff, emissiveMap: t, emissiveIntensity: 1.1, roughness: 0.5 });
+				const mat = new THREE.MeshStandardMaterial({ map: t, emissive: 0xffffff, emissiveMap: t, emissiveIntensity: 0.5, roughness: 0.5 });
 				const m = add(new THREE.BoxGeometry(0.52, 0.165, 0.03), mat, x, y, -1.12, corr);
 				m.castShadow = false;
 				for (const sx of [-0.21, 0.21]) {
 					const ch = add(new THREE.CylinderGeometry(0.004, 0.004, 2.45 - y, 6), new THREE.MeshStandardMaterial({ color: 0xb08a3c, metalness: 0.85, roughness: 0.35 }), x + sx, (2.45 + y) / 2, -1.12, corr);
 					ch.castShadow = false;
 				}
-				const glow = new THREE.PointLight(0xffd9a0, high ? 0.6 : 0.4, 1.2, 2);
+				const glow = new THREE.PointLight(0xffd9a0, high ? 0.2 : 0.14, 1.0, 2);
 				glow.position.set(x, y, -0.95);
 				corr.add(glow);
 				signs[id] = { mesh: m, mat, glow };
@@ -1194,8 +1194,8 @@ export function buildRoomShell(scene, quality, opts = {}) {
 		setSign(id, on) {
 			const sg = signs[id];
 			if (sg) {
-				sg.mat.emissiveIntensity = on ? 1.1 : 0.12;
-				sg.glow.intensity = on ? 0.5 : 0;
+				sg.mat.emissiveIntensity = on ? 0.5 : 0.08;
+				sg.glow.intensity = on ? 0.16 : 0;
 			}
 		},
 		/** Miesta na státie pre online divákov: počet, miesto, oči diváka, výber zhora. */

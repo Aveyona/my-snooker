@@ -154,6 +154,7 @@ function mysn_roadmap() {
 /** Denník zmien (najnovšie hore). */
 function mysn_changelog() {
 	return array(
+		array( '0.8.1', '7. 11. 2026', 'Chodba: tlmenejšie svetlo a cedule Kancelária a Obývačka, aby nebili do očí (text je lepšie čitateľný).' ),
 		array( '0.8.0', '7. 11. 2026', 'Obývačka (etapa 1): z herne cez dvere (F6) do chodby, na jej stene svietiace cedule Kancelária a Obývačka, klik s Ctrl prejde do miestnosti (len prihlásení, neprihláseným cedule nesvietia). Obývačka má gauč, kreslá, krb s plápolajúcim ohňom, koberec, stojaciu lampu, knižnicu, rastliny, okno, hodiny na rímse so skutočným časom a televízor (zatiaľ znelka My Snooker TV). Sedíš na gauči a myšou sa rozhliadaš, F1 televízor, F2 krb, F3 knižnica, Ctrl a klik na dvere späť do herne, v menu Späť do herne, obývačka je aj v mape M. Plán vývoja: nová etapa 7 Obývačka.' ),
 		array( '0.7.104', '7. 11. 2026', 'Predĺženie tága už presnosť skoro nekazí: biela náhodne uhne najviac o 0,03° pri 15 cm, 0,06° pri 30 cm a 0,1° pri 45 cm (predtým 0,25°, 0,5° a 0,8°, to sa nedalo hrať). Väčšina úderov ide takmer presne, plná odchýlka príde len výnimočne; silnejší úder trochu viac.' ),
 		array( '0.7.103', '7. 11. 2026', 'Voľná kamera: Tab zapne alebo vypne malý náhľad stola zhora vpravo hore (gule vidno, aj keď sa kamera pozerá inam). Nastavenie sa pamätá.' ),
