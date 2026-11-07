@@ -17,6 +17,15 @@ export function soundGroup(slot) {
 	return 'table'; // stôl, rozostavenie aj rozhodca
 }
 
+/** Úprava zvuku úderu tága: ťažšie tágo hlbšie, mäkká špica tupšia, tvrdá ostrejšia, bez kriedy ostrejšie, opotrebovaná tupšia a nižšia. */
+export function cueMod(o = {}) {
+	const wear = Math.max(0, Math.min(1, o.wear || 0));
+	return {
+		pitch: (o.mass ? -6 * Math.log2(o.mass / 540) : 0) - wear * 0.8,
+		color: (o.tip === 'soft' ? -0.25 : o.tip === 'hard' ? 0.2 : 0) + (o.chalk === false ? 0.15 : 0) - wear * 0.35,
+	};
+}
+
 const DEF = { vol: 100, pitch: 0, color: 0, vary: 4, sens: 100, room: 100 };
 const ROOMS = { herna: { len: 0.55, wet: 0.16 }, office: { len: 0.32, wet: 0.08 }, stadium: { len: 2.3, wet: 0.34 } };
 const AMB = { herna: 'amb-herna', office: 'amb-office', stadium: 'amb-stadium' };
@@ -529,9 +538,7 @@ export class Sound {
 			return;
 		}
 		// ťažšie tágo hlbšie; opotrebovaná špica tupšia a nižšia (stlačená koža)
-		const wear = Math.max(0, Math.min(1, o.wear || 0));
-		const pitch = (o.mass ? -6 * Math.log2(o.mass / 540) : 0) - wear * 0.8;
-		const color = (o.tip === 'soft' ? -0.25 : o.tip === 'hard' ? 0.2 : 0) + (o.chalk === false ? 0.15 : 0) - wear * 0.35;
+		const { pitch, color } = cueMod(o);
 		const opt = { vel: power, pos: o.pos, pitch, color };
 		if (o.miscue && this.play('cue-miscue', opt)) {
 			return;

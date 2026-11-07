@@ -3,7 +3,7 @@
  * WordPressu): nahranie, prehranie, zapnutie, priorita, odloženie do koša. Skúška zahrá zvuk rovnakým enginom
  * ako hra, s aktuálnym (aj neuloženým) doladením a parametrami situácie.
  */
-import { Sound } from './audio.js';
+import { Sound, cueMod } from './audio.js';
 
 const $ = (s, el = document) => el.querySelector(s);
 const D = window.mysnSnd || { files: {}, names: {}, radio: [], rmeta: {} };
@@ -149,11 +149,21 @@ const playSlot = async (slot) => {
 		}
 		return;
 	}
-	if (LAYERS[g] && T.mode === 'game') {
-		playGroup(g, T);
+	if (LAYERS[g] && T.mode === 'mix') {
+		playGroup(g, T); // celý zvuk s prelínaním vrstiev (môže znieť aj iný súbor)
 		return;
 	}
-	if (snd.has(slot)) {
+	if (snd.has(slot) && T.mode === 'game') {
+		// presne tento zvuk tak, ako zaznie v hre pri tejto situácii (bez miešania s ostatnými vrstvami)
+		const o = { vel: T.vel, pos: T.pos };
+		if (g === 'cue') {
+			Object.assign(o, cueMod(T));
+		} else if (g === 'ball') {
+			o.vel = T.vel * (1 - T.thin * 0.4);
+			o.color = -T.thin * 0.25;
+		}
+		snd.play(slot, o);
+	} else if (snd.has(slot)) {
 		snd.play(slot, { vel: T.vel, pos: T.pos, pitch: 0 });
 	} else if (LAYERS[g]) {
 		playGroup(g, T); // bez súboru: generovaná náhrada
