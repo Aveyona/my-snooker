@@ -1890,7 +1890,7 @@ export function start(root, config = {}) {
 			ui.setChalk(chalk);
 			updateScore();
 			// úder tága: sila, tágo (hmotnosť, druh špice), krieda, šmyk, rozbitie
-			sound.cue(power, { pos: ballPos(game.cue), mass: cueSpec.massG, tip: tip.kind, chalk: hadChalk, miscue, brk: rackWasFresh && power > 0.55 });
+			sound.cue(power, { pos: ballPos(game.cue), mass: cueSpec.massG, tip: tip.kind, wear: tip.wear || 0, chalk: hadChalk, miscue, brk: rackWasFresh && power > 0.55 });
 			ui.sync(game, rig.mode);
 		}
 	};

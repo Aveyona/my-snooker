@@ -315,7 +315,7 @@ function mysn_admin_sounds_page() {
 			.mysn-snd .p{display:grid;grid-template-columns:repeat(3,minmax(150px,1fr));gap:4px 14px}
 			.mysn-snd .p label{font-size:12px;color:#50575e}.mysn-snd .p input{width:100%}
 			.mysn-snd .p output{float:right;font-weight:600;color:#1d2327}
-			.mysn-snd .test{position:sticky;top:32px;z-index:5;background:#fff;border:1px solid #c3c4c7;padding:8px 12px;margin:0 0 14px;display:flex;gap:16px;align-items:center;flex-wrap:wrap}
+			.mysn-snd .test{position:sticky;top:32px;z-index:5;background:#fff;border:1px solid #c3c4c7;padding:8px 12px;margin:0 0 14px;display:flex;gap:8px 16px;align-items:center;flex-wrap:wrap;box-shadow:0 2px 6px #0001}.mysn-snd .test label{white-space:nowrap}.mysn-snd .test .sep{flex-basis:100%;height:0}
 		</style>
 		<div class="card" style="max-width:none;margin:0 0 14px">
 			<h2 style="margin-top:6px">Ako dodávať zvuky</h2>
@@ -330,10 +330,23 @@ function mysn_admin_sounds_page() {
 			</ul>
 		</div>
 		<div class="test">
-			<b>Skúška:</b>
-			<label>Sila úderu <input type="range" id="mysn-snd-vel" min="0" max="100" value="60"> <output id="mysn-snd-velo">60 %</output></label>
+			<b>Skúška</b>
+			<label title="Sila úderu alebo rýchlosť gule">Sila <input type="range" id="mysn-snd-vel" min="0" max="100" value="60"> <output id="mysn-snd-velo">60 %</output></label>
 			<label>Miestnosť <select id="mysn-snd-room"><option value="herna">Herňa</option><option value="office">Kancelária</option><option value="stadium">Štadión</option></select></label>
-			<span class="description">Tlačidlo Prehrať pri zvuku ho zahrá s aktuálnym doladením (aj neuloženým), bez súboru zahrá generovaný zvuk.</span>
+			<label>Výstup <select id="mysn-snd-out"><option value="hrtf">Slúchadlá (3D)</option><option value="stereo">Reproduktory (stereo)</option></select></label>
+			<label>Poloha <select id="mysn-snd-pos"><option value="front">Pred tebou</option><option value="left">Vľavo</option><option value="right" selected>Vpravo vpredu</option><option value="back">Za tebou</option><option value="far">Ďaleko (druhý koniec stola)</option><option value="mono">Bez priestoru</option></select></label>
+			<label>Spôsob <select id="mysn-snd-mode"><option value="game">Ako v hre (vrstvy podľa sily, situácia)</option><option value="file">Len súbory tohto zvuku</option></select></label>
+			<span class="sep"></span>
+			<label title="Hmotnosť tága: ťažšie znie hlbšie">Tágo <input type="range" id="mysn-snd-mass" min="480" max="640" step="5" value="555"> <output id="mysn-snd-masso">555 g</output></label>
+			<label>Špica <select id="mysn-snd-tip"><option value="soft">Mäkká</option><option value="medium" selected>Stredná</option><option value="hard">Tvrdá</option></select></label>
+			<label title="Opotrebovaná špica znie tupšie a nižšie">Opotrebenie <input type="range" id="mysn-snd-wear" min="0" max="100" value="0"> <output id="mysn-snd-wearo">0 %</output></label>
+			<label>Krieda <select id="mysn-snd-chalk"><option value="1">Nakriedované</option><option value="0">Bez kriedy</option></select></label>
+			<label><input type="checkbox" id="mysn-snd-miscue"> Šmyk tága</label>
+			<label><input type="checkbox" id="mysn-snd-brk"> Rozbitie</label>
+			<label title="Gule: tenký zásah znie ľahšie a tlmenejšie">Zásah <input type="range" id="mysn-snd-thin" min="0" max="100" value="0"> <output id="mysn-snd-thino">plný</output></label>
+			<label>Jamka <select id="mysn-snd-pocket"><option value="1">Rohová</option><option value="0">Stredná</option></select></label>
+			<button type="button" class="button" id="mysn-snd-shot" title="Celý úder: tágo, guľa do gule, mantinel a jamka s nastavením vyššie">Prehrať celý úder</button>
+			<p class="description" style="flex-basis:100%;margin:0">Tlačidlo Prehrať pri zvuku ho zahrá s aktuálnym doladením (aj neuloženým) a s parametrami skúšky. Ako v hre: úder tága, gule a mantinel vyberú vrstvu podľa sily a zohľadnia tágo, špicu, kriedu, šmyk, rozbitie, zásah a jamku; Len súbory: zahrá presne súbory daného zvuku. Bez súboru zahrá základnú sadu alebo generovaný zvuk.</p>
 		</div>
 		<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>">
 			<input type="hidden" name="action" value="mysn_sounds">

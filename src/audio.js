@@ -499,15 +499,17 @@ export class Sound {
 	}
 
 	/**
-	 * Úder tága. o = { pos, mass (g, ťažšie tágo hlbšie), tip ('soft' | 'medium' | 'hard'), chalk (bool),
-	 * miscue (bool), brk (rozbitie) }.
+	 * Úder tága. o = { pos, mass (g, ťažšie tágo hlbšie), tip ('soft' | 'medium' | 'hard'), wear (0..1,
+	 * opotrebenie špice), chalk (bool), miscue (bool), brk (rozbitie) }.
 	 */
 	cue(power, o = {}) {
 		if (!this._ok()) {
 			return;
 		}
-		const pitch = o.mass ? -6 * Math.log2(o.mass / 540) : 0;
-		const color = (o.tip === 'soft' ? -0.25 : o.tip === 'hard' ? 0.2 : 0) + (o.chalk === false ? 0.15 : 0);
+		// ťažšie tágo hlbšie; opotrebovaná špica tupšia a nižšia (stlačená koža)
+		const wear = Math.max(0, Math.min(1, o.wear || 0));
+		const pitch = (o.mass ? -6 * Math.log2(o.mass / 540) : 0) - wear * 0.8;
+		const color = (o.tip === 'soft' ? -0.25 : o.tip === 'hard' ? 0.2 : 0) + (o.chalk === false ? 0.15 : 0) - wear * 0.35;
 		const opt = { vel: power, pos: o.pos, pitch, color };
 		if (o.miscue && this.play('cue-miscue', opt)) {
 			return;
