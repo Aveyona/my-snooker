@@ -9,6 +9,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 function mysn_roadmap() {
 	return array(
+		array( '0.7.59', '7. 11. 2026', 'Stav špice a kriedy inak: vedľa gule Miesto úderu je koniec tága zboku. Špica má farbu tvojej špice a opotrebením sa zmenšuje, navrchu je vrstva kriedy vo farbe kriedy (hrubšia = viac úderov), nad ním percento špice. Miesto úderu je opäť modrá bodka.' ),
 		array( '0.7.58', '7. 11. 2026', 'Miesto úderu sa po každom údere vráti do stredu. Na guli Miesto úderu je v strede čelo špice (farba špice, poprášené kriedou, tmavšie podľa opotrebenia) a okolo dva oblúky: vľavo zdravie špice, vpravo nakriedovanie; pod guľou Špica v % a Krieda 3/3. Detail dotyku je predvolene vpravo dole.' ),
 		array(
 			'n'      => 1,

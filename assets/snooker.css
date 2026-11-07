@@ -34,14 +34,11 @@ body.mysn-page { font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans
 .mysn-spin { position: absolute; left: 16px; bottom: 70px; display: flex; flex-direction: column; align-items: center; gap: 6px; font-size: 12px; }
 .mysn-spin-ball { position: relative; width: 84px; height: 84px; border-radius: 50%; background: radial-gradient(circle at 35% 30%, #fff, #e6e2d6 45%, #a9a596); box-shadow: 0 2px 10px #000a; cursor: crosshair; touch-action: none; }
 .mysn-spin-ball::before { content: ""; position: absolute; inset: 20%; border-radius: 50%; border: 1px dashed #0004; }
-.mysn-spin-dot { position: absolute; left: 50%; top: 50%; width: 22px; height: 22px; margin: -11px 0 0 -11px; border-radius: 50%; border: 3px solid #2f6fd6; box-shadow: 0 0 0 1.5px #fff, 0 0 5px #000a; pointer-events: none; }
-.mysn-spin-wrap { position: relative; padding: 7px; }
-.mysn-spin-gauge { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; overflow: visible; }
-.mysn-spin-gauge path { fill: none; stroke-width: 3.2; stroke-linecap: round; }
-.mysn-spin-gauge .mysn-g-track { stroke: #ffffff22; }
-.mysn-spin-gauge .mysn-g-tip, .mysn-spin-gauge .mysn-g-chalk { transition: stroke-dasharray .4s ease; filter: drop-shadow(0 0 2px #0008); }
-.mysn-spin-face { position: absolute; left: 50%; top: 50%; width: 12px; height: 12px; margin: -6px 0 0 -6px; border-radius: 50%; box-shadow: inset 0 0 2px #000a; overflow: hidden; pointer-events: none; }
-.mysn-spin-face i { position: absolute; inset: 0; border-radius: 50%; transition: opacity .3s; }
+.mysn-spin-dot { position: absolute; left: 50%; top: 50%; width: 14px; height: 14px; margin: -7px 0 0 -7px; border-radius: 50%; background: #2f6fd6; border: 2px solid #fff; box-shadow: 0 0 4px #000; pointer-events: none; }
+.mysn-spin-wrap { display: flex; align-items: flex-end; gap: 8px; }
+.mysn-spin-cue { width: 28px; height: 84px; filter: drop-shadow(0 2px 4px #000a); pointer-events: none; overflow: visible; }
+.mysn-spin-cue text { font: bold 11px Arial, sans-serif; paint-order: stroke; stroke: #000a; stroke-width: 2.5px; }
+@media (max-width: 760px) { .mysn-spin-cue { width: 21px; height: 64px; } }
 .mysn-spin-stat { display: flex; gap: 8px; font-size: 10.5px; font-weight: 600; background: #0c0f14b0; border-radius: 6px; padding: 2px 7px; white-space: nowrap; }
 
 .mysn-tools { position: absolute; left: 0; right: 0; bottom: 0; display: flex; flex-wrap: wrap; justify-content: center; gap: 8px 18px; padding: 12px 16px; background: linear-gradient(#0c0f1400, #0c0f14e6); }

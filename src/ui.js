@@ -61,11 +61,10 @@ export class UI {
 		this.bindPower();
 
 		// Falše
-		this.spinBox = h('div', 'mysn-spin', '<div class="mysn-spin-wrap"><svg class="mysn-spin-gauge" viewBox="0 0 100 100"><path class="mysn-g-track" d="M50 96 A46 46 0 0 1 50 4"/><path class="mysn-g-track" d="M50 96 A46 46 0 0 0 50 4"/><path class="mysn-g-tip" d="M50 96 A46 46 0 0 1 50 4" pathLength="100"/><path class="mysn-g-chalk" d="M50 96 A46 46 0 0 0 50 4" pathLength="100"/></svg><div class="mysn-spin-ball"><div class="mysn-spin-face"><i></i></div><div class="mysn-spin-dot"></div></div></div><div class="mysn-spin-label">Miesto úderu</div><div class="mysn-spin-stat"><span class="mysn-st-tip"></span><span class="mysn-st-chalk"></span></div>');
+		this.spinBox = h('div', 'mysn-spin', '<div class="mysn-spin-wrap"><div class="mysn-spin-ball"><div class="mysn-spin-dot"></div></div><svg class="mysn-spin-cue" viewBox="0 0 40 120"><defs><linearGradient id="mysnCueG"><stop offset="0" stop-color="#0005"/><stop offset=".45" stop-color="#fff2"/><stop offset="1" stop-color="#0006"/></linearGradient></defs><text class="mysn-sc-pct" x="20" y="11" text-anchor="middle"></text><rect x="10" y="62" width="20" height="58" fill="#c9a26b"/><rect x="10" y="46" width="20" height="16" fill="#f3ead2"/><path class="mysn-sc-tip"/><path class="mysn-sc-chalk"/><rect x="10" y="46" width="20" height="74" fill="url(#mysnCueG)" opacity=".7"/></svg></div><div class="mysn-spin-label">Miesto úderu</div><div class="mysn-spin-stat"><span class="mysn-st-tip"></span><span class="mysn-st-chalk"></span></div>');
 		root.appendChild(this.spinBox);
 		this.spinBall = this.spinBox.querySelector('.mysn-spin-ball');
 		this.spinDot = this.spinBox.querySelector('.mysn-spin-dot');
-		this.spinFace = this.spinBox.querySelector('.mysn-spin-face');
 		this.bindSpin();
 
 		// Spodné tlačidlá
@@ -239,17 +238,19 @@ export class UI {
 		const q = (c) => this.spinBox.querySelector(c);
 		const life = Math.max(0, Math.min(1, 1 - (st.wear || 0)));
 		const lc = life > 0.5 ? '#4ade80' : life > 0.2 ? '#fbbf24' : '#f87171';
-		const g1 = q('.mysn-g-tip');
-		g1.style.stroke = lc;
-		g1.style.strokeDasharray = `${life * 100} 100`;
-		const g2 = q('.mysn-g-chalk');
-		g2.style.stroke = st.chalkHex;
-		g2.style.strokeDasharray = `${st.chalk * 100} 100`;
-		this.spinFace.style.background = st.tip;
-		const dust = this.spinFace.firstChild;
-		dust.style.background = `radial-gradient(circle at 40% 35%, ${st.chalkHex} 0 45%, transparent 75%)`;
-		dust.style.opacity = st.chalk ? 0.35 + st.chalk * 0.6 : 0;
-		this.spinFace.style.filter = `brightness(${1 - (st.wear || 0) * 0.45})`;
+		// tágo zboku: špica (výška klesá opotrebením) s klenbou, navrchu vrstva kriedy (hrubšia = viac úderov)
+		const th = 3 + 15 * life;
+		const top = 46 - th;
+		const tp = q('.mysn-sc-tip');
+		tp.setAttribute('d', `M10 46 V${top} Q20 ${top - 7} 30 ${top} V46Z`);
+		tp.setAttribute('fill', st.tip);
+		const ck = st.chalk > 0 ? 1.5 + st.chalk * 4.5 : 0;
+		const ch = q('.mysn-sc-chalk');
+		ch.setAttribute('d', ck ? `M10 ${top} Q20 ${top - 7} 30 ${top} V${top + ck} Q20 ${top - 7 + ck} 10 ${top + ck}Z` : 'M0 0');
+		ch.setAttribute('fill', st.chalkHex);
+		const pc = q('.mysn-sc-pct');
+		pc.textContent = Math.round(life * 100) + '%';
+		pc.setAttribute('fill', lc);
 		const t1 = q('.mysn-st-tip');
 		t1.textContent = `Špica ${Math.round(life * 100)} %`;
 		t1.style.color = lc;
