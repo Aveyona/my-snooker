@@ -16,7 +16,7 @@ const PAPERS = [
 			'F7  kreslo so správami (C noviny, V RSS)',
 			'F8  rebríček   F9  rádio (šípky, P)',
 			'F10 bar s telefónom   F12 nástenka Liga',
-			'Tab  stôl zhora   M  mapa miestností',
+			'Tab  stôl zhora (vo voľnej kamere náhľad)   M  mapa',
 			'Medzerník  voľná kamera   Esc  menu',
 			'Z späť, B biela do ruky, R nové rozostavenie,',
 			'S preskočiť, Enter polož bielu, šípky: jemné',

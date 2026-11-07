@@ -1663,7 +1663,7 @@ export function start(root, config = {}) {
 			renderer.shadowMap.autoUpdate = sh;
 			top += h + 10;
 		}
-		const on = !!(settings.specMini !== false && specView() && view !== 'fiesta');
+		const on = !!((settings.specMini !== false && specView() && view !== 'fiesta') || (settings.freeMini && view === 'free' && venue !== 'office'));
 		miniFrame.classList.toggle('mysn-hidden', !on);
 		if (!on) {
 			return;
@@ -3199,6 +3199,13 @@ export function start(root, config = {}) {
 		radioPick: (i) => radio.play(i),
 		radioSet: ({ k, v }) => radio.set(k, v),
 		top: () => {
+			if (view === 'free') {
+				// voľná kamera: Tab zapne alebo vypne malý náhľad stola zhora v rohu (gule vidno, aj keď sa pozeráš inam)
+				settings.freeMini = !settings.freeMini;
+				saveSettings(settings);
+				ui.toast(settings.freeMini ? 'Náhľad stola zapnutý (Tab ho vypne).' : 'Náhľad stola vypnutý.');
+				return;
+			}
 			if (view) {
 				return;
 			}
