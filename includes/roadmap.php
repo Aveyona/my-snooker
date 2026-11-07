@@ -123,6 +123,7 @@ function mysn_roadmap() {
 				array( 'Ochrana proti podvádzaniu (až pred dokončením hry): súper ako rozhodca (porovná výsledok úderu), kontrola rozumnosti bodov na serveri, overenie skóre v hre o skóre, označenie podozrivo presných hráčov', 0 ),
 				array( 'TURN server pre priame spojenie (WebRTC): odložené, zatiaľ netreba (spojenie po 0.6.44 funguje)', 0 ),
 				array( 'Klávesy F8, F9 a F10 na štadióne (zatiaľ nerobia nič)', 0 ),
+				array( 'Štadión: zápas začína animáciou, rozhodca vkladá gule do trojuholníka a zdvíha ho', 0 ),
 				array( 'Doladenie podľa skúšania (svetlá, citlivosť ovládania, rýchlosť súkna)', 0 ),
 			),
 		),
@@ -132,6 +133,7 @@ function mysn_roadmap() {
 /** Denník zmien (najnovšie hore). */
 function mysn_changelog() {
 	return array(
+		array( '0.7.78', '7. 11. 2026', 'Zvuky, etapa Stôl: gúľanie gúľ (šuchot súkna z miesta, kde sa gule gúľajú, hlasitosť, výška a jas podľa rýchlosti, dobeh pri zastavení) a položenie gule (farba na spot, biela z ruky). Plán: animácia rozhodcu s trojuholníkom na začiatku zápasu na štadióne.' ),
 		array( '0.7.77', '7. 11. 2026', 'Administrácia Zvuky: pri každom zvuku odporúčaná dĺžka klipu a hlasitosť v klipe (špička v dBFS pri krátkych úderoch, priemer v LUFS pri dlhších zvukoch) a návod, ako ich zmerať. Hlas rozhodcu a divákov je po anglicky.' ),
 		array( '0.7.76', '7. 11. 2026', 'Zvuky: základná sada 58 voľných nahrávok (CC0 a royalty free): úder tága, gule, mantinel, jamka, rozbitie, trojuholník, krieda, gúľanie, ambient herne, kancelárie a štadióna, potlesk, údiv, smiech, pískanie, kašeľ. Hrá, kým admin k zvuku nevyberie vlastné súbory; v administrácii Zvuky je pri zvuku vidno základná sada a dá sa prehrať. Zdroje v assets/sounds/LICENSES.txt.' ),
 		array( '0.7.75', '7. 11. 2026', 'Zvuky, 1. etapa: nový zvukový engine. Zvuky vznikajú na mieste v scéne a poslucháč je kamera (3D zvuk na slúchadlách, výrazné stereo na reproduktoroch), dozvuk podľa miestnosti (herňa, kancelária, štadión). Úder tága sa mení podľa sily, hmotnosti tága, druhu špice, kriedy, šmyku a rozbitia; gule, mantinel a jamky (rohová, stredná, drkotanie) podľa rýchlosti. Administrácia My Snooker → Zvuky: ku každému z 52 zvukov (stôl, rozostavenie, miestnosti, rozhodca, hráč, diváci) sa vyberajú súbory z Médií (WAV, MP3, OGG, viac súborov = varianty) a dolaďuje hlasitosť, tón, farba, náhodnosť, citlivosť na silu a dozvuk, so skúškou. Zvuk bez súboru hrá generovanú náhradu. Nastavenia hráča: hlasitosť zvukov stola, miestnosti a divákov a Priestorový zvuk (slúchadlá alebo reproduktory).' ),

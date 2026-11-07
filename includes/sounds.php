@@ -26,9 +26,9 @@ function mysn_sound_slots() {
 		'pot-corner'     => array( 'Stôl', 'Jamka: rohová', 'Hrá z rohovej jamky (3D). Guľa padne do rohovej jamky; rýchlejšia guľa je hlasnejšia.', 'Guľa padne do jamky a dokotúľa sa v sieťke alebo žľabe. 3 varianty.' ),
 		'pot-middle'     => array( 'Stôl', 'Jamka: stredná', 'Hrá zo strednej jamky (3D). Bez nahrávky sa použije rohová jamka.', 'Pád do strednej jamky. 3 varianty.' ),
 		'pot-jaws'       => array( 'Stôl', 'Jamka: drkotanie v čeľustiach', 'Hrá z jamky tesne pred pádom, keď guľa ide do jamky rýchlo (zadrkoce o čeľuste).', 'Guľa zadrkoce o čeľuste jamky. 3 varianty.' ),
-		'roll'           => array( 'Stôl', 'Gúľanie po súkne (slučka)', 'Šuchot gúľajúcich sa gúľ, hlasitosť podľa rýchlosti (pripravujeme, etapa Stôl).', 'Guľa sa gúľa po súkne, 5 až 10 s, plynulo opakovateľné.' ),
+		'roll'           => array( 'Stôl', 'Gúľanie po súkne (slučka)', 'Hrá počas pohybu gúľ z miesta, kde sa gúľajú: hlasitosť, výška a jas podľa ich rýchlosti, pri zastavení dobehne. Bez nahrávky generovaný šum súkna.', 'Guľa sa gúľa po súkne, 5 až 10 s, plynulo opakovateľné.' ),
 		'chalk'          => array( 'Stôl', 'Kriedovanie tága', 'Hrá pri kriedovaní (F3, 1) zo špice tága.', 'Krieda o špicu, krátke škrípanie. 2 až 3 varianty.' ),
-		'place'          => array( 'Stôl', 'Položenie gule rukou', 'Guľa položená na súkno: farba na spot, biela do ruky (pripravujeme).', 'Mäkké ťuknutie gule o súkno. 3 varianty.' ),
+		'place'          => array( 'Stôl', 'Položenie gule rukou', 'Hrá, keď sa farba vráti na spot a keď položíš bielu z ruky (3D, z miesta gule).', 'Mäkké ťuknutie gule o súkno. 3 varianty.' ),
 		'rest'           => array( 'Stôl', 'Položenie nádstavca', 'Hrá, keď vezmeš krížik alebo pavúk (F3, 2 až 4).', 'Kovový alebo drevený nádstavec položený na súkno. 2 varianty.' ),
 		'rack-fill'      => array( 'Rozostavenie', 'Gule do trojuholníka', 'Hrá pri novom rozostavení, keď sa objaví trojuholník okolo červených.', 'Červené sa vkladajú do trojuholníka a cvakajú, 1 až 3 s.' ),
 		'rack-lift'      => array( 'Rozostavenie', 'Zdvihnutie trojuholníka', 'Hrá, keď sa trojuholník zdvíha zo stola.', 'Trojuholník sa zdvihne, drevo alebo plast jemne ťukne.' ),
@@ -72,6 +72,9 @@ function mysn_sound_slots() {
  * použije sa, kým admin k zvuku nevyberie vlastné súbory. Vráti cesty (bez domény).
  */
 function mysn_sound_bundled( $slot ) {
+	if ( 'roll' === $slot ) {
+		return array(); // gúľanie: generovaný šum súkna, kým nie je vlastná slučka (voľná nahrávka končila pádom do jamky)
+	}
 	$alias = array( 'applause-small' => 'applause-big', 'ovation' => 'applause-big' );
 	$dir   = isset( $alias[ $slot ] ) ? $alias[ $slot ] : $slot;
 	$files = glob( MYSN_DIR . 'assets/sounds/' . sanitize_file_name( $dir ) . '/*.{ogg,mp3,wav}', GLOB_BRACE );

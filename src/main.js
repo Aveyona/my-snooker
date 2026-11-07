@@ -3992,6 +3992,9 @@ export function start(root, config = {}) {
 
 	// pri kladení bielej do D sa kamera za tágom dočasne prepne zhora (bielu je tak lepšie vidieť)
 	game.on((type, d) => {
+		if ((type === 'spot' || type === 'placed') && d && d.p) {
+			sound.fx('place', { pos: ballPos(d), delay: type === 'spot' ? 0.15 + Math.random() * 0.25 : 0 }); // guľa položená na súkno
+		}
 		if (type === 'shot' && d && d.shot && typeof d.shot.cx === 'number') {
 			// stopa kriedy na súkne pod bielou: moja krieda, pri súperovi a sledovanom hráčovi jeho krieda
 			const remote = !!d.remote || !!game.spectating;
@@ -4081,6 +4084,7 @@ export function start(root, config = {}) {
 		controls.update(dt);
 		sound.setListener(rig.camera); // poslucháč = kamera (3D zvuk)
 		sound.setRoom(view === 'office' ? 'office' : venue === 'league' ? 'stadium' : 'herna');
+		sound.roll(game.state === 'moving' ? game.balls.filter((b) => b.on && b.moving) : []); // šuchot gúľajúcich sa gúľ
 		if (game.state === 'moving') {
 			for (const e of game.tick(dt)) {
 				if (e.type === 'ball') {

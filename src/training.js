@@ -169,6 +169,7 @@ export class Training {
 		b.moving = false;
 		b.v.x = b.v.z = 0;
 		b.w.x = b.w.y = b.w.z = 0;
+		this.emit('spot', b); // zvuk: guľa položená na spot
 	}
 
 	/** Biela do ruky: hráč ju posúva po D. */
@@ -213,6 +214,7 @@ export class Training {
 
 	confirmPlace() {
 		if (this.state === 'place') {
+			this.emit('placed', this.cue); // zvuk: biela položená rukou
 			this.state = 'aim';
 			this.message = '';
 			this.emit('change');

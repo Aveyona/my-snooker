@@ -252,6 +252,7 @@ export class Sound {
 				pn.setPosition(pos.x, pos.y, pos.z);
 			}
 			g.connect(pn);
+			g.panner = pn; // poloha sa dá meniť (gúľanie)
 			head = pn;
 		}
 		head.connect(this.bus[group] || this.master);
@@ -365,6 +366,81 @@ export class Sound {
 		const out = this._out(pos, soundGroup(slot), (p.room / 100) * 0.6);
 		out.gain.value = p.vol / 100;
 		return { out, k: Math.pow(2, p.pitch / 12) };
+	}
+
+	/**
+	 * Gúľanie: jedna slučka (nahrávka roll, inak generovaný šum súkna), hlasitosť a výška podľa rýchlosti
+	 * gúľajúcich sa gúľ, zvuk ide z miesta, kde sa gúľajú (vážené rýchlosťou). balls = [{ p, v }].
+	 */
+	roll(balls) {
+		if (!this._ok()) {
+			return;
+		}
+		const c = this.ctx;
+		let sum = 0;
+		let x = 0;
+		let z = 0;
+		for (const b of balls) {
+			const sp = Math.hypot(b.v.x, b.v.z);
+			sum += sp;
+			x += b.p.x * sp;
+			z += b.p.z * sp;
+		}
+		if (!this.rollV) {
+			if (sum < 0.01) {
+				return;
+			}
+			let buf = this.has('roll') ? this.bufs.roll[0] : null;
+			if (!buf) {
+				// hnedý šum (súkno): náhodná prechádzka, tlmená dolnou priepusťou
+				const n = c.sampleRate * 2;
+				buf = c.createBuffer(1, n, c.sampleRate);
+				const d = buf.getChannelData(0);
+				let last = 0;
+				for (let i = 0; i < n; i++) {
+					last = (last + 0.02 * (Math.random() * 2 - 1)) / 1.02;
+					d[i] = last * 3.5;
+				}
+			}
+			const s = c.createBufferSource();
+			s.buffer = buf;
+			s.loop = true;
+			const lp = c.createBiquadFilter();
+			lp.type = 'lowpass';
+			lp.frequency.value = 900;
+			const p = this.par('roll');
+			const out = this._out({ x: 0, y: 0.9, z: 0 }, 'table', (p.room / 100) * 0.4);
+			out.gain.value = 0;
+			s.connect(lp).connect(out);
+			s.start();
+			this.rollV = { s, lp, out, panner: out.panner || null, vol: p.vol / 100, pitch: p.pitch };
+		}
+		const R = this.rollV;
+		const t = c.currentTime;
+		const v = Math.min(1, sum / 2.5);
+		R.out.gain.setTargetAtTime(R.vol * 0.35 * Math.pow(v, 0.8), t, 0.06);
+		R.s.playbackRate.setTargetAtTime(Math.pow(2, R.pitch / 12) * (0.75 + 0.5 * v), t, 0.08);
+		R.lp.frequency.setTargetAtTime(500 + 2200 * v, t, 0.08);
+		if (sum > 0.01) {
+			const P = R.panner;
+			if (P && P.positionX) {
+				P.positionX.setTargetAtTime(x / sum, t, 0.05);
+				P.positionZ.setTargetAtTime(z / sum, t, 0.05);
+			}
+		}
+		if (sum < 0.01 && !this._rollStop) {
+			this._rollStop = setTimeout(() => {
+				this._rollStop = null;
+				if (this.rollV && this.rollV === R) {
+					R.out.gain.setTargetAtTime(0, c.currentTime, 0.1);
+					setTimeout(() => R.s.stop(), 800);
+					this.rollV = null;
+				}
+			}, 400);
+		} else if (sum >= 0.01 && this._rollStop) {
+			clearTimeout(this._rollStop);
+			this._rollStop = null;
+		}
 	}
 
 	/* ---------- zvuky hry ---------- */

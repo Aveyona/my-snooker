@@ -91,7 +91,20 @@ for (const tr of document.querySelectorAll('tr[data-slot]')) {
 		snd.setListener({ position: { x: 0, y: 1.6, z: 2.5 }, matrixWorld: { elements: [1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0] } });
 		const pos = { x: 0.6, y: 0.9, z: 0.5 };
 		const base = slot.replace(/-(soft|medium|hard)$/, '');
-		if (snd.has(slot)) {
+		if (slot === 'roll') {
+			// gúľanie: 2 s slučky podľa sily, potom dobeh
+			const ball = { p: { x: 0.6, z: 0.5 }, v: { x: Math.max(0.2, vel * 3), z: 0 } };
+			const t0 = performance.now();
+			const tick = () => {
+				const k = Math.max(0, 1 - (performance.now() - t0) / 2200);
+				ball.v.x = Math.max(0.2, vel * 3) * k;
+				snd.roll(k > 0 ? [ball] : []);
+				if (k > 0) {
+					requestAnimationFrame(tick);
+				}
+			};
+			tick();
+		} else if (snd.has(slot)) {
 			snd.play(slot, { vel, pos });
 		} else if (base === 'cue') {
 			snd.cue(vel, { pos });
