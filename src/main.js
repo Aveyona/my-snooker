@@ -365,52 +365,36 @@ export function start(root, config = {}) {
 		}
 	};
 	/**
-	 * Štadión: rozhodca postaví červené do trojuholníka (ukážka pre admina z mapy M, neskôr začiatok zápasu).
-	 * Príde k čiernemu koncu stola, po jednej dokotúľa 15 červených do trojuholníka, zarovná ich,
-	 * trojuholník zdvihne a vráti sa na svoje miesto. Gule sa len zobrazujú (fyzika stojí na mieste).
+	 * Štadión: po rozostavení rozhodca zoberie trojuholník zo stola a zavesí ho pod stôl na háčik (ukážka pre admina
+	 * z mapy M, neskôr začiatok zápasu). Príde k čiernemu koncu, trojuholník zdvihne, prenesie cez mantinel,
+	 * zvisle ho zavesí pod rám na jeho miesto a vráti sa na svoje stanovište.
 	 */
 	let rackShow = null;
-	const RS_IN = 2.4; // príchod
-	const RS_PER = 0.42; // jedna guľa
-	const RS_SETTLE = 0.9; // zarovnanie
-	const RS_LIFT = 1.4; // zdvihnutie trojuholníka
+	const RS_IN = 2.4; // príchod k čiernemu koncu
+	const RS_GRIP = 0.6; // chytí trojuholník
+	const RS_LIFT = 1.3; // zdvihne a pritiahne k sebe nad mantinel
+	const RS_HANG = 1.5; // spustí dole a zavesí pod rám
 	const RS_OUT = 2.4; // odchod
+	const HANG_POS = { x: HANG_X + 0.008 + 0.02, y: -0.212 - 0.06 }; // poloha modelu na háčiku (ako zavesený trojuholník)
 	const ease = (k) => (k <= 0 ? 0 : k >= 1 ? 1 : k * k * (3 - 2 * k));
 	const startRackShow = () => {
-		const reds = views.items.filter((it) => it.ball.kind === 'red' && it.ball.on).map((it) => it.ball);
-		if (!reds.length) {
-			return false;
-		}
-		// voľne rozložené červené pri čiernom konci (mimo čiernej), plnia sa od zadného radu
-		const ord = [...reds].sort((a, b) => b.p.x - a.p.x || a.p.z - b.p.z);
-		const from = new Map();
-		ord.forEach((b, i) => {
-			const side = i % 2 ? 1 : -1;
-			const k = Math.floor(i / 2);
-			from.set(b, { x: L / 2 - 0.12 - (k % 4) * 0.075 - (i % 3) * 0.02, z: side * (0.32 + Math.floor(k / 4) * 0.11 + (i % 3) * 0.03) });
-		});
 		const home = stadium.refHome();
 		const spot = { x: L / 2 + 0.42, z: 0, yaw: -Math.PI / 2 };
-		rackShow = { t: 0, ord, from, home, spot, done: new Set(), lift: false };
+		rackShow = { t: 0, home, spot, lift: false, hung: false };
 		rackT = -1;
-		triangle.visible = false;
+		triangle.visible = false; // háčik je prázdny, trojuholník leží okolo červených
 		rackAnim.visible = true;
 		rackMat.opacity = 1;
 		rackAnim.position.set(rackLayout().cx, 0, 0);
-		views.over = views.over || new Map();
-		for (const b of ord) {
-			views.over.set(b, { ...from.get(b) });
-		}
+		rackAnim.rotation.set(0, 0, 0);
 		return true;
 	};
 	const endRackShow = () => {
 		rackShow = null;
 		stadium.refScript(null);
-		if (views.over) {
-			views.over.clear();
-		}
 		rackAnim.visible = false;
 		rackAnim.position.set(rackLayout().cx, 0, 0);
+		rackAnim.rotation.set(0, 0, 0);
 		triangle.visible = true;
 		rackWasFresh = rackFresh(); // bez druhej (krátkej) animácie trojuholníka
 	};
@@ -422,74 +406,47 @@ export function start(root, config = {}) {
 		}
 		S.t += dt;
 		const t = S.t;
-		const n = S.ord.length;
 		const T1 = RS_IN;
-		const T2 = T1 + n * RS_PER;
-		const T3 = T2 + RS_SETTLE;
-		const T4 = T3 + RS_LIFT;
+		const T2 = T1 + RS_GRIP;
+		const T3 = T2 + RS_LIFT;
+		const T4 = T3 + RS_HANG;
 		const T5 = T4 + RS_OUT;
 		const lerp = (a, b, k) => a + (b - a) * k;
 		const walkTo = (a, b, k) => {
 			const e = ease(k);
 			return { x: lerp(a.x, b.x, e), z: lerp(a.z, b.z, e), yaw: Math.atan2(b.x - a.x, b.z - a.z), walk: k > 0 && k < 1, arm: 0 };
 		};
+		const cx = rackLayout().cx;
+		const OVER = { x: L / 2 + 0.2, y: 0.17 }; // nad mantinelom pri rozhodcovi (vo výške rúk)
 		let sc;
-		let nudge = 0;
 		if (t < T1) {
 			sc = walkTo(S.home, S.spot, t / T1);
 		} else if (t < T2) {
-			const k = (t - T1) / RS_PER;
-			const i = Math.min(n - 1, Math.floor(k));
-			const f = k - i;
-			const b = S.ord[i];
-			const to = { x: b.p.x, z: b.p.z };
-			sc = { ...S.spot, walk: false, arm: Math.sin(Math.PI * Math.min(1, f * 1.4)) * 0.9 };
-			sc.yaw = Math.atan2(to.x - S.spot.x, to.z - S.spot.z) * 0.35 + S.spot.yaw * 0.65;
-			// guľa i: pomaly sa dokotúľa z miesta na svoje miesto v trojuholníku
-			for (let j = 0; j < n; j++) {
-				const bj = S.ord[j];
-				const o = views.over.get(bj);
-				const fr = S.from.get(bj);
-				const kk = j < i ? 1 : j > i ? 0 : ease(Math.min(1, f * 1.3));
-				const x = lerp(fr.x, bj.p.x, kk);
-				const z = lerp(fr.z, bj.p.z, kk);
-				const d = Math.hypot(x - o.x, z - o.z);
-				o.roll = d > 1e-5 ? { x: x - o.x, z: z - o.z, a: d / R } : null;
-				o.x = x;
-				o.z = z;
-				if (j === i && kk >= 1 && !S.done.has(bj)) {
-					S.done.add(bj);
-					sound.fx('place', { pos: { x, y: R, z }, gain: 0.45 });
-				}
-			}
+			sc = { ...S.spot, walk: false, arm: ease((t - T1) / RS_GRIP) * 0.95 }; // natiahne ruku k trojuholníku
 		} else if (t < T3) {
-			// zarovnanie: trojuholník aj gule kúsok dopredu k ružovej a späť
-			const k = (t - T2) / RS_SETTLE;
-			nudge = -Math.sin(Math.PI * k) * 0.012;
-			sc = { ...S.spot, walk: false, arm: 0.95 };
-			for (const b of S.ord) {
-				const o = views.over.get(b);
-				o.roll = null;
-				o.x = b.p.x + nudge;
-				o.z = b.p.z;
-			}
-			rackAnim.position.x = rackLayout().cx + nudge;
-		} else if (t < T4) {
-			// trojuholník hore a k rozhodcovi
-			const k = (t - T3) / RS_LIFT;
+			// zdvihne trojuholník zo súkna a pritiahne ho k sebe nad mantinel
+			const k = ease((t - T2) / RS_LIFT);
 			if (!S.lift) {
 				S.lift = true;
-				for (const b of S.ord) {
-					views.over.delete(b); // gule sú na svojich miestach (fyzika)
-				}
-				sound.fx('rack-lift', { pos: { x: rackLayout().cx, y: R + 0.1, z: 0 } });
+				sound.fx('rack-lift', { pos: { x: cx, y: R + 0.1, z: 0 } });
 			}
-			const e = ease(k);
-			rackAnim.position.set(lerp(rackLayout().cx, L / 2 + 0.05, e), Math.sin(Math.PI * Math.min(1, k * 1.6)) * 0.22 + e * 0.1, 0);
-			rackMat.opacity = 1 - ease((k - 0.7) / 0.3);
-			sc = { ...S.spot, walk: false, arm: 0.9 - 0.6 * e };
+			rackAnim.position.set(lerp(cx, OVER.x, k), Math.sin((Math.PI / 2) * Math.min(1, k * 1.8)) * OVER.y, 0);
+			sc = { ...S.spot, walk: false, arm: 0.95 - 0.35 * k };
+		} else if (t < T4) {
+			// spustí ho dole popri čele stola, otočí zvisle a nasunie pod rám na háčik
+			const k = (t - T3) / RS_HANG;
+			const down = ease(Math.min(1, k / 0.7));
+			const slide = ease(Math.max(0, (k - 0.65) / 0.35));
+			rackAnim.position.set(lerp(OVER.x, HANG_POS.x, slide), lerp(OVER.y, HANG_POS.y, down), 0);
+			rackAnim.rotation.z = -down * (Math.PI / 2);
+			sc = { ...S.spot, walk: false, arm: 0.6 - 0.45 * down };
+			if (k > 0.97 && !S.hung) {
+				S.hung = true;
+				sound.fx('place', { pos: { x: HANG_POS.x, y: HANG_POS.y, z: 0 }, gain: 0.35 }); // cvaknutie na háčik
+			}
 		} else if (t < T5) {
 			rackAnim.visible = false;
+			triangle.visible = true; // visí na svojom mieste
 			sc = walkTo(S.spot, S.home, (t - T4) / RS_OUT);
 			if (t - T4 > RS_OUT * 0.97) {
 				sc.yaw = S.home.yaw;
@@ -2070,7 +2027,7 @@ export function start(root, config = {}) {
 			: `Nedosiahneš: ruka na rukoväti by bola ${Math.round(r.d * 100)} cm od mantinelu (najviac ${Math.round(r.max * 100)} cm). Použi nádstavec alebo predĺženie (F3).`;
 	const doShoot = (rawPower) => {
 		if (rackShow) {
-			ui.toast('Rozhodca ešte stavia gule.');
+			ui.toast('Rozhodca ešte odkladá trojuholník.');
 			return;
 		}
 		if (!game.spectating && game.cue.on) {
@@ -2156,7 +2113,7 @@ export function start(root, config = {}) {
 		return [
 			{ id: 'home', name: 'Herňa', desc: 'Tréning, Hrať o najlepšie skóre, partie s priateľmi. Stôl s červeným súknom pri tréningu, zeleným v partii.', map: [4, 30, 46, 64], here: here === 'home', locked: false, play: 'Vstúpiť a hrať' },
 			{ id: 'office', name: 'Kancelária', desc: 'Liga: registrácia, tabuľky líg, mapa hráčov, moje tágá, vyhľadanie ligového zápasu.', map: [4, 4, 46, 22], here: here === 'office', locked: !user, lockNote: 'Kancelária je pre prihlásených hráčov.', play: 'Vstúpiť' },
-			{ id: 'league', name: 'Štadión', desc: 'Ligové zápasy pred divákmi, modré súkno, svetlá na stôl.', map: [56, 4, 40, 90], here: here === 'league', locked: !admin, lockNote: 'Štadión sa otvorí, keď nájdeš ligový zápas (Kancelária, Vyhľadať zápas). Hrá sa tu len liga.', play: admin ? 'Vstúpiť a trénovať (admin)' : 'Vstúpiť', extra: admin ? [{ label: 'Rozhodca stavia trojuholník (admin)', act: 'rackDemo', title: 'Ukážka: rozhodca postaví červené do trojuholníka a zdvihne ho' }, { label: 'Ukážka konca zápasu (admin)', act: 'fiestaDemo', title: 'Tabuľa s víťazom a konfety na kontrolu' }, { label: 'Ukážka od diváka (admin)', act: 'spectDemo', title: 'Sedíš na tribúne ako divák: LCD, malý stôl, konfety' }] : [] },
+			{ id: 'league', name: 'Štadión', desc: 'Ligové zápasy pred divákmi, modré súkno, svetlá na stôl.', map: [56, 4, 40, 90], here: here === 'league', locked: !admin, lockNote: 'Štadión sa otvorí, keď nájdeš ligový zápas (Kancelária, Vyhľadať zápas). Hrá sa tu len liga.', play: admin ? 'Vstúpiť a trénovať (admin)' : 'Vstúpiť', extra: admin ? [{ label: 'Rozhodca odkladá trojuholník (admin)', act: 'rackDemo', title: 'Ukážka: rozhodca zoberie trojuholník zo stola a zavesí ho pod stôl' }, { label: 'Ukážka konca zápasu (admin)', act: 'fiestaDemo', title: 'Tabuľa s víťazom a konfety na kontrolu' }, { label: 'Ukážka od diváka (admin)', act: 'spectDemo', title: 'Sedíš na tribúne ako divák: LCD, malý stôl, konfety' }] : [] },
 		].map((r) => ({ ...r, tour: admin }));
 	};
 
@@ -3169,7 +3126,7 @@ export function start(root, config = {}) {
 			exitView();
 			ui.toast('Ukážka od diváka skončila.');
 		},
-		// admin z mapy (M): ukážka, ako rozhodca na štadióne postaví červené do trojuholníka
+		// admin z mapy (M): ukážka, ako rozhodca na štadióne zoberie trojuholník a zavesí ho pod stôl
 		rackDemo: () => {
 			if (config.role !== 'admin' || game.match || game.spectating) {
 				return;
@@ -3180,7 +3137,7 @@ export function start(root, config = {}) {
 				rackWasFresh = true;
 				setTimeout(() => {
 					if (startRackShow()) {
-						ui.toast('Ukážka: rozhodca stavia červené do trojuholníka.');
+						ui.toast('Ukážka: rozhodca odkladá trojuholník pod stôl.');
 					}
 				}, 100);
 			};
