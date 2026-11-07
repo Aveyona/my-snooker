@@ -523,7 +523,7 @@ function mysn_admin_sounds_page() {
 		<style>
 			.mysn-snd table{border-collapse:collapse;width:100%;background:#fff;margin:0 0 22px}
 			.mysn-snd th,.mysn-snd td{border-bottom:1px solid #e2e4e7;padding:8px;vertical-align:top;text-align:left}
-			.mysn-snd td.n{width:340px}.mysn-snd td.n b{display:block}.mysn-snd td.n small{display:block;color:#50575e;margin-top:3px}.mysn-snd td.n small.rec{color:#2271b1}.mysn-snd td.n small.spec{color:#8a5a00}.mysn-snd td.n small.spec b{display:inline}.mysn-snd td.n small.fn{color:#3c434a}.mysn-snd td.n small.fn b{display:inline}.mysn-snd td.n small.fn code{font-size:11px;padding:0 3px}.mysn-snd td.n small.rec b{display:inline}
+			.mysn-snd tr.mysn-own td{background:#f0faf3}.mysn-snd tr.mysn-own td.n{box-shadow:inset 5px 0 0 #00a32a}.mysn-snd .own-tag{display:inline-block!important;margin-left:8px;padding:1px 7px;border-radius:9px;background:#00a32a;color:#fff;font-size:10.5px;font-weight:700;letter-spacing:.3px;vertical-align:1px}#mysn-own-count{font-weight:600;color:#00a32a;margin:0 0 10px}.mysn-snd td.n{width:340px}.mysn-snd td.n b{display:block}.mysn-snd td.n small{display:block;color:#50575e;margin-top:3px}.mysn-snd td.n small.rec{color:#2271b1}.mysn-snd td.n small.spec{color:#8a5a00}.mysn-snd td.n small.spec b{display:inline}.mysn-snd td.n small.fn{color:#3c434a}.mysn-snd td.n small.fn b{display:inline}.mysn-snd td.n small.fn code{font-size:11px;padding:0 3px}.mysn-snd td.n small.rec b{display:inline}
 			.mysn-snd .files{min-width:200px}.mysn-snd .files span{display:inline-block;background:#f0f0f1;border-radius:3px;padding:1px 6px;margin:0 4px 4px 0;font-size:12px}
 			.mysn-snd .files span a{color:#b32d2e;text-decoration:none;margin-left:4px}
 			#mysn-gal{position:fixed;inset:0;z-index:100000;background:#0008;display:none;align-items:flex-start;justify-content:center;padding:60px 16px;overflow:auto}
@@ -550,6 +550,7 @@ function mysn_admin_sounds_page() {
 				<li>Zvuky môžeš dopĺňať postupne. Kým zvuk nemá vlastné súbory, hrá <b>základná sada</b> (po pridaní vlastných sa vypne, v galérii ju môžeš zapnúť späť) (voľné zvuky CC0, zdroje v assets/sounds/LICENSES.txt), a kde nie je ani tá, generovaná náhrada. Keď budú všetky hotové, spravíme kompiláciu (zjednotenie hlasitosti, orezanie, menšie súbory).</li>
 			</ul>
 		</div>
+		<p id="mysn-own-count"></p>
 		<div class="test">
 			<b>Skúška</b>
 			<label title="Sila úderu alebo rýchlosť gule">Sila <input type="range" id="mysn-snd-vel" min="0" max="100" value="60"> <output id="mysn-snd-velo">60 %</output></label>

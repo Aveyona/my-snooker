@@ -86,23 +86,42 @@ export class Sound {
 	}
 
 	/** Načíta nahrávky všetkých slotov (cesty sú z tej istej adresy ako hra). */
-	loadAll() {
-		for (const [slot, c] of Object.entries(this.cfg)) {
-			if (c && c.urls && c.urls.length) {
-				this.load(slot, c.urls, c.w);
-			}
+	/**
+	 * Načíta nahrávky postupne (jeden súbor za druhým s malou pauzou), aby server nedostal naraz stovku
+	 * požiadaviek (odpovedal by 429 Too Many Requests). Najprv zvuky stola, potom miestnosť, diváci a ostatné.
+	 */
+	async loadAll() {
+		const order = (slot) => (/^(cue-|ball-|cushion-|pot-|break|chalk|place|rest|score)/.test(slot) ? 0 : /^amb-/.test(slot) ? 1 : 2);
+		const list = Object.entries(this.cfg)
+			.filter(([, c]) => c && c.urls && c.urls.length)
+			.sort((a, b) => order(a[0]) - order(b[0]));
+		for (const [slot, c] of list) {
+			await this.load(slot, c.urls, c.w, 120);
 		}
 	}
 
 	/** Načíta nahrávky slotu; weights = priorita každého súboru (1 zriedka až 5 často). */
-	async load(slot, urls, weights = []) {
+	async load(slot, urls, weights = [], gap = 0) {
 		const out = [];
 		const w = [];
 		for (let i = 0; i < urls.length; i++) {
+			if (gap) {
+				await new Promise((r) => setTimeout(r, gap));
+			}
 			try {
-				const r = await fetch(urls[i], { credentials: 'same-origin' });
+				let r = await fetch(urls[i], { credentials: 'same-origin' });
+				if (r.status === 429) {
+					await new Promise((ok) => setTimeout(ok, 3000)); // server chce pauzu: skúsiť ešte raz
+					r = await fetch(urls[i], { credentials: 'same-origin' });
+				}
 				if (r.ok) {
-					out.push(await this.ctx.decodeAudioData(await r.arrayBuffer()));
+					const data = await r.arrayBuffer();
+					// dekódovanie s poistkou: keby sa zaseklo, ďalšie zvuky sa načítajú aj tak
+					const buf = await Promise.race([new Promise((ok, no) => this.ctx.decodeAudioData(data, ok, no)), new Promise((ok) => setTimeout(() => ok(null), 8000))]);
+					if (!buf) {
+						continue;
+					}
+					out.push(buf);
 					w.push(Math.max(1, +weights[i] || 3));
 				}
 			} catch (e) {

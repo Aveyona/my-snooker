@@ -38,6 +38,15 @@ const filesOf = (slot) => {
 	});
 };
 
+/** Počet zvukov s vlastnými nahrávkami (navrchu stránky). */
+const ownCount = () => {
+	const el = document.getElementById('mysn-own-count');
+	if (el) {
+		const all = document.querySelectorAll('tr[data-slot]').length;
+		el.textContent = `Vlastné nahrávky má ${document.querySelectorAll('tr[data-slot].mysn-own').length} z ${all} zvukov (zvýraznené zelenou).`;
+	}
+};
+
 const summary = (tr) => {
 	const slot = tr.dataset.slot;
 	const L = tr.querySelector('.list');
@@ -52,6 +61,20 @@ const summary = (tr) => {
 	const list = filesOf(slot);
 	const own = list.filter((f) => f.src === 'own');
 	const on = list.filter((f) => f.on);
+	// zvýraznenie zvuku s vlastnými nahrávkami (zelený pás a štítok pri názve)
+	tr.classList.toggle('mysn-own', own.length > 0);
+	const nb = tr.querySelector('td.n > b');
+	let tag = tr.querySelector('.own-tag');
+	if (own.length && !tag) {
+		tag = document.createElement('span');
+		tag.className = 'own-tag';
+		nb.appendChild(tag);
+	}
+	if (tag) {
+		tag.textContent = own.length ? `VLASTNÝ ZVUK · ${own.filter((f) => f.on).length}/${own.length}` : '';
+		tag.style.display = own.length ? '' : 'none';
+	}
+	ownCount();
 	L.innerHTML = !list.length
 		? '<em style="color:#8c8f94;font-size:12px">bez súboru (hrá generovaný zvuk)</em>'
 		: `<em style="font-size:12px;color:${own.length ? '#1d2327' : '#00a32a'}">${own.length ? `vlastné: ${own.length}` : 'základná sada'}${own.length && list.length > own.length ? `, základná sada: ${list.length - own.length}` : !own.length ? `: ${list.length}` : ''}; hrá ${on.length}</em>`;

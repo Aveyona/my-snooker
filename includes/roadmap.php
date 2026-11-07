@@ -133,6 +133,8 @@ function mysn_roadmap() {
 /** Denník zmien (najnovšie hore). */
 function mysn_changelog() {
 	return array(
+		array( '0.7.94', '7. 11. 2026', 'Administrácia Zvuky: zvuky s vlastnými nahrávkami sú zvýraznené (zelený pás, svetlozelené pozadie a štítok VLASTNÝ ZVUK s počtom zapnutých súborov), navrchu je počet zvukov s vlastnými nahrávkami.' ),
+		array( '0.7.93', '7. 11. 2026', 'Zvuky sa načítajú postupne (najprv zvuky stola, potom miestnosť a diváci), server už nedostane naraz stovku požiadaviek (odpovedal 429 Too Many Requests a časť zvukov chýbala).' ),
 		array( '0.7.92', '7. 11. 2026', 'Zvuky divákov a hráčov online: divák F2 potlesk, F3 jooooj, 1 jasot, 2 óóó, 3 smiech, 4 pískanie, 5 well done, 6 pšššt, 7 kašeľ (v telefóne F1); hráč v partii N napiť sa vody, G grgnúť, H prdnúť (G a H nie v ligovom zápase). Zvuk počujú obaja hráči aj všetci diváci, ide z miesta, kde divák alebo hráč sedí; najviac jeden zvuk za 2,5 sekundy od jedného človeka.' ),
 		array( '0.7.91', '7. 11. 2026', 'Noviny v hre: obrázky článkov z hedlajner.sk sa znova zobrazujú (načítajú sa z adresy hry, prehliadač ich už neblokuje).' ),
 		array( '0.7.90', '7. 11. 2026', 'Administrácia Zvuky: tlačidlo Typická situácia pri každom zvuku zahrá zvuk tak, ako zaznie v hre v situácii, pre ktorú je určený (jemný úder slabou silou, tvrdý plnou, rozbitie, jamka pri jamke, rozhodca a diváci na štadióne, ambient vo svojej miestnosti), s klubovým tágom, strednou špicou a kriedou, bez ohľadu na nastavenie skúšky.' ),
