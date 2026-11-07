@@ -131,6 +131,7 @@ function mysn_roadmap() {
 /** Denník zmien (najnovšie hore). */
 function mysn_changelog() {
 	return array(
+		array( '0.7.72', '7. 11. 2026', 'Tágá so Shift (jemné mierenie): presné mierenie je predvolene vždy zapnuté a Shift prepne na rýchle. Na stojane F2 hneď pod popisom tága sa dá voľba Presné mierenie vždy zapnuté vypnúť (potom Shift zapína presné ako predtým). Pamätá sa pri každom tágu zvlášť.' ),
 		array( '0.7.71', '7. 11. 2026', 'Predĺženie tága škodí presnosti stredne: biela náhodne uhne až o 0,25° pri 15 cm, 0,5° pri 30 cm a 0,8° pri 45 cm (silnejší úder viac).' ),
 		array( '0.7.70', '7. 11. 2026', 'Predĺženie tága zhoršuje presnosť: biela náhodne uhne až o 0,15° pri 15 cm, 0,3° pri 30 cm a 0,5° pri 45 cm (silnejší úder viac, sčíta sa s nepresnosťou opotrebovanej špice). Nasadené predĺženie je vidno na tágu vľavo dole (tmavý kus s kovovým spojom) a pod guľou Miesto úderu text Predĺženie 30 cm ±0,3°.' ),
 		array( '0.7.69', '7. 11. 2026', 'Pravidlá: po súperovom faule voľba Hrám ja (1) alebo Nech hrá súper (2). Súper potom hrá z miesta, kde gule ostali, bez voľnej gule; opakovať sa dá bez limitu, za každý faul sú trestné body. Úderom hráš sám. Platí aj po faule za čas. Výzva na partiu na 1, 3 alebo 5 framov (vyhráva, kto prvý vyhrá väčšinu), ďalší frame rozbíja striedavo, hore stav vo framoch. Liga ostáva na 1 frame.' ),

@@ -2190,9 +2190,9 @@ export class UI {
 		if (c.fine > 0) {
 			// jemné mierenie vždy zapnuté (Shift potom prepne na rýchle)
 			const st = this.opts.settings || {};
-			const lab = h('label', 'mysn-cp-fine', '<input type="checkbox"><span>Jemné mierenie vždy zapnuté <em>(Shift prepne na rýchle mierenie)</em></span>');
+			const lab = h('label', 'mysn-cp-fine', '<input type="checkbox"><span><b>Presné mierenie vždy zapnuté</b> <em>(predvolené; Shift prepne na rýchle mierenie, bez zaškrtnutia naopak Shift zapína presné)</em></span>');
 			const cb = lab.querySelector('input');
-			cb.checked = !!(st.fineCues && st.fineCues[c.id]);
+			cb.checked = !(st.fineCues && st.fineCues[c.id] === 0); // predvolene zapnuté
 			cb.addEventListener('change', () => this.opts.onAction('fineAlways', { id: c.id, on: cb.checked }));
 			P.appendChild(lab);
 		}

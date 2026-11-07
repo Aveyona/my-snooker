@@ -2530,11 +2530,7 @@ export function start(root, config = {}) {
 				return;
 			}
 			settings.fineCues = settings.fineCues || {};
-			if (v.on) {
-				settings.fineCues[v.id] = 1;
-			} else {
-				delete settings.fineCues[v.id];
-			}
+			settings.fineCues[v.id] = v.on ? 1 : 0; // predvolene zapnuté (0 = hráč ho vypol)
 			controls.fineMap = settings.fineCues;
 			saveSettings(settings);
 			controls.setCue(cueSpec);

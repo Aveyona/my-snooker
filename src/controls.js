@@ -242,7 +242,7 @@ export class Controls {
 		this.cueSpec = spec;
 		this.strokePx = strokePx(spec);
 		// jemné mierenie vždy zapnuté (nastavenie pri tágu so Shift); Shift potom prepne na rýchle mierenie
-		this.fineAlways = !!(this.fineMap && this.fineMap[spec.id]) && spec.fine > 0;
+		this.fineAlways = !(this.fineMap && this.fineMap[spec.id] === 0) && spec.fine > 0; // predvolene presné mierenie, Shift prepne na rýchle
 	}
 
 	/** Je myš zachytená v okne hry? */
