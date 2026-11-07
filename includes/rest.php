@@ -36,6 +36,7 @@ add_action(
 			'shot'   => 'mysn_rest_shot',
 			'settle' => 'mysn_rest_settle',
 			'timeout' => 'mysn_rest_timeout',
+			'choice' => 'mysn_rest_choice',
 			'leave'  => 'mysn_rest_leave',
 			'resume' => 'mysn_rest_resume',
 			'score'  => 'mysn_rest_score',
@@ -285,6 +286,7 @@ function mysn_rest_ping( $req ) {
 			'from' => mysn_user( $r['p1'] ),
 			'league' => (int) $r['league'],
 			'training' => 'training' === $r['kind'],
+			'frames'   => mysn_kind_frames( $r['kind'] ),
 		);
 	}
 	$out = $wpdb->get_row( $wpdb->prepare( "SELECT id, p2, status FROM $t WHERE p1 = %d AND status IN ('invited','declined') AND updated >= %d ORDER BY id DESC LIMIT 1", $uid, $now - MYSN_INVITE ), ARRAY_A ); // phpcs:ignore
@@ -338,6 +340,8 @@ function mysn_rest_invite( $req ) {
 	}
 	$training = $req->get_param( 'training' ) ? 1 : 0; // spoločný tréning (bez pravidiel a bez ligy)
 	$league   = ! $training && $req->get_param( 'league' ) ? 1 : 0;
+	$frames   = (int) $req->get_param( 'frames' );
+	$frames   = $training || $league || ! in_array( $frames, array( 3, 5 ), true ) ? 1 : $frames; // výzva na 1, 3 alebo 5 framov, liga 1
 	if ( $league ) {
 		$why = mysn_league_can_play( $uid, $to );
 		if ( $why ) {
@@ -356,7 +360,7 @@ function mysn_rest_invite( $req ) {
 			'created'   => $now,
 			'updated'   => $now,
 			'league'    => $league,
-			'kind'      => $training ? 'training' : '',
+			'kind'      => $training ? 'training' : ( $frames > 1 ? 'bo' . $frames : '' ),
 			'season_id' => $league ? (int) mysn_season_current()['id'] : 0,
 		)
 	);
@@ -380,6 +384,11 @@ function mysn_rest_answer( $req ) {
 	return array( 'id' => (int) $m['id'] );
 }
 
+/** Počet framov partie podľa druhu (bo3, bo5), inak 1. */
+function mysn_kind_frames( $kind ) {
+	return 'bo3' === $kind ? 3 : ( 'bo5' === $kind ? 5 : 1 );
+}
+
 /** Spustí partiu: rozbíja p1 s bielou v ruke v D (stav stola si pri prvom údere vytvorí klient). */
 function mysn_match_begin( $m ) {
 	$now = time();
@@ -395,8 +404,12 @@ function mysn_match_begin( $m ) {
 			'winner' => null,
 		),
 		'inHand' => true,
-		'msg'    => ( 'training' === $m['kind'] ? 'Spoločný tréning začína, rozbíja ' : 'Partia začína, rozbíja ' ) . mysn_user( $m['p1'] )['name'] . '.',
+		'msg'    => ( 'training' === $m['kind'] ? 'Spoločný tréning začína, rozbíja ' : ( mysn_kind_frames( $m['kind'] ) > 1 ? 'Partia na ' . mysn_kind_frames( $m['kind'] ) . ( 3 === mysn_kind_frames( $m['kind'] ) ? ' framy' : ' framov' ) . ' začína, 1. frame rozbíja ' : 'Partia začína, rozbíja ' ) ) . mysn_user( $m['p1'] )['name'] . '.',
 	);
+	$frames = mysn_kind_frames( $m['kind'] );
+	if ( $frames > 1 ) {
+		$state['frames'] = array( 'of' => $frames, 'won' => array( 0, 0 ), 'n' => 1 ); // zápas na viac framov, ďalší frame rozbíja striedavo
+	}
 	mysn_update_match(
 		$m['id'],
 		array(
@@ -539,6 +552,61 @@ function mysn_rest_settle( $req ) {
 		'ok'    => true,
 		'match' => mysn_match_out( mysn_get_match( $m['id'] ), get_current_user_id() ),
 	);
+}
+
+/**
+ * Voľba po faule: hráč na rade (ten, kto faul nespravil) pošle súpera hrať znova z miesta, kde gule ostali.
+ * Server overí, že posledný stav čaká na voľbu a že na rade bude ten, kto faul spravil; ťah sa zapíše bez úderu.
+ */
+function mysn_rest_choice( $req ) {
+	global $wpdb;
+	$r = mysn_my_match( $req );
+	if ( is_wp_error( $r ) ) {
+		return $r;
+	}
+	list( $m, $me ) = $r;
+	$seq            = (int) $req->get_param( 'seq' );
+	if ( (int) $m['seq'] >= $seq ) {
+		return array( 'ok' => true ); // už uložené
+	}
+	$cur = $m['state'] ? json_decode( $m['state'], true ) : null;
+	$off = isset( $cur['rules']['choice'] ) ? (int) $cur['rules']['choice'] : -1;
+	if ( 'active' !== $m['status'] || (int) $m['turn'] !== $me || $m['shot'] || (int) $m['seq'] + 1 !== $seq || $off !== 1 - $me ) {
+		return mysn_err( 'Voľba po faule sa nedá uložiť.', 409 );
+	}
+	$state = mysn_json_param( $req, 'state', 30000 );
+	$st    = $state ? json_decode( $state, true ) : null;
+	if ( ! $st || ! isset( $st['rules']['scores'], $st['rules']['turn'] ) || (int) $st['rules']['turn'] !== $off ) {
+		return mysn_err( 'Chýba stav stola.' );
+	}
+	$st['rules']['scores'] = $cur['rules']['scores']; // skóre sa voľbou nemení
+	unset( $st['rules']['choice'] );
+	$state = wp_json_encode( $st );
+	$now   = time();
+	$wpdb->insert(
+		mysn_table( 'moves' ),
+		array(
+			'match_id' => (int) $m['id'],
+			'seq'      => $seq,
+			'user_id'  => get_current_user_id(),
+			'shot'     => null,
+			'after'    => $state,
+			'points'   => 0,
+			'foul'     => 0,
+			'created'  => $now,
+		)
+	);
+	mysn_update_match(
+		$m['id'],
+		array(
+			'seq'    => $seq,
+			'state'  => $state,
+			'turn'   => $off,
+			'aim'    => null,
+			'turnat' => $now,
+		)
+	);
+	return array( 'ok' => true );
 }
 
 const MYSN_CLOCK_DEFAULT = 45; // ligový zápas: predvolený čas na ťah (sekundy), nastavuje sa pri sezóne ligy

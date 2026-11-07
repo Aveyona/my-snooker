@@ -2266,6 +2266,16 @@ export function start(root, config = {}) {
 			}
 		},
 		foundAccept: () => online && online.accept(true),
+		foulChoice: (again) => {
+			if (online) {
+				online.foulChoice(!!again);
+			}
+			if (freeMouse) {
+				freeMouse = false;
+				ui.setFree(false);
+			}
+			controls.capture();
+		},
 		foundCancel: async () => {
 			ui.foundPopup(null);
 			if (online) {
@@ -2437,7 +2447,7 @@ export function start(root, config = {}) {
 			}
 			ui.openLobby(false);
 		},
-		invite: (id) => online && online.invite(id),
+		invite: (id) => online && online.invite(id, false, false, ui.inviteFrames || 1),
 		inviteTraining: (id) => online && online.invite(id, false, true),
 		cancelInvite: () => online && online.cancelInvite(),
 		accept: (id) => {
@@ -3285,6 +3295,10 @@ export function start(root, config = {}) {
 					}
 					return true;
 				}
+			}
+			if (ui.choiceOpen() && (lk === '1' || lk === '2') && !ui.toolsOpen()) {
+				actions.foulChoice(lk === '2'); // po súperovom faule: 1 hrám ja, 2 nech hrá súper
+				return true;
 			}
 			if (ui.foundOpen()) {
 				// okno nájdeného ligového zápasu: Enter prijme, Esc zruší (aj vyhľadávanie)
@@ -4327,6 +4341,7 @@ export function start(root, config = {}) {
 		} else {
 			ui.reachNote('');
 		}
+		ui.foulChoice(game.choicePending && view !== 'office' ? game.match.players[1 - game.match.me].name : null); // po súperovom faule: Hrám ja alebo Nech hrá súper
 		// krieda na špici: po nakriedovaní, údere alebo zmene kriedy sa tágo v ruke prekreslí (súper ho vidí tiež)
 		const lvl = chalk >= 3 ? 1 : chalk === 2 ? 0.75 : chalk === 1 ? 0.45 : 0;
 		if (cueSpec) {

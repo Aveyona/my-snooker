@@ -136,10 +136,10 @@ export class Online {
 		}
 	}
 
-	async invite(uid, league = false, training = false) {
+	async invite(uid, league = false, training = false, frames = 1) {
 		this.seekStopFor('Vyhľadávanie ligového zápasu je zrušené, poslal si výzvu na partiu.');
 		try {
-			const r = await this.net.call('invite', { user: uid, league: league ? 1 : 0, training: training ? 1 : 0 });
+			const r = await this.net.call('invite', { user: uid, league: league ? 1 : 0, training: training ? 1 : 0, frames: !league && !training ? frames : 1 });
 			this._waitFor = r.id;
 			await this.ping();
 		} catch (e) {
@@ -751,6 +751,14 @@ export class Online {
 		this._toBusy = false;
 	}
 
+	/** Po súperovom faule: again = pošlem súpera hrať znova (stav ide súperovi, divákom a na server), inak hrám sám. */
+	foulChoice(again) {
+		const r = this.game.foulChoice(again);
+		if (r) {
+			this.send('choice', { seq: r.seq, state: r.st });
+		}
+	}
+
 	/** Model tága hráča na rade (od súpera alebo pre diváka od sledovaného hráča). Mení sa len pri zmene. */
 	setRemoteCue(c) {
 		if (!c || typeof c !== 'object' || typeof c.id !== 'string') {
@@ -805,7 +813,7 @@ export class Online {
 			const shot = { ...d.shot, seq: d.seq, by: g.match.me };
 			this.rtcSendOpp({ k: 'shot', shot });
 			this.wsend({ k: 'w-shot', seq: d.seq, before: snapshot(g.balls), shot });
-		} else if (type === 'settle') {
+		} else if (type === 'settle' || type === 'choice') {
 			this.rtcSendOpp({ k: 'settle', seq: d.seq, state: d.state });
 			this.wsend(this.matchWState());
 		}

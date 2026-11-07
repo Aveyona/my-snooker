@@ -543,6 +543,13 @@ body.mysn-page { font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans
 .mysn-tipbox { position: absolute; z-index: 30; width: 280px; padding: 10px 12px; border-radius: 9px; background: #10151ef7; border: 1px solid #FACC15aa; box-shadow: 0 8px 24px #000b; color: #e6eae2; font: 400 13px/1.45 Arial, sans-serif; pointer-events: none; }
 .mysn-tipbox.mysn-hidden { display: none; }
 .mysn-tools-menu .mysn-warn { color: #f08a8a; font-weight: 700; }
+.mysn-choice { position: absolute; left: 50%; top: 22%; transform: translateX(-50%); z-index: 8; width: min(440px, calc(100vw - 32px)); padding: 14px 16px; border-radius: 12px; background: #101826f0; border: 1px solid #facc15; box-shadow: 0 8px 28px #000c; text-align: center; }
+.mysn-choice-t { font-size: 14.5px; color: #fff; line-height: 1.4; }
+.mysn-choice-b { display: flex; gap: 10px; justify-content: center; margin: 12px 0 8px; }
+.mysn-choice-b button { flex: 1; padding: 9px 10px; border-radius: 8px; border: 1px solid #ffffff33; background: #1e2a40; color: #fff; font-weight: 700; cursor: pointer; }
+.mysn-choice-b button[data-a="0"] { background: #facc15; color: #111; border-color: #facc15; }
+.mysn-choice-b button:hover { filter: brightness(1.12); }
+.mysn-choice-n { font-size: 11.5px; color: #9fb3d9; }
 .mysn-reach { position: absolute; left: 50%; bottom: 120px; transform: translateX(-50%); z-index: 5; padding: 7px 14px; border-radius: 9px; background: #3a0d0dd9; border: 1px solid #e5484d; color: #ffd7d7; font-size: 13.5px; pointer-events: none; }
 .mysn-cp-fine { display: flex; gap: 8px; align-items: flex-start; font-size: 13px; color: #e6eae2; cursor: pointer; padding: 6px 10px; border-radius: 8px; background: #ffffff0d; border: 1px solid #ffffff1a; }
 .mysn-cp-fine input { margin-top: 2px; accent-color: #FACC15; }

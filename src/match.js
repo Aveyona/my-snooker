@@ -214,6 +214,7 @@ export class Game extends Training {
 		m.turn = m.rules.turn;
 		m.inHand = !!st.inHand;
 		m.best = Array.isArray(st.best) ? [...st.best] : [0, 0];
+		m.frames = st.frames && st.frames.of > 1 ? { of: st.frames.of | 0, won: [st.frames.won[0] | 0, st.frames.won[1] | 0], n: st.frames.n | 0 || 1 } : null; // zápas na viac framov
 		m.last = st.last || null; // posledný úder (pre divákov na štadióne)
 		this.remote = false;
 		this.message = st.msg || '';
@@ -366,11 +367,22 @@ export class Game extends Training {
 			}
 		}
 		const names = m.players.map((p) => p.name);
+		delete res.state.choice;
+		// po faule rozhoduje ten, kto faul nespravil: hrá sám, alebo pošle súpera hrať znova (choice = kto faulil)
+		const choice = !m.training && res.foul && !res.state.over;
+		if (choice) {
+			res.state.choice = m.me;
+		}
+		const fr = this.frameEnd(res.state);
 		const st = {
 			balls: snapshot(this.balls),
 			rules: res.state,
 			inHand: res.inHand,
-			msg: `${names[m.me]}: ${res.msg}` + (res.state.over ? ` Koniec partie, víťaz: ${names[res.state.winner]}.` : res.state.turn !== m.me ? ` Na rade je ${names[res.state.turn]}.` : ''),
+			frames: m.frames || undefined,
+			msg:
+				`${names[m.me]}: ${res.msg}` +
+				(res.state.over ? ` Koniec partie, víťaz: ${names[res.state.winner]}.` : res.state.turn !== m.me ? ` Na rade je ${names[res.state.turn]}.` : '') +
+				(choice ? ` ${names[res.state.turn]} rozhodne: hrá sám, alebo pošle súpera hrať znova.` : ''),
 			last: { by: m.me, points: res.points, foul: res.foul, penalty: res.penalty, brk: res.state.brk },
 			// najvyššia séria každého hráča v partii (do ligy)
 			best: (() => {
@@ -379,12 +391,84 @@ export class Game extends Training {
 				return b;
 			})(),
 		};
+		if (fr) {
+			// zápas na viac framov: frame skončil, ale zápas ešte nie (nové rozostavenie, rozbíja sa striedavo)
+			st.frames = fr.frames;
+			st.msg = `${names[m.me]}: ${res.msg} Frame ${fr.frames.n - 1} vyhral ${names[res.state.winner]} (${res.state.scores[0]}:${res.state.scores[1]}). Stav vo framoch ${fr.frames.won[0]}:${fr.frames.won[1]}, rozbíja ${names[fr.rules.turn]}.`;
+			st.rules = fr.rules;
+			st.balls = null;
+			st.inHand = true;
+		} else if (res.state.over && m.frames && m.frames.of > 1) {
+			const w = res.state.winner;
+			const won = [...m.frames.won];
+			won[w]++;
+			st.frames = { ...m.frames, won };
+			st.msg += ` Vo framoch ${won[0]}:${won[1]}.`;
+		}
 		const seq = m.seq + 1;
 		this.applyState(st, seq);
 		this.emit('settle', { pots: this.lastPots, points: res.points });
 		if (this.onNet) {
 			this.onNet('settle', { seq, state: st, points: res.points, foul: res.foul });
 		}
+	}
+
+	/**
+	 * Zápas na viac framov: keď frame skončil a víťaz ešte nemá potrebný počet framov, vráti nový frame
+	 * ({ rules, frames }); inak null. Ďalší frame rozbíja striedavo (nepárne framy p1, párne p2).
+	 */
+	frameEnd(rules) {
+		const f = this.match && this.match.frames;
+		if (!f || !(f.of > 1) || !rules.over) {
+			return null;
+		}
+		const won = [...f.won];
+		won[rules.winner]++;
+		if (won[rules.winner] >= Math.ceil(f.of / 2)) {
+			return null;
+		}
+		const n = f.n + 1;
+		const nr = newFrame(n % 2 === 1 ? 0 : 1);
+		nr.scores = [0, 0];
+		return { rules: nr, frames: { ...f, won, n } };
+	}
+
+	/**
+	 * Voľba po súperovom faule (som na rade a choice je súperova strana): again = pošlem súpera hrať znova
+	 * z miesta, kde gule ostali (bez voľnej gule). Vráti nový stav { st, seq } na odoslanie; inak len skryje voľbu.
+	 */
+	foulChoice(again) {
+		const m = this.match;
+		if (!m || !m.rules || m.rules.choice === undefined || m.rules.choice === null || m.turn !== m.me) {
+			return null;
+		}
+		if (!again) {
+			m.choiceDone = m.seq; // hrám sám: voľba sa skryje, stav sa zmení až mojím úderom
+			this.emit('change');
+			return null;
+		}
+		const off = m.rules.choice;
+		const names = m.players.map((p) => p.name);
+		const rules = { ...m.rules, scores: [...m.rules.scores], turn: off, free: false, brk: 0 };
+		delete rules.choice;
+		const st = {
+			balls: snapshot(this.balls),
+			rules,
+			inHand: !!m.inHand,
+			frames: m.frames || undefined,
+			msg: `${names[m.me]} posiela ${names[off]} hrať znova z miesta, kde gule ostali. Na rade je ${names[off]}.`,
+			last: m.last || null,
+			best: [...(m.best || [0, 0])],
+		};
+		const seq = m.seq + 1;
+		this.applyState(st, seq);
+		return { st, seq };
+	}
+
+	/** Čaká sa na moju voľbu po súperovom faule (ukazuje sa okno Hrám ja / Nech hrá súper). */
+	get choicePending() {
+		const m = this.match;
+		return !!(m && !this.spectating && m.rules && !m.rules.over && m.rules.choice !== undefined && m.rules.choice !== null && m.turn === m.me && m.choiceDone !== m.seq && (this.state === 'aim' || this.state === 'place'));
 	}
 
 	/**
@@ -419,11 +503,16 @@ export class Game extends Training {
 		const res = evaluate({ ...m.rules, free: false }, { first: null, pots: [], reds });
 		const why = res.msg.replace('Biela netrafila žiadnu guľu.', 'Čas na úder vypršal.');
 		const names = m.players.map((p) => p.name);
+		delete res.state.choice;
+		if (!res.state.over) {
+			res.state.choice = off; // aj po faule za čas rozhoduje súper
+		}
 		const st = {
 			balls: snapshot(this.balls),
 			rules: res.state,
 			inHand: !!m.inHand || !this.cue.on, // biela v ruke ostáva súperovi
-			msg: `${names[off]}: ${why}` + (res.state.over ? ` Koniec partie, víťaz: ${names[res.state.winner]}.` : ` Na rade je ${names[res.state.turn]}.`),
+			frames: m.frames || undefined,
+			msg: `${names[off]}: ${why}` + (res.state.over ? ` Koniec partie, víťaz: ${names[res.state.winner]}.` : ` Na rade je ${names[res.state.turn]}, rozhodne, či hrá sám, alebo pošle súpera hrať znova.`),
 			last: { by: off, points: 0, foul: true, penalty: res.penalty, brk: 0, timeout: true },
 			best: [...(m.best || [0, 0])],
 		};

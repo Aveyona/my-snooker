@@ -1204,7 +1204,7 @@ export class UI {
 		L.innerHTML = '<h3>Poslať výzvu</h3>';
 		const av = (u) => (u.avatar ? `<img src="${esc(u.avatar)}" alt="">` : '<i></i>');
 		for (const i of d.invites || []) {
-			const row = h('div', 'mysn-inv', `${av(i.from)}<span><b>Boli ste vyzvaný!</b> ${esc(i.from.name)} ťa vyzýva ${i.training ? 'na spoločný tréning' : i.league ? 'na ligovú partiu' : 'na partiu'}</span>`);
+			const row = h('div', 'mysn-inv', `${av(i.from)}<span><b>Boli ste vyzvaný!</b> ${esc(i.from.name)} ťa vyzýva ${i.training ? 'na spoločný tréning' : i.league ? 'na ligovú partiu' : i.frames > 1 ? `na partiu na ${i.frames} ${i.frames === 3 ? "framy" : "framov"}` : 'na partiu'}</span>`);
 			const yes = this.button('Prijať', 'accept', '', i.id);
 			yes.classList.add('mysn-primary');
 			row.append(yes, this.button('Odmietnuť', 'decline', '', i.id));
@@ -1217,6 +1217,12 @@ export class UI {
 			L.appendChild(row);
 		}
 		L.appendChild(h('p', 'mysn-lobby-sub', 'Hráči práve v hre My Snooker'));
+		// výzva na partiu: počet framov (1, 3 alebo 5; vyhráva, kto prvý vyhrá väčšinu)
+		const fsel = h('label', 'mysn-frames', 'Partia na <select><option value="1">1 frame</option><option value="3">3 framy (2 víťazné)</option><option value="5">5 framov (3 víťazné)</option></select>');
+		const sel = fsel.querySelector('select');
+		sel.value = String(this.inviteFrames || 1);
+		sel.addEventListener('change', () => (this.inviteFrames = +sel.value || 1));
+		L.appendChild(fsel);
 		const live = d.live || [];
 		if (!live.length) {
 			L.appendChild(h('p', 'mysn-note', 'Teraz nie je v hre nikto iný. Zoznam sa obnovuje sám, keď niekto príde, objaví sa tu.'));
@@ -1224,7 +1230,7 @@ export class UI {
 		const list = h('div', 'mysn-live');
 		for (const u of live) {
 			const row = h('div', 'mysn-live-row', `${av(u)}<span><b>${esc(u.name)}</b>${u.busy ? '<em>hrá partiu</em>' : '<em class="mysn-live-on">v hre</em>'}</span>`);
-			const b = this.button('Vyzvať na partiu', 'invite', 'Jeden frame podľa pravidiel snookeru', u.id);
+			const b = this.button('Vyzvať na partiu', 'invite', 'Partia podľa pravidiel snookeru na zvolený počet framov', u.id);
 			const bt = this.button('Pozvať na tréning', 'inviteTraining', 'Spoločný tréning: striedate sa pri stole, bez faulov, farby sa vracajú na spoty', u.id);
 			b.disabled = bt.disabled = !!u.busy || !!(o && o.status === 'invited');
 			row.append(b, bt);
@@ -1873,6 +1879,33 @@ export class UI {
 
 	/** Poznámka pod guľou Miesto úderu (napríklad automaticky vyšší úder pri mantineli). */
 	/** Upozornenie pri mierení, keď hráč nedosiahne na bielu (prázdny text = skryť). */
+	/** Okno po súperovom faule: Hrám ja (1) alebo Nech hrá súper (2). opp = meno súpera, null = skryť. */
+	foulChoice(opp) {
+		if (!this.choiceEl) {
+			this.choiceEl = h('div', 'mysn-choice', '<div class="mysn-choice-t"></div><div class="mysn-choice-b"><button type="button" data-a="0">1 · Hrám ja</button><button type="button" data-a="1">2 · Nech hrá súper</button></div><div class="mysn-choice-n">Klikni s Ctrl alebo stlač 1 či 2. Úderom hráš sám.</div>');
+			this.choiceEl.addEventListener('click', (e) => {
+				const b = e.target.closest('button');
+				if (b) {
+					this.opts.onAction('foulChoice', b.dataset.a === '1');
+				}
+			});
+			this.root.appendChild(this.choiceEl);
+		}
+		const key = opp || '';
+		if (this._choice === key) {
+			return;
+		}
+		this._choice = key;
+		this.choiceEl.style.display = opp ? '' : 'none';
+		if (opp) {
+			this.choiceEl.querySelector('.mysn-choice-t').textContent = `${opp} spravil faul. Hráš sám, alebo ho pošleš hrať znova z miesta, kde gule ostali?`;
+		}
+	}
+
+	choiceOpen() {
+		return !!this._choice;
+	}
+
 	reachNote(text) {
 		if (!this.reachEl) {
 			this.reachEl = h('div', 'mysn-reach');
@@ -2639,7 +2672,7 @@ export class UI {
 			const nm = (i) => esc(String(mt.players[i].name).slice(0, 16));
 			const r = mt.rules;
 			const turn = (i) => (r.turn === i && !r.over ? ' mysn-turn' : '');
-			this.stats.innerHTML = `<span class="mysn-sc${turn(mt.me)}">${nm(mt.me)} <b>${r.scores[mt.me]}</b></span><span class="mysn-sc${turn(1 - mt.me)}">${nm(1 - mt.me)} <b>${r.scores[1 - mt.me]}</b>${mt.players[1 - mt.me].online === false ? ' <i>mimo</i>' : ''}</span><span>Na rade <b>${r.turn === mt.me ? 'ty' : nm(r.turn)}</b></span><span>Hrá sa na <b>${esc(game.onText())}</b></span><span>Séria <b>${r.brk}</b></span><span class="${this._chalk > 0 ? 'mysn-chalk-on' : 'mysn-chalk-off'}">Krieda <b>${this._chalk > 0 ? this._chalk : 'F3'}</b></span>`;
+			this.stats.innerHTML = `<span class="mysn-sc${turn(mt.me)}">${nm(mt.me)} <b>${r.scores[mt.me]}</b></span><span class="mysn-sc${turn(1 - mt.me)}">${nm(1 - mt.me)} <b>${r.scores[1 - mt.me]}</b>${mt.players[1 - mt.me].online === false ? ' <i>mimo</i>' : ''}</span>${mt.frames ? `<span>Framy <b>${mt.frames.won[mt.me]} : ${mt.frames.won[1 - mt.me]}</b> (${mt.frames.n}. z ${mt.frames.of})</span>` : ''}<span>Na rade <b>${r.turn === mt.me ? 'ty' : nm(r.turn)}</b></span><span>Hrá sa na <b>${esc(game.onText())}</b></span><span>Séria <b>${r.brk}</b></span><span class="${this._chalk > 0 ? 'mysn-chalk-on' : 'mysn-chalk-off'}">Krieda <b>${this._chalk > 0 ? this._chalk : 'F3'}</b></span>`;
 		} else {
 		this.stats.innerHTML = `<span>Údery <b>${s.shots}</b></span><span>Spadnuté <b>${s.points >= 0 ? s.potted : 0}</b></span><span>Body <b>${s.points}</b></span><span>Séria <b>${s.run}</b></span><span>Najlepšia <b>${s.best}</b></span><span class="${this._chalk > 0 ? 'mysn-chalk-on' : 'mysn-chalk-off'}">Krieda <b>${this._chalk > 0 ? this._chalk : 'F3'}</b></span>`;
 		}

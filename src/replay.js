@@ -35,6 +35,10 @@ export class Replay {
 			restore(this.balls, this.rack);
 		} else {
 			const b = this.moves[this.i - 1].b || [];
+			if (!b.length) {
+				restore(this.balls, this.rack); // nový frame v zápase na viac framov: nové rozostavenie
+				return;
+			}
 			restore(
 				this.balls,
 				b.map((x, id) => ({ id, x: x[0], z: x[1], on: !!x[2] }))

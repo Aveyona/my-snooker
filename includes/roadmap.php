@@ -49,7 +49,7 @@ function mysn_roadmap() {
 		array(
 			'n'      => 2,
 			'title'  => 'Pravidlá snookeru',
-			'status' => 'now',
+			'status' => 'done',
 			'goal'   => 'Skutočný frame podľa pravidiel. Pravidlo miss nebude, viac hráčov na jednom zariadení zatiaľ nie je podporované.',
 			'items'  => array(
 				array( 'Poradie gúľ: červená, farba, na konci farby od žltej po čiernu (modul pravidiel s testami)', 1 ),
@@ -57,8 +57,8 @@ function mysn_roadmap() {
 				array( 'Ukazovateľ, na akú guľu sa hrá, skóre, náboj, zostávajúce body na stole', 1 ),
 				array( 'Koniec framu, opätovné položenie čiernej pri rovnosti', 1 ),
 				array( 'Voľná guľa po faule, keď je súper zasnookrovaný (ľubovoľná farba platí ako guľa na rade)', 1 ),
-				array( 'Po faule voľba Hrám ja alebo Nech hrá súper', 0 ),
-				array( 'Zápas na viac framov (1, 3 alebo 5) pri výzve na partiu, liga ostáva na 1 frame', 0 ),
+				array( 'Po faule voľba Hrám ja alebo Nech hrá súper (súper hrá, ako gule ostali, bez limitu opakovania)', 1 ),
+				array( 'Zápas na viac framov (1, 3 alebo 5) pri výzve na partiu, ďalší frame rozbíja striedavo, liga ostáva na 1 frame', 1 ),
 			),
 		),
 		array(
@@ -131,6 +131,7 @@ function mysn_roadmap() {
 /** Denník zmien (najnovšie hore). */
 function mysn_changelog() {
 	return array(
+		array( '0.7.69', '7. 11. 2026', 'Pravidlá: po súperovom faule voľba Hrám ja (1) alebo Nech hrá súper (2). Súper potom hrá z miesta, kde gule ostali, bez voľnej gule; opakovať sa dá bez limitu, za každý faul sú trestné body. Úderom hráš sám. Platí aj po faule za čas. Výzva na partiu na 1, 3 alebo 5 framov (vyhráva, kto prvý vyhrá väčšinu), ďalší frame rozbíja striedavo, hore stav vo framoch. Liga ostáva na 1 frame.' ),
 		array( '0.7.68', '7. 11. 2026', 'Za tágom pravé tlačidlo myši nerobí nič, keď nemieriš na žiadnu guľu (pohľad sa neposúva).' ),
 		array( '0.7.67', '7. 11. 2026', 'Kancelária: priblíženie na predmet zruší pravé tlačidlo myši aj bez Ctrl (ako v herni návrat za tágo).' ),
 		array( '0.7.66', '7. 11. 2026', 'Oblúk pri priblížení na mierenú guľu je plynulý: rovnomerne s pohybom myši, bez skoku na začiatku a bez ostrého vrcholu.' ),
