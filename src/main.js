@@ -1135,7 +1135,7 @@ export function start(root, config = {}) {
 	const confSeen = new Set(); // id dávok konfiet (prídu od oboch hráčov naraz)
 	/**
 	 * Zvuky od divákov a hráčov: divák F2 potlesk, F3 jooooj, 1 až 7 ďalšie; hráč N napitie, G grgnutie,
-	 * H prdnutie (G a H mimo ligy). Správa ide hráčovi, ten ju prepošle súperovi a svojim divákom,
+	 * H prdnutie (v lige za opakovanie napomenutie a súper +4). Správa ide hráčovi, ten ju prepošle súperovi a svojim divákom,
 	 * každý ju zahrá raz (id), zvuk ide z miesta, kde divák alebo hráč sedí.
 	 */
 	const SPEC_SND = { f2: 'applause-small', f3: 'crowd-ooh', 1: 'crowd-cheer', 2: 'crowd-wow', 3: 'laugh', 4: 'whistle', 5: 'well-done', 6: 'shush', 7: 'cough' };
@@ -1178,13 +1178,59 @@ export function start(root, config = {}) {
 		sndLast[String(m.id).split(':')[0]] = 0;
 		playSnd(m);
 		if (!online) {
-			return;
+			return true;
 		}
 		if (game.spectating) {
 			online.watchSend(m);
 		} else {
 			online.sendSnd(m);
 		}
+		return true;
+	};
+	/**
+	 * Nešportové správanie v lige (G grgnutie, H prdnutie): server počíta prehrešky hráča v zápase,
+	 * druhý raz napomenutie rozhodcu, od tretieho súper +4 body. Správa { id, who, level, pts, name } ide súperovi a divákom.
+	 */
+	const condSeen = new Set();
+	const applyConduct = (c) => {
+		if (!c || !c.id || condSeen.has(c.id) || (c.level !== 'warning' && c.level !== 'penalty')) {
+			return false;
+		}
+		condSeen.add(c.id);
+		const pos = venue === 'league' ? stadium.refPos() : null;
+		const name = String(c.name || 'Hráč').slice(0, 40);
+		const m = game.match;
+		if (c.level === 'warning') {
+			setTimeout(() => sound.fx('ref-warning', { pos, room: 0.8 }), 300);
+			ui.toast(`Rozhodca: ${name}, napomenutie za nešportové správanie. Ďalší prehrešok: súper +4 body.`);
+			return true;
+		}
+		const pts = Math.min(4, Math.max(0, Number(c.pts) || 4));
+		if (m && m.rules && m.rules.scores && !game.spectating && (c.who === 0 || c.who === 1)) {
+			m.rules.scores[1 - c.who] += pts;
+		}
+		setTimeout(() => sound.fx('ref-penalty', { pos, room: 0.8 }), 300);
+		const sc = toScreen(0, R, 0);
+		if (sc) {
+			ui.scorePop(`Nešportové správanie · súper +${pts}`, sc.x, sc.y - 40, '#ff6b6b', true);
+		}
+		ui.toast(`Rozhodca: ${name}, nešportové správanie, súper dostáva ${pts} body.`);
+		return true;
+	};
+	const conductCheck = async () => {
+		const m = game.match;
+		if (!online || !online.matchId || !m || !m.league) {
+			return;
+		}
+		const r = await online.net.call('conduct', { id: online.matchId }).catch(() => null);
+		if (!r || (r.level !== 'warning' && r.level !== 'penalty')) {
+			return;
+		}
+		const me = m.me ? 1 : 0;
+		const c = { id: online.matchId + ':' + me + ':' + r.count, who: me, level: r.level, pts: r.points || 0, name: (m.players && m.players[me] && m.players[me].name) || (user && user.name) || '' };
+		applyConduct(c);
+		online.rtcSendOpp({ k: 'cond', c });
+		online.wsend({ k: 'w-cond', c });
 	};
 	const playConf = (m) => {
 		if (!m || !m.id || confSeen.has(m.id)) {
@@ -3510,12 +3556,10 @@ export function start(root, config = {}) {
 			}
 			const typing = document.activeElement && /input|select|textarea/i.test(document.activeElement.tagName);
 			if (PLAYER_SND[lk] && !typing && game.match && !game.match.training && !game.spectating && !ui.menuOpen() && !ui.toolsOpen()) {
-				// hráč v partii: N napitie sa vody, G grgnutie, H prdnutie (G a H nie v lige)
-				if (game.match.league && lk !== 'n') {
-					ui.toast('V ligovom zápase sa dá len napiť vody (N).');
-				} else {
-					const c = rig.camera.position;
-					sendSnd(PLAYER_SND[lk], { x: c.x, y: c.y - 0.15, z: c.z });
+				// hráč v partii: N napitie sa vody, G grgnutie, H prdnutie (v lige G a H: napomenutie, potom súper +4)
+				const c = rig.camera.position;
+				if (sendSnd(PLAYER_SND[lk], { x: c.x, y: c.y - 0.15, z: c.z }) && game.match.league && lk !== 'n') {
+					conductCheck();
 				}
 				return true;
 			}
@@ -3869,6 +3913,10 @@ export function start(root, config = {}) {
 					playSnd(m);
 					return;
 				}
+				if (m.k === 'w-cond') {
+					applyConduct(m.c);
+					return;
+				}
 				if (m.k === 'w-end') {
 					if (watchFiesta && venue === 'league') {
 						// divák ostáva na štadióne, kým sa oslavuje (Späť do herne v menu)
@@ -4052,6 +4100,12 @@ export function start(root, config = {}) {
 					if (!fromOpp) {
 						online.rtcSendOpp({ k: 'snd', m });
 					}
+				}
+			},
+			// nešportové správanie súpera v lige: napomenutie alebo +4 pre mňa, pošlem aj svojim divákom
+			cond: (c) => {
+				if (applyConduct(c)) {
+					online.wsend({ k: 'w-cond', c });
 				}
 			},
 			stats: (st) => office.setNotes(st),

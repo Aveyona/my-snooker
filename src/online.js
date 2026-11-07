@@ -479,6 +479,8 @@ export class Online {
 			if (this.hooks.cam) {
 				this.hooks.cam(m); // pohľad súpera na rade (LCD na štadióne)
 			}
+		} else if (m.k === 'cond' && m.c && this.hooks.cond) {
+			this.hooks.cond(m.c); // nešportové správanie súpera (liga)
 		} else if (m.k === 'snd' && m.m && this.hooks.snd) {
 			this.hooks.snd(m.m, true); // zvuk od súpera alebo od jeho diváka
 		} else if (m.k === 'flag') {

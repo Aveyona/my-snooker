@@ -133,6 +133,7 @@ function mysn_roadmap() {
 /** Denník zmien (najnovšie hore). */
 function mysn_changelog() {
 	return array(
+		array( '0.7.95', '7. 11. 2026', 'Nešportové správanie v lige: hráč môže v ligovom zápase grgnúť (G) aj prdnúť (H), druhý raz v zápase ho rozhodca napomenie, od tretieho raza dostane súper za každé ďalšie 4 body. Počíta server, napomenutie aj trest vidia a počujú obaja hráči aj diváci; v administrácii Zvuky pribudli hlasy rozhodcu Napomenutie a Trest.' ),
 		array( '0.7.94', '7. 11. 2026', 'Administrácia Zvuky: zvuky s vlastnými nahrávkami sú zvýraznené (zelený pás, svetlozelené pozadie a štítok VLASTNÝ ZVUK s počtom zapnutých súborov), navrchu je počet zvukov s vlastnými nahrávkami.' ),
 		array( '0.7.93', '7. 11. 2026', 'Zvuky sa načítajú postupne (najprv zvuky stola, potom miestnosť a diváci), server už nedostane naraz stovku požiadaviek (odpovedal 429 Too Many Requests a časť zvukov chýbala).' ),
 		array( '0.7.92', '7. 11. 2026', 'Zvuky divákov a hráčov online: divák F2 potlesk, F3 jooooj, 1 jasot, 2 óóó, 3 smiech, 4 pískanie, 5 well done, 6 pšššt, 7 kašeľ (v telefóne F1); hráč v partii N napiť sa vody, G grgnúť, H prdnúť (G a H nie v ligovom zápase). Zvuk počujú obaja hráči aj všetci diváci, ide z miesta, kde divák alebo hráč sedí; najviac jeden zvuk za 2,5 sekundy od jedného človeka.' ),

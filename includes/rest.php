@@ -37,6 +37,7 @@ add_action(
 			'settle' => 'mysn_rest_settle',
 			'timeout' => 'mysn_rest_timeout',
 			'choice' => 'mysn_rest_choice',
+			'conduct' => 'mysn_rest_conduct',
 			'leave'  => 'mysn_rest_leave',
 			'resume' => 'mysn_rest_resume',
 			'score'  => 'mysn_rest_score',
@@ -507,6 +508,11 @@ function mysn_rest_settle( $req ) {
 	if ( ! $st || ! isset( $st['rules']['scores'], $st['rules']['turn'] ) ) {
 		return mysn_err( 'Chýba stav stola.' );
 	}
+	$prev = $m['state'] ? json_decode( $m['state'], true ) : null;
+	if ( isset( $prev['conduct'] ) && is_array( $prev['conduct'] ) ) {
+		$st['conduct'] = $prev['conduct']; // počet nešportových správaní hráčov sa prenáša (klient ho neposiela)
+		$state         = wp_json_encode( $st );
+	}
 	$rules = $st['rules'];
 	$turn  = 1 === (int) $rules['turn'] ? 1 : 0;
 	$over  = ! empty( $rules['over'] );
@@ -558,6 +564,34 @@ function mysn_rest_settle( $req ) {
  * Voľba po faule: hráč na rade (ten, kto faul nespravil) pošle súpera hrať znova z miesta, kde gule ostali.
  * Server overí, že posledný stav čaká na voľbu a že na rade bude ten, kto faul spravil; ťah sa zapíše bez úderu.
  */
+/**
+ * Nešportové správanie v ligovom zápase (grgnutie, prdnutie): server počíta prípady hráča v zápase.
+ * 1. bez trestu, 2. napomenutie rozhodcom, od 3. súper +4 body (pripíšu sa aj do uloženého stavu).
+ */
+function mysn_rest_conduct( $req ) {
+	$r = mysn_my_match( $req );
+	if ( is_wp_error( $r ) ) {
+		return $r;
+	}
+	list( $m, $me ) = $r;
+	if ( 'active' !== $m['status'] || empty( $m['season_id'] ) ) {
+		return array( 'count' => 0, 'level' => 'none' ); // mimo ligy bez trestu
+	}
+	$st = $m['state'] ? json_decode( $m['state'], true ) : null;
+	if ( ! $st || ! isset( $st['rules']['scores'] ) ) {
+		return array( 'count' => 0, 'level' => 'none' );
+	}
+	$c        = isset( $st['conduct'] ) && is_array( $st['conduct'] ) ? $st['conduct'] : array( 0, 0 );
+	$c[ $me ] = (int) $c[ $me ] + 1;
+	$level    = $c[ $me ] >= 3 ? 'penalty' : ( 2 === $c[ $me ] ? 'warning' : 'none' );
+	$st['conduct'] = $c;
+	if ( 'penalty' === $level ) {
+		$st['rules']['scores'][ 1 - $me ] = (int) $st['rules']['scores'][ 1 - $me ] + 4;
+	}
+	mysn_update_match( $m['id'], array( 'state' => wp_json_encode( $st ) ) );
+	return array( 'count' => $c[ $me ], 'level' => $level, 'points' => 'penalty' === $level ? 4 : 0 );
+}
+
 function mysn_rest_choice( $req ) {
 	global $wpdb;
 	$r = mysn_my_match( $req );
@@ -581,6 +615,9 @@ function mysn_rest_choice( $req ) {
 	}
 	$st['rules']['scores'] = $cur['rules']['scores']; // skóre sa voľbou nemení
 	unset( $st['rules']['choice'] );
+	if ( isset( $cur['conduct'] ) ) {
+		$st['conduct'] = $cur['conduct'];
+	}
 	$state = wp_json_encode( $st );
 	$now   = time();
 	$wpdb->insert(
