@@ -1791,20 +1791,32 @@ export function start(root, config = {}) {
 		}
 		const g = cueGrip(cueSpec, rest);
 		const gd = railDist(c.x + dx * g, c.z + dz * g);
-		return { ok: gd <= REACH.gripMax, part: 'grip', d: gd, max: REACH.gripMax };
+		const ok = gd <= REACH.gripMax;
+		if (!ok && rest) {
+			// s nádstavcom mimo dosahu: úder sa dá, ale natiahnutý a nepresný; s predĺžením 45 cm vysoko,
+			// bez predĺženia extrémne (biela ide celkom krivo)
+			const over = gd - REACH.gripMax;
+			const ext = settings.cueExt || 0;
+			const base = ext >= 0.44 ? 1.5 : ext >= 0.29 ? 2.5 : ext >= 0.14 ? 3.5 : 5;
+			return { ok: false, stretch: true, ext, part: 'grip', d: gd, max: REACH.gripMax, deg: +Math.min(base * 2, base + over * 5).toFixed(1) };
+		}
+		return { ok, part: 'grip', d: gd, max: REACH.gripMax };
 	};
 	const reachMsg = (r) =>
-		r.part === 'bridge'
+		r.stretch
+			? `Natiahnutý úder: s nádstavcom${r.ext ? ` a predĺžením ${Math.round(r.ext * 100)} cm` : ' bez predĺženia'} je ruka ${Math.round(r.d * 100)} cm od mantinelu (najviac ${Math.round(r.max * 100)} cm). Úder sa dá, ale biela náhodne uhne až o ${String(r.deg).replace('.', ',')}°${r.ext >= 0.44 ? '' : ' (dlhšie predĺženie F3 6 pomôže)'}.`
+			: r.part === 'bridge'
 			? `Nedosiahneš: ruka na mostíku by bola ${Math.round(r.d * 100)} cm od mantinelu (najviac ${Math.round(r.max * 100)} cm). Použi nádstavec (F3).`
 			: `Nedosiahneš: ruka na rukoväti by bola ${Math.round(r.d * 100)} cm od mantinelu (najviac ${Math.round(r.max * 100)} cm). Použi nádstavec alebo predĺženie (F3).`;
 	const doShoot = (rawPower) => {
 		if (!game.spectating && game.cue.on) {
 			const r = reachInfo();
-			if (!r.ok) {
+			if (!r.ok && !r.stretch) {
 				ui.toast(reachMsg(r));
 				return;
 			}
 		}
+		const stretchDeg = !game.spectating && game.cue.on ? reachInfo().deg || 0 : 0; // natiahnutý úder (mimo dosahu s nádstavcom a predĺžením)
 		// nasadená špica: druh mení silu a falše, opotrebovaná (od 70 %) slabšie drží falše, nad 90 % sa môže šmyknúť
 		const tip = tipOf(cueSpec);
 		const TK = TIP_KINDS[tip.kind] || TIP_KINDS.medium;
@@ -1832,7 +1844,7 @@ export function start(root, config = {}) {
 			game.dir -= side * sq;
 		}
 		// nepresnosť opotrebovanej špice (od 80 %): náhodná odchýlka smeru, silnejší úder viac
-		const inacc = (tipInaccuracy(tip.wear, tip.kind, cueSpec) + extInaccuracy(settings.cueExt || 0)) * (0.75 + 0.5 * power); // opotrebovaná špica a predĺženie tága
+		const inacc = (tipInaccuracy(tip.wear, tip.kind, cueSpec) + extInaccuracy(settings.cueExt || 0) + stretchDeg) * (0.75 + 0.5 * power); // opotrebovaná špica a predĺženie tága
 		if (inacc > 0) {
 			game.dir += ((Math.random() * 2 - 1) * inacc * Math.PI) / 180;
 		}
@@ -2648,7 +2660,7 @@ export function start(root, config = {}) {
 				restNote: !mine ? 'Nádstavec sa dá vziať, keď mieriš.' : Object.values(can).some(Boolean) ? '' : 'Za bielou nie je miesto na nádstavec (mantinel alebo guľa tesne za bielou).',
 				rack: !game.match ? (game.solo ? 'Nový frame' : 'Nové postavenie gúľ') : '',
 				ext: Math.round((settings.cueExt || 0) * 100),
-				reach: mine && game.cue.on ? (() => { const r = reachInfo(); return { ok: r.ok, text: r.ok ? 'Dosiahneš na bielu (mostík do 95 cm, rukoväť do 55 cm od mantinelu).' : reachMsg(r) }; })() : null,
+				reach: mine && game.cue.on ? (() => { const r = reachInfo(); return { ok: r.ok || !!r.stretch, text: r.ok ? 'Dosiahneš na bielu (mostík do 95 cm, rukoväť do 55 cm od mantinelu).' : reachMsg(r) }; })() : null,
 			});
 		},
 		// predĺženie tága (F3, 6): 0, 15, 30, 45 cm dookola; ostáva nasadené, kým ho nezmeníš
@@ -3085,7 +3097,7 @@ export function start(root, config = {}) {
 		unlock: () => sound.unlock(),
 		shoot: doShoot,
 		// dosah tága: keď hráč nedosiahne na bielu, tágo sa neodtiahne (upozornenie je pri mierení)
-		canStroke: () => game.spectating || !game.cue.on || reachInfo().ok,
+		canStroke: () => game.spectating || !game.cue.on || reachInfo().ok || !!reachInfo().stretch,
 		spinReset: () => ui.setSpin(0, 0),
 		spin: (dx, dy) => ui.setSpin(Math.max(-1, Math.min(1, ui.side + dx)), Math.max(-1, Math.min(1, ui.top + dy))),
 		lock: (on) => {
@@ -4333,7 +4345,7 @@ export function start(root, config = {}) {
 		// dosah: pri mierení upozornenie, keď hráč nedosiahne na bielu (dĺžka tága, predĺženie, nádstavec)
 		if (game.state === 'aim' && !game.spectating && game.cue.on && !view) {
 			const r = reachInfo();
-			ui.reachNote(r.ok ? '' : reachMsg(r));
+			ui.reachNote(r.ok ? '' : reachMsg(r), !!r.stretch);
 		} else {
 			ui.reachNote('');
 		}

@@ -1918,13 +1918,14 @@ export class UI {
 		return !!this._choice;
 	}
 
-	reachNote(text) {
+	reachNote(text, stretch = false) {
 		if (!this.reachEl) {
 			this.reachEl = h('div', 'mysn-reach');
 			this.root.appendChild(this.reachEl);
 		}
 		if (this._reach !== text) {
 			this._reach = text;
+			this.reachEl.classList.toggle('mysn-reach-stretch', !!stretch); // natiahnutý úder: dá sa, ale nepresný
 			this.reachEl.textContent = text;
 			this.reachEl.style.display = text ? '' : 'none';
 			this.spinBox.classList.toggle('mysn-noreach', !!text); // výkričník pri špici: na bielu nedosiahneš
