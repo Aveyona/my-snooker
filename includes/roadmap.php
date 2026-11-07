@@ -9,6 +9,8 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 function mysn_roadmap() {
 	return array(
+		array( '0.7.63', '7. 11. 2026', 'Kancelária s držaným Ctrl ako herňa: predmety pod kurzorom sa jemne rozsvietia a klik ich otvorí (nástenka F1, stojan F2, kalendár F3, tabuľa líg F4, notebook F7, vizitka F8, dvere F9, lampa F12, mapa hráčov so špendlíkmi). Tréning z menu v kancelárii neotvorí menu znova.' ),
+		array( '0.7.62', '7. 11. 2026', 'Menu v kancelárii: Tréning a Hrať ťa prenesú z kancelárie do herne (predtým sa nič nestalo).' ),
 		array( '0.7.61', '7. 11. 2026', 'Kancelária: Esc otvorí menu (predtým presunul do herne). Druhé Esc menu zavrie a ostávaš v kancelárii.' ),
 		array( '0.7.60', '7. 11. 2026', 'Keď na bielu nedosiahneš, pri špici tága vedľa gule Miesto úderu bliká červený výkričník (popri upozornení dole).' ),
 		array( '0.7.59', '7. 11. 2026', 'Stav špice a kriedy inak: vedľa gule Miesto úderu je koniec tága zboku. Špica má farbu tvojej špice a opotrebením sa zmenšuje, navrchu je vrstva kriedy vo farbe kriedy (hrubšia = viac úderov), nad ním percento špice. Miesto úderu je opäť modrá bodka.' ),

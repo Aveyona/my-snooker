@@ -482,7 +482,7 @@ export function start(root, config = {}) {
 	const LOOK = new Set(['chair', 'bar', 'office', 'seat', 'free']); // seat = divák na svojom mieste, free = voľná kamera
 	let officeFocusNow = '';
 	let replay = null; // prehrávač partie na notebooku (F7, detail zápasu)
-	const OFFICE_KEYS = 'Kancelária: F1 nástenka s klávesmi za tebou, F8 vizitka (registrácia), F9 alebo dvere ŠTADIÓN: vyhľadať zápas, F12 lampa (zhasnutá = nie si online). Esc späť do herne.';
+	const OFFICE_KEYS = 'Kancelária: F1 nástenka s klávesmi za tebou, F8 vizitka (registrácia), F9 alebo dvere ŠTADIÓN: vyhľadať zápas, F12 lampa (zhasnutá = nie si online). Ctrl a klik na predmet ho otvorí, Esc menu.';
 	let venue = 'home';
 	const fadeEl = document.createElement('div');
 	fadeEl.className = 'mysn-fade';
@@ -798,7 +798,23 @@ export function start(root, config = {}) {
 		{ id: 'triangle', act: 'rackNew', pos: new THREE.Vector3(HANG_X, -0.212, 0), r: 0.2 },
 	];
 	/** Klikateľné miesta podľa miestnosti: stred, polomer a kláves, ktorý klik urobí. */
+	const wpos = (o) => o.getWorldPosition(new THREE.Vector3());
 	const hotSpots = () => {
+		if (view === 'office') {
+			// kancelária s držaným Ctrl: predmety sa rozsvietia, klik = ich kláves (mapa: klik na špendlík rieši kancelária)
+			const v = office.views;
+			return [
+				{ id: 'of-help', key: 'f1', pos: v.help.look, r: 0.9 },
+				{ id: 'of-rack', key: 'f2', pos: v.rack.look, r: 0.8 },
+				{ id: 'of-cal', key: 'f3', pos: v.calendar.look, r: 0.18 },
+				{ id: 'of-res', key: 'f4', pos: v.results.look, r: 1.8 },
+				{ id: 'of-nb', key: 'f7', pos: v.notebook.look, r: 0.24 },
+				{ id: 'of-card', key: 'f8', pos: wpos(office.card), r: 0.1 },
+				{ id: 'of-door', key: 'f9', pos: wpos(office.door), r: 0.8 },
+				{ id: 'of-map', pass: true, pos: v.map.look, r: 1.3 },
+				{ id: 'of-lamp', key: 'f12', pos: wpos(office.lamp), r: 0.22 },
+			];
+		}
 		if (venue === 'league') {
 			const sd = mySide();
 			const v = stadium.views;
@@ -880,7 +896,7 @@ export function start(root, config = {}) {
 	};
 	/** Raz za 0,1 s: ktorý predmet je pod kurzorom (len vo voľnej kamere s držaným Ctrl). */
 	// predmety svietia s držaným Ctrl za tágom (hráč) aj vo voľnej kamere
-	const hotOn = () => (view === 'free' || (!view && !game.spectating && user)) && venue !== 'office';
+	const hotOn = () => view === 'office' || ((view === 'free' || (!view && !game.spectating && user)) && venue !== 'office');
 	const hotTick = (dt) => {
 		if (!hotOn() || !freeMouse || !hotMouseOk) {
 			hotSet(null);
@@ -1876,6 +1892,20 @@ export function start(root, config = {}) {
 		}
 		actions.staff();
 	};
+	/** Z kancelárie do herne (prechod cez stmavnutie), potom fn: Tréning, Hrať a Pokračovať z menu v kancelárii. */
+	const fromOffice = (fn) => {
+		ui.showMenu(false);
+		ui.openLeague(false);
+		fadeEl.classList.add('mysn-on');
+		setTimeout(() => {
+			if (view === 'office') {
+				exitView();
+			}
+			escClosedAt = performance.now(); // uvoľnenie myši pri prechode neotvorí znova menu
+			fn();
+			setTimeout(() => fadeEl.classList.remove('mysn-on'), 80);
+		}, 300);
+	};
 	const actions = {
 		unlock: () => sound.unlock(),
 		camera: (m) => setCamera(m),
@@ -1927,6 +1957,9 @@ export function start(root, config = {}) {
 			controls.capture();
 		},
 		resume: () => {
+			if (view === 'office') {
+				return fromOffice(() => actions.resume()); // Tréning z menu v kancelárii: späť do herne
+			}
 			if (game.solo && game.solo.done) {
 				actions.training();
 				return;
@@ -1935,9 +1968,12 @@ export function start(root, config = {}) {
 			ui.openLobby(false);
 			controls.capture();
 		},
-		solo: () => startSolo(false),
-		soloNew: () => startSolo(true),
+		solo: () => (view === 'office' ? fromOffice(() => startSolo(false)) : startSolo(false)),
+		soloNew: () => (view === 'office' ? fromOffice(() => startSolo(true)) : startSolo(true)),
 		training: () => {
+			if (view === 'office') {
+				return fromOffice(() => actions.training());
+			}
 			game.stopSolo();
 			if (!restoreTraining()) {
 				game.aimAtNearest();
@@ -3090,6 +3126,9 @@ export function start(root, config = {}) {
 			}
 			if (!hotNow || !freeMouse || e.button !== 0 || !hotOn()) {
 				return false;
+			}
+			if (hotNow.pass) {
+				return false; // mapa hráčov: klik na špendlík spracuje kancelária
 			}
 			const k = hotNow.key;
 			const act = hotNow.act;
@@ -4472,6 +4511,7 @@ export function start(root, config = {}) {
 	};
 	requestAnimationFrame(frame);
 
+	debug.setFree = (on) => { freeMouse = !!on; ui.setFree(freeMouse); }; // na testy: voľná myš ako pri držanom Ctrl
 	return { game, rig, renderer, scene, settings, controls, debug, actions, cue, get online() {
 		return online;
 	} };
