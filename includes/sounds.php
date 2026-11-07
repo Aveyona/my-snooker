@@ -86,6 +86,9 @@ function mysn_sound_bundled( $slot ) {
 	if ( 'roll' === $slot ) {
 		return array(); // gúľanie: generovaný šum súkna, kým nie je vlastná slučka (voľná nahrávka končila pádom do jamky)
 	}
+	if ( 'amb-herna' === $slot || 'amb-office' === $slot ) {
+		return array(); // herňa a kancelária: voľné nahrávky miestností hučali a šumeli (klimatizácia), je ticho, kým nie je vlastná slučka
+	}
 	$alias = array( 'applause-small' => 'applause-big', 'ovation' => 'applause-big' );
 	$dir   = isset( $alias[ $slot ] ) ? $alias[ $slot ] : $slot;
 	$files = glob( MYSN_DIR . 'assets/sounds/' . sanitize_file_name( $dir ) . '/*.{ogg,mp3,wav}', GLOB_BRACE );

@@ -3,7 +3,7 @@
  * My Snooker: vlastné tabuľky vo WordPresse pre hru dvoch hráčov cez internet.
  *
  * {prefix}my_snooker_presence  kto je práve v hre (posledný signál), v akom stave a v ktorej partii
- * {prefix}my_snooker_matches   partie: hráči, stav, kto je na rade, poradie úderu, uložený stav stola a skóre,
+ * {prefix}my_snooker_matches   partie: hráči, stav, kto je na rade, poradie úderu, uložený stav stola a skóre, ELO po zápase a zmena,
  *                              rozohraný úder, mierenie hráča na rade, posledný signál každého hráča, výsledok
  * {prefix}my_snooker_moves     záznam partie: každý úder s parametrami, stavom po údere, bodmi a faulom
  * {prefix}my_snooker_seasons   sezóny ligy (približne rok): názov, začiatok, koniec, stav, majster sezóny, čas na ťah
@@ -20,7 +20,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-const MYSN_DB_VERSION = '14';
+const MYSN_DB_VERSION = '15';
 
 function mysn_table( $name ) {
 	global $wpdb;
@@ -68,6 +68,10 @@ delta int(10) NOT NULL DEFAULT 0,
 acc1 tinyint(1) unsigned NOT NULL DEFAULT 0,
 acc2 tinyint(1) unsigned NOT NULL DEFAULT 0,
 turnat int(10) unsigned NOT NULL DEFAULT 0,
+elo1 int(10) NOT NULL DEFAULT 0,
+elo2 int(10) NOT NULL DEFAULT 0,
+edel1 int(10) NOT NULL DEFAULT 0,
+edel2 int(10) NOT NULL DEFAULT 0,
 PRIMARY KEY  (id),
 KEY p1 (p1,status),
 KEY p2 (p2,status),

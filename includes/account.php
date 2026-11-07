@@ -43,6 +43,10 @@ function mysn_rest_account() {
 			'losses'  => $me ? (int) $me['losses'] : 0,
 		);
 	}
+	$elo = array(
+		'elo'   => mysn_elo( $uid ),
+		'games' => mysn_elo_n( $uid ),
+	);
 
 	$cues = (int) $wpdb->get_var( $wpdb->prepare( 'SELECT COUNT(*) FROM ' . mysn_table( 'cues' ) . ' WHERE user_id = %d', $uid ) ); // phpcs:ignore
 
@@ -66,6 +70,7 @@ function mysn_rest_account() {
 			'league' => (int) ( $m ? $m['league'] : 0 ),
 		),
 		'league'     => $league,
+		'elo'        => $elo,
 		'cues'       => $cues,
 		'links'      => array(
 			'account' => function_exists( 'my_users_account_url' ) ? my_users_account_url() : admin_url( 'profile.php' ),

@@ -116,7 +116,7 @@ function mysn_roadmap() {
 				array( 'Voľná kamera na medzerníku pre hráčov (medzerník prepína voľný pohľad a tágo, Ctrl zastaví kameru a uvoľní kurzor; pre divákov zatiaľ nie), úder len myšou', 1 ),
 				array( 'Role admin a správca hry: zoznam hráčov s nastavením roly v administrácii, panel Správa hry v hre podľa práv (práva v dokumentácii), odkaz Dokumentácia v menu My Snooker', 1 ),
 				array( 'Prehľad hráčov v administrácii (účty, odohrané hry, výhry, liga, aktivita), rovnaké údaje aj pre hráča', 0 ),
-				array( 'ELO sila hráča ako v šachu (len ligové zápasy), nový hráč začína na 1350', 0 ),
+				array( 'ELO sila hráča ako v šachu (len ligové zápasy), nový hráč začína na 1350', 1 ),
 				array( 'Voľná kamera: Tab zobrazí mini náhľad stola ako ďalšiu kameru', 0 ),
 				array( 'Mobil: úder ťahaním prstom, priblíženie dvoma prstami; chat (Enter)', 0 ),
 				array( 'Klik na predmety v scéne (vo voľnom pohľade s Ctrl) ako ich klávesy F2, F4, F8 a ďalšie', 1 ),
@@ -133,6 +133,7 @@ function mysn_roadmap() {
 /** Denník zmien (najnovšie hore). */
 function mysn_changelog() {
 	return array(
+		array( '0.7.96', '7. 11. 2026', 'ELO sila hráča ako v šachu, len z ligových zápasov: nový hráč začína na 1350, výhra nad silnejším dá viac, nad slabším menej (K 40 prvých 30 zápasov, potom 20), vzdanie a výpadok spojenia sú prehra, zrušený zápas sa neráta. Doterajšie ligové zápasy sa prepočítali spätne. Herňa a kancelária sú bez hukotu: voľné nahrávky miestností (šum klimatizácie) sa už nepúšťajú, je tam ticho, kým admin nenahrá vlastný ambient. ELO je v tabuľke ligy, v notebooku Moja liga, pri konci zápasu (zmena, napríklad 1350 → 1370), v histórii zápasov, v Účte a v administrácii (Hráči, Partie).' ),
 		array( '0.7.95', '7. 11. 2026', 'Nešportové správanie v lige: hráč môže v ligovom zápase grgnúť (G) aj prdnúť (H), druhý raz v zápase ho rozhodca napomenie, od tretieho raza dostane súper za každé ďalšie 4 body. Počíta server, napomenutie aj trest vidia a počujú obaja hráči aj diváci; v administrácii Zvuky pribudli hlasy rozhodcu Napomenutie a Trest.' ),
 		array( '0.7.94', '7. 11. 2026', 'Administrácia Zvuky: zvuky s vlastnými nahrávkami sú zvýraznené (zelený pás, svetlozelené pozadie a štítok VLASTNÝ ZVUK s počtom zapnutých súborov), navrchu je počet zvukov s vlastnými nahrávkami.' ),
 		array( '0.7.93', '7. 11. 2026', 'Zvuky sa načítajú postupne (najprv zvuky stola, potom miestnosť a diváci), server už nedostane naraz stovku požiadaviek (odpovedal 429 Too Many Requests a časť zvukov chýbala).' ),

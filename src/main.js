@@ -4065,7 +4065,7 @@ export function start(root, config = {}) {
 					leagueData = (await online.league()) || leagueData;
 					room.setLeague(leagueData);
 					if (fiesta && user && fz && fz.winId === user.id && leagueData && leagueData.me) {
-						fiesta.lines = [fiesta.lines[0], `Výhry v sezóne: ${leagueData.me.wins} · ${leagueData.me.league}. liga, ${leagueData.me.rank}. miesto`];
+						fiesta.lines = [fiesta.lines[0], `Výhry v sezóne: ${leagueData.me.wins} · ${leagueData.me.league}. liga, ${leagueData.me.rank}. miesto${leagueData.me.elo ? ` · ELO ${leagueData.me.elo}` : ''}`];
 					}
 					updateStadiumScreen();
 				}

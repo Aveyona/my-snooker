@@ -261,9 +261,9 @@ function mysn_admin_players() {
 		echo '<div class="notice notice-success is-dismissible"><p>Uložené.</p></div>';
 	}
 	echo '<p>Správca hry pomáha dohliadať na ligu: v hre má v menu tlačidlo Správa hry (prehľad, neviditeľné sledovanie, zmena prezývky; ďalšie práva podľa dokumentácie). Admin (správca webu) môže všetko.</p>';
-	echo '<table class="widefat striped" style="max-width:1200px"><thead><tr><th>Hráč</th><th>Prezývka v lige</th><th>Body v sezóne</th><th>Výhry : prehry</th><th>Odohrané partie</th><th>Naposledy v hre</th><th>Zákaz ligy</th><th>Rola</th></tr></thead><tbody>';
+	echo '<table class="widefat striped" style="max-width:1200px"><thead><tr><th>Hráč</th><th>Prezývka v lige</th><th>ELO</th><th>Body v sezóne</th><th>Výhry : prehry</th><th>Odohrané partie</th><th>Naposledy v hre</th><th>Zákaz ligy</th><th>Rola</th></tr></thead><tbody>';
 	if ( ! $ids ) {
-		echo '<tr><td colspan="8">Zatiaľ žiadni hráči.</td></tr>';
+		echo '<tr><td colspan="9">Zatiaľ žiadni hráči.</td></tr>';
 	}
 	foreach ( $ids as $uid ) {
 		$u = get_userdata( $uid );
@@ -277,6 +277,8 @@ function mysn_admin_players() {
 		$role  = mysn_role( $uid );
 		echo '<tr><td><b>' . esc_html( $u->display_name ) . '</b><br><span class="description">' . esc_html( $u->user_email ) . '</span></td>';
 		echo '<td>' . esc_html( $p && ! empty( $p['nick'] ) ? $p['nick'] : '' ) . '</td>';
+		$en = mysn_elo_n( $uid );
+		echo '<td>' . ( $en ? '<b>' . mysn_elo( $uid ) . '</b><br><span class="description">' . $en . ' lig. zápasov</span>' : '<span class="description">' . MYSN_ELO_START . ' (bez zápasu)</span>' ) . '</td>';
 		echo '<td>' . ( $lg ? (int) $lg['points'] : 'nie je v lige' ) . '</td>';
 		echo '<td>' . ( $lg ? (int) $lg['wins'] . ' : ' . (int) $lg['losses'] : '' ) . '</td>';
 		echo '<td>' . (int) $games . '</td>';

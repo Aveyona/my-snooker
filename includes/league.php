@@ -240,6 +240,7 @@ function mysn_league_apply( $m, $winner, $points, $resign = false, $best = array
 	if ( ! $claimed ) {
 		return 0;
 	}
+	mysn_elo_apply( (int) $m['id'], (int) $winner ); // ELO sila hráča (len liga)
 	$pts = max( 0, (int) $points );
 	if ( $resign ) {
 		$pts = max( $pts, MYSN_LEAGUE_RESIGN_MIN );
@@ -362,6 +363,7 @@ function mysn_league_row( $r, $uid ) {
 		'wins'   => (int) $r['wins'],
 		'losses' => (int) $r['losses'],
 		'best'   => (int) $r['best'],
+		'elo'    => mysn_elo( $r['user_id'] ),
 		'me'     => (int) $r['user_id'] === (int) $uid,
 	);
 }

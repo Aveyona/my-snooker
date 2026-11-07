@@ -936,7 +936,8 @@ export class Online {
 		g.match.status = m.status;
 		if (m.status === 'finished' && !(m.seq > g.match.seq)) {
 			const won = m.winner === m.players[m.me].id;
-			const lg = m.league ? ` Liga: ${won ? '+' : '-'}${Math.max(0, m.delta)} bodov.` : '';
+			const ed = m.elo && m.elo[m.me] && m.edel ? m.edel[m.me] : 0;
+			const lg = m.league ? ` Liga: ${won ? '+' : '-'}${Math.max(0, m.delta)} bodov.${ed ? ` ELO ${m.elo[m.me] - ed} → ${m.elo[m.me]} (${ed > 0 ? '+' : '−'}${Math.abs(ed)}).` : ''}` : '';
 			this.lastLeague = !!m.league;
 			this.stopMatchText = lg;
 			const wi = m.players.findIndex((p) => p.id === m.winner);
@@ -946,7 +947,7 @@ export class Online {
 				this.lastFiesta = {
 					winner: m.players[wi].name,
 					result: `${m.players[0].name} ${m.scores[0]} : ${m.scores[1]} ${m.players[1].name}`,
-					lines: [m.result === 'resign' ? `${m.players[1 - wi].name} sa vzdal partie` : m.result === 'disconnect' ? `${m.players[1 - wi].name} stratil spojenie` : m.result === 'timeout' ? 'rozhodol čas' : `Najvyššia séria: ${Math.max(best[0] || 0, best[1] || 0)}`, `Liga: víťaz +${Math.max(0, m.delta || 0)} bodov`],
+					lines: [m.result === 'resign' ? `${m.players[1 - wi].name} sa vzdal partie` : m.result === 'disconnect' ? `${m.players[1 - wi].name} stratil spojenie` : m.result === 'timeout' ? 'rozhodol čas' : `Najvyššia séria: ${Math.max(best[0] || 0, best[1] || 0)}`, `Liga: víťaz +${Math.max(0, m.delta || 0)} bodov${m.elo && m.elo[wi] ? ` · ELO ${m.elo[wi]} (+${Math.abs(m.edel[wi])})` : ''}`],
 					winId: m.winner,
 				};
 				this.wsend({ k: 'w-over', f: this.lastFiesta });

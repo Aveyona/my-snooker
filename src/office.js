@@ -779,7 +779,7 @@ export function buildOffice(scene) {
 		g.fillText(d && d.me ? `${d.me.rank}. miesto · ${d.me.points} b.` : '', 256, 210);
 		g.fillStyle = '#9fb3d9';
 		g.font = '26px Arial, sans-serif';
-		g.fillText(d && d.me ? `V ${d.me.wins} · P ${d.me.losses} · séria ${d.me.best}` : '', 256, 260);
+		g.fillText(d && d.me ? `V ${d.me.wins} · P ${d.me.losses} · séria ${d.me.best} · ELO ${d.me.elo}` : '', 256, 260);
 		g.restore();
 		nb.t.needsUpdate = true;
 	};

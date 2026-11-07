@@ -508,7 +508,8 @@ export class UI {
 				(lg
 					? row('Prezývka', esc(lg.nick || d.name)) +
 						row('Sezóna', esc(lg.season)) +
-						(lg.league ? row('Liga a miesto', `${lg.league}. liga, ${lg.rank}. miesto`) + row('Body', String(lg.points)) + row('Výhry a prehry', `${lg.wins} : ${lg.losses}`) : row('Stav', 'zatiaľ bez zápasu'))
+						(lg.league ? row('Liga a miesto', `${lg.league}. liga, ${lg.rank}. miesto`) + row('Body', String(lg.points)) + row('Výhry a prehry', `${lg.wins} : ${lg.losses}`) : row('Stav', 'zatiaľ bez zápasu')) +
+						(d.elo ? row('ELO sila', d.elo.games ? `<b>${d.elo.elo}</b> (${d.elo.games} ${d.elo.games === 1 ? 'ligový zápas' : d.elo.games < 5 ? 'ligové zápasy' : 'ligových zápasov'})` : `${d.elo.elo} (začiatočná, zatiaľ bez ligového zápasu)`) : '')
 					: '<p class="mysn-note">V lige nie si zaregistrovaný. Registrácia je v kancelárii (Liga v menu).</p>') +
 				`<h4>Partie a skóre</h4>` +
 				row('Dohraté partie cez internet', `${d.matches.played} (výhry ${d.matches.won}, ligové ${d.matches.league})`) +
@@ -886,6 +887,12 @@ export class UI {
 		return d.toLocaleDateString('sk-SK', { day: 'numeric', month: 'numeric', year: 'numeric' }) + (time ? ' ' + d.toLocaleTimeString('sk-SK', { hour: '2-digit', minute: '2-digit' }) : '');
 	}
 
+	/** Číslo so znamienkom: +22, −15. */
+	static sgn(n) {
+		n = Number(n) || 0;
+		return n > 0 ? '+' + n : n < 0 ? '−' + Math.abs(n) : '0';
+	}
+
 	static histWho(p) {
 		const c = p && p.country ? countryByCode(p.country) : null;
 		return esc(p ? p.name : '') + (c ? ` <span class="mysn-hist-cc">${esc(c.name)}</span>` : '');
@@ -902,7 +909,7 @@ export class UI {
 			el.appendChild(h('h3', '', 'Moje zápasy v lige'));
 			if (d.sum) {
 				const pct = d.sum.wins + d.sum.losses ? Math.round((d.sum.wins / (d.sum.wins + d.sum.losses)) * 100) : 0;
-				el.appendChild(h('div', 'mysn-hist-sum', `<span><b>${d.sum.played}</b> zápasov</span><span><b>${d.sum.wins}</b> výhier</span><span><b>${d.sum.losses}</b> prehier</span><span><b>${pct} %</b> výhier</span><span>najvyšší brejk <b>${d.sum.best}</b></span>`));
+				el.appendChild(h('div', 'mysn-hist-sum', `<span><b>${d.sum.played}</b> zápasov</span><span><b>${d.sum.wins}</b> výhier</span><span><b>${d.sum.losses}</b> prehier</span><span><b>${pct} %</b> výhier</span><span>najvyšší brejk <b>${d.sum.best}</b></span>${d.sum.elo ? `<span>ELO <b>${d.sum.elo}</b></span>` : ''}`));
 			}
 			this.histList = h('div', 'mysn-hist-list');
 			el.appendChild(this.histList);
@@ -923,7 +930,7 @@ export class UI {
 				'mysn-hist-row mysn-hist-' + cls,
 				`<span class="mysn-hist-date">${UI.histDate(m.date)}</span><span class="mysn-hist-opp">${UI.histWho(m.opp)}</span>` +
 					`<span class="mysn-hist-score">${m.my} : ${m.their}</span><span class="mysn-hist-res">${txt}</span>` +
-					`<span class="mysn-hist-delta">${m.delta > 0 ? '+' + m.delta : m.delta < 0 ? '−' + Math.abs(m.delta) : ''}</span>`
+					`<span class="mysn-hist-delta">${m.delta > 0 ? '+' + m.delta : m.delta < 0 ? '−' + Math.abs(m.delta) : ''}${m.elo ? `<small title="ELO po zápase">ELO ${m.elo} (${m.edel > 0 ? '+' + m.edel : '−' + Math.abs(m.edel)})</small>` : ''}</span>`
 			);
 			row.type = 'button';
 			row.addEventListener('click', () => this.opts.onAction('historyMatch', m.id));
@@ -958,7 +965,7 @@ export class UI {
 				'div',
 				'mysn-hist-head mysn-hist-' + cls,
 				`<div class="mysn-hist-vs"><span>${UI.histWho(P[0])}</span><b>${d.scores[0]} : ${d.scores[1]}</b><span>${UI.histWho(P[1])}</span></div>` +
-					`<div class="mysn-hist-meta">${txt}${d.delta ? ` · body ligy ${d.delta > 0 ? '+' + d.delta : '−' + Math.abs(d.delta)}` : ''}<br>${d.season ? esc(d.season) + ' · ' : ''}${UI.histDate(d.date)} · ${d.duration ? mins + ' min' : ''}</div>`
+					`<div class="mysn-hist-meta">${txt}${d.delta ? ` · body ligy ${d.delta > 0 ? '+' + d.delta : '−' + Math.abs(d.delta)}` : ''}${d.elo && d.elo[0] ? `<br>ELO: ${esc(P[0].name || '')} ${d.elo[0]} (${UI.sgn(d.edel[0])}), ${esc(P[1].name || '')} ${d.elo[1]} (${UI.sgn(d.edel[1])})` : ''}<br>${d.season ? esc(d.season) + ' · ' : ''}${UI.histDate(d.date)} · ${d.duration ? mins + ' min' : ''}</div>`
 			)
 		);
 		// porovnanie hráčov
@@ -1396,7 +1403,7 @@ export class UI {
 		B.appendChild(h('h3', '', `Liga: ${esc(d.season.name)}`));
 		B.appendChild(h('p', 'mysn-note', `Do konca sezóny ostáva ${d.season.daysLeft} dní (${tm(d.season.ends)}). Hráčov v lige: ${d.players}.`));
 		if (d.me) {
-			B.appendChild(h('div', 'mysn-menu-note', `Si <b>${d.me.rank}.</b> v <b>${d.me.league}. lige</b>, máš <b>${d.me.points}</b> bodov (výhry ${d.me.wins}, prehry ${d.me.losses}).`));
+			B.appendChild(h('div', 'mysn-menu-note', `Si <b>${d.me.rank}.</b> v <b>${d.me.league}. lige</b>, máš <b>${d.me.points}</b> bodov (výhry ${d.me.wins}, prehry ${d.me.losses}), ELO <b>${d.me.elo}</b>.`));
 			if (this._leagueTab === 0) {
 				this._leagueTab = d.me.league;
 			}
@@ -1432,13 +1439,13 @@ export class UI {
 		B.appendChild(tabs);
 		const rows = (d.leagues && d.leagues[this._leagueTab || 1]) || [];
 		const tb = h('table', 'mysn-lb');
-		tb.innerHTML = '<thead><tr><th>#</th><th>Hráč</th><th>Body</th><th>V / P</th><th>Séria</th></tr></thead>';
+		tb.innerHTML = '<thead><tr><th>#</th><th>Hráč</th><th>Body</th><th>V / P</th><th>Séria</th><th>ELO</th></tr></thead>';
 		const body = h('tbody');
 		if (!rows.length) {
-			body.appendChild(h('tr', 'mysn-lb-gap', '<td colspan="5">V tejto lige zatiaľ nikto nie je.</td>'));
+			body.appendChild(h('tr', 'mysn-lb-gap', '<td colspan="6">V tejto lige zatiaľ nikto nie je.</td>'));
 		}
 		for (const r of rows) {
-			body.appendChild(h('tr', r.me ? 'mysn-lb-me' : '', `<td>${r.rank}.</td><td>${esc(r.user.name)}</td><td><b>${r.points}</b></td><td>${r.wins} / ${r.losses}</td><td>${r.best}</td>`));
+			body.appendChild(h('tr', r.me ? 'mysn-lb-me' : '', `<td>${r.rank}.</td><td>${esc(r.user.name)}</td><td><b>${r.points}</b></td><td>${r.wins} / ${r.losses}</td><td>${r.best}</td><td>${r.elo || ''}</td>`));
 		}
 		tb.appendChild(body);
 		B.appendChild(tb);
@@ -2527,7 +2534,7 @@ export class UI {
 			// prehľad hráča v lige
 			const me = d.me;
 			w.appendChild(h('div', 'mysn-news-head', `<b>Kancelária: ${esc((p.nick || (o.user && o.user.name)) || '')}</b>`));
-			w.appendChild(h('div', 'mysn-menu-note', `<b>${me.rank}.</b> miesto v <b>${me.league}. lige</b>, <b>${me.points}</b> bodov<br>Výhry ${me.wins}, prehry ${me.losses}, najvyššia séria ${me.best}`));
+			w.appendChild(h('div', 'mysn-menu-note', `<b>${me.rank}.</b> miesto v <b>${me.league}. lige</b>, <b>${me.points}</b> bodov<br>Výhry ${me.wins}, prehry ${me.losses}, najvyššia séria ${me.best}, ELO ${me.elo}`));
 			w.appendChild(h('p', 'mysn-mixer-status', `${esc(d.season.name)}: do konca sezóny ${d.season.daysLeft} dní. Hráčov v lige: ${d.players}.`));
 			const btns = h('div', 'mysn-office-btns');
 			const t = this.button('Tabuľky líg a vyzvanie hráča', 'leagueTables');

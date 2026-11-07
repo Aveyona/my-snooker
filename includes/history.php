@@ -45,7 +45,7 @@ function mysn_rest_history( $req ) {
 	$t      = mysn_table( 'matches' );
 	$before = (int) $req->get_param( 'before' );
 	$where  = $wpdb->prepare( "league = 1 AND (p1 = %d OR p2 = %d) AND status IN ('active','finished','annulled','paused')", $uid, $uid );
-	$rows   = $wpdb->get_results( "SELECT id, p1, p2, status, created, updated, score1, score2, winner, result, season_id, delta FROM $t WHERE $where" . ( $before ? $wpdb->prepare( ' AND id < %d', $before ) : '' ) . ' ORDER BY id DESC LIMIT 21', ARRAY_A ); // phpcs:ignore
+	$rows   = $wpdb->get_results( "SELECT id, p1, p2, status, created, updated, score1, score2, winner, result, season_id, delta, elo1, elo2, edel1, edel2 FROM $t WHERE $where" . ( $before ? $wpdb->prepare( ' AND id < %d', $before ) : '' ) . ' ORDER BY id DESC LIMIT 21', ARRAY_A ); // phpcs:ignore
 	$more   = count( $rows ) > 20;
 	$list   = array();
 	foreach ( array_slice( $rows, 0, 20 ) as $m ) {
@@ -61,6 +61,8 @@ function mysn_rest_history( $req ) {
 			'their'  => (int) ( 0 === $me ? $m['score2'] : $m['score1'] ),
 			'result' => $res,
 			'delta'  => $won ? max( 0, (int) $m['delta'] ) : ( $lost ? -max( 0, (int) $m['delta'] ) : 0 ),
+			'elo'    => (int) ( 0 === $me ? $m['elo1'] : $m['elo2'] ),
+			'edel'   => (int) ( 0 === $me ? $m['edel1'] : $m['edel2'] ),
 		);
 	}
 	$out = array(
@@ -76,6 +78,7 @@ function mysn_rest_history( $req ) {
 			'wins'   => (int) $s['w'],
 			'losses' => (int) $s['l'],
 			'best'   => $best,
+			'elo'    => mysn_elo( $uid ),
 		);
 	}
 	return $out;
@@ -172,6 +175,8 @@ function mysn_rest_history_match( $req ) {
 		'result'   => $res,
 		'delta'    => $won ? max( 0, (int) $m['delta'] ) : ( $lost ? -max( 0, (int) $m['delta'] ) : 0 ),
 		'season'   => (string) $season,
+		'elo'      => array( (int) ( $m['elo1'] ?? 0 ), (int) ( $m['elo2'] ?? 0 ) ),
+		'edel'     => array( (int) ( $m['edel1'] ?? 0 ), (int) ( $m['edel2'] ?? 0 ) ),
 		'date'     => (int) $m['created'],
 		'duration' => max( 0, $last - $first ),
 		'stats'    => $stat,

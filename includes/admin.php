@@ -158,7 +158,7 @@ function mysn_admin_matches( $limit = 30 ) {
 		<p>Zatiaľ žiadne partie.</p>
 	<?php else : ?>
 		<table class="widefat striped" style="max-width:1200px">
-			<thead><tr><th>Partia</th><th>Hráči</th><th>Skóre</th><th>Údery</th><th>Stav</th><th>Víťaz</th><th>Body ligy</th><th>Naposledy</th><th></th></tr></thead>
+			<thead><tr><th>Partia</th><th>Hráči</th><th>Skóre</th><th>Údery</th><th>Stav</th><th>Víťaz</th><th>Body ligy</th><th>ELO</th><th>Naposledy</th><th></th></tr></thead>
 			<tbody>
 			<?php foreach ( $rows as $m ) : ?>
 				<tr>
@@ -169,6 +169,7 @@ function mysn_admin_matches( $limit = 30 ) {
 					<td><?php echo esc_html( ( $names[ $m['status'] ] ?? $m['status'] ) . ( 'resign' === $m['result'] ? ', vzdaná' : '' ) ); ?></td>
 					<td><?php echo $m['winner'] ? esc_html( mysn_user( $m['winner'] )['name'] ) : ''; ?></td>
 					<td><?php echo esc_html( mysn_admin_delta( $m ) ); ?></td>
+					<td><?php echo (int) ( $m['elo1'] ?? 0 ) ? esc_html( sprintf( '%d (%+d) : %d (%+d)', $m['elo1'], $m['edel1'], $m['elo2'], $m['edel2'] ) ) : ''; ?></td>
 					<td><?php echo esc_html( wp_date( 'j. n. Y H:i', (int) $m['updated'] ) ); ?></td>
 					<td><?php if ( (int) $m['moves'] ) : ?><button type="button" class="button button-small" data-mysn-replay="<?php echo (int) $m['id']; ?>">▶ Prehrať</button><?php endif; ?></td>
 				</tr>
