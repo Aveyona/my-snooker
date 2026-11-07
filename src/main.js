@@ -3428,8 +3428,14 @@ export function start(root, config = {}) {
 						actions.officeFocus(officeFocusNow);
 					} else if (ui.leagueOpen()) {
 						ui.openLeague(false);
+					} else if (ui.menuOpen()) {
+						if (performance.now() - (ui._menuAt || 0) > 300) {
+							ui.showMenu(false); // druhé Esc menu zavrie, ostáva sa v kancelárii
+							ui.toast('Klikni do hry, myš sa zachytí.');
+						}
 					} else {
-						actions.officeLeave();
+						controls.uncapture(); // Esc v kancelárii: menu (do herne sa ide dverami alebo z menu)
+						ui.showMenu(true, true);
 					}
 					return true;
 				}
