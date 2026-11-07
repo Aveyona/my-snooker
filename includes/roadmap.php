@@ -133,6 +133,7 @@ function mysn_roadmap() {
 /** Denník zmien (najnovšie hore). */
 function mysn_changelog() {
 	return array(
+		array( '0.7.102', '7. 11. 2026', 'Zvuk gúľania gúľ po súkne je ešte o niečo tichší.' ),
 		array( '0.7.101', '7. 11. 2026', 'Animácia rozhodcu zmenená: po rozostavení rozhodca príde k čiernemu koncu stola, zoberie trojuholník zo súkna, prenesie ho cez mantinel, zvisle ho zavesí pod stôl na jeho háčik a vráti sa na svoje miesto. Admin ju spustí z mapy (M, Štadión, Rozhodca odkladá trojuholník).' ),
 		array( '0.7.100', '7. 11. 2026', 'Štadión: animácia rozhodcu, ktorý stavia červené do trojuholníka. Príde k čiernemu koncu stola, po jednej dokotúľa 15 červených do trojuholníka (pravou rukou siaha na stôl), zarovná ich, trojuholník zdvihne a vráti sa na svoje miesto. Admin ju spustí z mapy miestností (M, Štadión, Rozhodca stavia trojuholník). Zvuk gúľania gúľ po súkne je tichší.' ),
 		array( '0.7.99', '7. 11. 2026', 'Administrácia Hráči: nové stĺpce percento výhier (z dohraných partií cez internet) a najvyšší break (liga aj hra o skóre), hráči sa dajú zoradiť kliknutím na názov stĺpca (ELO, body, výhry, partie, naposledy v hre a ďalšie).' ),
