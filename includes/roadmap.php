@@ -133,6 +133,7 @@ function mysn_roadmap() {
 /** Denník zmien (najnovšie hore). */
 function mysn_changelog() {
 	return array(
+		array( '0.7.87', '7. 11. 2026', 'Administrácia Zvuky: pri každom zvuku odporúčaný názov súboru po anglicky s číslom varianty (napríklad cue-hit-soft-01.wav).' ),
 		array( '0.7.86', '7. 11. 2026', 'Základná sada zvukov: ďalších 67 voľných nahrávok (CC0 a public domain): napitie sa vody, grgnutie, prdnutie, jooooj, óóó, šepot, jasot publika, tlkot srdca, znelky začiatku a víťazstva, tiknutie, upozornenie, dvere, jemný a tvrdý náraz gúľ, jemný mantinel. Bez voľnej nahrávky ostáva pšššt, well done, drkotanie v jamke a hlas rozhodcu.' ),
 		array( '0.7.85', '7. 11. 2026', 'Body: pri každej potopenej guli vyskočí nad jamkou +1 až +7 vo farbe gule a zaznie zvuk bodov (vyšší pri hodnotnejšej guli; viac gúľ za sebou). Pri faule v partii sa ukáže Faul · súper +4 (až +7). Zvuk Body sa dá nahradiť v administrácii Zvuky (Atmosféra).' ),
 		array( '0.7.84', '7. 11. 2026', 'Zvuky: nové zvuky v administrácii a v hre: šepot publika pred rozhodujúcim úderom, jasot a Well done (pre online divákov), skupina Atmosféra: napätie (tlkot srdca pri poslednej čiernej na štadióne, kým sa mieri), znelka pri príchode na štadión, znelka víťazstva (keď nie je označená víťazná skladba), tiknutie časomiery a upozornenie na nájdený zápas; pípnutie pred ťahom hrá nahrávku, ak je.' ),

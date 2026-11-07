@@ -221,6 +221,74 @@ function mysn_radio_music() {
 	return $out;
 }
 
+/** Odporúčaný názov súboru po anglicky (bez čísla varianty a prípony). */
+function mysn_sound_filename( $id ) {
+	$m = array(
+		'cue-soft' => 'cue-hit-soft',
+		'cue-medium' => 'cue-hit-medium',
+		'cue-hard' => 'cue-hit-hard',
+		'cue-miscue' => 'cue-miscue',
+		'ball-soft' => 'ball-hit-soft',
+		'ball-medium' => 'ball-hit-medium',
+		'ball-hard' => 'ball-hit-hard',
+		'ball-kiss' => 'ball-kiss',
+		'cushion-soft' => 'cushion-hit-soft',
+		'cushion-medium' => 'cushion-hit-medium',
+		'cushion-hard' => 'cushion-hit-hard',
+		'pot-corner' => 'pocket-corner-drop',
+		'pot-middle' => 'pocket-middle-drop',
+		'pot-jaws' => 'pocket-jaws-rattle',
+		'roll' => 'ball-roll-loop',
+		'chalk' => 'cue-chalk',
+		'place' => 'ball-place',
+		'rest' => 'cue-rest-place',
+		'rack-fill' => 'rack-fill',
+		'rack-lift' => 'rack-lift',
+		'break' => 'break-shot',
+		'amb-herna' => 'ambience-pool-room-loop',
+		'amb-office' => 'ambience-office-loop',
+		'amb-stadium' => 'ambience-arena-loop',
+		'door-creak' => 'door-creak',
+		'door-shut' => 'door-shut',
+		'beep' => 'turn-beep',
+		'ref-foul' => 'referee-foul',
+		'ref-foul-4' => 'referee-foul-four',
+		'ref-foul-5' => 'referee-foul-five',
+		'ref-foul-6' => 'referee-foul-six',
+		'ref-foul-7' => 'referee-foul-seven',
+		'ref-freeball' => 'referee-free-ball',
+		'ref-again' => 'referee-play-again',
+		'ref-time' => 'referee-time',
+		'ref-frame' => 'referee-frame',
+		'ref-match' => 'referee-frame-and-match',
+		'ref-start' => 'referee-match-start',
+		'ref-steps' => 'referee-footsteps-loop',
+		'ref-gloves' => 'referee-ball-respot',
+		'crowd-whisper' => 'crowd-whisper',
+		'crowd-cheer' => 'crowd-cheer',
+		'well-done' => 'voice-well-done',
+		'tension' => 'heartbeat-loop',
+		'jingle-start' => 'jingle-match-start',
+		'jingle-win' => 'jingle-victory',
+		'clock-tick' => 'clock-tick',
+		'score' => 'score-point',
+		'notify' => 'notify-match-found',
+		'player-drink' => 'player-drink-water',
+		'player-burp' => 'player-burp',
+		'player-fart' => 'player-fart',
+		'applause-small' => 'applause-polite',
+		'applause-big' => 'applause-strong',
+		'ovation' => 'crowd-ovation',
+		'crowd-ooh' => 'crowd-aww',
+		'crowd-wow' => 'crowd-ooh-amazed',
+		'laugh' => 'crowd-laugh',
+		'whistle' => 'crowd-whistle',
+		'cough' => 'crowd-cough',
+		'shush' => 'crowd-shush',
+	);
+	return isset( $m[ $id ] ) ? $m[ $id ] : $id;
+}
+
 /** Predvolené doladenie slotu. */
 function mysn_sound_defaults() {
 	return array(
@@ -455,7 +523,7 @@ function mysn_admin_sounds_page() {
 		<style>
 			.mysn-snd table{border-collapse:collapse;width:100%;background:#fff;margin:0 0 22px}
 			.mysn-snd th,.mysn-snd td{border-bottom:1px solid #e2e4e7;padding:8px;vertical-align:top;text-align:left}
-			.mysn-snd td.n{width:340px}.mysn-snd td.n b{display:block}.mysn-snd td.n small{display:block;color:#50575e;margin-top:3px}.mysn-snd td.n small.rec{color:#2271b1}.mysn-snd td.n small.spec{color:#8a5a00}.mysn-snd td.n small.spec b{display:inline}.mysn-snd td.n small.rec b{display:inline}
+			.mysn-snd td.n{width:340px}.mysn-snd td.n b{display:block}.mysn-snd td.n small{display:block;color:#50575e;margin-top:3px}.mysn-snd td.n small.rec{color:#2271b1}.mysn-snd td.n small.spec{color:#8a5a00}.mysn-snd td.n small.spec b{display:inline}.mysn-snd td.n small.fn{color:#3c434a}.mysn-snd td.n small.fn b{display:inline}.mysn-snd td.n small.fn code{font-size:11px;padding:0 3px}.mysn-snd td.n small.rec b{display:inline}
 			.mysn-snd .files{min-width:200px}.mysn-snd .files span{display:inline-block;background:#f0f0f1;border-radius:3px;padding:1px 6px;margin:0 4px 4px 0;font-size:12px}
 			.mysn-snd .files span a{color:#b32d2e;text-decoration:none;margin-left:4px}
 			#mysn-gal{position:fixed;inset:0;z-index:100000;background:#0008;display:none;align-items:flex-start;justify-content:center;padding:60px 16px;overflow:auto}
@@ -473,6 +541,7 @@ function mysn_admin_sounds_page() {
 			<ul style="list-style:disc;margin-left:18px">
 				<li><b>Galéria My Snooker:</b> tlačidlo <b>Súbory…</b> pri zvuku otvorí jeho galériu: Pridať súbory nahrá nahrávky priamo sem (priečinok uploads/my-snooker-sounds, mimo knižnice Médií, v Médiách WordPressu sa vôbec neukážu). Pri každom súbore: prehrať, zapnúť alebo vypnúť (Hrá) a priorita 1 až 5 (ako často sa hrá oproti ostatným: 5 = päťkrát častejšie ako 1). Odložiť presunie súbor do koša galérie (uploads/my-snooker-sounds/_kos), nič sa nemaže natrvalo. Zmeny Hrá a priority ulož tlačidlom Uložiť zvuky.</li>
 				<li><b>Formát:</b> WAV (48 kHz, 24 bitov) alebo MP3 (320 kbps), aj OGG.</li>
+				<li><b>Názov súboru:</b> pri každom zvuku je odporúčaný názov po anglicky s číslom varianty, napríklad cue-hit-soft-01.wav, cue-hit-soft-02.wav. Malé písmená, bez diakritiky a medzier, slová oddelené pomlčkou; v galérii sa podľa neho súbory zoradia.</li>
 				<li><b>Kvalita:</b> profesionálne nahrávky, minimálne stereo. Zvuky stola sa v hre umiestnia do priestoru (3D na slúchadlách, výrazné stereo na reproduktoroch); ambient a diváci hrajú v plnom sterei.</li>
 				<li><b>Čisté nahrávky:</b> bez ozveny miestnosti (dozvuk pridá hra podľa miestnosti), bez šumu, krátke ticho na začiatku a konci (do 50 ms).</li>
 				<li><b>Jazyk:</b> hlas rozhodcu aj hlasy divákov sú po anglicky (ako v skutočnom snookri): Foul, four. Free ball. Frame and match. Well done.</li>
@@ -516,7 +585,7 @@ function mysn_admin_sounds_page() {
 				endif;
 				?>
 				<tr data-slot="<?php echo esc_attr( $id ); ?>">
-					<td class="n"><b><?php echo esc_html( $x[1] ); ?></b><small><?php echo esc_html( $x[2] ); ?></small><small class="rec"><b>Nahrávka:</b> <?php echo esc_html( $x[3] ); ?></small><?php $sp = mysn_sound_spec( $id ); ?><small class="spec"><b>Dĺžka klipu:</b> <?php echo esc_html( $sp[0] ); ?><br><b>Hlasitosť v klipe:</b> <?php echo esc_html( $sp[1] ); ?></small></td>
+					<td class="n"><b><?php echo esc_html( $x[1] ); ?></b><small><?php echo esc_html( $x[2] ); ?></small><small class="rec"><b>Nahrávka:</b> <?php echo esc_html( $x[3] ); ?></small><?php $sp = mysn_sound_spec( $id ); ?><small class="spec"><b>Dĺžka klipu:</b> <?php echo esc_html( $sp[0] ); ?><br><b>Hlasitosť v klipe:</b> <?php echo esc_html( $sp[1] ); ?></small><?php $fnm = mysn_sound_filename( $id ); ?><small class="fn"><b>Názov súboru:</b> <code><?php echo esc_html( $fnm ); ?>-01.wav</code>, <code><?php echo esc_html( $fnm ); ?>-02.wav</code>…</small></td>
 					<td class="files">
 						<input type="hidden" class="fm" name="snd[<?php echo esc_attr( $id ); ?>][fm]" value="<?php echo esc_attr( wp_json_encode( (object) $s['fm'] ) ); ?>">
 						<div class="list"></div>
