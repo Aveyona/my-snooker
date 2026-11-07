@@ -21,7 +21,7 @@ import { UI } from './ui.js';
 import { Game, fmtTime } from './match.js';
 import { Online } from './online.js';
 import { remaining } from './rules.js';
-import { aimTrace, R, L, W, snapshot, restore, createRack } from './physics.js';
+import { aimTrace, R, L, W, snapshot, restore, createRack, POCKETS } from './physics.js';
 import { buildRackTriangle, rackLayout } from './rackTriangle.js';
 import { Replay } from './replay.js';
 import { CHALKS, chalkById } from './chalks.js';
@@ -33,7 +33,7 @@ const AIM_AHEAD = 0.5; // posun pohľadu bez mierenej gule: kamera sa pozerá 50
 
 function loadSettings() {
 	const mobile = /Android|iPhone|iPad|Mobile/i.test(navigator.userAgent);
-	const def = { tableDetail: 'fine', lines: false, quality: mobile ? 'low' : 'high', volume: 0.8, respot: true, contact: true, contactPos: 'right', afterShot: 'follow', oppCam: 'follow', camera: 'cue', cue: 'club' };
+	const def = { tableDetail: 'fine', lines: false, quality: mobile ? 'low' : 'high', volume: 0.8, volTable: 1, volRoom: 1, volCrowd: 1, sound3d: 'hrtf', respot: true, contact: true, contactPos: 'right', afterShot: 'follow', oppCam: 'follow', camera: 'cue', cue: 'club' };
 	try {
 		const raw = window.localStorage.getItem(STORE);
 		if (raw) {
@@ -312,6 +312,7 @@ export function start(root, config = {}) {
 	table.group.add(rackAnim);
 	let rackT = -1; // čas animácie (s), -1 = neprebieha
 	let rackWasFresh = false;
+	let rackLiftSnd = false;
 	const RACK_POS = createRack().filter((b) => b.kind === 'red').map((b) => b.p);
 	const rackFresh = () => {
 		const reds = game.balls.filter((b) => b.kind === 'red');
@@ -331,6 +332,8 @@ export function start(root, config = {}) {
 		if (fresh && !rackWasFresh) {
 			chalkMarks.clear(); // nový frame alebo nové rozostavenie: čisté súkno
 			rackT = 0; // nové rozostavenie: spusti animáciu
+			rackLiftSnd = false;
+			sound.fx('rack-fill', { pos: { x: 0.9, y: R, z: 0 } });
 		}
 		rackWasFresh = fresh;
 		if (rackT < 0) {
@@ -350,6 +353,10 @@ export function start(root, config = {}) {
 			const k = Math.min(1, (t - 1.15) / 0.8);
 			y = k * k * 0.45; // vznesie sa hore
 			op = 1 - k;
+		}
+		if (t > 1.15 && !rackLiftSnd) {
+			rackLiftSnd = true;
+			sound.fx('rack-lift', { pos: { x: 0.9, y: R + 0.1, z: 0 } }); // trojuholník sa zdvíha
 		}
 		rackAnim.position.y = y;
 		rackMat.opacity = op;
@@ -374,8 +381,13 @@ export function start(root, config = {}) {
 	// kamera je vždy za tágom (staré uložené nastavenie kamery sa ignoruje)
 	settings.camera = 'cue';
 	rig.setMode('cue');
-	const sound = new Sound();
+	const sound = new Sound(config.sounds || {}); // nahrávky a doladenie z administrácie (My Snooker → Zvuky)
 	sound.setVolume(settings.volume);
+	sound.setMode(settings.sound3d === 'stereo' ? 'stereo' : 'hrtf');
+	for (const [g, k] of [['table', 'volTable'], ['room', 'volRoom'], ['crowd', 'volCrowd']]) {
+		sound.setGroupVolume(g, settings[k] === undefined ? 1 : +settings[k]);
+	}
+	const ballPos = (b) => (b ? { x: b.p.x, y: R, z: b.p.z } : null); // stôl je v strede scény, gule = poloha zvuku
 
 	// rádio v herni: stanice z My Player, priestorový zvuk z dvoch reproduktorov, mixpult (F9)
 	const preRadio = new Set(scene.children);
@@ -1597,6 +1609,7 @@ export function start(root, config = {}) {
 			rig.setView(pos, tip);
 			chalkT = 0;
 			chalkStart = performance.now();
+			setTimeout(() => sound.fx('chalk', { pos: cue.pivot.position }), 450); // krieda o špicu
 			chalkMesh.visible = true;
 		} else {
 			// na štadióne (liga) majú niektoré pohľady vlastné miesto (F4 skóre na veľkej obrazovke)
@@ -1862,12 +1875,14 @@ export function start(root, config = {}) {
 			ui.setSpin(0, 0); // po údere sa Miesto úderu vráti do stredu
 			cushAuto = null;
 			ui.spinNote('');
+			const hadChalk = chalk > 0;
 			if (chalk > 0) {
 				chalk--;
 			}
 			ui.setChalk(chalk);
 			updateScore();
-			sound.cue(power);
+			// úder tága: sila, tágo (hmotnosť, druh špice), krieda, šmyk, rozbitie
+			sound.cue(power, { pos: ballPos(game.cue), mass: cueSpec.massG, tip: tip.kind, chalk: hadChalk, miscue, brk: rackWasFresh && power > 0.55 });
 			ui.sync(game, rig.mode);
 		}
 	};
@@ -2784,6 +2799,7 @@ export function start(root, config = {}) {
 				return;
 			}
 			spiderOn = true;
+			sound.fx('rest', { pos: ballPos(game.cue) });
 			if (!freeMouse) {
 				controls.capture();
 			}
@@ -3057,6 +3073,12 @@ export function start(root, config = {}) {
 			settings[k] = v;
 			if (k === 'volume') {
 				sound.setVolume(v);
+			}
+			if (k === 'volTable' || k === 'volRoom' || k === 'volCrowd') {
+				sound.setGroupVolume({ volTable: 'table', volRoom: 'room', volCrowd: 'crowd' }[k], +v);
+			}
+			if (k === 'sound3d') {
+				sound.setMode(v);
 			}
 			if (k === 'respot') {
 				game.respot = !!v;
@@ -4057,19 +4079,26 @@ export function start(root, config = {}) {
 		const dt = Math.min(0.05, (now - last) / 1000);
 		last = now;
 		controls.update(dt);
+		sound.setListener(rig.camera); // poslucháč = kamera (3D zvuk)
+		sound.setRoom(view === 'office' ? 'office' : venue === 'league' ? 'stadium' : 'herna');
 		if (game.state === 'moving') {
 			for (const e of game.tick(dt)) {
 				if (e.type === 'ball') {
-					sound.ball(e.speed);
+					const a = game.balls[e.a];
+					const b = game.balls[e.b];
+					sound.ball(e.speed, { pos: a && b ? { x: (a.p.x + b.p.x) / 2, y: R, z: (a.p.z + b.p.z) / 2 } : null });
 				} else if (e.type === 'cushion') {
-					sound.cushion(e.speed);
+					sound.cushion(e.speed, { pos: ballPos(game.balls[e.a]) });
 				} else if (e.type === 'pot') {
-					sound.pot();
+					const pk = POCKETS[e.pocket];
+					sound.pot({ pos: pk ? { x: pk.x, y: R, z: pk.z } : null, corner: pk ? !!pk.corner : true, speed: e.speed });
 					if (venue === 'league' && game.balls[e.a] && game.balls[e.a].kind !== 'white') {
 						stadium.react('clap'); // diváci tlieskajú pri potopenej guli
 						crowdLg.react('clap');
+						sound.fx('applause-small', { gain: 0.7 }); // potlesk z tribún (stereo, zo všetkých strán)
 					} else if (venue !== 'league' && game.balls[e.a] && game.balls[e.a].kind !== 'white') {
 						crowdHome.react('clap');
+						sound.fx('applause-small', { gain: 0.35, room: 0.5 });
 					}
 				}
 			}

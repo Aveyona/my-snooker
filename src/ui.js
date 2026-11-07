@@ -324,6 +324,14 @@ export class UI {
 					<option value="simple">Jednoduchý (pre slabšie zariadenia)</option>
 				</select></label>
 			<label>Hlasitosť <input type="range" min="0" max="1" step="0.05" data-k="volume"></label>
+			<label>Zvuky stola <input type="range" min="0" max="1.5" step="0.05" data-k="volTable"></label>
+			<label>Miestnosť (ambient, dvere) <input type="range" min="0" max="1.5" step="0.05" data-k="volRoom"></label>
+			<label>Diváci <input type="range" min="0" max="1.5" step="0.05" data-k="volCrowd"></label>
+			<label>Priestorový zvuk
+				<select data-k="sound3d">
+					<option value="hrtf">Slúchadlá (3D zvuk)</option>
+					<option value="stereo">Reproduktory (výrazné stereo)</option>
+				</select></label>
 			<label>Detail dotyku pri mierení
 				<select data-k="contactPos">
 					<option value="center">V strede dole</option>

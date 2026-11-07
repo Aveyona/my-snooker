@@ -97,6 +97,7 @@ function mysn_render( $preview ) {
 		'role'     => $user ? mysn_role() : '',
 		'staff'    => mysn_staff_ids(),
 		// admini (správcovia webu): na menovke pri kresle na štadióne majú pod menom ADMIN
+		'sounds'   => mysn_sounds_config(), // nahrávky a doladenie zvukov (My Snooker → Zvuky)
 		'clock'    => mysn_shot_clock(), // čas na ťah v ligovom zápase (sekundy) podľa sezóny
 		'admins'   => array_map( 'intval', (array) get_users( array( 'fields' => 'ID', 'capability' => 'manage_options', 'number' => 50 ) ) ),
 	);
