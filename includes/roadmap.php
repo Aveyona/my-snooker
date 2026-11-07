@@ -9,6 +9,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 function mysn_roadmap() {
 	return array(
+		array( '0.7.68', '7. 11. 2026', 'Za tágom pravé tlačidlo myši nerobí nič, keď nemieriš na žiadnu guľu (pohľad sa neposúva).' ),
 		array( '0.7.67', '7. 11. 2026', 'Kancelária: priblíženie na predmet zruší pravé tlačidlo myši aj bez Ctrl (ako v herni návrat za tágo).' ),
 		array( '0.7.66', '7. 11. 2026', 'Oblúk pri priblížení na mierenú guľu je plynulý: rovnomerne s pohybom myši, bez skoku na začiatku a bez ostrého vrcholu.' ),
 		array( '0.7.65', '7. 11. 2026', 'Kancelária: Ctrl a pravé tlačidlo myši zruší priblíženie na predmet (notebook, kalendár, tabuľa, nástenka, mapa, stojan) a vráti pohľad za písací stôl.' ),

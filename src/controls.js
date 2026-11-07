@@ -95,6 +95,9 @@ export class Controls {
 		}
 		if (e.pointerType === 'mouse' && e.button === 2) {
 			// pravé tlačidlo drž = posúvanie pohľadu (kamera sa pozerá na mierenú guľu, inak na bod pol metra pred bielou)
+			if (this.rig.mode === 'cue' && g.state === 'aim' && !g.spectating && !this.rig.aimBall) {
+				return; // za tágom bez zameranej gule pravé tlačidlo nerobí nič
+			}
 			if (this.rig.mode !== 'free') {
 				this.panning = true;
 				this.rig.panActive = true;

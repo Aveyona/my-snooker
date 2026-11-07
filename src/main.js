@@ -4312,8 +4312,10 @@ export function start(root, config = {}) {
 				: { x: game.cue.p.x + Math.cos(game.dir) * AIM_AHEAD, z: game.cue.p.z + Math.sin(game.dir) * AIM_AHEAD };
 			aimPoint.set(tp.x, R, tp.z);
 			rig.aimPoint = aimPoint;
+			rig.aimBall = !!trace.ball;
 		} else {
 			rig.aimPoint = null;
+			rig.aimBall = false;
 		}
 		updateFelt();
 		office.updateWindow(dt);
