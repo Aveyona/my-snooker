@@ -133,6 +133,7 @@ function mysn_roadmap() {
 /** Denník zmien (najnovšie hore). */
 function mysn_changelog() {
 	return array(
+		array( '0.7.98', '7. 11. 2026', 'Štadión je predvolene ticho: šum publika v pozadí (voľná nahrávka) sa už nepúšťa, hrá len vlastná slučka, ak ju admin vyberie v administrácii Zvuky. Reakcie divákov (potlesk, ovácie, jooooj) ostávajú.' ),
 		array( '0.7.97', '7. 11. 2026', 'Štadión: na menovke na stolíku pri kresle je pod menom hráča jeho ELO (vidia to hráči aj diváci).' ),
 		array( '0.7.96', '7. 11. 2026', 'ELO sila hráča ako v šachu, len z ligových zápasov: nový hráč začína na 1350, výhra nad silnejším dá viac, nad slabším menej (K 40 prvých 30 zápasov, potom 20), vzdanie a výpadok spojenia sú prehra, zrušený zápas sa neráta. Doterajšie ligové zápasy sa prepočítali spätne. Herňa a kancelária sú bez hukotu: voľné nahrávky miestností (šum klimatizácie) sa už nepúšťajú, je tam ticho, kým admin nenahrá vlastný ambient. ELO je v tabuľke ligy, v notebooku Moja liga, pri konci zápasu (zmena, napríklad 1350 → 1370), v histórii zápasov, v Účte a v administrácii (Hráči, Partie).' ),
 		array( '0.7.95', '7. 11. 2026', 'Nešportové správanie v lige: hráč môže v ligovom zápase grgnúť (G) aj prdnúť (H), druhý raz v zápase ho rozhodca napomenie, od tretieho raza dostane súper za každé ďalšie 4 body. Počíta server, napomenutie aj trest vidia a počujú obaja hráči aj diváci; v administrácii Zvuky pribudli hlasy rozhodcu Napomenutie a Trest.' ),

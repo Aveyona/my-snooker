@@ -86,8 +86,8 @@ function mysn_sound_bundled( $slot ) {
 	if ( 'roll' === $slot ) {
 		return array(); // gúľanie: generovaný šum súkna, kým nie je vlastná slučka (voľná nahrávka končila pádom do jamky)
 	}
-	if ( 'amb-herna' === $slot || 'amb-office' === $slot ) {
-		return array(); // herňa a kancelária: voľné nahrávky miestností hučali a šumeli (klimatizácia), je ticho, kým nie je vlastná slučka
+	if ( in_array( $slot, array( 'amb-herna', 'amb-office', 'amb-stadium' ), true ) ) {
+		return array(); // ambienty miestností (herňa, kancelária, štadión): voľné nahrávky hučali a šumeli, predvolene je ticho, kým admin nevyberie vlastnú slučku
 	}
 	$alias = array( 'applause-small' => 'applause-big', 'ovation' => 'applause-big' );
 	$dir   = isset( $alias[ $slot ] ) ? $alias[ $slot ] : $slot;
