@@ -6,6 +6,7 @@ import { Sound } from './audio.js';
 
 const $ = (s, el = document) => el.querySelector(s);
 const files = window.mysnSoundFiles || {}; // id prílohy → { url, name }
+const bundled = window.mysnSoundBundled || {}; // slot → cesty základnej sady
 const snd = new Sound({});
 const loaded = {}; // slot → reťazec id, pre ktoré sú nahrávky načítané
 
@@ -39,7 +40,8 @@ const renderList = (tr) => {
 		L.appendChild(sp);
 	}
 	if (!L.children.length) {
-		L.innerHTML = '<em style="color:#8c8f94;font-size:12px">bez súboru (hrá generovaný zvuk)</em>';
+		const b = bundled[tr.dataset.slot];
+		L.innerHTML = b ? `<em style="color:#00a32a;font-size:12px">základná sada: ${b.length} ${b.length === 1 ? 'súbor' : b.length < 5 ? 'súbory' : 'súborov'} (CC0)</em>` : '<em style="color:#8c8f94;font-size:12px">bez súboru (hrá generovaný zvuk)</em>';
 	}
 };
 
@@ -79,7 +81,8 @@ for (const tr of document.querySelectorAll('tr[data-slot]')) {
 		const key = ids(tr).join(',');
 		if (loaded[slot] !== key) {
 			loaded[slot] = key;
-			await snd.load(slot, ids(tr).map((i) => files[i] && files[i].url).filter(Boolean));
+			const own = ids(tr).map((i) => files[i] && files[i].url).filter(Boolean);
+			await snd.load(slot, own.length ? own : bundled[slot] || []);
 		}
 		snd.tune(slot, params(tr));
 		snd.setRoom($('#mysn-snd-room').value);

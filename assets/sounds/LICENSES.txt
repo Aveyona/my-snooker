@@ -1,0 +1,60 @@
+My Snooker: základná sada zvukov (zdroje a licencie). Vlastné nahrávky v administrácii My Snooker → Zvuky majú prednosť.
+
+cue-medium/cue-strike-01.ogg: USC Cinema / Sunset Editorial collection (SSE Library, uploaded as CC0) | CC0 1.0 | https://archive.org/details/SSE_Library_SPORTS
+cue-medium/cue-strike-02.ogg: USC Cinema / Sunset Editorial collection (SSE Library, uploaded as CC0) | CC0 1.0 | https://archive.org/details/SSE_Library_SPORTS
+cue-medium/cue-strike-03.ogg: USC Cinema / Sunset Editorial collection (SSE Library, uploaded as CC0) | CC0 1.0 | https://archive.org/details/SSE_Library_SPORTS
+cue-medium/cue-strike-04.ogg: USC Cinema / Sunset Editorial collection (SSE Library, uploaded as CC0) | CC0 1.0 | https://archive.org/details/SSE_Library_SPORTS
+cue-medium/cue-strike-05.ogg: USC Cinema / Sunset Editorial collection (SSE Library, uploaded as CC0) | CC0 1.0 | https://archive.org/details/SSE_Library_SPORTS
+cue-medium/cue-strike-06.ogg: USC Cinema / Sunset Editorial collection (SSE Library, uploaded as CC0) | CC0 1.0 | https://archive.org/details/SSE_Library_SPORTS
+cue-medium/cue-strike-07.ogg: USC Cinema / Sunset Editorial collection (SSE Library, uploaded as CC0) | CC0 1.0 | https://archive.org/details/SSE_Library_SPORTS
+cue-medium/cue-strike-08.ogg: USC Cinema / Sunset Editorial collection (SSE Library, uploaded as CC0) | CC0 1.0 | https://archive.org/details/SSE_Library_SPORTS
+cue-medium/cue-strike-09.ogg: SURAJ KISPOTTA (papapleygames) | CC0 1.0 | https://papapleygames.itch.io/pool-and-billiards
+cue-medium/cue-strike-10.ogg: SURAJ KISPOTTA (papapleygames) | CC0 1.0 | https://papapleygames.itch.io/pool-and-billiards
+cue-medium/cue-strike-11.ogg: SURAJ KISPOTTA (papapleygames) | CC0 1.0 | https://papapleygames.itch.io/pool-and-billiards
+cue-medium/cue-strike-12.ogg: SURAJ KISPOTTA (papapleygames) | CC0 1.0 | https://papapleygames.itch.io/pool-and-billiards
+ball-medium/ball-ball-01.ogg: SURAJ KISPOTTA (papapleygames) | CC0 1.0 | https://papapleygames.itch.io/pool-and-billiards
+ball-medium/ball-ball-02.ogg: SURAJ KISPOTTA (papapleygames) | CC0 1.0 | https://papapleygames.itch.io/pool-and-billiards
+ball-medium/ball-ball-03.ogg: SURAJ KISPOTTA (papapleygames) | CC0 1.0 | https://papapleygames.itch.io/pool-and-billiards
+ball-medium/ball-ball-04.ogg: SURAJ KISPOTTA (papapleygames) | CC0 1.0 | https://papapleygames.itch.io/pool-and-billiards
+ball-medium/ball-ball-05.ogg: SURAJ KISPOTTA (papapleygames) | CC0 1.0 | https://papapleygames.itch.io/pool-and-billiards
+ball-medium/ball-ball-06.ogg: SURAJ KISPOTTA (papapleygames) | CC0 1.0 | https://papapleygames.itch.io/pool-and-billiards
+ball-medium/ball-ball-07.ogg: Nicholas A. Judy (The Designer's Choice) | Royalty-free, commercial use allowed, attribution optional (author statement on item page; no CC licenseurl set; same author's sibling collections are CC0) | https://archive.org/details/designers-choice-collection-foley_202508
+ball-medium/ball-ball-08.ogg: Nicholas A. Judy (The Designer's Choice) | Royalty-free, commercial use allowed, attribution optional (author statement on item page; no CC licenseurl set; same author's sibling collections are CC0) | https://archive.org/details/designers-choice-collection-foley_202508
+ball-medium/ball-ball-09.ogg: Nicholas A. Judy (The Designer's Choice) | Royalty-free, commercial use allowed, attribution optional (author statement on item page; no CC licenseurl set; same author's sibling collections are CC0) | https://archive.org/details/designers-choice-collection-foley_202508
+ball-medium/ball-ball-10.ogg: Nicholas A. Judy (The Designer's Choice) | Royalty-free, commercial use allowed, attribution optional (author statement on item page; no CC licenseurl set; same author's sibling collections are CC0) | https://archive.org/details/designers-choice-collection-foley_202508
+ball-medium/ball-ball-11.ogg: Nicholas A. Judy (The Designer's Choice) | Royalty-free, commercial use allowed, attribution optional (author statement on item page; no CC licenseurl set; same author's sibling collections are CC0) | https://archive.org/details/designers-choice-collection-foley_202508
+ball-medium/ball-ball-12.ogg: Nicholas A. Judy (The Designer's Choice) | Royalty-free, commercial use allowed, attribution optional (author statement on item page; no CC licenseurl set; same author's sibling collections are CC0) | https://archive.org/details/designers-choice-collection-foley_202508
+ball-medium/ball-ball-13.ogg: Nicholas A. Judy (The Designer's Choice) | Royalty-free, commercial use allowed, attribution optional (author statement on item page; no CC licenseurl set; same author's sibling collections are CC0) | https://archive.org/details/designers-choice-collection-foley_202508
+ball-medium/ball-ball-14.ogg: Nicholas A. Judy (The Designer's Choice) | Royalty-free, commercial use allowed, attribution optional (author statement on item page; no CC licenseurl set; same author's sibling collections are CC0) | https://archive.org/details/designers-choice-collection-foley_202508
+ball-medium/ball-ball-15.ogg: Nicholas A. Judy (The Designer's Choice) | Royalty-free, commercial use allowed, attribution optional (author statement on item page; no CC licenseurl set; same author's sibling collections are CC0) | https://archive.org/details/designers-choice-collection-foley_202508
+cushion-medium/ball-cushion-01.ogg: SURAJ KISPOTTA (papapleygames) | CC0 1.0 | https://papapleygames.itch.io/pool-and-billiards
+cushion-medium/ball-cushion-02.ogg: SURAJ KISPOTTA (papapleygames) | CC0 1.0 | https://papapleygames.itch.io/pool-and-billiards
+cushion-medium/ball-cushion-03.ogg: SURAJ KISPOTTA (papapleygames) | CC0 1.0 | https://papapleygames.itch.io/pool-and-billiards
+cushion-medium/ball-cushion-04.ogg: Nicholas A. Judy (The Designer's Choice) | Royalty-free, commercial use allowed, attribution optional (author statement on item page; no CC licenseurl set; same author's sibling collections are CC0) | https://archive.org/details/designers-choice-collection-foley_202508
+cushion-medium/ball-cushion-05.ogg: Nicholas A. Judy (The Designer's Choice) | Royalty-free, commercial use allowed, attribution optional (author statement on item page; no CC licenseurl set; same author's sibling collections are CC0) | https://archive.org/details/designers-choice-collection-foley_202508
+pot-corner/pot-drop-01.ogg: Nicholas A. Judy (The Designer's Choice) | Royalty-free, commercial use allowed, attribution optional (author statement on item page; no CC licenseurl set; same author's sibling collections are CC0) | https://archive.org/details/designers-choice-collection-foley_202508
+pot-corner/pot-drop-02.ogg: SURAJ KISPOTTA (papapleygames) | CC0 1.0 | https://papapleygames.itch.io/pool-and-billiards
+roll/ball-roll-01.ogg: SURAJ KISPOTTA (papapleygames) | CC0 1.0 | https://papapleygames.itch.io/pool-and-billiards
+break/break-01.ogg: Nicholas A. Judy (The Designer's Choice) | CC0 1.0 | https://archive.org/details/Designers-Choice-Collection-Sports
+rack-fill/rack-01.ogg: Nicholas A. Judy (The Designer's Choice) | CC0 1.0 | https://archive.org/details/Designers-Choice-Collection-Sports
+rack-fill/rack-02.ogg: Nicholas A. Judy (The Designer's Choice) | Royalty-free, commercial use allowed, attribution optional (author statement on item page; no CC licenseurl set; same author's sibling collections are CC0) | https://archive.org/details/designers-choice-collection-foley_202508
+rack-fill/rack-03.ogg: Nicholas A. Judy (The Designer's Choice) | Royalty-free, commercial use allowed, attribution optional (author statement on item page; no CC licenseurl set; same author's sibling collections are CC0) | https://archive.org/details/designers-choice-collection-foley_202508
+chalk/chalk-01.ogg: Nicholas A. Judy (The Designer's Choice) | CC0 1.0 | https://archive.org/details/Designers-Choice-Collection-Sports
+chalk/chalk-02.ogg: Nicholas A. Judy (The Designer's Choice) | CC0 1.0 | https://archive.org/details/Designers-Choice-Collection-Sports
+applause-big/applause-big-01.ogg: expl0it3r | CC0 1.0 | https://opengameart.org/content/applause-in-a-large-hall-or-church
+applause-big/applause-big-02.ogg: Thore | Public Domain (as stated on SoundBible) | https://soundbible.com/1260-Auditorium-Applause.html
+applause-big/applause-big-03.ogg: Nicholas A. Judy (The Designer's Choice) | CC0 1.0 | https://archive.org/details/Designers-Choice-Collection-Crowds
+crowd-wow/crowd-wow-01.ogg: AuraVoice (OGA user nocturnalvanguard) | CC0 1.0 | https://opengameart.org/content/oooooooooooooo
+laugh/crowd-laugh-01.ogg: USC Cinema / Sunset Editorial collection (SSE Library, uploaded as CC0) | CC0 1.0 | https://archive.org/details/SSE_Library_CROWDS
+laugh/crowd-laugh-02.ogg: USC Cinema / Sunset Editorial collection (SSE Library, uploaded as CC0) | CC0 1.0 | https://archive.org/details/SSE_Library_CROWDS
+whistle/whistle-01.ogg: Nicholas A. Judy (The Designer's Choice) | CC0 1.0 | https://archive.org/details/Designers-Choice-Collection-Whistles
+whistle/whistle-02.ogg: Nicholas A. Judy (The Designer's Choice) | CC0 1.0 | https://archive.org/details/Designers-Choice-Collection-Whistles
+whistle/whistle-03.ogg: Nicholas A. Judy (The Designer's Choice) | CC0 1.0 | https://archive.org/details/Designers-Choice-Collection-Whistles
+cough/cough-01.ogg: Nicholas A. Judy (The Designer's Choice) | CC0 1.0 | https://archive.org/details/Designers-Choice-Collection-Human
+cough/cough-02.ogg: Nicholas A. Judy (The Designer's Choice) | CC0 1.0 | https://archive.org/details/Designers-Choice-Collection-Human
+amb-herna/ambient-room-01.ogg: Nicholas A. Judy (The Designer's Choice) | CC0 1.0 | https://archive.org/details/Designers-Choice-Collection-Ambiences
+amb-office/ambient-office-01.ogg: Nicholas A. Judy (The Designer's Choice) | CC0 1.0 | https://archive.org/details/Designers-Choice-Collection-Ambiences + https://archive.org/details/Designers-Choice-Collection-Clocks
+amb-office/ambient-office-02.ogg: Nicholas A. Judy (The Designer's Choice) | CC0 1.0 | https://archive.org/details/Designers-Choice-Collection-Ambiences + https://archive.org/details/Designers-Choice-Collection-Clocks
+amb-stadium/ambient-arena-01.ogg: USC Cinema / Sunset Editorial collection (SSE Library, uploaded as CC0) | CC0 1.0 | https://archive.org/details/SSE_Library_CROWDS
+amb-stadium/ambient-arena-02.ogg: SURAJ KISPOTTA (papapleygames) | CC0 1.0 | https://papapleygames.itch.io/pool-and-billiards
+amb-stadium/ambient-arena-03.ogg: USC Cinema / Sunset Editorial collection (SSE Library, uploaded as CC0) | CC0 1.0 | https://archive.org/details/SSE_Library_CROWDS

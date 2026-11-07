@@ -67,6 +67,22 @@ function mysn_sound_slots() {
 	);
 }
 
+/**
+ * Základná sada (voľné zvuky CC0 a royalty free v assets/sounds, zdroje v assets/sounds/LICENSES.txt):
+ * použije sa, kým admin k zvuku nevyberie vlastné súbory. Vráti cesty (bez domény).
+ */
+function mysn_sound_bundled( $slot ) {
+	$alias = array( 'applause-small' => 'applause-big', 'ovation' => 'applause-big' );
+	$dir   = isset( $alias[ $slot ] ) ? $alias[ $slot ] : $slot;
+	$files = glob( MYSN_DIR . 'assets/sounds/' . sanitize_file_name( $dir ) . '/*.{ogg,mp3,wav}', GLOB_BRACE );
+	$base  = (string) wp_parse_url( MYSN_URL, PHP_URL_PATH );
+	$out   = array();
+	foreach ( $files ? $files : array() as $f ) {
+		$out[] = $base . 'assets/sounds/' . rawurlencode( $dir ) . '/' . rawurlencode( basename( $f ) );
+	}
+	return $out;
+}
+
 /** Predvolené doladenie slotu. */
 function mysn_sound_defaults() {
 	return array(
@@ -103,6 +119,9 @@ function mysn_sounds_config() {
 			if ( $u ) {
 				$urls[] = (string) wp_parse_url( $u, PHP_URL_PATH );
 			}
+		}
+		if ( ! $urls ) {
+			$urls = mysn_sound_bundled( $id ); // základná sada, kým nie sú vlastné nahrávky
 		}
 		$c = array(
 			'urls'  => $urls,
@@ -179,7 +198,14 @@ function mysn_admin_sounds_page() {
 			}
 		}
 	}
-	wp_add_inline_script( 'mysn-sound-admin', 'window.mysnSoundFiles = ' . wp_json_encode( (object) $files ) . ';', 'before' );
+	$bundled = array();
+	foreach ( $slots as $id => $x ) {
+		$b = mysn_sound_bundled( $id );
+		if ( $b ) {
+			$bundled[ $id ] = $b;
+		}
+	}
+	wp_add_inline_script( 'mysn-sound-admin', 'window.mysnSoundFiles = ' . wp_json_encode( (object) $files ) . '; window.mysnSoundBundled = ' . wp_json_encode( (object) $bundled ) . ';', 'before' );
 	$params = array(
 		'vol'   => array( 'Hlasitosť', 0, 300, 1, '%', 'Celková hlasitosť zvuku (100 % = ako je nahraný).' ),
 		'pitch' => array( 'Tón', -12, 12, 0.5, ' pt', 'Posun výšky v poltónoch: mínus hlbší, plus vyšší.' ),
@@ -213,7 +239,7 @@ function mysn_admin_sounds_page() {
 				<li><b>Čisté nahrávky:</b> bez ozveny miestnosti (dozvuk pridá hra podľa miestnosti), bez šumu, krátke ticho na začiatku a konci (do 50 ms).</li>
 				<li><b>Varianty:</b> pri každom zvuku 3 až 6 súborov, hra ich strieda náhodne, aby rovnaké údery nezneli ako stroj.</li>
 				<li><b>Hlasitosť:</b> podobná úroveň všetkých súborov (okolo −18 LUFS); jemné a tvrdé vrstvy nahraj prirodzene, hra ich prelína podľa sily.</li>
-				<li>Zvuky môžeš dopĺňať postupne. Prázdny zvuk hrá generovanú náhradu. Keď budú všetky hotové, spravíme kompiláciu (zjednotenie hlasitosti, orezanie, menšie súbory).</li>
+				<li>Zvuky môžeš dopĺňať postupne. Kým k zvuku nevyberieš vlastné súbory, hrá <b>základná sada</b> (voľné zvuky CC0, zdroje v assets/sounds/LICENSES.txt), a kde nie je ani tá, generovaná náhrada. Keď budú všetky hotové, spravíme kompiláciu (zjednotenie hlasitosti, orezanie, menšie súbory).</li>
 			</ul>
 		</div>
 		<div class="test">
