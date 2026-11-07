@@ -1133,6 +1133,59 @@ export function start(root, config = {}) {
 	};
 	let confLeft = 3; // divák: konfety F7 najviac 3-krát za zápas
 	const confSeen = new Set(); // id dávok konfiet (prídu od oboch hráčov naraz)
+	/**
+	 * Zvuky od divákov a hráčov: divák F2 potlesk, F3 jooooj, 1 až 7 ďalšie; hráč N napitie, G grgnutie,
+	 * H prdnutie (G a H mimo ligy). Správa ide hráčovi, ten ju prepošle súperovi a svojim divákom,
+	 * každý ju zahrá raz (id), zvuk ide z miesta, kde divák alebo hráč sedí.
+	 */
+	const SPEC_SND = { f2: 'applause-small', f3: 'crowd-ooh', 1: 'crowd-cheer', 2: 'crowd-wow', 3: 'laugh', 4: 'whistle', 5: 'well-done', 6: 'shush', 7: 'cough' };
+	const PLAYER_SND = { n: 'player-drink', g: 'player-burp', h: 'player-fart' };
+	const SND_OK = new Set([...Object.values(SPEC_SND), ...Object.values(PLAYER_SND)]);
+	const sndSeen = new Set();
+	const sndLast = {}; // posledný zvuk od používateľa (ochrana proti spamu)
+	let sndMine = 0;
+	const playSnd = (m) => {
+		if (!m || !m.id || !SND_OK.has(m.s) || sndSeen.has(m.id)) {
+			return false;
+		}
+		const uid = String(m.id).split(':')[0];
+		const now = performance.now();
+		if (now - (sndLast[uid] || 0) < 1500) {
+			return false; // ten istý človek najviac raz za 1,5 s
+		}
+		sndLast[uid] = now;
+		sndSeen.add(m.id);
+		let pos = null;
+		if (m.seat >= 0 && venue === 'league') {
+			const e = stadium.seatEye(m.seat);
+			pos = { x: e.x, y: e.y, z: e.z };
+		} else if (m.p && typeof m.p.x === 'number') {
+			pos = { x: m.p.x, y: m.p.y, z: m.p.z };
+		}
+		const crowd = !String(m.s).startsWith('player-');
+		sound.fx(m.s, { pos: crowd && m.seat < 0 ? null : pos, gain: crowd ? 0.9 : 1 });
+		return true;
+	};
+	/** Môj zvuk: zahrám ho, divák ho pošle hráčom, hráč súperovi a svojim divákom. */
+	const sendSnd = (slot, p) => {
+		const now = performance.now();
+		if (now - sndMine < 2500) {
+			ui.toast('Chvíľu počkaj, zvuky sa dajú púšťať najviac raz za 2,5 sekundy.');
+			return;
+		}
+		sndMine = now;
+		const m = { k: 'w-snd', s: slot, seat: game.spectating ? mySeat : -1, p: p || null, id: (user ? user.id : 0) + ':' + Date.now() };
+		sndLast[String(m.id).split(':')[0]] = 0;
+		playSnd(m);
+		if (!online) {
+			return;
+		}
+		if (game.spectating) {
+			online.watchSend(m);
+		} else {
+			online.sendSnd(m);
+		}
+	};
 	const playConf = (m) => {
 		if (!m || !m.id || confSeen.has(m.id)) {
 			return false;
@@ -3412,6 +3465,10 @@ export function start(root, config = {}) {
 					actions.spectConfetti();
 					return true;
 				}
+				if (SPEC_SND[lk] && !(document.activeElement && /input|select|textarea/i.test(document.activeElement.tagName))) {
+					sendSnd(SPEC_SND[lk]); // divák: F2 potlesk, F3 jooooj, 1 až 7 ďalšie zvuky
+					return true;
+				}
 				if (lk === 'f1') {
 					actions.spectPhone();
 					return true;
@@ -3452,6 +3509,16 @@ export function start(root, config = {}) {
 				return true;
 			}
 			const typing = document.activeElement && /input|select|textarea/i.test(document.activeElement.tagName);
+			if (PLAYER_SND[lk] && !typing && game.match && !game.match.training && !game.spectating && !ui.menuOpen() && !ui.toolsOpen()) {
+				// hráč v partii: N napitie sa vody, G grgnutie, H prdnutie (G a H nie v lige)
+				if (game.match.league && lk !== 'n') {
+					ui.toast('V ligovom zápase sa dá len napiť vody (N).');
+				} else {
+					const c = rig.camera.position;
+					sendSnd(PLAYER_SND[lk], { x: c.x, y: c.y - 0.15, z: c.z });
+				}
+				return true;
+			}
 			if (lk === 'm' && !typing && (!view || view === 'free' || (view === 'office' && !officeMode)) && !game.spectating && !ui.menuOpen()) {
 				actions.roomMap(); // mapa miestností
 				return true;
@@ -3798,6 +3865,10 @@ export function start(root, config = {}) {
 					playConf(m);
 					return;
 				}
+				if (m.k === 'w-snd') {
+					playSnd(m);
+					return;
+				}
 				if (m.k === 'w-end') {
 					if (watchFiesta && venue === 'league') {
 						// divák ostáva na štadióne, kým sa oslavuje (Späť do herne v menu)
@@ -3972,6 +4043,15 @@ export function start(root, config = {}) {
 			watcherConf: (m) => {
 				if (playConf(m)) {
 					online.wsend(m);
+				}
+			},
+			// zvuk od môjho diváka alebo od súpera: zahrám, pošlem svojim divákom (a súperovi, ak je od diváka)
+			snd: (m, fromOpp) => {
+				if (playSnd(m)) {
+					online.wsend(m);
+					if (!fromOpp) {
+						online.rtcSendOpp({ k: 'snd', m });
+					}
 				}
 			},
 			stats: (st) => office.setNotes(st),

@@ -1896,6 +1896,9 @@ export class UI {
 			['F9', 'obrazovky nad stolom zap. a vyp. (pre všetkých)'],
 			['F12', 'zelený reflektor zap. a vyp. (pre všetkých)'],
 			['Tab', 'malý stôl zhora vpravo hore'],
+			['F2', 'potlesk (počujú všetci)'],
+			['F3', 'jooooj'],
+			['1 až 7', 'jasot, óóó, smiech, pískanie, well done, pšššt, kašeľ'],
 			['Myš', 'rozhliadanie, koliesko priblíženie'],
 			['Esc', 'menu (Prestať sledovať)'],
 		];

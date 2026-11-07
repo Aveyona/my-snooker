@@ -256,6 +256,12 @@ export class Online {
 		return this.rtc.broadcast('watch', msg, (p) => !p.offerer);
 	}
 
+	/** Môj zvuk hráča (napitie, grgnutie...): súperovi a mojim divákom. */
+	sendSnd(m) {
+		this.rtcSendOpp({ k: 'snd', m });
+		this.wsend(m);
+	}
+
 	/** Kamera hráča pre divákov (F8): poloha voči stolu, natočenie, zorný uhol, vrstvy. Najviac 10-krát za sekundu. */
 	sendCam(c) {
 		const now = performance.now();
@@ -433,6 +439,8 @@ export class Online {
 				this.hooks.watch(m);
 			} else if (!p.offerer && m.k === 'w-conf' && this.hooks.watcherConf) {
 				this.hooks.watcherConf(m); // konfety od môjho diváka (F7)
+			} else if (!p.offerer && m.k === 'w-snd' && this.hooks.snd) {
+				this.hooks.snd(m, false); // zvuk od môjho diváka (potlesk, jooooj...)
 			} else if (!p.offerer && FLAGS.has(m.k) && this.hooks.flag) {
 				this.hooks.flag(m); // divák prepol reflektor alebo obrazovky
 			}
@@ -471,6 +479,8 @@ export class Online {
 			if (this.hooks.cam) {
 				this.hooks.cam(m); // pohľad súpera na rade (LCD na štadióne)
 			}
+		} else if (m.k === 'snd' && m.m && this.hooks.snd) {
+			this.hooks.snd(m.m, true); // zvuk od súpera alebo od jeho diváka
 		} else if (m.k === 'flag') {
 			if (this.hooks.flag && m.f && FLAGS.has(m.f.k)) {
 				this.hooks.flag({ k: m.f.k, on: !!m.f.on, id: String(m.f.id || '') });

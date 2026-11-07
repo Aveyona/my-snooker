@@ -20,6 +20,7 @@ const PAPERS = [
 			'Medzerník  voľná kamera   Esc  menu',
 			'Z späť, B biela do ruky, R nové rozostavenie,',
 			'S preskočiť, Enter polož bielu, šípky: jemné',
+			'V partii: N napiť sa, G grgnúť, H prdnúť',
 		],
 	},
 	{
