@@ -1923,6 +1923,19 @@ export class UI {
 
 	/** Poznámka pod guľou Miesto úderu (napríklad automaticky vyšší úder pri mantineli). */
 	/** Upozornenie pri mierení, keď hráč nedosiahne na bielu (prázdny text = skryť). */
+	/**
+	 * Vyskakujúce body: text (+1, +7, Faul +4) na mieste x, y (px v okne hry) vo farbe gule, stúpa a zmizne.
+	 */
+	scorePop(text, x, y, color = '#ffd23f', big = false) {
+		const el = h('div', 'mysn-pop' + (big ? ' mysn-pop-big' : ''));
+		el.textContent = text;
+		el.style.left = x + 'px';
+		el.style.top = y + 'px';
+		el.style.color = color;
+		this.root.appendChild(el);
+		setTimeout(() => el.remove(), 1700);
+	}
+
 	/** Okno po súperovom faule: Hrám ja (1) alebo Nech hrá súper (2). opp = meno súpera, null = skryť. */
 	foulChoice(opp) {
 		if (!this.choiceEl) {

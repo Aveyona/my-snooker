@@ -8,7 +8,7 @@
 
 /** Skupina slotu: stôl, miestnosť, diváci (hlasitosti v Nastaveniach). */
 export function soundGroup(slot) {
-	if (/^(amb-|door-|beep|tension|jingle-|clock-tick|notify)/.test(slot)) {
+	if (/^(amb-|door-|beep|tension|jingle-|clock-tick|notify|score)/.test(slot)) {
 		return 'room';
 	}
 	if (/^(applause|ovation|crowd-|laugh|whistle|cough|shush|player-)/.test(slot)) {
@@ -578,6 +578,21 @@ export class Sound {
 		this._tone(70, 0.35, 0.9, 'sine', 0.5, out);
 		this._click(500, 1.5, 0.8, 0.5, out);
 		setTimeout(() => this._ok() && this._click(2500, 4, 0.25, 1, out), 40); // cvaknutie zámku
+	}
+
+	/** Body: zvuk pri pripísaní bodov, vyšší tón pri hodnotnejšej guli (1 až 7), bez nahrávky generovaný zvonček. */
+	score(value, o = {}) {
+		if (!this._ok()) {
+			return;
+		}
+		const v = Math.max(1, Math.min(7, value | 0));
+		if (this.play('score', { ...o, vel: 0.5 + v * 0.07, pitch: (v - 1) * 1.2 })) {
+			return;
+		}
+		const { out, k } = this._synthOut('score', o.pos);
+		const f = 880 * k * Math.pow(2, ((v - 1) * 1.2) / 12);
+		this._tone(f, 0.18, 0.12, 'sine', 1, out);
+		setTimeout(() => this._ok() && this._tone(f * 1.5, 0.28, 0.1, 'sine', 1, out), 70);
 	}
 
 	/** Slučka zo slotu (napätie): on = hrá, inak sa plynulo stíši. */

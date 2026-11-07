@@ -59,6 +59,7 @@ function mysn_sound_slots() {
 		'jingle-start'   => array( 'Atmosféra', 'Znelka: začiatok zápasu', 'Krátka znelka pri príchode na štadión pred ligovým zápasom.', 'Krátka hudobná znelka, 2 až 5 s, stereo.' ),
 		'jingle-win'     => array( 'Atmosféra', 'Znelka: víťazstvo', 'Na konci zápasu na štadióne, keď v rádiu nie je označená víťazná skladba (★).', 'Víťazná fanfára, 3 až 8 s, stereo.' ),
 		'clock-tick'     => array( 'Atmosféra', 'Časomiera: tiknutie', 'Posledné sekundy času na úder v lige (každú sekundu). Bez nahrávky generované pípnutie.', 'Jedno tiknutie hodín, krátke.' ),
+		'score'          => array( 'Atmosféra', 'Body: +1 až +7', 'Pri pripísaní bodov za potopenú guľu (aj na obrazovke vyskočí +1, +5... vo farbe gule). Hra zvuk posunie vyššie podľa hodnoty gule: červená najnižšie, čierna najvyššie. Bez nahrávky generovaný zvonček.', 'Príjemný krátky zvuk zisku (cink), do 0,5 s; jedna nahrávka stačí, výšku mení hra.' ),
 		'notify'         => array( 'Atmosféra', 'Upozornenie: zápas nájdený', 'Keď sa nájde ligový zápas. Bez nahrávky generovaný dvojtón.', 'Príjemný krátky signál, do 1 s.' ),
 		'player-drink'   => array( 'Hráč', 'Napitie sa vody', 'Hráč v kresle sa napije z pohára (kláves, pripravujeme). Hrá z miesta hráča (3D), počujú ho súper aj diváci.', 'Dúšok vody a položenie pohára na stolík.' ),
 		'player-burp'    => array( 'Hráč', 'Grgnutie', 'Zábavný zvuk hráča alebo diváka (kláves, pripravujeme). Hrá z jeho miesta (3D), počujú ho všetci.', 'Grgnutie, krátke.' ),
@@ -146,6 +147,7 @@ function mysn_sound_spec( $id ) {
 		'jingle-win'     => array( '3 až 8 s', 'priemer okolo −16 LUFS' ),
 		'clock-tick'     => array( 'do 0,2 s', 'špička okolo −12 dBFS' ),
 		'notify'         => array( '0,3 až 1 s', 'priemer okolo −18 LUFS' ),
+		'score'          => array( '0,2 až 0,5 s', 'špička okolo −10 dBFS' ),
 	);
 	if ( isset( $m[ $id ] ) ) {
 		return $m[ $id ];

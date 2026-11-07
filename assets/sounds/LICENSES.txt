@@ -58,3 +58,72 @@ amb-office/ambient-office-02.ogg: Nicholas A. Judy (The Designer's Choice) | CC0
 amb-stadium/ambient-arena-01.ogg: USC Cinema / Sunset Editorial collection (SSE Library, uploaded as CC0) | CC0 1.0 | https://archive.org/details/SSE_Library_CROWDS
 amb-stadium/ambient-arena-02.ogg: SURAJ KISPOTTA (papapleygames) | CC0 1.0 | https://papapleygames.itch.io/pool-and-billiards
 amb-stadium/ambient-arena-03.ogg: USC Cinema / Sunset Editorial collection (SSE Library, uploaded as CC0) | CC0 1.0 | https://archive.org/details/SSE_Library_CROWDS
+
+Doplnenie 7. 11. 2026:
+player-drink/player-drink-01.ogg: Nicholas A. Judy (The Designer's Choice) | CC0 1.0 | https://archive.org/details/designers-choice-complete
+player-drink/player-drink-02.ogg: Nicholas A. Judy (The Designer's Choice) | CC0 1.0 | https://archive.org/details/designers-choice-complete
+player-drink/player-drink-03.ogg: Nicholas A. Judy (The Designer's Choice) | CC0 1.0 | https://archive.org/details/designers-choice-complete
+player-drink/player-drink-04.ogg: Nicholas A. Judy (The Designer's Choice) | CC0 1.0 | https://archive.org/details/designers-choice-complete
+player-burp/player-burp-01.ogg: Nicholas A. Judy (The Designer's Choice) | CC0 1.0 | https://archive.org/details/Designers-Choice-Collection-Human
+player-burp/player-burp-02.ogg: Nicholas A. Judy (The Designer's Choice) | CC0 1.0 | https://archive.org/details/Designers-Choice-Collection-Human
+player-burp/player-burp-03.ogg: Nicholas A. Judy (The Designer's Choice) | CC0 1.0 | https://archive.org/details/Designers-Choice-Collection-Human
+player-burp/player-burp-04.ogg: Kevan | Public Domain (as stated on SoundBible) | https://soundbible.com/1579-Belch.html
+player-fart/player-fart-01.ogg: Nicholas A. Judy (The Designer's Choice) | CC0 1.0 | https://archive.org/details/designers-choice-complete
+player-fart/player-fart-02.ogg: Nicholas A. Judy (The Designer's Choice) | CC0 1.0 | https://archive.org/details/designers-choice-complete
+player-fart/player-fart-03.ogg: Nicholas A. Judy (The Designer's Choice) | CC0 1.0 | https://archive.org/details/designers-choice-complete
+player-fart/player-fart-04.ogg: Paula | Public Domain (as stated on SoundBible) | https://soundbible.com/1605-Blowing-A-Raspberry.html
+crowd-ooh/crowd-ooh-01.ogg: USC Cinema / Sunset Editorial collection (SSE Library, uploaded as CC0) | CC0 1.0 | https://archive.org/details/SSE_Library_CROWDS
+crowd-ooh/crowd-ooh-02.ogg: USC Cinema / Sunset Editorial collection (SSE Library, uploaded as CC0) | CC0 1.0 | https://archive.org/details/SSE_Library_CROWDS
+crowd-ooh/crowd-ooh-03.ogg: USC Cinema / Sunset Editorial collection (SSE Library, uploaded as CC0) | CC0 1.0 | https://archive.org/details/SSE_Library_CROWDS
+crowd-ooh/crowd-ooh-04.ogg: USC Cinema / Sunset Editorial collection (SSE Library, uploaded as CC0) | CC0 1.0 | https://archive.org/details/SSE_Library_CROWDS
+crowd-wow/b-crowd-wow-01.ogg: USC Cinema / Sunset Editorial collection (SSE Library, uploaded as CC0) | CC0 1.0 | https://archive.org/details/SSE_Library_AMBIENCE
+crowd-wow/crowd-wow-02.ogg: USC Cinema / Sunset Editorial collection (SSE Library, uploaded as CC0) | CC0 1.0 | https://archive.org/details/SSE_Library_AMBIENCE
+crowd-wow/crowd-wow-03.ogg: USC Cinema / Sunset Editorial collection (SSE Library, uploaded as CC0) | CC0 1.0 | https://archive.org/details/SSE_Library_CROWDS
+crowd-wow/crowd-wow-04.ogg: USC Cinema / Sunset Editorial collection (SSE Library, uploaded as CC0) | CC0 1.0 | https://archive.org/details/SSE_Library_CROWDS
+crowd-whisper/crowd-whisper-01.ogg: USC Cinema / Sunset Editorial collection (SSE Library, uploaded as CC0) | CC0 1.0 | https://archive.org/details/SSE_Library_CROWDS
+crowd-whisper/crowd-whisper-02.ogg: USC Cinema / Sunset Editorial collection (SSE Library, uploaded as CC0) | CC0 1.0 | https://archive.org/details/SSE_Library_CROWDS
+crowd-whisper/crowd-whisper-03.ogg: USC Cinema / Sunset Editorial collection (SSE Library, uploaded as CC0) | CC0 1.0 | https://archive.org/details/SSE_Library_CROWDS
+crowd-whisper/crowd-whisper-04.ogg: USC Cinema / Sunset Editorial collection (SSE Library, uploaded as CC0) | CC0 1.0 | https://archive.org/details/SSE_Library_CROWDS
+crowd-cheer/crowd-cheer-01.ogg: USC Cinema / Sunset Editorial collection (SSE Library, uploaded as CC0) | CC0 1.0 | https://archive.org/details/SSE_Library_CROWDS
+crowd-cheer/crowd-cheer-02.ogg: USC Cinema / Sunset Editorial collection (SSE Library, uploaded as CC0) | CC0 1.0 | https://archive.org/details/SSE_Library_CROWDS
+crowd-cheer/crowd-cheer-03.ogg: USC Cinema / Sunset Editorial collection (SSE Library, uploaded as CC0) | CC0 1.0 | https://archive.org/details/SSE_Library_CROWDS
+crowd-cheer/crowd-cheer-04.ogg: USC Cinema / Sunset Editorial collection (SSE Library, uploaded as CC0) | CC0 1.0 | https://archive.org/details/SSE_Library_CROWDS
+tension/tension-01.ogg: USC Cinema / Sunset Editorial collection (SSE Library, uploaded as CC0) | CC0 1.0 | https://archive.org/details/SSE_Library_HUMAN
+tension/tension-02.ogg: USC Cinema / Sunset Editorial collection (SSE Library, uploaded as CC0) | CC0 1.0 | https://archive.org/details/SSE_Library_HUMAN
+tension/tension-03.ogg: bart | CC0 1.0 | https://opengameart.org/content/heartbeat-sounds
+tension/tension-04.ogg: bart | CC0 1.0 | https://opengameart.org/content/heartbeat-sounds
+jingle-start/jingle-start-01.ogg: Haley Halcyon | CC0 1.0 | https://opengameart.org/content/8bit-fanfare-jingle-the-lick
+jingle-start/jingle-start-02.ogg: Fupi | CC0 1.0 | https://opengameart.org/content/win-jingle
+jingle-start/jingle-start-03.ogg: Nicholas A. Judy (The Designer's Choice) | CC0 1.0 | https://archive.org/details/Designers-Choice-Collection-Musical
+jingle-start/jingle-start-04.ogg: Nicholas A. Judy (The Designer's Choice) | CC0 1.0 | https://archive.org/details/Designers-Choice-Collection-Musical
+jingle-win/jingle-win-01.ogg: Zane Little Music | CC0 1.0 | https://opengameart.org/content/hyper-ultra-fanfare
+jingle-win/jingle-win-02.ogg: Listener | CC0 1.0 | https://opengameart.org/content/win-sound-effect
+jingle-win/jingle-win-03.ogg: Fupi | CC0 1.0 | https://opengameart.org/content/win-jingle
+jingle-win/jingle-win-04.ogg: Nicholas A. Judy (The Designer's Choice) | CC0 1.0 | https://archive.org/details/Designers-Choice-Collection-Musical
+clock-tick/clock-tick-01.ogg: IgnasD | CC0 1.0 | https://opengameart.org/content/clock-tick-0
+clock-tick/clock-tick-02.ogg: cemkalyoncu | CC0 1.0 | https://opengameart.org/content/tick-and-tock
+clock-tick/clock-tick-03.ogg: cemkalyoncu | CC0 1.0 | https://opengameart.org/content/tick-and-tock
+clock-tick/clock-tick-04.ogg: Nicholas A. Judy (The Designer's Choice) | CC0 1.0 | https://archive.org/details/Designers-Choice-Collection-Clocks
+notify/notify-01.ogg: railkill | CC0 1.0 | https://opengameart.org/content/kalimba-two-notes
+notify/notify-02.ogg: Robin Lamb | CC0 1.0 | https://opengameart.org/content/ui-sound-effects-button-clicks-user-feedback-notifications
+notify/notify-03.ogg: Nicholas A. Judy (The Designer's Choice) | CC0 1.0 | https://archive.org/details/Designers-Choice-Collection-Bells
+notify/notify-04.ogg: Nicholas A. Judy (The Designer's Choice) | CC0 1.0 | https://archive.org/details/designers-choice-complete
+door-creak/door-creak-01.ogg: Nicholas A. Judy (The Designer's Choice) | CC0 1.0 | https://archive.org/details/Designers-Choice-Collection-Doors
+door-creak/door-creak-02.ogg: Nicholas A. Judy (The Designer's Choice) | CC0 1.0 | https://archive.org/details/Designers-Choice-Collection-Doors
+door-creak/door-creak-03.ogg: USC Cinema / Sunset Editorial collection (SSE Library, uploaded as CC0) | CC0 1.0 | https://archive.org/details/SSE_Library_DOORS
+door-creak/door-creak-04.ogg: stephan | Public Domain (as stated on SoundBible) | https://soundbible.com/1717-Creaking-Door-Spooky.html
+door-shut/door-shut-01.ogg: Nicholas A. Judy (The Designer's Choice) | CC0 1.0 | https://archive.org/details/Designers-Choice-Collection-Doors
+door-shut/door-shut-02.ogg: USC Cinema / Sunset Editorial collection (SSE Library, uploaded as CC0) | CC0 1.0 | https://archive.org/details/SSE_Library_DOORS
+door-shut/door-shut-03.ogg: USC Cinema / Sunset Editorial collection (SSE Library, uploaded as CC0) | CC0 1.0 | https://archive.org/details/SSE_Library_DOORS
+door-shut/door-shut-04.ogg: Clemens F | Public Domain (as stated on SoundBible) | https://soundbible.com/1586-Big-Door-Closed.html
+cushion-soft/cushion-01.ogg: Nicholas A. Judy (The Designer's Choice) | CC0 1.0 | https://archive.org/details/designers-choice-complete (FOLEY/PROP/FOLYProp-...Billiards, Balls, Into Box; identical size to round-1 copy)
+cushion-soft/cushion-02.ogg: Nicholas A. Judy (The Designer's Choice) | CC0 1.0 | https://archive.org/details/designers-choice-complete (FOLEY/PROP/FOLYProp-...Billiards, Balls, Into Box; identical size to round-1 copy)
+cushion-soft/cushion-03.ogg: Nicholas A. Judy (The Designer's Choice) | CC0 1.0 | https://archive.org/details/designers-choice-complete (FOLEY/PROP/FOLYProp-...Billiards, Balls, Into Box; identical size to round-1 copy)
+ball-soft/ball-soft-01.ogg: Nicholas A. Judy (The Designer's Choice) | CC0 1.0 | https://archive.org/details/designers-choice-complete (FOLEY/PROP/FOLYProp-...Billiards, Balls, Into Box; identical size to round-1 copy)
+ball-soft/ball-soft-02.ogg: Nicholas A. Judy (The Designer's Choice) | CC0 1.0 | https://archive.org/details/designers-choice-complete (FOLEY/PROP/FOLYProp-...Billiards, Balls, Into Box; identical size to round-1 copy)
+ball-soft/ball-soft-03.ogg: Nicholas A. Judy (The Designer's Choice) | CC0 1.0 | https://archive.org/details/designers-choice-complete (FOLEY/PROP/FOLYProp-...Billiards, Balls, Into Box; identical size to round-1 copy)
+ball-soft/ball-soft-04.ogg: Nicholas A. Judy (The Designer's Choice) | CC0 1.0 | https://archive.org/details/designers-choice-complete (FOLEY/PROP/FOLYProp-...Billiards, Balls, Into Box; identical size to round-1 copy)
+ball-hard/ball-hard-01.ogg: Nicholas A. Judy (The Designer's Choice) | CC0 1.0 | https://archive.org/details/Designers-Choice-Collection-Sports
+ball-hard/ball-hard-02.ogg: Nicholas A. Judy (The Designer's Choice) | CC0 1.0 | https://archive.org/details/Designers-Choice-Collection-Sports
+ball-hard/ball-hard-03.ogg: Nicholas A. Judy (The Designer's Choice) | CC0 1.0 | https://archive.org/details/designers-choice-complete (FOLEY/PROP/FOLYProp-...Billiards, Balls, Into Box; identical size to round-1 copy)
+ball-hard/ball-hard-04.ogg: Nicholas A. Judy (The Designer's Choice) | CC0 1.0 | https://archive.org/details/designers-choice-complete (FOLEY/PROP/FOLYProp-...Billiards, Balls, Into Box; identical size to round-1 copy)

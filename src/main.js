@@ -21,7 +21,7 @@ import { UI } from './ui.js';
 import { Game, fmtTime } from './match.js';
 import { Online } from './online.js';
 import { remaining } from './rules.js';
-import { aimTrace, R, L, W, snapshot, restore, createRack, POCKETS } from './physics.js';
+import { aimTrace, R, L, W, snapshot, restore, createRack, POCKETS, COLOURS } from './physics.js';
 import { buildRackTriangle, rackLayout } from './rackTriangle.js';
 import { Replay } from './replay.js';
 import { CHALKS, chalkById } from './chalks.js';
@@ -389,7 +389,7 @@ export function start(root, config = {}) {
 	}
 	const ballPos = (b) => (b ? { x: b.p.x, y: R, z: b.p.z } : null); // stôl je v strede scény, gule = poloha zvuku
 	// priebeh úderu pre reakcie divákov: ktoré gule narazili do mantinelu, ktoré spadli
-	const shotTrack = { cush: new Set(), pots: [], lead: 0, brk0: 0, active: false };
+	const shotTrack = { cush: new Set(), pots: [], potAt: {}, lead: 0, brk0: 0, active: false };
 	let tensionOn = false; // tlkot srdca pri rozhodujúcom údere
 	const winHold = { stop: () => {} }; // víťazná hudba (definovaná nižšie, setVenue ju zastaví pri odchode zo štadióna)
 
@@ -4059,6 +4059,48 @@ export function start(root, config = {}) {
 		};
 		ui.toast(`Hrá: ${tr.title}`);
 	};
+	/** Bod v scéne → miesto v okne hry (px), null keď je za kamerou. */
+	const toScreen = (x, y, z) => {
+		const v = new THREE.Vector3(x, y, z).project(rig.camera);
+		if (v.z > 1) {
+			return null;
+		}
+		const r = renderer.domElement.getBoundingClientRect();
+		const root = ui.root.getBoundingClientRect();
+		return { x: r.left - root.left + ((v.x + 1) / 2) * r.width, y: r.top - root.top + ((1 - v.y) / 2) * r.height };
+	};
+	/**
+	 * Body po údere: pri každej potopenej guli vyskočí +hodnota vo farbe gule nad jamkou a zaznie zvuk bodov
+	 * (vyšší pri hodnotnejšej guli); pri faule Faul a body pre súpera.
+	 */
+	const scorePops = (points) => {
+		const pots = shotTrack.pots.filter((id) => game.balls[id] && game.balls[id].kind !== 'white');
+		const css = (k) => '#' + COLOURS[k].color.toString(16).padStart(6, '0');
+		if (shotTrack.foul) {
+			const c = toScreen(0, R, 0);
+			if (c) {
+				ui.scorePop(`Faul · súper +${shotTrack.foul}`, c.x, c.y - 40, '#ff6b6b', true);
+			}
+			return;
+		}
+		if (points !== null && points <= 0) {
+			return;
+		}
+		let t = 0;
+		for (const id of pots) {
+			const b = game.balls[id];
+			const pk = POCKETS[shotTrack.potAt[id]];
+			const val = pots.length === 1 && points ? points : COLOURS[b.kind].value;
+			setTimeout(() => {
+				const c = pk ? toScreen(pk.x, R + 0.05, pk.z) : null;
+				if (c) {
+					ui.scorePop('+' + val, c.x, c.y, css(b.kind)); // čierna má biely obrys, je čitateľná
+				}
+				sound.score(val, { pos: pk ? { x: pk.x, y: R, z: pk.z } : null });
+			}, t);
+			t += 260;
+		}
+	};
 	/** Hlasitosť publika: štadión vždy, herňa len keď sedia skutoční diváci, inak ticho. */
 	const crowdGain = () => (venue === 'league' ? 1 : seatList.length ? 0.45 : 0);
 	/** Hlásenie rozhodcu (nahrávky po anglicky; bez nahrávky ticho). Hlas ide z miesta rozhodcu na štadióne. */
@@ -4145,6 +4187,7 @@ export function start(root, config = {}) {
 		if (type === 'shot') {
 			shotTrack.cush.clear();
 			shotTrack.pots = [];
+			shotTrack.potAt = {};
 			shotTrack.foul = 0;
 			shotTrack.active = true;
 			const m = game.match;
@@ -4156,6 +4199,7 @@ export function start(root, config = {}) {
 		if (type === 'settle' && shotTrack.active) {
 			shotTrack.active = false;
 			setTimeout(crowdReact, 250);
+			scorePops(d && typeof d.points === 'number' ? d.points : null);
 		}
 		if ((type === 'spot' || type === 'placed') && d && d.p) {
 			sound.fx('place', { pos: ballPos(d), delay: type === 'spot' ? 0.15 + Math.random() * 0.25 : 0 }); // guľa položená na súkno
@@ -4265,6 +4309,7 @@ export function start(root, config = {}) {
 					shotTrack.cush.add(e.a);
 				} else if (e.type === 'pot') {
 					shotTrack.pots.push(e.a);
+					shotTrack.potAt[e.a] = e.pocket;
 				}
 				if (e.type === 'ball') {
 					const a = game.balls[e.a];
