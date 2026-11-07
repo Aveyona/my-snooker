@@ -303,6 +303,7 @@ export function buildRoomShell(scene, quality, opts = {}) {
 	const DOOR = { at: 1.9, w: 1.0, h: 2.15 };
 	let doorHinge = null;
 	const DOOR_OPEN = THREE.MathUtils.degToRad(72);
+	const signs = {}; // svietiace cedule v chodbe (Kancelária, Obývačka): klik = prechod do miestnosti
 	const doorState = { open: false, angle: 0 }; // po načítaní zatvorené: partia je súkromná, kým hráč neotvorí dvere (F6)
 
 	// Steny: [stred x, stred z, otočenie, dĺžka, dvere]
@@ -398,6 +399,39 @@ export function buildRoomShell(scene, quality, opts = {}) {
 			corr.add(corrLight);
 			const bulb = add(new THREE.SphereGeometry(0.05, 12, 8), new THREE.MeshBasicMaterial({ color: 0xfff0d0 }), 0, 2.45, -0.4, corr);
 			bulb.castShadow = false;
+			// svietiace cedule zavesené na zadnej stene chodby (vidno ich cez otvorené dvere)
+			const sign = (id, text, arrow, x, y) => {
+				const c = document.createElement('canvas');
+				c.width = 512;
+				c.height = 160;
+				const g = c.getContext('2d');
+				g.fillStyle = '#0d1b14';
+				g.fillRect(0, 0, 512, 160);
+				g.strokeStyle = '#d8b46a';
+				g.lineWidth = 8;
+				g.strokeRect(8, 8, 496, 144);
+				g.fillStyle = '#ffe9b0';
+				g.font = 'bold 62px Georgia, serif';
+				g.textAlign = 'center';
+				g.textBaseline = 'middle';
+				g.fillText(arrow === 'l' ? '\u2190 ' + text : text + ' \u2192', 256, 84);
+				const t = new THREE.CanvasTexture(c);
+				t.colorSpace = THREE.SRGBColorSpace;
+				const mat = new THREE.MeshStandardMaterial({ map: t, emissive: 0xffffff, emissiveMap: t, emissiveIntensity: 1.1, roughness: 0.5 });
+				const m = add(new THREE.BoxGeometry(0.52, 0.165, 0.03), mat, x, y, -1.12, corr);
+				m.castShadow = false;
+				for (const sx of [-0.21, 0.21]) {
+					const ch = add(new THREE.CylinderGeometry(0.004, 0.004, 2.45 - y, 6), new THREE.MeshStandardMaterial({ color: 0xb08a3c, metalness: 0.85, roughness: 0.35 }), x + sx, (2.45 + y) / 2, -1.12, corr);
+					ch.castShadow = false;
+				}
+				const glow = new THREE.PointLight(0xffd9a0, high ? 0.6 : 0.4, 1.2, 2);
+				glow.position.set(x, y, -0.95);
+				corr.add(glow);
+				signs[id] = { mesh: m, mat, glow };
+			};
+			// pod sebou vľavo: otvorené krídlo dverí zakrýva pravú časť chodby
+			sign('office', 'Kancelária', 'l', -0.62, 2.06);
+			sign('living', 'Obývačka', 'r', -0.62, 1.8);
 		}
 		scene.add(wall);
 	}
@@ -1155,6 +1189,15 @@ export function buildRoomShell(scene, quality, opts = {}) {
 	};
 
 	return {
+		/** Cedule v chodbe: { office, living } s mesh (klik s Ctrl), setSign(id, svieti). */
+		signs,
+		setSign(id, on) {
+			const sg = signs[id];
+			if (sg) {
+				sg.mat.emissiveIntensity = on ? 1.1 : 0.12;
+				sg.glow.intensity = on ? 0.5 : 0;
+			}
+		},
 		/** Miesta na státie pre online divákov: počet, miesto, oči diváka, výber zhora. */
 		/** Vypínač nástenných svietidiel: poloha (klik s Ctrl) a zapnutie alebo zhasnutie. */
 		lightSwitch: new THREE.Vector3(SW.x, SW.y, SW.z),

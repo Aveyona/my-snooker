@@ -21,7 +21,7 @@ const H = 3.0;
  * Drevená textúra z dosiek (kreslená na plátno): base a dark = farby dreva, n = počet dosiek, vertical = dosky zvisle.
  * Kresba je deterministická (bez náhody pri každom načítaní), aby drevo vyzeralo vždy rovnako.
  */
-const woodTex = (base, dark, n, vertical, seed = 1) => {
+export const woodTex = (base, dark, n, vertical, seed = 1) => {
 	const S = 1024;
 	const c = document.createElement('canvas');
 	c.width = S;
@@ -77,7 +77,7 @@ const woodTex = (base, dark, n, vertical, seed = 1) => {
 	return t;
 };
 
-const tex = (w, h) => {
+export const tex = (w, h) => {
 	const c = document.createElement('canvas');
 	c.width = w;
 	c.height = h;

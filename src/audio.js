@@ -27,7 +27,7 @@ export function cueMod(o = {}) {
 }
 
 const DEF = { vol: 100, pitch: 0, color: 0, vary: 4, sens: 100, room: 100 };
-const ROOMS = { herna: { len: 0.55, wet: 0.16 }, office: { len: 0.32, wet: 0.08 }, stadium: { len: 2.3, wet: 0.34 } };
+const ROOMS = { herna: { len: 0.55, wet: 0.16 }, office: { len: 0.32, wet: 0.08 }, living: { len: 0.4, wet: 0.1 }, stadium: { len: 2.3, wet: 0.34 } };
 const AMB = { herna: 'amb-herna', office: 'amb-office', stadium: 'amb-stadium' };
 
 export class Sound {

@@ -470,6 +470,9 @@ export class UI {
 			if (this.opts.venue && this.opts.venue() === 'league') {
 				box.appendChild(this.button('Späť do herne', 'leagueHome'));
 			}
+			if (this.opts.room && this.opts.room() === 'living') {
+				box.appendChild(this.button('Späť do herne', 'officeLeave')); // z obývačky
+			}
 			box.append(...common());
 		}
 		box.appendChild(this.button('Späť na web', 'home'));
@@ -1851,7 +1854,7 @@ export class UI {
 				})
 				.join('');
 			const r = rooms.find((x) => x.id === sel) || rooms[0];
-			B.innerHTML = `<h3>Mapa miestností</h3><div class="mysn-map-wrap"><svg viewBox="0 0 100 100" class="mysn-map"><rect class="mysn-corr" x="50" y="10" width="6" height="80"></rect><rect class="mysn-corr" x="27" y="26" width="6" height="4"></rect>${svg}</svg><div class="mysn-map-card"></div></div>`;
+			B.innerHTML = `<h3>Mapa miestností</h3><div class="mysn-map-wrap"><svg viewBox="0 0 100 100" class="mysn-map"><rect class="mysn-corr" x="50" y="10" width="6" height="80"></rect>${svg}</svg><div class="mysn-map-card"></div></div>`;
 			const card = B.querySelector('.mysn-map-card');
 			if (r) {
 				card.innerHTML = `<b>${esc(r.name)}</b><p>${esc(r.desc)}</p>${r.locked ? `<p class="mysn-note">🔒 ${esc(r.lockNote || 'Zamknuté.')}</p>` : ''}`;
