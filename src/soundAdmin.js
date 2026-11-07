@@ -126,14 +126,29 @@ for (const tr of document.querySelectorAll('tr[data-slot]')) {
 // rádio Hedlajner - Free Music: výber skladieb (poradie podľa výberu, v hre sa miešajú)
 const mtr = document.querySelector('tr[data-music]');
 if (mtr) {
-	const inp = mtr.querySelector('input[type=hidden]');
+	const inp = mtr.querySelector('input[name=radio_music]');
+	const winInp = mtr.querySelector('input[name=radio_win]');
+	const wins = () => winInp.value.split(',').map((x) => parseInt(x, 10)).filter((x) => x > 0);
 	const mids = () => inp.value.split(',').map((x) => parseInt(x, 10)).filter((x) => x > 0);
 	const draw = () => {
 		const L = mtr.querySelector('.list');
 		L.innerHTML = '';
 		for (const id of mids()) {
 			const sp = document.createElement('span');
-			sp.textContent = (files[id] && files[id].name) || '#' + id;
+			const star = document.createElement('a');
+			star.href = '#';
+			const on = wins().includes(id);
+			star.textContent = on ? '★ ' : '☆ ';
+			star.style.color = on ? '#dba617' : '#8c8f94';
+			star.style.textDecoration = 'none';
+			star.title = on ? 'Víťazná skladba (hrá na konci zápasu na štadióne). Klik zruší.' : 'Označiť ako víťaznú (na konci zápasu na štadióne)';
+			star.addEventListener('click', (e) => {
+				e.preventDefault();
+				winInp.value = (on ? wins().filter((i) => i !== id) : [...wins(), id]).join(',');
+				draw();
+			});
+			sp.appendChild(star);
+			sp.appendChild(document.createTextNode((files[id] && files[id].name) || '#' + id));
 			const x = document.createElement('a');
 			x.href = '#';
 			x.textContent = '×';

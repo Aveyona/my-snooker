@@ -390,6 +390,7 @@ export function start(root, config = {}) {
 	const ballPos = (b) => (b ? { x: b.p.x, y: R, z: b.p.z } : null); // stôl je v strede scény, gule = poloha zvuku
 	// priebeh úderu pre reakcie divákov: ktoré gule narazili do mantinelu, ktoré spadli
 	const shotTrack = { cush: new Set(), pots: [], lead: 0, brk0: 0, active: false };
+	const winHold = { stop: () => {} }; // víťazná hudba (definovaná nižšie, setVenue ju zastaví pri odchode zo štadióna)
 
 	// rádio v herni: stanice z My Player, priestorový zvuk z dvoch reproduktorov, mixpult (F9)
 	const preRadio = new Set(scene.children);
@@ -1036,6 +1037,7 @@ export function start(root, config = {}) {
 		if (v === venue) {
 			return;
 		}
+		winHold.stop();
 		fadeEl.classList.add('mysn-on');
 		if (v !== 'league') {
 			stopFiesta();
@@ -3997,6 +3999,58 @@ export function start(root, config = {}) {
 	updateScore();
 
 	// pri kladení bielej do D sa kamera za tágom dočasne prepne zhora (bielu je tak lepšie vidieť)
+	// víťazná hudba: označené skladby rádia Hedlajner - Free Music (administrácia Zvuky), hrá jedna náhodná
+	const winTracks = (config.radio || []).flatMap((st) => st.tracks || []).filter((t) => t.win);
+	let winAudio = null;
+	const winMusicStop = () => {
+		if (!winAudio) {
+			return;
+		}
+		const a = winAudio;
+		winAudio = null;
+		const t0 = performance.now();
+		const v0 = a.volume;
+		const fade = () => {
+			const k = 1 - (performance.now() - t0) / 1500;
+			a.volume = Math.max(0, v0 * k);
+			if (k > 0) {
+				requestAnimationFrame(fade);
+			} else {
+				a.pause();
+			}
+		};
+		fade();
+	};
+	winHold.stop = winMusicStop;
+	const winMusic = () => {
+		if (!winTracks.length || winAudio || venue !== 'league') {
+			return;
+		}
+		const tr = winTracks[Math.floor(Math.random() * winTracks.length)];
+		const a = new Audio(tr.url);
+		const vol = Math.min(1, (settings.volume ?? 0.8) * (settings.volCrowd ?? 1) * 0.7);
+		a.volume = 0;
+		a.play().catch(() => null);
+		winAudio = a;
+		const t0 = performance.now();
+		const fade = () => {
+			if (winAudio !== a) {
+				return;
+			}
+			const k = Math.min(1, (performance.now() - t0) / 2000);
+			a.volume = vol * k;
+			if (k < 1) {
+				requestAnimationFrame(fade);
+			}
+		};
+		fade();
+		a.onended = () => {
+			if (winAudio === a) {
+				winAudio = null;
+			}
+		};
+		ui.toast(`Hrá: ${tr.title}`);
+	};
 	/** Hlasitosť publika: štadión vždy, herňa len keď sedia skutoční diváci, inak ticho. */
 	const crowdGain = () => (venue === 'league' ? 1 : seatList.length ? 0.45 : 0);
 	/** Hlásenie rozhodcu (nahrávky po anglicky; bez nahrávky ticho). Hlas ide z miesta rozhodcu na štadióne. */
@@ -4022,6 +4076,9 @@ export function start(root, config = {}) {
 			say('ref-match', t + 200);
 		} else if (c.frame) {
 			say('ref-frame', t + 200);
+		}
+		if (c.over && venue === 'league') {
+			setTimeout(winMusic, t + 2500); // koniec zápasu na štadióne: víťazná pieseň z rádia Hedlajner
 		}
 		if ((c.over || c.frame) && crowdGain()) {
 			setTimeout(() => sound.fx('ovation', { gain: crowdGain() }), t + 900);
