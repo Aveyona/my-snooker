@@ -601,6 +601,7 @@ export function buildStadium(scene, quality, clock = 45) {
 	const refHead = referee.userData.head;
 	refHead.rotation.order = 'YXZ'; // najprv otočenie do strany, potom sklon dole
 	const ref = { s: REF_SPOTS[0].s, target: REF_SPOTS[0].s, walk: 0, yaw: Math.PI };
+	let refSc = null; // scenár rozhodcu (animácia stavania gúľ): { x, z, yaw, walk, arm } alebo null
 	/** Zavadzia rozhodca na mieste (x, z) tágu? Pás za bielou v smere tága (aj miesto hráča a kamery). */
 	const refBlocked = (x, z, cb, dir) => {
 		const dx = Math.cos(dir);
@@ -1010,6 +1011,12 @@ export function buildStadium(scene, quality, clock = 45) {
 	return {
 		root,
 		/** Poloha rozhodcu (zvuk jeho hlasu a krokov). */
+		/** Scenár rozhodcu: o = { x, z, yaw, walk, arm } (každá snímka), null = späť na bežné správanie. */
+		refScript: (o) => {
+			refSc = o || null;
+		},
+		/** Kde rozhodca práve stojí a kam sa pozerá. */
+		refHome: () => ({ x: referee.position.x, z: referee.position.z, yaw: referee.rotation.y }),
 		refPos: () => ({ x: referee.position.x, y: FY + 1.6, z: referee.position.z }),
 		/** Pohľady na štadióne: F4 skóre = veľká obrazovka nad tribúnou za kratšou stranou. */
 		views: {
@@ -1072,7 +1079,27 @@ export function buildStadium(scene, quality, clock = 45) {
 			chairChalkTick(dt);
 			confetti.update(dt);
 			spotUpdate(dt);
-			if (cueBall && root.visible) {
+			const [, armR] = referee.userData.arms || [];
+			if (refSc && root.visible) {
+				// rozhodca podľa scenára (stavia gule do trojuholníka): poloha, natočenie, chôdza, pravá ruka
+				referee.position.set(refSc.x, FY + (refSc.walk ? Math.abs(Math.cos(ref.walk)) * 0.015 : 0), refSc.z);
+				let dy = refSc.yaw - referee.rotation.y;
+				dy = Math.atan2(Math.sin(dy), Math.cos(dy));
+				referee.rotation.y += dy * Math.min(1, dt * 6);
+				ref.walk = refSc.walk ? ref.walk + dt * 6 : 0;
+				const sw = refSc.walk ? Math.sin(ref.walk) * 0.45 : 0;
+				const [l0, l1] = referee.userData.legs;
+				l0.rotation.x += (sw - l0.rotation.x) * Math.min(1, dt * 12);
+				l1.rotation.x += (-sw - l1.rotation.x) * Math.min(1, dt * 12);
+				if (armR) {
+					armR.rotation.x += (-(refSc.arm || 0) * 1.25 - armR.rotation.x) * Math.min(1, dt * 10);
+				}
+				refHead.rotation.y += (0 - refHead.rotation.y) * Math.min(1, dt * 3);
+				refHead.rotation.x = refSc.walk ? 0.15 : 0.45;
+			} else if (cueBall && root.visible) {
+				if (armR) {
+					armR.rotation.x += (0 - armR.rotation.x) * Math.min(1, dt * 6);
+				}
 				// kým sa gule nehýbu a mieri sa: uhne z cesty tága (obíde stôl po obvode)
 				let slow = false;
 				const prevTarget = ref.target;

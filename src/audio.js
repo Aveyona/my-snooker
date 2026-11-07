@@ -468,7 +468,7 @@ export class Sound {
 		const R = this.rollV;
 		const t = c.currentTime;
 		const v = Math.min(1, sum / 2.5);
-		R.out.gain.setTargetAtTime(R.vol * 0.35 * Math.pow(v, 0.8), t, 0.06);
+		R.out.gain.setTargetAtTime(R.vol * 0.12 * Math.pow(v, 1.1), t, 0.06); // tichšie (Robo 7. 11.: gúľanie bolo hlasné)
 		R.s.playbackRate.setTargetAtTime(Math.pow(2, R.pitch / 12) * (0.75 + 0.5 * v), t, 0.08);
 		R.lp.frequency.setTargetAtTime(500 + 2200 * v, t, 0.08);
 		if (sum > 0.01) {

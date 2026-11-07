@@ -147,6 +147,20 @@ export class BallViews {
 		for (const it of this.items) {
 			const b = it.ball;
 			const m = it.mesh;
+			const ov = this.over && this.over.get(b);
+			if (ov) {
+				// animácia mimo fyziky (rozhodca stavia gule do trojuholníka): poloha zvonka
+				m.visible = ov.vis !== false;
+				m.position.set(ov.x, ov.y === undefined ? R : ov.y, ov.z);
+				if (ov.roll) {
+					this._axis.set(ov.roll.z, 0, -ov.roll.x).normalize();
+					this._q.setFromAxisAngle(this._axis, ov.roll.a);
+					m.quaternion.premultiply(this._q);
+				}
+				it.blob.visible = m.visible && (ov.y === undefined || ov.y < R * 1.5);
+				it.blob.position.set(ov.x, 0.0006, ov.z);
+				continue;
+			}
 			if (b.on) {
 				it.drop = 0;
 				m.visible = true;

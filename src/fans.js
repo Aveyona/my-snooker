@@ -265,13 +265,20 @@ export function buildReferee() {
 	}
 	add(new THREE.SphereGeometry(0.009, 8, 6), dark, 0, 1.545, 0.06);
 	// ruky: ramená pozdĺž tela, predlaktia dopredu, dlane v rukaviciach zopäté pred bruchom
+	// každá ruka je skupina s kĺbom v ramene (pri stavaní gúľ do trojuholníka siaha pravou rukou na stôl)
+	const arms = [];
 	for (const sx of [-1, 1]) {
-		const upper = add(new THREE.CapsuleGeometry(0.045, 0.26, 6, 10), shirt, sx * 0.215, 1.33, 0.01);
+		const arm = new THREE.Group();
+		arm.position.set(sx * 0.215, 1.46, 0.01);
+		r.add(arm);
+		const upper = add(new THREE.CapsuleGeometry(0.045, 0.26, 6, 10), shirt, 0, -0.13, 0, arm);
 		upper.rotation.z = sx * 0.12;
-		const fore = add(new THREE.CapsuleGeometry(0.04, 0.22, 6, 10), shirt, sx * 0.17, 1.07, 0.09);
+		const fore = add(new THREE.CapsuleGeometry(0.04, 0.22, 6, 10), shirt, sx * 0.17 - sx * 0.215, 1.07 - 1.46, 0.08, arm);
 		fore.rotation.set(-0.9, 0, -sx * 0.55);
-		add(new THREE.SphereGeometry(0.045, 12, 10), glove, sx * 0.05, 1.0, 0.16).scale.set(1, 0.8, 1.15);
+		add(new THREE.SphereGeometry(0.045, 12, 10), glove, sx * 0.05 - sx * 0.215, 1.0 - 1.46, 0.15, arm).scale.set(1, 0.8, 1.15);
+		arms.push(arm);
 	}
+	r.userData.arms = arms;
 	// hlava: krk, tvár, uši, nos, oči, vlasy
 	add(new THREE.CylinderGeometry(0.045, 0.05, 0.08, 12), skin, 0, 1.61, 0);
 	const head = new THREE.Group();
