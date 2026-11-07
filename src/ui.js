@@ -272,7 +272,31 @@ export class UI {
 		this.spinBox.title = `Špica: ${Math.round(life * 100)} % (${st.strokes || 0} úderov). Krieda: ${st.shots ? st.shots + ' z ' + st.max + ' úderov' : 'treba nakriedovať (F3)'}.${st.ext ? ` Predĺženie ${st.ext} cm: biela náhodne uhne až o ${String(st.extDeg).replace('.', ',')}° (silnejší úder viac).` : ''}`;
 	}
 
+	/** Natiahnutý úder (deg > 0): Miesto úderu sa vráti do stredu a zamkne (bez falše), pod guľou nepresnosť. */
+	spinLock(deg) {
+		const on = deg > 0;
+		if (this._spinLock === deg) {
+			return;
+		}
+		this._spinLock = deg;
+		this.spinBox.classList.toggle('mysn-spin-locked', on);
+		if (on && (this.side || this.top)) {
+			this.setSpin(0, 0);
+		}
+		let el = this.spinBox.querySelector('.mysn-st-stretch');
+		if (!el) {
+			el = h('span', 'mysn-st-stretch');
+			this.spinBox.querySelector('.mysn-spin-stat').appendChild(el);
+		}
+		el.style.display = on ? '' : 'none';
+		el.textContent = on ? `Natiahnutý úder ±${String(deg).replace('.', ',')}°, bez falše` : '';
+	}
+
 	setSpin(side, top) {
+		if (this._spinLock > 0 && (side || top)) {
+			side = 0; // natiahnutý úder: miesto úderu sa nedá meniť
+			top = 0;
+		}
 		const l = Math.hypot(side, top);
 		if (l > 1) {
 			side /= l;

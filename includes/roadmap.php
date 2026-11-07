@@ -131,6 +131,7 @@ function mysn_roadmap() {
 /** Denník zmien (najnovšie hore). */
 function mysn_changelog() {
 	return array(
+		array( '0.7.74', '7. 11. 2026', 'Natiahnutý úder (s nádstavcom mimo dosahu): Miesto úderu sa zamkne v strede (sivá guľa, falša sa nedá zadať ani klávesmi), úder ide bez falše a pod guľou je oranžový text Natiahnutý úder ±x°, bez falše.' ),
 		array( '0.7.73', '7. 11. 2026', 'Natiahnutý úder: s nádstavcom (krížik alebo pavúk) sa dá hrať aj tam, kam nedosiahneš, ale úder je nepresný. Biela náhodne uhne od 1,5° (predĺženie 45 cm), 2,5° (30 cm), 3,5° (15 cm) až po extrémnych 5° bez predĺženia, a viac podľa toho, o koľko chýba (najviac dvojnásobok), silnejší úder viac. Upozornenie dole je oranžové a ukazuje odklon. Bez nádstavca sa mimo dosahu hrať nedá.' ),
 		array( '0.7.72', '7. 11. 2026', 'Tágá so Shift (jemné mierenie): presné mierenie je predvolene vždy zapnuté a Shift prepne na rýchle. Na stojane F2 hneď pod popisom tága sa dá voľba Presné mierenie vždy zapnuté vypnúť (potom Shift zapína presné ako predtým). Pamätá sa pri každom tágu zvlášť.' ),
 		array( '0.7.71', '7. 11. 2026', 'Predĺženie tága škodí presnosti stredne: biela náhodne uhne až o 0,25° pri 15 cm, 0,5° pri 30 cm a 0,8° pri 45 cm (silnejší úder viac).' ),

@@ -1825,8 +1825,8 @@ export function start(root, config = {}) {
 		let power = Math.min(1, rawPower * cueSpec.power * TK.power);
 		// krieda: nakriedovaná špička prenesie miesto úderu (falšu) naplno, bez kriedy len pätinu
 		const k = cueSpec.grip * (chalk > 0 ? 1 : CHALK_SPIN) * TK.spin * wearK;
-		let side = spin.side * k;
-		let top = spin.top * k;
+		let side = stretchDeg ? 0 : spin.side * k; // natiahnutý úder: bez falše, len stredom
+		let top = stretchDeg ? 0 : spin.top * k;
 		const missChance = (tip.wear >= 1 ? 0.3 : tip.wear >= 0.9 ? 0.1 : 0) * (cueSpec.miscueK || 1); // menšia špica sa šmýka ľahšie
 		let miscue = false;
 		if (missChance && Math.hypot(spin.side, spin.top) > 0.25 && Math.random() < missChance) {
@@ -4346,8 +4346,10 @@ export function start(root, config = {}) {
 		if (game.state === 'aim' && !game.spectating && game.cue.on && !view) {
 			const r = reachInfo();
 			ui.reachNote(r.ok ? '' : reachMsg(r), !!r.stretch);
+			ui.spinLock(r.stretch ? r.deg : 0); // natiahnutý úder: Miesto úderu je zamknuté v strede, nepresnosť pri tágu
 		} else {
 			ui.reachNote('');
+			ui.spinLock(0);
 		}
 		ui.foulChoice(game.choicePending && view !== 'office' ? game.match.players[1 - game.match.me].name : null); // po súperovom faule: Hrám ja alebo Nech hrá súper
 		// krieda na špici: po nakriedovaní, údere alebo zmene kriedy sa tágo v ruke prekreslí (súper ho vidí tiež)

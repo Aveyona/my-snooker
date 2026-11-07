@@ -40,6 +40,9 @@ body.mysn-page { font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans
 .mysn-spin-cue text { font: bold 11px Arial, sans-serif; paint-order: stroke; stroke: #000a; stroke-width: 2.5px; }
 .mysn-sc-warn { display: none; }
 .mysn-st-ext { color: #fbbf24; }
+.mysn-st-stretch { color: #fb923c; flex-basis: 100%; }
+.mysn-spin-locked .mysn-spin-ball { filter: grayscale(1) brightness(.7); cursor: not-allowed; }
+.mysn-spin-locked .mysn-spin-dot { background: #6b7280; }
 .mysn-sc-warn text { font: bold 17px Arial, sans-serif; fill: #fff; stroke: none; }
 .mysn-noreach .mysn-sc-warn { display: inline; animation: mysn-warn-pulse 1s ease-in-out infinite; transform-origin: 44px 38px; }
 @keyframes mysn-warn-pulse { 50% { transform: scale(1.15); } }
