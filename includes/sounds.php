@@ -591,6 +591,7 @@ function mysn_admin_sounds_page() {
 						<div class="list"></div>
 						<button type="button" class="button button-small pick">Súbory…</button>
 						<button type="button" class="button button-small play">Prehrať</button>
+						<button type="button" class="button button-small typical" title="Zahrá zvuk tak, ako zaznie v hre v situácii, pre ktorú je určený (napríklad jemný úder slabou silou, rozbitie plnou silou, diváci na štadióne), bez ohľadu na nastavenie skúšky">Typická situácia</button>
 					</td>
 					<td><div class="p">
 						<?php foreach ( $params as $k => $p ) : ?>

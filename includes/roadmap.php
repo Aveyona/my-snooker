@@ -133,6 +133,7 @@ function mysn_roadmap() {
 /** Denník zmien (najnovšie hore). */
 function mysn_changelog() {
 	return array(
+		array( '0.7.90', '7. 11. 2026', 'Administrácia Zvuky: tlačidlo Typická situácia pri každom zvuku zahrá zvuk tak, ako zaznie v hre v situácii, pre ktorú je určený (jemný úder slabou silou, tvrdý plnou, rozbitie, jamka pri jamke, rozhodca a diváci na štadióne, ambient vo svojej miestnosti), s klubovým tágom, strednou špicou a kriedou, bez ohľadu na nastavenie skúšky.' ),
 				array( '0.7.89', '7. 11. 2026', 'Skúška zvukov: Spôsob Ako v hre: tento zvuk (predvolené) zahrá súbory zvuku presne tak, ako zaznejú v hre pri nastavenej situácii, bez miešania s inými vrstvami; Ako v hre: s ostatnými vrstvami zahrá celý zvuk s prelínaním vrstiev podľa sily; Pôvodný súbor bez úprav. Predtým predvolené prelínanie miešalo aj iné súbory, preto zvuk neznel ako nahrávka.' ),
 		array( '0.7.88', '7. 11. 2026', 'Skúška zvukov: Spôsob s možnosťou Pôvodný súbor (bez úprav).' ),
 		array( '0.7.87', '7. 11. 2026', 'Administrácia Zvuky: pri každom zvuku odporúčaný názov súboru po anglicky s číslom varianty (napríklad cue-hit-soft-01.wav).' ),

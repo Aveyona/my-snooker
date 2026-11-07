@@ -175,6 +175,58 @@ const playSlot = async (slot) => {
 		window.alert('Tento zvuk zatiaľ nemá súbor ani generovanú náhradu.');
 	}
 };
+/**
+ * Typická situácia zvuku: sila, miestnosť a podmienky, pri ktorých ho hra najčastejšie použije (klubové tágo,
+ * stredná špica, nakriedované, plný zásah, zvuk pred hráčom). Zvuk sa zahrá ako v hre, len jeho súbory.
+ */
+const TYPICAL = {
+	'cue-soft': 0.2, 'cue-medium': 0.5, 'cue-hard': 0.9, 'cue-miscue': 0.55, break: 1,
+	'ball-soft': 0.12, 'ball-medium': 0.45, 'ball-hard': 0.9, 'ball-kiss': 0.04,
+	'cushion-soft': 0.15, 'cushion-medium': 0.45, 'cushion-hard': 0.9,
+	'pot-corner': 0.5, 'pot-middle': 0.5, 'pot-jaws': 0.8, roll: 0.5,
+};
+const playTypical = async (slot) => {
+	await ready();
+	const g = groupOf(slot);
+	const room = /^(amb-office|notify)/.test(slot) ? 'office' : /^(amb-herna|door-|beep|player-)/.test(slot) ? 'herna' : /^(amb-stadium|ref-|applause|ovation|crowd-|laugh|whistle|cough|shush|well-done|tension|jingle-|clock-tick)/.test(slot) ? 'stadium' : val('room').value;
+	snd.setRoom(room);
+	await prep(slot);
+	const vel = TYPICAL[slot] !== undefined ? TYPICAL[slot] : 0.6;
+	const pos = /^(amb-|applause|ovation|crowd-|laugh|whistle|jingle-|tension|notify|clock-tick|beep|score)/.test(slot) ? null : slot.startsWith('pot-') ? { x: -0.9, y: 0.9, z: 0.4 } : /^(ref-|cough|shush|well-done)/.test(slot) ? { x: 1.6, y: 1.6, z: -0.6 } : { x: 0.3, y: 0.9, z: 1.0 };
+	if (slot === 'roll') {
+		const T = { ...test(), vel, pos };
+		const ball = { p: { x: 0.3, z: 0.5 }, v: { x: vel * 3, z: 0 } };
+		const t0 = performance.now();
+		const tick = () => {
+			const k = Math.max(0, 1 - (performance.now() - t0) / 2200);
+			ball.v.x = Math.max(0.2, T.vel * 3) * k;
+			snd.roll(k > 0 ? [ball] : []);
+			if (k > 0) {
+				requestAnimationFrame(tick);
+			}
+		};
+		tick();
+		return;
+	}
+	const o = { vel, pos };
+	if (g === 'cue') {
+		Object.assign(o, cueMod({ mass: 555, tip: 'medium', chalk: true, wear: 0 }));
+	}
+	if (snd.has(slot)) {
+		snd.play(slot, o);
+	} else if (LAYERS[g]) {
+		const T = { vel, pos, mass: 555, tip: 'medium', wear: 0, chalk: true, miscue: slot === 'cue-miscue', brk: slot === 'break', thin: slot === 'ball-kiss' ? 0.5 : 0, corner: slot !== 'pot-middle' };
+		playGroup(g, T); // bez súboru: generovaná náhrada
+	} else if (slot === 'score') {
+		snd.score(4, { pos });
+	} else if (slot === 'door-creak') {
+		snd.doorCreak(pos);
+	} else if (slot === 'door-shut') {
+		snd.doorShut(pos);
+	} else {
+		window.alert('Tento zvuk zatiaľ nemá súbor ani generovanú náhradu.');
+	}
+};
 /** Celý úder: tágo, po chvíli guľa do gule, mantinel a jamka. */
 const playShot = async () => {
 	await ready();
@@ -349,6 +401,7 @@ for (const tr of document.querySelectorAll('tr[data-slot]')) {
 	}
 	tr.querySelector('.pick').addEventListener('click', () => galOpen(tr));
 	tr.querySelector('.play').addEventListener('click', () => playSlot(tr.dataset.slot));
+	tr.querySelector('.typical').addEventListener('click', () => playTypical(tr.dataset.slot));
 }
 const mtr = document.querySelector('tr[data-music]');
 if (mtr) {
