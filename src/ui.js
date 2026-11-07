@@ -61,7 +61,7 @@ export class UI {
 		this.bindPower();
 
 		// Falše
-		this.spinBox = h('div', 'mysn-spin', '<div class="mysn-spin-wrap"><div class="mysn-spin-ball"><div class="mysn-spin-dot"></div></div><svg class="mysn-spin-cue" viewBox="0 0 40 120"><defs><linearGradient id="mysnCueG"><stop offset="0" stop-color="#0005"/><stop offset=".45" stop-color="#fff2"/><stop offset="1" stop-color="#0006"/></linearGradient></defs><text class="mysn-sc-pct" x="20" y="11" text-anchor="middle"></text><rect x="10" y="62" width="20" height="58" fill="#c9a26b"/><rect x="10" y="46" width="20" height="16" fill="#f3ead2"/><path class="mysn-sc-tip"/><path class="mysn-sc-chalk"/><rect x="10" y="46" width="20" height="74" fill="url(#mysnCueG)" opacity=".7"/></svg></div><div class="mysn-spin-label">Miesto úderu</div><div class="mysn-spin-stat"><span class="mysn-st-tip"></span><span class="mysn-st-chalk"></span></div>');
+		this.spinBox = h('div', 'mysn-spin', '<div class="mysn-spin-wrap"><div class="mysn-spin-ball"><div class="mysn-spin-dot"></div></div><svg class="mysn-spin-cue" viewBox="0 0 40 120"><defs><linearGradient id="mysnCueG"><stop offset="0" stop-color="#0005"/><stop offset=".45" stop-color="#fff2"/><stop offset="1" stop-color="#0006"/></linearGradient></defs><text class="mysn-sc-pct" x="20" y="11" text-anchor="middle"></text><rect x="10" y="62" width="20" height="58" fill="#c9a26b"/><rect x="10" y="46" width="20" height="16" fill="#f3ead2"/><path class="mysn-sc-tip"/><path class="mysn-sc-chalk"/><g class="mysn-sc-warn"><path d="M44 22 L57 46 H31 Z" fill="#dc2626" stroke="#fff" stroke-width="2" stroke-linejoin="round"/><text x="44" y="43" text-anchor="middle">!</text></g><rect x="10" y="46" width="20" height="74" fill="url(#mysnCueG)" opacity=".7"/></svg></div><div class="mysn-spin-label">Miesto úderu</div><div class="mysn-spin-stat"><span class="mysn-st-tip"></span><span class="mysn-st-chalk"></span></div>');
 		root.appendChild(this.spinBox);
 		this.spinBall = this.spinBox.querySelector('.mysn-spin-ball');
 		this.spinDot = this.spinBox.querySelector('.mysn-spin-dot');
@@ -1882,6 +1882,7 @@ export class UI {
 			this._reach = text;
 			this.reachEl.textContent = text;
 			this.reachEl.style.display = text ? '' : 'none';
+			this.spinBox.classList.toggle('mysn-noreach', !!text); // výkričník pri špici: na bielu nedosiahneš
 		}
 	}
 
