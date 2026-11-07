@@ -390,6 +390,7 @@ export function start(root, config = {}) {
 	const ballPos = (b) => (b ? { x: b.p.x, y: R, z: b.p.z } : null); // stôl je v strede scény, gule = poloha zvuku
 	// priebeh úderu pre reakcie divákov: ktoré gule narazili do mantinelu, ktoré spadli
 	const shotTrack = { cush: new Set(), pots: [], lead: 0, brk0: 0, active: false };
+	let tensionOn = false; // tlkot srdca pri rozhodujúcom údere
 	const winHold = { stop: () => {} }; // víťazná hudba (definovaná nižšie, setVenue ju zastaví pri odchode zo štadióna)
 
 	// rádio v herni: stanice z My Player, priestorový zvuk z dvoch reproduktorov, mixpult (F9)
@@ -733,8 +734,8 @@ export function start(root, config = {}) {
 	// tiknutie časomiery v posledných sekundách (pri nule dlhší tón)
 	const clockTick = (sec) => {
 		const ctx = sound.ctx;
-		if (!ctx) {
-			return;
+		if (!ctx || sound.fx('clock-tick', { gain: sec <= 1 ? 1.3 : 1 })) {
+			return; // nahrávka z administrácie (inak generované pípnutie)
 		}
 		const o = ctx.createOscillator();
 		const g = ctx.createGain();
@@ -999,7 +1000,7 @@ export function start(root, config = {}) {
 	/** Pípnutie pri prepnutí kamery medzi kreslom a stolom (mine = idem na ťah: vyšší tón). */
 	const turnBeep = (mine) => {
 		const ctx = sound.ctx;
-		if (!ctx) {
+		if (!ctx || (mine && sound.fx('beep'))) {
 			return;
 		}
 		(mine ? [660, 990] : [990, 660]).forEach((f, i) => {
@@ -1017,7 +1018,7 @@ export function start(root, config = {}) {
 	};
 	const foundBeep = () => {
 		const ctx = sound.ctx;
-		if (!ctx) {
+		if (!ctx || sound.fx('notify')) {
 			return;
 		}
 		[880, 1320].forEach((f, i) => {
@@ -1038,6 +1039,9 @@ export function start(root, config = {}) {
 			return;
 		}
 		winHold.stop();
+		if (v === 'league') {
+			setTimeout(() => sound.fx('jingle-start'), 900); // znelka pri príchode na štadión
+		}
 		fadeEl.classList.add('mysn-on');
 		if (v !== 'league') {
 			stopFiesta();
@@ -4023,6 +4027,10 @@ export function start(root, config = {}) {
 	};
 	winHold.stop = winMusicStop;
 	const winMusic = () => {
+		if (!winTracks.length && venue === 'league') {
+			sound.fx('jingle-win'); // bez označenej víťaznej skladby: znelka víťazstva
+			return;
+		}
 		if (!winTracks.length || winAudio || venue !== 'league') {
 			return;
 		}
@@ -4241,6 +4249,15 @@ export function start(root, config = {}) {
 		controls.update(dt);
 		sound.setListener(rig.camera); // poslucháč = kamera (3D zvuk)
 		sound.setRoom(view === 'office' ? 'office' : venue === 'league' ? 'stadium' : 'herna');
+		// napätie: na štadióne pri rozhodujúcom údere (na stole už len čierna), kým sa mieri
+		const decider = venue === 'league' && game.match && game.match.rules && !game.match.rules.over && game.match.rules.on === 'black' && (game.state === 'aim' || game.state === 'watch');
+		if (decider !== tensionOn) {
+			tensionOn = decider;
+			sound.loop('tension', decider, { gain: 0.8 });
+			if (decider) {
+				sound.fx('crowd-whisper', { gain: 0.8 });
+			}
+		}
 		sound.roll(game.state === 'moving' ? game.balls.filter((b) => b.on && b.moving) : []); // šuchot gúľajúcich sa gúľ
 		if (game.state === 'moving') {
 			for (const e of game.tick(dt)) {

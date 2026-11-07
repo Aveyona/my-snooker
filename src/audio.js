@@ -8,7 +8,7 @@
 
 /** Skupina slotu: stôl, miestnosť, diváci (hlasitosti v Nastaveniach). */
 export function soundGroup(slot) {
-	if (/^(amb-|door-|beep)/.test(slot)) {
+	if (/^(amb-|door-|beep|tension|jingle-|clock-tick|notify)/.test(slot)) {
 		return 'room';
 	}
 	if (/^(applause|ovation|crowd-|laugh|whistle|cough|shush|player-)/.test(slot)) {
@@ -578,6 +578,33 @@ export class Sound {
 		this._tone(70, 0.35, 0.9, 'sine', 0.5, out);
 		this._click(500, 1.5, 0.8, 0.5, out);
 		setTimeout(() => this._ok() && this._click(2500, 4, 0.25, 1, out), 40); // cvaknutie zámku
+	}
+
+	/** Slučka zo slotu (napätie): on = hrá, inak sa plynulo stíši. */
+	loop(slot, on, o = {}) {
+		this.loops = this.loops || {};
+		const L = this.loops[slot];
+		if (!this._ok()) {
+			return;
+		}
+		if (on && !L && this.has(slot)) {
+			const c = this.ctx;
+			const p = this.par(slot);
+			const s = c.createBufferSource();
+			s.buffer = this.bufs[slot][0];
+			s.loop = true;
+			s.playbackRate.value = Math.pow(2, p.pitch / 12);
+			const out = this._out(o.pos || null, soundGroup(slot), (p.room / 100) * 0.3);
+			out.gain.value = 0;
+			out.gain.setTargetAtTime((p.vol / 100) * (o.gain === undefined ? 1 : o.gain), c.currentTime, 0.8);
+			s.connect(out);
+			s.start();
+			this.loops[slot] = { s, out };
+		} else if (!on && L) {
+			L.out.gain.setTargetAtTime(0, this.ctx.currentTime, 0.4);
+			setTimeout(() => L.s.stop(), 2500);
+			delete this.loops[slot];
+		}
 	}
 
 	/** Jednoduchý zvuk zo slotu bez generovanej náhrady (krieda, diváci, rozhodca...). */
