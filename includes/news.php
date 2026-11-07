@@ -7,8 +7,20 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
+/**
+ * Obrázok z hedlajner.sk: len cesta (bez domény), aby sa načítal z adresy hry (snooker.hedlajner.sk). Inak ho
+ * prehliadač zablokuje (iná adresa bez povolenia CORS) a v novinách v hre chýba. Cudzie adresy ostanú.
+ */
+function mysn_local_url( $u ) {
+	$host = (string) wp_parse_url( $u, PHP_URL_HOST );
+	if ( $host && ( 'hedlajner.sk' === $host || '.hedlajner.sk' === substr( $host, -13 ) ) ) {
+		return (string) wp_parse_url( $u, PHP_URL_PATH );
+	}
+	return $u;
+}
+
 function mysn_news() {
-	$cached = get_transient( 'mysn_news' );
+	$cached = get_transient( 'mysn_news2' );
 	if ( is_array( $cached ) ) {
 		return $cached;
 	}
@@ -27,7 +39,7 @@ function mysn_news() {
 				'd' => wp_date( 'j. n. Y', strtotime( $p->post_date_gmt . ' UTC' ) ),
 				'c' => $cat_name ? $cat_name : ( $cats ? $cats[0]->name : '' ),
 				'e' => html_entity_decode( wp_trim_words( wp_strip_all_tags( get_the_excerpt( $p ) ), 30, '…' ), ENT_QUOTES, 'UTF-8' ),
-				'i' => (string) get_the_post_thumbnail_url( $p, 'medium_large' ),
+				'i' => mysn_local_url( (string) get_the_post_thumbnail_url( $p, 'medium_large' ) ),
 			);
 		}
 	};
@@ -46,13 +58,13 @@ function mysn_news() {
 	if ( count( $posts ) < 9 ) {
 		$push( get_posts( array( 'numberposts' => 12, 'post_status' => 'publish' ) ) );
 	}
-	set_transient( 'mysn_news', $posts, 10 * MINUTE_IN_SECONDS );
+	set_transient( 'mysn_news2', $posts, 10 * MINUTE_IN_SECONDS );
 	return $posts;
 }
 
 // nový alebo upravený článok: noviny sa obnovia
 add_action( 'save_post_post', function () {
-	delete_transient( 'mysn_news' );
+	delete_transient( 'mysn_news2' );
 } );
 
 /** Časopis na stolíku: najnovšie správy z RSS kanálov (doplnok My RSS), rovnaké ako na stránke Správy RSS. */
@@ -60,7 +72,7 @@ function mysn_rss() {
 	if ( ! function_exists( 'myrss_query' ) ) {
 		return array();
 	}
-	$cached = get_transient( 'mysn_rss' );
+	$cached = get_transient( 'mysn_rss2' );
 	if ( is_array( $cached ) ) {
 		return $cached;
 	}
@@ -79,10 +91,10 @@ function mysn_rss() {
 			'c' => isset( $cats[ $m['category'] ] ) ? $cats[ $m['category'] ] : '',
 			's' => function_exists( 'myrss_short_name' ) ? myrss_short_name( $m['feed_name'] ) : (string) $m['feed_name'],
 			'e' => html_entity_decode( wp_trim_words( wp_strip_all_tags( (string) $m['summary'] ), 30, '…' ), ENT_QUOTES, 'UTF-8' ),
-			'i' => (string) $m['image'],
+			'i' => mysn_local_url( (string) $m['image'] ),
 			'n' => count( $g['others'] ), // koľko ďalších médií píše o tom istom
 		);
 	}
-	set_transient( 'mysn_rss', $out, 10 * MINUTE_IN_SECONDS );
+	set_transient( 'mysn_rss2', $out, 10 * MINUTE_IN_SECONDS );
 	return $out;
 }
