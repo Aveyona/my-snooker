@@ -128,7 +128,7 @@ export function buildLiving(scene) {
 	const tvY = FY + 1.45;
 	const tvT = tex(1024, 576);
 	add(new THREE.BoxGeometry(TVW + 0.06, TVH + 0.06, 0.06), black, 0, tvY, -RZ + 0.05);
-	const tvScreen = add(new THREE.PlaneGeometry(TVW, TVH), new THREE.MeshStandardMaterial({ map: tvT.t, emissive: 0xffffff, emissiveMap: tvT.t, emissiveIntensity: 0.9, roughness: 0.3 }), 0, tvY, -RZ + 0.081);
+	const tvScreen = add(new THREE.PlaneGeometry(TVW, TVH), new THREE.MeshStandardMaterial({ map: tvT.t, emissive: 0xffffff, emissiveMap: tvT.t, emissiveIntensity: 0.9, roughness: 0.95, metalness: 0 }), 0, tvY, -RZ + 0.081);
 	const drawTv = (title, lines = []) => {
 		const g = tvT.g;
 		const gr = g.createLinearGradient(0, 0, 0, 576);
@@ -148,7 +148,7 @@ export function buildLiving(scene) {
 		lines.forEach((l, i) => g.fillText(l, 512, 340 + i * 46));
 		tvT.t.needsUpdate = true;
 	};
-	drawTv('Čoskoro: živé ligové zápasy a záznamy', ['Sadni si na gauč, F1 priblíži televízor.']);
+	drawTv('Načítavam…', []);
 	add(new THREE.BoxGeometry(2.0, 0.5, 0.45), woodDark, 0, FY + 0.25, -RZ + 0.25);
 	for (const sx of [-0.5, 0.5]) {
 		add(new THREE.BoxGeometry(0.9, 0.4, 0.01), wood, sx, FY + 0.25, -RZ + 0.476);
@@ -395,6 +395,11 @@ export function buildLiving(scene) {
 		views,
 		tvScreen,
 		drawTv,
+		/** Kreslenie na obrazovku televízora: fn(g) do plátna 1024 × 576. */
+		tvPaint(fn) {
+			fn(tvT.g);
+			tvT.t.needsUpdate = true;
+		},
 		/** Body na klik s Ctrl (svetové súradnice). */
 		spots: { tv: views.tv.look, fire: V(FX + 0.3, FY + 0.5, -0.3), books: V(BX, FY + 1.1, -1.4), door: V(RX - 0.05, FY + 1.1, 1.9) },
 		update(dt) {

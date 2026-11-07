@@ -10,6 +10,7 @@ import { buildRadioCorner, RadioPlayer, RADIO } from './radio.js';
 import { buildStadium } from './stadium.js';
 import { buildOffice } from './office.js';
 import { buildLiving } from './living.js';
+import { Tv } from './tv.js';
 import { Crowd } from './fans.js';
 import { COUNTRIES, countryByCode } from './countries.js';
 import { BallViews } from './balls.js';
@@ -501,6 +502,42 @@ export function start(root, config = {}) {
 	const stadium = buildStadium(scene, settings.quality, config.clock || 45);
 	const office = buildOffice(scene);
 	const living = buildLiving(scene); // obývačka (z chodby cez ceduľu, len prihlásení)
+	// televízor v obývačke: živé zápasy, moje zápasy (záznamy), rekordy
+	const tv = new Tv({
+		load: (path) => (online ? online.net.call(path, null, 'GET') : Promise.reject(new Error('Si offline.'))),
+		watch: (r) => {
+			if (livingFocusNow === 'tv') {
+				actions.livingFocus('tv');
+			}
+			actions.watchStart(r);
+		},
+		toast: (t) => ui.toast(t),
+	});
+	let tvPaintAt = 0;
+	const tvRay = new THREE.Raycaster();
+	const tvMouse = new THREE.Vector2();
+	/** Bod na obrazovke televízora pod myšou (x, y v plátne) alebo null. */
+	const tvPoint = (e) => {
+		const r = renderer.domElement.getBoundingClientRect();
+		tvMouse.set(((e.clientX - r.left) / r.width) * 2 - 1, -((e.clientY - r.top) / r.height) * 2 + 1);
+		tvRay.setFromCamera(tvMouse, rig.camera);
+		const hit = tvRay.intersectObject(living.tvScreen, false)[0];
+		return hit && hit.uv ? { x: hit.uv.x * 1024, y: (1 - hit.uv.y) * 576 } : null;
+	};
+	renderer.domElement.addEventListener('pointermove', (e) => {
+		if (view === 'living' && livingFocusNow === 'tv' && freeMouse) {
+			const p = tvPoint(e);
+			renderer.domElement.style.cursor = p && tv.move(p.x, p.y) ? 'pointer' : '';
+		}
+	});
+	renderer.domElement.addEventListener('pointerdown', (e) => {
+		if (view === 'living' && livingFocusNow === 'tv' && freeMouse && e.button === 0) {
+			const p = tvPoint(e);
+			if (p) {
+				tv.click(p.x, p.y);
+			}
+		}
+	});
 	office.root.add(new THREE.AmbientLight(0xffe6c8, settings.quality === 'high' ? 0.22 : 0.4)); // herňa je v kancelárii skrytá (aj jej svetlo)
 	/*
 	 * Všetky miestnosti sú v jednej scéne vedľa seba (herňa, kancelária za ňou, štadión). Kreslí sa len tá,
@@ -918,6 +955,9 @@ export function start(root, config = {}) {
 	const hotSpots = () => {
 		if (view === 'living') {
 			const sp = living.spots;
+			if (livingFocusNow === 'tv') {
+				return []; // pri televízore myš kliká po obrazovke
+			}
 			return [
 				{ id: 'lv-tv', key: 'f1', pos: sp.tv, r: 0.9 },
 				{ id: 'lv-fire', key: 'f2', pos: sp.fire, r: 0.8 },
@@ -1796,6 +1836,12 @@ export function start(root, config = {}) {
 		}
 		if (view === 'living' && name !== 'living') {
 			ui.root.classList.remove('mysn-in-living');
+			if (livingFocusNow === 'tv') {
+				freeMouse = false;
+				ui.setFree(false);
+				renderer.domElement.style.cursor = '';
+			}
+			tv.stop();
 			livingFocusNow = '';
 			rig.noClamp = false;
 			rig.snapNext = true;
@@ -1924,6 +1970,12 @@ export function start(root, config = {}) {
 		rig.setViewZoom(1);
 		if (was === 'living') {
 			ui.root.classList.remove('mysn-in-living');
+			if (livingFocusNow === 'tv') {
+				freeMouse = false;
+				ui.setFree(false);
+				renderer.domElement.style.cursor = '';
+			}
+			tv.stop();
 			livingFocusNow = '';
 			rig.noClamp = false;
 			rig.snapNext = true; // z obývačky späť do herne hneď
@@ -2340,6 +2392,19 @@ export function start(root, config = {}) {
 			}
 			const v = livingFocusNow === name ? living.seat : living.views[name];
 			livingFocusNow = livingFocusNow === name ? '' : name;
+			// televízor: myš je voľná na klikanie po obrazovke, ostatné predmety sa len priblížia
+			if (livingFocusNow === 'tv') {
+				controls.uncapture();
+				freeMouse = true;
+				ui.setFree(true);
+				tv.refresh(true);
+				ui.toast('Televízor: klikni myšou na kanál alebo zápas, ← → kanál, ↑ ↓ výber, Enter spustiť, Esc späť na gauč.');
+			} else if (freeMouse) {
+				freeMouse = false;
+				ui.setFree(false);
+				renderer.domElement.style.cursor = '';
+				controls.capture();
+			}
 			rig.setView(v.pos.clone(), v.look.clone());
 			const d = v.look.clone().sub(v.pos);
 			chairLook.yaw = Math.atan2(d.z, d.x);
@@ -3557,7 +3622,7 @@ export function start(root, config = {}) {
 			}
 		},
 		viewDown: (e) => {
-			if (e.button === 2 && view && !['free', 'seat', 'seatPick', 'office', 'chalk'].includes(view) && !game.spectating) {
+			if (e.button === 2 && view && !['free', 'seat', 'seatPick', 'office', 'living', 'chalk'].includes(view) && !game.spectating) {
 				exitView(!!e.ctrlKey); // pravé tlačidlo v pohľade na predmet (stojan, nástenka, skóre, kreslo...): späť za tágo
 				if (e.ctrlKey) {
 					// Ctrl je stále stlačený: myš ostáva voľná (kurzor, rozsvietenie predmetov), nezachytí sa na tágo
@@ -3589,6 +3654,11 @@ export function start(root, config = {}) {
 			}
 			if (view === 'chair' && e.button === 0) {
 				controls.capture();
+			}
+			if (view === 'living' && e.button === 0 && !freeMouse && !controls.captured) {
+				ui.showMenu(false);
+				controls.capture(); // obývačka: klik zachytí myš na rozhliadanie
+				return;
 			}
 			if (view === 'office' && e.button === 0) {
 				// v kancelárii klik bez Ctrl nerobí nič; s podržaným Ctrl (voľná myš) vizitka, dvere a mapa hráčov
@@ -3869,6 +3939,13 @@ export function start(root, config = {}) {
 				return true;
 			}
 			if (view === 'living') {
+				if (livingFocusNow === 'tv' && lk !== 'escape' && tv.key(lk)) {
+					return true; // televízor: šípky, Enter, medzerník, Backspace
+				}
+				if (livingFocusNow === 'tv' && lk === 'escape' && tv.replay) {
+					tv.stop(); // Esc najprv zastaví záznam
+					return true;
+				}
 				const lkeys = { f1: 'tv', f2: 'fire', f3: 'books' };
 				if (lkeys[lk]) {
 					actions.livingFocus(lkeys[lk]);
@@ -5064,6 +5141,14 @@ export function start(root, config = {}) {
 			rackTick(dt); // trojuholník pri novom rozostavení
 		}
 		living.update(dt); // oheň v krbe, hodiny
+		if (view === 'living') {
+			tv.tick(dt, true);
+			tvPaintAt -= dt;
+			if (tv.dirty && tvPaintAt <= 0) {
+				tvPaintAt = tv.replay ? 1 / 30 : 0.1;
+				living.tvPaint((g) => tv.draw(g));
+			}
+		}
 		room.setSign('office', !!user);
 		room.setSign('living', !!user); // cedule svietia len prihláseným
 		hotTick(dt); // Ctrl: rozsvietenie klikateľných predmetov pod kurzorom

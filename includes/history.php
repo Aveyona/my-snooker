@@ -246,6 +246,49 @@ function mysn_rest_history_replay( $req ) {
 	);
 }
 
+/** GET /history/top: najlepšie brejky (liga aj hra o skóre, najlepší na hráča) a najvyššie ELO, pre televízor v obývačke. */
+function mysn_rest_history_top() {
+	global $wpdb;
+	$best = array();
+	$lt   = mysn_table( 'league' );
+	$st   = mysn_table( 'scores' );
+	foreach ( $wpdb->get_results( "SELECT user_id, MAX(best) AS b FROM $lt GROUP BY user_id HAVING b > 0", ARRAY_A ) as $r ) { // phpcs:ignore
+		$best[ (int) $r['user_id'] ] = array( (int) $r['b'], 'liga' );
+	}
+	foreach ( $wpdb->get_results( "SELECT user_id, MAX(brk) AS b FROM $st GROUP BY user_id HAVING b > 0", ARRAY_A ) as $r ) { // phpcs:ignore
+		$u = (int) $r['user_id'];
+		if ( empty( $best[ $u ] ) || (int) $r['b'] > $best[ $u ][0] ) {
+			$best[ $u ] = array( (int) $r['b'], 'hra o skóre' );
+		}
+	}
+	uasort(
+		$best,
+		function ( $a, $b ) {
+			return $b[0] - $a[0];
+		}
+	);
+	$breaks = array();
+	foreach ( array_slice( $best, 0, 10, true ) as $uid => $b ) {
+		$breaks[] = array(
+			'who'   => mysn_hist_who( $uid ),
+			'brk'   => $b[0],
+			'where' => $b[1],
+		);
+	}
+	$elo = array();
+	foreach ( $wpdb->get_results( "SELECT user_id, meta_value AS e FROM {$wpdb->usermeta} WHERE meta_key = 'mysn_elo' ORDER BY CAST(meta_value AS SIGNED) DESC LIMIT 10", ARRAY_A ) as $r ) { // phpcs:ignore
+		$elo[] = array(
+			'who' => mysn_hist_who( (int) $r['user_id'] ),
+			'elo' => (int) $r['e'],
+			'n'   => mysn_elo_n( (int) $r['user_id'] ),
+		);
+	}
+	return array(
+		'breaks' => $breaks,
+		'elo'    => $elo,
+	);
+}
+
 add_action(
 	'rest_api_init',
 	function () {
@@ -253,6 +296,7 @@ add_action(
 			'/history'       => 'mysn_rest_history',
 			'/history/match' => 'mysn_rest_history_match',
 			'/history/replay' => 'mysn_rest_history_replay',
+			'/history/top'   => 'mysn_rest_history_top',
 		) as $route => $cb ) {
 			register_rest_route(
 				'my-snooker/v1',
