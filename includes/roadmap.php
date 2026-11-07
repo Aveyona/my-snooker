@@ -9,17 +9,6 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 function mysn_roadmap() {
 	return array(
-		array( '0.7.68', '7. 11. 2026', 'Za tágom pravé tlačidlo myši nerobí nič, keď nemieriš na žiadnu guľu (pohľad sa neposúva).' ),
-		array( '0.7.67', '7. 11. 2026', 'Kancelária: priblíženie na predmet zruší pravé tlačidlo myši aj bez Ctrl (ako v herni návrat za tágo).' ),
-		array( '0.7.66', '7. 11. 2026', 'Oblúk pri priblížení na mierenú guľu je plynulý: rovnomerne s pohybom myši, bez skoku na začiatku a bez ostrého vrcholu.' ),
-		array( '0.7.65', '7. 11. 2026', 'Kancelária: Ctrl a pravé tlačidlo myši zruší priblíženie na predmet (notebook, kalendár, tabuľa, nástenka, mapa, stojan) a vráti pohľad za písací stôl.' ),
-		array( '0.7.64', '7. 11. 2026', 'Priblíženie na mierenú guľu (pravé tlačidlo, myš hore) ide po oblúku: do polovice priblíženia kamera stúpa, potom pomaly klesá až ku guli.' ),
-		array( '0.7.63', '7. 11. 2026', 'Kancelária s držaným Ctrl ako herňa: predmety pod kurzorom sa jemne rozsvietia a klik ich otvorí (nástenka F1, stojan F2, kalendár F3, tabuľa líg F4, notebook F7, vizitka F8, dvere F9, lampa F12, mapa hráčov so špendlíkmi). Tréning z menu v kancelárii neotvorí menu znova.' ),
-		array( '0.7.62', '7. 11. 2026', 'Menu v kancelárii: Tréning a Hrať ťa prenesú z kancelárie do herne (predtým sa nič nestalo).' ),
-		array( '0.7.61', '7. 11. 2026', 'Kancelária: Esc otvorí menu (predtým presunul do herne). Druhé Esc menu zavrie a ostávaš v kancelárii.' ),
-		array( '0.7.60', '7. 11. 2026', 'Keď na bielu nedosiahneš, pri špici tága vedľa gule Miesto úderu bliká červený výkričník (popri upozornení dole).' ),
-		array( '0.7.59', '7. 11. 2026', 'Stav špice a kriedy inak: vedľa gule Miesto úderu je koniec tága zboku. Špica má farbu tvojej špice a opotrebením sa zmenšuje, navrchu je vrstva kriedy vo farbe kriedy (hrubšia = viac úderov), nad ním percento špice. Miesto úderu je opäť modrá bodka.' ),
-		array( '0.7.58', '7. 11. 2026', 'Miesto úderu sa po každom údere vráti do stredu. Na guli Miesto úderu je v strede čelo špice (farba špice, poprášené kriedou, tmavšie podľa opotrebenia) a okolo dva oblúky: vľavo zdravie špice, vpravo nakriedovanie; pod guľou Špica v % a Krieda 3/3. Detail dotyku je predvolene vpravo dole.' ),
 		array(
 			'n'      => 1,
 			'title'  => '3D stôl, fyzika a tréning',
@@ -142,6 +131,17 @@ function mysn_roadmap() {
 /** Denník zmien (najnovšie hore). */
 function mysn_changelog() {
 	return array(
+		array( '0.7.68', '7. 11. 2026', 'Za tágom pravé tlačidlo myši nerobí nič, keď nemieriš na žiadnu guľu (pohľad sa neposúva).' ),
+		array( '0.7.67', '7. 11. 2026', 'Kancelária: priblíženie na predmet zruší pravé tlačidlo myši aj bez Ctrl (ako v herni návrat za tágo).' ),
+		array( '0.7.66', '7. 11. 2026', 'Oblúk pri priblížení na mierenú guľu je plynulý: rovnomerne s pohybom myši, bez skoku na začiatku a bez ostrého vrcholu.' ),
+		array( '0.7.65', '7. 11. 2026', 'Kancelária: Ctrl a pravé tlačidlo myši zruší priblíženie na predmet (notebook, kalendár, tabuľa, nástenka, mapa, stojan) a vráti pohľad za písací stôl.' ),
+		array( '0.7.64', '7. 11. 2026', 'Priblíženie na mierenú guľu (pravé tlačidlo, myš hore) ide po oblúku: do polovice priblíženia kamera stúpa, potom pomaly klesá až ku guli.' ),
+		array( '0.7.63', '7. 11. 2026', 'Kancelária s držaným Ctrl ako herňa: predmety pod kurzorom sa jemne rozsvietia a klik ich otvorí (nástenka F1, stojan F2, kalendár F3, tabuľa líg F4, notebook F7, vizitka F8, dvere F9, lampa F12, mapa hráčov so špendlíkmi). Tréning z menu v kancelárii neotvorí menu znova.' ),
+		array( '0.7.62', '7. 11. 2026', 'Menu v kancelárii: Tréning a Hrať ťa prenesú z kancelárie do herne (predtým sa nič nestalo).' ),
+		array( '0.7.61', '7. 11. 2026', 'Kancelária: Esc otvorí menu (predtým presunul do herne). Druhé Esc menu zavrie a ostávaš v kancelárii.' ),
+		array( '0.7.60', '7. 11. 2026', 'Keď na bielu nedosiahneš, pri špici tága vedľa gule Miesto úderu bliká červený výkričník (popri upozornení dole).' ),
+		array( '0.7.59', '7. 11. 2026', 'Stav špice a kriedy inak: vedľa gule Miesto úderu je koniec tága zboku. Špica má farbu tvojej špice a opotrebením sa zmenšuje, navrchu je vrstva kriedy vo farbe kriedy (hrubšia = viac úderov), nad ním percento špice. Miesto úderu je opäť modrá bodka.' ),
+		array( '0.7.58', '7. 11. 2026', 'Miesto úderu sa po každom údere vráti do stredu. Na guli Miesto úderu je v strede čelo špice (farba špice, poprášené kriedou, tmavšie podľa opotrebenia) a okolo dva oblúky: vľavo zdravie špice, vpravo nakriedovanie; pod guľou Špica v % a Krieda 3/3. Detail dotyku je predvolene vpravo dole.' ),
 		array( '0.7.57', '7. 11. 2026', 'Herňa F1: väčšia nástenka (2,6 m) so šiestimi papiermi: všetky klávesy aj F3 1 až 7, Ctrl a šúpatká myši, princíp hry, tágá a špice, dosah a pomôcky a obrázok myši s popisom tlačidiel (ľavé, koliesko, pravé, pohyb).' ),
 		array( '0.7.56', '7. 11. 2026', 'Ponuka F3: predĺženie tága má dve tlačidlá. Kláves 6 nasadí predĺženie 15 cm a ďalej mení 15, 30, 45 cm; kláves 7 Dať predĺženie dole je samostatné tlačidlo.' ),
 		array( '0.7.55', '7. 11. 2026', 'Dosah tága opravený: hráč stojí kdekoľvek pri stole, rozhoduje vzdialenosť rúk od najbližšieho mantinelu. Ruka na mostíku (30 cm za bielou) najviac 95 cm, ruka na rukoväti (3/4 tága za bielou, s predĺžením ďalej) najviac 55 cm od mantinelu alebo už za ním. S krížikom alebo pavúkom len rukoväť (skoro celé tágo za bielou). Úder popri mantineli pozdĺž stola je teda povolený.' ),
