@@ -123,6 +123,55 @@ for (const tr of document.querySelectorAll('tr[data-slot]')) {
 		}
 	});
 }
+// rádio Hedlajner - Free Music: výber skladieb (poradie podľa výberu, v hre sa miešajú)
+const mtr = document.querySelector('tr[data-music]');
+if (mtr) {
+	const inp = mtr.querySelector('input[type=hidden]');
+	const mids = () => inp.value.split(',').map((x) => parseInt(x, 10)).filter((x) => x > 0);
+	const draw = () => {
+		const L = mtr.querySelector('.list');
+		L.innerHTML = '';
+		for (const id of mids()) {
+			const sp = document.createElement('span');
+			sp.textContent = (files[id] && files[id].name) || '#' + id;
+			const x = document.createElement('a');
+			x.href = '#';
+			x.textContent = '×';
+			x.title = 'Odobrať z rádia (súbor ostane v Médiách)';
+			x.addEventListener('click', (e) => {
+				e.preventDefault();
+				inp.value = mids().filter((i) => i !== id).join(',');
+				draw();
+			});
+			sp.appendChild(x);
+			L.appendChild(sp);
+		}
+		if (!L.children.length) {
+			L.innerHTML = '<em style="color:#8c8f94;font-size:12px">zatiaľ žiadna skladba (stanica sa v rádiu neukáže)</em>';
+		}
+	};
+	draw();
+	mtr.querySelector('.pick').addEventListener('click', () => {
+		const frame = window.wp.media({ title: 'Skladby rádia Hedlajner - Free Music', library: { type: 'audio' }, multiple: 'add', button: { text: 'Použiť skladby' } });
+		frame.on('open', () => {
+			const sel = frame.state().get('selection');
+			for (const id of mids()) {
+				const a = window.wp.media.attachment(id);
+				a.fetch();
+				sel.add(a);
+			}
+		});
+		frame.on('select', () => {
+			const list = frame.state().get('selection').toJSON();
+			for (const a of list) {
+				files[a.id] = { url: a.url, name: a.title || a.filename };
+			}
+			inp.value = list.map((a) => a.id).join(',');
+			draw();
+		});
+		frame.open();
+	});
+}
 const vel = $('#mysn-snd-vel');
 if (vel) {
 	vel.addEventListener('input', () => ($('#mysn-snd-velo').textContent = vel.value + ' %'));

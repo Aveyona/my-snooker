@@ -1181,10 +1181,14 @@ export function start(root, config = {}) {
 	if (settings.radio && typeof settings.radio === 'object') {
 		Object.assign(radio.params, settings.radio.params || {});
 		radio.index = Math.min(radio.stations.length - 1, settings.radio.index ?? -1);
+		const byName = settings.radio.name ? radio.stations.findIndex((x) => x.name === settings.radio.name) : -1;
+		if (byName >= 0) {
+			radio.index = byName; // stanica podľa mena (zoznam sa môže posunúť, napríklad pribudne Free Music)
+		}
 	}
 	const radioSync = (kind) => {
 		radioCorner.setControls(radio.params, radio.station ? radio.station.name : '', radio.on);
-		settings.radio = { params: radio.params, index: radio.index, on: !!radio.on }; // on: hrá aj po obnovení (F5)
+		settings.radio = { params: radio.params, index: radio.index, name: radio.station ? radio.station.name : '', on: !!radio.on }; // on: hrá aj po obnovení (F5)
 		saveSettings(settings);
 		if (view === 'mixer' && kind !== 'param') {
 			ui.showView('mixer', CUES, cueSpec.id, { radio });

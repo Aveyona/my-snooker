@@ -140,6 +140,22 @@ function mysn_sound_spec( $id ) {
 	return array( '0,5 až 2 s', 'priemer okolo −18 LUFS' ); // hráč
 }
 
+/** Skladby rádia Hedlajner - Free Music: [{ title, url }] (cesta bez domény, hrá z adresy hry). */
+function mysn_radio_music() {
+	$out = array();
+	foreach ( (array) get_option( 'mysn_radio_music', array() ) as $aid ) {
+		$u = wp_get_attachment_url( (int) $aid );
+		if ( $u ) {
+			$t     = get_the_title( (int) $aid );
+			$out[] = array(
+				'title' => $t ? $t : basename( (string) get_attached_file( (int) $aid ) ),
+				'url'   => (string) wp_parse_url( $u, PHP_URL_PATH ),
+			);
+		}
+	}
+	return $out;
+}
+
 /** Predvolené doladenie slotu. */
 function mysn_sound_defaults() {
 	return array(
@@ -233,6 +249,8 @@ add_action( 'admin_post_mysn_sounds', function () {
 		$out[ $id ] = $s;
 	}
 	update_option( 'mysn_sounds', $out, false );
+	$music = array_values( array_filter( array_map( 'absint', explode( ',', isset( $_POST['radio_music'] ) ? sanitize_text_field( wp_unslash( $_POST['radio_music'] ) ) : '' ) ) ) );
+	update_option( 'mysn_radio_music', array_slice( $music, 0, 200 ), false );
 	wp_safe_redirect( admin_url( 'admin.php?page=my-snooker-sounds&saved=1' ) );
 	exit;
 } );
@@ -253,6 +271,13 @@ function mysn_admin_sounds_page() {
 			if ( $u ) {
 				$files[ (int) $aid ] = array( 'url' => $u, 'name' => basename( (string) get_attached_file( (int) $aid ) ) );
 			}
+		}
+	}
+	foreach ( (array) get_option( 'mysn_radio_music', array() ) as $aid ) {
+		$u = wp_get_attachment_url( (int) $aid );
+		if ( $u ) {
+			$t                   = get_the_title( (int) $aid );
+			$files[ (int) $aid ] = array( 'url' => $u, 'name' => $t ? $t : basename( (string) get_attached_file( (int) $aid ) ) );
 		}
 	}
 	$bundled = array();
@@ -339,6 +364,15 @@ function mysn_admin_sounds_page() {
 				</tr>
 			<?php endforeach; ?>
 			</tbody></table>
+			<h2>Rádio Hedlajner - Free Music</h2>
+			<table><tbody><tr data-music="1">
+				<td class="n"><b>Skladby rádia</b><small>Vlastná stanica Hedlajner - Free Music v rádiu hry (F9, mixpult v herni, reproduktory v kancelárii). Koľko skladieb pridáš, toľko je v nej; hrajú sa zamiešane jedna za druhou, po poslednej sa poradie znova zamieša. Stanica je v rádiu prvá. Názov skladby v hre je názov súboru v Médiách (dá sa tam upraviť).</small><small class="rec"><b>Súbory:</b> MP3 (192 až 320 kbps) alebo OGG, stereo, hudba s licenciou na voľné použitie.</small><small class="spec"><b>Hlasitosť:</b> priemer okolo −14 LUFS (bežná hudba), všetky skladby podobne hlasné.</small></td>
+				<td class="files" colspan="2">
+					<input type="hidden" name="radio_music" value="<?php echo esc_attr( implode( ',', array_map( 'intval', (array) get_option( 'mysn_radio_music', array() ) ) ) ); ?>">
+					<div class="list"></div>
+					<button type="button" class="button button-small pick">Vybrať skladby</button>
+				</td>
+			</tr></tbody></table>
 			<p><button class="button button-primary button-large">Uložiť zvuky</button> <span class="description">Na kompiláciu (keď budú všetky zvuky hotové) stačí poslať súbory, zvyšok spravíme spolu.</span></p>
 		</form>
 	</div>

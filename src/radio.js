@@ -250,7 +250,10 @@ export function buildRadioCorner(scene) {
  */
 export class RadioPlayer {
 	constructor(stations, ctxGet) {
-		this.stations = (stations || []).filter((s) => s && s.stream);
+		// stanica je prúd (stream) alebo zoznam skladieb (tracks: Hedlajner - Free Music z administrácie)
+		this.stations = (stations || []).filter((s) => s && (s.stream || (s.tracks && s.tracks.length)));
+		this._order = [];
+		this._pos = 0;
 		this.ctxGet = ctxGet;
 		this.index = -1;
 		this.on = false;
@@ -344,8 +347,19 @@ export class RadioPlayer {
 			this._emit();
 			return;
 		}
+		const prev = this.index;
 		this.index = ((i % this.stations.length) + this.stations.length) % this.stations.length;
 		const st = this.station;
+		if (st.tracks) {
+			if (prev !== this.index || !this._order.length) {
+				// zamiešané poradie skladieb, po poslednej znova zamiešať
+				this._order = st.tracks.map((_, k) => k).sort(() => Math.random() - 0.5);
+				this._pos = 0;
+			}
+			this.track = st.tracks[this._order[this._pos % this._order.length]];
+		} else {
+			this.track = null;
+		}
 		this.stopAudio();
 		this.on = true;
 		this.status = 'Ladím stanicu…';
@@ -366,11 +380,16 @@ export class RadioPlayer {
 		};
 		gr.el.onplaying = () => {
 			if (this._token === token) {
-				this.status = 'Hrá priestorovo z reproduktorov.';
+				this.status = this.track ? `Hrá: ${this.track.title}` : 'Hrá priestorovo z reproduktorov.';
 				this._emit();
 			}
 		};
-		gr.el.src = st.stream;
+		gr.el.onended = () => {
+			if (this._token === token && this.on && this.track) {
+				this.nextTrack(); // koniec skladby: ďalšia z Free Music
+			}
+		};
+		gr.el.src = this.track ? this.track.url : st.stream;
 		gr.el.play().catch(() => null);
 		this._tuneTimeout(token);
 		this._emit();
@@ -394,11 +413,16 @@ export class RadioPlayer {
 		};
 		el.onplaying = () => {
 			if (this._token === token) {
-				this.status = 'Hrá (táto stanica nedovolí priestorový zvuk a ekvalizér).';
+				this.status = this.track ? `Hrá: ${this.track.title}` : 'Hrá (táto stanica nedovolí priestorový zvuk a ekvalizér).';
 				this._emit();
 			}
 		};
-		el.src = st.stream;
+		el.onended = () => {
+			if (this._token === token && this.on && this.track) {
+				this.nextTrack();
+			}
+		};
+		el.src = this.track ? this.track.url : st.stream;
 		this._apply();
 		el.play().catch(() => null);
 		this._tuneTimeout(token);
@@ -447,6 +471,20 @@ export class RadioPlayer {
 
 	next(d) {
 		this.play(this.index + d);
+	}
+
+	/** Ďalšia skladba stanice so zoznamom skladieb (Hedlajner - Free Music). */
+	nextTrack() {
+		const st = this.station;
+		if (!st || !st.tracks) {
+			return;
+		}
+		this._pos++;
+		if (this._pos >= this._order.length) {
+			this._order = st.tracks.map((_, k) => k).sort(() => Math.random() - 0.5);
+			this._pos = 0;
+		}
+		this.play(this.index);
 	}
 
 	/**

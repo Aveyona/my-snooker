@@ -177,10 +177,20 @@ function mysn_auth_config( $game ) {
 }
 
 function mysn_radio_stations() {
-	if ( ! function_exists( 'mpl_public_list' ) ) {
-		return array();
+	$out   = array();
+	$music = mysn_radio_music();
+	if ( $music ) {
+		// vlastná stanica: skladby z administrácie (My Snooker → Zvuky), hrajú sa zamiešane jedna za druhou
+		$out[] = array(
+			'name'   => 'Hedlajner - Free Music',
+			'tracks' => $music,
+			'city'   => 'HEDLAJNER',
+			'genre'  => 'Free Music',
+		);
 	}
-	$out = array();
+	if ( ! function_exists( 'mpl_public_list' ) ) {
+		return $out;
+	}
 	foreach ( mpl_public_list() as $s ) {
 		if ( 'radio' !== $s['type'] || empty( $s['stream'] ) || ! empty( $s['hls'] ) || ! empty( $s['resolve'] ) || ! empty( $s['bad'] ) ) {
 			continue;
