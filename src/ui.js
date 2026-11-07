@@ -1784,7 +1784,7 @@ export class UI {
 		if (o.reach) {
 			B.appendChild(h('p', 'mysn-note' + (o.reach.ok ? '' : ' mysn-warn'), esc(o.reach.text)));
 		}
-		B.appendChild(h('p', 'mysn-note', 'Klávesy 1 až 7, Esc alebo F3 zavrie. Predĺženie ostáva nasadené, kým ho nedáš dole (7), a zhoršuje presnosť: biela náhodne uhne až o 0,15° (15 cm), 0,3° (30 cm) alebo 0,5° (45 cm), pri silnom údere viac. Krížik sa dá použiť aj pri mantineli (položí sa na rám), pavúky nie. Pavúk a trojuholník visia pod stolom (Ctrl a klik).'));
+		B.appendChild(h('p', 'mysn-note', 'Klávesy 1 až 7, Esc alebo F3 zavrie. Predĺženie ostáva nasadené, kým ho nedáš dole (7), a zhoršuje presnosť: biela náhodne uhne až o 0,25° (15 cm), 0,5° (30 cm) alebo 0,8° (45 cm), pri silnom údere viac. Krížik sa dá použiť aj pri mantineli (položí sa na rám), pavúky nie. Pavúk a trojuholník visia pod stolom (Ctrl a klik).'));
 	}
 
 	/** Mapa miestností: pôdorys zhora, klik na miestnosť ukáže kartu s tlačidlami. */
