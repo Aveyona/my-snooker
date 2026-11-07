@@ -80,24 +80,29 @@ export class Sound {
 	loadAll() {
 		for (const [slot, c] of Object.entries(this.cfg)) {
 			if (c && c.urls && c.urls.length) {
-				this.load(slot, c.urls);
+				this.load(slot, c.urls, c.w);
 			}
 		}
 	}
 
-	async load(slot, urls) {
+	/** Načíta nahrávky slotu; weights = priorita každého súboru (1 zriedka až 5 často). */
+	async load(slot, urls, weights = []) {
 		const out = [];
-		for (const u of urls) {
+		const w = [];
+		for (let i = 0; i < urls.length; i++) {
 			try {
-				const r = await fetch(u, { credentials: 'same-origin' });
+				const r = await fetch(urls[i], { credentials: 'same-origin' });
 				if (r.ok) {
 					out.push(await this.ctx.decodeAudioData(await r.arrayBuffer()));
+					w.push(Math.max(1, +weights[i] || 3));
 				}
 			} catch (e) {
 				/* súbor sa nedá načítať: slot ostane na generovanom zvuku */
 			}
 		}
 		this.bufs[slot] = out;
+		this.bw = this.bw || {};
+		this.bw[slot] = w;
 		if (slot === AMB[this.roomName]) {
 			this.ambient(this.roomName);
 		}
@@ -275,9 +280,20 @@ export class Sound {
 		const c = this.ctx;
 		const p = this.par(slot);
 		const list = this.bufs[slot];
-		let i = Math.floor(Math.random() * list.length);
-		if (list.length > 1 && i === this._lastPick[slot]) {
-			i = (i + 1) % list.length; // ten istý variant nie dvakrát po sebe
+		// náhodný variant podľa priority (vyššia priorita = častejšie), ten istý nie dvakrát po sebe
+		const W = (this.bw && this.bw[slot]) || [];
+		const wt = (k) => (k === this._lastPick[slot] && list.length > 1 ? 0 : W[k] || 3);
+		let sum = 0;
+		for (let k = 0; k < list.length; k++) {
+			sum += wt(k);
+		}
+		let r = Math.random() * sum;
+		let i = 0;
+		for (; i < list.length - 1; i++) {
+			r -= wt(i);
+			if (r < 0) {
+				break;
+			}
 		}
 		this._lastPick[slot] = i;
 		const vel = Math.max(0, Math.min(1, o.vel === undefined ? 0.6 : o.vel));

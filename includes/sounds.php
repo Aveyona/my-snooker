@@ -140,20 +140,65 @@ function mysn_sound_spec( $id ) {
 	return array( '0,5 až 2 s', 'priemer okolo −18 LUFS' ); // hráč
 }
 
-/** Skladby rádia Hedlajner - Free Music: [{ title, url }] (cesta bez domény, hrá z adresy hry). */
-function mysn_radio_music() {
+/**
+ * Vlastná galéria zvukov My Snooker: súbory sú v uploads/my-snooker-sounds/<zvuk>/ (rádio v _radio), mimo
+ * knižnice Médií WordPressu, takže sa tam vôbec nezobrazujú. Vráti [ priečinok na disku, cesta pre prehliadač ].
+ */
+function mysn_sound_store( $sub = '' ) {
+	$up  = wp_upload_dir( null, false );
+	$sub = $sub ? '/' . sanitize_file_name( $sub ) : '';
+	return array( $up['basedir'] . '/my-snooker-sounds' . $sub, (string) wp_parse_url( $up['baseurl'], PHP_URL_PATH ) . '/my-snooker-sounds' . $sub );
+}
+
+/** Vlastné súbory zvuku (alebo rádia, $slot = _radio), zoradené podľa mena. */
+function mysn_sound_own( $slot ) {
+	list( $dir, $url ) = mysn_sound_store( $slot );
+	$out               = array();
+	foreach ( glob( $dir . '/*.{mp3,wav,ogg,MP3,WAV,OGG}', GLOB_BRACE ) ?: array() as $f ) {
+		$n     = basename( $f );
+		$out[] = array( 'name' => $n, 'url' => $url . '/' . rawurlencode( $n ), 'size' => (int) filesize( $f ) );
+	}
+	usort( $out, function ( $a, $b ) {
+		return strnatcasecmp( $a['name'], $b['name'] );
+	} );
+	return $out;
+}
+
+/**
+ * Všetky súbory zvuku s nastavením: vlastné (galéria) aj základná sada. on = hrá, w = priorita 1 (zriedka) až
+ * 5 (často). Kým má zvuk vlastné súbory, základná sada je predvolene vypnutá.
+ */
+function mysn_sound_files( $slot, $fm = array() ) {
+	$own = mysn_sound_own( $slot );
 	$out = array();
-	$win = array_map( 'intval', (array) get_option( 'mysn_radio_win', array() ) );
-	foreach ( (array) get_option( 'mysn_radio_music', array() ) as $aid ) {
-		$u = wp_get_attachment_url( (int) $aid );
-		if ( $u ) {
-			$t     = get_the_title( (int) $aid );
-			$out[] = array(
-				'title' => $t ? $t : basename( (string) get_attached_file( (int) $aid ) ),
-				'url'   => (string) wp_parse_url( $u, PHP_URL_PATH ),
-				'win'   => in_array( (int) $aid, $win, true ), // hrá aj na konci zápasu na štadióne
-			);
+	foreach ( $own as $f ) {
+		$k     = 'own:' . $f['name'];
+		$m     = isset( $fm[ $k ] ) ? $fm[ $k ] : array();
+		$out[] = array( 'key' => $k, 'src' => 'own', 'name' => $f['name'], 'url' => $f['url'], 'size' => $f['size'], 'on' => isset( $m['on'] ) ? (int) $m['on'] : 1, 'w' => isset( $m['w'] ) ? (int) $m['w'] : 3 );
+	}
+	foreach ( mysn_sound_bundled( $slot ) as $u ) {
+		$n     = rawurldecode( basename( $u ) );
+		$k     = 'base:' . $n;
+		$m     = isset( $fm[ $k ] ) ? $fm[ $k ] : array();
+		$out[] = array( 'key' => $k, 'src' => 'base', 'name' => $n, 'url' => $u, 'size' => 0, 'on' => isset( $m['on'] ) ? (int) $m['on'] : ( $own ? 0 : 1 ), 'w' => isset( $m['w'] ) ? (int) $m['w'] : 3 );
+	}
+	return $out;
+}
+
+/** Skladby rádia Hedlajner - Free Music: [{ title, url, win }] (len zapnuté, cesta bez domény). */
+function mysn_radio_music() {
+	$meta = (array) get_option( 'mysn_radio_meta', array() );
+	$out  = array();
+	foreach ( mysn_sound_own( '_radio' ) as $f ) {
+		$m = isset( $meta[ $f['name'] ] ) ? $meta[ $f['name'] ] : array();
+		if ( isset( $m['on'] ) && ! $m['on'] ) {
+			continue;
 		}
+		$out[] = array(
+			'title' => trim( preg_replace( '/[_-]+/', ' ', pathinfo( $f['name'], PATHINFO_FILENAME ) ) ),
+			'url'   => $f['url'],
+			'win'   => ! empty( $m['win'] ), // hrá aj na konci zápasu na štadióne
+		);
 	}
 	return $out;
 }
@@ -161,7 +206,7 @@ function mysn_radio_music() {
 /** Predvolené doladenie slotu. */
 function mysn_sound_defaults() {
 	return array(
-		'ids'   => array(),
+		'fm'    => array(), // nastavenie súborov: kľúč (own:meno alebo base:meno) => { on, w }
 		'vol'   => 100, // hlasitosť %
 		'pitch' => 0,   // tón v poltónoch (−12 až +12)
 		'color' => 0,   // farba −100 (tmavší, tlmený) až +100 (jasnejší, ostrejší)
@@ -182,24 +227,23 @@ function mysn_sounds() {
 }
 
 /**
- * Konfigurácia pre hru: slot => { urls, vol, pitch, color, vary, sens, room }. Adresy súborov sú len cesta
- * (bez domény), aby sa načítali z tej istej adresy ako hra (subdoména) a WebAudio ich mohlo dekódovať.
+ * Konfigurácia pre hru: slot => { urls, w (priority), vol, pitch, color, vary, sens, room }. Len zapnuté súbory;
+ * adresy sú cesta bez domény (načítajú sa z adresy hry, WebAudio ich tak môže dekódovať).
  */
 function mysn_sounds_config() {
 	$cfg = array();
 	foreach ( mysn_sounds() as $id => $s ) {
 		$urls = array();
-		foreach ( (array) $s['ids'] as $aid ) {
-			$u = wp_get_attachment_url( (int) $aid );
-			if ( $u ) {
-				$urls[] = (string) wp_parse_url( $u, PHP_URL_PATH );
+		$w    = array();
+		foreach ( mysn_sound_files( $id, (array) $s['fm'] ) as $f ) {
+			if ( $f['on'] ) {
+				$urls[] = $f['url'];
+				$w[]    = max( 1, min( 5, (int) $f['w'] ) );
 			}
 		}
-		if ( ! $urls ) {
-			$urls = mysn_sound_bundled( $id ); // základná sada, kým nie sú vlastné nahrávky
-		}
-		$c = array(
+		$c    = array(
 			'urls'  => $urls,
+			'w'     => $w,
 			'vol'   => (int) $s['vol'],
 			'pitch' => (float) $s['pitch'],
 			'color' => (int) $s['color'],
@@ -209,7 +253,7 @@ function mysn_sounds_config() {
 		);
 		$same = true;
 		foreach ( mysn_sound_defaults() as $k => $v ) {
-			if ( 'ids' !== $k && (float) $c[ $k ] !== (float) $v ) {
+			if ( 'fm' !== $k && (float) $c[ $k ] !== (float) $v ) {
 				$same = false;
 			}
 		}
@@ -219,6 +263,84 @@ function mysn_sounds_config() {
 		$cfg[ $id ] = $c;
 	}
 	return (object) $cfg;
+}
+
+/* ---------- galéria zvukov: nahranie a odloženie súborov (len admin) ---------- */
+
+add_action( 'rest_api_init', function () {
+	$can = function () {
+		return current_user_can( 'manage_options' );
+	};
+	register_rest_route( 'my-snooker/v1', '/sound-upload', array( 'methods' => 'POST', 'callback' => 'mysn_rest_sound_upload', 'permission_callback' => $can ) );
+	register_rest_route( 'my-snooker/v1', '/sound-trash', array( 'methods' => 'POST', 'callback' => 'mysn_rest_sound_trash', 'permission_callback' => $can ) );
+} );
+
+/** Platný zvuk (slot) alebo rádio. */
+function mysn_sound_slot_ok( $slot ) {
+	return '_radio' === $slot || isset( mysn_sound_slots()[ $slot ] );
+}
+
+/** Zoznam súborov po zmene (galéria v administrácii). */
+function mysn_sound_list_out( $slot ) {
+	if ( '_radio' === $slot ) {
+		return mysn_sound_own( '_radio' );
+	}
+	$s = mysn_sounds()[ $slot ];
+	return mysn_sound_files( $slot, (array) $s['fm'] );
+}
+
+function mysn_rest_sound_upload( $req ) {
+	$slot = sanitize_key( (string) $req->get_param( 'slot' ) );
+	$slot = '_radio' === (string) $req->get_param( 'slot' ) ? '_radio' : $slot;
+	if ( ! mysn_sound_slot_ok( $slot ) ) {
+		return new WP_Error( 'mysn', 'Neznámy zvuk.', array( 'status' => 400 ) );
+	}
+	$files = $req->get_file_params();
+	if ( empty( $files['file'] ) ) {
+		return new WP_Error( 'mysn', 'Chýba súbor.', array( 'status' => 400 ) );
+	}
+	$f   = $files['file'];
+	$ext = strtolower( pathinfo( (string) $f['name'], PATHINFO_EXTENSION ) );
+	if ( ! in_array( $ext, array( 'mp3', 'wav', 'ogg' ), true ) ) {
+		return new WP_Error( 'mysn', 'Povolené sú len súbory MP3, WAV a OGG.', array( 'status' => 400 ) );
+	}
+	list( $dir, $url ) = mysn_sound_store( $slot );
+	wp_mkdir_p( $dir );
+	if ( ! file_exists( dirname( $dir ) . '/index.html' ) ) {
+		file_put_contents( dirname( $dir ) . '/index.html', '' ); // phpcs:ignore WordPress.WP.AlternativeFunctions
+	}
+	require_once ABSPATH . 'wp-admin/includes/file.php';
+	$to  = function ( $u ) use ( $dir, $url ) {
+		$u['path']   = $dir;
+		$u['url']    = $url;
+		$u['subdir'] = '';
+		return $u;
+	};
+	add_filter( 'upload_dir', $to );
+	$r = wp_handle_upload( $f, array( 'test_form' => false, 'mimes' => array( 'mp3' => 'audio/mpeg', 'wav' => 'audio/wav', 'ogg' => 'audio/ogg' ) ) );
+	remove_filter( 'upload_dir', $to );
+	if ( isset( $r['error'] ) ) {
+		return new WP_Error( 'mysn', 'Súbor sa nenahral: ' . $r['error'], array( 'status' => 400 ) );
+	}
+	return array( 'ok' => true, 'name' => basename( $r['file'] ), 'files' => mysn_sound_list_out( $slot ) );
+}
+
+/** Odloží vlastný súbor do koša galérie (uploads/my-snooker-sounds/_kos), natrvalo sa nemaže. */
+function mysn_rest_sound_trash( $req ) {
+	$slot = '_radio' === (string) $req->get_param( 'slot' ) ? '_radio' : sanitize_key( (string) $req->get_param( 'slot' ) );
+	$name = basename( (string) $req->get_param( 'name' ) );
+	if ( ! mysn_sound_slot_ok( $slot ) || ! $name ) {
+		return new WP_Error( 'mysn', 'Neznámy súbor.', array( 'status' => 400 ) );
+	}
+	list( $dir ) = mysn_sound_store( $slot );
+	$src         = $dir . '/' . $name;
+	if ( ! is_file( $src ) ) {
+		return new WP_Error( 'mysn', 'Súbor neexistuje.', array( 'status' => 404 ) );
+	}
+	list( $kos ) = mysn_sound_store( '_kos' );
+	wp_mkdir_p( $kos );
+	rename( $src, $kos . '/' . $slot . '-' . time() . '-' . $name ); // phpcs:ignore WordPress.WP.AlternativeFunctions
+	return array( 'ok' => true, 'files' => mysn_sound_list_out( $slot ) );
 }
 
 add_action( 'admin_menu', function () {
@@ -241,9 +363,15 @@ add_action( 'admin_post_mysn_sounds', function () {
 		'room'  => array( 0, 200 ),
 	);
 	foreach ( mysn_sound_slots() as $id => $x ) {
-		$r   = isset( $in[ $id ] ) && is_array( $in[ $id ] ) ? $in[ $id ] : array();
-		$ids = array_values( array_filter( array_map( 'absint', explode( ',', isset( $r['ids'] ) ? (string) $r['ids'] : '' ) ) ) );
-		$s   = array( 'ids' => array_slice( $ids, 0, 20 ) );
+		$r  = isset( $in[ $id ] ) && is_array( $in[ $id ] ) ? $in[ $id ] : array();
+		$fm = array();
+		$j  = isset( $r['fm'] ) ? json_decode( (string) $r['fm'], true ) : null;
+		foreach ( is_array( $j ) ? $j : array() as $k => $m ) {
+			if ( preg_match( '/^(own|base):[^\/\\\\]{1,200}$/', (string) $k ) && is_array( $m ) ) {
+				$fm[ (string) $k ] = array( 'on' => empty( $m['on'] ) ? 0 : 1, 'w' => max( 1, min( 5, (int) ( isset( $m['w'] ) ? $m['w'] : 3 ) ) ) );
+			}
+		}
+		$s = array( 'fm' => $fm );
 		foreach ( $lim as $k => $mm ) {
 			$v       = isset( $r[ $k ] ) ? (float) $r[ $k ] : mysn_sound_defaults()[ $k ];
 			$s[ $k ] = 'pitch' === $k ? round( max( $mm[0], min( $mm[1], $v ) ), 1 ) : (int) max( $mm[0], min( $mm[1], $v ) );
@@ -251,10 +379,14 @@ add_action( 'admin_post_mysn_sounds', function () {
 		$out[ $id ] = $s;
 	}
 	update_option( 'mysn_sounds', $out, false );
-	$music = array_values( array_filter( array_map( 'absint', explode( ',', isset( $_POST['radio_music'] ) ? sanitize_text_field( wp_unslash( $_POST['radio_music'] ) ) : '' ) ) ) );
-	update_option( 'mysn_radio_music', array_slice( $music, 0, 200 ), false );
-	$win = array_values( array_intersect( array_filter( array_map( 'absint', explode( ',', isset( $_POST['radio_win'] ) ? sanitize_text_field( wp_unslash( $_POST['radio_win'] ) ) : '' ) ) ), $music ) );
-	update_option( 'mysn_radio_win', $win, false );
+	$rm   = isset( $_POST['radio_meta'] ) ? json_decode( wp_unslash( (string) $_POST['radio_meta'] ), true ) : null; // phpcs:ignore WordPress.Security.ValidatedSanitizedInput
+	$meta = array();
+	foreach ( is_array( $rm ) ? $rm : array() as $n => $m ) {
+		if ( is_array( $m ) && basename( (string) $n ) === (string) $n ) {
+			$meta[ (string) $n ] = array( 'on' => empty( $m['on'] ) ? 0 : 1, 'win' => empty( $m['win'] ) ? 0 : 1 );
+		}
+	}
+	update_option( 'mysn_radio_meta', $meta, false );
 	wp_safe_redirect( admin_url( 'admin.php?page=my-snooker-sounds&saved=1' ) );
 	exit;
 } );
@@ -264,34 +396,30 @@ function mysn_admin_sounds_page() {
 	if ( ! current_user_can( 'manage_options' ) ) {
 		return;
 	}
-	wp_enqueue_media();
-	wp_enqueue_script( 'mysn-sound-admin', MYSN_URL . 'assets/sound-admin.js', array( 'jquery' ), mysn_asset_ver( 'sound-admin.js' ), true );
+	wp_enqueue_script( 'mysn-sound-admin', MYSN_URL . 'assets/sound-admin.js', array(), mysn_asset_ver( 'sound-admin.js' ), true );
 	$slots = mysn_sound_slots();
 	$snd   = mysn_sounds();
-	$files = array();
-	foreach ( $snd as $id => $s ) {
-		foreach ( (array) $s['ids'] as $aid ) {
-			$u = wp_get_attachment_url( (int) $aid );
-			if ( $u ) {
-				$files[ (int) $aid ] = array( 'url' => $u, 'name' => basename( (string) get_attached_file( (int) $aid ) ) );
-			}
-		}
-	}
-	foreach ( (array) get_option( 'mysn_radio_music', array() ) as $aid ) {
-		$u = wp_get_attachment_url( (int) $aid );
-		if ( $u ) {
-			$t                   = get_the_title( (int) $aid );
-			$files[ (int) $aid ] = array( 'url' => $u, 'name' => $t ? $t : basename( (string) get_attached_file( (int) $aid ) ) );
-		}
-	}
-	$bundled = array();
+	$lists = array();
 	foreach ( $slots as $id => $x ) {
-		$b = mysn_sound_bundled( $id );
-		if ( $b ) {
-			$bundled[ $id ] = $b;
-		}
+		$lists[ $id ] = mysn_sound_files( $id, (array) $snd[ $id ]['fm'] );
 	}
-	wp_add_inline_script( 'mysn-sound-admin', 'window.mysnSoundFiles = ' . wp_json_encode( (object) $files ) . '; window.mysnSoundBundled = ' . wp_json_encode( (object) $bundled ) . ';', 'before' );
+	$rmeta = (array) get_option( 'mysn_radio_meta', array() );
+	wp_add_inline_script(
+		'mysn-sound-admin',
+		'window.mysnSnd = ' . wp_json_encode(
+			array(
+				'rest'  => esc_url_raw( rest_url( 'my-snooker/v1/' ) ),
+				'nonce' => wp_create_nonce( 'wp_rest' ),
+				'files' => (object) $lists,
+				'names' => (object) array_map( function ( $x ) {
+					return $x[1];
+				}, $slots ),
+				'radio' => mysn_sound_own( '_radio' ),
+				'rmeta' => (object) $rmeta,
+			)
+		) . ';',
+		'before'
+	);
 	$params = array(
 		'vol'   => array( 'Hlasitosť', 0, 300, 1, '%', 'Celková hlasitosť zvuku (100 % = ako je nahraný).' ),
 		'pitch' => array( 'Tón', -12, 12, 0.5, ' pt', 'Posun výšky v poltónoch: mínus hlbší, plus vyšší.' ),
@@ -302,7 +430,7 @@ function mysn_admin_sounds_page() {
 	);
 	?>
 	<div class="wrap mysn-snd">
-		<?php mysn_admin_head( 'Zvuky hry: ku každému zvuku vyber súbory z knižnice médií (viac súborov = varianty, hrajú sa náhodne) a dolaď ich. Zvuk bez súboru hrá zabudovaný generovaný zvuk. Zmeny sa v hre prejavia po obnovení stránky hry.' ); ?>
+		<?php mysn_admin_head( 'Zvuky hry: každý zvuk má vlastnú galériu súborov (viac súborov = varianty, hrajú sa náhodne podľa priority) a doladenie. Zvuk bez súboru hrá zabudovaný generovaný zvuk. Zmeny sa v hre prejavia po obnovení stránky hry.' ); ?>
 		<?php if ( isset( $_GET['saved'] ) ) : // phpcs:ignore WordPress.Security.NonceVerification ?>
 			<div class="notice notice-success is-dismissible"><p>Zvuky sú uložené.</p></div>
 		<?php endif; ?>
@@ -312,6 +440,11 @@ function mysn_admin_sounds_page() {
 			.mysn-snd td.n{width:340px}.mysn-snd td.n b{display:block}.mysn-snd td.n small{display:block;color:#50575e;margin-top:3px}.mysn-snd td.n small.rec{color:#2271b1}.mysn-snd td.n small.spec{color:#8a5a00}.mysn-snd td.n small.spec b{display:inline}.mysn-snd td.n small.rec b{display:inline}
 			.mysn-snd .files{min-width:200px}.mysn-snd .files span{display:inline-block;background:#f0f0f1;border-radius:3px;padding:1px 6px;margin:0 4px 4px 0;font-size:12px}
 			.mysn-snd .files span a{color:#b32d2e;text-decoration:none;margin-left:4px}
+			#mysn-gal{position:fixed;inset:0;z-index:100000;background:#0008;display:none;align-items:flex-start;justify-content:center;padding:60px 16px;overflow:auto}
+			#mysn-gal .box{background:#fff;max-width:860px;width:100%;border-radius:6px;box-shadow:0 10px 40px #0006;padding:16px 20px}
+			#mysn-gal h2{margin:0 0 4px}#mysn-gal table{margin:10px 0}#mysn-gal td{vertical-align:middle;padding:6px 8px}
+			#mysn-gal .src{font-size:11px;color:#646970}#mysn-gal .src.base{color:#00a32a}#mysn-gal tr.off td{opacity:.5}
+			#mysn-gal .foot{display:flex;gap:10px;align-items:center;justify-content:space-between;flex-wrap:wrap}
 			.mysn-snd .p{display:grid;grid-template-columns:repeat(3,minmax(150px,1fr));gap:4px 14px}
 			.mysn-snd .p label{font-size:12px;color:#50575e}.mysn-snd .p input{width:100%}
 			.mysn-snd .p output{float:right;font-weight:600;color:#1d2327}
@@ -320,13 +453,14 @@ function mysn_admin_sounds_page() {
 		<div class="card" style="max-width:none;margin:0 0 14px">
 			<h2 style="margin-top:6px">Ako dodávať zvuky</h2>
 			<ul style="list-style:disc;margin-left:18px">
-				<li><b>Formát:</b> WAV (48 kHz, 24 bitov) alebo MP3 (320 kbps), aj OGG. Nahraj do Médií a vyber tlačidlom Vybrať súbory.</li>
+				<li><b>Galéria My Snooker:</b> tlačidlo <b>Súbory…</b> pri zvuku otvorí jeho galériu: Pridať súbory nahrá nahrávky priamo sem (priečinok uploads/my-snooker-sounds, mimo knižnice Médií, v Médiách WordPressu sa vôbec neukážu). Pri každom súbore: prehrať, zapnúť alebo vypnúť (Hrá) a priorita 1 až 5 (ako často sa hrá oproti ostatným: 5 = päťkrát častejšie ako 1). Odložiť presunie súbor do koša galérie (uploads/my-snooker-sounds/_kos), nič sa nemaže natrvalo. Zmeny Hrá a priority ulož tlačidlom Uložiť zvuky.</li>
+				<li><b>Formát:</b> WAV (48 kHz, 24 bitov) alebo MP3 (320 kbps), aj OGG.</li>
 				<li><b>Kvalita:</b> profesionálne nahrávky, minimálne stereo. Zvuky stola sa v hre umiestnia do priestoru (3D na slúchadlách, výrazné stereo na reproduktoroch); ambient a diváci hrajú v plnom sterei.</li>
 				<li><b>Čisté nahrávky:</b> bez ozveny miestnosti (dozvuk pridá hra podľa miestnosti), bez šumu, krátke ticho na začiatku a konci (do 50 ms).</li>
 				<li><b>Jazyk:</b> hlas rozhodcu aj hlasy divákov sú po anglicky (ako v skutočnom snookri): Foul, four. Free ball. Frame and match. Well done.</li>
 				<li><b>Varianty:</b> pri každom zvuku 3 až 6 súborov, hra ich strieda náhodne, aby rovnaké údery nezneli ako stroj.</li>
 				<li><b>Dĺžka a hlasitosť:</b> pri každom zvuku je odporúčaná dĺžka klipu a hlasitosť v klipe. Krátke údery sa merajú <b>špičkou v dBFS</b> (najhlasnejšie miesto klipu, 0 dBFS je strop, nad ktorým zvuk skreslí; −10 dBFS je zreteľne pod ním). Dlhšie zvuky (ambient, diváci, hlas) sa merajú <b>priemernou hlasitosťou v LUFS</b> (meria ju väčšina strihových programov, napríklad Audacity: Analýza, Merač hlasitosti). Jemné a tvrdé vrstvy nahraj prirodzene, tichší úder má byť naozaj tichší; hra ich prelína podľa sily. Odchýlku doladíš posuvníkom Hlasitosť.</li>
-				<li>Zvuky môžeš dopĺňať postupne. Kým k zvuku nevyberieš vlastné súbory, hrá <b>základná sada</b> (voľné zvuky CC0, zdroje v assets/sounds/LICENSES.txt), a kde nie je ani tá, generovaná náhrada. Keď budú všetky hotové, spravíme kompiláciu (zjednotenie hlasitosti, orezanie, menšie súbory).</li>
+				<li>Zvuky môžeš dopĺňať postupne. Kým zvuk nemá vlastné súbory, hrá <b>základná sada</b> (po pridaní vlastných sa vypne, v galérii ju môžeš zapnúť späť) (voľné zvuky CC0, zdroje v assets/sounds/LICENSES.txt), a kde nie je ani tá, generovaná náhrada. Keď budú všetky hotové, spravíme kompiláciu (zjednotenie hlasitosti, orezanie, menšie súbory).</li>
 			</ul>
 		</div>
 		<div class="test">
@@ -366,9 +500,9 @@ function mysn_admin_sounds_page() {
 				<tr data-slot="<?php echo esc_attr( $id ); ?>">
 					<td class="n"><b><?php echo esc_html( $x[1] ); ?></b><small><?php echo esc_html( $x[2] ); ?></small><small class="rec"><b>Nahrávka:</b> <?php echo esc_html( $x[3] ); ?></small><?php $sp = mysn_sound_spec( $id ); ?><small class="spec"><b>Dĺžka klipu:</b> <?php echo esc_html( $sp[0] ); ?><br><b>Hlasitosť v klipe:</b> <?php echo esc_html( $sp[1] ); ?></small></td>
 					<td class="files">
-						<input type="hidden" name="snd[<?php echo esc_attr( $id ); ?>][ids]" value="<?php echo esc_attr( implode( ',', array_map( 'intval', (array) $s['ids'] ) ) ); ?>">
+						<input type="hidden" class="fm" name="snd[<?php echo esc_attr( $id ); ?>][fm]" value="<?php echo esc_attr( wp_json_encode( (object) $s['fm'] ) ); ?>">
 						<div class="list"></div>
-						<button type="button" class="button button-small pick">Vybrať súbory</button>
+						<button type="button" class="button button-small pick">Súbory…</button>
 						<button type="button" class="button button-small play">Prehrať</button>
 					</td>
 					<td><div class="p">
@@ -383,16 +517,25 @@ function mysn_admin_sounds_page() {
 			</tbody></table>
 			<h2>Rádio Hedlajner - Free Music</h2>
 			<table><tbody><tr data-music="1">
-				<td class="n"><b>Skladby rádia</b><small>Vlastná stanica Hedlajner - Free Music v rádiu hry (F9, mixpult v herni, reproduktory v kancelárii). Koľko skladieb pridáš, toľko je v nej; hrajú sa zamiešane jedna za druhou, po poslednej sa poradie znova zamieša. Stanica je v rádiu prvá. Názov skladby v hre je názov súboru v Médiách (dá sa tam upraviť). <b>Hviezdička ☆/★</b> pri skladbe ju označí ako víťaznú: na konci zápasu na štadióne zahrá jedna náhodná označená skladba (všetkým, s prelínaním, pri odchode zo štadióna stíchne).</small><small class="rec"><b>Súbory:</b> MP3 (192 až 320 kbps) alebo OGG, stereo, hudba s licenciou na voľné použitie.</small><small class="spec"><b>Hlasitosť:</b> priemer okolo −14 LUFS (bežná hudba), všetky skladby podobne hlasné.</small></td>
+				<td class="n"><b>Skladby rádia</b><small>Vlastná stanica Hedlajner - Free Music v rádiu hry (F9, mixpult v herni, reproduktory v kancelárii). Koľko skladieb pridáš, toľko je v nej; hrajú sa zamiešane jedna za druhou, po poslednej sa poradie znova zamieša. Stanica je v rádiu prvá. Názov skladby v hre je názov súboru (pomlčky a podčiarkovníky sa zmenia na medzery, napríklad Hedlajner-Leto.mp3 je Hedlajner Leto). <b>Hviezdička ☆/★</b> pri skladbe ju označí ako víťaznú: na konci zápasu na štadióne zahrá jedna náhodná označená skladba (všetkým, s prelínaním, pri odchode zo štadióna stíchne).</small><small class="rec"><b>Súbory:</b> MP3 (192 až 320 kbps) alebo OGG, stereo, hudba s licenciou na voľné použitie.</small><small class="spec"><b>Hlasitosť:</b> priemer okolo −14 LUFS (bežná hudba), všetky skladby podobne hlasné.</small></td>
 				<td class="files" colspan="2">
-					<input type="hidden" name="radio_win" value="<?php echo esc_attr( implode( ',', array_map( 'intval', (array) get_option( 'mysn_radio_win', array() ) ) ) ); ?>">
-										<input type="hidden" name="radio_music" value="<?php echo esc_attr( implode( ',', array_map( 'intval', (array) get_option( 'mysn_radio_music', array() ) ) ) ); ?>">
+					<input type="hidden" class="fm" name="radio_meta" value="<?php echo esc_attr( wp_json_encode( (object) $rmeta ) ); ?>">
 					<div class="list"></div>
-					<button type="button" class="button button-small pick">Vybrať skladby</button>
+					<button type="button" class="button button-small pick">Skladby…</button>
 				</td>
 			</tr></tbody></table>
 			<p><button class="button button-primary button-large">Uložiť zvuky</button> <span class="description">Na kompiláciu (keď budú všetky zvuky hotové) stačí poslať súbory, zvyšok spravíme spolu.</span></p>
 		</form>
+		<div id="mysn-gal"><div class="box">
+			<h2 class="t"></h2>
+			<p class="description d"></p>
+			<table class="widefat striped"><thead><tr><th>Súbor</th><th>Prehrať</th><th>Hrá</th><th class="pr">Priorita</th><th></th></tr></thead><tbody></tbody></table>
+			<div class="foot">
+				<label class="button button-primary">Pridať súbory <input type="file" class="up" accept=".mp3,.wav,.ogg,audio/mpeg,audio/wav,audio/ogg" multiple style="display:none"></label>
+				<span class="msg description"></span>
+				<button type="button" class="button close">Hotovo</button>
+			</div>
+		</div></div>
 	</div>
 	<?php
 }

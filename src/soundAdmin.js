@@ -1,14 +1,14 @@
 /*
- * My Snooker: administrácia zvukov (My Snooker → Zvuky). Výber súborov z knižnice médií ku každému zvuku
- * a skúška: zahrá zvuk rovnakým enginom ako hra, s aktuálnym (aj neuloženým) doladením, silou a miestnosťou.
+ * My Snooker: administrácia zvukov (My Snooker → Zvuky). Každý zvuk má vlastnú galériu súborov (mimo Médií
+ * WordPressu): nahranie, prehranie, zapnutie, priorita, odloženie do koša. Skúška zahrá zvuk rovnakým enginom
+ * ako hra, s aktuálnym (aj neuloženým) doladením a parametrami situácie.
  */
 import { Sound } from './audio.js';
 
 const $ = (s, el = document) => el.querySelector(s);
-const files = window.mysnSoundFiles || {}; // id prílohy → { url, name }
-const bundled = window.mysnSoundBundled || {}; // slot → cesty základnej sady
+const D = window.mysnSnd || { files: {}, names: {}, radio: [], rmeta: {} };
 const snd = new Sound({});
-const loaded = {}; // slot → reťazec id, pre ktoré sú nahrávky načítané
+const loaded = {}; // slot → kľúč načítaných súborov (zmena = znova načítať)
 
 const params = (tr) => {
 	const o = {};
@@ -18,33 +18,44 @@ const params = (tr) => {
 	return o;
 };
 
-const ids = (tr) => tr.querySelector('input[type=hidden]').value.split(',').map((x) => parseInt(x, 10)).filter((x) => x > 0);
-
-const renderList = (tr) => {
-	const L = tr.querySelector('.list');
-	L.innerHTML = '';
-	for (const id of ids(tr)) {
-		const f = files[id] || { name: '#' + id };
-		const sp = document.createElement('span');
-		sp.textContent = f.name;
-		const x = document.createElement('a');
-		x.href = '#';
-		x.textContent = '×';
-		x.title = 'Odobrať zo zvuku (súbor ostane v Médiách)';
-		x.addEventListener('click', (e) => {
-			e.preventDefault();
-			tr.querySelector('input[type=hidden]').value = ids(tr).filter((i) => i !== id).join(',');
-			renderList(tr);
-		});
-		sp.appendChild(x);
-		L.appendChild(sp);
-	}
-	if (!L.children.length) {
-		const b = bundled[tr.dataset.slot];
-		L.innerHTML = b ? `<em style="color:#00a32a;font-size:12px">základná sada: ${b.length} ${b.length === 1 ? 'súbor' : b.length < 5 ? 'súbory' : 'súborov'} (CC0)</em>` : '<em style="color:#8c8f94;font-size:12px">bez súboru (hrá generovaný zvuk)</em>';
+/** Nastavenie súborov slotu (skryté pole fm, ukladá sa formulárom). */
+const fmOf = (tr) => {
+	try {
+		return JSON.parse(tr.querySelector('input.fm').value || '{}') || {};
+	} catch (e) {
+		return {};
 	}
 };
+const setFm = (tr, fm) => (tr.querySelector('input.fm').value = JSON.stringify(fm));
 
+/** Súbory slotu s aktuálnym (aj neuloženým) nastavením Hrá a priority. */
+const filesOf = (slot) => {
+	const tr = rowOf(slot);
+	const fm = tr ? fmOf(tr) : {};
+	return (D.files[slot] || []).map((f) => {
+		const m = fm[f.key] || {};
+		return { ...f, on: m.on !== undefined ? +m.on : f.on, w: m.w !== undefined ? +m.w : f.w };
+	});
+};
+
+const summary = (tr) => {
+	const slot = tr.dataset.slot;
+	const L = tr.querySelector('.list');
+	if (!slot) {
+		const meta = fmOf(tr);
+		const n = D.radio.length;
+		const on = D.radio.filter((f) => !meta[f.name] || meta[f.name].on !== 0).length;
+		const win = D.radio.filter((f) => meta[f.name] && meta[f.name].win).length;
+		L.innerHTML = n ? `<em style="font-size:12px">${n} ${n === 1 ? 'skladba' : n < 5 ? 'skladby' : 'skladieb'}, hrá ${on}, víťazných ★ ${win}</em>` : '<em style="color:#8c8f94;font-size:12px">zatiaľ žiadna skladba (stanica sa v rádiu neukáže)</em>';
+		return;
+	}
+	const list = filesOf(slot);
+	const own = list.filter((f) => f.src === 'own');
+	const on = list.filter((f) => f.on);
+	L.innerHTML = !list.length
+		? '<em style="color:#8c8f94;font-size:12px">bez súboru (hrá generovaný zvuk)</em>'
+		: `<em style="font-size:12px;color:${own.length ? '#1d2327' : '#00a32a'}">${own.length ? `vlastné: ${own.length}` : 'základná sada'}${own.length && list.length > own.length ? `, základná sada: ${list.length - own.length}` : !own.length ? `: ${list.length}` : ''}; hrá ${on.length}</em>`;
+};
 
 const rowOf = (slot) => document.querySelector(`tr[data-slot="${slot}"]`);
 /** Načíta nahrávky slotu (vlastné, inak základná sada) a nastaví jeho aktuálne (aj neuložené) doladenie. */
@@ -53,11 +64,11 @@ const prep = async (slot) => {
 	if (!tr) {
 		return;
 	}
-	const key = ids(tr).join(',');
+	const list = filesOf(slot).filter((f) => f.on);
+	const key = list.map((f) => f.url + '|' + f.w).join(',');
 	if (loaded[slot] !== key) {
 		loaded[slot] = key;
-		const own = ids(tr).map((i) => files[i] && files[i].url).filter(Boolean);
-		await snd.load(slot, own.length ? own : bundled[slot] || []);
+		await snd.load(slot, list.map((f) => f.url), list.map((f) => f.w));
 	}
 	snd.tune(slot, params(tr));
 };
@@ -159,98 +170,172 @@ const playShot = async () => {
 	setTimeout(() => playGroup('pot', { ...T, vel: v * 0.7, pos: { x: -0.9, y: 0.9, z: -1.7 } }), gap + 1300);
 };
 
+
+/* ---------- galéria súborov (popup) ---------- */
+const G = $('#mysn-gal');
+let galTr = null;
+let preview = null;
+const fmtSize = (b) => (b > 1048576 ? (b / 1048576).toFixed(1) + ' MB' : b ? Math.round(b / 1024) + ' kB' : '');
+const galDraw = () => {
+	const tr = galTr;
+	const slot = tr.dataset.slot;
+	const radio = !slot;
+	const body = G.querySelector('tbody');
+	body.innerHTML = '';
+	G.querySelector('.pr').textContent = radio ? 'Víťazná ★' : 'Priorita';
+	const list = radio ? D.radio.map((f) => ({ ...f, src: 'own', key: f.name })) : filesOf(slot);
+	const meta = fmOf(tr);
+	if (!list.length) {
+		body.innerHTML = '<tr><td colspan="5"><em>Zatiaľ žiadny súbor. Pridaj ho tlačidlom Pridať súbory.</em></td></tr>';
+	}
+	for (const f of list) {
+		const m = radio ? meta[f.name] || {} : null;
+		const on = radio ? m.on !== 0 : !!f.on;
+		const row = document.createElement('tr');
+		row.className = on ? '' : 'off';
+		row.innerHTML = `<td><b></b> <span class="src ${f.src}">${f.src === 'base' ? 'základná sada (CC0)' : 'vlastný'} ${fmtSize(f.size)}</span></td><td><button type="button" class="button button-small pl">▶</button></td><td><label><input type="checkbox" class="on"> hrá</label></td><td class="w"></td><td class="x"></td>`;
+		row.querySelector('b').textContent = f.name;
+		const cb = row.querySelector('.on');
+		cb.checked = on;
+		cb.addEventListener('change', () => {
+			const fm = fmOf(tr);
+			const k = radio ? f.name : f.key;
+			fm[k] = { ...(fm[k] || (radio ? {} : { w: f.w })), on: cb.checked ? 1 : 0 };
+			setFm(tr, fm);
+			galDraw();
+			summary(tr);
+		});
+		if (radio) {
+			const st = document.createElement('a');
+			st.href = '#';
+			st.textContent = m.win ? '★' : '☆';
+			st.style.cssText = `font-size:20px;text-decoration:none;color:${m.win ? '#dba617' : '#8c8f94'}`;
+			st.title = 'Víťazná skladba: hrá na konci zápasu na štadióne';
+			st.addEventListener('click', (e) => {
+				e.preventDefault();
+				const fm = fmOf(tr);
+				fm[f.name] = { on: 1, ...(fm[f.name] || {}), win: m.win ? 0 : 1 };
+				setFm(tr, fm);
+				galDraw();
+				summary(tr);
+			});
+			row.querySelector('.w').appendChild(st);
+		} else {
+			const sel = document.createElement('select');
+			sel.innerHTML = '<option value="1">1 zriedka</option><option value="2">2</option><option value="3">3 bežne</option><option value="4">4</option><option value="5">5 často</option>';
+			sel.value = String(f.w || 3);
+			sel.addEventListener('change', () => {
+				const fm = fmOf(tr);
+				fm[f.key] = { on: f.on, ...(fm[f.key] || {}), w: +sel.value };
+				setFm(tr, fm);
+			});
+			row.querySelector('.w').appendChild(sel);
+		}
+		if (f.src === 'own') {
+			const x = document.createElement('button');
+			x.type = 'button';
+			x.className = 'button-link';
+			x.style.color = '#b32d2e';
+			x.textContent = 'Odložiť';
+			x.title = 'Presunie súbor do koša galérie (uploads/my-snooker-sounds/_kos), natrvalo sa nemaže';
+			x.addEventListener('click', async () => {
+				const r = await api('sound-trash', { slot: slot || '_radio', name: f.name });
+				if (r) {
+					galSet(r.files);
+				}
+			});
+			row.querySelector('.x').appendChild(x);
+		}
+		row.querySelector('.pl').addEventListener('click', () => {
+			if (preview) {
+				preview.pause();
+			}
+			preview = new Audio(f.url);
+			preview.play();
+		});
+		body.appendChild(row);
+	}
+};
+const galSet = (files) => {
+	const slot = galTr.dataset.slot;
+	if (slot) {
+		D.files[slot] = files;
+		loaded[slot] = null;
+	} else {
+		D.radio = files;
+	}
+	galDraw();
+	summary(galTr);
+};
+const api = async (path, data, file) => {
+	const fd = new FormData();
+	for (const [k, v] of Object.entries(data)) {
+		fd.append(k, v);
+	}
+	if (file) {
+		fd.append('file', file);
+	}
+	const r = await fetch(D.rest + path, { method: 'POST', headers: { 'X-WP-Nonce': D.nonce }, body: fd, credentials: 'same-origin' });
+	const j = await r.json().catch(() => null);
+	if (!r.ok) {
+		G.querySelector('.msg').textContent = (j && j.message) || 'Nepodarilo sa.';
+		return null;
+	}
+	return j;
+};
+const galOpen = (tr) => {
+	galTr = tr;
+	const slot = tr.dataset.slot;
+	G.querySelector('.t').textContent = slot ? `Galéria: ${D.names[slot] || slot}` : 'Galéria: Rádio Hedlajner - Free Music';
+	G.querySelector('.d').textContent = slot
+		? 'Súbory zvuku: ▶ prehrá súbor, Hrá ho zapne alebo vypne, priorita určuje, ako často sa hrá oproti ostatným (5 = päťkrát častejšie ako 1). Vlastné súbory sú mimo Médií WordPressu. Zmeny Hrá a priority ulož tlačidlom Uložiť zvuky.'
+		: 'Skladby rádia: hrajú zamiešane jedna za druhou. Hrá skladbu zapne alebo vypne, hviezdička ★ ju označí ako víťaznú (koniec zápasu na štadióne). Zmeny ulož tlačidlom Uložiť zvuky.';
+	G.querySelector('.msg').textContent = '';
+	G.style.display = 'flex';
+	galDraw();
+};
+if (G) {
+	G.querySelector('.close').addEventListener('click', () => {
+		G.style.display = 'none';
+		if (preview) {
+			preview.pause();
+		}
+	});
+	G.addEventListener('click', (e) => {
+		if (e.target === G) {
+			G.querySelector('.close').click();
+		}
+	});
+	G.querySelector('.up').addEventListener('change', async (e) => {
+		const list = [...e.target.files];
+		e.target.value = '';
+		const slot = galTr.dataset.slot || '_radio';
+		let n = 0;
+		for (const f of list) {
+			G.querySelector('.msg').textContent = `Nahrávam ${++n} z ${list.length}: ${f.name}…`;
+			const r = await api('sound-upload', { slot }, f);
+			if (!r) {
+				return;
+			}
+			galSet(r.files);
+		}
+		G.querySelector('.msg').textContent = list.length ? `Nahraté: ${list.length}.` : '';
+	});
+}
 for (const tr of document.querySelectorAll('tr[data-slot]')) {
-	renderList(tr);
+	summary(tr);
 	for (const r of tr.querySelectorAll('input[type=range]')) {
 		r.addEventListener('input', () => {
 			r.parentElement.querySelector('output').textContent = r.value + (r.dataset.u || '');
 		});
 	}
-	tr.querySelector('.pick').addEventListener('click', () => {
-		const frame = window.wp.media({ title: 'Súbory zvuku', library: { type: 'audio' }, multiple: 'add', button: { text: 'Použiť súbory' } });
-		frame.on('open', () => {
-			const sel = frame.state().get('selection');
-			for (const id of ids(tr)) {
-				const a = window.wp.media.attachment(id);
-				a.fetch();
-				sel.add(a);
-			}
-		});
-		frame.on('select', () => {
-			const list = frame.state().get('selection').toJSON();
-			for (const a of list) {
-				files[a.id] = { url: a.url, name: a.filename || a.title };
-			}
-			tr.querySelector('input[type=hidden]').value = list.map((a) => a.id).join(',');
-			renderList(tr);
-		});
-		frame.open();
-	});
+	tr.querySelector('.pick').addEventListener('click', () => galOpen(tr));
 	tr.querySelector('.play').addEventListener('click', () => playSlot(tr.dataset.slot));
 }
-// rádio Hedlajner - Free Music: výber skladieb (poradie podľa výberu, v hre sa miešajú)
 const mtr = document.querySelector('tr[data-music]');
 if (mtr) {
-	const inp = mtr.querySelector('input[name=radio_music]');
-	const winInp = mtr.querySelector('input[name=radio_win]');
-	const wins = () => winInp.value.split(',').map((x) => parseInt(x, 10)).filter((x) => x > 0);
-	const mids = () => inp.value.split(',').map((x) => parseInt(x, 10)).filter((x) => x > 0);
-	const draw = () => {
-		const L = mtr.querySelector('.list');
-		L.innerHTML = '';
-		for (const id of mids()) {
-			const sp = document.createElement('span');
-			const star = document.createElement('a');
-			star.href = '#';
-			const on = wins().includes(id);
-			star.textContent = on ? '★ ' : '☆ ';
-			star.style.color = on ? '#dba617' : '#8c8f94';
-			star.style.textDecoration = 'none';
-			star.title = on ? 'Víťazná skladba (hrá na konci zápasu na štadióne). Klik zruší.' : 'Označiť ako víťaznú (na konci zápasu na štadióne)';
-			star.addEventListener('click', (e) => {
-				e.preventDefault();
-				winInp.value = (on ? wins().filter((i) => i !== id) : [...wins(), id]).join(',');
-				draw();
-			});
-			sp.appendChild(star);
-			sp.appendChild(document.createTextNode((files[id] && files[id].name) || '#' + id));
-			const x = document.createElement('a');
-			x.href = '#';
-			x.textContent = '×';
-			x.title = 'Odobrať z rádia (súbor ostane v Médiách)';
-			x.addEventListener('click', (e) => {
-				e.preventDefault();
-				inp.value = mids().filter((i) => i !== id).join(',');
-				draw();
-			});
-			sp.appendChild(x);
-			L.appendChild(sp);
-		}
-		if (!L.children.length) {
-			L.innerHTML = '<em style="color:#8c8f94;font-size:12px">zatiaľ žiadna skladba (stanica sa v rádiu neukáže)</em>';
-		}
-	};
-	draw();
-	mtr.querySelector('.pick').addEventListener('click', () => {
-		const frame = window.wp.media({ title: 'Skladby rádia Hedlajner - Free Music', library: { type: 'audio' }, multiple: 'add', button: { text: 'Použiť skladby' } });
-		frame.on('open', () => {
-			const sel = frame.state().get('selection');
-			for (const id of mids()) {
-				const a = window.wp.media.attachment(id);
-				a.fetch();
-				sel.add(a);
-			}
-		});
-		frame.on('select', () => {
-			const list = frame.state().get('selection').toJSON();
-			for (const a of list) {
-				files[a.id] = { url: a.url, name: a.title || a.filename };
-			}
-			inp.value = list.map((a) => a.id).join(',');
-			draw();
-		});
-		frame.open();
-	});
+	summary(mtr);
+	mtr.querySelector('.pick').addEventListener('click', () => galOpen(mtr));
 }
 // popisky posuvníkov skúšky
 const lab = { vel: (v) => v + ' %', mass: (v) => v + ' g', wear: (v) => v + ' %', thin: (v) => (v < 15 ? 'plný' : v > 85 ? 'tenký' : v + ' %') };
