@@ -131,6 +131,11 @@ export function tipInaccuracy(wear, kind, spec) {
 	return d * k * t;
 }
 
+/** Nepresnosť od predĺženia tága (stupne, najväčší náhodný odklon pri strednom údere): dlhšie tágo sa ťažšie vedie rovno. */
+export function extInaccuracy(ext) {
+	return ext >= 0.44 ? 0.5 : ext >= 0.29 ? 0.3 : ext >= 0.14 ? 0.15 : 0;
+}
+
 /** Výhody a nedostatky tág 1 až 10 (panel na stojane F2). */
 export const CUE_PROS = {
 	club: ['vyvážené, spoľahlivé falše, ľahko sa ovláda', 'slabšia sila, bez jemného mierenia so Shift'],

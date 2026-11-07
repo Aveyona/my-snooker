@@ -26,7 +26,7 @@ import { buildRackTriangle, rackLayout } from './rackTriangle.js';
 import { Replay } from './replay.js';
 import { CHALKS, chalkById } from './chalks.js';
 import { ChalkMarks } from './chalkMarks.js';
-import { CUES, cueById, ownCueSpec, TIP_COLORS, tipInaccuracy, cueGrip, REACH, CUE_EXTS } from './cues.js';
+import { CUES, cueById, ownCueSpec, TIP_COLORS, tipInaccuracy, extInaccuracy, cueGrip, REACH, CUE_EXTS } from './cues.js';
 
 const STORE = 'mySnookerSettings';
 const AIM_AHEAD = 0.5; // posun pohľadu bez mierenej gule: kamera sa pozerá 50 cm pred bielu
@@ -1832,7 +1832,7 @@ export function start(root, config = {}) {
 			game.dir -= side * sq;
 		}
 		// nepresnosť opotrebovanej špice (od 80 %): náhodná odchýlka smeru, silnejší úder viac
-		const inacc = tipInaccuracy(tip.wear, tip.kind, cueSpec) * (0.75 + 0.5 * power);
+		const inacc = (tipInaccuracy(tip.wear, tip.kind, cueSpec) + extInaccuracy(settings.cueExt || 0)) * (0.75 + 0.5 * power); // opotrebovaná špica a predĺženie tága
 		if (inacc > 0) {
 			game.dir += ((Math.random() * 2 - 1) * inacc * Math.PI) / 180;
 		}
@@ -4347,7 +4347,7 @@ export function start(root, config = {}) {
 		if (cueSpec) {
 			const tw = tipOf(cueSpec);
 			const tc = TIP_COLORS[tipColors[cueSpec.id]] || TIP_COLORS.blue;
-			ui.tipState({ wear: +(tw.wear || 0).toFixed(3), strokes: tw.strokes | 0, tip: tc.hex, chalk: Math.min(1, chalk / CHALK_SHOTS), shots: chalk, max: CHALK_SHOTS, chalkHex: '#' + chalkById(settings.chalk).color.toString(16).padStart(6, '0') });
+			ui.tipState({ ext: Math.round((settings.cueExt || 0) * 100), extDeg: extInaccuracy(settings.cueExt || 0), wear: +(tw.wear || 0).toFixed(3), strokes: tw.strokes | 0, tip: tc.hex, chalk: Math.min(1, chalk / CHALK_SHOTS), shots: chalk, max: CHALK_SHOTS, chalkHex: '#' + chalkById(settings.chalk).color.toString(16).padStart(6, '0') });
 		}
 		const ccol = chalkById(settings.chalk).color;
 		if (lvl !== chalkTip.level || (lvl > 0 && ccol !== chalkTip.color)) {
