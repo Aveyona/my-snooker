@@ -9,6 +9,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 function mysn_roadmap() {
 	return array(
+		array( '0.7.66', '7. 11. 2026', 'Oblúk pri priblížení na mierenú guľu je plynulý: rovnomerne s pohybom myši, bez skoku na začiatku a bez ostrého vrcholu.' ),
 		array( '0.7.65', '7. 11. 2026', 'Kancelária: Ctrl a pravé tlačidlo myši zruší priblíženie na predmet (notebook, kalendár, tabuľa, nástenka, mapa, stojan) a vráti pohľad za písací stôl.' ),
 		array( '0.7.64', '7. 11. 2026', 'Priblíženie na mierenú guľu (pravé tlačidlo, myš hore) ide po oblúku: do polovice priblíženia kamera stúpa, potom pomaly klesá až ku guli.' ),
 		array( '0.7.63', '7. 11. 2026', 'Kancelária s držaným Ctrl ako herňa: predmety pod kurzorom sa jemne rozsvietia a klik ich otvorí (nástenka F1, stojan F2, kalendár F3, tabuľa líg F4, notebook F7, vizitka F8, dvere F9, lampa F12, mapa hráčov so špendlíkmi). Tréning z menu v kancelárii neotvorí menu znova.' ),

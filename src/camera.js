@@ -59,9 +59,20 @@ export class CameraRig {
 				p.x *= hr;
 				p.z *= hr;
 				// približovanie ku guli po oblúku: do polovice priblíženia kamera stúpa, potom pomaly klesá ku guli
-				const t = Math.max(0, Math.min(1, (1 - this.panDist) / 0.85));
-				const arc = Math.max(0.12, Math.min(0.45, h0 * 0.28)) * Math.sin(Math.PI * Math.pow(t, 0.8));
-				p.y = b.y * this.panDist + (this.panDist < 1 ? arc : Math.min(0, this.panLift));
+				// t rovnomerne s pohybom myši (vzdialenosť sa mení exponenciálne); do polovice plynulo hore o A,
+				// potom plynulo dole až ku guli (smoothstep: bez zlomu na začiatku, na vrchole aj na konci)
+				const t = Math.max(0, Math.min(1, Math.log(this.panDist) / Math.log(0.15)));
+				const ss = (x) => x * x * (3 - 2 * x);
+				const A = Math.max(0.12, Math.min(0.4, h0 * 0.25));
+				const y0 = b.y;
+				const y1 = b.y * 0.15;
+				if (this.panDist >= 1) {
+					p.y = b.y * this.panDist + Math.min(0, this.panLift);
+				} else if (t < 0.5) {
+					p.y = y0 + A * ss(t * 2);
+				} else {
+					p.y = y0 + A + (y1 - y0 - A) * ss(t * 2 - 1);
+				}
 				p.y = Math.max(0.05, p.y); // nie pod úroveň gule (do súkna)
 				this.panOffset.copy(this.aimPoint).add(p).sub(this._panBase);
 			}
