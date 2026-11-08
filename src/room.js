@@ -386,21 +386,9 @@ export function buildRoomShell(scene, quality, opts = {}) {
 			}
 			const knob = add(new THREE.SphereGeometry(0.03, 16, 12), brassMat, -(door.w - 0.04) + 0.08, 1.0, 0.05, hinge);
 			knob.castShadow = false;
-			// chodba za dverami (tlmené svetlo)
-			const corr = new THREE.Group();
-			corr.position.set(door.at, 0, -1.2);
-			wall.add(corr);
-			const corrMat = new THREE.MeshStandardMaterial({ color: 0x6b5a45, roughness: 0.9, side: THREE.BackSide });
-			add(new THREE.BoxGeometry(2.4, 2.6, 2.2), corrMat, 0, 1.3, -0.05, corr);
-			const corrFloor = add(new THREE.PlaneGeometry(2.4, 2.2), new THREE.MeshStandardMaterial({ color: 0x3b2a1c, roughness: 0.8 }), 0, 0.005, -0.05, corr);
-			corrFloor.rotation.x = -Math.PI / 2;
-			const corrLight = new THREE.PointLight(0xffd8a0, high ? 0.9 : 0.6, 4, 1.6); // tlmené (Robo 7. 11.: nesmie biť do očí)
-			corrLight.position.set(0, 2.2, -0.4);
-			corr.add(corrLight);
-			const bulb = add(new THREE.SphereGeometry(0.05, 12, 8), new THREE.MeshBasicMaterial({ color: 0xb8a888 }), 0, 2.45, -0.4, corr);
-			bulb.castShadow = false;
-			// svietiace cedule zavesené na zadnej stene chodby (vidno ich cez otvorené dvere)
-			const sign = (id, text, arrow, x, y) => {
+			// jemne podsvietené cedule na krídle dverí zo strany herne (Ctrl a klik = prechod do miestnosti)
+			const sign = (id, text, y) => {
+				const x = -(door.w - 0.04) / 2;
 				const c = document.createElement('canvas');
 				c.width = 512;
 				c.height = 160;
@@ -414,24 +402,32 @@ export function buildRoomShell(scene, quality, opts = {}) {
 				g.font = 'bold 62px Georgia, serif';
 				g.textAlign = 'center';
 				g.textBaseline = 'middle';
-				g.fillText(arrow === 'l' ? '\u2190 ' + text : text + ' \u2192', 256, 84);
+				g.fillText(text, 256, 84);
 				const t = new THREE.CanvasTexture(c);
 				t.colorSpace = THREE.SRGBColorSpace;
 				const mat = new THREE.MeshStandardMaterial({ map: t, emissive: 0xffffff, emissiveMap: t, emissiveIntensity: 0.5, roughness: 0.5 });
-				const m = add(new THREE.BoxGeometry(0.52, 0.165, 0.03), mat, x, y, -1.12, corr);
+				const m = add(new THREE.BoxGeometry(0.5, 0.16, 0.012), mat, x, y, 0.04, hinge);
 				m.castShadow = false;
-				for (const sx of [-0.21, 0.21]) {
-					const ch = add(new THREE.CylinderGeometry(0.004, 0.004, 2.45 - y, 6), new THREE.MeshStandardMaterial({ color: 0xb08a3c, metalness: 0.85, roughness: 0.35 }), x + sx, (2.45 + y) / 2, -1.12, corr);
-					ch.castShadow = false;
-				}
-				const glow = new THREE.PointLight(0xffd9a0, high ? 0.2 : 0.14, 1.0, 2);
-				glow.position.set(x, y, -0.95);
-				corr.add(glow);
+				const glow = new THREE.PointLight(0xffd9a0, high ? 0.12 : 0.08, 0.6, 2);
+				glow.position.set(x, y, 0.2);
+				hinge.add(glow);
 				signs[id] = { mesh: m, mat, glow };
 			};
-			// pod sebou vľavo: otvorené krídlo dverí zakrýva pravú časť chodby
-			sign('office', 'Kancelária', 'l', -0.62, 2.06);
-			sign('living', 'Obývačka', 'r', -0.62, 1.8);
+			sign('office', 'Kancelária', 1.66);
+			sign('living', 'Obývačka', 1.42);
+			// chodba za dverami (tlmené svetlo)
+			const corr = new THREE.Group();
+			corr.position.set(door.at, 0, -1.2);
+			wall.add(corr);
+			const corrMat = new THREE.MeshStandardMaterial({ color: 0x6b5a45, roughness: 0.9, side: THREE.BackSide });
+			add(new THREE.BoxGeometry(2.4, 2.6, 2.2), corrMat, 0, 1.3, -0.05, corr);
+			const corrFloor = add(new THREE.PlaneGeometry(2.4, 2.2), new THREE.MeshStandardMaterial({ color: 0x3b2a1c, roughness: 0.8 }), 0, 0.005, -0.05, corr);
+			corrFloor.rotation.x = -Math.PI / 2;
+			const corrLight = new THREE.PointLight(0xffd8a0, high ? 0.9 : 0.6, 4, 1.6); // tlmené (Robo 7. 11.: nesmie biť do očí)
+			corrLight.position.set(0, 2.2, -0.4);
+			corr.add(corrLight);
+			const bulb = add(new THREE.SphereGeometry(0.05, 12, 8), new THREE.MeshBasicMaterial({ color: 0xb8a888 }), 0, 2.45, -0.4, corr);
+			bulb.castShadow = false;
 		}
 		scene.add(wall);
 	}
@@ -1195,7 +1191,7 @@ export function buildRoomShell(scene, quality, opts = {}) {
 			const sg = signs[id];
 			if (sg) {
 				sg.mat.emissiveIntensity = on ? 0.5 : 0.08;
-				sg.glow.intensity = on ? 0.16 : 0;
+				sg.glow.intensity = on ? 0.08 : 0;
 			}
 		},
 		/** Miesta na státie pre online divákov: počet, miesto, oči diváka, výber zhora. */
