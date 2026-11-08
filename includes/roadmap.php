@@ -154,6 +154,7 @@ function mysn_roadmap() {
 /** Denník zmien (najnovšie hore). */
 function mysn_changelog() {
 	return array(
+		array( '0.8.10', '8. 11. 2026', 'Administrácia Kamera: červená čiara v grafe priblíženia určuje, odkedy sa kamera prestane pozerať len na mierenú guľu a začne sledovať aj smer mierenia (za guľu, kam po údere pôjde); šúpatko Ako veľmi sleduje smer mierenia (predvolene 70 %), červená plocha v grafe ukazuje, ako sa to postupne zväčšuje. Predvolene vypnuté, tlačidlo Podľa náčrtu ho nastaví od 80 % priblíženia.' ),
 		array( '0.8.9', '8. 11. 2026', 'Oprava: priblíženie pravým tlačidlom k vzdialenej guli sa zastavilo v polovici (obmedzenie na dĺžku tága z 0.8.8 platilo aj pri približovaní). Obmedzenie teraz platí len pri ťahaní dozadu.' ),
 		array( '0.8.8', '8. 11. 2026', 'Kamera pri držaní pravého tlačidla: oddialenie dozadu (aj posun bez mierenej gule) je obmedzené, kamera nesmie ujsť ďalej od bielej ako je dĺžka tága (s predĺžením) a nesmie vyletieť vysoko nad stôl; pri hranici sa ďalej nevzďaľuje, takže sa netreba dlho vracať.' ),
 		array( '0.8.7', '8. 11. 2026', 'Administrácia Kamera: popis k tlačidlám (pridať a odobrať pásmo, podľa náčrtu, predvolené), k šúpatku Najbližšie ku guli (s príkladom) a k náhľadu z boku; v náhľade popisky mierená guľa, kamera za tágom a najbližšie; v úzkom pásme rýchlosti sa text skráti, aby sa neprekrýval.' ),

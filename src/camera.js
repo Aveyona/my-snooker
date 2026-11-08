@@ -3,7 +3,7 @@
  * alebo prstami). Prechody medzi pohľadmi sú plynulé.
  */
 import * as THREE from 'three';
-import { zoomCfg, zoomHeight, zoomSpeed } from './camZoom.js';
+import { zoomCfg, zoomHeight, zoomSpeed, zoomFollow } from './camZoom.js';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import { L, W } from './physics.js';
 import { ROOM, clampToRoom } from './room.js';
@@ -230,6 +230,17 @@ export class CameraRig {
 			pos.add(this.panOffset);
 			if (this.aimPoint) {
 				look.lerp(this.aimPoint, this.panBlend || 0);
+				// od miesta v grafe (Kamera, červená čiara) sa pohľad stáča aj smerom mierenia za guľu
+				const zc = this.zoomCfg;
+				const pd = this.panDist || 1;
+				if (zc && pd < 1) {
+					const w = zoomFollow(zc, Math.log(pd) / Math.log(zc.near));
+					if (w > 0) {
+						const ahead = this._ahead || (this._ahead = new THREE.Vector3());
+						ahead.set(this.aimPoint.x + Math.cos(dir) * 0.6, this.aimPoint.y, this.aimPoint.z + Math.sin(dir) * 0.6);
+						look.lerp(ahead, w);
+					}
+				}
 				// koliesko pri držanom pravom tlačidle: vlastné priblíženie ku guli
 				// (len vodorovne: výška nad guľou, ktorú dáva myš hore a dole, ostáva)
 				const pz = this.panZoom || 1;

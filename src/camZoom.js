@@ -22,6 +22,8 @@ export const ZOOM_DEFAULT = {
 	],
 	zones: [{ to: 1, v: 1 }],
 	near: 0.15,
+	follow: 1, // od tohto miesta priblíženia sa kamera pozerá aj smerom mierenia (1 = nikdy)
+	followAmt: 0.7, // ako veľmi (0 len na guľu, 1 úplne smerom mierenia)
 };
 
 /** Kontrola a doplnenie nastavenia (z administrácie alebo predvolené). */
@@ -39,7 +41,18 @@ export function zoomCfg(c) {
 	let zones = Array.isArray(c.zones) && c.zones.length ? c.zones.map((z) => ({ to: Math.max(0.02, Math.min(1, Number(z.to) || 1)), v: Math.max(0.1, Math.min(5, Number(z.v) || 1)) })) : d.zones;
 	zones = zones.sort((a, b) => a.to - b.to);
 	zones[zones.length - 1].to = 1;
-	return { pts, zones, near: Math.max(0.05, Math.min(0.6, Number(c.near) || d.near)) };
+	const fo = c.follow === undefined ? d.follow : Number(c.follow);
+	const fa = c.followAmt === undefined ? d.followAmt : Number(c.followAmt);
+	return { pts, zones, near: Math.max(0.05, Math.min(0.6, Number(c.near) || d.near)), follow: Math.max(0, Math.min(1, isNaN(fo) ? 1 : fo)), followAmt: Math.max(0, Math.min(1, isNaN(fa) ? 0.7 : fa)) };
+}
+
+/** Koľko sa kamera v mieste t pozerá smerom mierenia namiesto na guľu (0 až followAmt, plynulo). */
+export function zoomFollow(cfg, t) {
+	if (cfg.follow >= 1 || t <= cfg.follow) {
+		return 0;
+	}
+	const k = Math.min(1, (t - cfg.follow) / Math.max(0.02, 1 - cfg.follow));
+	return k * k * (3 - 2 * k) * cfg.followAmt;
 }
 
 /** Plynulá krivka cez body bez prekmitov (monotónna kubická interpolácia). */

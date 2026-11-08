@@ -49,9 +49,11 @@ add_action(
 			}
 			if ( count( $pts ) >= 2 ) {
 				$out = array(
-					'pts'   => $pts,
-					'zones' => $zones ? $zones : array( array( 'to' => 1, 'v' => 1 ) ),
-					'near'  => round( max( 0.05, min( 0.6, (float) ( $j['near'] ?? 0.15 ) ) ), 3 ),
+					'pts'       => $pts,
+					'zones'     => $zones ? $zones : array( array( 'to' => 1, 'v' => 1 ) ),
+					'near'      => round( max( 0.05, min( 0.6, (float) ( $j['near'] ?? 0.15 ) ) ), 3 ),
+					'follow'    => round( max( 0, min( 1, (float) ( $j['follow'] ?? 1 ) ) ), 3 ),
+					'followAmt' => round( max( 0, min( 1, (float) ( $j['followAmt'] ?? 0.7 ) ) ), 3 ),
 				);
 			}
 		}
@@ -88,6 +90,7 @@ function mysn_admin_camera() {
 				<li><b>Oranžová krivka</b>: výška kamery počas priblíženia, 100 % je výška za tágom (sivá prerušovaná čiara). Body ťaháš myšou, dvojklik do grafu pridá bod, dvojklik na bod ho odoberie. Prvý bod (za tágom) je pevný, aby kamera pri stlačení neskočila.</li>
 				<li><b>Zelený pás hore</b>: rýchlosť priblíženia v jednotlivých častiach cesty. Klik na pásmo zmení rýchlosť (Najrýchlejšie 3×, Rýchlo 2×, Normálne 1×, Pomaly, Najpomalšie), hranice medzi pásmami ťaháš myšou.</li>
 				<li><b>Najbližšie ku guli</b>: na koľko percent pôvodnej vzdialenosti sa kamera najviac priblíži.</li>
+				<li><b>Červená čiara (smer mierenia)</b>: do nej sa kamera pozerá stále presne na mierenú guľu. Od nej doprava sa pohľad postupne stáča aj smerom mierenia, za guľu, kam guľa po údere pôjde (napríklad k jamke). Čiaru ťaháš myšou doľava a doprava; úplne vpravo je to vypnuté.</li>
 				<li>Hráčovo šúpatko <b>Pravé tlačidlo</b> v hre ostáva ako celková citlivosť (násobí všetko).</li>
 			</ul>
 		</div>
@@ -108,6 +111,10 @@ function mysn_admin_camera() {
 				<li><b>Podľa náčrtu</b>: nastaví krivku a pásma podľa náčrtu: kamera najprv rýchlo stúpne, potom ide rovno vo výške a na konci klesne ku guli; pásma Najrýchlejšie, Rýchlo a pri guli Normálne.</li>
 				<li><b>Predvolené</b>: vráti pôvodné správanie hry (stúpanie do polovice, potom klesanie ku guli, všade rovnaká rýchlosť). Zmeny v grafe platia až po stlačení Uložiť.</li>
 			</ul>
+			<p style="margin-bottom:2px">
+				<label><b>Ako veľmi sleduje smer mierenia:</b> <input type="range" id="mysn-cam-famt" min="0" max="100" step="5" style="vertical-align:middle;width:240px"> <b id="mysn-cam-famt-v"></b></label>
+			</p>
+			<p class="description" style="margin-top:0">Platí od červenej čiary v grafe po koniec priblíženia (pri guli naplno). 0 % = kamera sa pozerá stále len na guľu, 100 % = pri guli sa pozerá úplne smerom mierenia (guľa je pri spodnom okraji obrazu a vidno, kam pôjde), 70 % = väčšinou smerom mierenia, guľa ostáva v obraze. Červená plocha za čiarou v grafe ukazuje, ako sa to postupne zväčšuje.</p>
 			<p style="margin-bottom:2px">
 				<label><b>Najbližšie ku guli:</b> <input type="range" id="mysn-cam-near" min="5" max="60" step="1" style="vertical-align:middle;width:240px"> <b id="mysn-cam-near-v"></b> pôvodnej vzdialenosti</label>
 			</p>
