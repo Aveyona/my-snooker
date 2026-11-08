@@ -99,6 +99,7 @@ function mysn_render( $preview ) {
 		// admini (správcovia webu): na menovke pri kresle na štadióne majú pod menom ADMIN
 		'sounds'   => mysn_sounds_config(), // nahrávky a doladenie zvukov (My Snooker → Zvuky)
 		'tv'       => mysn_tv_stations(), // televízor v obývačke: voľné živé vysielanie (YouTube)
+		'camZoom'  => mysn_cam_zoom(), // graf priblíženia na guľu pravým tlačidlom (My Snooker → Kamera)
 		'clock'    => mysn_shot_clock(), // čas na ťah v ligovom zápase (sekundy) podľa sezóny
 		'admins'   => array_map( 'intval', (array) get_users( array( 'fields' => 'ID', 'capability' => 'manage_options', 'number' => 50 ) ) ),
 	);

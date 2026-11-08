@@ -3,6 +3,7 @@
  * alebo prstami). Prechody medzi pohľadmi sú plynulé.
  */
 import * as THREE from 'three';
+import { zoomCfg, zoomHeight, zoomSpeed } from './camZoom.js';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import { L, W } from './physics.js';
 import { ROOM, clampToRoom } from './room.js';
@@ -43,7 +44,17 @@ export class CameraRig {
 			// za tágom s mierenou guľou: myš doľava a doprava krúži okolo gule, hore priblíži ku guli, dole oddiali
 			// pohľad sa k mierenej guli otáča postupne s pohybom myši (stlačenie tlačidla nič nezmení)
 			this.panBlend = Math.min(1, (this.panBlend || 0) + (Math.abs(dx) + Math.abs(dy)) * 0.006);
-			this.panDist = Math.max(0.15, Math.min(2.5, (this.panDist || 1) * Math.exp(dy * 0.004)));
+			// priblíženie podľa grafu z administrácie (My Snooker → Kamera): rýchlosť podľa pásma, výška podľa krivky
+			const zc = this.zoomCfg || (this.zoomCfg = zoomCfg(null));
+			const LN = Math.log(zc.near);
+			const d0 = this.panDist || 1;
+			if (d0 > 1 || (d0 >= 1 && dy > 0)) {
+				this.panDist = Math.max(1, Math.min(2.5, d0 * Math.exp(dy * 0.004))); // oddialenie za tágom
+			} else {
+				const t0 = Math.max(0, Math.log(d0) / LN);
+				const t1 = Math.max(0, Math.min(1, t0 + ((dy * 0.004) / LN) * zoomSpeed(zc, t0)));
+				this.panDist = Math.exp(t1 * LN);
+			}
 			// k tomu mierne stúpanie (myš hore) a klesanie (myš dole), nezávislé od sklonu kamery
 			this.panLift = Math.max(-0.15, Math.min(0.8, (this.panLift || 0) - dy * k * 0.5));
 			this.panOffset.x += m[0] * dx * k;
@@ -61,17 +72,11 @@ export class CameraRig {
 				// približovanie ku guli po oblúku: do polovice priblíženia kamera stúpa, potom pomaly klesá ku guli
 				// t rovnomerne s pohybom myši (vzdialenosť sa mení exponenciálne); do polovice plynulo hore o A,
 				// potom plynulo dole až ku guli (smoothstep: bez zlomu na začiatku, na vrchole aj na konci)
-				const t = Math.max(0, Math.min(1, Math.log(this.panDist) / Math.log(0.15)));
-				const ss = (x) => x * x * (3 - 2 * x);
-				const A = Math.max(0.12, Math.min(0.4, h0 * 0.25));
-				const y0 = b.y;
-				const y1 = b.y * 0.15;
+				const t = Math.max(0, Math.min(1, Math.log(this.panDist) / LN));
 				if (this.panDist >= 1) {
 					p.y = b.y * this.panDist + Math.min(0, this.panLift);
-				} else if (t < 0.5) {
-					p.y = y0 + A * ss(t * 2);
 				} else {
-					p.y = y0 + A + (y1 - y0 - A) * ss(t * 2 - 1);
+					p.y = b.y * zoomHeight(zc, t); // výška podľa krivky (1 = ako za tágom)
 				}
 				p.y = Math.max(0.05, p.y); // nie pod úroveň gule (do súkna)
 				this.panOffset.copy(this.aimPoint).add(p).sub(this._panBase);

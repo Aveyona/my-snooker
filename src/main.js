@@ -11,6 +11,7 @@ import { buildStadium } from './stadium.js';
 import { buildOffice } from './office.js';
 import { buildLiving } from './living.js';
 import { Tv } from './tv.js';
+import { zoomCfg } from './camZoom.js';
 import { Crowd } from './fans.js';
 import { COUNTRIES, countryByCode } from './countries.js';
 import { BallViews } from './balls.js';
@@ -476,6 +477,7 @@ export function start(root, config = {}) {
 	// kamera je vždy za tágom (staré uložené nastavenie kamery sa ignoruje)
 	settings.camera = 'cue';
 	rig.setMode('cue');
+	rig.zoomCfg = zoomCfg(config.camZoom); // priblíženie na guľu podľa grafu z administrácie
 	const sound = new Sound(config.sounds || {}); // nahrávky a doladenie z administrácie (My Snooker → Zvuky)
 	sound.setVolume(settings.volume);
 	sound.setMode(settings.sound3d === 'stereo' ? 'stereo' : 'hrtf');

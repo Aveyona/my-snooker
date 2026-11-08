@@ -3,7 +3,7 @@
   "private": true,
   "description": "My Snooker: zdrojové súbory hry (src) sa zostavia do assets/snooker.js príkazom npm run build",
   "scripts": {
-    "build": "esbuild src/main.js --bundle --minify --format=iife --target=es2020 --legal-comments=external --outfile=assets/snooker.js && esbuild src/replayAdmin.js --bundle --minify --format=iife --target=es2020 --outfile=assets/replay.js && esbuild src/soundAdmin.js --bundle --minify --format=iife --target=es2020 --outfile=assets/sound-admin.js",
+    "build": "esbuild src/main.js --bundle --minify --format=iife --target=es2020 --legal-comments=external --outfile=assets/snooker.js && esbuild src/replayAdmin.js --bundle --minify --format=iife --target=es2020 --outfile=assets/replay.js && esbuild src/soundAdmin.js --bundle --minify --format=iife --target=es2020 --outfile=assets/sound-admin.js && esbuild src/camAdmin.js --bundle --minify --format=iife --target=es2020 --outfile=assets/cam-admin.js",
     "test": "node src/physics.test.mjs && node src/rules.test.mjs"
   },
   "devDependencies": {
