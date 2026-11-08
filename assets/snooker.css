@@ -605,3 +605,18 @@ body.mysn-page { font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans
 .mysn-tvvideo-t { position: absolute; left: 0; top: -30px; color: #e8ecf3; font: 600 13px/1.3 system-ui, sans-serif; text-shadow: 0 1px 3px #000; max-width: 70%; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
 .mysn-tvlink { position: absolute; z-index: 31; left: 50%; top: 40%; transform: translate(-50%, -50%); width: min(520px, 90%); display: flex; flex-direction: column; gap: 10px; padding: 18px; }
 .mysn-tvlink input { width: 100%; padding: 9px 10px; border-radius: 6px; border: 1px solid #fff3; background: #0b1424; color: #fff; font-size: 15px; }
+/* diaľkový ovládač televízora (obývačka, F2) */
+.mysn-remote { position: absolute; z-index: 32; right: 18px; top: 50%; transform: translateY(-50%); width: 150px; padding: 14px 12px 10px; border-radius: 26px 26px 34px 34px; background: linear-gradient(180deg, #2a2d33, #15171b); box-shadow: 0 10px 30px #000a, inset 0 1px 0 #ffffff1a; display: flex; flex-direction: column; gap: 8px; font: 600 12px/1 system-ui, sans-serif; }
+.mysn-remote-lcd { background: #0d2a1a; color: #7CFC9A; border-radius: 6px; padding: 7px 6px; text-align: center; font: 600 11px/1.2 ui-monospace, monospace; letter-spacing: .5px; border: 1px solid #000; }
+.mysn-remote-row { display: flex; gap: 6px; }
+.mysn-remote button { flex: 1; min-height: 32px; border: 0; border-radius: 9px; background: #3a3e46; color: #e8ecf3; cursor: pointer; font: 700 12px/1 system-ui, sans-serif; box-shadow: 0 2px 0 #000; }
+.mysn-remote button:hover { background: #FACC15; color: #111; }
+.mysn-remote button:active { transform: translateY(1px); box-shadow: none; }
+.mysn-remote .mysn-remote-src { background: #8a1d22; }
+.mysn-remote-pad { display: grid; grid-template-columns: repeat(3, 1fr); gap: 5px; margin: 4px 0; }
+.mysn-remote-pad [data-r="up"] { grid-column: 2; }
+.mysn-remote-pad [data-r="left"] { grid-column: 1; grid-row: 2; }
+.mysn-remote-pad .mysn-remote-ok { grid-column: 2; grid-row: 2; border-radius: 50%; background: #555b66; }
+.mysn-remote-pad [data-r="right"] { grid-column: 3; grid-row: 2; }
+.mysn-remote-pad [data-r="down"] { grid-column: 2; grid-row: 3; }
+.mysn-remote-brand { text-align: center; color: #8a92a0; font: italic 600 11px/1 Georgia, serif; margin-top: 2px; }

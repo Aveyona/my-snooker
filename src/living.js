@@ -186,7 +186,106 @@ export function buildLiving(scene) {
 	}
 	add(new THREE.BoxGeometry(1.1, 0.02, 0.5), woodDark, 0, FY + 0.1, 0.3); // polica dole
 	// na stolíku: kniha, šálka, miska s ovocím
-	add(new THREE.BoxGeometry(0.24, 0.04, 0.17), std(0x1d3a5a, 0.8), -0.3, FY + 0.465, 0.35).rotation.y = 0.3;
+	// kniha s klávesovými skratkami (F1 ju priblíži a otvorí): dve polovice, pravá sa otáča okolo chrbta
+	const BK = { x: -0.3, y: FY + 0.445, z: 0.32, w: 0.2, h: 0.28 };
+	const book = new THREE.Group();
+	book.position.set(BK.x + BK.w / 2, BK.y, BK.z);
+	root.add(book);
+	const coverMat = std(0x1d3a5a, 0.75);
+	const paperMat = std(0xf1ead8, 0.95);
+	const pageTex = (draw) => {
+		const t = tex(512, 716);
+		const g = t.g;
+		g.fillStyle = '#f4eedc';
+		g.fillRect(0, 0, 512, 716);
+		g.fillStyle = '#2a1d10';
+		g.textBaseline = 'top';
+		draw(g);
+		t.t.needsUpdate = true;
+		return new THREE.MeshStandardMaterial({ map: t.t, roughness: 0.95 });
+	};
+	const keyList = (g, title, rows, y0 = 40) => {
+		g.font = 'bold 40px Georgia, serif';
+		g.fillStyle = '#6b1d22';
+		g.fillText(title, 36, y0);
+		g.fillStyle = '#b08a3c';
+		g.fillRect(36, y0 + 52, 440, 3);
+		let y = y0 + 76;
+		for (const [k, t] of rows) {
+			if (!k) {
+				g.font = 'bold 26px Georgia, serif';
+				g.fillStyle = '#6b1d22';
+				g.fillText(t, 36, y + 6);
+				y += 46;
+				continue;
+			}
+			g.font = 'bold 26px Arial, sans-serif';
+			g.fillStyle = '#1d3a5a';
+			g.fillText(k, 36, y);
+			g.font = '25px Georgia, serif';
+			g.fillStyle = '#2a1d10';
+			const words = t.split(' ');
+			let line = '';
+			let ly = y;
+			for (const w of words) {
+				if (g.measureText(line + w).width > 290 && line) {
+					g.fillText(line.trim(), 186, ly);
+					line = '';
+					ly += 30;
+				}
+				line += w + ' ';
+			}
+			g.fillText(line.trim(), 186, ly);
+			y = ly + 42;
+		}
+	};
+	const leftMat = pageTex((g) =>
+		keyList(g, 'Obývačka', [
+			['F1', 'táto kniha'],
+			['F2', 'televízor a diaľkový ovládač'],
+			['F3', 'krb'],
+			['F4', 'knižnica'],
+			['Ctrl + klik', 'priblíži predmet, dvere späť do herne'],
+			['Esc', 'späť na gauč, potom menu'],
+			['Pravé tl.', 'späť na gauč'],
+			['M', 'mapa miestností'],
+			['Myš', 'rozhliadanie z gauča'],
+		])
+	);
+	const rightMat = pageTex((g) =>
+		keyList(g, 'Televízor', [
+			['1 až 5', 'kanál: zápasy, moje zápasy, rekordy, televízia, YouTube'],
+			['← →', 'predchádzajúci a ďalší kanál'],
+			['↑ ↓', 'výber v zozname'],
+			['Enter', 'spustiť'],
+			['Myš', 'klik priamo na obrazovku'],
+			['Esc', 'zavrie video alebo záznam'],
+			['', 'Záznam zápasu'],
+			['Medzerník', 'prehrávať a pauza'],
+			['← →', 'úder dozadu a dopredu'],
+			['R', 'rýchlosť'],
+		])
+	);
+	const half = (parent, side, pageMat) => {
+		// side -1 ľavá polovica (pevná), 1 pravá (otáča sa)
+		add(new THREE.BoxGeometry(BK.w, 0.008, BK.h), coverMat, (side * BK.w) / 2, 0.004, 0, parent);
+		add(new THREE.BoxGeometry(BK.w - 0.008, 0.012, BK.h - 0.01), paperMat, (side * (BK.w - 0.008)) / 2, 0.014, 0, parent);
+		const pg = add(new THREE.PlaneGeometry(BK.w - 0.012, BK.h - 0.016), pageMat, (side * (BK.w - 0.012)) / 2, 0.0205, 0, parent);
+		pg.rotation.x = -Math.PI / 2;
+	};
+	half(book, -1, leftMat);
+	const bookHinge = new THREE.Group(); // chrbát knihy: pravá polovica sa otvára
+	bookHinge.position.set(0, 0.0205, 0);
+	book.add(bookHinge);
+	const bookRight = new THREE.Group();
+	bookRight.position.set(0, -0.0205, 0);
+	bookHinge.add(bookRight);
+	half(bookRight, 1, rightMat);
+	add(new THREE.BoxGeometry(0.012, 0.03, BK.h), coverMat, 0, 0.012, 0, book); // chrbát
+	book.position.x = BK.x; // zatvorená kniha leží vľavo od chrbta
+	let bookOpen = 0; // 0 zatvorená, 1 otvorená
+	let bookWant = 0;
+	bookHinge.rotation.z = Math.PI;
 	add(new THREE.CylinderGeometry(0.04, 0.035, 0.08, 16), std(0xf4f1ea, 0.4), 0.25, FY + 0.485, 0.22);
 	add(new THREE.CylinderGeometry(0.12, 0.07, 0.06, 20), std(0xd8d0c0, 0.4), 0.3, FY + 0.475, 0.45);
 	for (const [x, z, c] of [[0.27, 0.43, 0xc02a1a], [0.33, 0.47, 0xd8a020], [0.3, 0.4, 0x6aa02a]]) {
@@ -386,6 +485,7 @@ export function buildLiving(scene) {
 		tv: { pos: V(0, tvY, -RZ + 1.55), look: V(0, tvY, -RZ) },
 		fire: { pos: V(FX + 1.9, FY + 0.95, -0.3), look: V(FX + 0.2, FY + 0.4, -0.3) },
 		books: { pos: V(BX - 1.6, FY + 1.3, -1.4), look: V(BX, FY + 1.1, -1.4) },
+		book: { pos: V(BK.x, BK.y + 0.44, BK.z + 0.3), look: V(BK.x, BK.y, BK.z - 0.02) },
 	};
 	let t = 0;
 	let clockAt = 0;
@@ -401,12 +501,22 @@ export function buildLiving(scene) {
 			tvT.t.needsUpdate = true;
 		},
 		/** Body na klik s Ctrl (svetové súradnice). */
-		spots: { tv: views.tv.look, fire: V(FX + 0.3, FY + 0.5, -0.3), books: V(BX, FY + 1.1, -1.4), door: V(RX - 0.05, FY + 1.1, 1.9) },
+		/** Kniha s klávesmi: otvoriť (true) alebo zavrieť. */
+		bookOpen(on) {
+			bookWant = on ? 1 : 0;
+		},
+		spots: { book: V(BK.x, BK.y + 0.02, BK.z), tv: views.tv.look, fire: V(FX + 0.3, FY + 0.5, -0.3), books: V(BX, FY + 1.1, -1.4), door: V(RX - 0.05, FY + 1.1, 1.9) },
 		update(dt) {
 			if (!root.visible) {
 				return;
 			}
 			t += dt;
+			if (bookOpen !== bookWant) {
+				bookOpen += Math.sign(bookWant - bookOpen) * Math.min(Math.abs(bookWant - bookOpen), dt * 1.6);
+				const e = bookOpen * bookOpen * (3 - 2 * bookOpen);
+				bookHinge.rotation.z = Math.PI * (1 - e);
+				bookHinge.position.y = 0.0205 + Math.sin(Math.PI * e) * 0.01;
+			}
 			for (const f of flames) {
 				const p = f.userData.ph;
 				f.scale.set(1, 0.8 + 0.35 * Math.abs(Math.sin(t * 7 + p)) + 0.15 * Math.sin(t * 13 + p * 2), 1);

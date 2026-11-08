@@ -515,6 +515,8 @@ export function start(root, config = {}) {
 		stations: config.tv || [],
 		play: (o) => tvVideoOpen(o.src, o.title),
 		askLink: () => tvLinkAsk(),
+		stopVideo: () => tvVideoClose(),
+		volume: (v, muted) => tvVolume(v, muted),
 	});
 	let tvPaintAt = 0;
 	/*
@@ -526,7 +528,28 @@ export function start(root, config = {}) {
 	let tvLink = null;
 	let tvLinkInput = null;
 	let tvVideoOn = '';
+	let tvRemote = null; // diaľkový ovládač (F2 televízor)
 	const tvLinkHide = () => tvLink && tvLink.classList.add('mysn-hidden');
+	/** Hlasitosť videa: príkaz prehrávaču YouTube (enablejsapi). */
+	const tvVolume = (v, muted) => {
+		const post = (func, args = []) => tvFrame && tvFrame.contentWindow && tvFrame.contentWindow.postMessage(JSON.stringify({ event: 'command', func, args }), '*');
+		if (muted) {
+			post('mute');
+		} else {
+			post('unMute');
+			post('setVolume', [v]);
+		}
+		tvRemoteShow(true);
+	};
+	/** Ovládač: zobraziť alebo skryť, displej so zdrojom a hlasitosťou. */
+	const tvRemoteShow = (on) => {
+		if (!on && !tvRemote) {
+			return;
+		}
+		tvDom();
+		tvRemote.classList.toggle('mysn-hidden', !on);
+		tvRemote.querySelector('.mysn-remote-lcd').textContent = `${['SNOOKER', 'TV', 'YOUTUBE'][tv.source]} · ${tv.muted ? 'TICHO' : 'VOL ' + tv.vol}`;
+	};
 	const tvLinkOpen = () => !!tvLink && !tvLink.classList.contains('mysn-hidden');
 	const tvDom = () => {
 		if (tvVideo) {
@@ -538,6 +561,30 @@ export function start(root, config = {}) {
 		ui.root.appendChild(tvVideo);
 		tvFrame = tvVideo.querySelector('iframe');
 		tvVideo.querySelector('.mysn-tvvideo-x').addEventListener('click', () => tvVideoClose());
+		tvRemote = document.createElement('div');
+		tvRemote.className = 'mysn-remote mysn-hidden';
+		const rb = (cmd, label, title, cls = '') => `<button type="button" data-r="${cmd}" class="${cls}" title="${title}">${label}</button>`;
+		tvRemote.innerHTML =
+			'<div class="mysn-remote-lcd"></div>' +
+			'<div class="mysn-remote-row">' + rb('source', 'SOURCE', 'Zdroj: Snooker, Televízia, YouTube (S)', 'mysn-remote-src') + rb('mute', '🔇', 'Stlmiť') + '</div>' +
+			'<div class="mysn-remote-row">' + rb('volup', 'VOL +', 'Hlasitosť (+)') + rb('chup', 'CH ▲', 'Ďalší kanál (Page Up)') + '</div>' +
+			'<div class="mysn-remote-row">' + rb('voldown', 'VOL −', 'Hlasitosť (−)') + rb('chdown', 'CH ▼', 'Predchádzajúci kanál (Page Down)') + '</div>' +
+			'<div class="mysn-remote-pad">' + rb('up', '▲', 'Hore') + rb('left', '◀', 'Doľava') + rb('ok', 'OK', 'Spustiť (Enter)', 'mysn-remote-ok') + rb('right', '▶', 'Doprava') + rb('down', '▼', 'Dole') + '</div>' +
+			'<div class="mysn-remote-row">' + rb('back', '↩ Späť', 'Zastaviť video alebo záznam') + '</div>' +
+			'<div class="mysn-remote-brand">My Snooker</div>';
+		ui.root.appendChild(tvRemote);
+		tvRemote.addEventListener('click', (e) => {
+			const b = e.target.closest('[data-r]');
+			if (b) {
+				tv.remote(b.dataset.r);
+				tvRemoteShow(true);
+			}
+		});
+		tvFrame.addEventListener('load', () => {
+			if (tvVideoOn) {
+				setTimeout(() => tvVolume(tv.vol, tv.muted), 800); // nová stanica: rovnaká hlasitosť
+			}
+		});
 		tvLink = document.createElement('form');
 		tvLink.className = 'mysn-panel mysn-tvlink mysn-hidden';
 		tvLink.innerHTML = '<label>Odkaz z YouTube (video, živé vysielanie alebo playlist)</label><input type="url" placeholder="https://www.youtube.com/watch?v=..." autocomplete="off"><div><button type="submit" class="mysn-btn mysn-primary">Pozerať</button> <button type="button" class="mysn-btn" data-x>Zrušiť</button></div>';
@@ -583,7 +630,7 @@ export function start(root, config = {}) {
 	const tvVideoOpen = (src, title) => {
 		tvDom();
 		tvVideoOn = title || 'Video';
-		tvFrame.src = src;
+		tvFrame.src = src + '&enablejsapi=1&origin=' + encodeURIComponent(location.origin);
 		tvVideo.querySelector('.mysn-tvvideo-t').textContent = tvVideoOn;
 		tvVideo.classList.remove('mysn-hidden');
 		tvVideoPlace();
@@ -706,7 +753,7 @@ export function start(root, config = {}) {
 	const LOOK = new Set(['chair', 'bar', 'office', 'living', 'seat', 'free']); // seat = divák na svojom mieste, free = voľná kamera
 	let officeFocusNow = '';
 	let livingFocusNow = ''; // obývačka: priblížený predmet (tv, fire, books)
-	const LIVING_KEYS = 'Obývačka: F1 televízor, F2 krb, F3 knižnica, myšou sa rozhliadaš. Ctrl a klik na predmet ho priblíži, na dvere späť do herne. Esc menu, M mapa.';
+	const LIVING_KEYS = 'Obývačka: F1 kniha s klávesmi, F2 televízor, F3 krb, F4 knižnica, myšou sa rozhliadaš. Ctrl a klik na predmet ho priblíži, na dvere späť do herne. Esc menu, M mapa.';
 	const away = () => view === 'office' || view === 'living'; // som mimo herne (kancelária, obývačka)
 	let replay = null; // prehrávač partie na notebooku (F7, detail zápasu)
 	const OFFICE_KEYS = 'Kancelária: F1 nástenka s klávesmi za tebou, F8 vizitka (registrácia), F9 alebo dvere ŠTADIÓN: vyhľadať zápas, F12 lampa (zhasnutá = nie si online). Ctrl a klik na predmet ho otvorí, Esc menu.';
@@ -1033,9 +1080,10 @@ export function start(root, config = {}) {
 				return []; // pri televízore myš kliká po obrazovke
 			}
 			return [
-				{ id: 'lv-tv', key: 'f1', pos: sp.tv, r: 0.9 },
-				{ id: 'lv-fire', key: 'f2', pos: sp.fire, r: 0.8 },
-				{ id: 'lv-books', key: 'f3', pos: sp.books, r: 1.0 },
+				{ id: 'lv-book', key: 'f1', pos: sp.book, r: 0.18 },
+				{ id: 'lv-tv', key: 'f2', pos: sp.tv, r: 0.9 },
+				{ id: 'lv-fire', key: 'f3', pos: sp.fire, r: 0.8 },
+				{ id: 'lv-books', key: 'f4', pos: sp.books, r: 1.0 },
 				{ id: 'lv-door', act: 'officeLeave', pos: sp.door, r: 0.7 },
 			];
 		}
@@ -1918,6 +1966,7 @@ export function start(root, config = {}) {
 			tv.stop();
 			tvVideoClose();
 			tvLinkHide();
+			tvRemoteShow(false);
 			livingFocusNow = '';
 			rig.noClamp = false;
 			rig.snapNext = true;
@@ -2054,6 +2103,7 @@ export function start(root, config = {}) {
 			tv.stop();
 			tvVideoClose();
 			tvLinkHide();
+			tvRemoteShow(false);
 			livingFocusNow = '';
 			rig.noClamp = false;
 			rig.snapNext = true; // z obývačky späť do herne hneď
@@ -2470,13 +2520,14 @@ export function start(root, config = {}) {
 			}
 			const v = livingFocusNow === name ? living.seat : living.views[name];
 			livingFocusNow = livingFocusNow === name ? '' : name;
+			living.bookOpen(livingFocusNow === 'book'); // F1: kniha s klávesmi sa otvorí
 			// televízor: myš je voľná na klikanie po obrazovke, ostatné predmety sa len priblížia
 			if (livingFocusNow === 'tv') {
 				controls.uncapture();
 				freeMouse = true;
 				ui.setFree(true);
 				tv.refresh(true);
-				ui.toast('Televízor: klikni myšou na kanál alebo zápas, ← → kanál, ↑ ↓ výber, Enter spustiť, Esc späť na gauč.');
+				ui.toast('Televízor: diaľkový ovládač vpravo (SOURCE zdroj, CH kanál, VOL hlasitosť), alebo klikni myšou priamo na obrazovku. Esc späť na gauč.');
 			} else if (freeMouse) {
 				freeMouse = false;
 				ui.setFree(false);
@@ -2487,6 +2538,7 @@ export function start(root, config = {}) {
 				tvVideoClose(); // video hrá len pri televízore
 				tvLinkHide();
 			}
+			tvRemoteShow(livingFocusNow === 'tv'); // F2: diaľkový ovládač vpravo
 			rig.setView(v.pos.clone(), v.look.clone());
 			const d = v.look.clone().sub(v.pos);
 			chairLook.yaw = Math.atan2(d.z, d.x);
@@ -4021,7 +4073,8 @@ export function start(root, config = {}) {
 				return true;
 			}
 			if (view === 'living') {
-				if (livingFocusNow === 'tv' && lk !== 'escape' && !tvVideoOn && tv.key(lk)) {
+				if (livingFocusNow === 'tv' && lk !== 'escape' && (!tvVideoOn || ['s', 'pageup', 'pagedown', '+', '=', '-'].includes(lk)) && tv.key(lk)) {
+					tvRemoteShow(true);
 					return true; // televízor: šípky, Enter, medzerník, Backspace
 				}
 				if (livingFocusNow === 'tv' && lk === 'escape' && tvLinkOpen()) {
@@ -4036,7 +4089,7 @@ export function start(root, config = {}) {
 					tv.stop(); // Esc najprv zastaví záznam
 					return true;
 				}
-				const lkeys = { f1: 'tv', f2: 'fire', f3: 'books' };
+				const lkeys = { f1: 'book', f2: 'tv', f3: 'fire', f4: 'books' };
 				if (lkeys[lk]) {
 					actions.livingFocus(lkeys[lk]);
 					return true;

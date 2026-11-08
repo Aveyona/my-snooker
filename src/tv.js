@@ -9,6 +9,8 @@ const W = 1024;
 const H = 576;
 const TABS = ['Živé zápasy', 'Moje zápasy', 'Rekordy', 'Televízia', 'YouTube'];
 const NT = TABS.length;
+const SOURCES = ['Snooker', 'Televízia', 'YouTube']; // tlačidlo SOURCE na ovládači
+const SRC_CH = [0, 3, 4]; // prvý kanál zdroja (Snooker má kanály 0 až 2)
 const ROWS = 7; // riadkov na obrazovke
 const ROW_Y = 132;
 const ROW_H = 54;
@@ -53,6 +55,10 @@ export class Tv {
 			this.recent = [];
 		}
 		this.ch = 0;
+		this.source = 0;
+		this.station = 0;
+		this.vol = 60;
+		this.muted = false;
 		this.sel = 0;
 		this.top = 0; // prvý zobrazený riadok
 		this.hover = -1;
@@ -121,7 +127,7 @@ export class Tv {
 			}));
 		}
 		if (this.ch === 3) {
-			return (d.stations || []).map((t) => ({ a: t.name, b: t.info || 'Živé vysielanie', r: 'Pozerať ▶', act: () => this.o.play({ src: liveEmbed(t.yt), title: t.name }) }));
+			return (d.stations || []).map((t, i) => ({ a: t.name, b: t.info || 'Živé vysielanie', r: 'Pozerať ▶', act: () => this.playStation(i) }));
 		}
 		if (this.ch === 4) {
 			return [
@@ -172,8 +178,73 @@ export class Tv {
 		this.dirty = true;
 	}
 
+	/** Zdroj podľa kanála (0 až 2 Snooker, 3 Televízia, 4 YouTube). */
+	srcOf(ch) {
+		return ch < 3 ? 0 : ch === 3 ? 1 : 2;
+	}
+
+	/** Diaľkový ovládač: source, chup, chdown, volup, voldown, mute, up, down, left, right, ok, back. */
+	remote(cmd) {
+		const st = (this.data[3] && this.data[3].stations) || [];
+		if (cmd === 'volup' || cmd === 'voldown') {
+			this.vol = Math.max(0, Math.min(100, this.vol + (cmd === 'volup' ? 10 : -10)));
+			this.muted = false;
+			this.o.volume(this.vol, false);
+			return;
+		}
+		if (cmd === 'mute') {
+			this.muted = !this.muted;
+			this.o.volume(this.vol, this.muted);
+			return;
+		}
+		if (cmd === 'source') {
+			this.stop();
+			this.o.stopVideo();
+			this.source = (this.source + 1) % 3;
+			this.setCh(SRC_CH[this.source]);
+			if (this.source === 1 && st.length) {
+				this.playStation(this.station);
+			}
+			return;
+		}
+		if (cmd === 'chup' || cmd === 'chdown') {
+			const d = cmd === 'chup' ? 1 : -1;
+			if (this.source === 0) {
+				this.stop();
+				this.setCh((this.ch + d + 3) % 3);
+			} else if (this.source === 1 && st.length) {
+				this.playStation((this.station + d + st.length) % st.length);
+			} else {
+				this.key(d > 0 ? 'arrowdown' : 'arrowup');
+			}
+			return;
+		}
+		if (cmd === 'back') {
+			if (this.replay) {
+				this.stop();
+			} else {
+				this.o.stopVideo();
+			}
+			return;
+		}
+		this.key({ up: 'arrowup', down: 'arrowdown', left: 'arrowleft', right: 'arrowright', ok: 'enter' }[cmd] || cmd);
+	}
+
+	playStation(i) {
+		const st = (this.data[3] && this.data[3].stations) || [];
+		const t = st[i];
+		if (!t) {
+			return;
+		}
+		this.station = i;
+		this.sel = i;
+		this.dirty = true;
+		this.o.play({ src: liveEmbed(t.yt), title: t.name });
+	}
+
 	setCh(i) {
 		this.ch = (i + NT) % NT;
+		this.source = this.srcOf(this.ch);
 		this.sel = 0;
 		this.top = 0;
 		this.hover = -1;
@@ -183,6 +254,11 @@ export class Tv {
 
 	/** Klávesy: vráti true, keď ich televízor použil. */
 	key(k) {
+		const rk = { s: 'source', pageup: 'chup', pagedown: 'chdown', '+': 'volup', '=': 'volup', '-': 'voldown' }[k];
+		if (rk) {
+			this.remote(rk); // klávesy ako na ovládači
+			return true;
+		}
 		const rp = this.replay;
 		if (rp) {
 			const m = { arrowleft: () => rp.prev(), arrowright: () => rp.next(), space: () => rp.toggle(), enter: () => rp.toggle(), home: () => rp.first(), end: () => rp.last(), r: () => (rp.speed = rp.speed >= 2 ? 0.5 : rp.speed * 2) }[k];
@@ -312,7 +388,7 @@ export class Tv {
 		g.font = '22px Arial, sans-serif';
 		g.textAlign = 'right';
 		const now = new Date();
-		g.fillText(now.toLocaleTimeString('sk-SK', { hour: '2-digit', minute: '2-digit' }), W - 40, 36);
+		g.fillText(`Zdroj: ${SOURCES[this.source]}   ${now.toLocaleTimeString('sk-SK', { hour: '2-digit', minute: '2-digit' })}`, W - 40, 36);
 		// karty kanálov
 		const tw = (W - 80) / NT;
 		TABS.forEach((t, i) => {
@@ -379,7 +455,7 @@ export class Tv {
 		g.fillStyle = '#6b7a90';
 		g.font = '17px Arial, sans-serif';
 		g.textAlign = 'center';
-		g.fillText('Klik myšou alebo ← → kanál, ↑ ↓ výber, Enter spustiť · Esc späť na gauč', W / 2, H - 30);
+		g.fillText('Diaľkový ovládač vpravo: SOURCE zdroj, CH kanál, VOL hlasitosť · klik myšou na obrazovku · Esc späť', W / 2, H - 30);
 		g.restore();
 	}
 
