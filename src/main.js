@@ -2,6 +2,7 @@
  * My Snooker: spustenie hry. Spája moduly: fyzika a tréning (logika), stôl, gule, tágo, kamery,
  * ovládanie, zvuk a rozhranie. Kreslenie beží cez requestAnimationFrame, fyzika v malých krokoch.
  */
+import { gameChat } from './gameChat.js';
 import * as THREE from 'three';
 import { RoomEnvironment } from 'three/examples/jsm/environments/RoomEnvironment.js';
 import { buildTable, buildRoom } from './table.js';
@@ -3420,6 +3421,11 @@ export function start(root, config = {}) {
 				controls.uncapture();
 				return;
 			}
+			if (!on && chat.isOpen()) {
+				chat.close(); // Esc pri písaní v chate: zavrie len chat, menu sa neotvorí
+				escClosedAt = performance.now();
+				return;
+			}
 			if (on) {
 				started = true;
 				freeMouse = false;
@@ -3939,6 +3945,12 @@ export function start(root, config = {}) {
 			}
 			return false;
 		},
+	});
+	// chat v hre (miestnosť Snooker z My Chat): Enter píše, správy vľavo
+	const chat = gameChat(overlay, config.chat ? Object.assign({ nonce: config.nonce }, config.chat) : null, {
+		canWrite: () => !!user,
+		// Enter inde: biela do ruky, pohľady (kreslo, noviny, stojan...), nájdený zápas, koniec partie
+		canOpen: () => !!(user || guestPlay) && game.state !== 'place' && !view && !ui.menuOpen() && !ui.foundOpen() && !ui.partyOpen() && !ui.cardOpen() && !ui.phoneOpen(),
 	});
 	let zoomSaveT = 0;
 	controls.sens = settings.mouseSens || 1; // šúpatko Otáčanie myšou

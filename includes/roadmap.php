@@ -118,7 +118,8 @@ function mysn_roadmap() {
 				array( 'Prehľad hráčov v administrácii (účty, odohrané hry, výhry, percento výhier, najvyšší break, ELO, aktivita, triedenie), údaje aj pre hráča v Účte', 1 ),
 				array( 'ELO sila hráča ako v šachu (len ligové zápasy), nový hráč začína na 1350', 1 ),
 				array( 'Voľná kamera: Tab zobrazí mini náhľad stola ako ďalšiu kameru', 1 ),
-				array( 'Mobil: úder ťahaním prstom, priblíženie dvoma prstami; chat (Enter) (neskôr)', 0 ),
+				array( 'Chat v hre (Enter), miestnosť Snooker z My Chat', 1 ),
+				array( 'Mobil: úder ťahaním prstom, priblíženie dvoma prstami (neskôr)', 0 ),
 				array( 'Klik na predmety v scéne (vo voľnom pohľade s Ctrl) ako ich klávesy F2, F4, F8 a ďalšie', 1 ),
 				array( 'Ochrana proti podvádzaniu (až pred dokončením hry): súper ako rozhodca (porovná výsledok úderu), kontrola rozumnosti bodov na serveri, overenie skóre v hre o skóre, označenie podozrivo presných hráčov', 0 ),
 				array( 'TURN server pre priame spojenie (WebRTC): odložené, zatiaľ netreba (spojenie po 0.6.44 funguje)', 0 ),
@@ -154,6 +155,7 @@ function mysn_roadmap() {
 /** Denník zmien (najnovšie hore). */
 function mysn_changelog() {
 	return array(
+		array( '0.9.2', '8. 11. 2026', 'Chat v hre (miestnosť Snooker z doplnku My Chat): Enter otvorí políčko na písanie, Enter pošle, Esc zavrie. Správy sú vľavo: prvá hore, ďalšie pod ňou, najnovšia vždy dole; keď siahnu po stred obrazovky, chat nižšie nejde a staré správy miznú hore. Políčko na písanie je hneď pod poslednou správou (bez správ hore vľavo). Nové správy prídu okamžite cez live server. Pri bielej v ruke, v pohľadoch (kreslo, noviny, stojan s tágami a ďalšie), v okne nájdeného zápasu a na konci partie má Enter doterajší význam.' ),
 		array( '0.9.1', '8. 11. 2026', 'Lepší prenos cez vlastný server live.hedlajner.sk (Hetzner): server TURN (coturn) sprostredkuje spojenie hráčov aj divákov, keď priame spojenie nejde (prísne siete, mobilní operátori); prihlasovacie údaje sú časovo obmedzené na 24 hodín. Signály spojenia a pozvánky (nová, prijatá, odmietnutá, zrušená) prídu hráčovi okamžite cez websocket do jeho osobného kanála, nemusí čakať na pravidelný dopyt. Pri výpadku servera ide všetko ako predtým.' ),
 		array( '0.9.0', '8. 11. 2026', 'Obývačka je odteraz samostatná hra My Rooms (nový doplnok my-rooms, adresa myrooms.hedlajner.sk, kým nie je subdoména, hedlajner.sk/my-rooms). Cedula Obývačka v chodbe a mapa M otvoria jej stránku, dvere obývačky vedú späť do herne. Televízor s kanálmi, kniha s klávesmi a diaľkový ovládač sa presunuli do My Rooms; Sledovať zápas z televízora otvorí My Snooker priamo ako divák.' ),
 		array( '0.8.14', '8. 11. 2026', 'Cedule Kancelária a Obývačka sú späť v chodbe: visia na retiazkach hneď za dverami herne, takže cez otvorené dvere (F6) ich vidno spredu aj zboku; Ctrl a klik na ceduľu prejde do miestnosti.' ),

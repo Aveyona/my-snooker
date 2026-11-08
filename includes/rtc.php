@@ -222,3 +222,23 @@ add_action(
 		);
 	}
 );
+
+/** Chat v hre: miestnosť Snooker z doplnku My Chat (adresa REST, live server, najviac slov). Bez My Chat nič. */
+function mysn_chat_cfg() {
+	if ( ! function_exists( 'myc_rooms' ) ) {
+		return null;
+	}
+	foreach ( (array) myc_rooms() as $r ) {
+		if ( 'snooker' === $r['slug'] ) {
+			$s = function_exists( 'myc_settings' ) ? myc_settings() : array();
+			return array(
+				'rest'     => (string) wp_parse_url( rest_url( 'my-chat/v1/' ), PHP_URL_PATH ),
+				'room'     => (int) $r['id'],
+				'roomName' => (string) $r['name'],
+				'ws'       => function_exists( 'myc_live_ws' ) ? myc_live_ws() : '',
+				'maxWords' => (int) ( $s['max_words'] ?? 500 ),
+			);
+		}
+	}
+	return null;
+}

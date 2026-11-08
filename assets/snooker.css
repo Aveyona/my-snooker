@@ -597,3 +597,16 @@ body.mysn-page { font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans
 .mysn-balls { display: flex; flex-wrap: wrap; gap: 10px; }
 .mysn-ball { display: inline-block; width: 18px; height: 18px; border-radius: 50%; margin-right: 4px; vertical-align: -3px; box-shadow: inset -3px -3px 5px #0006, inset 2px 2px 3px #fff5; }
 .mysn-rules-foot { margin: 14px 0 0; color: #9aa4b2; font-size: 14px; }
+/* chat v hre: vľavo, od vrchu po stred obrazovky, najnovšia správa dole */
+.mysn-gchat { position: absolute; left: 16px; top: 104px; width: min(460px, 38vw); z-index: 25; pointer-events: none; display: flex; flex-direction: column; font: 500 15px/1.35 system-ui, -apple-system, "Segoe UI", sans-serif; }
+.mysn-gchat-list { display: flex; flex-direction: column; justify-content: flex-end; max-height: calc(50vh - 104px); overflow: hidden; }
+.mysn-gchat-full .mysn-gchat-list { -webkit-mask-image: linear-gradient(to bottom, transparent 0, #000 64px); mask-image: linear-gradient(to bottom, transparent 0, #000 64px); }
+.mysn-gchat-msg { flex: none; margin-top: 4px; padding: 4px 10px; border-radius: 8px; background: #0c0f14b3; color: #f1f1f1; text-shadow: 0 1px 2px #000; overflow-wrap: anywhere; opacity: 0; transform: translateY(8px); transition: opacity .25s, transform .25s; }
+.mysn-gchat-msg.mysn-gchat-in { opacity: 1; transform: none; }
+.mysn-gchat-msg b { color: #ffd34d; font-weight: 700; }
+.mysn-gchat-mine b { color: #7CFC8A; }
+.mysn-gchat-form { margin-top: 6px; pointer-events: auto; }
+.mysn-gchat-form input { width: 100%; box-sizing: border-box; padding: 8px 12px; border-radius: 8px; border: 2px solid #ffd34d99; background: #0c0f14e6; color: #fff; font: inherit; outline: none; }
+.mysn-gchat-form input:disabled { opacity: .7; }
+.mysn-gchat-note { margin-top: 4px; padding: 3px 10px; border-radius: 6px; background: #5a1010d9; color: #fff; font-size: 13px; }
+.mysn-gchat-note:empty { display: none; }

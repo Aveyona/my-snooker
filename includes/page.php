@@ -95,6 +95,7 @@ function mysn_render( $preview ) {
 		'nonce'    => $user ? wp_create_nonce( 'wp_rest' ) : '',
 		// lepší prenos: servery ICE (náš TURN) a okamžité signály cez live server (osobný kanál hráča)
 		'ice'      => mysn_ice_servers( $user ? (int) $user['id'] : 0 ),
+		'chat'     => mysn_chat_cfg(), // chat v hre: miestnosť Snooker z doplnku My Chat
 		'live'     => $user && mysn_live_ws() ? array( 'ws' => mysn_live_ws(), 'chan' => mysn_live_chan( (int) $user['id'] ) ) : null,
 		// rola (admin alebo mod = správca hry) a id všetkých správcov: hra prijme ich neviditeľné sledovanie
 		'role'     => $user ? mysn_role() : '',
