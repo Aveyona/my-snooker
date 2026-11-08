@@ -154,6 +154,7 @@ function mysn_roadmap() {
 /** Denník zmien (najnovšie hore). */
 function mysn_changelog() {
 	return array(
+		array( '0.8.14', '8. 11. 2026', 'Cedule Kancelária a Obývačka sú späť v chodbe: visia na retiazkach hneď za dverami herne, takže cez otvorené dvere (F6) ich vidno spredu aj zboku; Ctrl a klik na ceduľu prejde do miestnosti.' ),
 		array( '0.8.13', '8. 11. 2026', 'Cedule Kancelária a Obývačka sú teraz jemne podsvietené priamo na dverách herne (zo strany herne), vidno ich aj pri zatvorených dverách; Ctrl a klik na ceduľu prejde do miestnosti.' ),
 		array( '0.8.12', '8. 11. 2026', 'Kamera: červená čiara v grafe (sledovanie smeru mierenia a zastavenie otáčania kamery) zrušená, kamera pri priblížení sa pozerá na mierenú guľu ako predtým. Graf ostáva: výška kamery, pásma rýchlosti, najbližšie ku guli.' ),
 		array( '0.8.11', '8. 11. 2026', 'Kamera, červená čiara v grafe zmenená podľa Roba: od čiary kamera prestane sledovať mierenú guľu a ostane otočená presne tak, ako bola na čiare, ďalej sa len približuje (guľa sa posúva v obraze, jamku za ňou vidno). Šúpatko Ako veľmi sleduje smer mierenia zrušené, Podľa náčrtu dá čiaru na 30 %.' ),

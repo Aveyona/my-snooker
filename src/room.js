@@ -386,9 +386,20 @@ export function buildRoomShell(scene, quality, opts = {}) {
 			}
 			const knob = add(new THREE.SphereGeometry(0.03, 16, 12), brassMat, -(door.w - 0.04) + 0.08, 1.0, 0.05, hinge);
 			knob.castShadow = false;
-			// jemne podsvietené cedule na krídle dverí zo strany herne (Ctrl a klik = prechod do miestnosti)
+			// chodba za dverami (tlmené svetlo)
+			const corr = new THREE.Group();
+			corr.position.set(door.at, 0, -1.2);
+			wall.add(corr);
+			const corrMat = new THREE.MeshStandardMaterial({ color: 0x6b5a45, roughness: 0.9, side: THREE.BackSide });
+			add(new THREE.BoxGeometry(2.4, 2.6, 2.2), corrMat, 0, 1.3, -0.05, corr);
+			const corrFloor = add(new THREE.PlaneGeometry(2.4, 2.2), new THREE.MeshStandardMaterial({ color: 0x3b2a1c, roughness: 0.8 }), 0, 0.005, -0.05, corr);
+			corrFloor.rotation.x = -Math.PI / 2;
+			const corrLight = new THREE.PointLight(0xffd8a0, high ? 0.9 : 0.6, 4, 1.6); // tlmené (Robo 7. 11.: nesmie biť do očí)
+			corrLight.position.set(0, 2.2, -0.4);
+			corr.add(corrLight);
+			// jemne podsvietené cedule zavesené v chodbe hneď za dverami, vidno ich cez otvorené dvere aj zboku (Ctrl a klik = prechod do miestnosti)
 			const sign = (id, text, y) => {
-				const x = -(door.w - 0.04) / 2;
+				const x = -0.14;
 				const c = document.createElement('canvas');
 				c.width = 512;
 				c.height = 160;
@@ -406,26 +417,19 @@ export function buildRoomShell(scene, quality, opts = {}) {
 				const t = new THREE.CanvasTexture(c);
 				t.colorSpace = THREE.SRGBColorSpace;
 				const mat = new THREE.MeshStandardMaterial({ map: t, emissive: 0xffffff, emissiveMap: t, emissiveIntensity: 0.5, roughness: 0.5 });
-				const m = add(new THREE.BoxGeometry(0.5, 0.16, 0.012), mat, x, y, 0.04, hinge);
+				const m = add(new THREE.BoxGeometry(0.44, 0.14, 0.02), mat, x, y, 1.2 - 0.4, corr); // corr stojí 1,2 m za stenou: 0,4 m za dverami
+				for (const sx of [-0.18, 0.18]) {
+					const ch = add(new THREE.CylinderGeometry(0.003, 0.003, 2.25 - y, 6), new THREE.MeshStandardMaterial({ color: 0xb08a3c, metalness: 0.85, roughness: 0.35 }), x + sx, (2.25 + y) / 2 + 0.07, 1.2 - 0.4, corr);
+					ch.castShadow = false;
+				}
 				m.castShadow = false;
 				const glow = new THREE.PointLight(0xffd9a0, high ? 0.12 : 0.08, 0.6, 2);
-				glow.position.set(x, y, 0.2);
-				hinge.add(glow);
+				glow.position.set(x, y, 1.2 - 0.2);
+				corr.add(glow);
 				signs[id] = { mesh: m, mat, glow };
 			};
-			sign('office', 'Kancelária', 1.66);
-			sign('living', 'Obývačka', 1.42);
-			// chodba za dverami (tlmené svetlo)
-			const corr = new THREE.Group();
-			corr.position.set(door.at, 0, -1.2);
-			wall.add(corr);
-			const corrMat = new THREE.MeshStandardMaterial({ color: 0x6b5a45, roughness: 0.9, side: THREE.BackSide });
-			add(new THREE.BoxGeometry(2.4, 2.6, 2.2), corrMat, 0, 1.3, -0.05, corr);
-			const corrFloor = add(new THREE.PlaneGeometry(2.4, 2.2), new THREE.MeshStandardMaterial({ color: 0x3b2a1c, roughness: 0.8 }), 0, 0.005, -0.05, corr);
-			corrFloor.rotation.x = -Math.PI / 2;
-			const corrLight = new THREE.PointLight(0xffd8a0, high ? 0.9 : 0.6, 4, 1.6); // tlmené (Robo 7. 11.: nesmie biť do očí)
-			corrLight.position.set(0, 2.2, -0.4);
-			corr.add(corrLight);
+			sign('office', 'Kancelária', 1.86);
+			sign('living', 'Obývačka', 1.66);
 			const bulb = add(new THREE.SphereGeometry(0.05, 12, 8), new THREE.MeshBasicMaterial({ color: 0xb8a888 }), 0, 2.45, -0.4, corr);
 			bulb.castShadow = false;
 		}
