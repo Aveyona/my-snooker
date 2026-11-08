@@ -102,7 +102,6 @@ export class CameraRig {
 		this.panLift = 0;
 		this.panBlend = 0; // ako veľmi sa pohľad už otočil na mierenú guľu (0 = ako za tágom)
 		this.panZoom = 1; // koliesko pri držanom pravom tlačidle platí len počas držania
-		this._frozenLook = null; // smer pohľadu zastavený na červenej čiare grafu (Kamera)
 	}
 
 	/** Po údere: otáčanie pohľadu okolo bielej pohybom myši. */
@@ -239,19 +238,6 @@ export class CameraRig {
 				pos.y = Math.max(this.aimPoint.y + 0.04, pos.y);
 			} else {
 				look.add(this.panOffset);
-			}
-			// od červenej čiary v grafe (Kamera) kamera prestane sledovať guľu: ostane otočená tak, ako bola na čiare,
-			// a ďalej sa len približuje (guľa sa posúva v obraze, jamka za ňou ostáva vidno)
-			const zf = this.zoomCfg;
-			const pdf = this.panDist || 1;
-			const tf = zf && pdf < 1 ? Math.log(pdf) / Math.log(zf.near) : 0;
-			if (zf && zf.follow < 1 && this.aimPoint && tf >= zf.follow) {
-				if (!this._frozenLook) {
-					this._frozenLook = look.clone().sub(pos).normalize();
-				}
-				look.copy(pos).addScaledVector(this._frozenLook, 1);
-			} else {
-				this._frozenLook = null;
 			}
 			// kamera pri posune pravým tlačidlom nesmie ujsť ďalej od bielej ako dĺžka tága (ani príliš vysoko)
 			const maxD = this.cueReach || 1.5;

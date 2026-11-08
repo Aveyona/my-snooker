@@ -52,7 +52,6 @@ add_action(
 					'pts'       => $pts,
 					'zones'     => $zones ? $zones : array( array( 'to' => 1, 'v' => 1 ) ),
 					'near'      => round( max( 0.05, min( 0.6, (float) ( $j['near'] ?? 0.15 ) ) ), 3 ),
-					'follow'    => round( max( 0, min( 1, (float) ( $j['follow'] ?? 1 ) ) ), 3 ),
 				);
 			}
 		}
@@ -89,7 +88,6 @@ function mysn_admin_camera() {
 				<li><b>Oranžová krivka</b>: výška kamery počas priblíženia, 100 % je výška za tágom (sivá prerušovaná čiara). Body ťaháš myšou, dvojklik do grafu pridá bod, dvojklik na bod ho odoberie. Prvý bod (za tágom) je pevný, aby kamera pri stlačení neskočila.</li>
 				<li><b>Zelený pás hore</b>: rýchlosť priblíženia v jednotlivých častiach cesty. Klik na pásmo zmení rýchlosť (Najrýchlejšie 3×, Rýchlo 2×, Normálne 1×, Pomaly, Najpomalšie), hranice medzi pásmami ťaháš myšou.</li>
 				<li><b>Najbližšie ku guli</b>: na koľko percent pôvodnej vzdialenosti sa kamera najviac priblíži.</li>
-				<li><b>Červená čiara (koniec sledovania gule)</b>: do nej sa kamera otáča tak, aby sa pozerala na mierenú guľu. Od nej doprava sa kamera už neotáča: ostane otočená presne tak, ako bola na čiare, a ďalej sa len približuje. Guľa sa tak v obraze posúva a za ňou ostáva vidno jamku a smer, kam guľa pôjde. Čiaru ťaháš myšou za trojuholník dole; úplne vpravo kamera sleduje guľu až do konca.</li>
 				<li>Hráčovo šúpatko <b>Pravé tlačidlo</b> v hre ostáva ako celková citlivosť (násobí všetko).</li>
 			</ul>
 		</div>

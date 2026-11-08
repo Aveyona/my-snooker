@@ -110,36 +110,6 @@ const boot = () => {
 		g.beginPath();
 		g.arc(X1, CB, 6, 0, Math.PI * 2);
 		g.fill();
-		// červená čiara: od tadiaľto kamera prestane sledovať guľu a ostane otočená, ako je (plocha za ňou)
-		{
-			const fx = sx(cfg.follow);
-			if (cfg.follow < 1) {
-				const gr = g.createLinearGradient(fx, 0, X1, 0);
-				gr.addColorStop(0, 'rgba(220,38,38,0)');
-				gr.addColorStop(0.15, 'rgba(220,38,38,0.12)');
-				gr.addColorStop(1, 'rgba(220,38,38,0.12)');
-				g.fillStyle = gr;
-				g.fillRect(fx, CT, X1 - fx, CB - CT);
-			}
-			g.strokeStyle = hover && hover.fl ? '#7f1d1d' : '#dc2626';
-			g.lineWidth = 2;
-			g.setLineDash([5, 4]);
-			g.beginPath();
-			g.moveTo(fx, CT);
-			g.lineTo(fx, CB);
-			g.stroke();
-			g.setLineDash([]);
-			g.fillStyle = '#dc2626';
-			g.beginPath();
-			g.moveTo(fx, CB - 2);
-			g.lineTo(fx - 7, CB + 10);
-			g.lineTo(fx + 7, CB + 10);
-			g.fill();
-			g.font = '11px system-ui, sans-serif';
-			g.textAlign = cfg.follow > 0.7 ? 'right' : 'left';
-			g.fillText(cfg.follow < 1 ? `od ${Math.round(cfg.follow * 100)} %: kamera už nesleduje guľu, ostane otočená ako je` : 'kamera sleduje guľu až do konca (ťahaj červenú čiaru doľava)', fx + (cfg.follow > 0.7 ? -8 : 8), CT + 14);
-			g.font = '12px system-ui, sans-serif';
-		}
 		// krivka
 		g.strokeStyle = '#f97316';
 		g.lineWidth = 3;
@@ -233,9 +203,6 @@ const boot = () => {
 				return { pt: i };
 			}
 		}
-		if (p.y >= CT && p.y <= CB + 12 && Math.abs(sx(cfg.follow) - p.x) < 8) {
-			return { fl: true };
-		}
 		if (p.y >= ZT - 6 && p.y <= ZB + 6) {
 			for (let i = 0; i < cfg.zones.length - 1; i++) {
 				if (Math.abs(sx(cfg.zones[i].to) - p.x) < 7) {
@@ -256,7 +223,7 @@ const boot = () => {
 		const h = hit(pos(e));
 		if (h && h.pt !== undefined && h.pt > 0) {
 			drag = h;
-		} else if (h && (h.zb !== undefined || h.fl)) {
+		} else if (h && h.zb !== undefined) {
 			drag = h;
 		} else if (h && h.zone !== undefined) {
 			// klik na pásmo: ďalšia rýchlosť
@@ -270,7 +237,7 @@ const boot = () => {
 		const p = pos(e);
 		if (!drag) {
 			hover = hit(p);
-			cv.style.cursor = hover ? (hover.zb !== undefined || hover.fl ? 'ew-resize' : 'pointer') : 'crosshair';
+			cv.style.cursor = hover ? (hover.zb !== undefined ? 'ew-resize' : 'pointer') : 'crosshair';
 			draw();
 			return;
 		}
@@ -280,8 +247,6 @@ const boot = () => {
 			const lo = cfg.pts[i - 1][0] + 0.02;
 			const hi = last ? 1 : cfg.pts[i + 1][0] - 0.02;
 			cfg.pts[i] = [last ? 1 : Math.max(lo, Math.min(hi, tx(p.x))), Math.round(ty(p.y) * 100) / 100];
-		} else if (drag.fl) {
-			cfg.follow = Math.round(Math.max(0.05, Math.min(1, tx(p.x))) * 100) / 100;
 		} else if (drag.zb !== undefined) {
 			const i = drag.zb;
 			const lo = (i ? cfg.zones[i - 1].to : 0) + 0.03;
@@ -361,7 +326,6 @@ const boot = () => {
 				{ to: 1, v: 1 },
 			],
 			near: 0.15,
-			follow: 0.3,
 		});
 	});
 	const near = document.getElementById('mysn-cam-near');

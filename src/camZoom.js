@@ -22,7 +22,6 @@ export const ZOOM_DEFAULT = {
 	],
 	zones: [{ to: 1, v: 1 }],
 	near: 0.15,
-	follow: 1, // od tohto miesta priblíženia kamera prestane sledovať guľu a ostane otočená, ako je (1 = nikdy)
 };
 
 /** Kontrola a doplnenie nastavenia (z administrácie alebo predvolené). */
@@ -40,8 +39,7 @@ export function zoomCfg(c) {
 	let zones = Array.isArray(c.zones) && c.zones.length ? c.zones.map((z) => ({ to: Math.max(0.02, Math.min(1, Number(z.to) || 1)), v: Math.max(0.1, Math.min(5, Number(z.v) || 1)) })) : d.zones;
 	zones = zones.sort((a, b) => a.to - b.to);
 	zones[zones.length - 1].to = 1;
-	const fo = c.follow === undefined ? d.follow : Number(c.follow);
-	return { pts, zones, near: Math.max(0.05, Math.min(0.6, Number(c.near) || d.near)), follow: Math.max(0, Math.min(1, isNaN(fo) ? 1 : fo)) };
+	return { pts, zones, near: Math.max(0.05, Math.min(0.6, Number(c.near) || d.near))};
 }
 
 /** Plynulá krivka cez body bez prekmitov (monotónna kubická interpolácia). */
