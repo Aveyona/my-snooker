@@ -2,7 +2,7 @@
  * My Snooker: rozhranie nad 3D scénou (štatistiky, sila, falše, tlačidlá, nastavenia, pomoc).
  */
 import { CHALKS } from './chalks.js';
-import { TIP_COLORS, BUDGET_KEYS, balanceAdj, CUES, CUE_PROS, tipInaccuracy } from './cues.js';
+import { TIP_COLORS, BUDGET_KEYS, balanceAdj, CUES, CUE_PROS, tipInaccuracy, fineDefault } from './cues.js';
 import { R, COLOURS, POCKETS } from './physics.js';
 
 const esc = (t) => String(t || '').replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
@@ -2249,9 +2249,10 @@ export class UI {
 		if (c.fine > 0) {
 			// jemné mierenie vždy zapnuté (Shift potom prepne na rýchle)
 			const st = this.opts.settings || {};
-			const lab = h('label', 'mysn-cp-fine', '<input type="checkbox"><span><b>Presné mierenie vždy zapnuté</b> <em>(predvolené; Shift prepne na rýchle mierenie, bez zaškrtnutia naopak Shift zapína presné)</em></span>');
+			const lab = h('label', 'mysn-cp-fine', `<input type="checkbox"><span><b>Presné mierenie vždy zapnuté</b> <em>(${fineDefault(c) ? 'pri Citlivom tágu predvolené; ' : ''}zaškrtnuté: Shift prepne na rýchle mierenie, bez zaškrtnutia Shift zapína presné)</em></span>`);
 			const cb = lab.querySelector('input');
-			cb.checked = !(st.fineCues && st.fineCues[c.id] === 0); // predvolene zapnuté
+			const fv = st.fineCues ? st.fineCues[c.id] : undefined;
+			cb.checked = fv === undefined ? fineDefault(c) : fv === 1; // predvolene len Citlivé tágo
 			cb.addEventListener('change', () => this.opts.onAction('fineAlways', { id: c.id, on: cb.checked }));
 			P.appendChild(lab);
 		}

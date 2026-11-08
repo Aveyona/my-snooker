@@ -4254,7 +4254,12 @@ export function start(root, config = {}) {
 	controls.sens = settings.mouseSens || 1; // šúpatko Otáčanie myšou
 	controls.strokeSens = settings.strokeSens || 1; // šúpatko Ťahanie tága
 	controls.panSens = settings.panSens || 1; // šúpatko Pravé tlačidlo
-	settings.fineCues = settings.fineCues || {}; // tágá s jemným mierením vždy zapnutým
+	if (settings.fineVer !== 2) {
+		settings.fineCues = {}; // 8. 11. 2026: nové predvolené (presné mierenie len Citlivé tágo), staré voľby všetkým zrušené
+		settings.fineVer = 2;
+		saveSettings(settings);
+	}
+	settings.fineCues = settings.fineCues || {}; // tágá s jemným mierením vždy zapnutým (1) alebo vypnutým (0)
 	controls.fineMap = settings.fineCues;
 	controls.setCue(cueSpec);
 	// priblíženie kolieskom za tágom sa pamätá (pri držanom pravom tlačidle platí koliesko len počas držania)

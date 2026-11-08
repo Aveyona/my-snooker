@@ -14,7 +14,7 @@
  */
 import * as THREE from 'three';
 import { R } from './physics.js';
-import { strokePx } from './cues.js';
+import { strokePx, fineDefault } from './cues.js';
 
 export class Controls {
 	constructor(dom, rig, game, hooks) {
@@ -242,7 +242,8 @@ export class Controls {
 		this.cueSpec = spec;
 		this.strokePx = strokePx(spec);
 		// jemné mierenie vždy zapnuté (nastavenie pri tágu so Shift); Shift potom prepne na rýchle mierenie
-		this.fineAlways = !(this.fineMap && this.fineMap[spec.id] === 0) && spec.fine > 0; // predvolene presné mierenie, Shift prepne na rýchle
+		const v = this.fineMap ? this.fineMap[spec.id] : undefined;
+		this.fineAlways = spec.fine > 0 && (v === undefined ? fineDefault(spec) : v === 1); // predvolene len Citlivé tágo, Shift prepne
 	}
 
 	/** Je myš zachytená v okne hry? */

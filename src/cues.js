@@ -10,6 +10,9 @@ import * as THREE from 'three';
 
 const c = (id, name, category, tip, power, grip, len, fine, shaft, butt, note) => ({ id, name, category, tip, power, grip, len, fine, colors: { shaft, butt }, note });
 
+/** Presné mierenie predvolene zapnuté len pri Citlivom tágu (aj vlastnom z jeho šablóny), ostatné tágá so Shift (Robo 8. 11. 2026). */
+export const fineDefault = (spec) => !!spec && (spec.base || spec.id) === 'touch';
+
 export const CUES = [
 	c('club', 'Klubové tágo', 'Základné', 'stredná', 0.8, 1, 1.45, 0, '#dcb57e', '#3a1c0c', 'Predvolené tágo na každý úder.'),
 	c('short', 'Krátke tágo', 'Základné', 'tvrdá', 0.9, 0.85, 1.37, 0, '#d2a56a', '#5a1d0e', 'Krátke ťahanie, silné údery, horšie drží falše.'),
