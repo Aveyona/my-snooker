@@ -246,13 +246,16 @@ export class CameraRig {
 			const ez = pos.z - cp.z;
 			const ed = Math.hypot(ex, ez);
 			this._panCapped = false;
-			if (ed > maxD) {
+			// obmedzenie len pri ťahaní dozadu: pri priblížení k vzdialenej mierenej guli kamera smie ísť ďaleko od bielej
+			const ap = this.aimPoint;
+			const back = !ap || (this.panDist || 1) >= 1 || Math.hypot(pos.x - ap.x, pos.z - ap.z) > Math.hypot(cp.x - ap.x, cp.z - ap.z);
+			if (back && ed > maxD) {
 				pos.x = cp.x + (ex / ed) * maxD;
 				pos.z = cp.z + (ez / ed) * maxD;
 				this._panCapped = true;
 			}
 			const maxY = Math.max(0.6, maxD * 0.6);
-			if (pos.y > maxY) {
+			if (back && pos.y > maxY) {
 				pos.y = maxY;
 				this._panCapped = true;
 			}
