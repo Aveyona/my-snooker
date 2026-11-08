@@ -93,6 +93,9 @@ function mysn_render( $preview ) {
 		// REST na tej istej adrese, z ktorej sa hra načítala (hlavný web alebo subdoména)
 		'restUrl'  => (string) wp_parse_url( rest_url( 'my-snooker/v1/' ), PHP_URL_PATH ),
 		'nonce'    => $user ? wp_create_nonce( 'wp_rest' ) : '',
+		// lepší prenos: servery ICE (náš TURN) a okamžité signály cez live server (osobný kanál hráča)
+		'ice'      => mysn_ice_servers( $user ? (int) $user['id'] : 0 ),
+		'live'     => $user && mysn_live_ws() ? array( 'ws' => mysn_live_ws(), 'chan' => mysn_live_chan( (int) $user['id'] ) ) : null,
 		// rola (admin alebo mod = správca hry) a id všetkých správcov: hra prijme ich neviditeľné sledovanie
 		'role'     => $user ? mysn_role() : '',
 		'staff'    => mysn_staff_ids(),

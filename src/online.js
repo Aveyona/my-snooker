@@ -4,7 +4,7 @@
  * dostane súper a divák hneď. Server partiu len ukladá (úder a stav po údere) a vyhodnotí koniec a ligu;
  * po obnovení stránky sa rozohraná partia načíta zo servera a pokračuje sa v nej.
  */
-import { Rtc } from './rtc.js';
+import { Rtc, setIce } from './rtc.js';
 import { snapshot } from './physics.js';
 
 const PING_MS = 5000;
@@ -75,6 +75,7 @@ export class Online {
 		this.myId = 0;
 		this.pendingShot = null;
 		this.watching = null;
+		setIce(cfg.ice);
 		this.rtc = new Rtc(this.net, {
 			accept: (from, tag) => this.rtcAccept(from, tag),
 			open: (p) => this.rtcOpen(p),
@@ -84,8 +85,76 @@ export class Online {
 			repaired: (p) => p.tag === 'match' && p.uid === this.opp && this.diag(p, 'opravené (ICE restart)'),
 		});
 		game.onNet = (type, d) => this.send(type, d);
+		this.liveConnect();
 		this.ping();
 		this._pingTimer = setInterval(() => this.ping(), PING_MS);
+	}
+
+	/*
+	 * Okamžité signály cez live server (Centrifugo na live.hedlajner.sk): osobný kanál hráča. Prichádza len
+	 * oznámenie (sig = nový signál spojenia, inv = pozvánka alebo začiatok partie), údaje sa načítajú z webu.
+	 * Pri výpadku sa spojenie obnoví; dovtedy ide všetko cez pravidelný ping ako predtým.
+	 */
+	liveConnect() {
+		const L = this.cfg.live;
+		if (!L || !L.ws || !L.chan || this._live || typeof WebSocket === 'undefined' || document.hidden) {
+			return;
+		}
+		let w;
+		try {
+			w = new WebSocket(L.ws);
+		} catch (e) {
+			return;
+		}
+		this._live = w;
+		w.onopen = () => w.send(JSON.stringify({ id: 1, connect: {} }) + '\n' + JSON.stringify({ id: 2, subscribe: { channel: L.chan } }));
+		w.onmessage = (ev) => {
+			for (const line of String(ev.data).split('\n')) {
+				if (!line) {
+					continue;
+				}
+				let m;
+				try {
+					m = JSON.parse(line);
+				} catch (e) {
+					continue;
+				}
+				if (!Object.keys(m).length) {
+					w.send('{}'); // ping, odpoveď pong
+					continue;
+				}
+				if (m.id === 2 && m.subscribe) {
+					this.rtc.liveOk = true;
+					this._liveTry = 0;
+				}
+				const d = m.push && m.push.pub && m.push.pub.data;
+				if (d && d.t === 'sig') {
+					this.rtc.pull();
+				} else if (d && d.t === 'inv') {
+					this.ping();
+				}
+			}
+		};
+		w.onclose = () => {
+			this._live = null;
+			this.rtc.liveOk = false;
+			this._liveTry = Math.min((this._liveTry || 0) + 1, 6);
+			clearTimeout(this._liveT);
+			this._liveT = setTimeout(() => this.liveConnect(), 2000 * this._liveTry * this._liveTry);
+		};
+		w.onerror = () => {
+			try {
+				w.close();
+			} catch (e) {}
+		};
+		if (!this._liveVis) {
+			this._liveVis = true;
+			document.addEventListener('visibilitychange', () => {
+				if (!document.hidden) {
+					this.liveConnect();
+				}
+			});
+		}
 	}
 
 	get inMatch() {

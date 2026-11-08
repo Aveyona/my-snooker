@@ -371,6 +371,7 @@ function mysn_rest_invite( $req ) {
 			'season_id' => $league ? (int) mysn_season_current()['id'] : 0,
 		)
 	);
+	mysn_live_notify( $to, 'inv' );
 	return array( 'id' => (int) $wpdb->insert_id );
 }
 
@@ -382,12 +383,14 @@ function mysn_rest_answer( $req ) {
 	}
 	if ( ! $req->get_param( 'accept' ) ) {
 		mysn_update_match( $m['id'], array( 'status' => 'declined' ) );
+		mysn_live_notify( (int) $m['p1'], 'inv' );
 		return array( 'ok' => true );
 	}
 	if ( mysn_active_match( $uid ) || mysn_active_match( (int) $m['p1'] ) ) {
 		return mysn_err( 'Jeden z hráčov už hrá inú partiu.' );
 	}
 	mysn_match_begin( $m );
+	mysn_live_notify( (int) $m['p1'], 'inv' );
 	return array( 'id' => (int) $m['id'] );
 }
 
@@ -435,6 +438,7 @@ function mysn_rest_cancel( $req ) {
 	$m = mysn_get_match( (int) $req->get_param( 'id' ) );
 	if ( $m && (int) $m['p1'] === get_current_user_id() && 'invited' === $m['status'] ) {
 		mysn_update_match( $m['id'], array( 'status' => 'cancelled' ) );
+		mysn_live_notify( (int) $m['p2'], 'inv' );
 	}
 	return array( 'ok' => true );
 }

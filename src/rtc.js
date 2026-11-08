@@ -4,7 +4,13 @@
  * cez REST: POST rtc, GET rtc a signály v pingu). Ponuka aj odpoveď idú naraz s kandidátmi, ktorí sa zozbierali
  * do pár sekúnd (zvyčajne stačia dve správy cez server); neskorší kandidáti sa dopošlú zvlášť.
  */
-const ICE = [{ urls: ['stun:stun.l.google.com:19302', 'stun:stun1.l.google.com:19302'] }, { urls: 'stun:stun.cloudflare.com:3478' }];
+let ICE = [{ urls: ['stun:stun.l.google.com:19302', 'stun:stun1.l.google.com:19302'] }, { urls: 'stun:stun.cloudflare.com:3478' }];
+/** Servery ICE zo servera (verejné STUN a náš TURN na live.hedlajner.sk s časovo obmedzeným prihlásením). */
+export function setIce(list) {
+	if (Array.isArray(list) && list.length) {
+		ICE = list;
+	}
+}
 const FAST_MS = 700; // čítanie signálov, kým sa spojenie nadväzuje
 const OPEN_MS = 15000; // spojenie, ktoré sa dovtedy neotvorí, sa zruší
 const GATHER_MS = 2500;
@@ -360,6 +366,16 @@ export class Rtc {
 		}
 	}
 
+	/** Okamžité prečítanie signálov (live server oznámil nový signál). */
+	async pull() {
+		try {
+			const r = await this.net.call('rtc', null, 'GET');
+			await this.handle(r.signals);
+		} catch (e) {
+			// výpadok: signály prečíta pravidelný dopyt
+		}
+	}
+
 	/** Rýchle čítanie signálov, kým sa niektoré spojenie nadväzuje. */
 	fast() {
 		if (this._fastT) {
@@ -386,7 +402,8 @@ export class Rtc {
 			} catch (e) {
 				// výpadok: skúsi sa znova
 			}
-			this._fastT = setTimeout(tick, young ? FAST_MS : 2000);
+			// pri živom spojení s live serverom prídu signály hneď, pravidelné čítanie je len poistka
+			this._fastT = setTimeout(tick, this.liveOk ? 2500 : young ? FAST_MS : 2000);
 		};
 		this._fastT = setTimeout(tick, 50);
 	}

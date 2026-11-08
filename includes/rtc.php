@@ -45,6 +45,54 @@ function mysn_rtc_allowed( $from, $to, $tag ) {
 	return false;
 }
 
+/*
+ * Lepší prenos cez vlastný server (Hetzner hedlajner-1, live.hedlajner.sk):
+ * TURN (coturn): sprostredkuje spojenie hráčov, keď priame spojenie cez STUN nejde (prísne siete, mobilní operátori).
+ * Prihlasovacie údaje sú časovo obmedzené (24 h) a odvodené zo zdieľaného tajomstva MY_TURN_SECRET
+ * (súbor wp-content/my-chat-live.php mimo repozitára).
+ * Okamžité signály (Centrifugo cez My Chat, myc_live_send): pri novom signáli spojenia alebo zmene pozvánky dostane
+ * hráč hneď správu do svojho kanála snk:<tajný kód> a nemusí čakať na pravidelný dopyt.
+ */
+
+/** Servery ICE pre prehliadač: verejné STUN a náš TURN (ak je nastavený). */
+function mysn_ice_servers( $uid = 0 ) {
+	$ice = array(
+		array( 'urls' => array( 'stun:stun.l.google.com:19302', 'stun:stun1.l.google.com:19302' ) ),
+		array( 'urls' => 'stun:stun.cloudflare.com:3478' ),
+	);
+	if ( function_exists( 'myc_live_server' ) ) {
+		myc_live_server(); // načíta wp-content/my-chat-live.php s kľúčmi
+	} elseif ( file_exists( WP_CONTENT_DIR . '/my-chat-live.php' ) ) {
+		include_once WP_CONTENT_DIR . '/my-chat-live.php';
+	}
+	if ( defined( 'MY_TURN_SECRET' ) && defined( 'MY_TURN_HOST' ) && MY_TURN_SECRET ) {
+		$user  = ( time() + DAY_IN_SECONDS ) . ':' . (int) $uid;
+		$ice[] = array(
+			'urls'       => array( 'stun:' . MY_TURN_HOST . ':3478', 'turn:' . MY_TURN_HOST . ':3478?transport=udp', 'turn:' . MY_TURN_HOST . ':3478?transport=tcp' ),
+			'username'   => $user,
+			'credential' => base64_encode( hash_hmac( 'sha1', $user, MY_TURN_SECRET, true ) ),
+		);
+	}
+	return $ice;
+}
+
+/** Osobný kanál hráča na live serveri (názov pozná len on, odvodený z kľúča webu). */
+function mysn_live_chan( $uid ) {
+	return 'snk:' . substr( hash_hmac( 'sha256', 'mysn-live-' . (int) $uid, wp_salt( 'auth' ) ), 0, 32 );
+}
+
+/** Websocket live servera pre prehliadač (prázdny, ak nie je nastavený). */
+function mysn_live_ws() {
+	return function_exists( 'myc_live_ws' ) ? myc_live_ws() : '';
+}
+
+/** Okamžitá správa hráčovi: sig = nový signál spojenia, inv = zmena pozvánky alebo začiatok partie. */
+function mysn_live_notify( $uid, $type ) {
+	if ( $uid && function_exists( 'myc_live_send' ) ) {
+		myc_live_send( mysn_live_chan( $uid ), array( 't' => $type ) );
+	}
+}
+
 /** Odošle signál (ponuka, odpoveď, ukončenie) inému hráčovi. */
 function mysn_rest_rtc_send( $req ) {
 	global $wpdb;
@@ -77,6 +125,7 @@ function mysn_rest_rtc_send( $req ) {
 			'created'   => $now,
 		)
 	);
+	mysn_live_notify( $to, 'sig' );
 	return array( 'ok' => true );
 }
 
