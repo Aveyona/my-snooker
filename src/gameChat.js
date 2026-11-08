@@ -199,28 +199,44 @@ export function gameChat(root, cfg, hooks = {}) {
 			flash('Správa môže mať najviac ' + cfg.maxWords + ' slov (teraz ' + words + ').');
 			return;
 		}
-		input.disabled = true;
+		// políčko sa zavrie hneď, správa sa ukáže ako odosielaná (bledšia) a server ju potvrdí v pozadí
+		close();
+		const tmp = document.createElement('div');
+		tmp.className = 'mysn-gchat-msg mysn-gchat-mine mysn-gchat-pending';
+		const who = document.createElement('b');
+		who.textContent = esc((hooks.myName && hooks.myName()) || 'Ja') + ': ';
+		const txt = document.createElement('span');
+		txt.textContent = text;
+		tmp.append(who, txt);
+		list.appendChild(tmp);
+		requestAnimationFrame(() => tmp.classList.add('mysn-gchat-in'));
+		fit();
+		const fail = (msg) => {
+			tmp.remove();
+			fit();
+			open();
+			input.value = text;
+			flash(msg);
+		};
 		try {
 			const r = await fetch(cfg.rest + 'messages', { method: 'POST', credentials: 'same-origin', headers: head(), body: JSON.stringify({ room: cfg.room, text }) });
 			const d = await r.json();
 			if (!r.ok) {
-				flash((d && d.message) || 'Správu sa nepodarilo odoslať.');
-				input.disabled = false;
-				input.focus();
+				fail((d && d.message) || 'Správu sa nepodarilo odoslať.');
 				return;
 			}
-			if (d && d.id) {
-				add(d);
+			if (d && d.id && !seen.has(d.id)) {
+				// skutočná správa nahradí odosielanú na tom istom mieste
+				seen.add(d.id);
+				tmp.dataset.id = d.id;
+				tmp.classList.remove('mysn-gchat-pending');
 				last = Math.max(last, d.id);
-				fit();
+			} else {
+				tmp.remove(); // medzitým ju priniesol dopyt
 			}
-			input.disabled = false;
-			close();
-			poll();
+			fit();
 		} catch (e) {
-			flash('Správu sa nepodarilo odoslať, skús znova.');
-			input.disabled = false;
-			input.focus();
+			fail('Správu sa nepodarilo odoslať, skús znova.');
 		}
 	};
 	form.addEventListener('submit', (e) => {

@@ -3949,6 +3949,7 @@ export function start(root, config = {}) {
 	// chat v hre (miestnosť Snooker z My Chat): Enter píše, správy vľavo
 	const chat = gameChat(overlay, config.chat ? Object.assign({ nonce: config.nonce }, config.chat) : null, {
 		canWrite: () => !!user,
+		myName: () => user && user.name,
 		// Enter inde: biela do ruky, pohľady (kreslo, noviny, stojan...), nájdený zápas, koniec partie
 		canOpen: () => !!(user || guestPlay) && game.state !== 'place' && !view && !ui.menuOpen() && !ui.foundOpen() && !ui.partyOpen() && !ui.cardOpen() && !ui.phoneOpen(),
 	});

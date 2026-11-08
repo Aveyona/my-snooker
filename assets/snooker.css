@@ -610,3 +610,4 @@ body.mysn-page { font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans
 .mysn-gchat-form input:disabled { opacity: .7; }
 .mysn-gchat-note { margin-top: 4px; padding: 3px 10px; border-radius: 6px; background: #5a1010d9; color: #fff; font-size: 13px; }
 .mysn-gchat-note:empty { display: none; }
+.mysn-gchat-pending { opacity: .55 !important; }
