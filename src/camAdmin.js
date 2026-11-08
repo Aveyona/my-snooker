@@ -54,7 +54,10 @@ const boot = () => {
 			g.fillRect(sx(from), ZT, sx(z.to) - sx(from), ZB - ZT);
 			g.fillStyle = '#052e16';
 			g.textAlign = 'center';
-			g.fillText(`${speedName(z.v)} (${z.v}×)`, (sx(from) + sx(z.to)) / 2, (ZT + ZB) / 2 + 4);
+			const zw = sx(z.to) - sx(from);
+			const full = `${speedName(z.v)} (${z.v}×)`;
+			const lab = g.measureText(full).width < zw - 8 ? full : g.measureText(speedName(z.v)).width < zw - 8 ? speedName(z.v) : `${z.v}×`; // úzke pásmo: kratší text
+			g.fillText(lab, (sx(from) + sx(z.to)) / 2, (ZT + ZB) / 2 + 4);
 			if (i < cfg.zones.length - 1) {
 				g.fillStyle = hover && hover.zb === i ? '#b45309' : '#14532d';
 				g.fillRect(sx(z.to) - 2, ZT - 4, 4, ZB - ZT + 8);
@@ -175,6 +178,14 @@ const boot = () => {
 		s.fillStyle = '#e5e7eb';
 		s.font = '12px system-ui, sans-serif';
 		s.fillText('pohľad z boku: guľa vľavo, kamera začína vpravo', 10, 16);
+		s.fillText('mierená guľa', bx - 20, base + 20);
+		s.textAlign = 'right';
+		s.fillText('kamera za tágom', bx + D + 4, base - 8 - Hs + 22);
+		const nx = bx + D * cfg.near;
+		s.textAlign = 'center';
+		s.fillStyle = '#fbbf24';
+		s.fillText('najbližšie', nx, base + 20);
+		s.textAlign = 'left';
 		s.fillStyle = '#fbbf24';
 		s.beginPath();
 		s.arc(bx + D, base - 8 - Hs, 5, 0, Math.PI * 2);

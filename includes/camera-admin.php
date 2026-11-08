@@ -102,9 +102,18 @@ function mysn_admin_camera() {
 				<button class="button" id="mysn-cam-sketch">Podľa náčrtu (rýchlo hore, rovina, dole ku guli)</button>
 				<button class="button" id="mysn-cam-reset">Predvolené (doterajšie správanie)</button>
 			</p>
-			<p>
-				<label>Najbližšie ku guli: <input type="range" id="mysn-cam-near" min="5" max="60" step="1" style="vertical-align:middle;width:240px"> <b id="mysn-cam-near-v"></b> pôvodnej vzdialenosti</label>
+			<ul class="description" style="list-style:disc;margin:4px 0 14px 20px">
+				<li><b>Pridať pásmo rýchlosti</b>: najširšie pásmo v zelenom páse sa rozdelí na dve rovnako rýchle, potom im klikom nastavíš inú rýchlosť a hranicu posunieš myšou (najviac 6 pásiem).</li>
+				<li><b>Odobrať pásmo</b>: zruší predposledné pásmo, jeho časť dostane pásmo za ním (posledné pásmo pri guli ostáva).</li>
+				<li><b>Podľa náčrtu</b>: nastaví krivku a pásma podľa náčrtu: kamera najprv rýchlo stúpne, potom ide rovno vo výške a na konci klesne ku guli; pásma Najrýchlejšie, Rýchlo a pri guli Normálne.</li>
+				<li><b>Predvolené</b>: vráti pôvodné správanie hry (stúpanie do polovice, potom klesanie ku guli, všade rovnaká rýchlosť). Zmeny v grafe platia až po stlačení Uložiť.</li>
+			</ul>
+			<p style="margin-bottom:2px">
+				<label><b>Najbližšie ku guli:</b> <input type="range" id="mysn-cam-near" min="5" max="60" step="1" style="vertical-align:middle;width:240px"> <b id="mysn-cam-near-v"></b> pôvodnej vzdialenosti</label>
 			</p>
+			<p class="description" style="margin-top:0">Koľko najviac sa dá kamerou priblížiť ku guli: 15 % znamená, že keď kamera za tágom stojí 1 meter od mierenej gule, na konci priblíženia bude 15 cm od nej. Menšie číslo = kamera príde bližšie ku guli (detailnejší pohľad, ale viac pohybu myšou), väčšie číslo = zastaví sa ďalej. Pravý koniec grafu (100 % priblíženia) je práve táto najbližšia vzdialenosť.</p>
+			<h3 style="margin:18px 0 4px">Náhľad z boku</h3>
+			<p class="description" style="margin-top:0">Stôl je videný zboku: biela guľa vľavo je mierená guľa, žltý bod vpravo je kamera za tágom. Žltá čiara je cesta kamery, keď hráč drží pravé tlačidlo a ťahá myš hore: sprava doľava sa vzdialenosť ku guli zmenšuje a výška ide podľa oranžovej krivky. Mení sa hneď pri úprave grafu a šúpatka, takže pred uložením vidíš, kadiaľ kamera poletí.</p>
 			<canvas id="mysn-cam-side" width="940" height="200" style="width:100%;max-width:940px;border-radius:6px;display:block"></canvas>
 			<p><button type="submit" class="button button-primary button-large">Uložiť</button></p>
 		</form>
