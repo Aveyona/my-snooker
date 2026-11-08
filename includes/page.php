@@ -98,7 +98,7 @@ function mysn_render( $preview ) {
 		'staff'    => mysn_staff_ids(),
 		// admini (správcovia webu): na menovke pri kresle na štadióne majú pod menom ADMIN
 		'sounds'   => mysn_sounds_config(), // nahrávky a doladenie zvukov (My Snooker → Zvuky)
-		'tv'       => mysn_tv_stations(), // televízor v obývačke: voľné živé vysielanie (YouTube)
+		'roomsUrl' => (string) apply_filters( 'mysn_rooms_url', '' ), // obývačka: samostatná hra My Rooms (doplnok my-rooms)
 		'camZoom'  => mysn_cam_zoom(), // graf priblíženia na guľu pravým tlačidlom (My Snooker → Kamera)
 		'clock'    => mysn_shot_clock(), // čas na ťah v ligovom zápase (sekundy) podľa sezóny
 		'admins'   => array_map( 'intval', (array) get_users( array( 'fields' => 'ID', 'capability' => 'manage_options', 'number' => 50 ) ) ),
@@ -230,19 +230,3 @@ add_action( 'init', function () {
 		Cache_Enabler::clear_page_cache_by_url( mysn_main_url() . mysn_preview_path() );
 	}
 } );
-
-/**
- * Televízor v obývačke: voľné živé spravodajské stanice. Hrajú sa cez YouTube (živé vysielanie kanála),
- * preto stačí ID kanála. Zoznam sa dá zmeniť filtrom mysn_tv_stations.
- */
-function mysn_tv_stations() {
-	$list = array(
-		array( 'name' => 'Al Jazeera English', 'info' => 'Správy zo sveta, po anglicky', 'yt' => 'UCNye-wNBqNL5ZzHSJj3l8Bg' ),
-		array( 'name' => 'DW News', 'info' => 'Deutsche Welle, po anglicky', 'yt' => 'UCknLrEdhRCp1aegoMqRaCZg' ),
-		array( 'name' => 'France 24 English', 'info' => 'Správy zo sveta, po anglicky', 'yt' => 'UCQfwfsi5VrQ8yKZ-UWmAEFg' ),
-		array( 'name' => 'Sky News', 'info' => 'Správy, Veľká Británia', 'yt' => 'UCoMdktPbSTixAyNGwb-UYkQ' ),
-		array( 'name' => 'euronews', 'info' => 'Európske správy', 'yt' => 'UCSrZ3UV4jOidv8ppoVuvW9Q' ),
-		array( 'name' => 'NASA', 'info' => 'Vesmír, priame prenosy (keď vysielajú)', 'yt' => 'UCLA_DiR1FfKNvjuUpBHmylQ' ),
-	);
-	return apply_filters( 'mysn_tv_stations', $list );
-}

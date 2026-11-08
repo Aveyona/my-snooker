@@ -9,8 +9,6 @@ import { buildRoomShell, ROOM } from './room.js';
 import { buildRadioCorner, RadioPlayer, RADIO } from './radio.js';
 import { buildStadium } from './stadium.js';
 import { buildOffice } from './office.js';
-import { buildLiving } from './living.js';
-import { Tv } from './tv.js';
 import { zoomCfg } from './camZoom.js';
 import { Crowd } from './fans.js';
 import { COUNTRIES, countryByCode } from './countries.js';
@@ -503,164 +501,6 @@ export function start(root, config = {}) {
 	homeObjs.push(...room.rackObjects()); // tágá stojana v herni na štadióne nevisia vo vzduchu
 	const stadium = buildStadium(scene, settings.quality, config.clock || 45);
 	const office = buildOffice(scene);
-	const living = buildLiving(scene); // obývačka (z chodby cez ceduľu, len prihlásení)
-	// televízor v obývačke: živé zápasy, moje zápasy (záznamy), rekordy
-	const tv = new Tv({
-		load: (path) => (online ? online.net.call(path, null, 'GET') : Promise.reject(new Error('Si offline.'))),
-		watch: (r) => {
-			if (livingFocusNow === 'tv') {
-				actions.livingFocus('tv');
-			}
-			actions.watchStart(r);
-		},
-		toast: (t) => ui.toast(t),
-		stations: config.tv || [],
-		play: (o) => tvVideoOpen(o.src, o.title),
-		askLink: () => tvLinkAsk(),
-		stopVideo: () => tvVideoClose(),
-		volume: (v, muted) => tvVolume(v, muted),
-	});
-	let tvPaintAt = 0;
-	/*
-	 * Video na televízore (YouTube, živé stanice): prehrávač YouTube nejde vložiť do 3D obrazovky, preto leží
-	 * ako okno presne nad obrazovkou televízora (kamera stojí pri televízore). Odchodom od televízora sa zastaví.
-	 */
-	let tvVideo = null; // okno videa a políčko na odkaz sa vytvoria pri prvom použití (ui ešte nie je hotové)
-	let tvFrame = null;
-	let tvLink = null;
-	let tvLinkInput = null;
-	let tvVideoOn = '';
-	let tvRemote = null; // diaľkový ovládač (F2 televízor)
-	const tvLinkHide = () => tvLink && tvLink.classList.add('mysn-hidden');
-	/** Hlasitosť videa: príkaz prehrávaču YouTube (enablejsapi). */
-	const tvVolume = (v, muted) => {
-		const post = (func, args = []) => tvFrame && tvFrame.contentWindow && tvFrame.contentWindow.postMessage(JSON.stringify({ event: 'command', func, args }), '*');
-		if (muted) {
-			post('mute');
-		} else {
-			post('unMute');
-			post('setVolume', [v]);
-		}
-		tvRemoteShow(true);
-	};
-	/** Ovládač: zobraziť alebo skryť, displej so zdrojom a hlasitosťou. */
-	const tvRemoteShow = (on) => {
-		if (!on && !tvRemote) {
-			return;
-		}
-		tvDom();
-		tvRemote.classList.toggle('mysn-hidden', !on);
-		tvRemote.querySelector('.mysn-remote-lcd').textContent = `${['SNOOKER', 'TV', 'YOUTUBE'][tv.source]} · ${tv.muted ? 'TICHO' : 'VOL ' + tv.vol}`;
-	};
-	const tvLinkOpen = () => !!tvLink && !tvLink.classList.contains('mysn-hidden');
-	const tvDom = () => {
-		if (tvVideo) {
-			return;
-		}
-		tvVideo = document.createElement('div');
-		tvVideo.className = 'mysn-tvvideo mysn-hidden';
-		tvVideo.innerHTML = '<iframe allow="autoplay; encrypted-media; picture-in-picture; fullscreen" allowfullscreen referrerpolicy="strict-origin-when-cross-origin"></iframe><button type="button" class="mysn-tvvideo-x" title="Zavrieť video (Esc)">✕ Zavrieť</button><span class="mysn-tvvideo-t"></span>';
-		ui.root.appendChild(tvVideo);
-		tvFrame = tvVideo.querySelector('iframe');
-		tvVideo.querySelector('.mysn-tvvideo-x').addEventListener('click', () => tvVideoClose());
-		tvRemote = document.createElement('div');
-		tvRemote.className = 'mysn-remote mysn-hidden';
-		const rb = (cmd, label, title, cls = '') => `<button type="button" data-r="${cmd}" class="${cls}" title="${title}">${label}</button>`;
-		tvRemote.innerHTML =
-			'<div class="mysn-remote-lcd"></div>' +
-			'<div class="mysn-remote-row">' + rb('source', 'SOURCE', 'Zdroj: Snooker, Televízia, YouTube (S)', 'mysn-remote-src') + rb('mute', '🔇', 'Stlmiť') + '</div>' +
-			'<div class="mysn-remote-row">' + rb('volup', 'VOL +', 'Hlasitosť (+)') + rb('chup', 'CH ▲', 'Ďalší kanál (Page Up)') + '</div>' +
-			'<div class="mysn-remote-row">' + rb('voldown', 'VOL −', 'Hlasitosť (−)') + rb('chdown', 'CH ▼', 'Predchádzajúci kanál (Page Down)') + '</div>' +
-			'<div class="mysn-remote-pad">' + rb('up', '▲', 'Hore') + rb('left', '◀', 'Doľava') + rb('ok', 'OK', 'Spustiť (Enter)', 'mysn-remote-ok') + rb('right', '▶', 'Doprava') + rb('down', '▼', 'Dole') + '</div>' +
-			'<div class="mysn-remote-row">' + rb('back', '↩ Späť', 'Zastaviť video alebo záznam') + '</div>' +
-			'<div class="mysn-remote-brand">My Snooker</div>';
-		ui.root.appendChild(tvRemote);
-		tvRemote.addEventListener('click', (e) => {
-			const b = e.target.closest('[data-r]');
-			if (b) {
-				tv.remote(b.dataset.r);
-				tvRemoteShow(true);
-			}
-		});
-		tvFrame.addEventListener('load', () => {
-			if (tvVideoOn) {
-				setTimeout(() => tvVolume(tv.vol, tv.muted), 800); // nová stanica: rovnaká hlasitosť
-			}
-		});
-		tvLink = document.createElement('form');
-		tvLink.className = 'mysn-panel mysn-tvlink mysn-hidden';
-		tvLink.innerHTML = '<label>Odkaz z YouTube (video, živé vysielanie alebo playlist)</label><input type="url" placeholder="https://www.youtube.com/watch?v=..." autocomplete="off"><div><button type="submit" class="mysn-btn mysn-primary">Pozerať</button> <button type="button" class="mysn-btn" data-x>Zrušiť</button></div>';
-		ui.root.appendChild(tvLink);
-		tvLinkInput = tvLink.querySelector('input');
-		tvLink.addEventListener('submit', (e) => {
-			e.preventDefault();
-			if (tv.openLink(tvLinkInput.value)) {
-				tvLinkHide();
-			}
-		});
-		tvLink.querySelector('[data-x]').addEventListener('click', () => tvLinkHide());
-		tvLinkInput.addEventListener('keydown', (e) => {
-			e.stopPropagation(); // písanie do políčka neovláda hru
-			if (e.key === 'Escape') {
-				tvLinkHide();
-			}
-		});
-	};
-	const tvCorner = new THREE.Vector3();
-	/** Okno videa presne nad obrazovku televízora (premietnuté rohy). */
-	const tvVideoPlace = () => {
-		const r = renderer.domElement.getBoundingClientRect();
-		const ro = ui.root.getBoundingClientRect();
-		const p = living.tvScreen.geometry.parameters;
-		let x0 = 1e9;
-		let y0 = 1e9;
-		let x1 = -1e9;
-		let y1 = -1e9;
-		for (const [sx, sy] of [[-1, -1], [1, -1], [1, 1], [-1, 1]]) {
-			tvCorner.set((sx * p.width) / 2, (sy * p.height) / 2, 0);
-			living.tvScreen.localToWorld(tvCorner);
-			tvCorner.project(rig.camera);
-			const cx = r.left + ((tvCorner.x + 1) / 2) * r.width - ro.left;
-			const cy = r.top + ((1 - tvCorner.y) / 2) * r.height - ro.top;
-			x0 = Math.min(x0, cx);
-			x1 = Math.max(x1, cx);
-			y0 = Math.min(y0, cy);
-			y1 = Math.max(y1, cy);
-		}
-		Object.assign(tvVideo.style, { left: x0 + 'px', top: y0 + 'px', width: Math.max(160, x1 - x0) + 'px', height: Math.max(90, y1 - y0) + 'px' });
-	};
-	const tvVideoOpen = (src, title) => {
-		tvDom();
-		tvVideoOn = title || 'Video';
-		tvFrame.src = src + '&enablejsapi=1&origin=' + encodeURIComponent(location.origin);
-		tvVideo.querySelector('.mysn-tvvideo-t').textContent = tvVideoOn;
-		tvVideo.classList.remove('mysn-hidden');
-		tvVideoPlace();
-	};
-	const tvVideoClose = () => {
-		if (!tvVideoOn) {
-			return;
-		}
-		tvVideoOn = '';
-		tvFrame.src = 'about:blank';
-		tvVideo.classList.add('mysn-hidden');
-		tv.dirty = true;
-	};
-	/** YouTube: políčko na vloženie odkazu (bez okna prehliadača). */
-	const tvLinkAsk = () => {
-		tvDom();
-		tvLink.classList.remove('mysn-hidden');
-		tvLinkInput.value = '';
-		setTimeout(() => tvLinkInput.focus(), 30);
-	};
-	renderer.domElement.addEventListener('pointerdown', (e) => {
-		if (view === 'living' && livingFocusNow === 'tv' && freeMouse && e.button === 0) {
-			const p = tvPoint(e);
-			if (p) {
-				tv.click(p.x, p.y);
-			}
-		}
-	});
 	office.root.add(new THREE.AmbientLight(0xffe6c8, settings.quality === 'high' ? 0.22 : 0.4)); // herňa je v kancelárii skrytá (aj jej svetlo)
 	/*
 	 * Všetky miestnosti sú v jednej scéne vedľa seba (herňa, kancelária za ňou, štadión). Kreslí sa len tá,
@@ -671,11 +511,10 @@ export function start(root, config = {}) {
 		const roam = view === 'free' && adminRoam;
 		const lg = venue === 'league';
 		const inOffice = view === 'office';
-		const inLiving = view === 'living';
-		const showHome = roam || (!lg && !inOffice && !inLiving);
+		const showHome = roam || (!lg && !inOffice);
 		const showStadium = roam || lg;
 		const showOffice = roam || inOffice;
-		const key = `${showHome}${showStadium}${showOffice}${inLiving}`;
+		const key = `${showHome}${showStadium}${showOffice}`;
 		if (key === sceneShown) {
 			return;
 		}
@@ -685,11 +524,10 @@ export function start(root, config = {}) {
 		}
 		stadium.root.visible = showStadium;
 		office.root.visible = showOffice;
-		living.root.visible = roam || inLiving;
 		for (const o of roomBase.lampParts) {
 			o.visible = !lg || roam; // na štadióne svietia na stôl tie isté svetlá, ale tienidlá nahrádza svietidlo s obrazovkami
 		}
-		table.group.visible = (!inOffice && !inLiving) || roam;
+		table.group.visible = !inOffice || roam;
 		room.setRackHidden(!showHome || (lg && !roam)); // tágá stojana herne (vybraté tágo sa skryje správne)
 	};
 	// online diváci: na štadióne sedia na stoličkách, v herni stoja pri stenách
@@ -753,11 +591,9 @@ export function start(root, config = {}) {
 	};
 	let officePlayers = [];
 	// pohľady, v ktorých sa myšou rozhliada (Ctrl drž = voľná myš)
-	const LOOK = new Set(['chair', 'bar', 'office', 'living', 'seat', 'free']); // seat = divák na svojom mieste, free = voľná kamera
+	const LOOK = new Set(['chair', 'bar', 'office', 'seat', 'free']); // seat = divák na svojom mieste, free = voľná kamera
 	let officeFocusNow = '';
-	let livingFocusNow = ''; // obývačka: priblížený predmet (tv, fire, books)
-	const LIVING_KEYS = 'Obývačka: F1 kniha s klávesmi, F2 televízor, F3 krb, F4 knižnica, myšou sa rozhliadaš. Ctrl a klik na predmet ho priblíži, na dvere späť do herne. Esc menu, M mapa.';
-	const away = () => view === 'office' || view === 'living'; // som mimo herne (kancelária, obývačka)
+	const away = () => view === 'office'; // som mimo herne (kancelária)
 	let replay = null; // prehrávač partie na notebooku (F7, detail zápasu)
 	const OFFICE_KEYS = 'Kancelária: F1 nástenka s klávesmi za tebou, F8 vizitka (registrácia), F9 alebo dvere ŠTADIÓN: vyhľadať zápas, F12 lampa (zhasnutá = nie si online). Ctrl a klik na predmet ho otvorí, Esc menu.';
 	let venue = 'home';
@@ -1077,19 +913,6 @@ export function start(root, config = {}) {
 	/** Klikateľné miesta podľa miestnosti: stred, polomer a kláves, ktorý klik urobí. */
 	const wpos = (o) => o.getWorldPosition(new THREE.Vector3());
 	const hotSpots = () => {
-		if (view === 'living') {
-			const sp = living.spots;
-			if (livingFocusNow === 'tv') {
-				return []; // pri televízore myš kliká po obrazovke
-			}
-			return [
-				{ id: 'lv-book', key: 'f1', pos: sp.book, r: 0.18 },
-				{ id: 'lv-tv', key: 'f2', pos: sp.tv, r: 0.9 },
-				{ id: 'lv-fire', key: 'f3', pos: sp.fire, r: 0.8 },
-				{ id: 'lv-books', key: 'f4', pos: sp.books, r: 1.0 },
-				{ id: 'lv-door', act: 'officeLeave', pos: sp.door, r: 0.7 },
-			];
-		}
 		if (view === 'office') {
 			// kancelária s držaným Ctrl: predmety sa rozsvietia, klik = ich kláves (mapa: klik na špendlík rieši kancelária)
 			const v = office.views;
@@ -1189,7 +1012,7 @@ export function start(root, config = {}) {
 	};
 	/** Raz za 0,1 s: ktorý predmet je pod kurzorom (len vo voľnej kamere s držaným Ctrl). */
 	// predmety svietia s držaným Ctrl za tágom (hráč) aj vo voľnej kamere
-	const hotOn = () => view === 'office' || view === 'living' || ((view === 'free' || (!view && !game.spectating && user)) && venue !== 'office');
+	const hotOn = () => view === 'office' || ((view === 'free' || (!view && !game.spectating && user)) && venue !== 'office');
 	const hotTick = (dt) => {
 		if (!hotOn() || !freeMouse || !hotMouseOk) {
 			hotSet(null);
@@ -1959,23 +1782,6 @@ export function start(root, config = {}) {
 		if (name === 'chalk' && game.state !== 'aim') {
 			return;
 		}
-		if (view === 'living' && name !== 'living') {
-			ui.root.classList.remove('mysn-in-living');
-			if (livingFocusNow === 'tv') {
-				freeMouse = false;
-				ui.setFree(false);
-				renderer.domElement.style.cursor = '';
-			}
-			tv.stop();
-			tvVideoClose();
-			tvLinkHide();
-			tvRemoteShow(false);
-			livingFocusNow = '';
-			rig.noClamp = false;
-			rig.snapNext = true;
-			rig.minViewZoom = 1;
-			rig.setViewZoom(1);
-		}
 		if (view === 'office' && name !== 'office') {
 			radio.setSpeakers(null);
 			ui.openHistory(false);
@@ -2020,7 +1826,7 @@ export function start(root, config = {}) {
 			// na štadióne (liga) majú niektoré pohľady vlastné miesto (F4 skóre na veľkej obrazovke)
 			// F7 stolička a F2 stojan na štadióne podľa strany hráča
 			const sname = venue === 'league' && (name === 'chair' || name === 'rack') ? name + mySide() : name;
-			const v = name === 'mixer' ? radioCorner.view : name === 'office' ? office.seat : name === 'living' ? living.seat : venue === 'league' && stadium.views[sname] ? stadium.views[sname] : room[name];
+			const v = name === 'mixer' ? radioCorner.view : name === 'office' ? office.seat : venue === 'league' && stadium.views[sname] ? stadium.views[sname] : room[name];
 			rig.setView(v.pos, v.look.clone());
 			if (venue === 'league' && stadium.views[sname]) {
 				rig.noClamp = true; // štadión je väčší ako herňa (kamera sa nesmie obmedziť stenami herne)
@@ -2028,14 +1834,6 @@ export function start(root, config = {}) {
 			if (v.zoom) {
 				rig.minViewZoom = v.zoom; // širší záber (F2: celý stojan so všetkými tágami, v herni aj polička s kriedami)
 				rig.setViewZoom(v.zoom);
-			}
-			if (name === 'living') {
-				// obývačka stojí mimo herne: kamera sa presunie hneď
-				rig.noClamp = true;
-				rig.jump();
-				livingFocusNow = '';
-				rig.minViewZoom = 0.85;
-				rig.setViewZoom(0.85);
 			}
 			if (name === 'office') {
 				// kancelária stojí mimo herne: kamera sa presunie hneď (bez letu cez steny)
@@ -2056,11 +1854,6 @@ export function start(root, config = {}) {
 		}
 		if (name === 'trophies') {
 			refreshTrophies();
-		}
-		if (name === 'living') {
-			ui.showView(null); // obývačka bez bočného panela
-			ui.root.classList.add('mysn-viewing', 'mysn-in-living'); // bez ovládania úderu (guľa, sila, nápoveda)
-			return;
 		}
 		if ((name === 'chair' || name === 'board') && venue === 'league') {
 			ui.showView(null); // štadión: stolička a návod na stolíku bez bočného panela
@@ -2096,21 +1889,6 @@ export function start(root, config = {}) {
 		rig.minViewZoom = 1;
 		rig.noClamp = false; // pohľady na štadióne kameru neobmedzujú, za tágom už áno
 		rig.setViewZoom(1);
-		if (was === 'living') {
-			ui.root.classList.remove('mysn-in-living');
-			if (livingFocusNow === 'tv') {
-				freeMouse = false;
-				ui.setFree(false);
-				renderer.domElement.style.cursor = '';
-			}
-			tv.stop();
-			tvVideoClose();
-			tvLinkHide();
-			tvRemoteShow(false);
-			livingFocusNow = '';
-			rig.noClamp = false;
-			rig.snapNext = true; // z obývačky späť do herne hneď
-		}
 		if (was === 'office') {
 			radio.setSpeakers(null);
 			actions.replayStop();
@@ -2345,11 +2123,11 @@ export function start(root, config = {}) {
 	 */
 	const mapRooms = () => {
 		const admin = config.role === 'admin';
-		const here = view === 'office' ? 'office' : view === 'living' ? 'living' : venue;
+		const here = view === 'office' ? 'office' : venue;
 		return [
 			{ id: 'home', name: 'Herňa', desc: 'Tréning, Hrať o najlepšie skóre, partie s priateľmi. Stôl s červeným súknom pri tréningu, zeleným v partii.', map: [4, 50, 46, 44], here: here === 'home', locked: false, play: 'Vstúpiť a hrať' },
 			{ id: 'office', name: 'Kancelária', desc: 'Liga: registrácia, tabuľky líg, mapa hráčov, moje tágá, vyhľadanie ligového zápasu.', map: [4, 4, 46, 20], here: here === 'office', locked: !user, lockNote: 'Kancelária je pre prihlásených hráčov.', play: 'Vstúpiť' },
-			{ id: 'living', name: 'Obývačka', desc: 'Oddych pri krbe, televízor, knižnica. Z herne cez dvere (F6): v chodbe Ctrl a klik na ceduľu Obývačka.', map: [4, 27, 46, 20], here: here === 'living', locked: !user, lockNote: 'Obývačka je pre prihlásených hráčov.', play: 'Vstúpiť', notour: true },
+			{ id: 'living', name: 'Obývačka', desc: 'Samostatná hra My Rooms: oddych pri krbe, televízor so zápasmi a YouTube, knižnica. Otvorí sa jej stránka, späť dverami obývačky.', map: [4, 27, 46, 20], here: here === 'living', locked: !user, lockNote: 'Obývačka je pre prihlásených hráčov.', play: 'Vstúpiť', notour: true },
 			{ id: 'league', name: 'Štadión', desc: 'Ligové zápasy pred divákmi, modré súkno, svetlá na stôl.', map: [56, 4, 40, 90], here: here === 'league', locked: !admin, lockNote: 'Štadión sa otvorí, keď nájdeš ligový zápas (Kancelária, Vyhľadať zápas). Hrá sa tu len liga.', play: admin ? 'Vstúpiť a trénovať (admin)' : 'Vstúpiť', extra: admin ? [{ label: 'Rozhodca odkladá trojuholník (admin)', act: 'rackDemo', title: 'Ukážka: rozhodca zoberie trojuholník zo stola a zavesí ho pod stôl' }, { label: 'Ukážka konca zápasu (admin)', act: 'fiestaDemo', title: 'Tabuľa s víťazom a konfety na kontrolu' }, { label: 'Ukážka od diváka (admin)', act: 'spectDemo', title: 'Sedíš na tribúne ako divák: LCD, malý stôl, konfety' }] : [] },
 		].map((r) => ({ ...r, tour: admin && !r.notour }));
 	};
@@ -2485,11 +2263,9 @@ export function start(root, config = {}) {
 			hotSet(null);
 			freeMouse = false;
 			ui.setFree(false);
-			if (view === 'living') {
-				exitView();
-			}
 			actions.league();
 		},
+		// obývačka je samostatná hra My Rooms (myrooms.hedlajner.sk): cedula v chodbe a mapa M vedú tam
 		goLiving: () => {
 			if (!user) {
 				ui.toast('Obývačka je pre prihlásených hráčov.');
@@ -2499,55 +2275,15 @@ export function start(root, config = {}) {
 				ui.toast('Počas partie alebo sledovania sa miestnosť meniť nedá.');
 				return;
 			}
-			hotSet(null);
-			freeMouse = false;
-			ui.setFree(false);
-			ui.showMenu(false);
-			ui.openRoomMap(false);
-			fadeEl.classList.add('mysn-on');
-			setTimeout(() => {
-				if (view && view !== 'living') {
-					exitView();
-				}
-				if (venue !== 'home') {
-					setVenue('home');
-				}
-				enterView('living');
-				controls.capture();
-				ui.toast(LIVING_KEYS);
-				setTimeout(() => fadeEl.classList.remove('mysn-on'), 80);
-			}, 300);
-		},
-		livingFocus: (name) => {
-			if (view !== 'living' || !living.views[name]) {
+			if (!config.roomsUrl) {
+				ui.toast('Obývačka (My Rooms) teraz nie je dostupná.');
 				return;
 			}
-			const v = livingFocusNow === name ? living.seat : living.views[name];
-			livingFocusNow = livingFocusNow === name ? '' : name;
-			living.bookOpen(livingFocusNow === 'book'); // F1: kniha s klávesmi sa otvorí
-			// televízor: myš je voľná na klikanie po obrazovke, ostatné predmety sa len priblížia
-			if (livingFocusNow === 'tv') {
-				controls.uncapture();
-				freeMouse = true;
-				ui.setFree(true);
-				tv.refresh(true);
-				ui.toast('Televízor: diaľkový ovládač vpravo (SOURCE zdroj, CH kanál, VOL hlasitosť), alebo klikni myšou priamo na obrazovku. Esc späť na gauč.');
-			} else if (freeMouse) {
-				freeMouse = false;
-				ui.setFree(false);
-				renderer.domElement.style.cursor = '';
-				controls.capture();
-			}
-			if (livingFocusNow !== 'tv') {
-				tvVideoClose(); // video hrá len pri televízore
-				tvLinkHide();
-			}
-			tvRemoteShow(livingFocusNow === 'tv'); // F2: diaľkový ovládač vpravo
-			rig.setView(v.pos.clone(), v.look.clone());
-			const d = v.look.clone().sub(v.pos);
-			chairLook.yaw = Math.atan2(d.z, d.x);
-			chairLook.pitch = Math.atan2(d.y, Math.hypot(d.x, d.z));
-			rig.setViewZoom(livingFocusNow ? 1 : 0.85);
+			hotSet(null);
+			fadeEl.classList.add('mysn-on');
+			setTimeout(() => {
+				location.href = config.roomsUrl;
+			}, 250);
 		},
 		officeLeave: () => {
 			fadeEl.classList.add('mysn-on');
@@ -3126,9 +2862,6 @@ export function start(root, config = {}) {
 				return;
 			}
 			if (id === 'office') {
-				if (view === 'living') {
-					exitView();
-				}
 				actions.league(); // kancelária ligy
 				return;
 			}
@@ -3660,7 +3393,6 @@ export function start(root, config = {}) {
 		auth: config.auth || null,
 		accountUrl: config.accountUrl,
 		venue: () => venue,
-		room: () => view, // obývačka: v menu Späť do herne
 		settings,
 		onAction: (name, value) => {
 			sound.unlock();
@@ -3719,10 +3451,6 @@ export function start(root, config = {}) {
 		},
 		// Ctrl + klik na rozsvietený predmet (za tágom aj vo voľnej kamere): to isté ako jeho kláves
 		hotClick: (e) => {
-			if (view === 'living' && e.button === 2 && livingFocusNow) {
-				actions.livingFocus(livingFocusNow); // pravé tlačidlo: späť na gauč
-				return true;
-			}
 			if (view === 'office' && e.button === 2 && (officeFocusNow || officeMode === 'cues')) {
 				// kancelária: pravé tlačidlo (aj bez Ctrl) zruší priblíženie na predmet, späť za písací stôl ako v herni za tágo
 				if (officeMode === 'cues') {
@@ -3763,7 +3491,7 @@ export function start(root, config = {}) {
 			}
 		},
 		viewDown: (e) => {
-			if (e.button === 2 && view && !['free', 'seat', 'seatPick', 'office', 'living', 'chalk'].includes(view) && !game.spectating) {
+			if (e.button === 2 && view && !['free', 'seat', 'seatPick', 'office', 'chalk'].includes(view) && !game.spectating) {
 				exitView(!!e.ctrlKey); // pravé tlačidlo v pohľade na predmet (stojan, nástenka, skóre, kreslo...): späť za tágo
 				if (e.ctrlKey) {
 					// Ctrl je stále stlačený: myš ostáva voľná (kurzor, rozsvietenie predmetov), nezachytí sa na tágo
@@ -3795,11 +3523,6 @@ export function start(root, config = {}) {
 			}
 			if (view === 'chair' && e.button === 0) {
 				controls.capture();
-			}
-			if (view === 'living' && e.button === 0 && !freeMouse && !controls.captured) {
-				ui.showMenu(false);
-				controls.capture(); // obývačka: klik zachytí myš na rozhliadanie
-				return;
 			}
 			if (view === 'office' && e.button === 0) {
 				// v kancelárii klik bez Ctrl nerobí nič; s podržaným Ctrl (voľná myš) vizitka, dvere a mapa hráčov
@@ -4020,7 +3743,7 @@ export function start(root, config = {}) {
 				}
 				return true;
 			}
-			if (lk === 'm' && !typing && (!view || view === 'free' || view === 'living' || (view === 'office' && !officeMode)) && !game.spectating && !ui.menuOpen()) {
+			if (lk === 'm' && !typing && (!view || view === 'free' || (view === 'office' && !officeMode)) && !game.spectating && !ui.menuOpen()) {
 				actions.roomMap(); // mapa miestností
 				return true;
 			}
@@ -4078,46 +3801,6 @@ export function start(root, config = {}) {
 			if (lk === 'escape' && ui.leaderboardOpen()) {
 				ui.opts.onAction('leaderboardClose');
 				return true;
-			}
-			if (view === 'living') {
-				if (livingFocusNow === 'tv' && lk !== 'escape' && (!tvVideoOn || ['s', 'pageup', 'pagedown', '+', '=', '-'].includes(lk)) && tv.key(lk)) {
-					tvRemoteShow(true);
-					return true; // televízor: šípky, Enter, medzerník, Backspace
-				}
-				if (livingFocusNow === 'tv' && lk === 'escape' && tvLinkOpen()) {
-					tvLinkHide();
-					return true;
-				}
-				if (livingFocusNow === 'tv' && lk === 'escape' && tvVideoOn) {
-					tvVideoClose(); // Esc najprv zavrie video
-					return true;
-				}
-				if (livingFocusNow === 'tv' && lk === 'escape' && tv.replay) {
-					tv.stop(); // Esc najprv zastaví záznam
-					return true;
-				}
-				const lkeys = { f1: 'book', f2: 'tv', f3: 'fire', f4: 'books' };
-				if (lkeys[lk]) {
-					actions.livingFocus(lkeys[lk]);
-					return true;
-				}
-				if (/^f\d+$/.test(lk) && lk !== 'f5' && lk !== 'f11') {
-					return true; // ostatné F klávesy v obývačke zatiaľ nič nerobia
-				}
-				if (lk === 'escape') {
-					if (livingFocusNow) {
-						actions.livingFocus(livingFocusNow);
-					} else if (ui.menuOpen()) {
-						if (performance.now() - (ui._menuAt || 0) > 300) {
-							ui.showMenu(false);
-							ui.toast('Klikni do hry, myš sa zachytí.');
-						}
-					} else {
-						controls.uncapture();
-						ui.showMenu(true, true);
-					}
-					return true;
-				}
 			}
 			if (view === 'office') {
 				// kancelária má vlastné klávesy (bez bočného panela)
@@ -4630,6 +4313,21 @@ export function start(root, config = {}) {
 		online.seatCtx = seatCtxNow;
 		online.away = !lampOn; // zhasnutá lampa v kancelárii: nie som online
 	}
+	// z My Rooms (televízor, Sledovať): adresa #watch=typ:id otvorí sledovanie partie
+	const wm = /^#watch=([a-z]+):(\d+)$/.exec(decodeURIComponent(location.hash || ''));
+	if (wm && online) {
+		history.replaceState(null, '', location.pathname + location.search);
+		setTimeout(async () => {
+			const list = await online.rooms();
+			const r = list.find((x) => String(x.type) === wm[1] && String(x.id) === wm[2]);
+			if (r) {
+				ui.showMenu(false);
+				actions.watchStart(r);
+			} else {
+				ui.toast('Táto partia sa už nehrá.');
+			}
+		}, 1500);
+	}
 	loadTrophies();
 	ui.setTipSource((spec) => ({ ...tipOf(spec), total: tipData.total, replaced: tipData.replaced, guest: !user || !online })); // špice v paneli tága (F2)
 	loadOwn();
@@ -4930,7 +4628,7 @@ export function start(root, config = {}) {
 		last = now;
 		controls.update(dt);
 		sound.setListener(rig.camera); // poslucháč = kamera (3D zvuk)
-		sound.setRoom(view === 'office' ? 'office' : view === 'living' ? 'living' : venue === 'league' ? 'stadium' : 'herna');
+		sound.setRoom(view === 'office' ? 'office' : venue === 'league' ? 'stadium' : 'herna');
 		// napätie: na štadióne pri rozhodujúcom údere (na stole už len čierna), kým sa mieri
 		const decider = venue === 'league' && game.match && game.match.rules && !game.match.rules.over && game.match.rules.on === 'black' && (game.state === 'aim' || game.state === 'watch');
 		if (decider !== tensionOn) {
@@ -5296,18 +4994,6 @@ export function start(root, config = {}) {
 			rackShowTick(dt); // rozhodca stavia gule do trojuholníka (štadión)
 		} else {
 			rackTick(dt); // trojuholník pri novom rozostavení
-		}
-		living.update(dt); // oheň v krbe, hodiny
-		if (view === 'living') {
-			tv.tick(dt, true);
-			tvPaintAt -= dt;
-			if (tvVideoOn) {
-				tvVideoPlace(); // okno videa drží polohu obrazovky
-			}
-			if (tv.dirty && tvPaintAt <= 0) {
-				tvPaintAt = tv.replay ? 1 / 30 : 0.1;
-				living.tvPaint((g) => tv.draw(g));
-			}
 		}
 		room.setSign('office', !!user);
 		room.setSign('living', !!user); // cedule svietia len prihláseným

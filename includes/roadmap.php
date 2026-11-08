@@ -129,7 +129,7 @@ function mysn_roadmap() {
 		),
 		array(
 			'n'      => 7,
-			'title'  => 'Obývačka',
+			'title'  => 'Obývačka (presunutá do doplnku My Rooms)',
 			'status' => 'now',
 			'goal'   => 'Miestnosť na oddych a stretávanie hráčov: z herne cez dvere do chodby, svietiace cedule Kancelária a Obývačka, len pre prihlásených.',
 			'items'  => array(
@@ -154,6 +154,7 @@ function mysn_roadmap() {
 /** Denník zmien (najnovšie hore). */
 function mysn_changelog() {
 	return array(
+		array( '0.9.0', '8. 11. 2026', 'Obývačka je odteraz samostatná hra My Rooms (nový doplnok my-rooms, adresa myrooms.hedlajner.sk, kým nie je subdoména, hedlajner.sk/my-rooms). Cedula Obývačka v chodbe a mapa M otvoria jej stránku, dvere obývačky vedú späť do herne. Televízor s kanálmi, kniha s klávesmi a diaľkový ovládač sa presunuli do My Rooms; Sledovať zápas z televízora otvorí My Snooker priamo ako divák.' ),
 		array( '0.8.14', '8. 11. 2026', 'Cedule Kancelária a Obývačka sú späť v chodbe: visia na retiazkach hneď za dverami herne, takže cez otvorené dvere (F6) ich vidno spredu aj zboku; Ctrl a klik na ceduľu prejde do miestnosti.' ),
 		array( '0.8.13', '8. 11. 2026', 'Cedule Kancelária a Obývačka sú teraz jemne podsvietené priamo na dverách herne (zo strany herne), vidno ich aj pri zatvorených dverách; Ctrl a klik na ceduľu prejde do miestnosti.' ),
 		array( '0.8.12', '8. 11. 2026', 'Kamera: červená čiara v grafe (sledovanie smeru mierenia a zastavenie otáčania kamery) zrušená, kamera pri priblížení sa pozerá na mierenú guľu ako predtým. Graf ostáva: výška kamery, pásma rýchlosti, najbližšie ku guli.' ),

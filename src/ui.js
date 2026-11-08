@@ -470,9 +470,6 @@ export class UI {
 			if (this.opts.venue && this.opts.venue() === 'league') {
 				box.appendChild(this.button('Späť do herne', 'leagueHome'));
 			}
-			if (this.opts.room && this.opts.room() === 'living') {
-				box.appendChild(this.button('Späť do herne', 'officeLeave')); // z obývačky
-			}
 			box.append(...common());
 		}
 		box.appendChild(this.button('Späť na web', 'home'));
