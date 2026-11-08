@@ -135,7 +135,7 @@ function mysn_roadmap() {
 			'items'  => array(
 				array( 'Chodba za dverami herne (F6) so svietiacimi ceduľami Kancelária a Obývačka, klik s Ctrl = prechod do miestnosti', 1 ),
 				array( 'Obývačka: gauč, kreslá, krb s ohňom, koberec, stojaca lampa, knižnica, rastliny, okno, hodiny na rímse; sedenie na gauči, F1 televízor, F2 krb, F3 knižnica, mapa M', 1 ),
-				array( 'Televízor: živé ligové zápasy (klik = sledovať), záznamy mojich zápasov, rekordy (najlepšie brejky, ELO)', 1 ),
+				array( 'Televízor: živé ligové zápasy (klik = sledovať), záznamy mojich zápasov, rekordy (najlepšie brejky, ELO), voľné TV stanice a YouTube', 1 ),
 				array( 'Vitrína s pohármi zo sezón, tabuľa rekordov (najvyšší brejk, ELO, najdlhšia séria výhier), Sieň slávy s majstrami sezón', 0 ),
 				array( 'Spoločenská časť: online hráči v obývačke na gauči a kreslách s menom, klik = vyzvať na partiu, ELO a štatistiky; chat neskôr', 0 ),
 				array( 'Okno s výhľadom podľa skutočného času a počasia', 0 ),
@@ -154,6 +154,7 @@ function mysn_roadmap() {
 /** Denník zmien (najnovšie hore). */
 function mysn_changelog() {
 	return array(
+		array( '0.8.3', '8. 11. 2026', 'Televízor v obývačke: nové kanály 4 Televízia (voľné živé spravodajské stanice cez YouTube: Al Jazeera English, DW News, France 24 English, Sky News, euronews, NASA) a 5 YouTube (vložíš odkaz na video, živé vysielanie alebo playlist, posledné pozerané si televízor pamätá). Video hrá priamo na obrazovke televízora, ✕ Zavrieť alebo Esc ho zastaví, odchodom od televízora sa zastaví samo. Kanály sa dajú prepínať aj klávesmi 1 až 5.' ),
 		array( '0.8.2', '7. 11. 2026', 'Obývačka, televízor (etapa 2): F1 priblíži televízor a myš je voľná na klikanie po obrazovke. Kanály: 1 Živé zápasy (prebiehajúce ligové zápasy a otvorené partie, klik Sledovať), 2 Moje zápasy (ligové zápasy s výsledkom a ELO, klik Záznam prehrá zápas priamo na televízore s tlačidlami ⏮ ◀ ⏸ ▶▶ ⏭, rýchlosť a Späť), 3 Rekordy (najlepšie brejky z ligy aj hry o skóre a najvyššie ELO). Ovládanie aj klávesmi: ← → kanál, ↑ ↓ výber, Enter spustiť, Esc späť na gauč. Pravé tlačidlo v obývačke už nevracia do herne.' ),
 		array( '0.8.1', '7. 11. 2026', 'Chodba: tlmenejšie svetlo a cedule Kancelária a Obývačka, aby nebili do očí (text je lepšie čitateľný).' ),
 		array( '0.8.0', '7. 11. 2026', 'Obývačka (etapa 1): z herne cez dvere (F6) do chodby, na jej stene svietiace cedule Kancelária a Obývačka, klik s Ctrl prejde do miestnosti (len prihlásení, neprihláseným cedule nesvietia). Obývačka má gauč, kreslá, krb s plápolajúcim ohňom, koberec, stojaciu lampu, knižnicu, rastliny, okno, hodiny na rímse so skutočným časom a televízor (zatiaľ znelka My Snooker TV). Sedíš na gauči a myšou sa rozhliadaš, F1 televízor, F2 krb, F3 knižnica, Ctrl a klik na dvere späť do herne, v menu Späť do herne, obývačka je aj v mape M. Plán vývoja: nová etapa 7 Obývačka.' ),

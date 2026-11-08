@@ -597,3 +597,11 @@ body.mysn-page { font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans
 .mysn-balls { display: flex; flex-wrap: wrap; gap: 10px; }
 .mysn-ball { display: inline-block; width: 18px; height: 18px; border-radius: 50%; margin-right: 4px; vertical-align: -3px; box-shadow: inset -3px -3px 5px #0006, inset 2px 2px 3px #fff5; }
 .mysn-rules-foot { margin: 14px 0 0; color: #9aa4b2; font-size: 14px; }
+/* televízor v obývačke: video YouTube nad obrazovkou a políčko na odkaz */
+.mysn-tvvideo { position: absolute; z-index: 30; background: #000; box-shadow: 0 0 0 2px #000; }
+.mysn-tvvideo iframe { width: 100%; height: 100%; border: 0; display: block; }
+.mysn-tvvideo-x { position: absolute; right: 0; top: -34px; background: #111a; color: #fff; border: 1px solid #fff4; border-radius: 6px; padding: 4px 10px; font: 600 13px/1.3 system-ui, sans-serif; cursor: pointer; }
+.mysn-tvvideo-x:hover { background: #FACC15; color: #111; }
+.mysn-tvvideo-t { position: absolute; left: 0; top: -30px; color: #e8ecf3; font: 600 13px/1.3 system-ui, sans-serif; text-shadow: 0 1px 3px #000; max-width: 70%; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+.mysn-tvlink { position: absolute; z-index: 31; left: 50%; top: 40%; transform: translate(-50%, -50%); width: min(520px, 90%); display: flex; flex-direction: column; gap: 10px; padding: 18px; }
+.mysn-tvlink input { width: 100%; padding: 9px 10px; border-radius: 6px; border: 1px solid #fff3; background: #0b1424; color: #fff; font-size: 15px; }

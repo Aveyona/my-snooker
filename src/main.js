@@ -512,24 +512,98 @@ export function start(root, config = {}) {
 			actions.watchStart(r);
 		},
 		toast: (t) => ui.toast(t),
+		stations: config.tv || [],
+		play: (o) => tvVideoOpen(o.src, o.title),
+		askLink: () => tvLinkAsk(),
 	});
 	let tvPaintAt = 0;
-	const tvRay = new THREE.Raycaster();
-	const tvMouse = new THREE.Vector2();
-	/** Bod na obrazovke televízora pod myšou (x, y v plátne) alebo null. */
-	const tvPoint = (e) => {
-		const r = renderer.domElement.getBoundingClientRect();
-		tvMouse.set(((e.clientX - r.left) / r.width) * 2 - 1, -((e.clientY - r.top) / r.height) * 2 + 1);
-		tvRay.setFromCamera(tvMouse, rig.camera);
-		const hit = tvRay.intersectObject(living.tvScreen, false)[0];
-		return hit && hit.uv ? { x: hit.uv.x * 1024, y: (1 - hit.uv.y) * 576 } : null;
-	};
-	renderer.domElement.addEventListener('pointermove', (e) => {
-		if (view === 'living' && livingFocusNow === 'tv' && freeMouse) {
-			const p = tvPoint(e);
-			renderer.domElement.style.cursor = p && tv.move(p.x, p.y) ? 'pointer' : '';
+	/*
+	 * Video na televízore (YouTube, živé stanice): prehrávač YouTube nejde vložiť do 3D obrazovky, preto leží
+	 * ako okno presne nad obrazovkou televízora (kamera stojí pri televízore). Odchodom od televízora sa zastaví.
+	 */
+	let tvVideo = null; // okno videa a políčko na odkaz sa vytvoria pri prvom použití (ui ešte nie je hotové)
+	let tvFrame = null;
+	let tvLink = null;
+	let tvLinkInput = null;
+	let tvVideoOn = '';
+	const tvLinkHide = () => tvLink && tvLink.classList.add('mysn-hidden');
+	const tvLinkOpen = () => !!tvLink && !tvLink.classList.contains('mysn-hidden');
+	const tvDom = () => {
+		if (tvVideo) {
+			return;
 		}
-	});
+		tvVideo = document.createElement('div');
+		tvVideo.className = 'mysn-tvvideo mysn-hidden';
+		tvVideo.innerHTML = '<iframe allow="autoplay; encrypted-media; picture-in-picture; fullscreen" allowfullscreen referrerpolicy="strict-origin-when-cross-origin"></iframe><button type="button" class="mysn-tvvideo-x" title="Zavrieť video (Esc)">✕ Zavrieť</button><span class="mysn-tvvideo-t"></span>';
+		ui.root.appendChild(tvVideo);
+		tvFrame = tvVideo.querySelector('iframe');
+		tvVideo.querySelector('.mysn-tvvideo-x').addEventListener('click', () => tvVideoClose());
+		tvLink = document.createElement('form');
+		tvLink.className = 'mysn-panel mysn-tvlink mysn-hidden';
+		tvLink.innerHTML = '<label>Odkaz z YouTube (video, živé vysielanie alebo playlist)</label><input type="url" placeholder="https://www.youtube.com/watch?v=..." autocomplete="off"><div><button type="submit" class="mysn-btn mysn-primary">Pozerať</button> <button type="button" class="mysn-btn" data-x>Zrušiť</button></div>';
+		ui.root.appendChild(tvLink);
+		tvLinkInput = tvLink.querySelector('input');
+		tvLink.addEventListener('submit', (e) => {
+			e.preventDefault();
+			if (tv.openLink(tvLinkInput.value)) {
+				tvLinkHide();
+			}
+		});
+		tvLink.querySelector('[data-x]').addEventListener('click', () => tvLinkHide());
+		tvLinkInput.addEventListener('keydown', (e) => {
+			e.stopPropagation(); // písanie do políčka neovláda hru
+			if (e.key === 'Escape') {
+				tvLinkHide();
+			}
+		});
+	};
+	const tvCorner = new THREE.Vector3();
+	/** Okno videa presne nad obrazovku televízora (premietnuté rohy). */
+	const tvVideoPlace = () => {
+		const r = renderer.domElement.getBoundingClientRect();
+		const ro = ui.root.getBoundingClientRect();
+		const p = living.tvScreen.geometry.parameters;
+		let x0 = 1e9;
+		let y0 = 1e9;
+		let x1 = -1e9;
+		let y1 = -1e9;
+		for (const [sx, sy] of [[-1, -1], [1, -1], [1, 1], [-1, 1]]) {
+			tvCorner.set((sx * p.width) / 2, (sy * p.height) / 2, 0);
+			living.tvScreen.localToWorld(tvCorner);
+			tvCorner.project(rig.camera);
+			const cx = r.left + ((tvCorner.x + 1) / 2) * r.width - ro.left;
+			const cy = r.top + ((1 - tvCorner.y) / 2) * r.height - ro.top;
+			x0 = Math.min(x0, cx);
+			x1 = Math.max(x1, cx);
+			y0 = Math.min(y0, cy);
+			y1 = Math.max(y1, cy);
+		}
+		Object.assign(tvVideo.style, { left: x0 + 'px', top: y0 + 'px', width: Math.max(160, x1 - x0) + 'px', height: Math.max(90, y1 - y0) + 'px' });
+	};
+	const tvVideoOpen = (src, title) => {
+		tvDom();
+		tvVideoOn = title || 'Video';
+		tvFrame.src = src;
+		tvVideo.querySelector('.mysn-tvvideo-t').textContent = tvVideoOn;
+		tvVideo.classList.remove('mysn-hidden');
+		tvVideoPlace();
+	};
+	const tvVideoClose = () => {
+		if (!tvVideoOn) {
+			return;
+		}
+		tvVideoOn = '';
+		tvFrame.src = 'about:blank';
+		tvVideo.classList.add('mysn-hidden');
+		tv.dirty = true;
+	};
+	/** YouTube: políčko na vloženie odkazu (bez okna prehliadača). */
+	const tvLinkAsk = () => {
+		tvDom();
+		tvLink.classList.remove('mysn-hidden');
+		tvLinkInput.value = '';
+		setTimeout(() => tvLinkInput.focus(), 30);
+	};
 	renderer.domElement.addEventListener('pointerdown', (e) => {
 		if (view === 'living' && livingFocusNow === 'tv' && freeMouse && e.button === 0) {
 			const p = tvPoint(e);
@@ -1842,6 +1916,8 @@ export function start(root, config = {}) {
 				renderer.domElement.style.cursor = '';
 			}
 			tv.stop();
+			tvVideoClose();
+			tvLinkHide();
 			livingFocusNow = '';
 			rig.noClamp = false;
 			rig.snapNext = true;
@@ -1976,6 +2052,8 @@ export function start(root, config = {}) {
 				renderer.domElement.style.cursor = '';
 			}
 			tv.stop();
+			tvVideoClose();
+			tvLinkHide();
 			livingFocusNow = '';
 			rig.noClamp = false;
 			rig.snapNext = true; // z obývačky späť do herne hneď
@@ -2404,6 +2482,10 @@ export function start(root, config = {}) {
 				ui.setFree(false);
 				renderer.domElement.style.cursor = '';
 				controls.capture();
+			}
+			if (livingFocusNow !== 'tv') {
+				tvVideoClose(); // video hrá len pri televízore
+				tvLinkHide();
 			}
 			rig.setView(v.pos.clone(), v.look.clone());
 			const d = v.look.clone().sub(v.pos);
@@ -3939,8 +4021,16 @@ export function start(root, config = {}) {
 				return true;
 			}
 			if (view === 'living') {
-				if (livingFocusNow === 'tv' && lk !== 'escape' && tv.key(lk)) {
+				if (livingFocusNow === 'tv' && lk !== 'escape' && !tvVideoOn && tv.key(lk)) {
 					return true; // televízor: šípky, Enter, medzerník, Backspace
+				}
+				if (livingFocusNow === 'tv' && lk === 'escape' && tvLinkOpen()) {
+					tvLinkHide();
+					return true;
+				}
+				if (livingFocusNow === 'tv' && lk === 'escape' && tvVideoOn) {
+					tvVideoClose(); // Esc najprv zavrie video
+					return true;
 				}
 				if (livingFocusNow === 'tv' && lk === 'escape' && tv.replay) {
 					tv.stop(); // Esc najprv zastaví záznam
@@ -5144,6 +5234,9 @@ export function start(root, config = {}) {
 		if (view === 'living') {
 			tv.tick(dt, true);
 			tvPaintAt -= dt;
+			if (tvVideoOn) {
+				tvVideoPlace(); // okno videa drží polohu obrazovky
+			}
 			if (tv.dirty && tvPaintAt <= 0) {
 				tvPaintAt = tv.replay ? 1 / 30 : 0.1;
 				living.tvPaint((g) => tv.draw(g));

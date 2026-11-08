@@ -7,24 +7,57 @@ import { Replay } from './replay.js';
 
 const W = 1024;
 const H = 576;
-const TABS = ['Živé zápasy', 'Moje zápasy', 'Rekordy'];
+const TABS = ['Živé zápasy', 'Moje zápasy', 'Rekordy', 'Televízia', 'YouTube'];
+const NT = TABS.length;
 const ROWS = 7; // riadkov na obrazovke
 const ROW_Y = 132;
 const ROW_H = 54;
 const KINDS = { training: 'Tréning', solo: 'O najlepšie skóre', league: 'Ligový zápas' };
 const RES = { win: 'výhra', loss: 'prehra', resign: 'vzdal som', resigned: 'súper vzdal', disconnect: 'výpadok', 'win-disconnect': 'výhra (výpadok súpera)', annulled: 'zrušený', live: 'prebieha' };
-const STALE = [10, 60, 120]; // po koľkých sekundách sa kanál načíta znova
+const STALE = [10, 60, 120, 1e9, 1e9]; // po koľkých sekundách sa kanál načíta znova (televízia a YouTube sa nenačítavajú)
+const RECENT_KEY = 'mysn_tv_yt';
+
+/** Odkaz z YouTube (video, shorts, živé vysielanie, playlist alebo samotné ID) → adresa prehrávača, alebo ''. */
+export function ytEmbed(url) {
+	const u = String(url || '').trim();
+	let id = '';
+	let list = '';
+	const m = u.match(/(?:v=|youtu\.be\/|\/shorts\/|\/live\/|\/embed\/)([\w-]{11})/);
+	if (m) {
+		id = m[1];
+	} else if (/^[\w-]{11}$/.test(u)) {
+		id = u;
+	}
+	const l = u.match(/[?&]list=([\w-]+)/);
+	if (l) {
+		list = l[1];
+	}
+	if (id) {
+		return `https://www.youtube.com/embed/${id}?autoplay=1&rel=0${list ? '&list=' + list : ''}`;
+	}
+	if (list) {
+		return `https://www.youtube.com/embed/videoseries?list=${list}&autoplay=1&rel=0`;
+	}
+	return '';
+}
+const liveEmbed = (channel) => `https://www.youtube.com/embed/live_stream?channel=${encodeURIComponent(channel)}&autoplay=1&rel=0`;
 
 export class Tv {
-	/** o = { load(path) → Promise, watch(room), toast(text) } */
+	/** o = { load(path) → Promise, watch(room), toast(text), play({ src, title }), askLink(), stations: [{ name, info, yt }] } */
 	constructor(o) {
 		this.o = o;
+		this.recent = [];
+		try {
+			this.recent = JSON.parse(localStorage.getItem(RECENT_KEY) || '[]').slice(0, 12);
+		} catch (e) {
+			this.recent = [];
+		}
 		this.ch = 0;
 		this.sel = 0;
 		this.top = 0; // prvý zobrazený riadok
 		this.hover = -1;
-		this.data = [null, null, null];
-		this.age = [1e9, 1e9, 1e9];
+		this.data = [null, null, null, { stations: o.stations || [] }, {}];
+		this.age = [1e9, 1e9, 1e9, 0, 0];
 		this.loading = false;
 		this.err = '';
 		this.replay = null;
@@ -36,7 +69,7 @@ export class Tv {
 	/** Načíta aktuálny kanál, ak je starý (force = hneď). */
 	async refresh(force) {
 		const ch = this.ch;
-		if (this.loading || (!force && this.age[ch] < STALE[ch])) {
+		if (ch > 2 || this.loading || (!force && this.age[ch] < STALE[ch])) {
 			return;
 		}
 		this.loading = true;
@@ -87,7 +120,35 @@ export class Tv {
 				act: m.result === 'live' ? null : () => this.play(m),
 			}));
 		}
+		if (this.ch === 3) {
+			return (d.stations || []).map((t) => ({ a: t.name, b: t.info || 'Živé vysielanie', r: 'Pozerať ▶', act: () => this.o.play({ src: liveEmbed(t.yt), title: t.name }) }));
+		}
+		if (this.ch === 4) {
+			return [
+				{ a: 'Vložiť odkaz z YouTube…', b: 'Video, živé vysielanie alebo playlist: skopíruj adresu z YouTube a vlož ju sem', r: 'Vložiť ▶', act: () => this.o.askLink() },
+				...this.recent.map((x) => ({ a: x.title || x.url, b: 'Naposledy pozerané', r: 'Pozerať ▶', act: () => this.o.play({ src: ytEmbed(x.url), title: x.title || x.url }) })),
+			];
+		}
 		return [];
+	}
+
+	/** Pozrieť odkaz z YouTube; zapamätá si ho medzi naposledy pozeranými. */
+	openLink(url) {
+		const src = ytEmbed(url);
+		if (!src) {
+			this.o.toast('To nie je odkaz na YouTube video ani playlist.');
+			return false;
+		}
+		const title = String(url).trim().replace(/^https?:\/\/(www\.)?/, '').slice(0, 60);
+		this.recent = [{ url: String(url).trim(), title }, ...this.recent.filter((x) => x.url !== String(url).trim())].slice(0, 12);
+		try {
+			localStorage.setItem(RECENT_KEY, JSON.stringify(this.recent));
+		} catch (e) {
+			// bez pamäte
+		}
+		this.dirty = true;
+		this.o.play({ src, title });
+		return true;
 	}
 
 	async play(m) {
@@ -112,7 +173,7 @@ export class Tv {
 	}
 
 	setCh(i) {
-		this.ch = (i + 3) % 3;
+		this.ch = (i + NT) % NT;
 		this.sel = 0;
 		this.top = 0;
 		this.hover = -1;
@@ -137,6 +198,10 @@ export class Tv {
 			return false;
 		}
 		const n = this.rows().length;
+		if (/^[1-5]$/.test(k)) {
+			this.setCh(Number(k) - 1); // 1 až 5: kanál priamo
+			return true;
+		}
 		if (k === 'arrowleft' || k === 'arrowright') {
 			this.setCh(this.ch + (k === 'arrowleft' ? -1 : 1));
 			return true;
@@ -171,10 +236,10 @@ export class Tv {
 			return { t: 'ctl', k: 'space' };
 		}
 		if (y < 112 && y > 64) {
-			const i = Math.floor((x - 40) / ((W - 80) / 3));
-			return i >= 0 && i < 3 ? { t: 'tab', i } : null;
+			const i = Math.floor((x - 40) / ((W - 80) / NT));
+			return i >= 0 && i < NT ? { t: 'tab', i } : null;
 		}
-		if (this.ch < 2 && y >= ROW_Y && y < ROW_Y + ROWS * ROW_H) {
+		if (this.ch !== 2 && y >= ROW_Y && y < ROW_Y + ROWS * ROW_H) {
 			const i = this.top + Math.floor((y - ROW_Y) / ROW_H);
 			return i < this.rows().length ? { t: 'row', i } : null;
 		}
@@ -249,15 +314,15 @@ export class Tv {
 		const now = new Date();
 		g.fillText(now.toLocaleTimeString('sk-SK', { hour: '2-digit', minute: '2-digit' }), W - 40, 36);
 		// karty kanálov
-		const tw = (W - 80) / 3;
+		const tw = (W - 80) / NT;
 		TABS.forEach((t, i) => {
 			const x = 40 + i * tw;
 			g.fillStyle = i === this.ch ? '#FACC15' : '#ffffff14';
 			g.fillRect(x + 4, 68, tw - 8, 42);
 			g.fillStyle = i === this.ch ? '#111' : '#e8ecf3';
-			g.font = 'bold 24px Arial, sans-serif';
+			g.font = 'bold 21px Arial, sans-serif';
 			g.textAlign = 'center';
-			g.fillText(`${i + 1}  ${t}`, x + tw / 2, 90);
+			g.fillText(`${i + 1} ${t}`, x + tw / 2, 90);
 		});
 		g.textAlign = 'left';
 		const d = this.data[this.ch];
@@ -268,7 +333,7 @@ export class Tv {
 		} else {
 			const rows = this.rows();
 			if (!rows.length) {
-				this.note(g, this.ch === 0 ? 'Teraz sa nehrá žiadna otvorená partia ani ligový zápas.' : 'Zatiaľ nemáš žiadny ligový zápas.');
+				this.note(g, this.ch === 0 ? 'Teraz sa nehrá žiadna otvorená partia ani ligový zápas.' : this.ch === 3 ? 'Žiadne stanice.' : 'Zatiaľ nemáš žiadny ligový zápas.');
 			}
 			for (let k = 0; k < ROWS; k++) {
 				const i = this.top + k;
