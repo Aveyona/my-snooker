@@ -3,7 +3,7 @@
  * alebo prstami). Prechody medzi pohľadmi sú plynulé.
  */
 import * as THREE from 'three';
-import { zoomCfg, zoomHeight, zoomSpeed, zoomFollow } from './camZoom.js';
+import { zoomCfg, zoomHeight, zoomSpeed } from './camZoom.js';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import { L, W } from './physics.js';
 import { ROOM, clampToRoom } from './room.js';
@@ -102,6 +102,7 @@ export class CameraRig {
 		this.panLift = 0;
 		this.panBlend = 0; // ako veľmi sa pohľad už otočil na mierenú guľu (0 = ako za tágom)
 		this.panZoom = 1; // koliesko pri držanom pravom tlačidle platí len počas držania
+		this._frozenLook = null; // smer pohľadu zastavený na červenej čiare grafu (Kamera)
 	}
 
 	/** Po údere: otáčanie pohľadu okolo bielej pohybom myši. */
@@ -230,17 +231,6 @@ export class CameraRig {
 			pos.add(this.panOffset);
 			if (this.aimPoint) {
 				look.lerp(this.aimPoint, this.panBlend || 0);
-				// od miesta v grafe (Kamera, červená čiara) sa pohľad stáča aj smerom mierenia za guľu
-				const zc = this.zoomCfg;
-				const pd = this.panDist || 1;
-				if (zc && pd < 1) {
-					const w = zoomFollow(zc, Math.log(pd) / Math.log(zc.near));
-					if (w > 0) {
-						const ahead = this._ahead || (this._ahead = new THREE.Vector3());
-						ahead.set(this.aimPoint.x + Math.cos(dir) * 0.6, this.aimPoint.y, this.aimPoint.z + Math.sin(dir) * 0.6);
-						look.lerp(ahead, w);
-					}
-				}
 				// koliesko pri držanom pravom tlačidle: vlastné priblíženie ku guli
 				// (len vodorovne: výška nad guľou, ktorú dáva myš hore a dole, ostáva)
 				const pz = this.panZoom || 1;
@@ -249,6 +239,19 @@ export class CameraRig {
 				pos.y = Math.max(this.aimPoint.y + 0.04, pos.y);
 			} else {
 				look.add(this.panOffset);
+			}
+			// od červenej čiary v grafe (Kamera) kamera prestane sledovať guľu: ostane otočená tak, ako bola na čiare,
+			// a ďalej sa len približuje (guľa sa posúva v obraze, jamka za ňou ostáva vidno)
+			const zf = this.zoomCfg;
+			const pdf = this.panDist || 1;
+			const tf = zf && pdf < 1 ? Math.log(pdf) / Math.log(zf.near) : 0;
+			if (zf && zf.follow < 1 && this.aimPoint && tf >= zf.follow) {
+				if (!this._frozenLook) {
+					this._frozenLook = look.clone().sub(pos).normalize();
+				}
+				look.copy(pos).addScaledVector(this._frozenLook, 1);
+			} else {
+				this._frozenLook = null;
 			}
 			// kamera pri posune pravým tlačidlom nesmie ujsť ďalej od bielej ako dĺžka tága (ani príliš vysoko)
 			const maxD = this.cueReach || 1.5;

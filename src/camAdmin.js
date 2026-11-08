@@ -39,11 +39,7 @@ const boot = () => {
 			near.value = Math.round(cfg.near * 100);
 			document.getElementById('mysn-cam-near-v').textContent = Math.round(cfg.near * 100) + ' %';
 		}
-		const fa = document.getElementById('mysn-cam-famt');
-		if (fa) {
-			fa.value = Math.round(cfg.followAmt * 100);
-			document.getElementById('mysn-cam-famt-v').textContent = Math.round(cfg.followAmt * 100) + ' %';
-		}
+
 		draw();
 	};
 
@@ -114,13 +110,14 @@ const boot = () => {
 		g.beginPath();
 		g.arc(X1, CB, 6, 0, Math.PI * 2);
 		g.fill();
-		// červená čiara: od tadiaľto sa kamera pozerá aj smerom mierenia (za guľu), plocha za ňou ukazuje ako veľmi
+		// červená čiara: od tadiaľto kamera prestane sledovať guľu a ostane otočená, ako je (plocha za ňou)
 		{
 			const fx = sx(cfg.follow);
 			if (cfg.follow < 1) {
 				const gr = g.createLinearGradient(fx, 0, X1, 0);
 				gr.addColorStop(0, 'rgba(220,38,38,0)');
-				gr.addColorStop(1, `rgba(220,38,38,${0.25 * cfg.followAmt + 0.03})`);
+				gr.addColorStop(0.15, 'rgba(220,38,38,0.12)');
+				gr.addColorStop(1, 'rgba(220,38,38,0.12)');
 				g.fillStyle = gr;
 				g.fillRect(fx, CT, X1 - fx, CB - CT);
 			}
@@ -140,7 +137,7 @@ const boot = () => {
 			g.fill();
 			g.font = '11px system-ui, sans-serif';
 			g.textAlign = cfg.follow > 0.7 ? 'right' : 'left';
-			g.fillText(cfg.follow < 1 ? `od ${Math.round(cfg.follow * 100)} %: kamera sleduje aj smer mierenia (${Math.round(cfg.followAmt * 100)} %)` : 'smer mierenia: vypnuté (ťahaj červenú čiaru doľava)', fx + (cfg.follow > 0.7 ? -8 : 8), CT + 14);
+			g.fillText(cfg.follow < 1 ? `od ${Math.round(cfg.follow * 100)} %: kamera už nesleduje guľu, ostane otočená ako je` : 'kamera sleduje guľu až do konca (ťahaj červenú čiaru doľava)', fx + (cfg.follow > 0.7 ? -8 : 8), CT + 14);
 			g.font = '12px system-ui, sans-serif';
 		}
 		// krivka
@@ -364,17 +361,9 @@ const boot = () => {
 				{ to: 1, v: 1 },
 			],
 			near: 0.15,
-			follow: 0.8,
-			followAmt: 0.7,
+			follow: 0.3,
 		});
 	});
-	const famt = document.getElementById('mysn-cam-famt');
-	if (famt) {
-		famt.addEventListener('input', () => {
-			cfg.followAmt = Number(famt.value) / 100;
-			save();
-		});
-	}
 	const near = document.getElementById('mysn-cam-near');
 	if (near) {
 		near.addEventListener('input', () => {
