@@ -49,7 +49,8 @@ export class CameraRig {
 			const LN = Math.log(zc.near);
 			const d0 = this.panDist || 1;
 			if (d0 > 1 || (d0 >= 1 && dy > 0)) {
-				this.panDist = Math.max(1, Math.min(2.5, d0 * Math.exp(dy * 0.004))); // oddialenie za tágom
+				// oddialenie za tágom: najviac na dĺžku tága od bielej (kamera narazila na hranicu = ďalej nejde)
+				this.panDist = this._panCapped && dy > 0 ? d0 : Math.max(1, Math.min(2.5, d0 * Math.exp(dy * 0.004)));
 			} else {
 				const t0 = Math.max(0, Math.log(d0) / LN);
 				const t1 = Math.max(0, Math.min(1, t0 + ((dy * 0.004) / LN) * zoomSpeed(zc, t0)));
@@ -237,6 +238,23 @@ export class CameraRig {
 				pos.y = Math.max(this.aimPoint.y + 0.04, pos.y);
 			} else {
 				look.add(this.panOffset);
+			}
+			// kamera pri posune pravým tlačidlom nesmie ujsť ďalej od bielej ako dĺžka tága (ani príliš vysoko)
+			const maxD = this.cueReach || 1.5;
+			const cp = cue && cue.p ? cue.p : pos;
+			const ex = pos.x - cp.x;
+			const ez = pos.z - cp.z;
+			const ed = Math.hypot(ex, ez);
+			this._panCapped = false;
+			if (ed > maxD) {
+				pos.x = cp.x + (ex / ed) * maxD;
+				pos.z = cp.z + (ez / ed) * maxD;
+				this._panCapped = true;
+			}
+			const maxY = Math.max(0.6, maxD * 0.6);
+			if (pos.y > maxY) {
+				pos.y = maxY;
+				this._panCapped = true;
 			}
 		}
 		if (this.mode !== 'top' && !this.noClamp) {

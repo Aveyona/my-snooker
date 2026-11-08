@@ -714,6 +714,7 @@ export function start(root, config = {}) {
 			cueSpec = specFor(cueSpec.id);
 			cue.setSpec(cueSpec);
 			controls.setCue(cueSpec);
+		rig.cueReach = (cueSpec.len || 1.45) + (settings.cueExt || 0); // kamera pravým tlačidlom najviac na dĺžku tága od bielej
 			ui.setCueInfo(cueSpec);
 		}
 		if (!quiet) {
@@ -2140,6 +2141,7 @@ export function start(root, config = {}) {
 		cue.setSpec(cueSpec);
 		stadiumRack();
 		controls.setCue(cueSpec);
+		rig.cueReach = (cueSpec.len || 1.45) + (settings.cueExt || 0); // kamera pravým tlačidlom najviac na dĺžku tága od bielej
 		room.selectCue(cueSpec.id, cueSpec.base);
 		ui.showView(view, rackNow(), cueSpec.id, rackInfoNow());
 		ui.setCueInfo(cueSpec);
@@ -3077,6 +3079,7 @@ export function start(root, config = {}) {
 			controls.fineMap = settings.fineCues;
 			saveSettings(settings);
 			controls.setCue(cueSpec);
+		rig.cueReach = (cueSpec.len || 1.45) + (settings.cueExt || 0); // kamera pravým tlačidlom najviac na dĺžku tága od bielej
 			ui.toast(v.on ? 'Jemné mierenie je pri tomto tágu vždy zapnuté. So Shift mieriš rýchlo.' : 'Jemné mierenie len so Shift.');
 		},
 		// šúpatko Pravé tlačidlo (Ctrl): citlivosť pohľadu pravým tlačidlom vo všetkých smeroch
@@ -3208,6 +3211,7 @@ export function start(root, config = {}) {
 			saveSettings(settings);
 			cueSpec = specFor(cueSpec.id);
 			controls.setCue(cueSpec);
+		rig.cueReach = (cueSpec.len || 1.45) + (settings.cueExt || 0); // kamera pravým tlačidlom najviac na dĺžku tága od bielej
 			ui.openTools(false);
 			if (!freeMouse) {
 				controls.capture();
@@ -3580,6 +3584,7 @@ export function start(root, config = {}) {
 				cueSpec = specFor(cueSpec.id);
 				cue.setSpec(cueSpec);
 				controls.setCue(cueSpec);
+		rig.cueReach = (cueSpec.len || 1.45) + (settings.cueExt || 0); // kamera pravým tlačidlom najviac na dĺžku tága od bielej
 				ui.setCueInfo(cueSpec);
 				ui.updateCueCard(cueSpec);
 			}
@@ -4264,6 +4269,7 @@ export function start(root, config = {}) {
 	settings.fineCues = settings.fineCues || {}; // tágá s jemným mierením vždy zapnutým (1) alebo vypnutým (0)
 	controls.fineMap = settings.fineCues;
 	controls.setCue(cueSpec);
+		rig.cueReach = (cueSpec.len || 1.45) + (settings.cueExt || 0); // kamera pravým tlačidlom najviac na dĺžku tága od bielej
 	// priblíženie kolieskom za tágom sa pamätá (pri držanom pravom tlačidle platí koliesko len počas držania)
 	rig.zoom = Math.min(6, Math.max(0.3, Number(settings.zoom) || 1));
 	controls.hooks.zoomed = (z, pz) => {
@@ -4629,6 +4635,7 @@ export function start(root, config = {}) {
 	loadOwn();
 
 	controls.setCue(cueSpec);
+		rig.cueReach = (cueSpec.len || 1.45) + (settings.cueExt || 0); // kamera pravým tlačidlom najviac na dĺžku tága od bielej
 	ui.setCueInfo(cueSpec);
 	ui.setChalk(chalk);
 	updateScore();

@@ -154,6 +154,7 @@ function mysn_roadmap() {
 /** Denník zmien (najnovšie hore). */
 function mysn_changelog() {
 	return array(
+		array( '0.8.8', '8. 11. 2026', 'Kamera pri držaní pravého tlačidla: oddialenie dozadu (aj posun bez mierenej gule) je obmedzené, kamera nesmie ujsť ďalej od bielej ako je dĺžka tága (s predĺžením) a nesmie vyletieť vysoko nad stôl; pri hranici sa ďalej nevzďaľuje, takže sa netreba dlho vracať.' ),
 		array( '0.8.7', '8. 11. 2026', 'Administrácia Kamera: popis k tlačidlám (pridať a odobrať pásmo, podľa náčrtu, predvolené), k šúpatku Najbližšie ku guli (s príkladom) a k náhľadu z boku; v náhľade popisky mierená guľa, kamera za tágom a najbližšie; v úzkom pásme rýchlosti sa text skráti, aby sa neprekrýval.' ),
 		array( '0.8.6', '8. 11. 2026', 'Administrácia My Snooker → Kamera: graf, ako funguje priblíženie na mierenú guľu pravým tlačidlom myši. Oranžová krivka je výška kamery počas priblíženia (body sa ťahajú myšou, dvojklik pridá alebo odoberie bod), zelený pás hore je rýchlosť po pásmach (Najrýchlejšie, Rýchlo, Normálne, Pomaly, Najpomalšie; klik zmení rýchlosť, hranice sa ťahajú), šúpatko Najbližšie ku guli a náhľad cesty kamery z boku. Tlačidlá Podľa náčrtu a Predvolené. Platí pre všetkých hráčov.' ),
 		array( '0.8.5', '8. 11. 2026', 'Presné mierenie vždy zapnuté je predvolene len pri Citlivom tágu (aj pri vlastnom tágu z jeho šablóny). Pri ostatných tágach so Shift Shift zapína presné mierenie. Doterajšie voľby sa všetkým hráčom raz vynulovali na nové predvolené, na stojane (F2) sa dajú pri každom tágu znova zmeniť.' ),
