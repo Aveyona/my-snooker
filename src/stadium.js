@@ -217,7 +217,7 @@ export function buildStadium(scene, quality, clock = 45) {
 	// svietidlo nad stolom s dvoma obrazovkami (moderný kužeľ: dole užší, hore širší), obrazovky šikmo k tribúnam;
 	// spodná strana je svetelný panel, ktorý svieti na stôl
 	const lcdBox = new THREE.Group();
-	lcdBox.position.set(0, 1.6, 0); // spodok vo výške pôvodných lámp nad stolom (svetlá ostávajú)
+	lcdBox.position.set(0, 2.0, 0); // spodok o 40 cm vyššie než pôvodné lampy, aby nezavadzal kamere za tágom (svetlá ostávajú)
 	root.add(lcdBox);
 	const LW = 3.3; // dĺžka pozdĺž stola
 	const BH = 0.26; // polovičná hrúbka dole (šírka svetelného panelu ako pôvodné tienidlá)
@@ -249,8 +249,8 @@ export function buildStadium(scene, quality, clock = 45) {
 		}
 		// závesy k stropu
 		for (const x of [-1.3, 1.3]) {
-			const rod = new THREE.Mesh(new THREE.CylinderGeometry(0.012, 0.012, 1.4, 8), metal);
-			rod.position.set(x, HH + 0.7, 0);
+			const rod = new THREE.Mesh(new THREE.CylinderGeometry(0.012, 0.012, 1.0, 8), metal);
+			rod.position.set(x, HH + 0.5, 0); // kratšie, svietidlo visí vyššie
 			lcdBox.add(rod);
 		}
 	}
@@ -911,6 +911,58 @@ export function buildStadium(scene, quality, clock = 45) {
 		fans.push(fan);
 	});
 
+	// komentátor Rudo (0.13.1): celý v čiernom, čierne zrkadlové okuliare, dlhé biele vlasy; sedí sám v strede
+	// tretieho radu na strane rozhodcu (+z), stoličky vedľa neho sú pre online divákov obsadené
+	const RUDO_SEAT = seatOf(0, 1, 2);
+	for (const d of [-1, 0, 1]) {
+		reserved.add(RUDO_SEAT + d);
+	}
+	const rudo = (() => {
+		const rp = seatPlace(RUDO_SEAT);
+		const fan = buildFan({ skin: 0xe8c4a0, shirt: 0x111111, hair: 0xf2f2ee }, false, 0.9);
+		const black = new THREE.MeshStandardMaterial({ color: 0x0c0c0e, roughness: 0.7 });
+		fan.f.traverse((o) => {
+			if (o.isMesh && o.material && o.material.color && o.material.color.getHex() === 0x23262e) {
+				o.material = black; // čierne nohavice
+			}
+		});
+		const hairM = new THREE.MeshStandardMaterial({ color: 0xf2f2ee, roughness: 0.85 });
+		const hd = fan.head;
+		// dlhé biele vlasy: zadná časť po plecia a pramene po bokoch
+		const back = new THREE.Mesh(new THREE.CapsuleGeometry(0.1, 0.22, 6, 12), hairM);
+		back.position.set(0, -0.12, -0.07);
+		back.scale.set(1.15, 1, 0.55);
+		hd.add(back);
+		for (const sx of [-1, 1]) {
+			const side = new THREE.Mesh(new THREE.CapsuleGeometry(0.035, 0.2, 4, 8), hairM);
+			side.position.set(sx * 0.1, -0.1, 0);
+			side.rotation.z = sx * 0.08;
+			hd.add(side);
+		}
+		// zrkadlové okuliare: dve lesklé sklá a mostík
+		const lens = new THREE.MeshStandardMaterial({ color: 0x1a1a1f, metalness: 1, roughness: 0.06, envMapIntensity: 1.5 });
+		const frame = new THREE.MeshStandardMaterial({ color: 0x050505, roughness: 0.3 });
+		for (const ex of [-0.042, 0.042]) {
+			const l = new THREE.Mesh(new THREE.CylinderGeometry(0.03, 0.03, 0.012, 20), lens);
+			l.rotation.x = Math.PI / 2;
+			l.position.set(ex, 0.022, 0.104);
+			hd.add(l);
+		}
+		const br = new THREE.Mesh(new THREE.BoxGeometry(0.03, 0.008, 0.008), frame);
+		br.position.set(0, 0.03, 0.11);
+		hd.add(br);
+		for (const sx of [-1, 1]) {
+			const arm = new THREE.Mesh(new THREE.BoxGeometry(0.006, 0.008, 0.1), frame);
+			arm.position.set(sx * 0.074, 0.025, 0.06);
+			hd.add(arm);
+		}
+		fan.f.position.set(rp.x, rp.y, rp.z);
+		fan.f.rotation.y = rp.rot;
+		root.add(fan.f);
+		fans.push(fan);
+		return { fan, head: () => ({ x: rp.x, y: rp.y + 0.9, z: rp.z }) };
+	})();
+
 	// konfety: dážď zo stropu po zápase, dávky od divákov (kulisa aj online diváci, F7)
 	const confetti = new Confetti(root, FY);
 	/** Dávka konfiet od kulisových divákov (dvaja: jeden na každej strane). */
@@ -1199,6 +1251,15 @@ export function buildStadium(scene, quality, clock = 45) {
 		/** Stoličky pre online divákov: počet, obsadené kulisou, miesto, oči diváka a výber zhora. */
 		seatCount: 350,
 		reserved,
+		/** Komentátor Rudo: poloha hlavy (zvuk), zobrazenie podľa nastavenia, gesto pri hovorení. */
+		rudoPos: rudo.head,
+		rudoShow(on) {
+			rudo.fan.f.visible = !!on;
+		},
+		rudoTalk(kind = 'stand') {
+			rudo.fan.act = kind; // 'stand' vstane a tlieska, 'facepalm' sa chytí za hlavu
+			rudo.fan.t = kind === 'stand' ? 3 : 1.8;
+		},
 		seatPlace,
 		seatEye(i) {
 			const p = seatPlace(i);

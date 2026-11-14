@@ -542,6 +542,8 @@ export class Online {
 			this.takeShot();
 		} else if (m.k === 'settle') {
 			this.applyInfo({ ...(this.info || {}), id: this.matchId, status: 'active', seq: m.seq, state: m.state, shot: null, players: g.match.players, me: g.match.me });
+		} else if (m.k === 'fix' && m.m) {
+			this.applyFix({ ...m.m, me: 1 - m.m.me });
 		} else if (m.k === 'info' && m.m) {
 			this.applyInfo({ ...m.m, me: 1 - m.m.me });
 		} else if (m.k === 'cam') {
@@ -618,7 +620,8 @@ export class Online {
 		// scr = údaje pre veľkú obrazovku na štadióne (mená, skóre, kto je na rade, séria, guľa na rade)
 		const r = m.rules || {};
 		const scr = { tier: m.tier || 0, clock: m.clock || 0, names: m.players.map((p) => p.name), elos: m.players.map((p) => Number(p.elo) || 0), scores: sc, turn: r.over ? -1 : r.turn, brk: r.brk || 0, on: g.onText ? g.onText() : '', left: m.league && m.turnAt ? Math.max(0, (m.clock || 45) - (Date.now() - m.turnAt) / 1000) : null };
-		return { k: 'w-state', seq: m.seq, ver: 0, balls: snapshot(g.balls), place: g.state === 'place' ? 1 : 0, info: `${m.players[0].name} ${sc[0]} : ${sc[1]} ${m.players[1].name}`, scr };
+		// call = hlásenie rozhodcu a Ruda k poslednému úderu (divák ho prehrá raz, keď dostane nový stav)
+		return { k: 'w-state', seq: m.seq, ver: 0, balls: snapshot(g.balls), place: g.state === 'place' ? 1 : 0, info: `${m.players[0].name} ${sc[0]} : ${sc[1]} ${m.players[1].name}`, scr, call: m.call && m.call.seq === m.seq ? m.call : null };
 	}
 
 	/** Vyhľadávanie ligového zápasu: beží aj mimo kancelárie (tréning, hra o skóre), kým ho hráč nezruší. */
@@ -913,6 +916,11 @@ export class Online {
 				try {
 					const r = await this.net.call(it.type, it.d);
 					this.queue.shift();
+					if (r && r.fixed && r.match && r.match.state) {
+						// server úder prehral a výsledok vyšiel inak: platí stav servera, súperovi aj divákom (0.11.1)
+						this.applyFix(r.match);
+						this.rtcSendOpp({ k: 'fix', m: r.match });
+					}
 					if (r && r.match) {
 						// stav uloženej partie (koniec partie, liga): súperovi priamo a sebe
 						this.rtcSendOpp({ k: 'info', m: r.match });
@@ -972,6 +980,11 @@ export class Online {
 			this.pendingInfo = null;
 			this.applyInfo(p);
 		}
+		if (this._fixLater && g.state !== 'moving') {
+			const f = this._fixLater;
+			this._fixLater = null;
+			this.applyFix(f);
+		}
 	}
 
 	/** Jedno načítanie uloženej partie zo servera (po obnovení spojenia alebo keď server partiu ukončil). */
@@ -987,6 +1000,23 @@ export class Online {
 			this.hooks.status();
 		} finally {
 			this._polling = false;
+		}
+	}
+
+	/** Oprava výsledku úderu serverom: stav servera prepíše aj rovnaký ťah (seq), aby sa stoly zhodovali. */
+	applyFix(m) {
+		const g = this.game;
+		if (!g.match || m.id !== this.matchId || !m.state || m.seq < g.match.seq) {
+			return;
+		}
+		if (g.state === 'moving') {
+			this._fixLater = m; // dobehne úder, potom
+			return;
+		}
+		g.applyState(m.state, m.seq);
+		this.wsend(this.matchWState());
+		if (this.hooks.toast) {
+			this.hooks.toast('Rozhodca (server) prehral úder a výsledok opravil, stôl je podľa servera.');
 		}
 	}
 

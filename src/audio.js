@@ -11,7 +11,7 @@ export function soundGroup(slot) {
 	if (/^(amb-|door-|beep|tension|jingle-|clock-tick|notify|score)/.test(slot)) {
 		return 'room';
 	}
-	if (/^(applause|ovation|crowd-|laugh|whistle|cough|shush|player-)/.test(slot)) {
+	if (/^(applause|ovation|crowd-|laugh|whistle|cough|shush|player-|rudo-)/.test(slot)) {
 		return 'crowd';
 	}
 	return 'table'; // stôl, rozostavenie aj rozhodca
@@ -45,6 +45,53 @@ export class Sound {
 		this._count = 0;
 		this._lastPick = {};
 		this.amb = null;
+		this.lang = 'sk'; // jazyk hlasov (rozhodca, diváci): súbory s jazykom sk/en, súbory bez jazyka hrajú vždy
+		this._gl = {}; // slot → jazyk, v ktorom je načítaný
+		this._gp = {}; // slot → sľub načítania
+	}
+
+	/** Súbory slotu pre aktuálny jazyk: bez jazyka vždy, s jazykom len zhodné (keď zhodné nie sú, všetky). */
+	_pick(slot) {
+		const c = this.cfg[slot];
+		if (!c || !c.urls || !c.urls.length) {
+			return null;
+		}
+		let idx = c.urls.map((u, i) => i);
+		if (c.lang) {
+			const m = idx.filter((i) => !c.lang[i] || c.lang[i] === this.lang);
+			if (m.length) {
+				idx = m;
+			}
+		}
+		return { urls: idx.map((i) => c.urls[i]), w: idx.map((i) => (c.w || [])[i]) };
+	}
+
+	/** Načíta slot (raz pre jazyk); vráti sľub, true = má nahrávku. */
+	ensure(slot, gap = 0) {
+		const c = this.cfg[slot];
+		const l = c && c.lang ? this.lang : '';
+		if (this._gl[slot] !== l || !this._gp[slot]) {
+			this._gl[slot] = l;
+			const p = this._pick(slot);
+			this._gp[slot] = p && this.ctx ? this.load(slot, p.urls, p.w, gap).then((n) => n > 0) : Promise.resolve(false);
+		}
+		return this._gp[slot];
+	}
+
+	/** Zmena jazyka hlasov: sloty so súbormi v jazykoch sa načítajú znova. */
+	setLang(l) {
+		if (l === this.lang) {
+			return;
+		}
+		this.lang = l;
+		for (const slot of Object.keys(this._gl)) {
+			if (this._gl[slot]) {
+				delete this._gp[slot];
+				if (!(this.cfg[slot] && this.cfg[slot].lazy)) {
+					this.ensure(slot);
+				}
+			}
+		}
 	}
 
 	/** Prehliadače dovolia zvuk až po kliknutí; voláme pri prvom dotyku. */
@@ -91,12 +138,14 @@ export class Sound {
 	 * požiadaviek (odpovedal by 429 Too Many Requests). Najprv zvuky stola, potom miestnosť, diváci a ostatné.
 	 */
 	async loadAll() {
-		const order = (slot) => (/^(cue-|ball-|cushion-|pot-|break|chalk|place|rest|score)/.test(slot) ? 0 : /^amb-/.test(slot) ? 1 : 2);
+		const order = (slot) => (/^(cue-|ball-|cushion-|pot-|break|chalk|place|rest|score)/.test(slot) ? 0 : /^(ref-|rudo-)/.test(slot) ? 1 : /^amb-/.test(slot) ? 2 : 3); // rozhodca a Rudo hneď po stole
 		const list = Object.entries(this.cfg)
 			.filter(([, c]) => c && c.urls && c.urls.length)
 			.sort((a, b) => order(a[0]) - order(b[0]));
 		for (const [slot, c] of list) {
-			await this.load(slot, c.urls, c.w, 120);
+			if (!c.lazy) {
+				await this.ensure(slot, 120); // čísla rozhodcu (lazy) sa načítajú až pri hlásení
+			}
 		}
 	}
 
@@ -147,6 +196,21 @@ export class Sound {
 		if (this.master) {
 			this.master.gain.value = v;
 		}
+	}
+
+	/** Stíši skupinu (napríklad divákov, kým hovorí komentátor) na factor na sec sekúnd, potom ju plynulo vráti. */
+	duck(g, factor, sec) {
+		const b = this.bus && this.bus[g];
+		if (!b) {
+			return;
+		}
+		const t = this.ctx.currentTime;
+		const base = this.gvol[g];
+		b.gain.cancelScheduledValues(t);
+		b.gain.setValueAtTime(b.gain.value, t);
+		b.gain.linearRampToValueAtTime(base * factor, t + 0.15);
+		b.gain.setValueAtTime(base * factor, t + sec);
+		b.gain.linearRampToValueAtTime(base, t + sec + 0.6);
 	}
 
 	setGroupVolume(g, v) {
@@ -322,6 +386,9 @@ export class Sound {
 			if (r < 0) {
 				break;
 			}
+		}
+		if (typeof o.pick === 'number' && list.length) {
+			i = Math.abs(Math.floor(o.pick)) % list.length; // daný variant (u všetkých hráčov a divákov rovnaký)
 		}
 		this._lastPick[slot] = i;
 		const vel = Math.max(0, Math.min(1, o.vel === undefined ? 0.6 : o.vel));

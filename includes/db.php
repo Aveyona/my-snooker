@@ -20,7 +20,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-const MYSN_DB_VERSION = '15';
+const MYSN_DB_VERSION = '18';
 
 function mysn_table( $name ) {
 	global $wpdb;
@@ -89,8 +89,12 @@ after longtext NULL,
 points int(10) unsigned NOT NULL DEFAULT 0,
 foul tinyint(1) unsigned NOT NULL DEFAULT 0,
 created int(10) unsigned NOT NULL DEFAULT 0,
+chk tinyint(1) unsigned NOT NULL DEFAULT 0,
+note varchar(255) NOT NULL DEFAULT '',
+lp tinyint(1) unsigned NOT NULL DEFAULT 0,
 PRIMARY KEY  (id),
-UNIQUE KEY match_seq (match_id,seq)
+UNIQUE KEY match_seq (match_id,seq),
+KEY chk (chk)
 ) $c;"
 	);
 	dbDelta(
@@ -103,8 +107,17 @@ shots int(10) unsigned NOT NULL DEFAULT 0,
 fouls int(10) unsigned NOT NULL DEFAULT 0,
 brk int(10) unsigned NOT NULL DEFAULT 0,
 created int(10) unsigned NOT NULL DEFAULT 0,
+ver tinyint(1) unsigned NOT NULL DEFAULT 0,
+flag tinyint(1) unsigned NOT NULL DEFAULT 0,
+note varchar(255) NOT NULL DEFAULT '',
+claim varchar(255) NOT NULL DEFAULT '',
+tries tinyint(3) unsigned NOT NULL DEFAULT 0,
+ln smallint(5) unsigned NOT NULL DEFAULT 0,
+lk smallint(5) unsigned NOT NULL DEFAULT 0,
+vlog mediumtext NULL,
 PRIMARY KEY  (id),
 KEY best (points,seconds),
+KEY ver (ver),
 KEY user_id (user_id)
 ) $c;"
 	);

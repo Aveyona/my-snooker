@@ -101,6 +101,7 @@ function mysn_render( $preview ) {
 		'role'     => $user ? mysn_role() : '',
 		'staff'    => mysn_staff_ids(),
 		// admini (správcovia webu): na menovke pri kresle na štadióne majú pod menom ADMIN
+		'crowd'    => function_exists( 'mysn_crowd_config' ) ? mysn_crowd_config() : null, // publikum a Rudo (administrácia Publikum a Rudo)
 		'sounds'   => mysn_sounds_config(), // nahrávky a doladenie zvukov (My Snooker → Zvuky)
 		'roomsUrl' => (string) apply_filters( 'mysn_rooms_url', '' ), // obývačka: samostatná hra My Rooms (doplnok my-rooms)
 		'camZoom'  => mysn_cam_zoom(), // graf priblíženia na guľu pravým tlačidlom (My Snooker → Kamera)

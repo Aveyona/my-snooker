@@ -4,6 +4,9 @@
  * obrazovky, chat nižšie nejde: nová správa je dole pri strede a staré miznú hore.
  * Enter otvorí políčko na písanie hneď pod poslednou správou (bez správ hore vľavo), Enter pošle, Esc zavrie.
  * Nové správy: okamžitý signál z live servera (kanál chat:all), poistkou je občasný dopyt.
+ * Chat zápasu (0.10.0): počas partie (hráči a diváci) alebo v otvorenej herni sú dve záložky – 🎱 Zápas (len táto
+ * partia, správy zmiznú po jej konci) a Snooker (spoločná miestnosť); Tab v políčku prepína, kam píšem.
+ * Správy zápasu prídu cez kanál snk:c<kód partie> na live serveri, poistkou je dopyt.
  */
 
 const esc = (s) => String(s == null ? '' : s);
@@ -25,7 +28,18 @@ export function gameChat(root, cfg, hooks = {}) {
 	input.placeholder = hooks.canWrite && hooks.canWrite() ? 'Správa do miestnosti ' + esc(cfg.roomName || 'Snooker') + ' (Enter pošle, Esc zavrie)' : 'Písať môžu prihlásení';
 	const note = document.createElement('div');
 	note.className = 'mysn-gchat-note';
-	form.append(input, note);
+	const tabs = document.createElement('div');
+	tabs.className = 'mysn-gchat-tabs mysn-hidden';
+	const tabM = document.createElement('button');
+	tabM.type = 'button';
+	tabM.textContent = '🎱 Zápas';
+	const tabS = document.createElement('button');
+	tabS.type = 'button';
+	tabS.textContent = esc(cfg.roomName || 'Snooker');
+	const tabHint = document.createElement('small');
+	tabHint.textContent = 'Tab prepína';
+	tabs.append(tabM, tabS, tabHint);
+	form.append(tabs, input, note);
 	el.append(list, form);
 	root.appendChild(el);
 
@@ -38,6 +52,50 @@ export function gameChat(root, cfg, hooks = {}) {
 	let isOpen = false;
 	let closedAt = 0;
 	const seen = new Set();
+	// chat zápasu
+	let mctx = '';
+	let mlast = 0;
+	let mchan = '';
+	let mbusy = false;
+	let target = 'm'; // m = zápas, s = miestnosť Snooker
+	let wsId = 10;
+	const ctxNow = () => {
+		try {
+			return (hooks.ctx && hooks.ctx()) || '';
+		} catch (e) {
+			return '';
+		}
+	};
+	const placeholder = () => {
+		if (!(hooks.canWrite && hooks.canWrite())) {
+			return 'Písať môžu prihlásení';
+		}
+		return target === 'm' && mctx ? 'Správa hráčom a divákom tejto partie (Enter pošle, Tab Snooker, Esc zavrie)' : 'Správa do miestnosti ' + esc(cfg.roomName || 'Snooker') + (mctx ? ' (Enter pošle, Tab Zápas, Esc zavrie)' : ' (Enter pošle, Esc zavrie)');
+	};
+	const drawTabs = () => {
+		tabs.classList.toggle('mysn-hidden', !mctx);
+		tabM.classList.toggle('on', !!mctx && target === 'm');
+		tabS.classList.toggle('on', !mctx || target !== 'm');
+		input.placeholder = placeholder();
+	};
+	const setTarget = (t) => {
+		target = t;
+		drawTabs();
+		input.focus();
+	};
+	tabM.addEventListener('mousedown', (e) => {
+		e.preventDefault();
+		setTarget('m');
+	});
+	tabS.addEventListener('mousedown', (e) => {
+		e.preventDefault();
+		setTarget('s');
+	});
+	const wsSub = (ch, on) => {
+		if (ws && ws.readyState === 1 && ch) {
+			ws.send(JSON.stringify({ id: ++wsId, [on ? 'subscribe' : 'unsubscribe']: { channel: ch } }));
+		}
+	};
 
 	const fit = () => {
 		el.classList.toggle('mysn-gchat-full', list.scrollHeight > list.clientHeight + 2);
@@ -47,15 +105,21 @@ export function gameChat(root, cfg, hooks = {}) {
 		}
 	};
 	const add = (m) => {
-		if (seen.has(m.id)) {
+		const key = m.mc ? 'mc' + m.mc + ':' + m.id : m.id;
+		// zmazané a vymazané po čase (aj prázdne) sa v hre neukazujú (0.10.2)
+		if (m.del || !String(m.text || '').trim()) {
+			seen.add(key);
 			return;
 		}
-		seen.add(m.id);
+		if (seen.has(key)) {
+			return;
+		}
+		seen.add(key);
 		const row = document.createElement('div');
-		row.className = 'mysn-gchat-msg' + (m.mine ? ' mysn-gchat-mine' : '');
-		row.dataset.id = m.id;
+		row.className = 'mysn-gchat-msg' + (m.mine ? ' mysn-gchat-mine' : '') + (m.mc ? ' mysn-gchat-mc' : '');
+		row.dataset.id = m.mc ? '' : m.id;
 		const who = document.createElement('b');
-		who.textContent = esc(m.user && m.user.name) + (m.user && m.user.guest ? ' (hosť)' : '') + ': ';
+		who.textContent = m.mc ? '🎱 ' + esc(m.name) + (m.role === 'd' ? ' (divák)' : '') + ': ' : esc(m.user && m.user.name) + (m.user && m.user.guest ? ' (hosť)' : '') + ': ';
 		const txt = document.createElement('span');
 		txt.textContent = esc(m.text);
 		row.append(who, txt);
@@ -74,11 +138,18 @@ export function gameChat(root, cfg, hooks = {}) {
 			return;
 		}
 		busy = true;
+		pollMatch();
 		try {
 			const r = await fetch(cfg.rest + 'poll?room=' + cfg.room + (last ? '&after=' + last : ''), { credentials: 'same-origin', headers: head(), cache: 'no-store' });
 			const d = await r.json();
 			const msgs = (d && d.messages) || [];
 			const gone = new Set((d && d.gone) || []);
+			// medzičasom zmazané správy (úpravy z chatu): z okna preč
+			((d && d.edited) || []).forEach((m) => {
+				if (m.del || !String(m.text || '').trim()) {
+					gone.add(m.id);
+				}
+			});
 			msgs.slice(-30).forEach(add);
 			if (msgs.length) {
 				last = Math.max(last, msgs[msgs.length - 1].id);
@@ -93,10 +164,53 @@ export function gameChat(root, cfg, hooks = {}) {
 		busy = false;
 		schedule();
 	};
+	// správy zápasu: pri zmene partie (začiatok, koniec, iné sledovanie) sa kanál vymení
+	const pollMatch = async () => {
+		const c = ctxNow();
+		if (c !== mctx) {
+			wsSub(mchan, false);
+			mchan = '';
+			mctx = c;
+			mlast = 0;
+			target = 'm';
+			drawTabs();
+		}
+		if (!mctx || mbusy || !hooks.mrest) {
+			return;
+		}
+		mbusy = true;
+		const c0 = mctx;
+		try {
+			const r = await fetch(hooks.mrest + 'mchat?ctx=' + encodeURIComponent(c0) + (mlast ? '&after=' + mlast : ''), { credentials: 'same-origin', headers: mhead(), cache: 'no-store' });
+			const d = await r.json();
+			if (r.ok && c0 === mctx && d) {
+				(d.messages || []).forEach((m) => {
+					add(Object.assign({ mc: c0 }, m));
+					mlast = Math.max(mlast, m.id);
+				});
+				if (d.chan && d.chan !== mchan) {
+					mchan = d.chan;
+					wsSub(mchan, true);
+				}
+				fit();
+			}
+		} catch (e) {
+			/* sieť: skúsi sa znova */
+		}
+		mbusy = false;
+	};
+	const mhead = () => {
+		const h = { 'Content-Type': 'application/json' };
+		const n = hooks.nonce ? hooks.nonce() : cfg.nonce;
+		if (n) {
+			h['X-WP-Nonce'] = n;
+		}
+		return h;
+	};
 	const schedule = () => {
 		clearTimeout(timer);
 		if (!document.hidden) {
-			timer = setTimeout(poll, wsOk ? 60000 : isOpen ? 4000 : 15000);
+			timer = setTimeout(poll, wsOk ? (ctxNow() ? 20000 : 60000) : isOpen || ctxNow() ? 4000 : 15000);
 		}
 	};
 
@@ -112,7 +226,7 @@ export function gameChat(root, cfg, hooks = {}) {
 			return;
 		}
 		ws = w;
-		w.onopen = () => w.send(JSON.stringify({ id: 1, connect: {} }) + '\n' + JSON.stringify({ id: 2, subscribe: { channel: 'chat:all' } }));
+		w.onopen = () => w.send(JSON.stringify({ id: 1, connect: {} }) + '\n' + JSON.stringify({ id: 2, subscribe: { channel: 'chat:all' } }) + (mchan ? '\n' + JSON.stringify({ id: ++wsId, subscribe: { channel: mchan } }) : ''));
 		w.onmessage = (ev) => {
 			String(ev.data).split('\n').forEach((line) => {
 				if (!line) {
@@ -135,6 +249,8 @@ export function gameChat(root, cfg, hooks = {}) {
 				}
 				if (m.push && m.push.channel === 'chat:all') {
 					poll();
+				} else if (m.push && mchan && m.push.channel === mchan) {
+					pollMatch();
 				}
 			});
 		};
@@ -171,6 +287,10 @@ export function gameChat(root, cfg, hooks = {}) {
 		form.classList.remove('mysn-hidden');
 		flash('');
 		input.disabled = !(hooks.canWrite && hooks.canWrite());
+		if (ctxNow() !== mctx) {
+			pollMatch();
+		}
+		drawTabs();
 		hooks.onOpen && hooks.onOpen();
 		setTimeout(() => input.focus(), 0);
 		schedule();
@@ -218,6 +338,34 @@ export function gameChat(root, cfg, hooks = {}) {
 			input.value = text;
 			flash(msg);
 		};
+		if (mctx && target === 'm') {
+			// do chatu zápasu
+			const c0 = mctx;
+			tmp.classList.add('mysn-gchat-mc');
+			who.textContent = '🎱 ' + who.textContent;
+			try {
+				const r = await fetch(hooks.mrest + 'mchat', { method: 'POST', credentials: 'same-origin', headers: mhead(), body: JSON.stringify({ ctx: c0, text }) });
+				const d = await r.json();
+				if (!r.ok) {
+					fail((d && d.message) || 'Správu sa nepodarilo odoslať.');
+					return;
+				}
+				const key = 'mc' + c0 + ':' + d.id;
+				if (!seen.has(key)) {
+					seen.add(key);
+					tmp.classList.remove('mysn-gchat-pending');
+					if (c0 === mctx) {
+						mlast = Math.max(mlast, d.id);
+					}
+				} else {
+					tmp.remove();
+				}
+				fit();
+			} catch (e) {
+				fail('Správu sa nepodarilo odoslať, skús znova.');
+			}
+			return;
+		}
 		try {
 			const r = await fetch(cfg.rest + 'messages', { method: 'POST', credentials: 'same-origin', headers: head(), body: JSON.stringify({ room: cfg.room, text }) });
 			const d = await r.json();
@@ -250,6 +398,9 @@ export function gameChat(root, cfg, hooks = {}) {
 			if (t === 'keydown' && e.key === 'Escape') {
 				e.preventDefault();
 				close();
+			} else if (t === 'keydown' && e.key === 'Tab' && mctx) {
+				e.preventDefault();
+				setTarget(target === 'm' ? 's' : 'm');
 			}
 		});
 	}

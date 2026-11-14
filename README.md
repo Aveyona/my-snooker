@@ -1,8 +1,30 @@
 # My Snooker
 
-3D snooker v prehliadači ako doplnok pre WordPress. Beží na adrese [hedlajner.sk/my-snooker](https://hedlajner.sk/my-snooker/) (neskôr snooker.hedlajner.sk). Autor: Aveyona.
+3D snooker v prehliadači ako doplnok pre WordPress – súčasť rodiny doplnkov **My** webu [hedlajner.sk](https://hedlajner.sk). Hra beží na adrese [snooker.hedlajner.sk](https://snooker.hedlajner.sk/). Autor: Aveyona.
 
 Hra je napísaná v JavaScripte nad knižnicou [three.js](https://threejs.org/), stôl má skutočné rozmery snookerového stola a fyzika počíta kĺzanie a kotúľanie gúľ po súkne, falše, nárazy gúľ a odrazy od mantinelov.
+
+## Rodina My a povinné doplnky
+
+My Snooker je samostatný projekt, ale **nefunguje bez týchto doplnkov rodiny My** (sú v inom repozitári a sú povinnou súčasťou hry):
+
+| Doplnok | Na čo ho hra potrebuje |
+|---|---|
+| **My Users** (`my-users`) | účty hráčov, prihlásenie a registrácia v hre (aj cez Google), úrovne používateľov |
+| **My Chat** (`my-chat`) | chat v hre a chat zápasu, živé spojenie (výzvy, signály WebRTC), kľúče servera pre overovanie skóre |
+| **My Rooms** (`my-rooms`) | hlasy ElevenLabs (rozhodca, komentátor Rudo, diváci) |
+| **My AI Writer** (`my-ai-writer`) | živý komentár Ruda (texty z umelej inteligencie) |
+| **My Player** (`my-player`) | rozhlasové stanice pre rádio v herni |
+
+Hlavička doplnku ich uvádza v `Requires Plugins`, takže WordPress My Snooker bez nich nezapne a kým je hra zapnutá, nedovolí ich vypnúť.
+
+Server `live.hedlajner.sk` (Hetzner) poskytuje TURN pre spojenie hráčov a overovač skóre – jeho kód je v priečinku [`server/snkverify`](server/snkverify).
+
+## Vývoj
+
+- **Hlavný zdroj kódu je tento repozitár** (`Aveyona/my-snooker`). Každá zmena sa robí tu: úprava, zvýšenie verzie v `my-snooker.php` (hlavička aj `MYSN_VERSION`), záznam do denníka zmien v `includes/roadmap.php`, commit „My Snooker X.Y.Z: …“.
+- Web hedlajner.sk preberá My Snooker do súkromného repozitára doplnkov My (`plugins/my-snooker`, `server/snkverify`) a odtiaľ sa nahráva na hosting. Tam sa My Snooker neupravuje.
+- Pri zmene fyziky alebo pravidiel (`src/physics.js`, `rules.js`, `training.js`, `match.js`) treba skopírovať súbory aj do `server/snkverify/game` a overovač na serveri nasadiť znova.
 
 ## Čo už funguje
 
@@ -12,7 +34,6 @@ Hra je napísaná v JavaScripte nad knižnicou [three.js](https://threejs.org/),
 - priehľadná 3D šípka vo farbe trafenej gule ukazuje, kam guľa pôjde
 - rádio so stanicami z My Player: retro rádio na komode, mixpult a dva reproduktory pri pravej stene, priestorový zvuk z reproduktorov, mixpult mení hlasitosť, basy, výšky a vyváženie (F9)
 - barový stolík s telefónom (Môj účet, F10) a dvoma pohármi s vodou
-- menu Účet: údaje účtu hráča, liga, dohraté partie, hra o skóre a vlastné tágá; prihlásenie a registrácia priamo v hre (aj cez Google)
 - konferenčný stolík s novinami a časopisom; v pohľade z kresla (F7) vpravo titulka webu Hedlajner a správy z RSS, C a V ich otvoria na celú obrazovku, koliesko približuje pohľad
 - O najlepšie skóre: jeden hráč hrá celý frame podľa pravidiel (fauly sa odpočítajú), rebríček prihlásených hráčov podľa bodov a pri rovnosti kratšieho celkového času; v herni polica s pohármi troch najlepších a tabuľka 4. až 10. miesta (F8), na konci framu slávnostné ukončenie
 - fyzika gúľ: kĺzanie, kotúľanie, guľa dopredu, guľa späť, zastavenie a bočná falša
@@ -23,11 +44,11 @@ Hra je napísaná v JavaScripte nad knižnicou [three.js](https://threejs.org/),
 - neprihlásený návštevník má v menu Tréning (voľný tréning bez prihlásenia) a Prihlásiť sa; hru o skóre, ligu, partie s priateľmi a vlastné tágá majú prihlásení používatelia webu
 - Poslať výzvu: partia alebo spoločný tréning cez internet s hráčom, ktorý je práve v hre (pozri nižšie)
 - Liga: kancelária hráča (Liga v menu) a nástenka Liga v herni (F12), pozri nižšie
-- Pozerať hru: sledovanie otvorených partií (tréning a Hrať s otvorenými dverami F6, ligové zápasy), pozri nižšie
+- Vstúpiť: sledovanie otvorených partií (tréning a Hrať s otvorenými dverami F6, ligové zápasy), pozri nižšie
 
-## Pozerať hru (sledovanie partií)
+## Vstúpiť (sledovanie partií)
 
-- V menu je tlačidlo Pozerať hru. Otvorí okno Otvorené partie: tréningy a hry o skóre, ktoré majú otvorené dvere herne (F6), a všetky prebiehajúce ligové zápasy.
+- V menu je tlačidlo Vstúpiť. Otvorí okno Otvorené partie: tréningy a hry o skóre, ktoré majú otvorené dvere herne (F6), a všetky prebiehajúce ligové zápasy.
 - Dvere herne sú po načítaní zatvorené, partia je súkromná. Keď ich hráč otvorí (F6), jeho partia sa objaví v zozname (tabuľka `my_snooker_rooms` drží len otvorené dvere, druh hry a krátky popis).
 - Sledovanie ide priamo medzi prehliadačmi cez WebRTC: divák sa spojí s hráčom (pri ligovom zápase s oboma hráčmi), hráč mu hneď posiela stav stola, každý úder (divák si ho prehrá rovnakou fyzikou) a mierenie tága asi 20-krát za sekundu. Server stôl nečíta ani neposiela.
 - Keď sa priame spojenie nepodarí nadviazať (niektoré firemné siete a mobilní operátori ho blokujú), sledovanie nejde a divák dostane správu.
@@ -121,6 +142,7 @@ Podrobný plán je aj priamo v doplnku: administrácia WordPressu, My Snooker, P
 - `my-snooker.php`, `includes/`: doplnok pre WordPress (stránka hry, nastavenia, plán vývoja, články do novín, tabuľky partií `db.php`, REST rozhranie `rest.php` pod `my-snooker/v1`)
 - `src/`: zdrojové moduly hry (physics, rules, table, room, board, newspaper, cues, balls, cue, camera, controls, audio, ui, training, match, online, main)
 - `assets/`: zostavená hra (`snooker.js`) a štýly (`snooker.css`)
+- `server/snkverify/`: overovač skóre a ťahov pre server (Node; `game/` je kópia fyziky a pravidiel z `src/`)
 
 ## Zostavenie a testy
 
@@ -130,7 +152,7 @@ npm run build   # src/main.js do assets/snooker.js
 npm test        # testy fyziky a pravidiel
 ```
 
-Na web sa nahrávajú len súbory doplnku (`my-snooker.php`, `uninstall.php`, `includes/`, `assets/`), priečinky `src` a `node_modules` nie.
+Na web sa nahrávajú len súbory doplnku (`my-snooker.php`, `uninstall.php`, `includes/`, `assets/`), priečinky `src`, `server` a `node_modules` nie.
 
 ## Licencia
 

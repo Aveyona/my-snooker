@@ -523,6 +523,40 @@ function mysn_rest_settle( $req ) {
 		$st['conduct'] = $prev['conduct']; // počet nešportových správaní hráčov sa prenáša (klient ho neposiela)
 		$state         = wp_json_encode( $st );
 	}
+	// 0.11.1: server úder prehrá zo stavu, ktorý má uložený; pri nezhode platí jeho stav (oba prehliadače sa zosúladia)
+	$points = max( 0, (int) $req->get_param( 'points' ) );
+	$foul   = $req->get_param( 'foul' ) ? 1 : 0;
+	$chk    = 0;
+	$cnote  = '';
+	$fixed  = false;
+	$lp     = 0;
+	if ( function_exists( 'mysn_verify_move' ) && $prev ) {
+		$v = mysn_verify_move( $m, $me, $prev, $pending, $st );
+		if ( $v && ! empty( $v['ok'] ) && ! empty( $v['state'] ) ) {
+			// dlhý úder (prvá trafená guľa ďalej ako 1,2 m): 1 = nespadla, 2 = spadla (štatistika presnosti)
+			if ( ! empty( $v['stat'] ) && (float) $v['stat']['d'] > 1.2 ) {
+				$lp = ! empty( $v['stat']['pot'] ) ? 2 : 1;
+			}
+			if ( ! empty( $v['same'] ) ) {
+				$chk = 1;
+			} else {
+				$chk   = 2;
+				$fixed = true;
+				$cnote = mb_substr( 'Server: ' . implode( ', ', (array) ( $v['diff'] ?? array() ) ), 0, 250 );
+				$st    = $v['state'];
+				if ( isset( $prev['conduct'] ) && is_array( $prev['conduct'] ) ) {
+					$st['conduct'] = $prev['conduct'];
+				}
+				$state  = wp_json_encode( $st );
+				$points = max( 0, (int) ( $v['points'] ?? 0 ) );
+				$foul   = ! empty( $v['foul'] ) ? 1 : 0;
+			}
+		} elseif ( $v && empty( $v['ok'] ) ) {
+			// úder sa na serveri nedá prehrať (napr. biela inde, nie je na rade): prijme sa, ale označí na kontrolu
+			$chk   = 3;
+			$cnote = mb_substr( (string) ( $v['error'] ?? '' ), 0, 250 );
+		}
+	}
 	$rules = $st['rules'];
 	$turn  = 1 === (int) $rules['turn'] ? 1 : 0;
 	$over  = ! empty( $rules['over'] );
@@ -535,9 +569,12 @@ function mysn_rest_settle( $req ) {
 			'user_id'  => get_current_user_id(),
 			'shot'     => $m['shot'],
 			'after'    => $state,
-			'points'   => max( 0, (int) $req->get_param( 'points' ) ),
-			'foul'     => $req->get_param( 'foul' ) ? 1 : 0,
+			'points'   => $points,
+			'foul'     => $foul,
 			'created'  => $now,
+			'chk'      => $chk,
+			'note'     => $cnote,
+			'lp'       => $lp,
 		)
 	);
 	$data = array(
@@ -563,9 +600,10 @@ function mysn_rest_settle( $req ) {
 		$best = isset( $st['best'] ) && is_array( $st['best'] ) ? array_map( 'intval', $st['best'] ) : array( 0, 0 );
 		mysn_league_apply( mysn_get_match( $m['id'] ), $data['winner'], (int) $rules['scores'][ $w ], false, $best );
 	}
-	// stav partie po uložení (hráč ho pošle súperovi priamo cez WebRTC)
+	// stav partie po uložení (hráč ho pošle súperovi priamo cez WebRTC); fixed = server opravil výsledok úderu
 	return array(
 		'ok'    => true,
+		'fixed' => $fixed,
 		'match' => mysn_match_out( mysn_get_match( $m['id'] ), get_current_user_id() ),
 	);
 }
@@ -823,6 +861,16 @@ function mysn_rest_score( $req ) {
 	if ( $last > time() - 20 ) {
 		return mysn_err( 'Skóre už je uložené.' );
 	}
+	// 0.11.0: zápis úderov na overenie serverom (frame rozohraný pred touto verziou ho nemá: uloží sa ako neoverený)
+	$log   = $req->get_param( 'log' );
+	$claim = array( 'points' => $points, 'seconds' => $seconds, 'shots' => $shots, 'fouls' => max( 0, (int) $req->get_param( 'fouls' ) ), 'brk' => $brk );
+	$has   = is_array( $log ) && $log;
+	if ( $has ) {
+		$bad = mysn_verify_sanity( $log, $claim );
+		if ( $bad ) {
+			return mysn_err( 'Skóre sa nedá uložiť: ' . $bad );
+		}
+	}
 	$wpdb->insert(
 		$t,
 		array(
@@ -830,13 +878,23 @@ function mysn_rest_score( $req ) {
 			'points'  => $points,
 			'seconds' => $seconds,
 			'shots'   => $shots,
-			'fouls'   => max( 0, (int) $req->get_param( 'fouls' ) ),
+			'fouls'   => $claim['fouls'],
 			'brk'     => $brk,
 			'created' => time(),
+			'ver'     => $has ? 2 : 0,
+			'claim'   => wp_json_encode( $claim ),
+			'vlog'    => $has ? wp_json_encode( $log ) : null,
 		)
 	);
-	$id = (int) $wpdb->insert_id;
-	return array_merge( mysn_scores_out( $uid ), array( 'saved' => $id ) );
+	$id  = (int) $wpdb->insert_id;
+	$ver = $has ? mysn_verify_score( $id ) : 0;
+	$out = array( 'saved' => $id, 'ver' => $ver );
+	if ( 1 === $ver ) {
+		$out['verified'] = $wpdb->get_row( $wpdb->prepare( "SELECT points, shots, fouls, brk, note FROM $t WHERE id = %d", $id ), ARRAY_A ); // phpcs:ignore
+	} elseif ( 3 === $ver ) {
+		$out['rejected'] = (string) $wpdb->get_var( $wpdb->prepare( "SELECT note FROM $t WHERE id = %d", $id ) ); // phpcs:ignore
+	}
+	return array_merge( mysn_scores_out( $uid ), $out );
 }
 
 function mysn_rest_scores( $req ) {
@@ -847,7 +905,8 @@ function mysn_rest_scores( $req ) {
 function mysn_scores_out( $uid ) {
 	global $wpdb;
 	$t    = mysn_table( 'scores' );
-	$rows = $wpdb->get_results( "SELECT user_id, points, seconds, brk, created FROM $t ORDER BY points DESC, seconds ASC, id ASC LIMIT 2000", ARRAY_A ); // phpcs:ignore
+	// v rebríčku overené (1) a staršie spred overovania (0, so štítkom neoverené); čakajúce a zamietnuté nie
+	$rows = $wpdb->get_results( "SELECT user_id, points, seconds, brk, created, ver FROM $t WHERE ver IN (0,1) ORDER BY points DESC, seconds ASC, id ASC LIMIT 2000", ARRAY_A ); // phpcs:ignore
 	$best = array();
 	foreach ( $rows as $r ) {
 		$u = (int) $r['user_id'];
@@ -868,6 +927,7 @@ function mysn_scores_out( $uid ) {
 			'seconds' => (int) $r['seconds'],
 			'brk'     => (int) $r['brk'],
 			'created' => (int) $r['created'],
+			'ver'     => (int) $r['ver'],
 			'me'      => $u === (int) $uid,
 		);
 		if ( $u === (int) $uid ) {
@@ -878,7 +938,7 @@ function mysn_scores_out( $uid ) {
 			$list[] = $row;
 		}
 	}
-	$frames = (int) $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM $t WHERE user_id = %d", $uid ) ); // phpcs:ignore
+	$frames = (int) $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM $t WHERE user_id = %d AND ver IN (0,1)", $uid ) ); // phpcs:ignore
 	return array(
 		'top'     => $list,
 		'mine'    => $mine,

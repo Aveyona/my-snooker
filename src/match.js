@@ -8,7 +8,7 @@
  */
 import { Training } from './training.js';
 import { createRack, snapshot, restore, strike, R } from './physics.js';
-import { evaluate, onLabel, newFrame, VALUE, snookered } from './rules.js';
+import { evaluate, onLabel, newFrame, VALUE, snookered, remaining } from './rules.js';
 
 const SOLO_KEY = 'mySnookerSolo';
 
@@ -38,7 +38,8 @@ export class Game extends Training {
 		}
 		if (saved && saved.balls && saved.rules && !saved.done) {
 			restore(this.balls, saved.balls);
-			this.solo = { rules: saved.rules, time: saved.time || 0, shots: saved.shots || 0, fouls: saved.fouls || 0, best: saved.best || 0, done: false };
+			// log = zápis úderov pre overenie serverom (0.11.0); frame rozohraný pred touto verziou ho nemá (null)
+			this.solo = { rules: saved.rules, time: saved.time || 0, shots: saved.shots || 0, fouls: saved.fouls || 0, best: saved.best || 0, done: false, log: Array.isArray(saved.log) ? saved.log : null };
 			this.message = 'Pokračuješ v rozohranom frame.';
 			if (saved.inHand) {
 				this.startPlace();
@@ -50,7 +51,7 @@ export class Game extends Training {
 			for (let i = 0; i < fresh2.length; i++) {
 				Object.assign(this.balls[i], fresh2[i]);
 			}
-			this.solo = { rules: newFrame(0), time: 0, shots: 0, fouls: 0, best: 0, done: false };
+			this.solo = { rules: newFrame(0), time: 0, shots: 0, fouls: 0, best: 0, done: false, log: [] };
 			this.message = 'Nový frame: potop čo najviac bodov. Rozbíjaš z D.';
 			this.saveSolo(true);
 			this.startPlace();
@@ -76,7 +77,7 @@ export class Game extends Training {
 				return;
 			}
 			const s = this.solo;
-			window.localStorage.setItem(SOLO_KEY, JSON.stringify({ balls: snapshot(this.balls), rules: s.rules, time: Math.round(s.time), shots: s.shots, fouls: s.fouls, best: s.best, inHand: !!inHand }));
+			window.localStorage.setItem(SOLO_KEY, JSON.stringify({ balls: snapshot(this.balls), rules: s.rules, time: Math.round(s.time), shots: s.shots, fouls: s.fouls, best: s.best, inHand: !!inHand, log: s.log }));
 		} catch (e) {
 			/* úložisko nemusí byť dostupné */
 		}
@@ -139,7 +140,7 @@ export class Game extends Training {
 			this.emit('settle', { pots: this.lastPots, points: res.points });
 			this.emit('change');
 			if (this.onSolo) {
-				this.onSolo({ points: sc, seconds: Math.round(so.time), shots: so.shots, fouls: so.fouls, brk: so.best });
+				this.onSolo({ points: sc, seconds: Math.round(so.time), shots: so.shots, fouls: so.fouls, brk: so.best, log: so.log });
 			}
 			return;
 		}
@@ -211,6 +212,7 @@ export class Game extends Training {
 		}
 		const fresh = m.seq >= 0 && seq > m.seq; // seq −1 = práve začatý alebo obnovený zápas: staré hlásenie sa neopakuje
 		m.seq = seq;
+		m.call = st.call ? { ...st.call, seq } : null; // posledné hlásenie (pre divákov v stave zápasu)
 		if (fresh && st.call) {
 			this.emit('call', st.call); // nové hlásenie rozhodcu (nie pri obnovení starého stavu)
 		}
@@ -246,8 +248,13 @@ export class Game extends Training {
 		}
 		const c = this.cue;
 		const shot = { dir: this.dir, power, side, top, cx: c.p.x, cz: c.p.z };
+		// hra o skóre: vstupy úderu a polohy gúľ pred ním (server frame prehrá a overí výsledok)
+		const rec = this.solo && !this.match && Array.isArray(this.solo.log) ? { s: [this.dir, power, side, top, c.p.x, c.p.z], b: this.balls.map((b) => [b.p.x, b.p.z, b.on ? 1 : 0]) } : null;
 		if (!super.shoot(power, side, top)) {
 			return false;
+		}
+		if (rec) {
+			this.solo.log.push(rec);
 		}
 		if (this.match) {
 			this.match.turnAt = 0; // časomiera sa po údere zastaví (znova beží až pri ďalšom ťahu)
@@ -397,6 +404,41 @@ export class Game extends Training {
 		};
 		// hlásenie rozhodcu (všetci klienti ho dostanú so stavom): faul a body, voľná guľa, koniec framu a zápasu
 		st.call = { foul: res.foul ? res.penalty : 0, free: !!res.state.free && !res.state.over, frame: !!fr, over: !!res.state.over };
+		// hlas rozhodcu (0.12.0): body v sérii, remíza (čierna späť), frame ball a potrebné snookery hráča na rade
+		if (!res.foul && res.points > 0 && !m.training) {
+			st.call.brk = res.state.turn === m.me ? res.state.brk : m.rules.brk + res.points;
+		}
+		if (res.tie) {
+			st.call.respot = true;
+		}
+		if (fr || res.state.over) {
+			st.call.fw = res.state.winner; // kto vyhral frame (komentátor Rudo)
+		}
+		if (!fr && !res.state.over && !res.tie && !m.training) {
+			const t = res.state.turn;
+			const reds = this.balls.filter((b) => b.on && b.kind === 'red').length;
+			const rem = remaining(res.state, reds);
+			const diff = res.state.scores[t] - res.state.scores[1 - t];
+			const on = res.state.on;
+			const v = on === 'red' ? 1 : on === 'colour' ? 7 : VALUE[on] || 0;
+			const rem2 = on === 'red' ? rem - 1 : on === 'colour' ? rem - 7 : rem - v;
+			if (diff + rem < 0) {
+				st.call.snk = t; // ani všetky body na stole nestačia: potrebuje snookery
+			} else if (v && diff <= rem && diff + v > rem2) {
+				st.call.fb = t; // ďalšia guľa rozhodne frame
+			}
+		}
+		// strelec práve dosiahol rozhodujúci náskok: súper by už potreboval snookery (potlesk publika, Rudo)
+		if (!fr && !res.state.over && !res.foul && !res.tie && !m.training && res.points > 0) {
+			const me = m.me;
+			const o = 1 - me;
+			const redsNow = this.balls.filter((b) => b.on && b.kind === 'red').length;
+			const redsPrev = redsNow + pots.filter((k) => k === 'red').length;
+			const need = (st0, r) => st0.scores[o] - st0.scores[me] + remaining(st0, r) < 0;
+			if (need(res.state, redsNow) && !need(m.rules, redsPrev)) {
+				st.call.won = me;
+			}
+		}
 		if (fr) {
 			// zápas na viac framov: frame skončil, ale zápas ešte nie (nové rozostavenie, rozbíja sa striedavo)
 			st.frames = fr.frames;
@@ -412,6 +454,9 @@ export class Game extends Training {
 			st.msg += ` Vo framoch ${won[0]}:${won[1]}.`;
 		}
 		const seq = m.seq + 1;
+		if (this.decorateCall) {
+			this.decorateCall(st.call, st); // strelec doplní hlásenie (Rudo): rovnaké pre súpera aj divákov
+		}
 		this.applyState(st, seq);
 		this.emit('settle', { pots: this.lastPots, points: res.points });
 		if (this.onNet) {

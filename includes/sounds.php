@@ -11,7 +11,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 /** Sloty zvukov: id => [skupina, názov, čo nahrať]. Poradie = poradie v administrácii. */
 function mysn_sound_slots() {
 	$T = 'Hrá z miesta na stole (3D). ';
-	return array(
+	$l = array(
 		'cue-soft'       => array( 'Stôl', 'Úder tága: jemný', $T . 'Úder tága do bielej pri slabej sile (do tretiny). Hra plynulo prelína jemný, stredný a tvrdý podľa sily. Ťažšie tágo znie hlbšie, mäkká špica tupšie, tvrdá ostrejšie, bez kriedy trochu ostrejšie.', 'Špica jemne do bielej, krátky tichý ťuk. Bez ozveny, 4 až 6 variantov.' ),
 		'cue-medium'     => array( 'Stôl', 'Úder tága: stredný', $T . 'Bežný úder tága do bielej (stredná sila). Mení sa ako jemný úder.', 'Bežný úder s plným ťuknutím. 4 až 6 variantov.' ),
 		'cue-hard'       => array( 'Stôl', 'Úder tága: tvrdý', $T . 'Silný úder tága (od dvoch tretín sily). Pri rozbití sa hrá zvuk Rozbitie, ak je nahraný.', 'Prudký úder, ostrý a plný. 4 až 6 variantov.' ),
@@ -51,7 +51,10 @@ function mysn_sound_slots() {
 		'ref-time'       => array( 'Rozhodca', 'Čas', 'Keď v lige vyprší čas na úder, potom nasleduje faul.', 'Po anglicky: Time.' ),
 		'ref-frame'      => array( 'Rozhodca', 'Koniec framu', 'Koniec framu pri zápase na viac framov, diváci potom zatlieskajú (ovácie).', 'Po anglicky: Frame.' ),
 		'ref-match'      => array( 'Rozhodca', 'Koniec zápasu', 'Koniec zápasu, diváci potom ovácie.', 'Po anglicky: Frame and match.' ),
-		'ref-start'      => array( 'Rozhodca', 'Začiatok zápasu', 'Začiatok zápasu na štadióne.', 'Po anglicky, napríklad: Ladies and gentlemen, ... to break.' ),
+		'ref-start'      => array( 'Rozhodca', 'Začiatok zápasu', 'Začiatok zápasu (v hre o skóre aj v partii), potom meno hráča, ktorý rozbíja (meno sa generuje samo pri prvom zápase hráča, hlasom rozhodcu).', 'Napríklad: Ladies and gentlemen, welcome.' ),
+		'ref-frameball'  => array( 'Rozhodca', 'Frame ball', 'Keď ďalšia potopená guľa rozhodne frame (raz za frame pre hráča).', 'Frame ball.' ),
+		'ref-snookers'   => array( 'Rozhodca', 'Potrebné snookery', 'Keď hráč na rade už nedohoní súpera bez snookerov (raz za frame pre hráča).', 'Snookers required.' ),
+		'ref-respot'     => array( 'Rozhodca', 'Čierna späť na spot', 'Remíza na konci framu: čierna sa vráti na spot.', 'Re-spotted black.' ),
 		'ref-steps'      => array( 'Rozhodca', 'Kroky rozhodcu', 'Kroky pri chôdzi rozhodcu okolo stola (3D).', 'Tiché kroky po koberci, slučka 3 až 5 s.' ),
 		'ref-gloves'     => array( 'Rozhodca', 'Vyberanie gule z jamky', 'Rozhodca vyberie farbu z jamky a položí na spot.', 'Guľa vybratá zo sieťky a položená na súkno.' ),
 		'crowd-whisper'  => array( 'Diváci', 'Šepot publika', 'Pred rozhodujúcim úderom (posledná čierna) na štadióne zašepká publikum, potom stíchne.', 'Tichý šepot a šum sediaceho publika, 5 až 15 s, stereo.' ),
@@ -76,6 +79,31 @@ function mysn_sound_slots() {
 		'cough'          => array( 'Diváci', 'Kašľanie', 'Občas v tichu na štadióne, keď sa mieri, z tribún (3D).', 'Jedno zakašľanie, mono stačí.' ),
 		'shush'          => array( 'Diváci', 'Pšššt', 'Prosba o ticho, online divák klávesom 6.', 'Pšššt jedného diváka.' ),
 	);
+	// komentátor Rudo (štadión): po slovensky, viac variantov ku každej situácii
+	foreach ( function_exists( 'mysn_rudo_lines' ) ? mysn_rudo_lines() : array() as $id => $x ) {
+		$l[ $id ] = array( 'Komentátor Rudo', $x[0], 'Rudo z tribúny na štadióne (3D): ' . $x[1] . ' Hrá náhodný variant, Rudo hovorí najviac raz za pár sekúnd. Hráč ho môže vypnúť v Nastaveniach.', 'Slovensky, vtipne, ľudovo; každý riadok textu pri Generovať… je jeden variant.' );
+	}
+	// čísla série 1 až 147 (rozhodca ich hlási po každej potopenej guli): vlastná zbalená skupina hneď za rozhodcom
+	$out = array();
+	foreach ( $l as $id => $x ) {
+		$out[ $id ] = $x;
+		if ( 'ref-gloves' === $id ) {
+			for ( $i = 1; $i <= 147; $i++ ) {
+				$out[ 'ref-n' . $i ] = array( 'Rozhodca: čísla série', (string) $i, 'Body v sérii po potopenej guli.', (string) $i );
+			}
+		}
+	}
+	return $out;
+}
+
+/** Čísla série: zjednodušený riadok v administrácii (bez doladenia), v hre sa načítajú až pri hlásení. */
+function mysn_sound_is_num( $id ) {
+	return 0 === strpos( $id, 'ref-n' ) && ctype_digit( substr( $id, 5 ) );
+}
+
+/** Jazyk súboru podľa názvu (…-sk-…, gen-en-…), '' = hrá v každom jazyku. */
+function mysn_sound_lang( $name ) {
+	return preg_match( '/(?:^|[-_.])(sk|en)(?:[-_.]|$)/i', (string) $name, $m ) ? strtolower( $m[1] ) : '';
 }
 
 /**
@@ -199,13 +227,13 @@ function mysn_sound_files( $slot, $fm = array() ) {
 	foreach ( $own as $f ) {
 		$k     = 'own:' . $f['name'];
 		$m     = isset( $fm[ $k ] ) ? $fm[ $k ] : array();
-		$out[] = array( 'key' => $k, 'src' => 'own', 'name' => $f['name'], 'url' => $f['url'], 'size' => $f['size'], 'on' => isset( $m['on'] ) ? (int) $m['on'] : 1, 'w' => isset( $m['w'] ) ? (int) $m['w'] : 3 );
+		$out[] = array( 'key' => $k, 'src' => 'own', 'name' => $f['name'], 'url' => $f['url'], 'size' => $f['size'], 'on' => isset( $m['on'] ) ? (int) $m['on'] : 1, 'w' => isset( $m['w'] ) ? (int) $m['w'] : 3, 'lang' => mysn_sound_lang( $f['name'] ), 'gen' => 0 === strpos( $f['name'], 'gen-' ) ? 1 : 0 );
 	}
 	foreach ( mysn_sound_bundled( $slot ) as $u ) {
 		$n     = rawurldecode( basename( $u ) );
 		$k     = 'base:' . $n;
 		$m     = isset( $fm[ $k ] ) ? $fm[ $k ] : array();
-		$out[] = array( 'key' => $k, 'src' => 'base', 'name' => $n, 'url' => $u, 'size' => 0, 'on' => isset( $m['on'] ) ? (int) $m['on'] : ( $own ? 0 : 1 ), 'w' => isset( $m['w'] ) ? (int) $m['w'] : 3 );
+		$out[] = array( 'key' => $k, 'src' => 'base', 'name' => $n, 'url' => $u, 'size' => 0, 'on' => isset( $m['on'] ) ? (int) $m['on'] : ( $own ? 0 : 1 ), 'w' => isset( $m['w'] ) ? (int) $m['w'] : 3, 'lang' => '', 'gen' => 0 );
 	}
 	return $out;
 }
@@ -271,6 +299,9 @@ function mysn_sound_filename( $id ) {
 		'ref-frame' => 'referee-frame',
 		'ref-match' => 'referee-frame-and-match',
 		'ref-start' => 'referee-match-start',
+		'ref-frameball' => 'referee-frame-ball',
+		'ref-snookers' => 'referee-snookers-required',
+		'ref-respot' => 'referee-respotted-black',
 		'ref-steps' => 'referee-footsteps-loop',
 		'ref-gloves' => 'referee-ball-respot',
 		'crowd-whisper' => 'crowd-whisper',
@@ -295,6 +326,9 @@ function mysn_sound_filename( $id ) {
 		'cough' => 'crowd-cough',
 		'shush' => 'crowd-shush',
 	);
+	if ( mysn_sound_is_num( $id ) ) {
+		return 'referee-break-' . substr( $id, 5 );
+	}
 	return isset( $m[ $id ] ) ? $m[ $id ] : $id;
 }
 
@@ -330,10 +364,12 @@ function mysn_sounds_config() {
 	foreach ( mysn_sounds() as $id => $s ) {
 		$urls = array();
 		$w    = array();
+		$lang = array();
 		foreach ( mysn_sound_files( $id, (array) $s['fm'] ) as $f ) {
-			if ( $f['on'] ) {
+			if ( $f['on'] && 'sk' !== $f['lang'] ) { // slovenské hlasy sa v hre nehrajú (rozhodca a diváci po anglicky)
 				$urls[] = $f['url'];
 				$w[]    = max( 1, min( 5, (int) $f['w'] ) );
+				$lang[] = $f['lang'];
 			}
 		}
 		$c    = array(
@@ -355,6 +391,12 @@ function mysn_sounds_config() {
 		if ( ! $urls && $same ) {
 			continue; // nič nenastavené: hra použije svoj zvuk s predvolenými hodnotami
 		}
+		if ( array_filter( $lang ) ) {
+			$c['lang'] = $lang; // jazyk súborov (hlasy): hra hrá súbory v jazyku podľa nastavenia Hlas rozhodcu
+		}
+		if ( mysn_sound_is_num( $id ) ) {
+			$c['lazy'] = 1; // čísla série: načítajú sa až pri hlásení
+		}
 		$cfg[ $id ] = $c;
 	}
 	return (object) $cfg;
@@ -368,6 +410,7 @@ add_action( 'rest_api_init', function () {
 	};
 	register_rest_route( 'my-snooker/v1', '/sound-upload', array( 'methods' => 'POST', 'callback' => 'mysn_rest_sound_upload', 'permission_callback' => $can ) );
 	register_rest_route( 'my-snooker/v1', '/sound-trash', array( 'methods' => 'POST', 'callback' => 'mysn_rest_sound_trash', 'permission_callback' => $can ) );
+	register_rest_route( 'my-snooker/v1', '/sound-gen', array( 'methods' => 'POST', 'callback' => 'mysn_rest_sound_gen', 'permission_callback' => $can ) );
 } );
 
 /** Platný zvuk (slot) alebo rádio. */
@@ -420,6 +463,58 @@ function mysn_rest_sound_upload( $req ) {
 	return array( 'ok' => true, 'name' => basename( $r['file'] ), 'files' => mysn_sound_list_out( $slot ) );
 }
 
+/**
+ * Vygeneruje zvuk cez ElevenLabs a pridá ho do galérie zvuku: hlas (text, jazyk sk/en, hlas skupiny z výberu
+ * na stránke) alebo zvukový efekt (anglický popis, dĺžka, slučka). Text sa zapamätá na ďalšie generovanie.
+ */
+function mysn_rest_sound_gen( $req ) {
+	$slot = sanitize_key( (string) $req->get_param( 'slot' ) );
+	if ( ! isset( mysn_sound_slots()[ $slot ] ) || ! function_exists( 'mysn_rv_tts_mp3' ) ) {
+		return new WP_Error( 'mysn', 'Neznámy zvuk.', array( 'status' => 400 ) );
+	}
+	$gen  = mysn_sound_gen_get();
+	$fn   = mysn_sound_filename( $slot );
+	$lang = '';
+	if ( function_exists( 'mysn_sound_is_rudo' ) && mysn_sound_is_rudo( $slot ) ) {
+		// Rudo: slovensky, súbor bez jazyka v názve (hrá vždy), zapamätajú sa všetky riadky
+		$text = trim( sanitize_text_field( (string) $req->get_param( 'text' ) ) );
+		$over = array( 'voice' => (string) $req->get_param( 'voice' ), 'model' => sanitize_key( (string) $req->get_param( 'model' ) ) );
+		$mp3  = mysn_rv_tts_mp3( $text, 'sk', 'Komentátor Rudo', $over, function_exists( 'mysn_rudo_mood' ) ? mysn_rudo_mood( $slot ) : '' );
+		$all  = trim( sanitize_textarea_field( (string) $req->get_param( 'all' ) ) );
+		if ( '' !== $all ) {
+			$gen[ $slot ]['rudo'] = $all;
+		}
+	} elseif ( mysn_sound_is_voice( $slot ) ) {
+		$lang = 'en'; // rozhodca a diváci len po anglicky (medzinárodný zápas)
+		$text = trim( sanitize_text_field( (string) $req->get_param( 'text' ) ) );
+		$over = array( 'voice' => (string) $req->get_param( 'voice' ), 'model' => sanitize_key( (string) $req->get_param( 'model' ) ) );
+		$mp3  = mysn_rv_tts_mp3( $text, $lang, mysn_sound_voice_group( $slot ), $over );
+		$gen[ $slot ][ $lang ] = $text;
+	} else {
+		$text = trim( sanitize_textarea_field( (string) $req->get_param( 'text' ) ) );
+		$dur  = max( 0, min( 30, (float) $req->get_param( 'dur' ) ) );
+		$loop = (bool) $req->get_param( 'loop' );
+		$mp3  = mysn_el_sfx_mp3( $text, $dur, $loop );
+		if ( is_wp_error( $mp3 ) && $loop ) {
+			$mp3 = mysn_el_sfx_mp3( $text, $dur, false ); // slučku účet alebo model nepodporuje: bežný zvuk
+		}
+		$gen[ $slot ]['fx']   = $text;
+		$gen[ $slot ]['dur']  = $dur;
+		$gen[ $slot ]['loop'] = $loop ? 1 : 0;
+	}
+	if ( is_wp_error( $mp3 ) ) {
+		return new WP_Error( 'mysn', $mp3->get_error_message(), array( 'status' => 400 ) );
+	}
+	update_option( 'mysn_sound_gen', $gen, false );
+	list( $dir ) = mysn_sound_store( $slot );
+	wp_mkdir_p( $dir );
+	$name = 'gen-' . ( $lang ? $lang . '-' : '' ) . $fn . '-' . substr( md5( $text . microtime() ), 0, 6 ) . '.mp3';
+	if ( false === file_put_contents( $dir . '/' . $name, $mp3 ) ) { // phpcs:ignore WordPress.WP.AlternativeFunctions
+		return new WP_Error( 'mysn', 'Súbor sa nepodarilo uložiť.', array( 'status' => 500 ) );
+	}
+	return array( 'ok' => true, 'name' => $name, 'files' => mysn_sound_list_out( $slot ) );
+}
+
 /** Odloží vlastný súbor do koša galérie (uploads/my-snooker-sounds/_kos), natrvalo sa nemaže. */
 function mysn_rest_sound_trash( $req ) {
 	$slot = '_radio' === (string) $req->get_param( 'slot' ) ? '_radio' : sanitize_key( (string) $req->get_param( 'slot' ) );
@@ -457,8 +552,15 @@ add_action( 'admin_post_mysn_sounds', function () {
 		'sens'  => array( 0, 200 ),
 		'room'  => array( 0, 200 ),
 	);
+	$saved = (array) get_option( 'mysn_sounds', array() );
 	foreach ( mysn_sound_slots() as $id => $x ) {
-		$r  = isset( $in[ $id ] ) && is_array( $in[ $id ] ) ? $in[ $id ] : array();
+		if ( ! isset( $in[ $id ] ) || ! is_array( $in[ $id ] ) ) {
+			if ( isset( $saved[ $id ] ) ) {
+				$out[ $id ] = $saved[ $id ]; // riadok bez polí (čísla série bez zmeny): ostáva uložené
+			}
+			continue;
+		}
+		$r  = $in[ $id ];
 		$fm = array();
 		$j  = isset( $r['fm'] ) ? json_decode( (string) $r['fm'], true ) : null;
 		foreach ( is_array( $j ) ? $j : array() as $k => $m ) {
@@ -474,6 +576,18 @@ add_action( 'admin_post_mysn_sounds', function () {
 		$out[ $id ] = $s;
 	}
 	update_option( 'mysn_sounds', $out, false );
+	// hlasy skupín na generovanie (Rozhodca, Diváci)
+	$vs = isset( $_POST['voice'] ) && is_array( $_POST['voice'] ) ? wp_unslash( $_POST['voice'] ) : array(); // phpcs:ignore WordPress.Security.ValidatedSanitizedInput
+	$vo = array();
+	foreach ( array( 'Rozhodca', 'Diváci', 'Komentátor Rudo' ) as $g ) {
+		$x        = isset( $vs[ $g ] ) && is_array( $vs[ $g ] ) ? $vs[ $g ] : array();
+		$vo[ $g ] = array(
+			'voice' => preg_replace( '/[^A-Za-z0-9]/', '', (string) ( $x['voice'] ?? '' ) ),
+			'model' => sanitize_key( (string) ( $x['model'] ?? '' ) ),
+			'name'  => sanitize_text_field( (string) ( $x['name'] ?? '' ) ),
+		);
+	}
+	update_option( 'mysn_sound_voices', $vo, false );
 	$rm   = isset( $_POST['radio_meta'] ) ? json_decode( wp_unslash( (string) $_POST['radio_meta'] ), true ) : null; // phpcs:ignore WordPress.Security.ValidatedSanitizedInput
 	$meta = array();
 	foreach ( is_array( $rm ) ? $rm : array() as $n => $m ) {
@@ -491,6 +605,9 @@ function mysn_admin_sounds_page() {
 	if ( ! current_user_can( 'manage_options' ) ) {
 		return;
 	}
+	if ( function_exists( 'mysn_rv_migrate' ) ) {
+		mysn_rv_migrate(); // repliky zo starej stránky Hlas rozhodcu → galérie zvukov
+	}
 	wp_enqueue_script( 'mysn-sound-admin', MYSN_URL . 'assets/sound-admin.js', array(), mysn_asset_ver( 'sound-admin.js' ), true );
 	$slots = mysn_sound_slots();
 	$snd   = mysn_sounds();
@@ -498,7 +615,10 @@ function mysn_admin_sounds_page() {
 	foreach ( $slots as $id => $x ) {
 		$lists[ $id ] = mysn_sound_files( $id, (array) $snd[ $id ]['fm'] );
 	}
-	$rmeta = (array) get_option( 'mysn_radio_meta', array() );
+	$rmeta  = (array) get_option( 'mysn_radio_meta', array() );
+	$voices = function_exists( 'myrm_voice_list' ) ? myrm_voice_list() : new WP_Error( 'rooms', 'Doplnok My Rooms nie je zapnutý.' );
+	$models = function_exists( 'myrm_voice_models' ) ? myrm_voice_models() : array();
+	$vdone  = array();
 	wp_add_inline_script(
 		'mysn-sound-admin',
 		'window.mysnSnd = ' . wp_json_encode(
@@ -511,6 +631,13 @@ function mysn_admin_sounds_page() {
 				}, $slots ),
 				'radio' => mysn_sound_own( '_radio' ),
 				'rmeta' => (object) $rmeta,
+				// generovanie cez ElevenLabs: texty a popisy, či je zvuk hlas a jeho skupina (hlas skupiny)
+				'gen'   => (object) array_map(
+					function ( $id ) {
+						return function_exists( 'mysn_sound_gen_text' ) ? mysn_sound_gen_text( $id ) + array( 'voice' => mysn_sound_is_voice( $id ) ? mysn_sound_voice_group( $id ) : '' ) : null;
+					},
+					array_combine( array_keys( $slots ), array_keys( $slots ) )
+				),
 			)
 		) . ';',
 		'before'
@@ -543,6 +670,10 @@ function mysn_admin_sounds_page() {
 			.mysn-snd .p{display:grid;grid-template-columns:repeat(3,minmax(150px,1fr));gap:4px 14px}
 			.mysn-snd .p label{font-size:12px;color:#50575e}.mysn-snd .p input{width:100%}
 			.mysn-snd .p output{float:right;font-weight:600;color:#1d2327}
+			.mysn-snd .vbox{display:flex;gap:8px 14px;align-items:center;flex-wrap:wrap;background:#f6f7f7;border:1px solid #dcdcde;padding:8px 12px;margin:0 0 8px}
+			.mysn-snd .genbox{margin-top:6px;padding:8px;border:1px solid #c3c4c7;background:#fcfcfc;display:flex;flex-direction:column;gap:6px;max-width:520px}.mysn-snd .genbox textarea,.mysn-snd .genbox input[type=text]{width:100%}.mysn-snd .genbox .row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+			.mysn-snd tr.num td{padding:4px 8px}.mysn-snd tr.num td.n{width:60px}.mysn-snd details.mysn-nums{margin:0 0 22px}.mysn-snd details.mysn-nums summary{cursor:pointer;margin:14px 0 8px}
+			.mysn-snd .lg{display:inline-block;padding:0 5px;border-radius:3px;background:#2271b1;color:#fff;font-size:10px;font-weight:700;margin-left:4px}
 			.mysn-snd .test{position:sticky;top:32px;z-index:5;background:#fff;border:1px solid #c3c4c7;padding:8px 12px;margin:0 0 14px;display:flex;gap:8px 16px;align-items:center;flex-wrap:wrap;box-shadow:0 2px 6px #0001}.mysn-snd .test label{white-space:nowrap}.mysn-snd .test .sep{flex-basis:100%;height:0}
 		</style>
 		<div class="card" style="max-width:none;margin:0 0 14px">
@@ -553,7 +684,8 @@ function mysn_admin_sounds_page() {
 				<li><b>Názov súboru:</b> pri každom zvuku je odporúčaný názov po anglicky s číslom varianty, napríklad cue-hit-soft-01.wav, cue-hit-soft-02.wav. Malé písmená, bez diakritiky a medzier, slová oddelené pomlčkou; v galérii sa podľa neho súbory zoradia.</li>
 				<li><b>Kvalita:</b> profesionálne nahrávky, minimálne stereo. Zvuky stola sa v hre umiestnia do priestoru (3D na slúchadlách, výrazné stereo na reproduktoroch); ambient a diváci hrajú v plnom sterei.</li>
 				<li><b>Čisté nahrávky:</b> bez ozveny miestnosti (dozvuk pridá hra podľa miestnosti), bez šumu, krátke ticho na začiatku a konci (do 50 ms).</li>
-				<li><b>Jazyk:</b> hlas rozhodcu aj hlasy divákov sú po anglicky (ako v skutočnom snookri): Foul, four. Free ball. Frame and match. Well done.</li>
+				<li><b>Generovanie (ElevenLabs):</b> tlačidlo <b>Generovať…</b> pri zvuku vytvorí nový súbor a pridá ho do galérie ako ďalší variant (Hrá, priorita aj doladenie ako pri nahratých). Hlasy (rozhodca, čísla série, Well done) sa generujú z textu po anglicky (zápas je medzinárodný) hlasom vybraným pri skupine (Rozhodca, Diváci); ostatné zvuky ako zvukový efekt z anglického popisu (dĺžka, slučka pri ambientoch). Kľúč ElevenLabs je spoločný s My Rooms. Nepodarený súbor odlož v galérii.</li>
+				<li><b>Jazyk:</b> rozhodca aj diváci hovoria po anglicky (zápas je medzinárodný). Súbory so slovenským hlasom (…-sk-… v názve) sa v hre nehrajú. Hráč môže hlas rozhodcu vypnúť v Nastaveniach (Hlas rozhodcu).</li>
 				<li><b>Varianty:</b> pri každom zvuku 3 až 6 súborov, hra ich strieda náhodne, aby rovnaké údery nezneli ako stroj.</li>
 				<li><b>Dĺžka a hlasitosť:</b> pri každom zvuku je odporúčaná dĺžka klipu a hlasitosť v klipe. Krátke údery sa merajú <b>špičkou v dBFS</b> (najhlasnejšie miesto klipu, 0 dBFS je strop, nad ktorým zvuk skreslí; −10 dBFS je zreteľne pod ním). Dlhšie zvuky (ambient, diváci, hlas) sa merajú <b>priemernou hlasitosťou v LUFS</b> (meria ju väčšina strihových programov, napríklad Audacity: Analýza, Merač hlasitosti). Jemné a tvrdé vrstvy nahraj prirodzene, tichší úder má byť naozaj tichší; hra ich prelína podľa sily. Odchýlku doladíš posuvníkom Hlasitosť.</li>
 				<li>Zvuky môžeš dopĺňať postupne. Kým zvuk nemá vlastné súbory, hrá <b>základná sada</b> (po pridaní vlastných sa vypne, v galérii ju môžeš zapnúť späť) (voľné zvuky CC0, zdroje v assets/sounds/LICENSES.txt), a kde nie je ani tá, generovaná náhrada. Keď budú všetky hotové, spravíme kompiláciu (zjednotenie hlasitosti, orezanie, menšie súbory).</li>
@@ -588,10 +720,30 @@ function mysn_admin_sounds_page() {
 				$s = $snd[ $id ];
 				if ( $group !== $x[0] ) :
 					if ( $group ) {
-						echo '</tbody></table>';
+						echo '</tbody></table>' . ( 'Rozhodca: čísla série' === $group ? '</details>' : '' );
 					}
 					$group = $x[0];
-					echo '<h2>' . esc_html( $group ) . '</h2><table><tbody>';
+					if ( 'Rozhodca: čísla série' === $group ) {
+						echo '<details class="mysn-nums"><summary><h2 style="display:inline">Rozhodca: čísla série 1 až 147</h2> <span class="description">(rozbaliť; rozhodca hlási body v sérii po každej potopenej guli, hlasom skupiny Rozhodca)</span></summary>';
+						echo '<p><button type="button" class="button button-primary nums-all" data-lang="en">Vygenerovať chýbajúce čísla</button> <span class="nums-st description"></span></p><table><tbody>';
+					} else {
+						echo '<h2>' . esc_html( $group ) . '</h2>';
+						if ( in_array( $group, array( 'Rozhodca', 'Diváci', 'Komentátor Rudo' ), true ) && empty( $vdone[ $group ] ) ) {
+							$vdone[ $group ] = 1; // Diváci sú na stránke dvakrát: výber hlasu len pri prvej
+							mysn_sound_voice_box( $group, $voices, $models );
+						}
+						echo '<table><tbody>';
+					}
+				endif;
+				if ( mysn_sound_is_num( $id ) ) :
+					// čísla série: bez doladenia; pole fm dostane meno až pri zmene v galérii (limit polí formulára)
+					?>
+					<tr data-slot="<?php echo esc_attr( $id ); ?>" class="num">
+						<td class="n"><b><?php echo esc_html( $x[1] ); ?></b></td>
+						<td class="files" colspan="2"><input type="hidden" class="fm" data-name="snd[<?php echo esc_attr( $id ); ?>][fm]" value="<?php echo esc_attr( wp_json_encode( (object) $s['fm'] ) ); ?>"><span class="list"></span> <button type="button" class="button button-small pick">Súbory…</button> <button type="button" class="button button-small play">Prehrať</button> <button type="button" class="button button-small gen">Generovať…</button></td>
+					</tr>
+					<?php
+					continue;
 				endif;
 				?>
 				<tr data-slot="<?php echo esc_attr( $id ); ?>">
@@ -602,6 +754,7 @@ function mysn_admin_sounds_page() {
 						<button type="button" class="button button-small pick">Súbory…</button>
 						<button type="button" class="button button-small play">Prehrať</button>
 						<button type="button" class="button button-small typical" title="Zahrá zvuk tak, ako zaznie v hre v situácii, pre ktorú je určený (napríklad jemný úder slabou silou, rozbitie plnou silou, diváci na štadióne), bez ohľadu na nastavenie skúšky">Typická situácia</button>
+						<button type="button" class="button button-small gen" title="Vygeneruje nový súbor cez ElevenLabs (hlas z textu alebo zvukový efekt z popisu) a pridá ho do galérie">Generovať…</button>
 					</td>
 					<td><div class="p">
 						<?php foreach ( $params as $k => $p ) : ?>
@@ -612,7 +765,7 @@ function mysn_admin_sounds_page() {
 					</div></td>
 				</tr>
 			<?php endforeach; ?>
-			</tbody></table>
+			</tbody></table><?php echo 'Rozhodca: čísla série' === $group ? '</details>' : ''; ?>
 			<h2>Rádio Hedlajner - Free Music</h2>
 			<table><tbody><tr data-music="1">
 				<td class="n"><b>Skladby rádia</b><small>Vlastná stanica Hedlajner - Free Music v rádiu hry (F9, mixpult v herni, reproduktory v kancelárii). Koľko skladieb pridáš, toľko je v nej; hrajú sa zamiešane jedna za druhou, po poslednej sa poradie znova zamieša. Stanica je v rádiu prvá. Názov skladby v hre je názov súboru (pomlčky a podčiarkovníky sa zmenia na medzery, napríklad Hedlajner-Leto.mp3 je Hedlajner Leto). <b>Hviezdička ☆/★</b> pri skladbe ju označí ako víťaznú: na konci zápasu na štadióne zahrá jedna náhodná označená skladba (všetkým, s prelínaním, pri odchode zo štadióna stíchne).</small><small class="rec"><b>Súbory:</b> MP3 (192 až 320 kbps) alebo OGG, stereo, hudba s licenciou na voľné použitie.</small><small class="spec"><b>Hlasitosť:</b> priemer okolo −14 LUFS (bežná hudba), všetky skladby podobne hlasné.</small></td>
@@ -636,4 +789,39 @@ function mysn_admin_sounds_page() {
 		</div></div>
 	</div>
 	<?php
+}
+
+/** Výber hlasu ElevenLabs pre skupinu (ukladá sa tlačidlom Uložiť zvuky, generovanie berie aktuálny výber). */
+function mysn_sound_voice_box( $group, $voices, $models ) {
+	$g = function_exists( 'mysn_sound_voice' ) ? mysn_sound_voice( $group ) : array( 'voice' => '', 'model' => '', 'name' => '' );
+	$n = 'voice[' . $group . ']';
+	echo '<div class="vbox" data-group="' . esc_attr( $group ) . '"><b>Hlas na generovanie (' . esc_html( $group ) . ')</b>';
+	echo '<select class="vsel" name="' . esc_attr( $n ) . '[voice]" style="max-width:360px"><option value="">Môj klon z My Rooms (postava Ja)</option>';
+	if ( ! is_wp_error( $voices ) ) {
+		$list = (array) $voices;
+		usort(
+			$list,
+			function ( $a, $b ) {
+				return ( 'cloned' === $b['cat'] ) <=> ( 'cloned' === $a['cat'] ) ?: ( 'male' === $b['gender'] ) <=> ( 'male' === $a['gender'] ) ?: strcasecmp( $a['name'], $b['name'] );
+			}
+		); // klony a mužské hlasy navrch
+		foreach ( $list as $x ) {
+			$meta = array_filter( array( 'cloned' === $x['cat'] ? 'klon' : '', 'female' === $x['gender'] ? 'žena' : ( 'male' === $x['gender'] ? 'muž' : '' ), $x['accent'], $x['lang'] ) );
+			echo '<option value="' . esc_attr( $x['id'] ) . '" data-prev="' . esc_url( $x['preview'] ) . '"' . selected( $g['voice'], $x['id'], false ) . '>' . esc_html( $x['name'] . ( $meta ? ' (' . implode( ', ', $meta ) . ')' : '' ) ) . '</option>';
+		}
+	}
+	echo '</select><input type="hidden" class="vname" name="' . esc_attr( $n ) . '[name]" value="' . esc_attr( $g['name'] ) . '">';
+	echo '<button type="button" class="button button-small vprev">▶ Ukážka hlasu</button>';
+	echo '<label>Model <select class="vmodel" name="' . esc_attr( $n ) . '[model]"><option value="">ako v My Rooms</option>';
+	foreach ( (array) $models as $k => $lbl ) {
+		echo '<option value="' . esc_attr( $k ) . '"' . selected( $g['model'], $k, false ) . '>' . esc_html( $lbl ) . '</option>';
+	}
+	echo '</select></label>';
+	if ( is_wp_error( $voices ) ) {
+		echo '<span style="color:#b32d2e">' . esc_html( $voices->get_error_message() ) . '</span>';
+	}
+	if ( 'Komentátor Rudo' === $group ) {
+		echo '<span class="description" style="flex-basis:100%">Popis Ruda, ako často hovorí, hlasitosť a živé komentáre sú v <a href="' . esc_url( admin_url( 'admin.php?page=my-snooker-crowd' ) ) . '">Publikum a Rudo</a>.</span>';
+	}
+	echo '<span class="description" style="flex-basis:100%">Hlas a model ulož tlačidlom Uložiť zvuky (generovanie použije aktuálny výber hneď). ' . ( 'Rozhodca' === $group ? 'Týmto hlasom sa generujú aj čísla série a mená hráčov.' : ( 'Komentátor Rudo' === $group ? 'Rudo hovorí po slovensky; týmto hlasom sa generujú aj jeho živé komentáre (stovka, koniec zápasu). Vyber starší mužský hlas, ktorý zvláda slovenčinu.' : 'Platí pre hlasové zvuky divákov (Well done).' ) ) . ' Ukážka hrá vzorku hlasu z ElevenLabs (klon nemá vzorku, vypočuj si vygenerovaný súbor).</span></div>';
 }

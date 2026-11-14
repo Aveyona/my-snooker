@@ -35,7 +35,7 @@ const AIM_AHEAD = 0.5; // posun pohľadu bez mierenej gule: kamera sa pozerá 50
 
 function loadSettings() {
 	const mobile = /Android|iPhone|iPad|Mobile/i.test(navigator.userAgent);
-	const def = { tableDetail: 'fine', lines: false, quality: mobile ? 'low' : 'high', volume: 0.8, volTable: 1, volRoom: 1, volCrowd: 1, sound3d: 'hrtf', respot: true, contact: true, contactPos: 'right', afterShot: 'follow', oppCam: 'follow', camera: 'cue', cue: 'club' };
+	const def = { tableDetail: 'fine', lines: false, quality: mobile ? 'low' : 'high', volume: 0.8, volTable: 1, volRoom: 1, volCrowd: 1, sound3d: 'hrtf', refLang: 'en', respot: true, contact: true, contactPos: 'right', afterShot: 'follow', oppCam: 'follow', camera: 'cue', cue: 'club' };
 	try {
 		const raw = window.localStorage.getItem(STORE);
 		if (raw) {
@@ -75,6 +75,7 @@ function webglOk() {
 }
 
 export function start(root, config = {}) {
+	const CROWD = config.crowd || {}; // publikum a Rudo: administrácia Publikum a Rudo (pre všetkých rovnako)
 	if (!webglOk()) {
 		root.innerHTML = '<div class="mysn-nogl">Tento prehliadač nepodporuje 3D grafiku (WebGL). Skús aktuálny Chrome, Firefox, Edge alebo Safari.</div>';
 		return null;
@@ -1302,7 +1303,7 @@ export function start(root, config = {}) {
 		const name = String(c.name || 'Hráč').slice(0, 40);
 		const m = game.match;
 		if (c.level === 'warning') {
-			setTimeout(() => sound.fx('ref-warning', { pos, room: 0.8 }), 300);
+			refVoice.say('ref-warning', 300);
 			ui.toast(`Rozhodca: ${name}, napomenutie za nešportové správanie. Ďalší prehrešok: súper +4 body.`);
 			return true;
 		}
@@ -1310,7 +1311,7 @@ export function start(root, config = {}) {
 		if (m && m.rules && m.rules.scores && !game.spectating && (c.who === 0 || c.who === 1)) {
 			m.rules.scores[1 - c.who] += pts;
 		}
-		setTimeout(() => sound.fx('ref-penalty', { pos, room: 0.8 }), 300);
+		refVoice.say('ref-penalty', 300);
 		const sc = toScreen(0, R, 0);
 		if (sc) {
 			ui.scorePop(`Nešportové správanie · súper +${pts}`, sc.x, sc.y - 40, '#ff6b6b', true);
@@ -3143,6 +3144,8 @@ export function start(root, config = {}) {
 			ui.openRoomMap(false);
 			const go = () => {
 				specDemo = true;
+				ui.demoWatch = true;
+				ui.root.classList.add('mysn-watching');
 				flagsReset();
 				confLeft = 3;
 				const seat = 2 * 25 + 12; // strana +z, 3. rad, stred
@@ -3174,6 +3177,8 @@ export function start(root, config = {}) {
 				return;
 			}
 			specDemo = false;
+			ui.demoWatch = false;
+			ui.root.classList.remove('mysn-watching');
 			mySeat = -1;
 			ui.openSpectPhone(false);
 			exitView();
@@ -3372,6 +3377,10 @@ export function start(root, config = {}) {
 			if (k === 'sound3d') {
 				sound.setMode(v);
 			}
+			if (k === 'refLang') {
+				refVoice.warm();
+				refVoice.say('ref-foul', 600); // ukážka hlasu
+			}
 			if (k === 'respot') {
 				game.respot = !!v;
 			}
@@ -3436,6 +3445,18 @@ export function start(root, config = {}) {
 			}
 		},
 		stroke: (on) => ui.setStroke(on),
+		// prvé dotknutie prstom za tágom: krátky návod (raz na zariadení)
+		touchHint: () => {
+			try {
+				if (localStorage.getItem('mysn_touch_hint')) {
+					return;
+				}
+				localStorage.setItem('mysn_touch_hint', '1');
+			} catch (e) {
+				return;
+			}
+			ui.toast('Prst: ťahaj vodorovne = mierenie, ťahaj dole = odtiahneš tágo, rýchlo hore = úder. Dvoma prstami priblížiš.');
+		},
 		look: (dx, dy) => {
 			if (!LOOK.has(view) || freeMouse || (view === 'seat' && seatScore)) {
 				return;
@@ -3950,8 +3971,12 @@ export function start(root, config = {}) {
 	const chat = gameChat(overlay, config.chat ? Object.assign({ nonce: config.nonce }, config.chat) : null, {
 		canWrite: () => !!user,
 		myName: () => user && user.name,
-		// Enter inde: biela do ruky, pohľady (kreslo, noviny, stojan...), nájdený zápas, koniec partie
-		canOpen: () => !!(user || guestPlay) && game.state !== 'place' && !view && !ui.menuOpen() && !ui.foundOpen() && !ui.partyOpen() && !ui.cardOpen() && !ui.phoneOpen(),
+		// chat zápasu: partia, ktorú hrám (aj mimo ligy), sledujem alebo moja otvorená herňa
+		ctx: () => (!user ? '' : game.spectating ? watchCtx : game.match && online && online.matchId ? 'm' + online.matchId : roomOpen() ? 'r' + user.id : ''),
+		mrest: config.restUrl,
+		nonce: () => (online && online.net && online.net.nonce) || config.nonce,
+		// Enter inde: biela do ruky, pohľady (kreslo, noviny, stojan...), nájdený zápas, koniec partie; divák na svojom mieste píše normálne
+		canOpen: () => !!(user || guestPlay) && (game.spectating || game.state !== 'place') && (!view || ((game.spectating || specDemo) && view === 'seat')) && !ui.menuOpen() && !ui.foundOpen() && !ui.partyOpen() && !ui.cardOpen() && !ui.phoneOpen(),
 	});
 	let zoomSaveT = 0;
 	controls.sens = settings.mouseSens || 1; // šúpatko Otáčanie myšou
@@ -4041,6 +4066,21 @@ export function start(root, config = {}) {
 		// slávnostné ukončenie: skóre za čas, zápis do rebríčka, potom sa hneď začne nový frame
 		const res = online ? await online.saveScore(r) : { error: 'Skóre sa zapisuje len prihláseným.' };
 		const ok = res && !res.error;
+		// overenie serverom (0.11.0): platí výsledok servera
+		let vnote = '';
+		let vbad = false;
+		if (ok && res.ver === 1 && res.verified) {
+			const v = res.verified;
+			vnote = Number(v.points) !== r.points ? `✓ Overené serverom. Server napočítal ${v.points} b. (v hre ${r.points} b.), do rebríčka ide výsledok servera.` : '✓ Overené serverom';
+			r = { ...r, points: Number(v.points), shots: Number(v.shots), fouls: Number(v.fouls), brk: Number(v.brk) };
+		} else if (ok && res.ver === 2) {
+			vnote = '⏳ Výsledok čaká na overenie serverom, do rebríčka pôjde po overení.';
+		} else if (ok && res.ver === 3) {
+			vnote = 'Server výsledok nepotvrdil, do rebríčka nejde. ' + (res.rejected || '').replace(/^Zamietnuté: /, '');
+			vbad = true;
+		} else if (ok && res.ver === 0) {
+			vnote = 'Frame sa začal pred overovaním serverom, výsledok je v rebríčku označený ako neoverený.';
+		}
 		if (ok) {
 			loadTrophies(res);
 		}
@@ -4051,7 +4091,7 @@ export function start(root, config = {}) {
 		if (ok) {
 			refreshTrophies(res);
 		}
-		ui.celebrate({ ...r, rank: ok ? res.rank : 0, players: ok ? res.players : 0, best, error: ok ? '' : res && res.error });
+		ui.celebrate({ ...r, rank: ok && res.ver !== 3 && res.ver !== 2 ? res.rank : 0, players: ok ? res.players : 0, best, vnote, vbad, error: ok ? '' : res && res.error });
 		sound.unlock();
 		if (sound.pot) {
 			sound.pot();
@@ -4154,6 +4194,15 @@ export function start(root, config = {}) {
 					game.spectateSet(m.balls || null);
 					watchInfo.key = key;
 					watchInfo.seq = m.seq;
+					// hlásenie rozhodcu a Ruda k úderu: divák ho počuje raz, keď gule dobehnú (rovnako ako hráči)
+					if (watchInfo.callSeq === undefined) {
+						watchInfo.callSeq = m.seq; // práve som prišiel: staré hlásenie sa neopakuje
+					} else if (m.call && m.seq > watchInfo.callSeq && sp.type === 'match') {
+						watchInfo.callSeq = m.seq;
+						crowdPlay(m.call.crowd);
+						refCall(m.call);
+						rudo.exec(m.call.rudo, sp.id, m.seq);
+					}
 				} else if (m.k === 'w-shot') {
 					watchTurnAt = 0; // hráč vystrelil: časomiera sa zastaví do ďalšieho ťahu
 					if (m.seq <= watchInfo.played || !m.before || !m.shot) {
@@ -4242,6 +4291,14 @@ export function start(root, config = {}) {
 				refreshMenu();
 				ui.showMenu(false);
 				ui.toast(`Partia s hráčom ${m.players[1 - m.me].name}. ${m.turn === m.me ? 'Si na rade.' : 'Na rade je súper.'}`);
+				if (m.league) {
+					setTimeout(() => rudo.start(), 500); // komentátor Rudo na štadióne
+				}
+				// rozhodca: začiatok zápasu a meno hráča, ktorý rozbíja
+				if (refVoice.on() && m.players[m.turn]) {
+					refVoice.say('ref-start', 900);
+					refVoice.sayName(m.players[m.turn].id, 900);
+				}
 				ui.sync(game, rig.mode);
 				updateScore();
 			},
@@ -4325,6 +4382,27 @@ export function start(root, config = {}) {
 		});
 		online.seatCtx = seatCtxNow;
 		online.away = !lampOn; // zhasnutá lampa v kancelárii: nie som online
+	}
+	// výzva z webového chatu (profil v My Chat → 🎱 Vyzvať na partiu): ?challenge=<id hráča> pošle pozvánku
+	const chq = new URLSearchParams(location.search);
+	const chUid = +chq.get('challenge');
+	if (chUid) {
+		chq.delete('challenge');
+		history.replaceState(null, '', location.pathname + (chq.toString() ? '?' + chq : '') + location.hash);
+		if (!online) {
+			ui.toast('Na výzvu na partiu sa najprv prihlás.');
+		} else {
+			setTimeout(async () => {
+				if (game.match) {
+					ui.toast('Práve hráš partiu, výzvu pošli po jej konci.');
+					return;
+				}
+				await online.invite(chUid, false, false, 1);
+				if (online._waitFor) {
+					ui.toast('Výzva na partiu odoslaná, čakáš, kým ju súper prijme (platí minútu).');
+				}
+			}, 2000);
+		}
 	}
 	// z My Rooms (televízor, Sledovať): adresa #watch=typ:id otvorí sledovanie partie
 	const wm = /^#watch=([a-z]+):(\d+)$/.exec(decodeURIComponent(location.hash || ''));
@@ -4452,24 +4530,383 @@ export function start(root, config = {}) {
 	};
 	/** Hlasitosť publika: štadión vždy, herňa len keď sedia skutoční diváci, inak ticho. */
 	const crowdGain = () => (venue === 'league' ? 1 : seatList.length ? 0.45 : 0);
-	/** Hlásenie rozhodcu (nahrávky po anglicky; bez nahrávky ticho). Hlas ide z miesta rozhodcu na štadióne. */
+	/**
+	 * Hlas rozhodcu (0.12.0 – 0.12.2): zvuky rozhodcu zo Zvukov (nahrané alebo vygenerované cez ElevenLabs),
+	 * súbory v jazyku podľa nastavenia Hlas rozhodcu (sk/en), Vypnutý = rozhodca mlčí. Repliky idú za sebou
+	 * (fronta), čísla série sa načítajú až pri hlásení, mená hráčov z REST refvoice/name.
+	 */
+	const refVoice = (() => {
+		const queue = [];
+		let busy = 0;
+		const lang = () => (settings.refLang === 'off' ? 'off' : 'en'); // rozhodca a diváci len po anglicky (medzinárodný zápas)
+		sound.lang = 'en';
+		const dur = (slot) => {
+			const b = sound.bufs && sound.bufs[slot] && sound.bufs[slot][0];
+			return b ? b.duration : 0.8;
+		};
+		const pump = () => {
+			if (busy || !queue.length) {
+				return;
+			}
+			const it = queue.shift();
+			busy = 1;
+			Promise.race([it.ready, new Promise((ok) => setTimeout(() => ok(false), 5000))]).then((ok) => {
+				const pos = venue === 'league' ? stadium.refPos() : null;
+				const len = ok && sound.fx(it.slot, { pos, room: 0.8 }) ? dur(it.slot) : 0;
+				setTimeout(() => {
+					busy = 0;
+					pump();
+				}, len ? len * 1000 + 220 : 0);
+			});
+		};
+		const push = (it, delay) =>
+			setTimeout(() => {
+				queue.push(it);
+				pump();
+			}, delay);
+		/** Povie zvuk rozhodcu (slot zo Zvukov), delay = najskôr o toľko ms. */
+		const say = (slot, delay = 0) => {
+			if (lang() !== 'off') {
+				push({ slot, ready: sound.ensure(slot) }, delay);
+			}
+		};
+		/** Meno hráča (vygeneruje sa na serveri pri prvom použití, hlasom rozhodcu). */
+		const names = {};
+		const sayName = (uid, delay = 0) => {
+			if (lang() === 'off' || !uid || !config.restUrl || !user) {
+				return;
+			}
+			const l = lang();
+			const slot = 'name-' + uid + '-' + l;
+			if (!names[slot]) {
+				names[slot] = fetch(config.restUrl + 'refvoice/name?u=' + uid + '&lang=' + l, { credentials: 'same-origin', headers: { 'X-WP-Nonce': (online && online.net && online.net.nonce) || config.nonce } })
+					.then((r) => (r.ok ? r.json() : null))
+					.then((d) => (d && d.url && sound.ctx ? sound.load(slot, [d.url]).then((n) => n > 0) : false))
+					.catch(() => false);
+			}
+			push({ slot, ready: names[slot] }, delay);
+		};
+		/** Body v sérii; zároveň dopredu načíta ďalšie čísla. */
+		const sayBreak = (n, delay = 0) => {
+			n = n | 0;
+			if (n < 1 || n > 147 || lang() === 'off') {
+				return;
+			}
+			say('ref-n' + n, delay);
+			for (let k = n + 1; k <= Math.min(147, n + 8); k++) {
+				sound.ensure('ref-n' + k);
+			}
+		};
+		/** Zmena jazyka: zvuky sa načítajú v novom jazyku. */
+		const warm = () => {
+			if (lang() !== 'off') {
+				sound.setLang(lang());
+			}
+		};
+		return { say, sayName, sayBreak, warm, on: () => lang() !== 'off', lang, busy: () => !!busy || queue.length > 0 };
+	})();
+	/**
+	 * Komentátor Rudo (0.13.0): divák na tribúne štadióna, po slovensky a s humorom komentuje ligový zápas.
+	 * Bežné situácie zo zvukov skupiny Komentátor Rudo (náhodný variant), stovku a koniec zápasu naživo cez AI
+	 * (REST rudo/live, pri chybe náhradný zvuk). Hovorí najviac raz za 6 s, po rozhodcovi. Vypína sa v Nastaveniach.
+	 */
+	/** Do kedy ešte tlieska publikum (Rudo počká, kým potlesk dozneje). */
+	const crowdBusy = { until: 0 };
+	const crowdMark = (slot, pick) => {
+		const list = sound.bufs && sound.bufs[slot];
+		if (!list || !list.length) {
+			return;
+		}
+		const b = typeof pick === 'number' ? list[Math.abs(Math.floor(pick)) % list.length] : list.reduce((a, x) => (x.duration > a.duration ? x : a), list[0]);
+		crowdBusy.until = Math.max(crowdBusy.until, Date.now() + Math.min(12, b.duration) * 1000 - 600);
+	};
+	const rudo = (() => {
+		let last = 0;
+		const pos = () => (stadium.rudoPos ? stadium.rudoPos() : { x: 0, y: 1.2, z: 3 }); // 3. rad v strede na strane rozhodcu
+		const GOOD = /^rudo-(live-)?(nice|50|break50|century|frame|match|start|pot|in|hang|won)/;
+		/** Násobok, ako často Rudo hovorí: menej 0,5, normálne 1, viac 1,7. */
+		const rf = () => ({ low: 0.5, high: 1.7 })[CROWD.rudoFreq] || 1;
+		const on = () => CROWD.rudo !== false && venue === 'league' && !!(game.match || game.spectating);
+		/** Rudo prehovorí: hlas z jeho miesta a gesto (pri dobrom vstane a tlieska, pri chybe sa chytí za hlavu). */
+		/**
+		 * Rudo prehovorí, keď dohovorí rozhodca; kým hovorí, diváci (potlesk, zvuky divákov) sú stíšení, aby
+		 * sa neprekrývali. Hlas ide mimo skupiny divákov (stíšenie divákov ho neovplyvní).
+		 */
+		let talking = 0;
+		const talk = (slot, tries = 0, pick = undefined) => {
+			// počká na rozhodcu, na vlastnú predošlú vetu a kým dozneje potlesk publika
+			if ((refVoice.busy() || Date.now() < talking || Date.now() < crowdBusy.until) && tries < 40) {
+				setTimeout(() => talk(slot, tries + 1, pick), 400);
+				return;
+			}
+			// pick = číslo variantu repliky, rovnaké u všetkých (inak by každý počul inú vetu)
+			if (sound.fx(slot, { pos: pos(), room: 0.6, group: 'rudo', gain: 1.8 * (CROWD.rudoVol ?? 1), pick })) {
+				const b = sound.bufs[slot] && sound.bufs[slot][0];
+				const sec = b ? b.duration : 2;
+				talking = Date.now() + sec * 1000 + 300;
+				sound.duck('crowd', 0.3, sec + 0.2);
+				if (stadium.rudoTalk) {
+					stadium.rudoTalk(GOOD.test(slot) ? 'stand' : 'facepalm');
+				}
+			}
+		};
+		const play = (slot, delay = 1800, force = false, pick = undefined) => {
+			const now = Date.now();
+			if (!on() || (!force && (now - last < (CROWD.rudoGap || 4) * 1000 || CROWD.rudoFreq === 'key'))) {
+				return; // Len dôležité chvíle: bežné repliky vynechá
+			}
+			last = now;
+			sound.ensure(slot).then((ok) => ok && setTimeout(() => talk(slot, 0, pick), delay));
+		};
+		/** Živý komentár (stovka, koniec zápasu); keď nevyjde do 9 s, zahrá náhradný zvuk. */
+		const live = (ev, data, fb, delay, force = true, mid = 0) => {
+			if (!on() || (!force && (Date.now() - last < (CROWD.rudoGap || 4) * 1000 || CROWD.rudoFreq === 'key'))) {
+				return;
+			}
+			if (CROWD.rudoLive === false) {
+				play(fb, Math.min(delay, 2500), true, Number(data.k) || 0); // bez živých komentárov: pripravená replika
+				return;
+			}
+			last = Date.now();
+			let done = false;
+			// náhradná replika až po 20 s (živý komentár trvá 4 až 10 s); keď náhrada nie je, čaká sa ďalej na živý
+			const fallback = setTimeout(() => {
+				const c = sound.cfg[fb];
+				if (c && c.urls && c.urls.length) {
+					done = true;
+					play(fb, 0, true, Number(data.k) || 0);
+				}
+			}, 20000);
+			const fd = new FormData();
+			fd.append('m', mid);
+			fd.append('ev', ev);
+			for (const [k, v] of Object.entries(data)) {
+				fd.append(k, v);
+			}
+			const t0 = Date.now();
+			fetch(config.restUrl + 'rudo/live', { method: 'POST', body: fd, credentials: 'same-origin', headers: { 'X-WP-Nonce': (online && online.net && online.net.nonce) || config.nonce } })
+				.then((r) => (r.ok ? r.json() : null))
+				.then((d) => {
+					if (done || !d || !d.url) {
+						return;
+					}
+					const slot = 'rudo-live-' + ev;
+					return sound.load(slot, [d.url]).then((n) => {
+						if (done || !n) {
+							return;
+						}
+						done = true;
+						clearTimeout(fallback);
+						setTimeout(() => talk(slot), Math.max(0, delay - (Date.now() - t0)));
+					});
+				})
+				.catch(() => {});
+		};
+		/** Hlásenie rozhodcu po údere: Rudo k tomu niečo povie. */
+		const said = new Set(); // frame ball a snookery: raz za frame pre hráča
+		/**
+		 * Strelec po údere rozhodne, čo Rudo povie (rovnako pre súpera aj divákov, ide so stavom zápasu):
+		 * { p: zvuk zo zásoby } alebo { l: udalosť na živý komentár, d: mená a čísla, f: náhradný zvuk }.
+		 * Výnimočné chvíle (stovka, séria 50, koniec framu a zápasu) vždy naživo, ostatné občas naživo.
+		 */
+		const decide = (c, st) => {
+			const m = game.match;
+			if (!m || !m.league) {
+				return null;
+			}
+			const names = m.players.map((p) => p.name);
+			const sh = m.me; // strieľal som ja
+			const rules = (st && st.rules) || m.rules || {};
+			const frames = st && st.frames ? st.frames : m.frames;
+			const sc = (w) => (rules.scores ? `${rules.scores[w]}:${rules.scores[1 - w]}` : '');
+			const fr = (w) => (frames ? `${frames.won[w]}:${frames.won[1 - w]}` : '');
+			const ctx = (w, extra = {}) => ({ who: names[w] || '', other: names[1 - w] || '', score: sc(w), frames: fr(w), ...extra });
+			const live = (ev, w, fb, delay, extra, f = 1) => ({ l: ev, d: ctx(w, extra), f: fb, t: delay, x: f });
+			const pool = (slot, delay) => ({ p: slot, t: delay, v: Math.floor(Math.random() * 1e6) }); // v = variant repliky pre všetkých
+			const maybe = (q) => Math.random() < Math.min(0.95, q * rf()); // Ako často hovorí (administrácia)
+			if (c.over) {
+				return live('match', c.fw !== undefined ? c.fw : sh, 'rudo-match', 3500);
+			}
+			if (c.frame) {
+				said.clear();
+				return live('frame', c.fw !== undefined ? c.fw : sh, 'rudo-frame', 3000);
+			}
+			if (c.won !== undefined) {
+				return live('won', c.won, 'rudo-won', 2500, { brk: c.brk || 0 }); // po potlesku, vtipne k partii
+			}
+			if (c.brk >= 100 && shotTrack.brk0 < 100) {
+				return live('century', sh, 'rudo-century', 2500, { brk: c.brk });
+			}
+			if (c.brk >= 50 && shotTrack.brk0 < 50) {
+				return live('break50', sh, 'rudo-50', 2200, { brk: c.brk });
+			}
+			const white = shotTrack.pots.some((id) => game.balls[id] && game.balls[id].kind === 'white');
+			const pots = shotTrack.pots.filter((id) => game.balls[id] && game.balls[id].kind !== 'white');
+			if (c.foul) {
+				const fb = white ? 'rudo-white' : 'rudo-foul';
+				if (shotTrack.lead >= 20 && maybe(0.6)) {
+					return live('foullead', sh, 'rudo-foul', 2600, { pts: c.foul }, 0);
+				}
+				return maybe(0.45) ? live(white ? 'white' : 'foul', sh, fb, 2600, { pts: c.foul }, 0) : pool(fb, 2600);
+			}
+			const fm = (frames ? frames.n : 1) + ':';
+			if (c.snk !== undefined && !said.has(fm + 's' + c.snk) && maybe(0.6)) {
+				said.add(fm + 's' + c.snk);
+				return live('snookers', c.snk, 'rudo-miss', 2600, {}, 0);
+			}
+			if (c.fb !== undefined && !said.has(fm + 'f' + c.fb) && maybe(0.5)) {
+				said.add(fm + 'f' + c.fb);
+				return live('frameball', c.fb, 'rudo-nice', 2400, {}, 0);
+			}
+			if (pots.some((id) => shotTrack.cush.has(id)) || (pots.length && c.brk >= 20 && maybe(0.15))) {
+				return maybe(0.45) ? live('nice', sh, 'rudo-nice', 1800, { brk: c.brk || 0 }, 0) : pool('rudo-nice', 1800);
+			}
+			if (!pots.length) {
+				const edge = game.balls.some((b) => b.on && b.kind !== 'white' && POCKETS.some((p) => Math.hypot(b.p.x - p.x, b.p.z - p.z) < (p.corner ? 0.085 : 0.075)));
+				if (edge) {
+					return maybe(0.45) ? live('edge', sh, 'rudo-edge', 1500, {}, 0) : pool('rudo-edge', 1500);
+				}
+				if (maybe(0.5)) {
+					return pool('rudo-miss', 1500);
+				}
+			}
+			if (pots.length && maybe(0.4)) {
+				return pool('rudo-pot', 1600); // bežná potopená guľa: často, ale nie pri každej
+			}
+			return null;
+		};
+		/** Prehrá rozhodnutie Ruda (hráči aj diváci): mid = zápas, seq = úder (jeden živý komentár pre všetkých). */
+		const exec = (r, mid, seq) => {
+			if (!on() || !mid) {
+				return;
+			}
+			if (r && r.p) {
+				play(r.p, r.t || 1800, false, r.v);
+			} else if (r && r.l) {
+				live(r.l, { ...(r.d || {}), k: String(seq) }, r.f, r.t || 2000, !!r.x, mid);
+			}
+			clearTimeout(layoutT);
+			layoutT = setTimeout(layout, 5500); // po chvíli: zaujímavé rozloženie gúľ na stole
+		};
+		/**
+		 * Náhoda rovnaká u všetkých (hráči aj diváci majú ten istý stôl): číslo 0 až 1 z polôh gúľ a soli,
+		 * takže Rudo povie to isté všade bez posielania správ.
+		 */
+		const seeded = (salt) => {
+			let h = 2166136261 ^ salt;
+			for (const b of game.balls) {
+				if (b.on) {
+					h = Math.imul(h ^ (Math.round(b.p.x * 200) + 1000 * Math.round(b.p.z * 200)), 16777619);
+				}
+			}
+			return ((h >>> 0) % 10000) / 10000;
+		};
+		/** Počas úderu: guľa práve spadla, Rudo vykríkne (občas). */
+		const potNow = (id) => {
+			const b = game.balls[id];
+			if (!on() || !b || b.kind === 'white' || Date.now() - last < 4000) {
+				return;
+			}
+			if (seeded(id * 31 + 7) < Math.min(0.95, 0.35 * rf())) {
+				play('rudo-in', 150, false, Math.floor(seeded(id * 53 + 3) * 1e6));
+			}
+		};
+		/** Zaujímavé rozloženie gúľ po údere (keď Rudo práve nehovoril): raz za frame pre každú situáciu. */
+		let layoutT = 0;
+		const seen = new Set();
+		const layout = () => {
+			if (!on() || game.state === 'moving' || Date.now() - last < 4000) {
+				return;
+			}
+			const on2 = game.balls.filter((b) => b.on);
+			const reds = on2.filter((b) => b.kind === 'red');
+			const cue = on2.find((b) => b.kind === 'white');
+			const colours = on2.filter((b) => b.kind !== 'red' && b.kind !== 'white');
+			const frameKey = String(game.match ? game.match.frames ? game.match.frames.n : 1 : 0) + ':';
+			const mx = L / 2; // mantinely (hracia plocha)
+			const mz = W / 2;
+			const cands = [];
+			if (reds.length === 1) {
+				cands.push(['lastred', 'rudo-lastred']);
+			}
+			if (!reds.length && colours.length === 1 && colours[0].kind === 'black') {
+				cands.push(['black', 'rudo-black']);
+			}
+			if (on2.some((b) => b.kind !== 'white' && POCKETS.some((p) => Math.hypot(b.p.x - p.x, b.p.z - p.z) < (p.corner ? 0.1 : 0.09)))) {
+				cands.push(['hang' + reds.length, 'rudo-hang']); // guľa visí nad jamkou
+			}
+			if (cue && (mx - Math.abs(cue.p.x) < R * 1.6 || mz - Math.abs(cue.p.z) < R * 1.6)) {
+				cands.push(['cush' + reds.length, 'rudo-cushion']); // biela prilepená na mantineli
+			}
+			let tight = 0;
+			for (let i = 0; i < reds.length; i++) {
+				for (let j = i + 1; j < reds.length; j++) {
+					if (Math.hypot(reds[i].p.x - reds[j].p.x, reds[i].p.z - reds[j].p.z) < R * 2.15) {
+						tight++;
+					}
+				}
+			}
+			if (reds.length >= 5 && reds.length <= 13 && tight >= 5) {
+				cands.push(['cluster' + reds.length, 'rudo-cluster']); // kopa červených, ktorú treba rozbiť
+			}
+			const c = cands.find(([k]) => !seen.has(frameKey + k));
+			if (c && seeded(97) < Math.min(0.95, 0.55 * rf())) {
+				seen.add(frameKey + c[0]);
+				play(c[1], 0, false, Math.floor(seeded(131) * 1e6));
+			}
+		};
+		const start = () => {
+			said.clear();
+			seen.clear();
+			play('rudo-start', 4500, true, game.match ? game.match.id : 0);
+		};
+		return { decide, exec, start, potNow };
+	})();
+	game.decorateCall = (c, st) => {
+		const r = rudo.decide(c, st);
+		if (r) {
+			c.rudo = r;
+		}
+		const cr = crowdDecide(st, c.foul, c);
+		if (cr) {
+			cr.v = Math.floor(Math.random() * 1e6); // rovnaká nahrávka potlesku u všetkých
+			c.crowd = cr; // reakcia publika: rovnaká pre súpera aj divákov
+		}
+	};
+	/** Kto koľko krát počul frame ball a snookery v tomto frame (hlási sa raz za frame). */
+	const refSaid = new Set();
+	/** Hlásenie rozhodcu: vygenerovaný hlas (SK/EN), inak nahrávky zo Zvukov. Hlas ide z miesta rozhodcu na štadióne. */
 	const refCall = (c) => {
-		const pos = venue === 'league' ? stadium.refPos() : null;
-		const say = (slot, delay = 0) => setTimeout(() => sound.fx(slot, { pos, room: 0.8 }), delay);
+		const say = (id, delay = 0) => refVoice.say(id, delay);
 		let t = 350;
 		if (c.time) {
 			say('ref-time', t);
-			t += 900;
 		}
 		if (c.foul) {
-			say(sound.has('ref-foul-' + c.foul) ? 'ref-foul-' + c.foul : 'ref-foul', t);
-			t += 1300;
+			const id = 'ref-foul-' + c.foul;
+			say(sound.cfg[id] && sound.cfg[id].urls && sound.cfg[id].urls.length ? id : 'ref-foul', t);
+		}
+		if (c.brk && !c.foul) {
+			refVoice.sayBreak(c.brk, t);
 		}
 		if (c.free) {
 			say('ref-freeball', t);
 		}
 		if (c.again) {
 			say('ref-again', t);
+		}
+		if (c.respot) {
+			say('ref-respot', t);
+		}
+		const m = game.match;
+		const fkey = m ? m.id + ':' + (m.frames ? m.frames.n : 1) + ':' : '';
+		if (c.fb !== undefined && m && !refSaid.has(fkey + 'fb' + c.fb)) {
+			refSaid.add(fkey + 'fb' + c.fb);
+			say('ref-frameball', t);
+		}
+		if (c.snk !== undefined && m && !refSaid.has(fkey + 'snk' + c.snk)) {
+			refSaid.add(fkey + 'snk' + c.snk);
+			say('ref-snookers', t);
 		}
 		if (c.over) {
 			say('ref-match', t + 200);
@@ -4479,8 +4916,12 @@ export function start(root, config = {}) {
 		if (c.over && venue === 'league') {
 			setTimeout(winMusic, t + 2500); // koniec zápasu na štadióne: víťazná pieseň z rádia Hedlajner
 		}
-		if ((c.over || c.frame) && crowdGain()) {
-			setTimeout(() => sound.fx('ovation', { gain: crowdGain() }), t + 900);
+		if ((c.over || c.frame) && crowdGain() && CROWD.applause !== 'off') {
+			setTimeout(() => {
+				if (sound.fx('ovation', { gain: crowdGain() })) {
+					crowdMark('ovation');
+				}
+			}, t + 900);
 		}
 	};
 	/**
@@ -4488,50 +4929,89 @@ export function start(root, config = {}) {
 	 * óóó pri ťažkom údere (guľa po mantineli do jamky), jooooj keď guľa ostane na hrane jamky, smiech keď
 	 * vedúci hráč nič netrafí alebo zafauluje bez potopenia.
 	 */
-	const crowdReact = () => {
-		const g = crowdGain();
-		if (!g) {
-			return;
-		}
+	/**
+	 * Reakcia publika na úder: { s: zvuk, g: hlasitosť, n: ďalší zvuk po 0,7 s } alebo null. V partii ju určí
+	 * strelec a ide so stavom zápasu (call.crowd), takže súper aj diváci počujú to isté v rovnakej chvíli.
+	 */
+	const crowdDecide = (st, foul, c = {}) => {
 		const m = game.match;
 		const pots = shotTrack.pots.filter((id) => game.balls[id] && game.balls[id].kind !== 'white');
 		const whitePot = shotTrack.pots.some((id) => game.balls[id] && game.balls[id].kind === 'white');
-		const brk = m && m.rules ? m.rules.brk : game.stats.run || 0;
-		const turnKept = m ? m.rules.turn === shotTrack.shooter : true;
+		const rules = (st && st.rules) || (m && m.rules) || null;
+		const brk = rules ? rules.brk : game.stats.run || 0;
+		const turnKept = rules ? rules.turn === shotTrack.shooter : true;
+		if (c.frame || c.over) {
+			return null; // koniec framu: veľké ovácie po hlásení rozhodcu
+		}
+		if (c.won !== undefined) {
+			return { s: 'applause-big', g: 0.9 }; // rozhodujúci náskok: súper už potrebuje snookery
+		}
+		// ako v skutočnom snookri: po červenej sa netlieska, po farebnej zdvorilo, po skončení série veľký potlesk
 		if (pots.length && turnKept && !whitePot) {
 			if (shotTrack.brk0 < 100 && brk >= 100) {
-				sound.fx('ovation', { gain: g });
-				return;
+				return { s: 'ovation', g: 1 };
 			}
+			const colour = pots.some((id) => game.balls[id].kind !== 'red');
 			if (pots.some((id) => shotTrack.cush.has(id))) {
-				sound.fx('crowd-wow', { gain: g * 0.9 });
-				setTimeout(() => sound.fx('applause-big', { gain: g }), 700);
-				return;
+				return colour ? { s: 'crowd-wow', g: 0.9, n: 'applause-small' } : { s: 'crowd-wow', g: 0.8 };
 			}
-			sound.fx(brk >= 30 ? 'applause-big' : 'applause-small', { gain: g * (brk >= 30 ? 0.8 : 0.6) });
-			return;
+			return colour ? { s: 'applause-small', g: brk >= 30 ? 0.7 : 0.55 } : null;
+		}
+		// séria skončila (hráč prestal byť na rade): veľký potlesk za sériu, za päťdesiatku a viac ovácie
+		if (!turnKept && shotTrack.brk0 >= (CROWD.brkClap || 20)) {
+			return shotTrack.brk0 >= 50 ? { s: 'ovation', g: 0.9 } : { s: 'applause-big', g: 0.85 };
 		}
 		// guľa ostala na hrane jamky
 		const edge = game.balls.some((b) => b.on && b.kind !== 'white' && POCKETS.some((p) => Math.hypot(b.p.x - p.x, b.p.z - p.z) < (p.corner ? 0.085 : 0.075)));
 		if (!pots.length && edge) {
-			sound.fx('crowd-ooh', { gain: g });
-			return;
+			return { s: 'crowd-ooh', g: 1 };
 		}
 		// somarina vedúceho hráča: faul bez potopenia, keď vedie aspoň o 20 bodov
-		if (m && !pots.length && shotTrack.lead >= 20 && shotTrack.foul) {
-			sound.fx('laugh', { gain: g * 0.8 });
+		if (m && !pots.length && shotTrack.lead >= 20 && (foul || shotTrack.foul)) {
+			return { s: 'laugh', g: 0.8 };
+		}
+		return null;
+	};
+	/** Smie publikum zahrať zvuk podľa nastavení (Potlesk, Reakcie publika)? */
+	const crowdOk = (slot) => (/^(applause|ovation)/.test(slot) ? CROWD.applause !== 'off' : /^(crowd-|laugh|cough)/.test(slot) ? CROWD.crowdFx !== false : true);
+	const crowdPlay = (r) => {
+		const g = crowdGain();
+		if (!r || !g || !r.s) {
+			return;
+		}
+		if (!crowdOk(r.s)) {
+			if (r.n && crowdOk(r.n)) {
+				setTimeout(() => sound.fx(r.n, { gain: g, pick: r.v }), 700);
+			}
+			return;
+		}
+		if (sound.fx(r.s, { gain: g * (r.g || 1), pick: r.v }) && /^(applause|ovation)/.test(r.s)) {
+			crowdMark(r.s, r.v);
+		}
+		if (r.n && crowdOk(r.n)) {
+			setTimeout(() => sound.fx(r.n, { gain: g, pick: r.v }), 700);
+		}
+	};
+	/** Mimo partie (tréning, herňa s divákmi): reakcia hneď po údere u mňa. */
+	const crowdReact = () => {
+		if (!game.match) {
+			crowdPlay(crowdDecide(null, 0));
 		}
 	};
 	// občasné zakašľanie na štadióne, keď je ticho
 	setInterval(() => {
-		if (venue === 'league' && game.state === 'aim' && Math.random() < 0.35) {
+		if (venue === 'league' && game.state === 'aim' && CROWD.crowdFx !== false && Math.random() < 0.35) {
 			sound.fx('cough', { gain: 0.5, pos: { x: (Math.random() * 2 - 1) * 6, y: 2.5, z: (Math.random() < 0.5 ? -1 : 1) * (4 + Math.random() * 3) } });
 		}
 	}, 45000);
 	game.on((type, d) => {
 		if (type === 'call' && d) {
 			shotTrack.foul = d.foul || 0;
+			crowdPlay(d.crowd); // publikum (rozhodol strelec)
 			refCall(d);
+			if (game.match) {
+				rudo.exec(d.rudo, game.match.id, game.match.seq); // komentátor Rudo (rozhodol strelec)
+			}
 		}
 		if (type === 'shot') {
 			shotTrack.cush.clear();
@@ -4543,10 +5023,16 @@ export function start(root, config = {}) {
 			const me = m ? m.rules.turn : 0;
 			shotTrack.lead = m && m.rules ? m.rules.scores[me] - m.rules.scores[1 - me] : 0; // náskok hráča na ťahu
 			shotTrack.brk0 = m && m.rules ? m.rules.brk : game.stats.run || 0;
+			shotTrack.solo0 = game.solo ? game.solo.rules.brk : game.stats.run || 0;
 			shotTrack.shooter = me;
 		}
 		if (type === 'settle' && shotTrack.active) {
 			shotTrack.active = false;
+			// sólo frame: rozhodca hlási body v sérii (v zápase ich hlási pri hlásení rozhodcu)
+			const run = game.solo ? game.solo.rules.brk : game.stats.run || 0;
+			if (!game.match && !game.spectating && run > (shotTrack.solo0 || 0)) {
+				refVoice.sayBreak(run, 300);
+			}
 			setTimeout(crowdReact, 250);
 			scorePops(d && typeof d.points === 'number' ? d.points : null);
 		}
@@ -4659,6 +5145,7 @@ export function start(root, config = {}) {
 				} else if (e.type === 'pot') {
 					shotTrack.pots.push(e.a);
 					shotTrack.potAt[e.a] = e.pocket;
+					rudo.potNow(e.a); // Rudo vykríkne hneď, keď guľa spadne
 				}
 				if (e.type === 'ball') {
 					const a = game.balls[e.a];
@@ -5158,7 +5645,7 @@ export function start(root, config = {}) {
 	requestAnimationFrame(frame);
 
 	debug.setFree = (on) => { freeMouse = !!on; ui.setFree(freeMouse); }; // na testy: voľná myš ako pri držanom Ctrl
-	return { game, rig, renderer, scene, settings, controls, debug, actions, cue, get online() {
+	return { game, rig, renderer, scene, settings, controls, debug, actions, cue, sound, get online() {
 		return online;
 	} };
 }

@@ -6,7 +6,8 @@
 import { Sound, cueMod } from './audio.js';
 
 const $ = (s, el = document) => el.querySelector(s);
-const D = window.mysnSnd || { files: {}, names: {}, radio: [], rmeta: {} };
+const D = window.mysnSnd || { files: {}, names: {}, radio: [], rmeta: {}, gen: {} };
+D.gen = D.gen || {};
 const snd = new Sound({});
 const loaded = {}; // slot → kľúč načítaných súborov (zmena = znova načítať)
 
@@ -26,7 +27,13 @@ const fmOf = (tr) => {
 		return {};
 	}
 };
-const setFm = (tr, fm) => (tr.querySelector('input.fm').value = JSON.stringify(fm));
+const setFm = (tr, fm) => {
+	const el = tr.querySelector('input.fm');
+	el.value = JSON.stringify(fm);
+	if (el.dataset.name && !el.name) {
+		el.name = el.dataset.name; // čísla série: pole sa odošle až po zmene (limit polí formulára)
+	}
+};
 
 /** Súbory slotu s aktuálnym (aj neuloženým) nastavením Hrá a priority. */
 const filesOf = (slot) => {
@@ -42,8 +49,9 @@ const filesOf = (slot) => {
 const ownCount = () => {
 	const el = document.getElementById('mysn-own-count');
 	if (el) {
-		const all = document.querySelectorAll('tr[data-slot]').length;
-		el.textContent = `Vlastné nahrávky má ${document.querySelectorAll('tr[data-slot].mysn-own').length} z ${all} zvukov (zvýraznené zelenou).`;
+		const all = document.querySelectorAll('tr[data-slot]:not(.num)').length;
+		const nums = document.querySelectorAll('tr[data-slot].num.mysn-own').length;
+		el.textContent = `Vlastné nahrávky má ${document.querySelectorAll('tr[data-slot].mysn-own:not(.num)').length} z ${all} zvukov (zvýraznené zelenou), čísla série ${nums} zo 147.`;
 	}
 };
 
@@ -71,7 +79,8 @@ const summary = (tr) => {
 		nb.appendChild(tag);
 	}
 	if (tag) {
-		tag.textContent = own.length ? `VLASTNÝ ZVUK · ${own.filter((f) => f.on).length}/${own.length}` : '';
+		const langs = [...new Set(own.filter((f) => f.lang).map((f) => f.lang.toUpperCase()))];
+		tag.textContent = own.length ? (tr.classList.contains('num') ? `${own.length}${langs.length ? ' · ' + langs.join(' ') : ''}` : `VLASTNÝ ZVUK · ${own.filter((f) => f.on).length}/${own.length}${langs.length ? ' · ' + langs.join(' ') : ''}`) : '';
 		tag.style.display = own.length ? '' : 'none';
 	}
 	ownCount();
@@ -211,11 +220,11 @@ const TYPICAL = {
 const playTypical = async (slot) => {
 	await ready();
 	const g = groupOf(slot);
-	const room = /^(amb-office|notify)/.test(slot) ? 'office' : /^(amb-herna|door-|beep|player-)/.test(slot) ? 'herna' : /^(amb-stadium|ref-|applause|ovation|crowd-|laugh|whistle|cough|shush|well-done|tension|jingle-|clock-tick)/.test(slot) ? 'stadium' : val('room').value;
+	const room = /^(amb-office|notify)/.test(slot) ? 'office' : /^(amb-herna|door-|beep|player-)/.test(slot) ? 'herna' : /^(amb-stadium|ref-|rudo-|applause|ovation|crowd-|laugh|whistle|cough|shush|well-done|tension|jingle-|clock-tick)/.test(slot) ? 'stadium' : val('room').value;
 	snd.setRoom(room);
 	await prep(slot);
 	const vel = TYPICAL[slot] !== undefined ? TYPICAL[slot] : 0.6;
-	const pos = /^(amb-|applause|ovation|crowd-|laugh|whistle|jingle-|tension|notify|clock-tick|beep|score)/.test(slot) ? null : slot.startsWith('pot-') ? { x: -0.9, y: 0.9, z: 0.4 } : /^(ref-|cough|shush|well-done)/.test(slot) ? { x: 1.6, y: 1.6, z: -0.6 } : { x: 0.3, y: 0.9, z: 1.0 };
+	const pos = /^(amb-|applause|ovation|crowd-|laugh|whistle|jingle-|tension|notify|clock-tick|beep|score)/.test(slot) ? null : slot.startsWith('pot-') ? { x: -0.9, y: 0.9, z: 0.4 } : /^rudo-/.test(slot) ? { x: -3.2, y: 1.2, z: 3 } : /^(ref-|cough|shush|well-done)/.test(slot) ? { x: 1.6, y: 1.6, z: -0.6 } : { x: 0.3, y: 0.9, z: 1.0 };
 	if (slot === 'roll') {
 		const T = { ...test(), vel, pos };
 		const ball = { p: { x: 0.3, z: 0.5 }, v: { x: vel * 3, z: 0 } };
@@ -286,7 +295,7 @@ const galDraw = () => {
 		const on = radio ? m.on !== 0 : !!f.on;
 		const row = document.createElement('tr');
 		row.className = on ? '' : 'off';
-		row.innerHTML = `<td><b></b> <span class="src ${f.src}">${f.src === 'base' ? 'základná sada (CC0)' : 'vlastný'} ${fmtSize(f.size)}</span></td><td><button type="button" class="button button-small pl">▶</button></td><td><label><input type="checkbox" class="on"> hrá</label></td><td class="w"></td><td class="x"></td>`;
+		row.innerHTML = `<td><b></b> <span class="src ${f.src}">${f.src === 'base' ? 'základná sada (CC0)' : f.gen ? 'generovaný (ElevenLabs)' : 'vlastný'} ${fmtSize(f.size)}</span>${f.lang ? `<span class="lg">${f.lang.toUpperCase()}</span>` : ''}</td><td><button type="button" class="button button-small pl">▶</button></td><td><label><input type="checkbox" class="on"> hrá</label></td><td class="w"></td><td class="x"></td>`;
 		row.querySelector('b').textContent = f.name;
 		const cb = row.querySelector('.on');
 		cb.checked = on;
@@ -415,8 +424,154 @@ if (G) {
 		G.querySelector('.msg').textContent = list.length ? `Nahraté: ${list.length}.` : '';
 	});
 }
+/* ---------- generovanie cez ElevenLabs ---------- */
+const voiceOf = (slot) => {
+	const g = D.gen[slot] && D.gen[slot].voice;
+	const box = g && document.querySelector(`.vbox[data-group="${g}"]`);
+	return box ? { voice: box.querySelector('.vsel').value, model: box.querySelector('.vmodel').value } : { voice: '', model: '' };
+};
+const post = async (path, data) => {
+	const fd = new FormData();
+	for (const [k, v] of Object.entries(data)) {
+		fd.append(k, v);
+	}
+	const r = await fetch(D.rest + path, { method: 'POST', headers: { 'X-WP-Nonce': D.nonce }, body: fd, credentials: 'same-origin' });
+	const j = await r.json().catch(() => null);
+	if (!r.ok) {
+		throw new Error((j && j.message) || 'Nepodarilo sa.');
+	}
+	return j;
+};
+/** Vygeneruje súbor zvuku, pridá ho do galérie a zahrá ho. */
+const genRun = async (tr, data, quiet) => {
+	const slot = tr.dataset.slot;
+	const j = await post('sound-gen', { slot, ...data, ...voiceOf(slot) });
+	D.files[slot] = j.files;
+	loaded[slot] = null;
+	const g = D.gen[slot];
+	if (g) {
+		if (data.lang) {
+			g[data.lang] = data.text;
+		} else {
+			Object.assign(g, { fx: data.text, dur: data.dur, loop: data.loop });
+		}
+	}
+	summary(tr);
+	const f = j.files.find((x) => x.name === j.name);
+	if (f && !quiet) {
+		if (preview) {
+			preview.pause();
+		}
+		preview = new Audio(f.url);
+		preview.play();
+	}
+	return j;
+};
+const genOpen = (tr) => {
+	const slot = tr.dataset.slot;
+	const old = tr.querySelector('.genbox');
+	if (old) {
+		old.remove();
+		return;
+	}
+	const g = D.gen[slot] || {};
+	const box = document.createElement('div');
+	box.className = 'genbox';
+	if (g.rudo !== undefined) {
+		// Rudo: každý riadok = jeden variant, vygenerujú sa všetky riadky (každý ako nový súbor)
+		box.innerHTML = `<b>Repliky Ruda (slovensky, každý riadok = jeden variant)</b><textarea class="gt" rows="6"></textarea><div class="row"><button type="button" class="button button-primary go">Generovať všetky riadky</button><span class="gs description"></span></div>`;
+		box.querySelector('.gt').value = g.rudo || '';
+		box.querySelector('.go').addEventListener('click', async (e) => {
+			const b = e.target;
+			const st = box.querySelector('.gs');
+			const all = box.querySelector('.gt').value;
+			const lines = all.split('\n').map((x) => x.trim()).filter(Boolean);
+			b.disabled = true;
+			let i = 0;
+			try {
+				for (const text of lines) {
+					st.textContent = `Generujem ${++i} / ${lines.length}…`;
+					await genRun(tr, { text, all }, true);
+				}
+				g.rudo = all;
+				st.textContent = `Hotovo (${lines.length}): súbory sú v galérii (Súbory…), nepodarené odlož.`;
+			} catch (er) {
+				st.textContent = er.message;
+			}
+			b.disabled = false;
+		});
+		tr.querySelector('td.files').appendChild(box);
+		return;
+	}
+	if (g.voice) {
+		box.innerHTML = `<b>Generovať hlas po anglicky (${g.voice})</b><input type="hidden" class="gl" value="en"><input type="text" class="gt"><div class="row"><button type="button" class="button button-primary go">Generovať</button><span class="gs description"></span></div>`;
+		box.querySelector('.gt').value = g.en || '';
+	} else {
+		box.innerHTML = `<b>Generovať zvukový efekt</b><textarea class="gt" rows="2" placeholder="Popis zvuku po anglicky"></textarea><div class="row"><label>Dĺžka <input type="number" class="gd" min="0" max="30" step="0.5" style="width:70px"> s (0 = automaticky)</label><label><input type="checkbox" class="gp"> slučka</label></div><div class="row"><button type="button" class="button button-primary go">Generovať</button><span class="gs description"></span></div>`;
+		box.querySelector('.gt').value = g.fx || '';
+		box.querySelector('.gd').value = g.dur || 0;
+		box.querySelector('.gp').checked = !!+g.loop;
+	}
+	box.querySelector('.go').addEventListener('click', async (e) => {
+		const b = e.target;
+		const st = box.querySelector('.gs');
+		const data = g.voice
+			? { lang: box.querySelector('.gl').value, text: box.querySelector('.gt').value }
+			: { text: box.querySelector('.gt').value, dur: box.querySelector('.gd').value, loop: box.querySelector('.gp').checked ? 1 : 0 };
+		b.disabled = true;
+		st.textContent = 'Generujem…';
+		try {
+			await genRun(tr, data);
+			st.textContent = 'Hotovo: súbor je v galérii (Súbory…), nepodarený odlož. Zmeny Hrá a priority ulož.';
+		} catch (er) {
+			st.textContent = er.message;
+		}
+		b.disabled = false;
+	});
+	tr.querySelector('td.files').appendChild(box);
+};
+// výber hlasu skupiny: ukážka a meno hlasu
+for (const box of document.querySelectorAll('.vbox')) {
+	const sel = box.querySelector('.vsel');
+	const nm = () => (box.querySelector('.vname').value = sel.value ? sel.selectedOptions[0].textContent.replace(/ \(.*$/, '') : '');
+	sel.addEventListener('change', nm);
+	box.querySelector('.vprev').addEventListener('click', () => {
+		const u = sel.selectedOptions[0] && sel.selectedOptions[0].dataset.prev;
+		if (preview) {
+			preview.pause();
+		}
+		if (!u) {
+			window.alert('Klon z My Rooms nemá vzorku: vygeneruj repliku a vypočuj si ju.');
+			return;
+		}
+		preview = new Audio(u);
+		preview.play();
+	});
+}
+// čísla série: všetky chýbajúce v jazyku za sebou
+for (const b of document.querySelectorAll('.nums-all')) {
+	b.addEventListener('click', async () => {
+		const lang = b.dataset.lang;
+		const st = document.querySelector('.nums-st');
+		const rows = [...document.querySelectorAll('tr[data-slot].num')].filter((tr) => !(D.files[tr.dataset.slot] || []).some((f) => f.lang === lang));
+		document.querySelectorAll('.nums-all').forEach((x) => (x.disabled = true));
+		let i = 0;
+		try {
+			for (const tr of rows) {
+				st.textContent = `Generujem ${++i} / ${rows.length}…`;
+				const g = D.gen[tr.dataset.slot] || {};
+				await genRun(tr, { lang, text: g[lang] || tr.querySelector('td.n b').textContent }, true);
+			}
+			st.textContent = `Hotovo (${rows.length}).`;
+		} catch (er) {
+			st.textContent = `Zastavené pri ${i}: ${er.message}`;
+		}
+		document.querySelectorAll('.nums-all').forEach((x) => (x.disabled = false));
+	});
+}
 for (const tr of document.querySelectorAll('tr[data-slot]')) {
 	summary(tr);
+	tr.querySelector('.gen').addEventListener('click', () => genOpen(tr));
 	for (const r of tr.querySelectorAll('input[type=range]')) {
 		r.addEventListener('input', () => {
 			r.parentElement.querySelector('output').textContent = r.value + (r.dataset.u || '');
@@ -424,7 +579,9 @@ for (const tr of document.querySelectorAll('tr[data-slot]')) {
 	}
 	tr.querySelector('.pick').addEventListener('click', () => galOpen(tr));
 	tr.querySelector('.play').addEventListener('click', () => playSlot(tr.dataset.slot));
-	tr.querySelector('.typical').addEventListener('click', () => playTypical(tr.dataset.slot));
+	if (tr.querySelector('.typical')) {
+		tr.querySelector('.typical').addEventListener('click', () => playTypical(tr.dataset.slot));
+	}
 }
 const mtr = document.querySelector('tr[data-music]');
 if (mtr) {

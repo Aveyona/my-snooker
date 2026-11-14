@@ -332,6 +332,11 @@ export class UI {
 					<option value="hrtf">Slúchadlá (3D zvuk)</option>
 					<option value="stereo">Reproduktory (výrazné stereo)</option>
 				</select></label>
+			<label>Hlas rozhodcu
+				<select data-k="refLang">
+					<option value="en">Zapnutý (po anglicky)</option>
+					<option value="off">Vypnutý</option>
+				</select></label>
 			<label>Detail dotyku pri mierení
 				<select data-k="contactPos">
 					<option value="center">V strede dole</option>
@@ -1330,7 +1335,7 @@ export class UI {
 			<div class="mysn-party-score"><b>${r.points}</b><span>${word}</span></div>
 			<p class="mysn-party-time">za <b>${time}</b></p>
 			<p class="mysn-party-meta">Najvyššia séria ${r.brk}, údery ${r.shots}, fauly ${r.fouls}</p>
-			${rank}${r.error ? `<p class="mysn-party-err">${esc(r.error)}</p>` : ''}
+			${rank}${r.vnote ? `<p class="mysn-party-ver${r.vbad ? ' bad' : ''}">${esc(r.vnote)}</p>` : ''}${r.error ? `<p class="mysn-party-err">${esc(r.error)}</p>` : ''}
 			<div class="mysn-party-btns"></div>
 		</div>`;
 		const btns = P.querySelector('.mysn-party-btns');
@@ -1486,7 +1491,9 @@ export class UI {
 			tb.innerHTML = '<thead><tr><th>#</th><th>Hráč</th><th>Body</th><th>Celkový čas</th><th>Séria</th></tr></thead>';
 			const body = h('tbody');
 			const row = (r) => {
-				const tr = h('tr', r.me ? 'mysn-lb-me' : '', `<td>${r.rank}.</td><td>${esc(r.user.name)}</td><td><b>${r.points}</b></td><td>${t(r.seconds)}</td><td>${r.brk}</td>`);
+				// ✓ overené serverom; staršie výsledky spred overovania majú štítok neoverené (0.11.0)
+				const vb = r.ver === 1 ? ' <span class="mysn-lb-ok" title="Overené serverom: frame prehral server a výsledok sedí">✓</span>' : r.ver === 0 ? ' <span class="mysn-lb-nv" title="Výsledok spred overovania serverom">neoverené</span>' : '';
+				const tr = h('tr', r.me ? 'mysn-lb-me' : '', `<td>${r.rank}.</td><td>${esc(r.user.name)}</td><td><b>${r.points}</b>${vb}</td><td>${t(r.seconds)}</td><td>${r.brk}</td>`);
 				body.appendChild(tr);
 			};
 			d.top.forEach(row);
@@ -2724,7 +2731,7 @@ export class UI {
 		const s = game.stats;
 		const mt = game.match;
 		this.root.classList.toggle('mysn-online', !!mt);
-		this.root.classList.toggle('mysn-watching', !!game.spectating);
+		this.root.classList.toggle('mysn-watching', !!game.spectating || !!this.demoWatch); // divák (aj ukážka od diváka): bez gule Miesto úderu, sily a nástrojov
 		if (game.spectating) {
 			// divák: kto hrá a stav partie
 			const sp = game.spectating;

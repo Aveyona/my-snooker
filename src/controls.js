@@ -6,7 +6,8 @@
  *  Koliesko stlač a drž = pohybom myši sa posúva miesto úderu na bielej (falše), dvojklik kolieskom = stred.
  *  Pravé tlačidlo drž = posúvanie pohľadu hore, dole, doľava a doprava (kamera sa pozerá na mierenú guľu,
  *  ak sa nemieri na guľu, tak na bod pol metra pred bielou). Po údere kamera sleduje bielu a pohyb myši bez tlačidla otáča pohľad.
- *  Prst: ťahaj vodorovne = mierenie, koliesko myši = priblíženie.
+ *  Prst (0.10.1): ťahaj vodorovne = mierenie; ťahaj zvislo = ruka s tágom: dole tágo odtiahne, rýchlo hore = úder
+ *  (sila podľa rýchlosti, pustenie bez úderu = zrušenie); dva prsty od seba a k sebe = priblíženie.
  *  Zhora: klikni alebo ťahaj na stole = smer úderu.
  *  Voľná kamera: ťahanie otáča pohľad, krátke ťuknutie na stôl alebo šípky = smer.
  *  Biela do ruky: klikni alebo ťahaj v D.
@@ -40,6 +41,9 @@ export class Controls {
 		this.strokePx = 380;
 		this.strokePull = 0;
 		this._hist = [];
+		this._tp = new Map(); // prsty na obrazovke (id → poloha) pre priblíženie dvoma prstami
+		this._pinch = null;
+		this.touchStroke = false; // úder ťahaním prstom
 
 		dom.addEventListener('mousemove', (e) => this.mouseMove(e));
 		this.panning = false; // pravé tlačidlo: posúvanie pohľadu
@@ -81,8 +85,30 @@ export class Controls {
 		}
 	}
 
+	/** Dva prsty: vzdialenosť medzi nimi. */
+	pinchDist() {
+		const a = Array.from(this._tp.values());
+		return a.length >= 2 ? Math.hypot(a[0].x - a[1].x, a[0].y - a[1].y) : 0;
+	}
+
 	down(e) {
 		this.hooks.unlock();
+		if (e.pointerType === 'touch') {
+			this._touchAt = performance.now();
+			this.uncapture(); // zachytená myš by prstu brala polohu
+			this._tp.set(e.pointerId, { x: e.clientX, y: e.clientY });
+			if (this._tp.size >= 2) {
+				// druhý prst: priblíženie, rozrobené mierenie alebo ťahanie tága sa zruší
+				this._drag = null;
+				this._tap = null;
+				if (this.stroking) {
+					this.endStroke();
+				}
+				this.touchStroke = false;
+				this._pinch = { d0: this.pinchDist() || 1, z0: this.rig.zoom, steps: 0 };
+				return;
+			}
+		}
 		if (this.hooks.hotClick && this.hooks.hotClick(e)) {
 			return; // Ctrl + klik na rozsvietený predmet (stojan, skóre a podobne)
 		}
@@ -173,6 +199,11 @@ export class Controls {
 				this.aimAt(p);
 			}
 			this._drag = { kind: 'aimTop', id: e.pointerId };
+		} else if (e.pointerType === 'touch') {
+			this._drag = { kind: 'touchCue', id: e.pointerId, x: e.clientX, y: e.clientY, dir: g.dir, lock: '' };
+			if (this.hooks.touchHint) {
+				this.hooks.touchHint();
+			}
 		} else {
 			this._drag = { kind: 'aimCue', id: e.pointerId, x: e.clientX, dir: g.dir };
 		}
@@ -184,6 +215,30 @@ export class Controls {
 	}
 
 	move(e) {
+		if (e.pointerType === 'touch' && this._tp.has(e.pointerId)) {
+			this._tp.set(e.pointerId, { x: e.clientX, y: e.clientY });
+			if (this._pinch) {
+				const pd = this.pinchDist();
+				if (pd > 0) {
+					const ratio = this._pinch.d0 / pd; // pre koliesko: prsty od seba = záporné kroky = priblížiť
+					if (this.blocked && this.hooks.viewWheel) {
+						// pohľad z kresla: rovnako ako koliesko (kroky)
+						const st = Math.log(ratio) / Math.log(1 / 0.82);
+						const dst = st - this._pinch.steps;
+						if (Math.abs(dst) >= 0.25) {
+							this._pinch.steps = st;
+							this.hooks.viewWheel(Math.max(-4, Math.min(4, dst)));
+						}
+					} else if (this.rig.mode === 'cue') {
+						this.rig.zoom = Math.min(6, Math.max(0.3, this._pinch.z0 / ratio)); // prsty od seba = bližšie
+						if (this.hooks.zoomed) {
+							this.hooks.zoomed(this.rig.zoom, this.rig.panZoom || 1);
+						}
+					}
+				}
+				return;
+			}
+		}
 		const d = this._drag;
 		if (!d || d.id !== e.pointerId) {
 			return;
@@ -199,6 +254,35 @@ export class Controls {
 			if (p) {
 				this.aimAt(p);
 			}
+		} else if (d.kind === 'touchCue') {
+			// prst za tágom: smer ťahu rozhodne – vodorovne mierenie, zvislo ruka s tágom
+			if (!d.lock) {
+				const dx = e.clientX - d.x;
+				const dy = e.clientY - d.y;
+				if (Math.hypot(dx, dy) < 8) {
+					return;
+				}
+				d.lock = Math.abs(dy) > Math.abs(dx) * 0.8 && g.canShoot() && (!this.hooks.canStroke || this.hooks.canStroke()) ? 'stroke' : 'aim';
+				if (d.lock === 'stroke') {
+					this.touchStroke = true;
+					this.startStroke();
+					d.ly = e.clientY;
+					if (!this.stroking) {
+						d.lock = 'none';
+						this.touchStroke = false;
+					}
+					return;
+				}
+			}
+			if (d.lock === 'aim') {
+				g.dir = d.dir + (e.clientX - d.x) * (this.fineAlways ? 0.0004 : 0.0016);
+			} else if (d.lock === 'stroke' && this.stroking) {
+				// na mobile je menej miesta a prst je pomalší než myš: plné odtiahnutie asi na pätine výšky obrazovky,
+				// plná sila pri švihnutí asi 2 000 px za sekundu
+				const k = Math.max(1, (this.strokePx * (this.strokeSens || 1)) / Math.max(120, window.innerHeight * 0.22)) / (this.strokeSens || 1);
+				this.strokeMove((e.clientY - d.ly) * k);
+				d.ly = e.clientY;
+			}
 		} else if (d.kind === 'aimCue') {
 			const k = e.shiftKey || this.fine ? 0.00015 : 0.0016;
 			// ťah doprava otočí mierenie doprava
@@ -207,6 +291,34 @@ export class Controls {
 	}
 
 	up(e) {
+		if (e.pointerType === 'touch') {
+			this._tp.delete(e.pointerId);
+			if (this._pinch) {
+				if (this._tp.size < 2) {
+					this._pinch = null;
+					this._drag = null; // zvyšný prst už nemieri
+				}
+				return;
+			}
+			if (this.touchStroke) {
+				this.touchStroke = false;
+				if (this.stroking) {
+					// prst sa pri švihnutí často zdvihne skôr, než tágo dôjde k bielej: ak sa ruka práve hýbala dopredu,
+					// úder sa dokončí silou švihnutia (0.10.5); inak (stojí alebo ide späť) = zrušenie ako pri myši
+					const h = this._hist;
+					const last = h[h.length - 1];
+					const prev = h.length > 1 ? h[h.length - 2] : null;
+					const fwd = last && prev && last.p < prev.p && performance.now() - last.t < 90;
+					const sp = Math.max(0, Math.min(1, this.strokeSpeed()));
+					if (fwd && sp > 0.03 && this.strokePull < 0.6) {
+						this.endStroke();
+						this.hooks.shoot(sp);
+					} else {
+						this.endStroke();
+					}
+				}
+			}
+		}
 		if (this.blocked && this.hooks.viewUp) {
 			this.hooks.viewUp(e);
 		}
@@ -246,13 +358,23 @@ export class Controls {
 		this.fineAlways = spec.fine > 0 && (v === undefined ? fineDefault(spec) : v === 1); // predvolene len Citlivé tágo, Shift prepne
 	}
 
+	/** Ovláda sa prstom? (posledný dotyk pred menej ako 5 s, alebo zariadenie bez myši) */
+	touchMode() {
+		if (performance.now() - (this._touchAt || -1e9) < 5000) {
+			return true;
+		}
+		return !!(window.matchMedia && window.matchMedia('(pointer: coarse)').matches && !window.matchMedia('(any-pointer: fine)').matches);
+	}
+
 	/** Je myš zachytená v okne hry? */
 	get captured() {
 		return document.pointerLockElement === this.dom;
 	}
 
 	capture() {
-		if (this.captured || !this.dom.requestPointerLock) {
+		// dotyková obrazovka: myš sa nezachytáva – so zachytením prehliadač posiela polohu prsta stále 0, 0
+		// a mierenie ani úder prstom by nefungovali (0.10.6)
+		if (this.captured || !this.dom.requestPointerLock || this.touchMode()) {
 			return;
 		}
 		try {
@@ -364,7 +486,9 @@ export class Controls {
 		this.strokePull = 0;
 		this._max = 0;
 		this._hist = [{ t: performance.now(), p: 0 }];
-		this.capture();
+		if (!this.touchStroke) {
+			this.capture();
+		}
 		if (this.hooks.stroke) {
 			this.hooks.stroke(true);
 		}
