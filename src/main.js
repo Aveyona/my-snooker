@@ -10,7 +10,7 @@ import { buildRoomShell, ROOM } from './room.js';
 import { buildRadioCorner, RadioPlayer, RADIO } from './radio.js';
 import { buildStadium } from './stadium.js';
 import { buildOffice } from './office.js';
-import { zoomCfg } from './camZoom.js';
+import { zoomCfg, camLowCfg } from './camZoom.js';
 import { Crowd } from './fans.js';
 import { COUNTRIES, countryByCode } from './countries.js';
 import { BallViews } from './balls.js';
@@ -33,9 +33,20 @@ import { CUES, cueById, ownCueSpec, TIP_COLORS, tipInaccuracy, extInaccuracy, cu
 const STORE = 'mySnookerSettings';
 const AIM_AHEAD = 0.5; // posun pohľadu bez mierenej gule: kamera sa pozerá 50 cm pred bielu
 
+/** Strana zostupu kamery popri tágu: -1 vľavo (pravák), 1 vpravo (ľavák); 'hand' podľa ligovej vizitky. */
+function lowSideFor(v, user) {
+	if (v === 'left') {
+		return -1;
+	}
+	if (v === 'right') {
+		return 1;
+	}
+	return user && user.hand === 'left' ? 1 : -1;
+}
+
 function loadSettings() {
 	const mobile = /Android|iPhone|iPad|Mobile/i.test(navigator.userAgent);
-	const def = { tableDetail: 'fine', lines: false, quality: mobile ? 'low' : 'high', volume: 0.8, volTable: 1, volRoom: 1, volCrowd: 1, sound3d: 'hrtf', refLang: 'en', respot: true, contact: true, contactPos: 'topright', afterShot: 'follow', oppCam: 'follow', camera: 'cue', cue: 'club' };
+	const def = { tableDetail: 'fine', lines: false, quality: mobile ? 'low' : 'high', volume: 0.8, volTable: 1, volRoom: 1, volCrowd: 1, sound3d: 'hrtf', refLang: 'en', respot: true, contact: true, contactPos: 'topright', camSide: 'hand', afterShot: 'follow', oppCam: 'follow', camera: 'cue', cue: 'club' };
 	try {
 		const raw = window.localStorage.getItem(STORE);
 		if (raw) {
@@ -478,6 +489,8 @@ export function start(root, config = {}) {
 	settings.camera = 'cue';
 	rig.setMode('cue');
 	rig.zoomCfg = zoomCfg(config.camZoom); // priblíženie na guľu podľa grafu z administrácie
+	rig.lowCfg = camLowCfg(config.camLow); // zostup popri tágu (My Snooker → Kamera)
+	rig.lowSide = lowSideFor(settings.camSide, config.user);
 	const sound = new Sound(config.sounds || {}); // nahrávky a doladenie z administrácie (My Snooker → Zvuky)
 	sound.setVolume(settings.volume);
 	sound.setMode(settings.sound3d === 'stereo' ? 'stereo' : 'hrtf');
@@ -3386,6 +3399,9 @@ export function start(root, config = {}) {
 			}
 			if (k === 'tableDetail') {
 				table.setDetail(v !== 'simple');
+			}
+			if (k === 'camSide') {
+				rig.lowSide = lowSideFor(v, config.user);
 			}
 			if (k === 'contactPos') {
 				settings.contact = v !== 'off';

@@ -81,3 +81,13 @@ export function zoomSpeed(cfg, t) {
 	}
 	return 1;
 }
+
+/** Zostup popri tágu (My Snooker → Kamera): bočný posun a najnižšia výška v metroch, dráha myši v pixeloch. */
+export function camLowCfg(c) {
+	const n = (v, d, lo, hi) => {
+		const x = Number(v);
+		return Number.isFinite(x) ? Math.max(lo, Math.min(hi, x)) : d;
+	};
+	c = c || {};
+	return { side: n(c.side, 7, 0, 20) / 100, minY: n(c.minY, 6.5, 5.5, 20) / 100, travel: n(c.travel, 300, 50, 1500) };
+}

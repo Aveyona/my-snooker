@@ -74,6 +74,8 @@ function mysn_render( $preview ) {
 			'account' => $u->display_name,
 			'avatar' => get_avatar_url( $u->ID, array( 'size' => 64 ) ),
 		);
+		$pl           = function_exists( 'mysn_player' ) ? mysn_player( $u->ID ) : null;
+		$user['hand'] = $pl && ( $pl['hand'] ?? '' ) === 'left' ? 'left' : 'right'; // ruka z ligovej vizitky (strana kamery pri zostupe)
 	}
 	$cfg = array(
 		'homeUrl'  => $main,
@@ -105,6 +107,7 @@ function mysn_render( $preview ) {
 		'sounds'   => mysn_sounds_config(), // nahrávky a doladenie zvukov (My Snooker → Zvuky)
 		'roomsUrl' => (string) apply_filters( 'mysn_rooms_url', '' ), // obývačka: samostatná hra My Rooms (doplnok my-rooms)
 		'camZoom'  => mysn_cam_zoom(), // graf priblíženia na guľu pravým tlačidlom (My Snooker → Kamera)
+		'camLow'   => mysn_cam_low(), // zostup kamery popri tágu (My Snooker → Kamera)
 		'clock'    => mysn_shot_clock(), // čas na ťah v ligovom zápase (sekundy) podľa sezóny
 		'admins'   => array_map( 'intval', (array) get_users( array( 'fields' => 'ID', 'capability' => 'manage_options', 'number' => 50 ) ) ),
 	);

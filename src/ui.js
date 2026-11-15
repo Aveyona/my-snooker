@@ -345,6 +345,12 @@ export class UI {
 					<option value="right">Vpravo dole</option>
 					<option value="off">Nezobrazovať</option>
 				</select></label>
+			<label>Kamera pri zostupe popri tágu (pravé tlačidlo, myš dozadu)
+				<select data-k="camSide">
+					<option value="hand">Podľa ruky z ligovej vizitky (pravák vľavo, ľavák vpravo)</option>
+					<option value="left">Vľavo od tága</option>
+					<option value="right">Vpravo od tága</option>
+				</select></label>
 			<label>Kamera po údere
 				<select data-k="afterShot">
 					<option value="follow">Sledovať bielu</option>
@@ -1528,7 +1534,7 @@ export class UI {
 			<h3>Ovládanie</h3>
 			<ul>
 				<li><b>Mierenie myšou:</b> kliknutím do hry sa myš zachytí v okne (kurzor sa skryje). Potom stačí hýbať myšou, tlačidlo netreba. Pomalý pohyb mieri veľmi jemne, so Shift ešte jemnejšie. Esc myš uvoľní a otvorí menu.</li>
-				<li><b>Posun pohľadu:</b> drž pravé tlačidlo myši a pohybom posúvaj pohľad hore, dole, doľava a doprava. Kamera sa pritom pozerá na guľu, na ktorú mieriš, a keď nemieriš na žiadnu, na miesto pol metra pred bielou v smere mierenia. Keď tlačidlo pustíš, pohľad sa vráti na pôvodné miesto. Otáčaním kolieska priblížiš alebo vzdiališ.</li>
+				<li><b>Posun pohľadu:</b> drž pravé tlačidlo myši a pohybom posúvaj pohľad hore, dole, doľava a doprava. Kamera sa pritom pozerá na guľu, na ktorú mieriš, a keď nemieriš na žiadnu, na miesto pol metra pred bielou v smere mierenia. Myš hore kameru približuje ku guli, myš dole (k sebe) ju z východiskovej polohy spúšťa popri tágu až na úroveň stola (pravák vľavo od tága, ľavák vpravo, dá sa zmeniť v Nastaveniach). Keď tlačidlo pustíš, pohľad sa vráti na pôvodné miesto. Otáčaním kolieska priblížiš alebo vzdiališ.</li>
 				<li><b>Po údere:</b> kamera sleduje bielu guľu. Pohybom myši bez tlačidla otáčaš pohľad okolo nej (doľava a doprava, hore a dole).</li>
 				<li><b>Biela do ruky myšou:</b> bielu posúvaš pohybom myši, ľavým klikom ju položíš.</li>
 				<li><b>Úder myšou:</b> drž ľavé tlačidlo, ruka chytí tágo. Myš k sebe tágo odtiahne, pohyb dopredu ho posunie a pri dotyku bielej vystrelí. Sila je podľa toho, ako rýchlo pohneš dopredu. Pustením ľavého tlačidla úder zrušíš.</li>

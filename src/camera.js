@@ -33,6 +33,10 @@ export class CameraRig {
 		this.followH = 0.55; // po údere: výška kamery
 		this._wasMoving = false;
 		this.aimPoint = null; // guľa (alebo miesto na mantineli), na ktorú sa mieri
+		// zostup popri tágu (pravé tlačidlo, myš dozadu z východiskovej polohy): 0 = za tágom, 1 = na úrovni stola
+		this.panLow = 0;
+		this.lowSide = -1; // -1 = vľavo od tága (pravák), 1 = vpravo (ľavák)
+		this.lowCfg = { side: 0.07, minY: 0.065, travel: 300 }; // My Snooker → Kamera (Zostup popri tágu)
 		this.orbit.mouseButtons = { LEFT: THREE.MOUSE.ROTATE, MIDDLE: THREE.MOUSE.PAN, RIGHT: THREE.MOUSE.PAN };
 	}
 
@@ -48,6 +52,15 @@ export class CameraRig {
 			const zc = this.zoomCfg || (this.zoomCfg = zoomCfg(null));
 			const LN = Math.log(zc.near);
 			const d0 = this.panDist || 1;
+			// myš dozadu z východiskovej polohy: kamera klesá popri tágu až na úroveň stola (namiesto oddialenia);
+			// myš dopredu ju najprv vráti hore a až potom sa začne približovať ku guli
+			if (this.panLow > 0 || (dy > 0 && d0 <= 1.0001)) {
+				const lc = this.lowCfg || {};
+				this.panLow = Math.max(0, Math.min(1, this.panLow + dy / Math.max(50, lc.travel || 300)));
+				this.panDist = 1;
+				this.panBlend = Math.max(this.panBlend || 0, this.panLow);
+				return;
+			}
 			if (d0 > 1 || (d0 >= 1 && dy > 0)) {
 				// oddialenie za tágom: najviac na dĺžku tága od bielej (kamera narazila na hranicu = ďalej nejde)
 				this.panDist = this._panCapped && dy > 0 ? d0 : Math.max(1, Math.min(2.5, d0 * Math.exp(dy * 0.004)));
@@ -101,6 +114,7 @@ export class CameraRig {
 		this.panDist = 1; // vzdialenosť od mierenej gule pri posune pravým tlačidlom (1 = ako za tágom)
 		this.panLift = 0;
 		this.panBlend = 0; // ako veľmi sa pohľad už otočil na mierenú guľu (0 = ako za tágom)
+		this.panLow = 0; // zostup popri tágu sa pustením tlačidla zruší
 		this.panZoom = 1; // koliesko pri držanom pravom tlačidle platí len počas držania
 	}
 
@@ -221,6 +235,21 @@ export class CameraRig {
 		this._wasMoving = moving;
 		if (this.mode !== 'top' && !moving && this.mode !== 'view') {
 			(this._panBase || (this._panBase = new THREE.Vector3())).copy(pos); // pre krúženie okolo gule (pan)
+		}
+		if (this.panLow > 0 && !moving && this.mode !== 'top' && this.mode !== 'view') {
+			// zostup popri tágu: kamera ide bokom od tága (pravák vľavo, ľavák vpravo) a klesá až na úroveň stola,
+			// vodorovná vzdialenosť od bielej sa nemení; pohľad sa stáča na mierenú guľu (panBlend)
+			const lc = this.lowCfg || {};
+			const s = this.panLow * this.panLow * (3 - 2 * this.panLow); // plynulý začiatok aj koniec
+			const fx = Math.cos(dir);
+			const fz = Math.sin(dir);
+			const side = (this.lowSide || -1) * (lc.side ?? 0.07) * s;
+			pos.x += -fz * side;
+			pos.z += fx * side;
+			// nad drevom rámu (biela pri mantineli) kamera nesmie ísť do rámu
+			const overFrame = Math.abs(pos.x) > L / 2 || Math.abs(pos.z) > W / 2;
+			const minY = Math.max(lc.minY ?? 0.065, overFrame ? 0.065 : 0);
+			pos.y = pos.y + (Math.min(pos.y, minY) - pos.y) * s;
 		}
 		if (this.mode === 'top') {
 			pos.add(this.panOffset);

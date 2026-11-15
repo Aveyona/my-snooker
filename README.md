@@ -90,7 +90,7 @@ Server `live.hedlajner.sk` (Hetzner) poskytuje TURN pre spojenie hráčov a over
 | Mierenie | pohyb myši bez tlačidla (so Shift jemnejšie, len pokročilé a majstrovské tágá) |
 | Úder | drž ľavé tlačidlo, myš k sebe tágo odtiahne, pohyb dopredu vystrelí |
 | Miesto úderu na bielej | drž koliesko a hýb myšou, dvojklik kolieskom = stred |
-| Posun pohľadu | drž pravé tlačidlo a hýb myšou |
+| Posun pohľadu | drž pravé tlačidlo a hýb myšou (hore priblíženie ku guli, dole zostup popri tágu na úroveň stola) |
 | Priblíženie | otáčanie kolieska |
 | Hlavné menu (ďalšie Esc ho zavrie, myš sa zachytí klikom do hry) | Esc |
 | Voľná myš (kurzor, klikanie), po pustení späť na tágo | drž Ctrl |
