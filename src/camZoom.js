@@ -92,7 +92,7 @@ export function camLowCfg(c) {
 	c = c || {};
 	return {
 		maxSide: n(c.maxSide, 20, 2, 60) / 100,
-		gap: n(c.gap, 5, 0, 20) / 100,
+		gap: n(c.gap, 2.5, 0, 20) / 100,
 		minY: n(c.minY, 6.5, 5.5, 20) / 100,
 		travel: n(c.travel, 300, 50, 1500),
 		travelSide: n(c.travelSide, 400, 50, 2000),

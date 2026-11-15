@@ -38,7 +38,7 @@ export class CameraRig {
 		this.lowSide = -1; // strana, keď myš nejde do strany: -1 = vľavo od tága (pravák), 1 = vpravo (ľavák)
 		this.lowLat = 0; // bočný posun od osi tága v metroch (myš doľava a doprava počas zostupu), + = vpravo
 		this.lowSign = 0; // zamknutá strana zostupu (0 = ešte nerozhodnutá), tágo kamera neprekročí
-		this.lowCfg = { maxSide: 0.2, gap: 0.05, minY: 0.065, travel: 300, travelSide: 400 }; // My Snooker → Kamera
+		this.lowCfg = { maxSide: 0.2, gap: 0.025, minY: 0.065, travel: 300, travelSide: 400 }; // My Snooker → Kamera
 		this.orbit.mouseButtons = { LEFT: THREE.MOUSE.ROTATE, MIDDLE: THREE.MOUSE.PAN, RIGHT: THREE.MOUSE.PAN };
 	}
 
@@ -285,7 +285,7 @@ export class CameraRig {
 			const fx = Math.cos(dir);
 			const fz = Math.sin(dir);
 			const fade = Math.min(1, this.panLow * 4); // pri návrate do východiskovej polohy sa vráti nad tágo
-			const side = this.lowSign ? this.lowSign * Math.max(Math.abs(this.lowLat), (lc.gap ?? 0.05) * s) * fade : this.lowLat * fade;
+			const side = this.lowSign ? this.lowSign * Math.max(Math.abs(this.lowLat), (lc.gap ?? 0.025) * s) * fade : this.lowLat * fade;
 			pos.x += -fz * side;
 			pos.z += fx * side;
 			// nad drevom rámu (biela pri mantineli) kamera nesmie ísť do rámu

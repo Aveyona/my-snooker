@@ -16,7 +16,7 @@ function mysn_cam_zoom() {
 
 /** Zostup kamery popri tágu (pravé tlačidlo, myš dozadu): bočný posun a najnižšia výška v cm, dráha myši v px. */
 function mysn_cam_low_defaults() {
-	return array( 'maxSide' => 20, 'gap' => 5, 'minY' => 6.5, 'travel' => 300, 'travelSide' => 400 );
+	return array( 'maxSide' => 20, 'gap' => 2.5, 'minY' => 6.5, 'travel' => 300, 'travelSide' => 400 );
 }
 
 function mysn_cam_low() {
@@ -168,7 +168,7 @@ function mysn_admin_camera() {
 				<?php wp_nonce_field( 'mysn_camera_low' ); ?>
 				<table class="form-table" role="presentation">
 					<tr><th><label for="mysn-low-max">Najväčší bočný posun</label></th><td><input type="number" id="mysn-low-max" name="maxSide" min="2" max="60" step="1" value="<?php echo esc_attr( $lo['maxSide'] ); ?>" class="small-text"> cm <p class="description">Ako ďaleko od osi tága môže hráč kameru myšou posunúť do strany. Predvolené 20 cm.</p></td></tr>
-					<tr><th><label for="mysn-low-gap">Najmenší odstup od tága pri stole</label></th><td><input type="number" id="mysn-low-gap" name="gap" min="0" max="20" step="0.5" value="<?php echo esc_attr( $lo['gap'] ); ?>" class="small-text"> cm <p class="description">Pri zostupe nadol kamera od tága postupne odstúpi aspoň o toľko, aby do neho nevošla. Predvolené 5 cm.</p></td></tr>
+					<tr><th><label for="mysn-low-gap">Najmenší odstup od tága pri stole</label></th><td><input type="number" id="mysn-low-gap" name="gap" min="0" max="20" step="0.5" value="<?php echo esc_attr( $lo['gap'] ); ?>" class="small-text"> cm <p class="description">Pri zostupe nadol kamera od tága postupne odstúpi aspoň o toľko, aby do neho nevošla. Predvolené 2,5 cm (tágo má v tom mieste hrúbku asi 2,5 cm, menej už kamera môže vojsť do tága).</p></td></tr>
 					<tr><th><label for="mysn-low-tside">Dráha myši do strany</label></th><td><input type="number" id="mysn-low-tside" name="travelSide" min="50" max="2000" step="10" value="<?php echo esc_attr( $lo['travelSide'] ); ?>" class="small-text"> px <p class="description">Koľko treba potiahnuť myš doľava alebo doprava na celý bočný posun. Viac = jemnejšie. Predvolené 400 px.</p></td></tr>
 					<tr><th><label for="mysn-low-min">Najnižšia výška</label></th><td><input type="number" id="mysn-low-min" name="minY" min="5.5" max="20" step="0.5" value="<?php echo esc_attr( $lo['minY'] ); ?>" class="small-text"> cm nad súknom <p class="description">Nižšie kamera nepôjde. Guľa má 5,25 cm, drevený rám stola je 4,9 cm nad súknom. Predvolené 6,5 cm.</p></td></tr>
 					<tr><th><label for="mysn-low-travel">Dráha myši na celý zostup</label></th><td><input type="number" id="mysn-low-travel" name="travel" min="50" max="1500" step="10" value="<?php echo esc_attr( $lo['travel'] ); ?>" class="small-text"> px <p class="description">Koľko treba potiahnuť myš dole, kým kamera dôjde až na úroveň stola. Menej = rýchlejší zostup. Predvolené 300 px (násobí sa hráčovým šúpatkom Pravé tlačidlo).</p></td></tr>
