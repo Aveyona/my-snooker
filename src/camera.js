@@ -38,7 +38,8 @@ export class CameraRig {
 		this.lowSide = -1; // strana, keď myš nejde do strany: -1 = vľavo od tága (pravák), 1 = vpravo (ľavák)
 		this.lowLat = 0; // bočný posun od osi tága v metroch (myš doľava a doprava počas zostupu), + = vpravo
 		this.lowSign = 0; // zamknutá strana zostupu (0 = ešte nerozhodnutá), tágo kamera neprekročí
-		this.lowCfg = { maxSide: 0.2, gap: 0.025, minY: 0.065, travel: 300, travelSide: 400 }; // My Snooker → Kamera
+		this.lowCfg = { maxSide: 0.2, clear: 0.01, minY: 0.065, travel: 300, travelSide: 400 }; // My Snooker → Kamera
+		this.cueAxis = null; // os tága { tip, back } – kamera pri zostupe uhne, aby doň nevošla
 		this.orbit.mouseButtons = { LEFT: THREE.MOUSE.ROTATE, MIDDLE: THREE.MOUSE.PAN, RIGHT: THREE.MOUSE.PAN };
 	}
 
@@ -78,17 +79,17 @@ export class CameraRig {
 				const lc = this.lowCfg || {};
 				this.panLow = Math.max(0, Math.min(1, this.panLow + dy / Math.max(50, lc.travel || 300)));
 				this.panBlend = Math.max(this.panBlend || 0, this.panLow);
-				// myš doľava a doprava: jemný posun kamery bokom od tága; strana sa zamkne podľa prvého posunu
-				// (alebo podľa ruky, keď myš ide rovno dole) a kamera tágo neprekročí, kým sa nevráti hore
+				// myš doľava a doprava: kým je kamera nad tágom, len vyberá stranu (kamera ostáva v strede);
+				// pod úrovňou tága je strana zamknutá (tágo kamera neprekročí) a myš kameru jemne odsúva ďalej bokom
 				const maxS = lc.maxSide ?? 0.2;
-				this.lowLat += (dx * maxS) / Math.max(50, lc.travelSide || 400);
-				if (!this.lowSign && Math.abs(this.lowLat) > 0.004) {
-					this.lowSign = Math.sign(this.lowLat);
+				this.lowLat = Math.max(-maxS, Math.min(maxS, this.lowLat + (dx * maxS) / Math.max(50, lc.travelSide || 400)));
+				if (!this._belowCue) {
+					if (Math.abs(this.lowLat) > 0.004) {
+						this.lowSign = Math.sign(this.lowLat);
+					}
+				} else if (this.lowSign) {
+					this.lowLat = this.lowSign > 0 ? Math.max(0, this.lowLat) : Math.min(0, this.lowLat);
 				}
-				if (!this.lowSign && this.panLow > 0.4) {
-					this.lowSign = this.lowSide || -1;
-				}
-				this.lowLat = this.lowSign > 0 ? Math.max(0, Math.min(maxS, this.lowLat)) : this.lowSign < 0 ? Math.max(-maxS, Math.min(0, this.lowLat)) : this.lowLat;
 				if (this.panLow <= 0) {
 					this.panLow = 0;
 					this.lowLat = 0;
@@ -153,6 +154,7 @@ export class CameraRig {
 		this.panLow = 0; // zostup popri tágu sa pustením tlačidla zruší
 		this.lowLat = 0;
 		this.lowSign = 0;
+		this._belowCue = false;
 		this._panFresh = true; // ďalší prvý pohyb s pravým tlačidlom znova rozhodne, či ide o zostup
 		this._freshAcc = null;
 		this.panZoom = 1; // koliesko pri držanom pravom tlačidle platí len počas držania
@@ -277,21 +279,47 @@ export class CameraRig {
 			(this._panBase || (this._panBase = new THREE.Vector3())).copy(pos); // pre krúženie okolo gule (pan)
 		}
 		if (this.panLow > 0 && !moving && this.mode !== 'top' && this.mode !== 'view') {
-			// zostup popri tágu: kamera klesá až na úroveň stola a myšou do strán sa posúva bokom od tága;
-			// čím nižšie, tým väčší najmenší odstup od tága (aby do neho nevošla), vodorovná vzdialenosť od bielej
-			// sa nemení; pohľad sa stáča na mierenú guľu (panBlend)
+			// zostup popri tágu: kamera klesá až na úroveň stola; kým je nad tágom, ostáva v strede nad ním, keď sa
+			// dostane k tágu, uhýba do strany presne toľko, aby doň nevošla (oblúkom okolo tága), a myšou do strán sa
+			// dá ďalej odsunúť; vodorovná vzdialenosť od bielej sa nemení, pohľad sa stáča na mierenú guľu (panBlend)
 			const lc = this.lowCfg || {};
 			const s = this.panLow * this.panLow * (3 - 2 * this.panLow); // plynulý začiatok aj koniec
 			const fx = Math.cos(dir);
 			const fz = Math.sin(dir);
-			const fade = Math.min(1, this.panLow * 4); // pri návrate do východiskovej polohy sa vráti nad tágo
-			const side = this.lowSign ? this.lowSign * Math.max(Math.abs(this.lowLat), (lc.gap ?? 0.025) * s) * fade : this.lowLat * fade;
-			pos.x += -fz * side;
-			pos.z += fx * side;
 			// nad drevom rámu (biela pri mantineli) kamera nesmie ísť do rámu
 			const overFrame = Math.abs(pos.x) > L / 2 || Math.abs(pos.z) > W / 2;
 			const minY = Math.max(lc.minY ?? 0.065, overFrame ? 0.065 : 0);
 			pos.y = pos.y + (Math.min(pos.y, minY) - pos.y) * s;
+			// najbližší bod osi tága ku kamere a jeho hrúbka (špička 4,8 mm, rukoväť 14,5 mm, predĺženie 15 mm)
+			let need = 0;
+			let rcMax = 0.0152 + (lc.clear ?? 0.01);
+			const ax = this.cueAxis;
+			if (ax && ax.tip && ax.back) {
+				const len = this.cueReach || 1.5;
+				const vx = pos.x - ax.tip.x;
+				const vy = pos.y - ax.tip.y;
+				const vz = pos.z - ax.tip.z;
+				const t = Math.max(0, Math.min(len, vx * ax.back.x + vy * ax.back.y + vz * ax.back.z));
+				const wx = vx - ax.back.x * t;
+				const wy = vy - ax.back.y * t;
+				const wz = vz - ax.back.z * t;
+				const rad = 0.0048 + (0.0152 - 0.0048) * Math.min(1, t / 1.45);
+				const rc = rad + (lc.clear ?? 0.01);
+				rcMax = rc;
+				const dist = Math.hypot(wx, wy, wz);
+				const above = wy >= 0 ? dist : -dist; // výška kamery nad osou tága (kolmo na tágo)
+				if (above < rc) {
+					need = above <= 0 ? rc : Math.sqrt(rc * rc - above * above);
+				}
+			}
+			this._belowCue = need > 0;
+			if (need > 0 && !this.lowSign) {
+				this.lowSign = this.lowSide || -1; // myš do strany nešla: podľa ruky
+			}
+			const extra = Math.abs(this.lowLat) * Math.min(1, need / Math.max(1e-6, rcMax)); // jemný posun myšou až pod tágom
+			const side = need > 0 ? this.lowSign * Math.max(need, extra) : 0;
+			pos.x += -fz * side;
+			pos.z += fx * side;
 		}
 		if (this.mode === 'top') {
 			pos.add(this.panOffset);

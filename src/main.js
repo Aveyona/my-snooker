@@ -5487,6 +5487,7 @@ export function start(root, config = {}) {
 			ui.replayBar(true, replay.playing, replay.speed);
 		}
 		rig.cueTilt = cue.pivot.visible ? cue.tilt || 0 : 0;
+		rig.cueAxis = cue.pivot.visible && cue.back ? { tip: cue.pivot.position, back: cue.back } : null; // zostup kamery obchádza tágo
 		// po údere: keď gule zastanú a som na rade, mierim zo smeru, z ktorého sa kamera práve pozerá na bielu
 		// (kamera sa neotáča, len sa plynulo spustí za tágo); v partii aj po súperovom údere
 		sceneCull(); // kreslí sa len miestnosť, v ktorej som

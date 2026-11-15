@@ -82,7 +82,7 @@ export function zoomSpeed(cfg, t) {
 	return 1;
 }
 
-/** Zostup popri tágu (My Snooker → Kamera): najväčší bočný posun, odstup od tága a najnižšia výška v metroch,
+/** Zostup popri tágu (My Snooker → Kamera): najväčší bočný posun, rezerva od tága a najnižšia výška v metroch,
  * dráha myši dole (zostup) a do strán (celý bočný posun) v pixeloch. */
 export function camLowCfg(c) {
 	const n = (v, d, lo, hi) => {
@@ -92,7 +92,7 @@ export function camLowCfg(c) {
 	c = c || {};
 	return {
 		maxSide: n(c.maxSide, 20, 2, 60) / 100,
-		gap: n(c.gap, 2.5, 0, 20) / 100,
+		clear: n(c.clear, 1, 0.3, 10) / 100,
 		minY: n(c.minY, 6.5, 5.5, 20) / 100,
 		travel: n(c.travel, 300, 50, 1500),
 		travelSide: n(c.travelSide, 400, 50, 2000),

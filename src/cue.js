@@ -344,6 +344,7 @@ export class Cue {
 		// os tága (+y skupiny) má smerovať dozadu a hore
 		const back = new THREE.Vector3(-dx * Math.cos(tilt), Math.sin(tilt), -dz * Math.cos(tilt));
 		this.pivot.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), back);
+		this.back = back; // os tága od špičky dozadu (kamera pri zostupe popri tágu ho obchádza)
 	}
 }
 
