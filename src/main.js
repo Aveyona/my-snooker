@@ -35,18 +35,18 @@ const AIM_AHEAD = 0.5; // posun pohľadu bez mierenej gule: kamera sa pozerá 50
 
 function loadSettings() {
 	const mobile = /Android|iPhone|iPad|Mobile/i.test(navigator.userAgent);
-	const def = { tableDetail: 'fine', lines: false, quality: mobile ? 'low' : 'high', volume: 0.8, volTable: 1, volRoom: 1, volCrowd: 1, sound3d: 'hrtf', refLang: 'en', respot: true, contact: true, contactPos: 'right', afterShot: 'follow', oppCam: 'follow', camera: 'cue', cue: 'club' };
+	const def = { tableDetail: 'fine', lines: false, quality: mobile ? 'low' : 'high', volume: 0.8, volTable: 1, volRoom: 1, volCrowd: 1, sound3d: 'hrtf', refLang: 'en', respot: true, contact: true, contactPos: 'topright', afterShot: 'follow', oppCam: 'follow', camera: 'cue', cue: 'club' };
 	try {
 		const raw = window.localStorage.getItem(STORE);
 		if (raw) {
 			const s = { ...def, ...JSON.parse(raw) };
 			if (!s.contactPos) {
-				s.contactPos = s.contact === false ? 'off' : 'right'; // staré nastavenie: vypnutý detail dotyku
+				s.contactPos = s.contact === false ? 'off' : 'topright'; // staré nastavenie: vypnutý detail dotyku
 			}
-			if (!s.contactPos2) {
-				s.contactPos2 = 1; // 0.7.58: predvolene vpravo dole (kto mal stred, presunie sa raz vpravo)
-				if (s.contactPos === 'center') {
-					s.contactPos = 'right';
+			if ((s.contactPos2 || 0) < 2) {
+				s.contactPos2 = 2; // 0.15.1: predvolene vpravo hore (kto mal stred alebo vpravo dole, presunie sa raz hore)
+				if (s.contactPos === 'center' || s.contactPos === 'right') {
+					s.contactPos = 'topright';
 				}
 			}
 			return s;

@@ -459,9 +459,11 @@ body.mysn-page { font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans
 /* detail dotyku: poloha podľa Nastavení (vľavo vedľa Miesta úderu, vpravo vedľa ukazovateľa sily) */
 .mysn-contact.mysn-contact-left { left: 120px; right: auto; transform: none; bottom: 24px; }
 .mysn-contact.mysn-contact-right { left: auto; right: 64px; transform: none; bottom: 24px; }
+.mysn-contact.mysn-contact-topright { left: auto; right: 64px; transform: none; bottom: auto; top: 56px; }
 @media (max-width: 720px) {
 	.mysn-contact.mysn-contact-left { left: 86px; bottom: 96px; }
 	.mysn-contact.mysn-contact-right { right: 48px; bottom: 104px; }
+	.mysn-contact.mysn-contact-topright { right: 48px; bottom: auto; top: 52px; }
 }
 
 /* časomiera ligového zápasu: ukazovateľ hore, posledných 5 sekúnd veľký odpočet */

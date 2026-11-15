@@ -132,7 +132,7 @@ function mysn_roadmap() {
 				array( 'Štadión: rozhodca po rozostavení zoberie trojuholník a zavesí ho pod stôl (ukážka pre admina z mapy M); neskôr aj na začiatku ligového zápasu', 1 ),
 				array( 'Doladenie podľa skúšania (svetlá, citlivosť ovládania, rýchlosť súkna)', 0 ),
 				array( 'Ovládanie na mobile: pokračovať (Robo 14. 11. 2026)', 0 ),
-				array( 'Zmeniť predvolené ovládanie na desktope (Robo 14. 11. 2026)', 0 ),
+				array( 'Zmeniť predvolené ovládanie na desktope (Robo 14. 11. 2026): najprv rozloženie obrazovky (detail dotyku vpravo hore 0.15.1), staré ovládanie sa úplne nahradí', 0 ),
 			),
 		),
 		array(
@@ -162,6 +162,7 @@ function mysn_roadmap() {
 /** Denník zmien (najnovšie hore). */
 function mysn_changelog() {
 	return array(
+		array( '0.15.1', '15. 11. 2026', 'Nové ovládanie na desktope, 1. krok (rozloženie obrazovky): detail dotyku pri mierení je predvolene vpravo hore (pod tlačidlom Nastavenia), aby nezakrýval stôl. Kto ho mal v strede alebo vpravo dole, presunie sa raz hore; v Nastaveniach sa dá vybrať aj Vpravo hore, V strede dole, Vľavo dole, Vpravo dole alebo Nezobrazovať.' ),
 		array( '0.15.0', '14. 11. 2026', 'My Snooker je samostatný projekt na GitHube (Aveyona/my-snooker), súčasť rodiny My. Vývoj prebieha tam, na web hedlajner.sk sa preberá do repozitára doplnkov My. Doplnky My Users, My Chat, My Rooms, My AI Writer a My Player sú povinnou súčasťou hry – WordPress My Snooker bez nich nezapne a kým je hra zapnutá, nedovolí ich vypnúť.' ),
 		array( '0.14.9', '14. 11. 2026', 'Keď hráč dosiahne rozhodujúci náskok (súper by už potreboval snookery), publikum mu zatlieska (veľký potlesk) a Rudo po potlesku povie niečo vtipné k partii (živý komentár s menami a skóre, inak nový zvuk Rozhodujúci náskok). Rudo teraz vždy počká, kým potlesk alebo ovácie doznejú, a až potom prehovorí.' ),
 		array( '0.14.8', '14. 11. 2026', 'Publikum a Rudo: Ako často Rudo hovorí má štyri možnosti: menej (asi o polovicu), normálne, viac (skoro pri každej príležitosti) a len dôležité chvíle. Séria 50, stovka a koniec framu a zápasu zaznejú vždy.' ),

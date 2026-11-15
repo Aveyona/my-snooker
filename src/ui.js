@@ -140,7 +140,7 @@ export class UI {
 		root.appendChild(this.contact);
 		this.contactCanvas = this.contact.querySelector('canvas');
 		this.contactInfo = this.contact.querySelector('.mysn-contact-info');
-		this.setContactPos((opts.settings && opts.settings.contactPos) || 'center');
+		this.setContactPos((opts.settings && opts.settings.contactPos) || 'topright');
 		this._contactKey = '';
 		this.help = this.buildHelp();
 		root.appendChild(this.help);
@@ -339,6 +339,7 @@ export class UI {
 				</select></label>
 			<label>Detail dotyku pri mierení
 				<select data-k="contactPos">
+					<option value="topright">Vpravo hore</option>
 					<option value="center">V strede dole</option>
 					<option value="left">Vľavo dole</option>
 					<option value="right">Vpravo dole</option>
@@ -624,9 +625,9 @@ export class UI {
 		}
 	}
 
-	/** Poloha detailu dotyku: center, left (vedľa Miesta úderu), right (vedľa ukazovateľa sily), off. */
+	/** Poloha detailu dotyku: topright (vpravo hore, predvolené), center, left (vedľa Miesta úderu), right (vedľa ukazovateľa sily), off. */
 	setContactPos(pos) {
-		for (const k of ['left', 'right']) {
+		for (const k of ['left', 'right', 'topright']) {
 			this.contact.classList.toggle('mysn-contact-' + k, pos === k);
 		}
 	}
@@ -1533,7 +1534,7 @@ export class UI {
 				<li><b>Úder myšou:</b> drž ľavé tlačidlo, ruka chytí tágo. Myš k sebe tágo odtiahne, pohyb dopredu ho posunie a pri dotyku bielej vystrelí. Sila je podľa toho, ako rýchlo pohneš dopredu. Pustením ľavého tlačidla úder zrušíš.</li>
 				<li><b>Miesto úderu myšou:</b> stlač a drž koliesko a pohybom myši posúvaj bod na bielej guli vľavo dole (hore guľa dopredu, dole guľa späť, do strán bočná falša). Dvojklik kolieskom vráti bod do stredu.</li>
 				<li><b>Mierenie prstom:</b> za tágom ťahaj doľava a doprava, šípky na klávesnici. V pohľade zhora klikni na miesto, kam chceš mieriť, vo voľnej kamere naň krátko ťukni.</li>
-				<li><b>Detail dotyku:</b> kruh dole ukazuje zhora okamih, keď sa biela dotkne gule. Úder ide vždy nahor, červený bod je miesto dotyku. Pomocné čiary a šípky (kam pôjdu gule) sú vypnuté, zapnúť sa budú dať v hlavnom menu.</li>
+				<li><b>Detail dotyku:</b> kruh vpravo hore ukazuje zhora okamih, keď sa biela dotkne gule. Úder ide vždy nahor, červený bod je miesto dotyku. Pomocné čiary a šípky (kam pôjdu gule) sú vypnuté, zapnúť sa budú dať v hlavnom menu.</li>
 				<li><b>Sila a úder:</b> ťahaj ukazovateľ sily vpravo nadol a pusť.</li>
 				<li><b>Voľná kamera:</b> medzerník. Myšou sa rozhliadaš, šípky alebo W A S D posúvajú, Q a E dole a hore, Shift rýchlejšie, koliesko približuje. Medzerník alebo Esc: späť.</li>
 				<li><b>Miesto úderu:</b> klikni na bielu guľu vľavo dole. Hore znamená guľu dopredu, dole guľu späť, do strán bočnú falšu. Dvojklik vráti stred.</li>
