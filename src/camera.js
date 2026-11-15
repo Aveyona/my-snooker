@@ -52,13 +52,34 @@ export class CameraRig {
 			const zc = this.zoomCfg || (this.zoomCfg = zoomCfg(null));
 			const LN = Math.log(zc.near);
 			const d0 = this.panDist || 1;
-			// myš dozadu z východiskovej polohy: kamera klesá popri tágu až na úroveň stola (namiesto oddialenia);
-			// myš dopredu ju najprv vráti hore a až potom sa začne približovať ku guli
-			if (this.panLow > 0 || (dy > 0 && d0 <= 1.0001)) {
+			// zostup popri tágu len z východiskovej polohy: prvý pohyb po stlačení pravého tlačidla (aspoň 6 px)
+			// rozhodne – jasne dole (k sebe) = kamera klesá popri tágu na úroveň stola, inak všetko ako doteraz
+			// (krúženie okolo gule, priblíženie, oddialenie dozadu)
+			if (this.panLow <= 0 && this._panFresh !== false) {
+				const a = this._freshAcc || (this._freshAcc = { x: 0, y: 0 });
+				a.x += dx;
+				a.y += dy;
+				if (Math.abs(a.x) + Math.abs(a.y) < 6) {
+					return;
+				}
+				this._panFresh = false;
+				dx = a.x;
+				dy = a.y;
+				a.x = 0;
+				a.y = 0;
+				if (dy > 0 && dy > Math.abs(dx) * 1.5 && d0 <= 1.0001) {
+					this.panLow = 1e-6;
+				}
+			}
+			if (this.panLow > 0) {
+				// myš dole kameru spúšťa, myš hore ju vracia; po návrate hore je kamera znova vo východiskovej polohe
 				const lc = this.lowCfg || {};
 				this.panLow = Math.max(0, Math.min(1, this.panLow + dy / Math.max(50, lc.travel || 300)));
-				this.panDist = 1;
 				this.panBlend = Math.max(this.panBlend || 0, this.panLow);
+				if (this.panLow <= 0) {
+					this.panLow = 0;
+					this._panFresh = true;
+				}
 				return;
 			}
 			if (d0 > 1 || (d0 >= 1 && dy > 0)) {
@@ -115,6 +136,8 @@ export class CameraRig {
 		this.panLift = 0;
 		this.panBlend = 0; // ako veľmi sa pohľad už otočil na mierenú guľu (0 = ako za tágom)
 		this.panLow = 0; // zostup popri tágu sa pustením tlačidla zruší
+		this._panFresh = true; // ďalší prvý pohyb s pravým tlačidlom znova rozhodne, či ide o zostup
+		this._freshAcc = null;
 		this.panZoom = 1; // koliesko pri držanom pravom tlačidle platí len počas držania
 	}
 

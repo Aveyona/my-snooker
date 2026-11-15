@@ -160,7 +160,7 @@ function mysn_admin_camera() {
 		<?php $lo = mysn_cam_low(); ?>
 		<div class="card" style="max-width:980px;margin-top:24px">
 			<h2>Zostup popri tágu pravým tlačidlom myši</h2>
-			<p>Hráč za tágom drží pravé tlačidlo a ťahá myš dole (k sebe): kamera z východiskovej polohy klesá popri tágu až na úroveň stola a stále sa pozerá na mierenú guľu. Pravák má kameru vľavo od tága, ľavák vpravo (podľa ligovej vizitky, hráč to môže zmeniť v Nastaveniach). Myš hore ju vráti hore, potom sa začne približovať ku guli.</p>
+			<p>Hráč za tágom stlačí pravé tlačidlo a prvý pohyb myšou urobí dole (k sebe): kamera z východiskovej polohy klesá popri tágu až na úroveň stola a stále sa pozerá na mierenú guľu. Pravák má kameru vľavo od tága, ľavák vpravo (podľa ligovej vizitky, hráč to môže zmeniť v Nastaveniach). Myš hore ju vráti hore, potom sa začne približovať ku guli.</p>
 			<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>">
 				<input type="hidden" name="action" value="mysn_camera_low">
 				<?php wp_nonce_field( 'mysn_camera_low' ); ?>
