@@ -345,7 +345,7 @@ export class UI {
 					<option value="right">Vpravo dole</option>
 					<option value="off">Nezobrazovať</option>
 				</select></label>
-			<label>Kamera pri zostupe popri tágu (pravé tlačidlo, myš dozadu)
+			<label>Zostup kamery popri tágu, keď myš nejde do strany (pravé tlačidlo, myš dole)
 				<select data-k="camSide">
 					<option value="hand">Podľa ruky z ligovej vizitky (pravák vľavo, ľavák vpravo)</option>
 					<option value="left">Vľavo od tága</option>
@@ -1534,7 +1534,7 @@ export class UI {
 			<h3>Ovládanie</h3>
 			<ul>
 				<li><b>Mierenie myšou:</b> kliknutím do hry sa myš zachytí v okne (kurzor sa skryje). Potom stačí hýbať myšou, tlačidlo netreba. Pomalý pohyb mieri veľmi jemne, so Shift ešte jemnejšie. Esc myš uvoľní a otvorí menu.</li>
-				<li><b>Posun pohľadu:</b> drž pravé tlačidlo myši a pohybom posúvaj pohľad hore, dole, doľava a doprava. Kamera sa pritom pozerá na guľu, na ktorú mieriš, a keď nemieriš na žiadnu, na miesto pol metra pred bielou v smere mierenia. Myš hore kameru približuje ku guli, myš dole (k sebe) ju oddiali; keď je prvý pohyb po stlačení tlačidla dole, kamera namiesto toho klesá popri tágu až na úroveň stola (pravák vľavo od tága, ľavák vpravo, dá sa zmeniť v Nastaveniach). Keď tlačidlo pustíš, pohľad sa vráti na pôvodné miesto. Otáčaním kolieska priblížiš alebo vzdiališ.</li>
+				<li><b>Posun pohľadu:</b> drž pravé tlačidlo myši a pohybom posúvaj pohľad hore, dole, doľava a doprava. Kamera sa pritom pozerá na guľu, na ktorú mieriš, a keď nemieriš na žiadnu, na miesto pol metra pred bielou v smere mierenia. Myš hore kameru približuje ku guli, myš dole (k sebe) ju oddiali; keď je prvý pohyb po stlačení tlačidla dole, kamera namiesto toho klesá popri tágu až na úroveň stola. Myšou doľava a doprava ju počas zostupu jemne posúvaš bokom od tága; strana sa podľa prvého posunu zamkne a tágo kamera neprekročí (kým sa nevráti hore). Keď ideš rovno dole, uhne podľa ruky (pravák vľavo, ľavák vpravo, dá sa zmeniť v Nastaveniach). Keď tlačidlo pustíš, pohľad sa vráti na pôvodné miesto. Otáčaním kolieska priblížiš alebo vzdiališ.</li>
 				<li><b>Po údere:</b> kamera sleduje bielu guľu. Pohybom myši bez tlačidla otáčaš pohľad okolo nej (doľava a doprava, hore a dole).</li>
 				<li><b>Biela do ruky myšou:</b> bielu posúvaš pohybom myši, ľavým klikom ju položíš.</li>
 				<li><b>Úder myšou:</b> drž ľavé tlačidlo, ruka chytí tágo. Myš k sebe tágo odtiahne, pohyb dopredu ho posunie a pri dotyku bielej vystrelí. Sila je podľa toho, ako rýchlo pohneš dopredu. Pustením ľavého tlačidla úder zrušíš.</li>
