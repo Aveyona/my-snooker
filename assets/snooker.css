@@ -520,6 +520,8 @@ body.mysn-page { font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans
 	.mysn-tpower { display: flex; }
 	.mysn-ui.mysn-tools-open .mysn-tpower { bottom: 180px; }
 	.mysn-eye.mysn-eye-on { display: flex; }
+	/* horná lišta: Krieda F3 sa na mobile neukazuje (klávesy tu nie sú, stav kriedy je pod Miestom úderu) */
+	.mysn-chalk-on, .mysn-chalk-off { display: none; }
 	.mysn-ui.mysn-tools-open .mysn-eye { bottom: 234px; }
 	.mysn-ui.mysn-viewing .mysn-eye, .mysn-watching .mysn-eye { display: none !important; }
 	/* detail dotyku úplne vpravo hore (zvislý ukazovateľ sily tu nie je, odsadenie sprava netreba) */
