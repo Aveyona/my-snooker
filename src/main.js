@@ -2103,6 +2103,7 @@ export function start(root, config = {}) {
 			game.dir = dir0;
 		}
 		if (shot) {
+			controls.touchFine = false; // mobil: jemné mierenie (zameriavač) sa po výstrele vypne, ako pustený Shift
 			game.dir = dir0; // smer mierenia ostáva (odklon platí len pre tento úder)
 			tipStroke(cueSpec, power);
 			if (miscue) {
