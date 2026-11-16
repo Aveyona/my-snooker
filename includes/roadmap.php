@@ -162,6 +162,7 @@ function mysn_roadmap() {
 /** Denník zmien (najnovšie hore). */
 function mysn_changelog() {
 	return array(
+		array( '0.16.0', '16. 11. 2026', 'Mobil: obrazovka za tágom je rozdelená na 4 časti podľa miesta dotyku – 1 vľavo hore: ťuknutie otvorí chat; 2 vpravo hore a 3 vľavo dole: ťahanie doľava a doprava otáča pohľad (mierenie); 4 vpravo dole: úder ako myšou – prst dole odtiahne tágo, rýchlo hore vystrelí, sila podľa rýchlosti švihnutia. Dva prsty kdekoľvek priblížia. Nový krátky návod sa ukáže raz pri prvom dotyku, nápoveda F1 doplnená.' ),
 		array( '0.15.9', '16. 11. 2026', 'Mobil: Miesto úderu (guľa s falšami, tágo a stav špice a kriedy) je úplne dole v ľavom rohu; pri otvorenom spodnom paneli sa vysunie nad neho.' ),
 		array( '0.15.8', '16. 11. 2026', 'Mobil: spodný panel (Späť, Biela do ruky, Nové rozostavenie, šúpatká citlivosti) je predvolene schovaný, aby nezakrýval stôl; šípka dole v strede ho zobrazí (▲) alebo schová (▼). Tlačidlo Hotovo pri kladení bielej ostáva vždy viditeľné. Na desktope sa nič nemení (panel pri držanom Ctrl).' ),
 		array( '0.15.7', '16. 11. 2026', 'Rozhodnutie zo 16. 11. 2026: prepínač pomocných čiar, odomykanie tág vyšších kategórií ani žreb, kto rozbíja prvý frame, nebudú. Pomocné čiary sú vypnuté pre všetkých (aj pre tých, čo ich mali zapnuté zo staršieho nastavenia), nápoveda už nesľubuje ich zapnutie v menu.' ),

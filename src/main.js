@@ -3461,17 +3461,18 @@ export function start(root, config = {}) {
 			}
 		},
 		stroke: (on) => ui.setStroke(on),
+		openChat: () => chat && chat.open(), // mobil: ťuknutie vľavo hore (časť 1)
 		// prvé dotknutie prstom za tágom: krátky návod (raz na zariadení)
 		touchHint: () => {
 			try {
-				if (localStorage.getItem('mysn_touch_hint')) {
+				if (localStorage.getItem('mysn_touch_hint2')) {
 					return;
 				}
-				localStorage.setItem('mysn_touch_hint', '1');
+				localStorage.setItem('mysn_touch_hint2', '1');
 			} catch (e) {
 				return;
 			}
-			ui.toast('Prst: ťahaj vodorovne = mierenie, ťahaj dole = odtiahneš tágo, rýchlo hore = úder. Dvoma prstami priblížiš.');
+			ui.toast('Obrazovka má 4 časti: vľavo hore ťukni = chat, vpravo hore a vľavo dole ťahaj = mierenie, vpravo dole prst dole = odtiahneš tágo, rýchlo hore = úder. Dvoma prstami priblížiš.');
 		},
 		look: (dx, dy) => {
 			if (!LOOK.has(view) || freeMouse || (view === 'seat' && seatScore)) {

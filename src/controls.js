@@ -85,6 +85,18 @@ export class Controls {
 		}
 	}
 
+	/**
+	 * Mobil za tágom: obrazovka je rozdelená na 4 časti podľa miesta dotyku (16. 11. 2026):
+	 * 1 vľavo hore = chat (ťuknutie), 2 vpravo hore a 3 vľavo dole = otáčanie pohľadu (mierenie),
+	 * 4 vpravo dole = úder (prst dole odtiahne tágo, rýchlo hore = výstrel, sila podľa rýchlosti).
+	 */
+	touchZone(e) {
+		const r = this.dom.getBoundingClientRect();
+		const left = e.clientX < r.left + r.width / 2;
+		const top = e.clientY < r.top + r.height / 2;
+		return top ? (left ? 1 : 2) : left ? 3 : 4;
+	}
+
 	/** Dva prsty: vzdialenosť medzi nimi. */
 	pinchDist() {
 		const a = Array.from(this._tp.values());
@@ -113,6 +125,11 @@ export class Controls {
 			return; // Ctrl + klik na rozsvietený predmet (stojan, skóre a podobne)
 		}
 		const g = this.game;
+		if (e.pointerType === 'touch' && !this.blocked && this.rig.mode === 'cue' && g.state !== 'place' && this.touchZone(e) === 1) {
+			// časť 1 (vľavo hore): ťuknutie otvorí chat, ťahanie tu nerobí nič
+			this._chatTap = { id: e.pointerId, x: e.clientX, y: e.clientY, t: performance.now() };
+			return;
+		}
 		if (this.blocked) {
 			if (this.hooks.viewDown) {
 				this.hooks.viewDown(e);
@@ -200,7 +217,9 @@ export class Controls {
 			}
 			this._drag = { kind: 'aimTop', id: e.pointerId };
 		} else if (e.pointerType === 'touch') {
-			this._drag = { kind: 'touchCue', id: e.pointerId, x: e.clientX, y: e.clientY, dir: g.dir, lock: '' };
+			// časť 4 (vpravo dole) = úder, časti 2 a 3 = otáčanie pohľadu (mierenie)
+			const zone = this.touchZone(e);
+			this._drag = { kind: 'touchCue', id: e.pointerId, x: e.clientX, y: e.clientY, dir: g.dir, zone, lock: zone === 4 ? '' : 'aim' };
 			if (this.hooks.touchHint) {
 				this.hooks.touchHint();
 			}
@@ -255,14 +274,14 @@ export class Controls {
 				this.aimAt(p);
 			}
 		} else if (d.kind === 'touchCue') {
-			// prst za tágom: smer ťahu rozhodne – vodorovne mierenie, zvislo ruka s tágom
+			// prst za tágom: v časti 4 ruka s tágom (prst dole odtiahne, rýchlo hore vystrelí), v častiach 2 a 3 mierenie
 			if (!d.lock) {
 				const dx = e.clientX - d.x;
 				const dy = e.clientY - d.y;
 				if (Math.hypot(dx, dy) < 8) {
 					return;
 				}
-				d.lock = Math.abs(dy) > Math.abs(dx) * 0.8 && g.canShoot() && (!this.hooks.canStroke || this.hooks.canStroke()) ? 'stroke' : 'aim';
+				d.lock = g.canShoot() && (!this.hooks.canStroke || this.hooks.canStroke()) ? 'stroke' : 'none';
 				if (d.lock === 'stroke') {
 					this.touchStroke = true;
 					this.startStroke();
@@ -333,6 +352,13 @@ export class Controls {
 			this.panning = false;
 			this.rig.panActive = false;
 			this.rig.resetPan();
+		}
+		const ct = this._chatTap;
+		if (ct && ct.id === e.pointerId) {
+			this._chatTap = null;
+			if (Math.hypot(e.clientX - ct.x, e.clientY - ct.y) < 12 && performance.now() - ct.t < 500 && this.hooks.openChat) {
+				this.hooks.openChat();
+			}
 		}
 		const t = this._tap;
 		if (t && t.id === e.pointerId) {
