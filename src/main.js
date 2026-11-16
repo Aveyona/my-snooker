@@ -3999,6 +3999,51 @@ export function start(root, config = {}) {
 	controls.sens = settings.mouseSens || 1; // šúpatko Otáčanie myšou
 	controls.strokeSens = settings.strokeSens || 1; // šúpatko Ťahanie tága
 	controls.panSens = settings.panSens || 1; // šúpatko Pravé tlačidlo
+	// mobil: oko pri zameranej guli – drž a ťahaj prstom = pravé tlačidlo myši (priblíženie ku guli, krúženie, zostup)
+	{
+		const eye = ui.eyeBtn;
+		let ep = null;
+		const stop = (e) => e.stopPropagation();
+		for (const t of ['mousedown', 'touchstart', 'touchmove', 'touchend', 'click', 'wheel']) {
+			eye.addEventListener(t, stop);
+		}
+		eye.addEventListener('pointerdown', (e) => {
+			e.stopPropagation();
+			e.preventDefault();
+			if (ep || !controls.eyePanStart()) {
+				return;
+			}
+			ep = { id: e.pointerId, x: e.clientX, y: e.clientY };
+			ui._eyeHeld = true;
+			eye.classList.add('mysn-eye-held');
+			try {
+				eye.setPointerCapture(e.pointerId);
+			} catch (err) {
+				/* nie je podstatné */
+			}
+		});
+		eye.addEventListener('pointermove', (e) => {
+			e.stopPropagation();
+			if (!ep || e.pointerId !== ep.id) {
+				return;
+			}
+			controls.eyePanMove(e.clientX - ep.x, e.clientY - ep.y);
+			ep.x = e.clientX;
+			ep.y = e.clientY;
+		});
+		const end = (e) => {
+			e.stopPropagation();
+			if (!ep || e.pointerId !== ep.id) {
+				return;
+			}
+			ep = null;
+			ui._eyeHeld = false;
+			eye.classList.remove('mysn-eye-held');
+			controls.eyePanEnd();
+		};
+		eye.addEventListener('pointerup', end);
+		eye.addEventListener('pointercancel', end);
+	}
 	if (settings.fineVer !== 2) {
 		settings.fineCues = {}; // 8. 11. 2026: nové predvolené (presné mierenie len Citlivé tágo), staré voľby všetkým zrušené
 		settings.fineVer = 2;
@@ -5447,6 +5492,7 @@ export function start(root, config = {}) {
 			rig.aimPoint = null;
 			rig.aimBall = false;
 		}
+		ui.showEye(rig.aimBall && aiming && rig.mode === 'cue' && !game.spectating);
 		updateFelt();
 		office.updateWindow(dt);
 		office.notebookTick(dt);

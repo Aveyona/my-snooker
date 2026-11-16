@@ -97,6 +97,40 @@ export class Controls {
 		return top ? (left ? 1 : 2) : left ? 3 : 4;
 	}
 
+	/** Mobil: oko pri zameranej guli – drž a ťahaj prstom = to isté ako pravé tlačidlo myši (priblíženie ku guli). */
+	eyePanStart() {
+		if (this.rig.mode !== 'cue' || this.blocked) {
+			return false;
+		}
+		if (this.stroking) {
+			this.endStroke();
+		}
+		this._drag = null;
+		this.touchStroke = false;
+		this.panning = true;
+		this.rig.panActive = true;
+		this._eyePan = true;
+		return true;
+	}
+
+	eyePanMove(dx, dy) {
+		if (!this._eyePan) {
+			return;
+		}
+		const ps = (this.panSens || 1) * 1.5; // prst je pomalší než myš
+		this.rig.pan(dx * ps, dy * ps);
+	}
+
+	eyePanEnd() {
+		if (!this._eyePan) {
+			return;
+		}
+		this._eyePan = false;
+		this.panning = false;
+		this.rig.panActive = false;
+		this.rig.resetPan();
+	}
+
 	/** Dva prsty: vzdialenosť medzi nimi. */
 	pinchDist() {
 		const a = Array.from(this._tp.values());

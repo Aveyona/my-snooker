@@ -162,6 +162,7 @@ function mysn_roadmap() {
 /** Denník zmien (najnovšie hore). */
 function mysn_changelog() {
 	return array(
+		array( '0.16.4', '16. 11. 2026', 'Mobil: keď je zameraná guľa, vedľa Miesta úderu sa ukáže biely priehľadný kruh s okom. Drž ho a ťahaj prstom = to isté ako pravé tlačidlo myši: hore priblíži pohľad ku guli, do strán krúži okolo nej, prvý ťah dole spustí kameru popri tágu k stolu; pustením sa pohľad vráti za tágo.' ),
 		array( '0.16.3', '16. 11. 2026', 'Mobil: detail dotyku vpravo hore o kúsok nižšie, aby nezasahoval do tlačidiel Nastavenia a ?.' ),
 		array( '0.16.2', '16. 11. 2026', 'Mobil: detail dotyku je úplne v pravom hornom rohu (bez medzery sprava, ktorá bola na desktope pre zvislý ukazovateľ sily).' ),
 		array( '0.16.1', '16. 11. 2026', 'Mobil: nový ukazovateľ sily v pravom dolnom rohu (návrh D) – priehľadný biely obdĺžnik, úzky pásik vľavo ukazuje odtiahnutie prstom (plní sa zhora), široký žltý stĺpec silu podľa rýchlosti švihu hore, nad ním „sila X %“. Pri mierení je jemne priehľadný, pri ťahaní tága sa rozsvieti. Zvislý ukazovateľ sily vpravo (desktop) sa na mobile nezobrazuje.' ),
