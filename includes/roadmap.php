@@ -162,6 +162,7 @@ function mysn_roadmap() {
 /** Denník zmien (najnovšie hore). */
 function mysn_changelog() {
 	return array(
+		array( '0.17.1', '16. 11. 2026', 'Mobil: šúpatko v spodnom paneli sa volá len Ťahanie tága (bez „prstom“).' ),
 		array( '0.17.0', '16. 11. 2026', 'Mobil: tlačidlo jemného mierenia (zameriavač, ako Shift na desktope) medzi kriedou a Miestom úderu – zobrazí sa len pri tágu, ktoré jemné mierenie má. Ťuknutím sa zapne alebo vypne, zapnuté je žlté; pri tágu s jemným mierením vždy zapnutým ho tlačidlo vypne (ako Shift). Krieda je o kúsok vyššie.' ),
 		array( '0.16.9', '16. 11. 2026', 'Šúpatká citlivosti podľa zariadenia: na desktope ostávajú Otáčanie myšou, Ťahanie tága a Pravé tlačidlo; na mobile sú v spodnom paneli Otáčanie prstom (mierenie v častiach 2 a 3, doteraz bez nastavenia), Ťahanie tága prstom (úder v časti 4) a Oko (pohľad na zameranú guľu). Mobil a desktop sa ukladajú zvlášť, 1,0× zodpovedá doterajšej rýchlosti.' ),
 		array( '0.16.8', '16. 11. 2026', 'Chat v hre ukazuje len posledné správy: na desktope 5, na mobile 3 (staršie sú v chate na webe).' ),
