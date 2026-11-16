@@ -58,6 +58,13 @@ export class UI {
 		this.powerFill = this.powerBox.querySelector('.mysn-power-fill');
 		this.powerKnob = this.powerBox.querySelector('.mysn-power-knob');
 		this.powerVal = this.powerBox.querySelector('.mysn-power-val');
+		// mobil: ukazovateľ sily v pravom dolnom rohu (časť 4, kde sa strieľa) – priehľadný biely obdĺžnik,
+		// úzky pásik vľavo = odtiahnutie prstom, žltý stĺpec = sila podľa rýchlosti švihu hore
+		this.tPower = h('div', 'mysn-tpower', '<div class="mysn-tp-val">sila 0 %</div><div class="mysn-tp-box"><div class="mysn-tp-pull"><i></i></div><div class="mysn-tp-pow"><i></i></div></div>');
+		root.appendChild(this.tPower);
+		this.tPull = this.tPower.querySelector('.mysn-tp-pull i');
+		this.tPow = this.tPower.querySelector('.mysn-tp-pow i');
+		this.tVal = this.tPower.querySelector('.mysn-tp-val');
 		this.bindPower();
 
 		// Falše
@@ -2742,11 +2749,23 @@ export class UI {
 		box.appendChild(foot);
 	}
 
-	showPower(p) {
+	showPower(p, pull = 0) {
 		const pct = Math.round(p * 100);
 		this.powerFill.style.height = pct + '%';
 		this.powerKnob.style.top = pct + '%';
 		this.powerVal.textContent = pct + ' %';
+		// mobil: ukazovateľ v pravom dolnom rohu
+		const pp = Math.round(Math.max(0, Math.min(1, pull)) * 100);
+		if (pp !== this._tpPull) {
+			this._tpPull = pp;
+			this.tPull.style.height = pp + '%';
+		}
+		if (pct !== this._tpPct) {
+			this._tpPct = pct;
+			this.tPow.style.height = pct + '%';
+			this.tVal.textContent = 'sila ' + pct + ' %';
+		}
+		this.tPower.classList.toggle('mysn-tp-on', this._stroke || pct > 0);
 	}
 
 	/** Prekreslí stav podľa hry. */
@@ -2795,6 +2814,7 @@ export class UI {
 		this.btnHand.disabled = st !== 'aim' || !!mt || !!so;
 		this.btnReset.disabled = !!mt; // v hre o skóre začne nový frame (čas a body od nuly)
 		this.powerBox.classList.toggle('mysn-off', st !== 'aim');
+		this.tPower.classList.toggle('mysn-off', st !== 'aim');
 		for (const m of Object.keys(this.camBtns)) {
 			this.camBtns[m].classList.toggle('mysn-on', m === camMode);
 		}

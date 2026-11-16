@@ -5248,7 +5248,7 @@ export function start(root, config = {}) {
 			const target = aiming ? controls.power : 0;
 			pull += (target - pull) * Math.min(1, dt * (controls.charging ? 30 : 12));
 		}
-		ui.showPower(controls.power);
+		ui.showPower(controls.power, controls.stroking ? controls.strokePull : 0);
 		views.update(dt);
 		// hodiny na stene: čas hrania od otvorenia hry (skrytá karta prehliadača sa nepočíta)
 		const before = Math.floor(playTime);
