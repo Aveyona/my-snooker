@@ -159,6 +159,20 @@ export class Controls {
 			return; // Ctrl + klik na rozsvietený predmet (stojan, skóre a podobne)
 		}
 		const g = this.game;
+		if (e.pointerType === 'touch' && !this.blocked && this.rig.mode === 'cue' && g.state === 'moving') {
+			// mobil po výstrele (gule sa kotúľajú): prst kdekoľvek na obrazovke otáča kameru okolo bielej ako myš na
+			// desktope; krátke ťuknutie vľavo hore bez posunu stále otvorí chat
+			this._drag = { kind: 'touchTurn', id: e.pointerId, x: e.clientX, y: e.clientY };
+			if (this.touchZone(e) === 1) {
+				this._chatTap = { id: e.pointerId, x: e.clientX, y: e.clientY, t: performance.now() };
+			}
+			try {
+				this.dom.setPointerCapture(e.pointerId);
+			} catch (err) {
+				/* nie je podstatné */
+			}
+			return;
+		}
 		if (e.pointerType === 'touch' && !this.blocked && this.rig.mode === 'cue' && g.state !== 'place' && this.touchZone(e) === 1) {
 			// časť 1 (vľavo hore): ťuknutie otvorí chat, ťahanie tu nerobí nič
 			this._chatTap = { id: e.pointerId, x: e.clientX, y: e.clientY, t: performance.now() };
@@ -307,6 +321,17 @@ export class Controls {
 			if (p) {
 				this.aimAt(p);
 			}
+		} else if (d.kind === 'touchTurn') {
+			const dx = e.clientX - d.x;
+			const dy = e.clientY - d.y;
+			d.x = e.clientX;
+			d.y = e.clientY;
+			const ct = this._chatTap;
+			if (ct && ct.id === e.pointerId && Math.hypot(e.clientX - ct.x, e.clientY - ct.y) >= 12) {
+				this._chatTap = null; // prst sa pohol: točí sa kamerou, chat sa neotvorí
+			}
+			const s = this.touchAimSens || 1; // šúpatko Otáčanie prstom
+			this.rig.turn(dx * s, dy * s);
 		} else if (d.kind === 'touchCue') {
 			// prst za tágom: v časti 4 ruka s tágom (prst dole odtiahne, rýchlo hore vystrelí), v častiach 2 a 3 mierenie
 			if (!d.lock) {
