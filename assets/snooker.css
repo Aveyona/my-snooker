@@ -501,6 +501,9 @@ body.mysn-page { font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans
 	.mysn-ui:not(.mysn-tools-open) .mysn-tools .mysn-btn:not(.mysn-primary), .mysn-ui:not(.mysn-tools-open) .mysn-sens { display: none; }
 	.mysn-ui:not(.mysn-tools-open) .mysn-tools .mysn-primary { pointer-events: auto; }
 	.mysn-ui.mysn-viewing .mysn-tools-toggle, .mysn-watching .mysn-tools-toggle { display: none; }
+	/* Miesto úderu úplne dole v ľavom rohu; pri otvorenom spodnom paneli nad ním */
+	.mysn-spin { left: 8px; bottom: 8px; }
+	.mysn-ui.mysn-tools-open .mysn-spin { bottom: 180px; }
 }
 .mysn-sens { display: flex; align-items: center; gap: 8px; font-size: 13px; color: #e8ecf2; }
 .mysn-sens input { width: 160px; accent-color: #d4a72c; }

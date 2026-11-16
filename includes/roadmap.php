@@ -162,6 +162,7 @@ function mysn_roadmap() {
 /** Denník zmien (najnovšie hore). */
 function mysn_changelog() {
 	return array(
+		array( '0.15.9', '16. 11. 2026', 'Mobil: Miesto úderu (guľa s falšami, tágo a stav špice a kriedy) je úplne dole v ľavom rohu; pri otvorenom spodnom paneli sa vysunie nad neho.' ),
 		array( '0.15.8', '16. 11. 2026', 'Mobil: spodný panel (Späť, Biela do ruky, Nové rozostavenie, šúpatká citlivosti) je predvolene schovaný, aby nezakrýval stôl; šípka dole v strede ho zobrazí (▲) alebo schová (▼). Tlačidlo Hotovo pri kladení bielej ostáva vždy viditeľné. Na desktope sa nič nemení (panel pri držanom Ctrl).' ),
 		array( '0.15.7', '16. 11. 2026', 'Rozhodnutie zo 16. 11. 2026: prepínač pomocných čiar, odomykanie tág vyšších kategórií ani žreb, kto rozbíja prvý frame, nebudú. Pomocné čiary sú vypnuté pre všetkých (aj pre tých, čo ich mali zapnuté zo staršieho nastavenia), nápoveda už nesľubuje ich zapnutie v menu.' ),
 		array( '0.15.6', '15. 11. 2026', 'Zostup kamery popri tágu obchádza skutočné tágo: kým je kamera nad tágom, ostáva v strede nad ním; keď klesne k tágu, uhne do strany presne toľko, aby doň nevošla (oblúkom okolo tága, aspoň 1 cm od jeho povrchu; počíta sa so skutočným sklonom tága nad mantinelom aj na pavúku a s jeho hrúbkou). Stranu vyberá myš doľava alebo doprava ešte nad tágom, inak podľa ruky; pod tágom je strana zamknutá a myš kameru už len jemne odsúva ďalej bokom (najviac 20 cm). V administrácii Kamera namiesto pevného odstupu Rezerva od tága (1 cm).' ),
