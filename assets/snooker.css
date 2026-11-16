@@ -492,6 +492,16 @@ body.mysn-page { font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans
 	.mysn-ui:not(.mysn-ctrl) .mysn-tools .mysn-primary { pointer-events: auto; }
 }
 .mysn-ui.mysn-ctrl-free .mysn-tools .mysn-group:not(.mysn-sens) { display: none; }
+/* mobil: šípka dole v strede zobrazí alebo schová spodný panel (predvolene schovaný, Hotovo ostáva) */
+.mysn-tools-toggle { display: none; }
+@media (hover: none), (pointer: coarse) {
+	.mysn-tools-toggle { display: flex; align-items: center; justify-content: center; position: absolute; left: 50%; bottom: 6px; transform: translateX(-50%); width: 56px; height: 30px; padding: 0; border-radius: 15px; border: 1px solid #ffffff40; background: #0c0f14cc; color: #e8ecf2; font-size: 15px; line-height: 1; pointer-events: auto; z-index: 3; -webkit-tap-highlight-color: transparent; }
+	.mysn-tools { padding-bottom: 44px; }
+	.mysn-ui:not(.mysn-tools-open) .mysn-tools { background: none; pointer-events: none; }
+	.mysn-ui:not(.mysn-tools-open) .mysn-tools .mysn-btn:not(.mysn-primary), .mysn-ui:not(.mysn-tools-open) .mysn-sens { display: none; }
+	.mysn-ui:not(.mysn-tools-open) .mysn-tools .mysn-primary { pointer-events: auto; }
+	.mysn-ui.mysn-viewing .mysn-tools-toggle, .mysn-watching .mysn-tools-toggle { display: none; }
+}
 .mysn-sens { display: flex; align-items: center; gap: 8px; font-size: 13px; color: #e8ecf2; }
 .mysn-sens input { width: 160px; accent-color: #d4a72c; }
 .mysn-sens b { min-width: 34px; font-weight: 600; }

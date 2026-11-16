@@ -129,6 +129,23 @@ export class UI {
 		}
 		tools.appendChild(psens);
 		root.appendChild(tools);
+		// na mobile: šípka dole v strede zobrazí alebo schová spodný panel (predvolene schovaný; Hotovo pri kladení
+		// bielej ostáva vždy viditeľné); na desktope sa panel ukazuje pri držanom Ctrl a šípka tam nie je
+		this.toolsToggle = h('button', 'mysn-tools-toggle', '▲');
+		this.toolsToggle.type = 'button';
+		this.toolsToggle.title = 'Zobraziť spodný panel';
+		this.toolsToggle.setAttribute('aria-label', 'Zobraziť spodný panel');
+		for (const t of ['pointerdown', 'pointerup', 'mousedown', 'touchstart', 'touchend', 'wheel', 'keydown']) {
+			this.toolsToggle.addEventListener(t, (e) => e.stopPropagation());
+		}
+		this.toolsToggle.addEventListener('click', (e) => {
+			e.stopPropagation();
+			const open = root.classList.toggle('mysn-tools-open');
+			this.toolsToggle.textContent = open ? '▼' : '▲';
+			this.toolsToggle.title = open ? 'Schovať spodný panel' : 'Zobraziť spodný panel';
+			this.toolsToggle.setAttribute('aria-label', this.toolsToggle.title);
+		});
+		root.appendChild(this.toolsToggle);
 
 		this.menu = this.buildMenu();
 		this.setMenu(opts.user ? 'training' : 'guest');
