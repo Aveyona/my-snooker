@@ -92,9 +92,9 @@ export function start(root, config = {}) {
 		return null;
 	}
 	const settings = loadSettings();
-	// pomocné čiary: predvolene vypnuté, zapínať sa budú v hlavnom menu (staré nastavenie „guide“ sa ignoruje)
+	// pomocné čiary mierenia sú vypnuté pre všetkých, prepínač nebude (16. 11. 2026); staré nastavenia sa ignorujú
 	delete settings.guide;
-	settings.lines = settings.lines === true;
+	settings.lines = false;
 	const high = settings.quality === 'high';
 
 	const renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: 'high-performance' });

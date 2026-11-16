@@ -40,7 +40,7 @@ function mysn_admin_page() {
 	$host_ok = 'ok' === mysn_host_check();
 	?>
 	<div class="wrap">
-		<?php mysn_admin_head( '3D snooker v prehliadači. Hra beží na vlastnej adrese, nastavenia hráčov (kvalita, zvuk, pomocné čiary) sa ukladajú v ich prehliadači.' ); ?>
+		<?php mysn_admin_head( '3D snooker v prehliadači. Hra beží na vlastnej adrese, nastavenia hráčov (kvalita, zvuk, ovládanie) sa ukladajú v ich prehliadači.' ); ?>
 		<?php if ( isset( $_GET['saved'] ) ) : // phpcs:ignore WordPress.Security.NonceVerification ?>
 			<div class="notice notice-success is-dismissible"><p>Nastavenia sú uložené.</p></div>
 		<?php endif; ?>

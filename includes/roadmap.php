@@ -35,7 +35,7 @@ function mysn_roadmap() {
 				array( 'Ovládanie: myš, prsty, klávesnica, ukazovateľ sily, miesto úderu na guli', 1 ),
 				array( 'Myš ako tágo: mierenie pohybom myši bez tlačidla (presne, so Shift ešte jemnejšie), úder ľavým tlačidlom a pohybom myši dozadu a dopredu, miesto úderu kolieskom (dvojklik = stred), posun pohľadu pravým tlačidlom', 1 ),
 				array( 'Zvýraznenie gule, na ktorú sa mieri (žltý obrys a krúžok na súkne)', 1 ),
-				array( 'Pomocné čiary mierenia (smer, kam pôjde objektová a biela guľa), predvolene vypnuté', 1 ),
+				array( 'Pomocné čiary mierenia (smer, kam pôjde objektová a biela guľa) – vypnuté pre všetkých, prepínač nebude (16. 11. 2026)', 1 ),
 				array( 'Hlavné menu hry (na začiatku a po Esc)', 1 ),
 				array( 'Polica s pohármi troch najlepších hráčov a tabuľka 4. až 10. miesta na zadnej stene (F8), slávnostné ukončenie framu', 1 ),
 				array( 'O najlepšie skóre (prvá položka menu Hrať): jeden hráč, celý frame podľa pravidiel, rebríček podľa bodov a celkového času (F8), vlastná tabuľka my_snooker_scores', 1 ),
@@ -162,6 +162,7 @@ function mysn_roadmap() {
 /** Denník zmien (najnovšie hore). */
 function mysn_changelog() {
 	return array(
+		array( '0.15.7', '16. 11. 2026', 'Rozhodnutie zo 16. 11. 2026: prepínač pomocných čiar, odomykanie tág vyšších kategórií ani žreb, kto rozbíja prvý frame, nebudú. Pomocné čiary sú vypnuté pre všetkých (aj pre tých, čo ich mali zapnuté zo staršieho nastavenia), nápoveda už nesľubuje ich zapnutie v menu.' ),
 		array( '0.15.6', '15. 11. 2026', 'Zostup kamery popri tágu obchádza skutočné tágo: kým je kamera nad tágom, ostáva v strede nad ním; keď klesne k tágu, uhne do strany presne toľko, aby doň nevošla (oblúkom okolo tága, aspoň 1 cm od jeho povrchu; počíta sa so skutočným sklonom tága nad mantinelom aj na pavúku a s jeho hrúbkou). Stranu vyberá myš doľava alebo doprava ešte nad tágom, inak podľa ruky; pod tágom je strana zamknutá a myš kameru už len jemne odsúva ďalej bokom (najviac 20 cm). V administrácii Kamera namiesto pevného odstupu Rezerva od tága (1 cm).' ),
 		array( '0.15.5', '15. 11. 2026', 'Zostup kamery popri tágu: kamera ide pri stole bližšie k tágu – najmenší odstup od osi tága je 2,5 cm (predtým 5 cm). Dá sa zmeniť v administrácii My Snooker → Kamera.' ),
 		array( '0.15.4', '15. 11. 2026', 'Zostup kamery popri tágu: strana sa určuje myšou. Kamera začne nad tágom; počas zostupu (pravé tlačidlo, prvý pohyb dole) myš doľava a doprava jemne posúva kameru bokom od tága, najviac 20 cm. Strana sa zamkne podľa prvého posunu a kamera tágo neprekročí, kým sa nevráti hore do východiskovej polohy; čím nižšie, tým aspoň 5 cm od tága. Keď myš ide rovno dole, kamera uhne podľa ruky (Nastavenia). V administrácii My Snooker → Kamera: najväčší bočný posun, najmenší odstup od tága a dráha myši do strany.' ),
