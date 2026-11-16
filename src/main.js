@@ -2833,6 +2833,22 @@ export function start(root, config = {}) {
 		rig.cueReach = (cueSpec.len || 1.45) + (settings.cueExt || 0); // kamera pravým tlačidlom najviac na dĺžku tága od bielej
 			ui.toast(v.on ? 'Jemné mierenie je pri tomto tágu vždy zapnuté. So Shift mieriš rýchlo.' : 'Jemné mierenie len so Shift.');
 		},
+		// mobil: šúpatká pre prst (ukladajú sa zvlášť od myšacích)
+		touchAimSens: (v) => {
+			settings.touchAimSens = Math.min(3, Math.max(0.3, Number(v) || 1));
+			controls.touchAimSens = settings.touchAimSens;
+			saveSettings(settings);
+		},
+		touchStrokeSens: (v) => {
+			settings.touchStrokeSens = Math.min(3, Math.max(0.3, Number(v) || 1));
+			controls.touchStrokeSens = settings.touchStrokeSens;
+			saveSettings(settings);
+		},
+		touchPanSens: (v) => {
+			settings.touchPanSens = Math.min(3, Math.max(0.3, Number(v) || 1));
+			controls.touchPanSens = settings.touchPanSens;
+			saveSettings(settings);
+		},
 		// šúpatko Pravé tlačidlo (Ctrl): citlivosť pohľadu pravým tlačidlom vo všetkých smeroch
 		panSens: (v) => {
 			settings.panSens = Math.min(3, Math.max(0.3, Number(v) || 1));
@@ -3999,6 +4015,9 @@ export function start(root, config = {}) {
 	controls.sens = settings.mouseSens || 1; // šúpatko Otáčanie myšou
 	controls.strokeSens = settings.strokeSens || 1; // šúpatko Ťahanie tága
 	controls.panSens = settings.panSens || 1; // šúpatko Pravé tlačidlo
+	controls.touchAimSens = settings.touchAimSens || 1; // mobil: Otáčanie prstom
+	controls.touchStrokeSens = settings.touchStrokeSens || 1; // mobil: Ťahanie tága prstom
+	controls.touchPanSens = settings.touchPanSens || 1; // mobil: Oko
 	// mobil: oko pri zameranej guli – drž a ťahaj prstom = pravé tlačidlo myši (priblíženie ku guli, krúženie, zostup)
 	{
 		const eye = ui.eyeBtn;

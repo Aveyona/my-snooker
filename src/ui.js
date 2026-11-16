@@ -106,54 +106,39 @@ export class UI {
 		this.btnPlace.classList.add('mysn-primary');
 		acts.append(this.btnPlace, this.btnUndo, this.btnHand, this.btnSkip, this.btnReset);
 		tools.appendChild(acts);
-		// rýchlosť otáčania kamery myšou (za tágom aj vo voľnej kamere); zobrazí sa s ostatnými tlačidlami pri držanom Ctrl
-		const sens = h('label', 'mysn-group mysn-sens', '<span>Otáčanie myšou</span><input type="range" min="0.3" max="3" step="0.1"><b></b>');
-		this.sensInput = sens.querySelector('input');
-		this.sensVal = sens.querySelector('b');
-		const sv = Number((opts.settings && opts.settings.mouseSens) || 1);
-		this.sensInput.value = String(sv);
-		this.sensVal.textContent = sv.toFixed(1) + '×';
-		this.sensInput.addEventListener('input', () => {
-			const v = Number(this.sensInput.value);
-			this.sensVal.textContent = v.toFixed(1) + '×';
-			this.opts.onAction('mouseSens', v);
-		});
-		for (const t of ['pointerdown', 'mousedown', 'click', 'wheel', 'keydown']) {
-			sens.addEventListener(t, (e) => e.stopPropagation());
+		// šúpatká citlivosti: na desktope pre myš (zobrazia sa pri držanom Ctrl), na mobile pre prst (šípka panela);
+		// mobil a desktop sa ukladajú zvlášť, aby sa nastavenia navzájom neprepisovali (16. 11. 2026)
+		const touchUI = typeof matchMedia === 'function' && matchMedia('(hover: none), (pointer: coarse)').matches;
+		this.touchUI = touchUI;
+		const st = opts.settings || {};
+		const slider = (label, action, key) => {
+			const box = h('label', 'mysn-group mysn-sens', '<span></span><input type="range" min="0.3" max="3" step="0.1"><b></b>');
+			box.querySelector('span').textContent = label;
+			const inp = box.querySelector('input');
+			const out = box.querySelector('b');
+			const v0 = Number(st[key] || 1);
+			inp.value = String(v0);
+			out.textContent = v0.toFixed(1) + '×';
+			inp.addEventListener('input', () => {
+				const v = Number(inp.value);
+				out.textContent = v.toFixed(1) + '×';
+				this.opts.onAction(action, v);
+			});
+			for (const t of ['pointerdown', 'mousedown', 'touchstart', 'click', 'wheel', 'keydown']) {
+				box.addEventListener(t, (e) => e.stopPropagation());
+			}
+			tools.appendChild(box);
+			return box;
+		};
+		if (touchUI) {
+			slider('Otáčanie prstom', 'touchAimSens', 'touchAimSens'); // mierenie ťahaním v častiach 2 a 3
+			slider('Ťahanie tága prstom', 'touchStrokeSens', 'touchStrokeSens'); // úder v časti 4
+			slider('Oko', 'touchPanSens', 'touchPanSens'); // pohľad na zameranú guľu
+		} else {
+			slider('Otáčanie myšou', 'mouseSens', 'mouseSens'); // otáčanie kamery a mierenie myšou
+			slider('Ťahanie tága', 'strokeSens', 'strokeSens'); // ťahanie tága myšou hore a dole
+			slider('Pravé tlačidlo', 'panSens', 'panSens'); // pohľad pravým tlačidlom vo všetkých smeroch
 		}
-		tools.appendChild(sens);
-		// rýchlosť ťahania tága myšou hore a dole (koľko pohybu myši treba na plné odtiahnutie a úder)
-		const ssens = h('label', 'mysn-group mysn-sens', '<span>Ťahanie tága</span><input type="range" min="0.3" max="3" step="0.1"><b></b>');
-		const si = ssens.querySelector('input');
-		const sb = ssens.querySelector('b');
-		const s0 = Number((opts.settings && opts.settings.strokeSens) || 1);
-		si.value = String(s0);
-		sb.textContent = s0.toFixed(1) + '×';
-		si.addEventListener('input', () => {
-			const v = Number(si.value);
-			sb.textContent = v.toFixed(1) + '×';
-			this.opts.onAction('strokeSens', v);
-		});
-		for (const t of ['pointerdown', 'mousedown', 'click', 'wheel', 'keydown']) {
-			ssens.addEventListener(t, (e) => e.stopPropagation());
-		}
-		tools.appendChild(ssens);
-		// citlivosť pohľadu pravým tlačidlom myši (krúženie okolo mierenej gule a priblíženie, všetky smery)
-		const psens = h('label', 'mysn-group mysn-sens', '<span>Pravé tlačidlo</span><input type="range" min="0.3" max="3" step="0.1"><b></b>');
-		const pi = psens.querySelector('input');
-		const pb = psens.querySelector('b');
-		const p0 = Number((opts.settings && opts.settings.panSens) || 1);
-		pi.value = String(p0);
-		pb.textContent = p0.toFixed(1) + '×';
-		pi.addEventListener('input', () => {
-			const v = Number(pi.value);
-			pb.textContent = v.toFixed(1) + '×';
-			this.opts.onAction('panSens', v);
-		});
-		for (const t of ['pointerdown', 'mousedown', 'click', 'wheel', 'keydown']) {
-			psens.addEventListener(t, (e) => e.stopPropagation());
-		}
-		tools.appendChild(psens);
 		root.appendChild(tools);
 		// na mobile: šípka dole v strede zobrazí alebo schová spodný panel (predvolene schovaný; Hotovo pri kladení
 		// bielej ostáva vždy viditeľné); na desktope sa panel ukazuje pri držanom Ctrl a šípka tam nie je
@@ -1582,7 +1567,7 @@ export class UI {
 				<li><b>Biela do ruky myšou:</b> bielu posúvaš pohybom myši, ľavým klikom ju položíš.</li>
 				<li><b>Úder myšou:</b> drž ľavé tlačidlo, ruka chytí tágo. Myš k sebe tágo odtiahne, pohyb dopredu ho posunie a pri dotyku bielej vystrelí. Sila je podľa toho, ako rýchlo pohneš dopredu. Pustením ľavého tlačidla úder zrušíš.</li>
 				<li><b>Miesto úderu myšou:</b> stlač a drž koliesko a pohybom myši posúvaj bod na bielej guli vľavo dole (hore guľa dopredu, dole guľa späť, do strán bočná falša). Dvojklik kolieskom vráti bod do stredu.</li>
-				<li><b>Mobil – 4 časti obrazovky:</b> vľavo hore ťukni = chat; vpravo hore a vľavo dole ťahaj doľava a doprava = mierenie (otáčanie pohľadu); vpravo dole = úder: prst ťahaj dole (odtiahneš tágo) a potom rýchlo hore, sila podľa rýchlosti. Dvoma prstami kdekoľvek priblížiš. Nad Miestom úderu je modrý štvorček: ťuknutím otvoríš kriedu a pomôcky (ako F3). Keď mieriš na guľu, vedľa Miesta úderu je kruh s okom: drž ho a ťahaj prstom – hore priblížiš pohľad ku guli, do strán krúžiš okolo nej, dole spustíš kameru popri tágu (ako pravé tlačidlo myši).</li>
+				<li><b>Mobil – 4 časti obrazovky:</b> vľavo hore ťukni = chat; vpravo hore a vľavo dole ťahaj doľava a doprava = mierenie (otáčanie pohľadu); vpravo dole = úder: prst ťahaj dole (odtiahneš tágo) a potom rýchlo hore, sila podľa rýchlosti. Dvoma prstami kdekoľvek priblížiš. Citlivosť nastavíš v spodnom paneli (šípka dole v strede): Otáčanie prstom, Ťahanie tága prstom a Oko; ukladajú sa zvlášť od nastavení myši. Nad Miestom úderu je modrý štvorček: ťuknutím otvoríš kriedu a pomôcky (ako F3). Keď mieriš na guľu, vedľa Miesta úderu je kruh s okom: drž ho a ťahaj prstom – hore priblížiš pohľad ku guli, do strán krúžiš okolo nej, dole spustíš kameru popri tágu (ako pravé tlačidlo myši).</li>
 				<li><b>Mierenie prstom:</b> za tágom ťahaj doľava a doprava (vpravo hore alebo vľavo dole), šípky na klávesnici. V pohľade zhora klikni na miesto, kam chceš mieriť, vo voľnej kamere naň krátko ťukni.</li>
 				<li><b>Detail dotyku:</b> kruh vpravo hore ukazuje zhora okamih, keď sa biela dotkne gule. Úder ide vždy nahor, červený bod je miesto dotyku. Pomocné čiary a šípky (kam pôjdu gule) v hre nie sú, mieri sa ako pri skutočnom stole.</li>
 				<li><b>Sila a úder:</b> ťahaj ukazovateľ sily vpravo nadol a pusť.</li>

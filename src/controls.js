@@ -117,7 +117,7 @@ export class Controls {
 		if (!this._eyePan) {
 			return;
 		}
-		const ps = (this.panSens || 1) * 1.5; // prst je pomalší než myš
+		const ps = (this.touchPanSens || 1) * 1.5; // prst je pomalší než myš; šúpatko Oko (mobil)
 		this.rig.pan(dx * ps, dy * ps);
 	}
 
@@ -328,11 +328,12 @@ export class Controls {
 				}
 			}
 			if (d.lock === 'aim') {
-				g.dir = d.dir + (e.clientX - d.x) * (this.fineAlways ? 0.0004 : 0.0016);
+				g.dir = d.dir + (e.clientX - d.x) * (this.fineAlways ? 0.0004 : 0.0016) * (this.touchAimSens || 1); // šúpatko Otáčanie prstom
 			} else if (d.lock === 'stroke' && this.stroking) {
 				// na mobile je menej miesta a prst je pomalší než myš: plné odtiahnutie asi na pätine výšky obrazovky,
 				// plná sila pri švihnutí asi 2 000 px za sekundu
-				const k = Math.max(1, (this.strokePx * (this.strokeSens || 1)) / Math.max(120, window.innerHeight * 0.22)) / (this.strokeSens || 1);
+				const ss = this.touchStrokeSens || 1; // šúpatko Ťahanie tága prstom (mobil)
+				const k = Math.max(1, (this.strokePx * ss) / Math.max(120, window.innerHeight * 0.22)) / ss;
 				this.strokeMove((e.clientY - d.ly) * k);
 				d.ly = e.clientY;
 			}
@@ -570,7 +571,8 @@ export class Controls {
 		}
 		const now = performance.now();
 		const prev = this.strokePull;
-		this.strokePull = Math.max(-0.02, Math.min(1, prev + (dy * (this.strokeSens || 1)) / this.strokePx)); // šúpatko Ťahanie tága
+		const ss = this.touchStroke ? this.touchStrokeSens || 1 : this.strokeSens || 1; // šúpatko Ťahanie tága (myš) alebo Ťahanie tága prstom
+		this.strokePull = Math.max(-0.02, Math.min(1, prev + (dy * ss) / this.strokePx));
 		this._max = Math.max(this._max, this.strokePull);
 		this._hist.push({ t: now, p: this.strokePull });
 		while (this._hist.length > 2 && now - this._hist[0].t > 80) {
