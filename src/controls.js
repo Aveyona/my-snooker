@@ -328,7 +328,7 @@ export class Controls {
 				}
 			}
 			if (d.lock === 'aim') {
-				g.dir = d.dir + (e.clientX - d.x) * (this.fineAlways ? 0.0004 : 0.0016) * (this.touchAimSens || 1); // šúpatko Otáčanie prstom
+				g.dir = d.dir + (e.clientX - d.x) * (this.touchFineOn() ? 0.0004 : 0.0016) * (this.touchAimSens || 1); // šúpatko Otáčanie prstom
 			} else if (d.lock === 'stroke' && this.stroking) {
 				// na mobile je menej miesta a prst je pomalší než myš: plné odtiahnutie asi na pätine výšky obrazovky,
 				// plná sila pri švihnutí asi 2 000 px za sekundu
@@ -408,6 +408,11 @@ export class Controls {
 		if (this._drag && this._drag.id === e.pointerId) {
 			this._drag = null;
 		}
+	}
+
+	/** Mobil: jemné mierenie je zapnuté? (tlačidlo zameriavača prepína ako Shift; len tágo s jemným mierením) */
+	touchFineOn() {
+		return !!(this.cueSpec && this.cueSpec.fine > 0) && !!this.touchFine !== !!this.fineAlways;
 	}
 
 	/** Vlastnosti tága: jemné mierenie so Shift a citlivosť ťahania myšou. */

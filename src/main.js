@@ -2833,6 +2833,11 @@ export function start(root, config = {}) {
 		rig.cueReach = (cueSpec.len || 1.45) + (settings.cueExt || 0); // kamera pravým tlačidlom najviac na dĺžku tága od bielej
 			ui.toast(v.on ? 'Jemné mierenie je pri tomto tágu vždy zapnuté. So Shift mieriš rýchlo.' : 'Jemné mierenie len so Shift.');
 		},
+		// mobil: zameriavač – jemné mierenie prstom zap/vyp (ako Shift)
+		touchFine: () => {
+			controls.touchFine = !controls.touchFine;
+			ui.toast(controls.touchFineOn() ? 'Jemné mierenie zapnuté.' : 'Jemné mierenie vypnuté.');
+		},
 		// mobil: šúpatká pre prst (ukladajú sa zvlášť od myšacích)
 		touchAimSens: (v) => {
 			settings.touchAimSens = Math.min(3, Math.max(0.3, Number(v) || 1));
@@ -5512,6 +5517,7 @@ export function start(root, config = {}) {
 			rig.aimBall = false;
 		}
 		ui.showEye(rig.aimBall && aiming && rig.mode === 'cue' && !game.spectating);
+		ui.showFine(cueSpec.fine > 0, controls.touchFineOn());
 		updateFelt();
 		office.updateWindow(dt);
 		office.notebookTick(dt);

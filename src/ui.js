@@ -92,6 +92,19 @@ export class UI {
 			this.opts.onAction('tools');
 		});
 		root.appendChild(this.chalkBtn);
+		// mobil: zameriavač = jemné mierenie (ako Shift), len pri tágu, ktoré ho má; zapnuté zožltne
+		this.fineBtn = h('button', 'mysn-finebtn', '<svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="7"/><path d="M12 2v4M12 18v4M2 12h4M18 12h4"/><circle cx="12" cy="12" r="1.3" fill="currentColor"/></svg>');
+		this.fineBtn.type = 'button';
+		this.fineBtn.title = 'Jemné mierenie (ako Shift)';
+		this.fineBtn.setAttribute('aria-label', 'Jemné mierenie');
+		for (const t of ['pointerdown', 'pointerup', 'mousedown', 'touchstart', 'touchend', 'wheel']) {
+			this.fineBtn.addEventListener(t, (e) => e.stopPropagation());
+		}
+		this.fineBtn.addEventListener('click', (e) => {
+			e.stopPropagation();
+			this.opts.onAction('touchFine');
+		});
+		root.appendChild(this.fineBtn);
 
 		// Spodné tlačidlá
 		const tools = h('div', 'mysn-tools');
@@ -1567,7 +1580,7 @@ export class UI {
 				<li><b>Biela do ruky myšou:</b> bielu posúvaš pohybom myši, ľavým klikom ju položíš.</li>
 				<li><b>Úder myšou:</b> drž ľavé tlačidlo, ruka chytí tágo. Myš k sebe tágo odtiahne, pohyb dopredu ho posunie a pri dotyku bielej vystrelí. Sila je podľa toho, ako rýchlo pohneš dopredu. Pustením ľavého tlačidla úder zrušíš.</li>
 				<li><b>Miesto úderu myšou:</b> stlač a drž koliesko a pohybom myši posúvaj bod na bielej guli vľavo dole (hore guľa dopredu, dole guľa späť, do strán bočná falša). Dvojklik kolieskom vráti bod do stredu.</li>
-				<li><b>Mobil – 4 časti obrazovky:</b> vľavo hore ťukni = chat; vpravo hore a vľavo dole ťahaj doľava a doprava = mierenie (otáčanie pohľadu); vpravo dole = úder: prst ťahaj dole (odtiahneš tágo) a potom rýchlo hore, sila podľa rýchlosti. Dvoma prstami kdekoľvek priblížiš. Citlivosť nastavíš v spodnom paneli (šípka dole v strede): Otáčanie prstom, Ťahanie tága prstom a Oko; ukladajú sa zvlášť od nastavení myši. Nad Miestom úderu je modrý štvorček: ťuknutím otvoríš kriedu a pomôcky (ako F3). Keď mieriš na guľu, vedľa Miesta úderu je kruh s okom: drž ho a ťahaj prstom – hore priblížiš pohľad ku guli, do strán krúžiš okolo nej, dole spustíš kameru popri tágu (ako pravé tlačidlo myši).</li>
+				<li><b>Mobil – 4 časti obrazovky:</b> vľavo hore ťukni = chat; vpravo hore a vľavo dole ťahaj doľava a doprava = mierenie (otáčanie pohľadu); vpravo dole = úder: prst ťahaj dole (odtiahneš tágo) a potom rýchlo hore, sila podľa rýchlosti. Dvoma prstami kdekoľvek priblížiš. Citlivosť nastavíš v spodnom paneli (šípka dole v strede): Otáčanie prstom, Ťahanie tága prstom a Oko; ukladajú sa zvlášť od nastavení myši. Nad Miestom úderu je modrý štvorček: ťuknutím otvoríš kriedu a pomôcky (ako F3). Pod ním je zameriavač (len pri tágu s jemným mierením): ťuknutím zapneš alebo vypneš jemné mierenie, zapnutý je žltý. Keď mieriš na guľu, vedľa Miesta úderu je kruh s okom: drž ho a ťahaj prstom – hore priblížiš pohľad ku guli, do strán krúžiš okolo nej, dole spustíš kameru popri tágu (ako pravé tlačidlo myši).</li>
 				<li><b>Mierenie prstom:</b> za tágom ťahaj doľava a doprava (vpravo hore alebo vľavo dole), šípky na klávesnici. V pohľade zhora klikni na miesto, kam chceš mieriť, vo voľnej kamere naň krátko ťukni.</li>
 				<li><b>Detail dotyku:</b> kruh vpravo hore ukazuje zhora okamih, keď sa biela dotkne gule. Úder ide vždy nahor, červený bod je miesto dotyku. Pomocné čiary a šípky (kam pôjdu gule) v hre nie sú, mieri sa ako pri skutočnom stole.</li>
 				<li><b>Sila a úder:</b> ťahaj ukazovateľ sily vpravo nadol a pusť.</li>
@@ -2751,6 +2764,17 @@ export class UI {
 			foot.appendChild(back);
 		}
 		box.appendChild(foot);
+	}
+
+	/** Mobil: zameriavač (jemné mierenie) – viditeľný len pri tágu s jemným mierením, zapnutý zožltne. */
+	showFine(can, on) {
+		const k = (can ? 1 : 0) + (on ? 2 : 0);
+		if (k !== this._fineK) {
+			this._fineK = k;
+			this.fineBtn.classList.toggle('mysn-fine-can', !!can);
+			this.fineBtn.classList.toggle('mysn-fine-on', !!(can && on));
+			this.fineBtn.setAttribute('aria-pressed', can && on ? 'true' : 'false');
+		}
 	}
 
 	/** Mobil: oko pri zameranej guli (počas ťahania ostáva). */
