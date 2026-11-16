@@ -162,6 +162,7 @@ function mysn_roadmap() {
 /** Denník zmien (najnovšie hore). */
 function mysn_changelog() {
 	return array(
+		array( '0.16.7', '16. 11. 2026', 'Mobil: nad Miestom úderu je ikonka krieda – modrý štvorček v bielom priehľadnom kruhu; ťuknutím sa otvorí ponuka Krieda a pomôcky (to isté ako F3 na desktope: nakriedovať, nádstavce, predĺženie, nové postavenie).' ),
 		array( '0.16.6', '16. 11. 2026', 'Mobil: v hornej lište sa nezobrazuje Krieda F3 (klávesy na mobile nie sú, stav kriedy je pod Miestom úderu).' ),
 		array( '0.16.5', '16. 11. 2026', 'Mobil: oko pri zameranej guli je viac vpravo a o kúsok vyššie, oddelene od Miesta úderu.' ),
 		array( '0.16.4', '16. 11. 2026', 'Mobil: keď je zameraná guľa, vedľa Miesta úderu sa ukáže biely priehľadný kruh s okom. Drž ho a ťahaj prstom = to isté ako pravé tlačidlo myši: hore priblíži pohľad ku guli, do strán krúži okolo nej, prvý ťah dole spustí kameru popri tágu k stolu; pustením sa pohľad vráti za tágo.' ),
