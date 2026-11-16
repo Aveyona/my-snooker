@@ -162,6 +162,7 @@ function mysn_roadmap() {
 /** Denník zmien (najnovšie hore). */
 function mysn_changelog() {
 	return array(
+		array( '0.16.5', '16. 11. 2026', 'Mobil: oko pri zameranej guli je viac vpravo a o kúsok vyššie, oddelene od Miesta úderu.' ),
 		array( '0.16.4', '16. 11. 2026', 'Mobil: keď je zameraná guľa, vedľa Miesta úderu sa ukáže biely priehľadný kruh s okom. Drž ho a ťahaj prstom = to isté ako pravé tlačidlo myši: hore priblíži pohľad ku guli, do strán krúži okolo nej, prvý ťah dole spustí kameru popri tágu k stolu; pustením sa pohľad vráti za tágo.' ),
 		array( '0.16.3', '16. 11. 2026', 'Mobil: detail dotyku vpravo hore o kúsok nižšie, aby nezasahoval do tlačidiel Nastavenia a ?.' ),
 		array( '0.16.2', '16. 11. 2026', 'Mobil: detail dotyku je úplne v pravom hornom rohu (bez medzery sprava, ktorá bola na desktope pre zvislý ukazovateľ sily).' ),
