@@ -162,6 +162,7 @@ function mysn_roadmap() {
 /** Denník zmien (najnovšie hore). */
 function mysn_changelog() {
 	return array(
+		array( '0.21.2', '17. 11. 2026', 'Skokový úder: pri silnejšom údere väčší skok (pri plnej sile silného tága asi 18 cm, ponad guľu asi od 75 % skutočnej sily).' ),
 		array( '0.21.1', '17. 11. 2026', 'Oprava skokového úderu: o skoku rozhoduje poloha bodu na bielej a sila na ukazovateli od 70 % (predtým ich zmenšila falša bez kriedy a sila tága, takže biela nevyskočila); výška skoku podľa skutočnej sily úderu (aj tága).' ),
 		array( '0.21.0', '17. 11. 2026', 'Skokový úder: bod úderu úplne dole (bod sa sfarbí na červeno, popis Skokový úder) a sila od 70 % = biela vyskočí; výška podľa sily, ponad guľu preletí asi od 92 % sily, po dopade odskakuje. Preskočenie gule nie je faul, ak biela trafí guľu, ktorú mala; biela, ktorá vyletí zo stola, je faul ako v jamke. Skok opotrebuje špicu o 5 %. Fyzika aj v overovači skóre.' ),
 		array( '0.20.21', '17. 11. 2026', 'Mobil, nástenka v herni (Nápoveda): ovládanie prstom, tlačidlá na obrazovke a obrázok telefónu so 4 časťami obrazovky namiesto kláves, Ctrl a myši; texty o tágach, príslušenstve a rebríčku podľa mobilu. Stojan: ikona Predĺženie a zvýraznenie otvorenej ikony.' ),

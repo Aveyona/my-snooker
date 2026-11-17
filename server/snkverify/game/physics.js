@@ -167,11 +167,11 @@ export function strike(ball, dir, power, side = 0, top = 0) {
 	ball.h = 0;
 	ball.vy = 0;
 	if (isJump(power, top)) {
-		// skok: časť energie ide do súkna a biela odskočí nahor (0,5 až 1,3 m/s podľa skutočnej sily úderu, teda
-		// aj podľa tága; ponad guľu preletí asi od 90 % skutočnej sily),
+		// skok: časť energie ide do súkna a biela odskočí nahor (0,5 až 1,9 m/s podľa skutočnej sily úderu, teda
+		// aj podľa tága; ponad guľu preletí asi od 75 % skutočnej sily),
 		// dopredu letí pomalšie a so slabšou rotáciou
 		const p = Math.max(0, Math.min(1, (Math.min(1, power) - 0.55) / 0.45));
-		ball.vy = 0.5 + 0.8 * p;
+		ball.vy = 0.5 + 1.4 * p; // 0,5 až 1,9 m/s: pri plnej sile asi 18 cm vysoko
 		ball.v.x *= 0.8;
 		ball.v.z *= 0.8;
 		ball.w.x *= 0.3;
