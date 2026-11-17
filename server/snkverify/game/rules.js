@@ -216,7 +216,7 @@ export function evaluate(state, shot) {
 				respot.push('black');
 			}
 			msg += ' Remíza, čierna sa vracia na spot.';
-			return { state: s, points, foul: !!foul, penalty: foul ? penalty : 0, respot, inHand: true, msg };
+			return { state: s, points, foul: !!foul, penalty: foul ? penalty : 0, respot, inHand: true, msg, tie: true };
 		}
 		s.over = true;
 		s.on = 'done';

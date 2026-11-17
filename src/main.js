@@ -23,7 +23,7 @@ import { UI } from './ui.js';
 import { Game, fmtTime } from './match.js';
 import { Online } from './online.js';
 import { remaining } from './rules.js';
-import { aimTrace, R, L, W, snapshot, restore, createRack, POCKETS, COLOURS } from './physics.js';
+import { aimTrace, R, L, W, snapshot, restore, createRack, POCKETS, COLOURS, isJump } from './physics.js';
 import { buildRackTriangle, rackLayout } from './rackTriangle.js';
 import { Replay } from './replay.js';
 import { CHALKS, chalkById } from './chalks.js';
@@ -2155,20 +2155,20 @@ export function start(root, config = {}) {
 		}
 	};
 	/** Úder tágom: hneď odhad opotrebenia u mňa, presnú hodnotu vráti server (zapíše ju do DB). */
-	const tipStroke = (spec, p) => {
+	const tipStroke = (spec, p, jump = false) => {
 		if (!online || !user || game.spectating) {
 			return;
 		}
 		const t = { ...tipOf(spec) };
 		const before = t.wear;
 		t.strokes++;
-		t.wear = Math.min(1, t.wear + tipStep(t.kind, p));
+		t.wear = Math.min(1, t.wear + tipStep(t.kind, p) + (jump ? 0.05 : 0)); // skokový úder: špica −5 %
 		tipData.tips[spec.id] = t;
 		tipData.total++;
 		if (before < 0.9 && t.wear >= 0.9) {
 			ui.toast('Špica na tágu je takmer opotrebovaná, vymeň ju na stojane (F2).');
 		}
-		online.net.call('tips/stroke', { cue: spec.id, power: +p.toFixed(3), def: tipDef(spec) }).then(tipApply).catch(() => null);
+		online.net.call('tips/stroke', { cue: spec.id, power: +p.toFixed(3), def: tipDef(spec), jump: jump ? 1 : 0 }).then(tipApply).catch(() => null);
 	};
 	/** Ako ďaleko je bod od najbližšieho mantinelu (0 = za mantinelom, mimo hracej plochy). */
 	const railDist = (x, z) => {
@@ -2268,7 +2268,11 @@ export function start(root, config = {}) {
 		if (shot) {
 			controls.touchFine = false; // mobil: jemné mierenie (zameriavač) sa po výstrele vypne, ako pustený Shift
 			game.dir = dir0; // smer mierenia ostáva (odklon platí len pre tento úder)
-			tipStroke(cueSpec, power);
+			const jumped = isJump(power, top);
+			tipStroke(cueSpec, power, jumped);
+			if (jumped) {
+				ui.toast('Skokový úder! Špica −5 %.');
+			}
 			if (miscue) {
 				ui.toast('Šmyk tága! Špica je opotrebovaná, vymeň ju na stojane (F2).');
 			}
@@ -5584,6 +5588,11 @@ export function start(root, config = {}) {
 					sound.ball(e.speed, { pos: a && b ? { x: (a.p.x + b.p.x) / 2, y: R, z: (a.p.z + b.p.z) / 2 } : null });
 				} else if (e.type === 'cushion') {
 					sound.cushion(e.speed, { pos: ballPos(game.balls[e.a]) });
+				} else if (e.type === 'bounce') {
+					sound.cushion(e.speed * 0.8, { pos: ballPos(game.balls[e.a]) }); // dopad skákajúcej gule na súkno
+				} else if (e.type === 'pot' && e.off) {
+					sound.cushion(Math.max(1, e.speed), { pos: ballPos(game.balls[e.a]) }); // guľa vyletela zo stola
+					ui.toast(game.balls[e.a] && game.balls[e.a].kind === 'white' ? 'Biela vyletela zo stola!' : 'Guľa vyletela zo stola!');
 				} else if (e.type === 'pot') {
 					const pk = POCKETS[e.pocket];
 					sound.pot({ pos: pk ? { x: pk.x, y: R, z: pk.z } : null, corner: pk ? !!pk.corner : true, speed: e.speed });

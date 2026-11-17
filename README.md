@@ -41,6 +41,7 @@ Server `live.hedlajner.sk` (Hetzner) poskytuje TURN pre spojenie hráčov a over
 - konferenčný stolík s novinami a časopisom; v pohľade z kresla (F7) vpravo titulka webu Hedlajner a správy z RSS, C a V ich otvoria na celú obrazovku, koliesko približuje pohľad
 - O najlepšie skóre: jeden hráč hrá celý frame podľa pravidiel (fauly sa odpočítajú), rebríček prihlásených hráčov podľa bodov a pri rovnosti kratšieho celkového času; v herni polica s pohármi troch najlepších a tabuľka 4. až 10. miesta (F8), na konci framu slávnostné ukončenie
 - fyzika gúľ: kĺzanie, kotúľanie, guľa dopredu, guľa späť, zastavenie a bočná falša
+- skokový úder: bod úderu úplne dole (červený) a sila od 70 %: biela vyskočí, od asi 92 % preletí ponad guľu, odskakuje; preskočenie nie je faul, ak biela trafí správnu guľu, vyletenie zo stola je faul; skok opotrebuje špicu o 5 %
 - ovládanie myšou ako tágo (myš sa zachytí v okne, Esc otvorí hlavné menu), klávesnicou a na mobile prstom (pozri Ovládanie na mobile)
 - detail dotyku gúľ zhora (uhol a plnosť zásahu, kruh vo farbe súkna) a krúžok na súkne pod guľou, na ktorú sa mieri
 - zvuky nárazov, mantinelov a jamiek

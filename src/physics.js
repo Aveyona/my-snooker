@@ -23,6 +23,11 @@ const E_BALL = 0.95; // pružnosť nárazu gúľ
 const E_CUSHION = 0.78; // pružnosť mantinelu
 const CUSHION_SPIN = 0.15; // ako silno bočná falša mení odraz od mantinelu
 export const V_MAX = 7.0; // najväčšia rýchlosť bielej pri plnej sile (m/s)
+// Skokový úder: tágo zasiahne bielu úplne dole (top ≤ JUMP_TOP) aspoň silou JUMP_POWER, biela vyletí nahor
+export const JUMP_TOP = -0.85;
+export const JUMP_POWER = 0.7;
+const E_TABLE = 0.45; // pružnosť dopadu na súkno (každý odskok menší)
+const H_CUSHION = 0.036; // výška nosa mantinelu nad súknom: vyššie letiaca guľa ho preletí
 
 /** Gule snookeru: názov, farba, body. */
 export const COLOURS = {
@@ -110,7 +115,7 @@ export function createRack() {
 }
 
 export function makeBall(id, kind, x, z) {
-	return { id, kind, p: { x, z }, v: { x: 0, z: 0 }, w: { x: 0, y: 0, z: 0 }, on: true, potted: null, moving: false };
+	return { id, kind, p: { x, z }, v: { x: 0, z: 0 }, w: { x: 0, y: 0, z: 0 }, h: 0, vy: 0, on: true, potted: null, moving: false };
 }
 
 /** Kópia stavu gúľ (na vrátenie úderu a zosúladenie hry cez internet). */
@@ -127,7 +132,14 @@ export function restore(balls, snap) {
 		b.potted = null;
 		b.v.x = b.v.z = 0;
 		b.w.x = b.w.y = b.w.z = 0;
+		b.h = 0;
+		b.vy = 0;
 	}
+}
+
+/** Je úder skokový? Bod úplne dole a dostatočná sila. */
+export function isJump(power, top) {
+	return top <= JUMP_TOP && power >= JUMP_POWER;
 }
 
 /* ---------- Úder ---------- */
@@ -149,6 +161,19 @@ export function strike(ball, dir, power, side = 0, top = 0) {
 	ball.w.x = k * b * dz;
 	ball.w.y = k * a;
 	ball.w.z = -k * b * dx;
+	ball.h = 0;
+	ball.vy = 0;
+	if (isJump(power, top)) {
+		// skok: časť energie ide do súkna a biela odskočí nahor (od 0,5 m/s pri 70 % po 1,3 m/s pri plnej sile;
+		// ponad guľu preletí asi od 92 % sily),
+		// dopredu letí pomalšie a so slabšou rotáciou
+		const p = Math.min(1, (Math.min(1, power) - JUMP_POWER) / (1 - JUMP_POWER));
+		ball.vy = 0.5 + 0.8 * p;
+		ball.v.x *= 0.8;
+		ball.v.z *= 0.8;
+		ball.w.x *= 0.3;
+		ball.w.z *= 0.3;
+	}
 	ball.moving = true;
 }
 
@@ -191,7 +216,24 @@ export class Physics {
 		const balls = this.balls;
 		for (const b of balls) {
 			if (b.on && b.moving) {
-				friction(b, h);
+				if (b.h > 0 || b.vy > 0) {
+					// let vzduchom: bez trenia súkna, gravitácia; po dopade odskok, slabý odskok = guľa dopadne
+					b.h += b.vy * h;
+					b.vy -= G * h;
+					if (b.h <= 0) {
+						b.h = 0;
+						const hit = -b.vy;
+						b.vy = hit * E_TABLE;
+						b.v.x *= 0.92;
+						b.v.z *= 0.92;
+						if (b.vy < 0.25) {
+							b.vy = 0;
+						}
+						this.events.push({ type: 'bounce', a: b.id, speed: hit });
+					}
+				} else {
+					friction(b, h);
+				}
 				b.p.x += b.v.x * h;
 				b.p.z += b.v.z * h;
 			}
@@ -209,8 +251,12 @@ export class Physics {
 				}
 				const nx = b.p.x - a.p.x;
 				const nz = b.p.z - a.p.z;
+				const dy = (a.h || 0) - (b.h || 0);
+				if (dy * dy >= 4 * R * R) {
+					continue; // guľa letí ponad
+				}
 				const d2 = nx * nx + nz * nz;
-				if (d2 >= 4 * R * R || d2 < 1e-12) {
+				if (d2 >= 4 * R * R - dy * dy || d2 < 1e-12) {
 					continue;
 				}
 				const d = Math.sqrt(d2);
@@ -218,7 +264,7 @@ export class Physics {
 				const uz = nz / d;
 				const rel = (a.v.x - b.v.x) * ux + (a.v.z - b.v.z) * uz;
 				// rozostúpiť gule (aj keď sa už vzďaľujú)
-				const over = (2 * R - d) / 2 + 1e-7;
+				const over = (Math.sqrt(4 * R * R - dy * dy) - d) / 2 + 1e-7;
 				a.p.x -= ux * over;
 				a.p.z -= uz * over;
 				b.p.x += ux * over;
@@ -246,7 +292,7 @@ export class Physics {
 			for (const pk of POCKETS) {
 				const dx = b.p.x - pk.x;
 				const dz = b.p.z - pk.z;
-				if (dx * dx + dz * dz < pk.r * pk.r) {
+				if (dx * dx + dz * dz < pk.r * pk.r && (b.h || 0) < R * 0.5) {
 					b.on = false;
 					b.moving = false;
 					b.potted = { x: pk.x, z: pk.z, vx: b.v.x, vz: b.v.z, t: this.time };
@@ -255,6 +301,20 @@ export class Physics {
 				}
 			}
 			if (!b.on) {
+				continue;
+			}
+			if ((b.h || 0) > H_CUSHION) {
+				// letí nad mantinelmi; keď je za okrajom hracej plochy mimo jamky, vyletela zo stola
+				const outX = Math.abs(b.p.x) > L / 2 + R * 0.5;
+				const outZ = Math.abs(b.p.z) > W / 2 + R * 0.5;
+				const nearPk = POCKETS.some((pk) => Math.hypot(b.p.x - pk.x, b.p.z - pk.z) < pk.r * 1.6);
+				if ((outX || outZ) && !nearPk) {
+					b.on = false;
+					b.moving = false;
+					b.potted = { x: b.p.x, z: b.p.z, vx: b.v.x, vz: b.v.z, t: this.time, off: true };
+					// pre pravidlá ako guľa v jamke (biela mimo stola = faul, biela do ruky), jamka -1
+					this.events.push({ type: 'pot', a: b.id, pocket: -1, off: true, speed: Math.hypot(b.v.x, b.v.z) });
+				}
 				continue;
 			}
 			for (const c of CUSHIONS) {

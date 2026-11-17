@@ -164,9 +164,11 @@ export class BallViews {
 			if (b.on) {
 				it.drop = 0;
 				m.visible = true;
-				m.position.set(b.p.x, R, b.p.z);
+				m.position.set(b.p.x, R + (b.h || 0), b.p.z); // skokový úder: guľa vo vzduchu
 				it.blob.visible = true;
 				it.blob.position.set(b.p.x, 0.0006, b.p.z);
+				const hs = Math.max(0.45, 1 - (b.h || 0) * 6); // tieň vo vzduchu menší
+				it.blob.scale.set(hs, hs, hs);
 				const wl = Math.hypot(b.w.x, b.w.y, b.w.z);
 				if (wl > 1e-3 && b.moving) {
 					this._axis.set(b.w.x / wl, b.w.y / wl, b.w.z / wl);

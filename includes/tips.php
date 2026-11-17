@@ -97,6 +97,9 @@ function mysn_rest_tip_stroke( $req ) {
 	}
 	$r    = mysn_tip_row( $uid, $cue, (string) $req->get_param( 'def' ) );
 	$step = mysn_tip_wear_step( $r['kind'], (float) $req->get_param( 'power' ) );
+	if ( $req->get_param( 'jump' ) ) {
+		$step += 50; // skokový úder: špica −5 % (opotrebenie je v tisícinách)
+	}
 	$wpdb->query( $wpdb->prepare( 'UPDATE ' . mysn_table( 'tips' ) . ' SET strokes = strokes + 1, wear = LEAST(1000, wear + %f), updated = %d WHERE user_id = %d AND cue_id = %s', $step, time(), $uid, $cue ) ); // phpcs:ignore
 	$r = mysn_tip_row( $uid, $cue, '' );
 	return array( 'cue' => $cue, 'tip' => mysn_tip_out( $r ) ) + mysn_tip_sum( $uid );

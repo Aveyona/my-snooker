@@ -3,7 +3,7 @@
  */
 import { CHALKS } from './chalks.js';
 import { TIP_COLORS, BUDGET_KEYS, balanceAdj, CUES, CUE_PROS, tipInaccuracy, fineDefault } from './cues.js';
-import { R, COLOURS, POCKETS } from './physics.js';
+import { R, COLOURS, POCKETS, JUMP_TOP, JUMP_POWER } from './physics.js';
 
 const esc = (t) => String(t || '').replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
 
@@ -558,6 +558,15 @@ export class UI {
 		this.spinDot.style.left = 50 + this.side * 40 + '%';
 		this.spinDot.style.top = 50 - this.top * 40 + '%';
 		this.spinBox.classList.toggle('mysn-spin-off', !!(this.side || this.top)); // mobil: ukáže Do stredu
+		// bod úplne dole = skokový úder (bod červený, popis Skokový úder; skočí až od sily JUMP_POWER)
+		const jump = this.top <= JUMP_TOP;
+		if (jump !== this._jumpOn) {
+			this._jumpOn = jump;
+			this.spinBox.classList.toggle('mysn-spin-jump', jump);
+			const lb = this.spinBox.querySelector('.mysn-spin-label');
+			lb.textContent = jump ? 'Skokový úder' : 'Miesto úderu';
+			lb.title = jump ? `Biela vyskočí pri sile od ${Math.round(JUMP_POWER * 100)} %, ponad guľu asi od 92 %. Skok veľmi opotrebuje špicu (5 %).` : '';
+		}
 		this.opts.onSpin(this.side, this.top);
 	}
 
