@@ -87,6 +87,13 @@ export class UI {
 		bar.appendChild(h('div', 'mysn-brand', `<a href="${opts.homeUrl || '/'}" class="mysn-home" title="Späť na web">My Snooker</a><span>Tréning</span>`));
 		this.modeLabel = bar.querySelector('.mysn-brand span');
 		this.stats = h('div', 'mysn-stats');
+		this.stats.addEventListener('click', (e) => {
+			// mobil: ťuknutie na Krieda v hornom paneli nakriedue tágo (len pri stole)
+			if (this.touchUI && e.target.closest && e.target.closest('.mysn-chalk-on, .mysn-chalk-off')) {
+				e.stopPropagation();
+				this.opts.onAction('chalkNow');
+			}
+		});
 		bar.appendChild(this.stats);
 		const right = h('div', 'mysn-barbtns');
 		this.btnHelp = this.button('?', 'help', 'Ovládanie');
@@ -159,8 +166,8 @@ export class UI {
 		// mobil: modrý štvorček (krieda) nad Miestom úderu – ťuknutie otvorí ponuku Krieda a pomôcky (ako F3)
 		this.chalkBtn = h('button', 'mysn-chalkbtn', '<i></i>');
 		this.chalkBtn.type = 'button';
-		this.chalkBtn.title = 'Krieda a pomôcky (F3)';
-		this.chalkBtn.setAttribute('aria-label', 'Krieda a pomôcky');
+		this.chalkBtn.title = 'Príslušenstvo (F3)';
+		this.chalkBtn.setAttribute('aria-label', 'Príslušenstvo');
 		for (const t of ['pointerdown', 'pointerup', 'mousedown', 'touchstart', 'touchend', 'wheel']) {
 			this.chalkBtn.addEventListener(t, (e) => e.stopPropagation());
 		}
@@ -1863,7 +1870,7 @@ export class UI {
 				<li><b>Biela do ruky myšou:</b> bielu posúvaš pohybom myši, ľavým klikom ju položíš.</li>
 				<li><b>Úder myšou:</b> drž ľavé tlačidlo, ruka chytí tágo. Myš k sebe tágo odtiahne, pohyb dopredu ho posunie a pri dotyku bielej vystrelí. Sila je podľa toho, ako rýchlo pohneš dopredu. Pustením ľavého tlačidla úder zrušíš.</li>
 				<li><b>Miesto úderu myšou:</b> stlač a drž koliesko a pohybom myši posúvaj bod na bielej guli vľavo dole (hore guľa dopredu, dole guľa späť, do strán bočná falša). Dvojklik kolieskom vráti bod do stredu.</li>
-				<li><b>Mobil – 4 časti obrazovky:</b> vľavo hore ťukni = chat; vpravo hore a vľavo dole ťahaj doľava a doprava = mierenie (otáčanie pohľadu); vpravo dole = úder: prst ťahaj dole (odtiahneš tágo) a potom rýchlo hore, sila podľa rýchlosti. Dvoma prstami kdekoľvek priblížiš. Po výstrele, kým sa gule kotúľajú, prst kdekoľvek na obrazovke otáča kameru okolo bielej (doľava a doprava krúži, hore a dole nakláňa); keď gule zastanú, mieriš zo smeru, kam sa kamera pozerá. Citlivosť nastavíš v spodnom paneli (šípka dole v strede): Otáčanie prstom, Ťahanie tága a Oko; ukladajú sa zvlášť od nastavení myši. Úplne hore vľavo je panák: voľný pohľad (ako medzerník) – prstom sa rozhliadaš, ovládačom vpravo dole chodíš, ▲ a ▼ vedľa neho hore a dole, dvoma prstami priblížiš, panák ťa vráti za tágo. Nad Miestom úderu je modrý štvorček: ťuknutím otvoríš kriedu a pomôcky (ako F3). Pod ním je zameriavač (len pri tágu s jemným mierením): ťuknutím zapneš alebo vypneš jemné mierenie, zapnutý je žltý; po výstrele sa sám vypne. Keď mieriš na guľu, vedľa Miesta úderu je kruh s okom: drž ho a ťahaj prstom – hore priblížiš pohľad ku guli, do strán krúžiš okolo nej, dole spustíš kameru popri tágu (ako pravé tlačidlo myši).</li>
+				<li><b>Mobil – 4 časti obrazovky:</b> vľavo hore ťukni = chat; vpravo hore a vľavo dole ťahaj doľava a doprava = mierenie (otáčanie pohľadu); vpravo dole = úder: prst ťahaj dole (odtiahneš tágo) a potom rýchlo hore, sila podľa rýchlosti. Dvoma prstami kdekoľvek priblížiš. Po výstrele, kým sa gule kotúľajú, prst kdekoľvek na obrazovke otáča kameru okolo bielej (doľava a doprava krúži, hore a dole nakláňa); keď gule zastanú, mieriš zo smeru, kam sa kamera pozerá. Citlivosť nastavíš v spodnom paneli (šípka dole v strede): Otáčanie prstom, Ťahanie tága a Oko; ukladajú sa zvlášť od nastavení myši. Úplne hore vľavo je panák: voľný pohľad (ako medzerník) – prstom sa rozhliadaš, ovládačom vpravo dole chodíš, ▲ a ▼ vedľa neho hore a dole, dvoma prstami priblížiš, panák ťa vráti za tágo. Nad Miestom úderu je modrý štvorček: ťuknutím otvoríš príslušenstvo – kriedu, nádstavce a predĺženie (ako F3). Pod ním je zameriavač (len pri tágu s jemným mierením): ťuknutím zapneš alebo vypneš jemné mierenie, zapnutý je žltý; po výstrele sa sám vypne. Keď mieriš na guľu, vedľa Miesta úderu je kruh s okom: drž ho a ťahaj prstom – hore priblížiš pohľad ku guli, do strán krúžiš okolo nej, dole spustíš kameru popri tágu (ako pravé tlačidlo myši).</li>
 				<li><b>Mierenie prstom:</b> za tágom ťahaj doľava a doprava (vpravo hore alebo vľavo dole), šípky na klávesnici. Pohľad zhora (Tab) je len na pozeranie, mieri sa za tágom.</li>
 				<li><b>Detail dotyku:</b> kruh vpravo hore ukazuje zhora okamih, keď sa biela dotkne gule. Úder ide vždy nahor, červený bod je miesto dotyku. Pomocné čiary a šípky (kam pôjdu gule) v hre nie sú, mieri sa ako pri skutočnom stole.</li>
 				<li><b>Sila a úder:</b> ťahaj ukazovateľ sily vpravo nadol a pusť.</li>
@@ -2138,7 +2145,7 @@ export class UI {
 			return;
 		}
 		this._tools = { toolChalk: !!o.chalk, rackNew: !!o.rack, cueExt: true, cueExtOff: !!o.ext };
-		B.innerHTML = '<h3>Krieda a pomôcky (F3)</h3>';
+		B.innerHTML = '<h3>Príslušenstvo (F3)</h3><p class="mysn-note">Krieda, nádstavce a predĺženie tága</p>';
 		const row = (n, label, act, ok, value) => {
 			const b = this.button(`<b>${n}</b> ${label}`, act, '', value);
 			b.disabled = !ok;
@@ -3209,7 +3216,13 @@ export class UI {
 				color: '#6fb3ff',
 				// položky menu hry (podľa stavu: Tréning, Hrať, Liga, Poslať výzvu, Pozerať hru, Účet…); ťuknutie
 				// stlačí pôvodné tlačidlo, takže robí presne to isté ako na desktope
-				items: [['set', 'Nastavenia', { a: 'settings' }, '#ff6b6b'], ...[...this.menuInv.querySelectorAll('button'), ...this.menuBtns.querySelectorAll('.mysn-btn')]
+				items: [['set', 'Nastavenia', { a: 'settings' }, '#ff6b6b'],
+					// krieda a pomôcky (nádstavce, predĺženie) len pri stole: inak sivé s textom len pri stole
+					...(ctx.office ? [] : [
+						['chalk', ctx.table ? 'Príslušenstvo' : 'Príslušenstvo · len pri stole', { a: 'tools', grey: !ctx.table }, ctx.table ? '#ffd34d' : '#8a8f98'],
+						['chalk', ctx.table ? 'Nakriedovať' : 'Nakriedovať · len pri stole', { a: 'chalkNow', grey: !ctx.table }, ctx.table ? '#ffd34d' : '#8a8f98'],
+					]),
+					...[...this.menuInv.querySelectorAll('button'), ...this.menuBtns.querySelectorAll('.mysn-btn')]
 					.filter((b) => b.dataset.act !== 'settings' && b.dataset.act !== 'roomMap' && b.style.display !== 'none')
 					.map((b) => [MM_ICON[b.dataset.act] || (b.classList.contains('mysn-login') ? 'user' : 'menu'), b.textContent, { el: b }, /^(Tréning|Hrať|Liga)$/.test(b.textContent.trim()) ? '#7CFC8A' : '']),
 				],
@@ -3253,7 +3266,6 @@ export class UI {
 							items: [
 								['help', 'Nápoveda', { k: 'F1' }],
 								['cue', 'Tágá', { k: 'F2' }],
-								['chalk', 'Krieda', { k: 'F3' }],
 								['score', 'Skóre', { k: 'F4' }],
 								['trophy', 'Rebríček', { k: 'F8' }],
 								['radio', 'Rádio', { k: 'F9' }],
@@ -3321,7 +3333,7 @@ export class UI {
 					}
 					const asMenu = this._mmAsMenu;
 					this.openMainMenu(false);
-					if (asMenu && (act.k || act.a === 'undo' || act.a === 'hand' || act.a === 'reset') && resumeBtn) {
+					if (asMenu && (act.k || act.a === 'undo' || act.a === 'hand' || act.a === 'reset' || act.a === 'tools' || act.a === 'chalkNow') && resumeBtn) {
 						resumeBtn.click(); // najprv späť do hry (menu hry sa zavrie), potom kláves
 					} else if (asMenu && act.k && ctx.office) {
 						this.showMenu(false); // kancelária: menu sa zavrie, ostáva sa v kancelárii, potom kláves
@@ -3497,14 +3509,14 @@ export class UI {
 		const so = game.solo;
 		if (so && !mt) {
 			const t = Math.max(0, Math.round(so.time));
-			this.stats.innerHTML = `<span>Body <b>${game.soloScore}</b></span><span>Séria <b>${so.rules.brk}</b></span><span>Najvyššia <b>${so.best}</b></span><span>Čas <b>${Math.floor(t / 60)}:${String(t % 60).padStart(2, '0')}</b></span><span>Hrá sa na <b>${esc(game.onText())}</b></span><span>Fauly <b>${so.fouls}</b></span><span class="${this._chalk > 0 ? 'mysn-chalk-on' : 'mysn-chalk-off'}">Krieda <b>${this._chalk > 0 ? this._chalk : 'F3'}</b></span>`;
+			this.stats.innerHTML = `<span>Body <b>${game.soloScore}</b></span><span>Séria <b>${so.rules.brk}</b></span><span>Najvyššia <b>${so.best}</b></span><span>Čas <b>${Math.floor(t / 60)}:${String(t % 60).padStart(2, '0')}</b></span><span>Hrá sa na <b>${esc(game.onText())}</b></span><span>Fauly <b>${so.fouls}</b></span><span class="${this._chalk > 0 ? 'mysn-chalk-on' : 'mysn-chalk-off'}">Krieda <b>${this._chalk > 0 ? this._chalk : this.touchUI ? 'nie' : 'F3'}</b></span>`;
 		} else if (mt && mt.rules) {
 			const nm = (i) => esc(String(mt.players[i].name).slice(0, 16));
 			const r = mt.rules;
 			const turn = (i) => (r.turn === i && !r.over ? ' mysn-turn' : '');
-			this.stats.innerHTML = `<span class="mysn-sc${turn(mt.me)}">${nm(mt.me)} <b>${r.scores[mt.me]}</b></span><span class="mysn-sc${turn(1 - mt.me)}">${nm(1 - mt.me)} <b>${r.scores[1 - mt.me]}</b>${mt.players[1 - mt.me].online === false ? ' <i>mimo</i>' : ''}</span>${mt.frames ? `<span>Framy <b>${mt.frames.won[mt.me]} : ${mt.frames.won[1 - mt.me]}</b> (${mt.frames.n}. z ${mt.frames.of})</span>` : ''}<span>Na rade <b>${r.turn === mt.me ? 'ty' : nm(r.turn)}</b></span><span>Hrá sa na <b>${esc(game.onText())}</b></span><span>Séria <b>${r.brk}</b></span><span class="${this._chalk > 0 ? 'mysn-chalk-on' : 'mysn-chalk-off'}">Krieda <b>${this._chalk > 0 ? this._chalk : 'F3'}</b></span>`;
+			this.stats.innerHTML = `<span class="mysn-sc${turn(mt.me)}">${nm(mt.me)} <b>${r.scores[mt.me]}</b></span><span class="mysn-sc${turn(1 - mt.me)}">${nm(1 - mt.me)} <b>${r.scores[1 - mt.me]}</b>${mt.players[1 - mt.me].online === false ? ' <i>mimo</i>' : ''}</span>${mt.frames ? `<span>Framy <b>${mt.frames.won[mt.me]} : ${mt.frames.won[1 - mt.me]}</b> (${mt.frames.n}. z ${mt.frames.of})</span>` : ''}<span>Na rade <b>${r.turn === mt.me ? 'ty' : nm(r.turn)}</b></span><span>Hrá sa na <b>${esc(game.onText())}</b></span><span>Séria <b>${r.brk}</b></span><span class="${this._chalk > 0 ? 'mysn-chalk-on' : 'mysn-chalk-off'}">Krieda <b>${this._chalk > 0 ? this._chalk : this.touchUI ? 'nie' : 'F3'}</b></span>`;
 		} else {
-		this.stats.innerHTML = `<span>Údery <b>${s.shots}</b></span><span>Spadnuté <b>${s.points >= 0 ? s.potted : 0}</b></span><span>Body <b>${s.points}</b></span><span>Séria <b>${s.run}</b></span><span>Najlepšia <b>${s.best}</b></span><span class="${this._chalk > 0 ? 'mysn-chalk-on' : 'mysn-chalk-off'}">Krieda <b>${this._chalk > 0 ? this._chalk : 'F3'}</b></span>`;
+		this.stats.innerHTML = `<span>Údery <b>${s.shots}</b></span><span>Spadnuté <b>${s.points >= 0 ? s.potted : 0}</b></span><span>Body <b>${s.points}</b></span><span>Séria <b>${s.run}</b></span><span>Najlepšia <b>${s.best}</b></span><span class="${this._chalk > 0 ? 'mysn-chalk-on' : 'mysn-chalk-off'}">Krieda <b>${this._chalk > 0 ? this._chalk : this.touchUI ? 'nie' : 'F3'}</b></span>`;
 		}
 		const st0 = game.state;
 		const base =

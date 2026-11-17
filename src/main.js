@@ -1990,6 +1990,28 @@ export function start(root, config = {}) {
 		rig.setViewZoom(1);
 		rig.setView(new THREE.Vector3(cx, v.look.y + 0.12, v.look.z + 1.75), new THREE.Vector3(cx, v.look.y + 0.08, v.look.z));
 	};
+	/** Krieda a pomôcky (nádstavce, predĺženie) len pri stole: prečo teraz nie ('' = dá sa). */
+	const tableNo = () => {
+		if (game.spectating) {
+			return 'Pri sledovaní partie sa príslušenstvo nepoužíva.';
+		}
+		if (view && view !== 'chalk') {
+			return 'Príslušenstvo (krieda, nádstavce, predĺženie) je len pri stole: vráť sa do hry za tágo.';
+		}
+		if (game.match && game.match.turn !== game.match.me) {
+			return 'Príslušenstvo až keď si na rade.';
+		}
+		if (game.state === 'moving') {
+			return 'Počkaj, kým gule zastanú.';
+		}
+		if (game.state === 'place') {
+			return 'Najprv polož bielu.';
+		}
+		if (game.state !== 'aim' || !game.cue.on || chalkT >= 0) {
+			return 'Príslušenstvo (krieda, nádstavce, predĺženie) je len pri stole, keď mieriš.';
+		}
+		return '';
+	};
 	const pickCue = (id) => {
 		cueSpec = specFor(id);
 		settings.cue = cueSpec.id;
@@ -3068,6 +3090,11 @@ export function start(root, config = {}) {
 				}
 				return;
 			}
+			const why = tableNo();
+			if (why) {
+				ui.toast(why); // krieda a pomôcky len pri stole
+				return;
+			}
 			const mine = game.state === 'aim' && !game.spectating;
 			const sp = mine && game.cue.on;
 			controls.uncapture(); // kurzor na výber v ponuke (alebo klávesy 1 až 3)
@@ -3179,6 +3206,15 @@ export function start(root, config = {}) {
 			if (online && game.match && game.match.league) {
 				online.sendChalk({ side: mySide(), spec: cueSpec, color: chalkById(settings.chalk).color });
 			}
+		},
+		// mobil ☰ Nakriedovať a ťuk na Krieda v paneli: hneď nakriedovať (len pri stole)
+		chalkNow: () => {
+			const why = tableNo();
+			if (why) {
+				ui.toast(why);
+				return;
+			}
+			actions.toolChalk();
 		},
 		toolChalk: () => {
 			ui.openTools(false);
@@ -4208,7 +4244,7 @@ export function start(root, config = {}) {
 	controls.sens = settings.mouseSens || 1; // šúpatko Otáčanie myšou
 	controls.strokeSens = settings.strokeSens || 1; // šúpatko Ťahanie tága
 	controls.panSens = settings.panSens || 1; // šúpatko Pravé tlačidlo
-	ui.menuCtx = () => ({ venue, office: view === 'office' }); // mobil: hlavné menu ☰ vie, kde hráč je (herňa, kancelária, štadión)
+	ui.menuCtx = () => ({ venue, office: view === 'office', table: !tableNo() }); // mobil: hlavné menu ☰ vie, kde hráč je (herňa, kancelária, štadión)
 	controls.touchAimSens = settings.touchAimSens || 1; // mobil: Otáčanie prstom
 	controls.touchStrokeSens = settings.touchStrokeSens || 1; // mobil: Ťahanie tága prstom
 	controls.touchPanSens = settings.touchPanSens || 1; // mobil: Oko

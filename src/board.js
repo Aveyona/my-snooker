@@ -9,7 +9,7 @@ const PAPERS = [
 		title: 'Klávesy',
 		lines: [
 			'F1  táto nástenka   F2  stojan s tágami a kriedami',
-			'F3  krieda a pomôcky: 1 krieda, 2 krížik, 3 pavúk,',
+			'F3  príslušenstvo: 1 krieda, 2 krížik, 3 pavúk,',
 			'      4 vysoký pavúk, 5 nové postavenie,',
 			'      6 predĺženie tága, 7 predĺženie dole',
 			'F4  tabuľa so skóre   F6  dvere (sledovanie)',

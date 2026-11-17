@@ -761,3 +761,8 @@ body.mysn-page { font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans
 	.mysn-chalks.mysn-chalks-on { display: block; top: auto; left: 0; right: 0; bottom: 0; width: auto; max-height: 62%; border-radius: 14px 14px 0 0; z-index: 9; background: #0c0f14f5; }
 	.mysn-chalks-x { float: right; width: 36px; height: 36px; border-radius: 50%; border: 2px solid #ffd34d99; background: #0c0f14; color: #fff; font: 700 15px system-ui, sans-serif; padding: 0; }
 }
+
+/* mobil: Krieda v hornom paneli sa dá ťuknúť (nakriedovať) */
+@media (hover: none), (pointer: coarse) {
+	.mysn-stats .mysn-chalk-on, .mysn-stats .mysn-chalk-off { pointer-events: auto; cursor: pointer; text-decoration: underline dotted; }
+}
