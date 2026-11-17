@@ -162,6 +162,7 @@ function mysn_roadmap() {
 /** Denník zmien (najnovšie hore). */
 function mysn_changelog() {
 	return array(
+		array( '0.19.12', '17. 11. 2026', 'Nedosiahneš na bielu: tágo sa namiesto zdvihnutia vytočí do strany okolo ruky na rukoväti – rukoväť ostáva pri hráčovi, špička mieri vedľa bielej.' ),
 		array( '0.19.11', '17. 11. 2026', 'Keď nedosiahneš na bielu (PC aj mobil), tágo sa plynulo zdvihne šikmo nad stôl – rukoväť hore, špička nad bielou, mimo mierenia; keď dosiahneš (smer, nádstavec, predĺženie), vráti sa do mierenia.' ),
 		array( '0.19.10', '17. 11. 2026', 'Mobil: hlásenie, z ktorého po odstránení klávesových skratiek nezostal žiadny text (napr. pri ligovej tabuli), sa už nezobrazí ako prázdny rámček.' ),
 		array( '0.19.9', '17. 11. 2026', 'Oprava: pavúk (aj súperov) sa pri naťahovaní tága už neťahá hore – výška drážky sa meria po osi tága so znamienkom, aj keď špička prejde za pavúka.' ),

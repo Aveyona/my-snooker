@@ -5561,18 +5561,17 @@ export function start(root, config = {}) {
 			}
 		}
 		cue.place(game.cue, game.dir, pull, watchAim ? watchAim.side || 0 : spin.side, watchAim ? watchAim.top || 0 : spin.top, (aiming || view === 'chalk' || (watchAim && !watchAim.place)) && game.cue.on, game.balls, spiderNow || restRemote);
-		// nedosiahneš na bielu: tágo sa plynulo zdvihne šikmo nad stôl (rukoväť hore, špička nad bielou), mimo mierenia;
-		// uhol pre kameru (cue.tilt) ostáva, mení sa len poloha a sklon modelu
+		// nedosiahneš na bielu: tágo sa plynulo vytočí do strany okolo ruky na rukoväti (rukoväť ostáva pri hráčovi,
+		// špička mieri vedľa bielej, mimo mierenia); uhol pre kameru (cue.tilt) sa nemení
 		reachLift += ((reachBad ? 1 : 0) - reachLift) * Math.min(1, dt * 6);
-		if (reachLift > 0.002 && cue.pivot.visible) {
+		if (reachLift > 0.002 && cue.pivot.visible && cue.back) {
 			const e = reachLift * reachLift * (3 - 2 * reachLift);
-			const ldx = Math.cos(game.dir);
-			const ldz = Math.sin(game.dir);
-			cue.pivot.position.x -= ldx * 0.05 * e;
-			cue.pivot.position.z -= ldz * 0.05 * e;
-			cue.pivot.position.y += 0.17 * e;
-			const lt = (cue.tilt || 0) + (0.62 - (cue.tilt || 0)) * e; // asi 35°
-			cue.pivot.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), new THREE.Vector3(-ldx * Math.cos(lt), Math.sin(lt), -ldz * Math.cos(lt)));
+			const q = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 1, 0), 0.32 * e);
+			const grip = cue.pivot.position.clone().addScaledVector(cue.back, 0.95); // ruka na rukoväti
+			const toTip = cue.pivot.position.clone().sub(grip).applyQuaternion(q);
+			cue.pivot.position.copy(grip.add(toTip));
+			cue.pivot.position.y += 0.02 * e; // špička tesne nad súknom
+			cue.pivot.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), cue.back.clone().applyQuaternion(q));
 		}
 		if (restRemote) {
 			const hh = cueYAt(restRemote.x, restRemote.z) - restRemote.y;
