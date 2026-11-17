@@ -26,7 +26,7 @@ const cueStateId = (c) => c.id;
 
 // mobil: texty bez klávesových skratiek a bez myši – myš sa nahradí prstom, zátvorky a vety s klávesmi alebo
 // s tým, čo ide len myšou (zachytenie, kurzor, koliesko, tlačidlá myši), zmiznú
-const KEY_RE = /\bF(?:1[0-2]|[1-9])\b|\bEsc\b|\bEnter\b|\bCtrl\b|\bShift\b|\bTab\b|[Mm]edzerník|[Kk]láves|\bšípk|W A S D/;
+const KEY_RE = /\bF(?:1[0-2]|[1-9])\b|\bEsc\b|\bEnter\b|\bCtrl\b|\bShift\b|\bTab\b|[Mm]edzerník|[Kk]láves|(?:^|[^\p{L}])[Šš]ípk|W A S D/u;
 const MOUSE_RE = /[Mm]yš|kurzor|koliesk|ľavé tlačidl|pravé tlačidl|ľavým tlačidl|pravým tlačidl|zachyt/;
 const TOUCH_WORDS = [
 	[/keď myš nejde do strany \(pravé tlačidlo, myš dole\)/g, 'keď prst nejde do strany (oko, prst dole)'],
@@ -1059,6 +1059,16 @@ export class UI {
 		this.chalkEl.innerHTML = office
 			? '<h3>Krieda do zápasu</h3><p class="mysn-chalks-sub">Vyber jednu kriedu: ňou kriedueš tágo v lige (F3) a jej farbu vidia súper aj diváci, aj na stopách na súkne.</p>'
 			: '<h3>Kriedy</h3><p class="mysn-chalks-sub">Vyber kriedu, kamera sa na ňu priblíži na poličke. Vybratou kriedou kriedueš tágo (F3), ostávajú po nej jemné stopy na súkne.</p>';
+		if (this.touchUI) {
+			const x = h('button', 'mysn-chalks-x', '✕');
+			x.type = 'button';
+			x.setAttribute('aria-label', 'Zavrieť kriedy');
+			x.addEventListener('click', (e) => {
+				e.stopPropagation();
+				this.chalkEl.classList.remove('mysn-chalks-on');
+			});
+			this.chalkEl.prepend(x);
+		}
 		const list = h('div', 'mysn-chalk-list');
 		CHALKS.forEach((c, i) => {
 			const b = h(
@@ -1070,6 +1080,7 @@ export class UI {
 			b.addEventListener('click', (e) => {
 				e.stopPropagation();
 				b.blur();
+				this.chalkEl.classList.remove('mysn-chalks-on'); // mobil: po výbere sa okno kried zavrie
 				this.opts.onAction('chalkPick', i);
 			});
 			list.appendChild(b);
@@ -2701,7 +2712,12 @@ export class UI {
 			}
 		}
 		// tágá 1 až 10: výhody a nedostatky (zvýraznená šablóna vybraného tága)
-		P.appendChild(h('div', 'mysn-cp-head', 'Tágá 1 až 10'));
+		const cmp = this.touchUI ? h('details', 'mysn-cp-cmp', '<summary>Porovnanie tág 1 až 10</summary>') : P; // mobil: rozbalí sa až po ťuknutí
+		if (cmp !== P) {
+			P.appendChild(cmp);
+		} else {
+			P.appendChild(h('div', 'mysn-cp-head', 'Tágá 1 až 10'));
+		}
 		const pros = h('ol', 'mysn-cp-pros');
 		for (const t of CUES) {
 			const p = CUE_PROS[t.id];
@@ -2710,7 +2726,7 @@ export class UI {
 			}
 			pros.appendChild(h('li', (c.base || c.id) === t.id ? 'mysn-on' : '', `<b>${esc(t.name)}</b><span class="mysn-pro">+ ${esc(p[0])}</span><span class="mysn-con">− ${esc(p[1])}</span>`));
 		}
-		P.appendChild(pros);
+		cmp.appendChild(pros);
 	}
 
 	cardOpen() {
@@ -2965,6 +2981,35 @@ export class UI {
 				list.appendChild(card);
 			});
 			box.appendChild(list);
+			if (this.touchUI) {
+				// mobil: ‹ › na bokoch vyberajú tágo (ako šípky), Kriedy otvoria okno kried; panel tága je nad pásom tág
+				const nav = (k, t) => {
+					const b = h('button', 'mysn-rack-nav mysn-rack-' + (k === 'ArrowLeft' ? 'prev' : 'next'), t);
+					b.type = 'button';
+					b.addEventListener('click', (e) => {
+						e.stopPropagation();
+						this.opts.onAction('menuKey', k);
+					});
+					return b;
+				};
+				box.append(nav('ArrowLeft', '‹'), nav('ArrowRight', '›'));
+				const kb = h('button', 'mysn-btn mysn-rack-chalkbtn', 'Kriedy');
+				kb.type = 'button';
+				kb.addEventListener('click', (e) => {
+					e.stopPropagation();
+					if (this.chalkEl) {
+						this.chalkEl.classList.toggle('mysn-chalks-on');
+					}
+				});
+				this._rackChalkBtn = kb;
+				const on = list.querySelector('.mysn-on');
+				requestAnimationFrame(() => {
+					if (on) {
+						on.scrollIntoView({ block: 'nearest', inline: 'center' });
+					}
+					this.root.style.setProperty('--mysn-rackh', box.offsetHeight + 'px');
+				});
+			}
 			this.renderCuePanel((news && news.rack && news.rack.sel) || cues.find((c) => c.id === selId) || cues[0], (news && news.rack) || {});
 		}
 		const foot = h('div', 'mysn-view-foot');
@@ -3029,10 +3074,15 @@ export class UI {
 			paintSun: 'Obraz: úplné zatmenie Slnka nad jazerom. Enter, Esc alebo pravé tlačidlo myši: späť do hry.',
 			paintMoon: 'Obraz: zatmenie Mesiaca (krvavý Mesiac) nad jazerom. Enter, Esc alebo pravé tlačidlo myši: späť do hry.',
 		};
-		foot.appendChild(h('span', '', texts[name] || ''));
+		if (!(name === 'rack' && this.touchUI)) {
+			foot.appendChild(h('span', '', texts[name] || '')); // mobil pri stojane: tágo vyberajú ‹ ›, text o šípkach netreba
+		}
 		if (name !== 'chalk' && name !== 'office') {
 			const back = this.button('Späť do hry', 'back');
 			back.classList.add('mysn-primary');
+			if (name === 'rack' && this.touchUI && this._rackChalkBtn) {
+				foot.appendChild(this._rackChalkBtn);
+			}
 			foot.appendChild(back);
 		}
 		box.appendChild(foot);
