@@ -268,6 +268,16 @@ export function start(root, config = {}) {
 		spiderMesh.visible = false;
 		scene.add(spiderMesh);
 	};
+	/** Výška osi tága nad miestom (x, z) na stole: vzdialenosť po osi tága so znamienkom, takže pri odtiahnutí
+	 *  (špička môže prejsť až za pavúka) ostane výška rovnaká a nádstavec sa nenaťahuje hore. */
+	const cueYAt = (x, z) => {
+		const tp = cue.pivot.position;
+		const t = cue.tilt || 0;
+		const b = cue.back;
+		const c = Math.cos(t) || 1;
+		const s = b ? ((x - tp.x) * b.x + (z - tp.z) * b.z) / c : Math.hypot(x - tp.x, z - tp.z);
+		return tp.y + s * Math.tan(t);
+	};
 	const restSpot = () => spiderSpot(game.cue, game.dir, game.balls, RESTS[restKind].tilt, restKind);
 	const REST_KINDS = Object.keys(RESTS);
 	/** K mieraniu pre súpera a divákov: nádstavec na stole (druh, poloha, sklon) a kriedovanie (čas animácie). */
@@ -5550,8 +5560,7 @@ export function start(root, config = {}) {
 		}
 		cue.place(game.cue, game.dir, pull, watchAim ? watchAim.side || 0 : spin.side, watchAim ? watchAim.top || 0 : spin.top, (aiming || view === 'chalk' || (watchAim && !watchAim.place)) && game.cue.on, game.balls, spiderNow || restRemote);
 		if (restRemote) {
-			const tp = cue.pivot.position;
-			const hh = tp.y + Math.hypot(restRemote.x - tp.x, restRemote.z - tp.z) * Math.tan(cue.tilt || 0) - restRemote.y;
+			const hh = cueYAt(restRemote.x, restRemote.z) - restRemote.y;
 			const rr = restRise(restRemote.x, restRemote.z, restRemote.y, hh);
 			if (Math.abs(hh - remoteRest.mesh.userData.h) > 0.0005 || Math.abs(rr - (remoteRest.mesh.userData.r || 0)) > 0.005) {
 				remoteRest.mesh.userData.h = hh;
@@ -5562,9 +5571,7 @@ export function start(root, config = {}) {
 		if (spiderNow) {
 			// výška drážky podľa skutočnej polohy tága (miesto úderu hore a dole mení výšku špičky), aby tágo
 			// ležalo v drážke a neprechádzalo cez nádstavec; model sa prestavia len pri zmene o viac ako 0,5 mm
-			const tp = cue.pivot.position;
-			const dist = Math.hypot(spiderNow.x - tp.x, spiderNow.z - tp.z);
-			const hh = tp.y + dist * Math.tan(cue.tilt || 0) - (spiderNow.y || 0);
+			const hh = cueYAt(spiderNow.x, spiderNow.z) - (spiderNow.y || 0);
 			const rr = restRise(spiderNow.x, spiderNow.z, spiderNow.y || 0, hh); // tyč ponad mantinel a rám
 			if (Math.abs(hh - (spiderMesh.userData.h || 0)) > 0.0005 || Math.abs(rr - (spiderMesh.userData.r || 0)) > 0.005) {
 				spiderMesh.userData.h = hh;

@@ -162,6 +162,7 @@ function mysn_roadmap() {
 /** Denník zmien (najnovšie hore). */
 function mysn_changelog() {
 	return array(
+		array( '0.19.9', '17. 11. 2026', 'Oprava: pavúk (aj súperov) sa pri naťahovaní tága už neťahá hore – výška drážky sa meria po osi tága so znamienkom, aj keď špička prejde za pavúka.' ),
 		array( '0.19.8', '17. 11. 2026', 'Dvere herne sa dajú otvoriť a zatvoriť klikom (PC: voľný pohľad alebo Ctrl + klik) alebo ťuknutím na mobile vo voľnom pohľade – rovnako ako F6.' ),
 		array( '0.19.7', '17. 11. 2026', 'Mobil: bez jednopísmenkových klávesových skratiek v zátvorkách – napr. rádio Zapnúť (P), Čítať (C), Zavrieť (M), Späť (Z).' ),
 		array( '0.19.6', '17. 11. 2026', 'Voľný pohľad: predmety v miestnosti sa dajú otvoriť priamo. PC: predmet v strede obrazovky sa rozsvieti, krátky klik ľavým ho otvorí (držanie ďalej posúva kameru dole), pravé tlačidlo vráti späť do voľného pohľadu na to isté miesto. Mobil: ťuknutie na predmet ho otvorí, vľavo dole tlačidlo ← panák Voľný pohľad vráti späť.' ),
