@@ -324,8 +324,10 @@ export function buildStadium(scene, quality, clock = 45) {
 		if (!spotBeam.visible) {
 			return;
 		}
-		// elipsa po hale: tribúny, kratšie konce a podlaha za mantinelmi, stôl (|x| < 2,1, |z| < 1,2) nikdy
-		const a = ((Date.now() / 1000) * Math.PI * 2) / 40; // jedno kolo za 40 s
+		// oblúk po hale na strane reflektora (tribúna za ním a kratšie konce), tam a späť; na druhú stranu nesvieti,
+		// lúč by tam prešiel cez svietidlo s obrazovkami. Stôl (|x| < 2,1, |z| < 1,2) nikdy.
+		const ph = ((Date.now() / 1000) / 40) % 1; // tam a späť za 40 s
+		const a = Math.PI - 0.15 + (1 - Math.abs(2 * ph - 1)) * (Math.PI + 0.3);
 		const ex = 6.2 + Math.sin(a * 3) * 0.6;
 		const ez = 5.0 + Math.sin(a * 2) * 0.8;
 		spotT.set(Math.cos(a) * ex, FY + 1.1 + Math.sin(a * 5) * 0.4, Math.sin(a) * ez);
