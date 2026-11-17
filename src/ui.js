@@ -41,7 +41,16 @@ export class UI {
 		const right = h('div', 'mysn-barbtns');
 		this.btnHelp = this.button('?', 'help', 'Ovládanie');
 		this.btnSet = this.button('Nastavenia', 'settings');
-		right.append(this.btnSet, this.btnHelp);
+		// mobil: hlavné menu ☰ úplne vpravo (Nastavenia a ? sú v ňom; na desktope sa nezobrazuje)
+		this.btnMain = h('button', 'mysn-btn mysn-mmbtn', '☰');
+		this.btnMain.type = 'button';
+		this.btnMain.title = 'Hlavné menu';
+		this.btnMain.setAttribute('aria-label', 'Hlavné menu');
+		this.btnMain.addEventListener('click', (e) => {
+			e.stopPropagation();
+			this.openMainMenu(!this.mainMenuOpen());
+		});
+		right.append(this.btnSet, this.btnHelp, this.btnMain);
 		bar.appendChild(right);
 		root.appendChild(bar);
 
@@ -170,6 +179,22 @@ export class UI {
 			this.toolsToggle.setAttribute('aria-label', this.toolsToggle.title);
 		});
 		root.appendChild(this.toolsToggle);
+		// mobil: hlavné menu na celú obrazovku (okrúhle ikony, farba podľa skupiny) a tlačidlo Späť k stolu
+		this.mmenu = h('div', 'mysn-mmenu mysn-hidden');
+		for (const t of ['pointerdown', 'pointerup', 'mousedown', 'touchstart', 'touchend', 'wheel', 'click']) {
+			this.mmenu.addEventListener(t, (e) => e.stopPropagation());
+		}
+		root.appendChild(this.mmenu);
+		this.backBtn = h('button', 'mysn-backbtn', '← Späť k stolu');
+		this.backBtn.type = 'button';
+		for (const t of ['pointerdown', 'pointerup', 'mousedown', 'touchstart', 'touchend']) {
+			this.backBtn.addEventListener(t, (e) => e.stopPropagation());
+		}
+		this.backBtn.addEventListener('click', (e) => {
+			e.stopPropagation();
+			this.opts.onAction('menuBack');
+		});
+		root.appendChild(this.backBtn);
 
 		this.menu = this.buildMenu();
 		this.setMenu(opts.user ? 'training' : 'guest');
@@ -2764,6 +2789,128 @@ export class UI {
 			foot.appendChild(back);
 		}
 		box.appendChild(foot);
+	}
+
+	mainMenuOpen() {
+		return !this.mmenu.classList.contains('mysn-hidden');
+	}
+
+	/**
+	 * Mobil: hlavné menu na celú obrazovku. Dlaždice robia to isté ako klávesy na desktope (Tágá = F2 …);
+	 * čo práve nejde, sa neukáže. Kontext (miesto, tréning) dodá main.js cez ui.menuCtx.
+	 */
+	openMainMenu(on) {
+		this.mmenu.classList.toggle('mysn-hidden', !on);
+		this.btnMain.textContent = on ? '✕' : '☰';
+		this.btnMain.classList.toggle('mysn-on', !!on);
+		if (!on) {
+			return;
+		}
+		const ctx = (this.menuCtx && this.menuCtx()) || {};
+		const P = {
+			set: '<circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9 7 7M17 17l2.1 2.1M4.9 19.1 7 17M17 7l2.1-2.1"/>',
+			help: '<circle cx="12" cy="12" r="9"/><path d="M9.5 9a2.5 2.5 0 1 1 3.5 2.3c-.6.3-1 .8-1 1.5V14M12 17h.01"/>',
+			cue: '<path d="M3 21 16 8"/><path d="m15 6 3 3 2-2-3-3z"/>',
+			chalk: '<path d="m12 3 8 4.5v9L12 21l-8-4.5v-9z"/><path d="m4 7.5 8 4.5 8-4.5M12 12v9"/>',
+			score: '<rect x="3" y="5" width="18" height="14" rx="2"/><path d="M8 9v6M14 9h3v3h-3v3h3"/>',
+			trophy: '<path d="M8 21h8M12 17v4M7 4h10v5a5 5 0 0 1-10 0z"/><path d="M7 6H4v1a3 3 0 0 0 3 3M17 6h3v1a3 3 0 0 1-3 3"/>',
+			radio: '<rect x="3" y="8" width="18" height="12" rx="2"/><circle cx="8" cy="14" r="2.5"/><path d="M14 12h4M14 15h4M7 8l10-4"/>',
+			door: '<path d="M5 21V4a1 1 0 0 1 1-1h12a1 1 0 0 1 1 1v17M3 21h18M15 12v1"/>',
+			chair: '<path d="M5 11V8a3 3 0 0 1 3-3h8a3 3 0 0 1 3 3v3"/><path d="M3 13a2 2 0 0 1 4 0v2h10v-2a2 2 0 0 1 4 0v5H3zM5 18v2M19 18v2"/>',
+			bar: '<path d="M7 3h10l-1 9a4 4 0 0 1-8 0zM12 16v5M8 21h8"/>',
+			league: '<ellipse cx="12" cy="8" rx="9" ry="3"/><path d="M3 8v8c0 1.7 4 3 9 3s9-1.3 9-3V8"/>',
+			top: '<rect x="3" y="6" width="18" height="12" rx="2"/><circle cx="8" cy="12" r="1"/><circle cx="14" cy="10" r="1"/><path d="M12 1v3"/>',
+			map: '<path d="m3 6 6-3 6 3 6-3v15l-6 3-6-3-6 3zM9 3v15M15 6v15"/>',
+			undo: '<path d="M9 14 4 9l5-5"/><path d="M4 9h11a5 5 0 0 1 0 10h-3"/>',
+			hand: '<circle cx="12" cy="12" r="4"/><path d="M12 3v2M12 19v2M3 12h2M19 12h2"/>',
+			reset: '<path d="M20 11A8 8 0 0 0 5.6 6.6L4 8M4 4v4h4M4 13a8 8 0 0 0 14.4 4.4L20 16M20 20v-4h-4"/>',
+			menu: '<path d="M4 6h16M4 12h16M4 18h16"/>',
+			web: '<circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18"/>',
+		};
+		const home = ctx.venue === 'home';
+		const groups = [
+			{ name: 'Nastavenia', color: '#9aa4b2', items: [['set', 'Nastavenia', { a: 'settings' }]] },
+			{
+				name: 'Herňa',
+				color: '#ffd34d',
+				items: home
+					? [
+							['help', 'Nápoveda', { k: 'F1' }],
+							['cue', 'Tágá', { k: 'F2' }],
+							['chalk', 'Krieda', { k: 'F3' }],
+							['score', 'Skóre', { k: 'F4' }],
+							['trophy', 'Rebríček', { k: 'F8' }],
+							['radio', 'Rádio', { k: 'F9' }],
+							['door', 'Dvere', { k: 'F6' }],
+							['chair', 'Kreslo', { k: 'F7' }],
+							['bar', 'Bar', { k: 'F10' }],
+							['league', 'Liga', { k: 'F12' }],
+							['top', 'Stôl zhora', { k: 'Tab' }],
+							['map', 'Mapa', { k: 'm' }],
+						]
+					: [
+							['help', 'Nápoveda', { k: 'F1' }],
+							['map', 'Mapa', { k: 'm' }],
+						],
+			},
+			{
+				name: 'Tréning',
+				color: '#7CFC8A',
+				items: [
+					!this.btnUndo.disabled && ['undo', 'Späť', { a: 'undo' }],
+					!this.btnHand.disabled && ['hand', 'Biela do ruky', { a: 'hand' }],
+					!this.btnReset.disabled && ['reset', 'Nové rozostavenie', { a: 'reset' }],
+				].filter(Boolean),
+			},
+			{
+				name: 'Menu hry',
+				color: '#6fb3ff',
+				items: [
+					['menu', 'Hrať, Liga, Výzva, Účet…', { a: 'menuGame' }],
+					['web', 'Späť na web', { a: 'menuWeb' }],
+				],
+			},
+		];
+		this.mmenu.textContent = '';
+		const close = h('button', 'mysn-mm-x', '✕');
+		close.type = 'button';
+		close.setAttribute('aria-label', 'Zavrieť menu');
+		close.addEventListener('click', () => this.openMainMenu(false));
+		this.mmenu.appendChild(close);
+		for (const g of groups) {
+			if (!g.items.length) {
+				continue;
+			}
+			const sec = h('div', 'mysn-mm-sec');
+			sec.style.setProperty('--mm', g.color);
+			sec.appendChild(h('div', 'mysn-mm-h', g.name));
+			const grid = h('div', 'mysn-mm-grid');
+			for (const [ic, label, act] of g.items) {
+				const b = h('button', 'mysn-mm-it', `<span class="mysn-mm-ic"><svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${P[ic]}</svg></span><span class="mysn-mm-l"></span>`);
+				b.type = 'button';
+				b.querySelector('.mysn-mm-l').textContent = label;
+				b.addEventListener('click', () => {
+					this.openMainMenu(false);
+					if (act.k) {
+						this.opts.onAction('menuKey', act.k);
+					} else {
+						this.opts.onAction(act.a);
+					}
+				});
+				grid.appendChild(b);
+			}
+			sec.appendChild(grid);
+			this.mmenu.appendChild(sec);
+		}
+	}
+
+	/** Mobil: tlačidlo Späť k stolu (v pohľade na nástenku, stojan, rebríček… a v pohľade zhora). */
+	showBack(on) {
+		on = !!on;
+		if (on !== this._backOn) {
+			this._backOn = on;
+			this.backBtn.classList.toggle('mysn-back-on', on);
+		}
 	}
 
 	/** Mobil: zameriavač (jemné mierenie) – viditeľný len pri tágu s jemným mierením, zapnutý zožltne. */

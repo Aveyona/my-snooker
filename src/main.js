@@ -2834,6 +2834,26 @@ export function start(root, config = {}) {
 		rig.cueReach = (cueSpec.len || 1.45) + (settings.cueExt || 0); // kamera pravým tlačidlom najviac na dĺžku tága od bielej
 			ui.toast(v.on ? 'Jemné mierenie je pri tomto tágu vždy zapnuté. So Shift mieriš rýchlo.' : 'Jemné mierenie len so Shift.');
 		},
+		// mobil: hlavné menu ☰ – dlaždica urobí to isté ako kláves na desktope
+		menuKey: (k) => {
+			sound.unlock();
+			if (controls.hooks.key) {
+				controls.hooks.key(k);
+			}
+		},
+		menuGame: () => {
+			controls.uncapture();
+			ui.showMenu(true, true);
+		},
+		menuWeb: () => {
+			window.location.href = config.homeUrl || '/';
+		},
+		// mobil: Späť k stolu (z pohľadu na nástenku, stojan, rebríček… alebo zo stola zhora)
+		menuBack: () => {
+			if (controls.hooks.key) {
+				controls.hooks.key(rig.mode === 'top' && !view ? 'Tab' : 'Escape');
+			}
+		},
 		// mobil: zameriavač – jemné mierenie prstom zap/vyp (ako Shift)
 		touchFine: () => {
 			controls.touchFine = !controls.touchFine;
@@ -4021,6 +4041,7 @@ export function start(root, config = {}) {
 	controls.sens = settings.mouseSens || 1; // šúpatko Otáčanie myšou
 	controls.strokeSens = settings.strokeSens || 1; // šúpatko Ťahanie tága
 	controls.panSens = settings.panSens || 1; // šúpatko Pravé tlačidlo
+	ui.menuCtx = () => ({ venue }); // mobil: hlavné menu ☰ vie, kde hráč je (herňa = všetky dlaždice)
 	controls.touchAimSens = settings.touchAimSens || 1; // mobil: Otáčanie prstom
 	controls.touchStrokeSens = settings.touchStrokeSens || 1; // mobil: Ťahanie tága prstom
 	controls.touchPanSens = settings.touchPanSens || 1; // mobil: Oko
@@ -5519,6 +5540,7 @@ export function start(root, config = {}) {
 		}
 		ui.showEye(rig.aimBall && aiming && rig.mode === 'cue' && !game.spectating);
 		ui.showFine(cueSpec.fine > 0, controls.touchFineOn());
+		ui.showBack(ui.touchUI && !ui.mainMenuOpen() && !ui.menuOpen() && ((view && view !== 'free' && view !== 'fiesta' && view !== 'office') || (!view && rig.mode === 'top')));
 		updateFelt();
 		office.updateWindow(dt);
 		office.notebookTick(dt);
