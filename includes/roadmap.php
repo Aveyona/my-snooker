@@ -162,6 +162,7 @@ function mysn_roadmap() {
 /** Denník zmien (najnovšie hore). */
 function mysn_changelog() {
 	return array(
+		array( '0.20.15', '17. 11. 2026', 'Mobil ☰: bez dlaždice Stôl zhora (pohľad zhora má vlastné tlačidlo nad panákom).' ),
 		array( '0.20.14', '17. 11. 2026', 'Mobil na výšku: pevné pohľady (rebríček s pohármi, nástenka, skóre, ligová tabuľa…) majú širší záber, aby bolo vidno skoro celú šírku ako na PC; stojan s tágami má vlastný bližší záber.' ),
 		array( '0.20.13', '17. 11. 2026', 'Príslušenstvo (krieda, nádstavce, predĺženie; predtým Krieda a pomôcky) len pri stole, na PC aj mobile: inde F3 ukáže, prečo teraz nie. Mobil ☰: v skupine Hra dlaždice Príslušenstvo a Nakriedovať (mimo stola sivé, len pri stole); v hornom paneli Krieda: nie a ťuknutím sa tágo nakriedue.' ),
 		array( '0.20.12', '17. 11. 2026', 'Mobil, stojan s tágami: kamera bližšie, na vybratom tágu (pri výbere prejde k novému); ťuknutím prstom na tágo v stojane ho vyberieš; šípky ‹ › presne v strede kruhov; lišta s názvom tága je úplne dole na obrazovke.' ),

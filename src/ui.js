@@ -3257,7 +3257,6 @@ export class UI {
 								['score', 'Skóre', { k: 'F4' }],
 								['chair', 'Kreslo', { k: 'F7' }],
 								['lamp', 'Svetlá', { k: 'F12' }],
-								['top', 'Stôl zhora', { k: 'Tab' }],
 							],
 						}
 					: {
@@ -3273,7 +3272,6 @@ export class UI {
 								['chair', 'Kreslo', { k: 'F7' }],
 								['bar', 'Bar', { k: 'F10' }],
 								['league', 'Liga', { k: 'F12' }],
-								['top', 'Stôl zhora', { k: 'Tab' }],
 							],
 						},
 			{
