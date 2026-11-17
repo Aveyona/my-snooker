@@ -331,7 +331,7 @@ export class Sound {
 	}
 
 	/** Výstup zvuku: priestor (pos = {x, y, z} v scéne) alebo stred, skupina a odbočka do dozvuku. */
-	_out(pos, group, room = 1) {
+	_out(pos, group, room = 1, dist = null) {
 		const c = this.ctx;
 		const g = c.createGain();
 		let head = g;
@@ -339,8 +339,8 @@ export class Sound {
 			const pn = c.createPanner();
 			pn.panningModel = this.mode === 'hrtf' ? 'HRTF' : 'equalpower';
 			pn.distanceModel = 'inverse';
-			pn.refDistance = 1.2;
-			pn.rolloffFactor = 0.8;
+			pn.refDistance = dist ? dist.ref : 1.2;
+			pn.rolloffFactor = dist ? dist.roll : 0.8;
 			if (pn.positionX) {
 				pn.positionX.value = pos.x;
 				pn.positionY.value = pos.y;
@@ -413,7 +413,7 @@ export class Sound {
 		hs.type = 'highshelf';
 		hs.frequency.value = 3200;
 		hs.gain.value = col > 0 ? col * 9 : 0;
-		const out = this._out(o.pos || null, o.group || soundGroup(slot), (p.room / 100) * (o.room === undefined ? 1 : o.room));
+		const out = this._out(o.pos || null, o.group || soundGroup(slot), (p.room / 100) * (o.room === undefined ? 1 : o.room), o.dist || null);
 		out.gain.value = (p.vol / 100) * (o.gain === undefined ? 1 : o.gain) * (1 - sens + sens * Math.pow(Math.max(0.03, vel), 1.2));
 		s.connect(lp).connect(hs).connect(out);
 		s.start(c.currentTime + (o.delay || 0));

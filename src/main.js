@@ -5066,11 +5066,11 @@ export function start(root, config = {}) {
 				return;
 			}
 			// pick = číslo variantu repliky, rovnaké u všetkých (inak by každý počul inú vetu)
-			if (sound.fx(slot, { pos: pos(), room: 0.6, group: 'rudo', gain: 1.8 * (CROWD.rudoVol ?? 1), pick })) {
+			if (sound.fx(slot, { pos: pos(), room: 0.25, dist: { ref: 3, roll: 0.35 }, group: 'rudo', gain: 1.8 * (CROWD.rudoVol ?? 1), pick })) {
 				const b = sound.bufs[slot] && sound.bufs[slot][0];
 				const sec = b ? b.duration : 2;
 				talking = Date.now() + sec * 1000 + 300;
-				sound.duck('crowd', 0.3, sec + 0.2);
+				sound.duck('crowd', 0.15, sec + 0.2);
 				if (stadium.rudoTalk) {
 					stadium.rudoTalk(GOOD.test(slot) ? 'stand' : 'facepalm');
 				}

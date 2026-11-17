@@ -12,7 +12,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 function mysn_crowd_defaults() {
 	return array(
 		'rudo'      => 1,      // Rudo sedí na tribúne a komentuje ligový zápas
-		'rudo_vol'  => 1,      // hlasitosť Ruda (násobok, 0 až 2)
+		'rudo_vol'  => 1,      // hlasitosť Ruda (násobok, 0 až 4)
 		'rudo_freq' => 'mid',  // low = menej, mid = normálne, high = viac, key = len dôležité chvíle
 		'rudo_live' => 1,      // živé komentáre cez AI
 		'rudo_gap'  => 4,      // najmenší odstup medzi komentármi (s)
@@ -61,7 +61,7 @@ function mysn_admin_crowd() {
 			'mysn_crowd',
 			array(
 				'rudo'      => empty( $in['rudo'] ) ? 0 : 1,
-				'rudo_vol'  => max( 0, min( 2, (float) ( $in['rudo_vol'] ?? 1 ) ) ),
+				'rudo_vol'  => max( 0, min( 4, (float) ( $in['rudo_vol'] ?? 1 ) ) ),
 				'rudo_freq' => in_array( $in['rudo_freq'] ?? '', array( 'low', 'high', 'key' ), true ) ? $in['rudo_freq'] : 'mid',
 				'rudo_live' => empty( $in['rudo_live'] ) ? 0 : 1,
 				'rudo_gap'  => max( 1, min( 30, (int) ( $in['rudo_gap'] ?? 4 ) ) ),
@@ -85,7 +85,7 @@ function mysn_admin_crowd() {
 	<table class="form-table"><tbody>
 		<tr><th>Rudo</th><td><label><input type="checkbox" name="rudo" value="1" <?php checked( $c['rudo'] ); ?>> Sedí na tribúne a komentuje ligový zápas po slovensky</label></td></tr>
 		<tr><th>Popis postavy</th><td><textarea name="rudo_desc" rows="5" class="large-text" maxlength="1500"><?php echo esc_textarea( mysn_rudo_desc() ); ?></textarea><p class="description">Kto je Rudo: AI sa týmto popisom riadi pri živých komentároch. Prázdne = predvolený popis.</p></td></tr>
-		<tr><th>Hlasitosť</th><td><input type="range" name="rudo_vol" min="0" max="2" step="0.05" value="<?php echo esc_attr( $c['rudo_vol'] ); ?>" oninput="this.nextElementSibling.textContent=Math.round(this.value*100)+' %'"> <span><?php echo esc_html( round( $c['rudo_vol'] * 100 ) ); ?> %</span></td></tr>
+		<tr><th>Hlasitosť</th><td><input type="range" name="rudo_vol" min="0" max="4" step="0.05" value="<?php echo esc_attr( $c['rudo_vol'] ); ?>" oninput="this.nextElementSibling.textContent=Math.round(this.value*100)+' %'"> <span><?php echo esc_html( round( $c['rudo_vol'] * 100 ) ); ?> %</span></td></tr>
 		<tr><th>Ako často hovorí</th><td><select name="rudo_freq"><option value="low" <?php selected( $c['rudo_freq'], 'low' ); ?>>Menej (asi o polovicu)</option><option value="mid" <?php selected( in_array( $c['rudo_freq'], array( 'low', 'high', 'key' ), true ) ? '' : 'mid', 'mid' ); ?>>Normálne</option><option value="high" <?php selected( $c['rudo_freq'], 'high' ); ?>>Viac (skoro pri každej príležitosti)</option><option value="key" <?php selected( $c['rudo_freq'], 'key' ); ?>>Len dôležité chvíle (séria 50, stovka, koniec framu a zápasu)</option></select><p class="description">Platí pre pády gúľ, fauly, minutia, pekné údery, rozloženie gúľ aj živé komentáre. Séria 50, stovka a koniec framu a zápasu zaznejú vždy.</p></td></tr>
 		<tr><th>Odstup medzi komentármi</th><td><input type="number" name="rudo_gap" min="1" max="30" value="<?php echo esc_attr( $c['rudo_gap'] ); ?>" style="width:70px"> s</td></tr>
 		<tr><th>Živé komentáre</th><td><label><input type="checkbox" name="rudo_live" value="1" <?php checked( $c['rudo_live'] ); ?>> Podľa situácie: AI (My AI Writer) napíše vetu s menami a skóre, ElevenLabs ju namluví</label><br><label>Najviac <input type="number" name="live_hour" min="0" max="500" value="<?php echo esc_attr( $c['live_hour'] ); ?>" style="width:80px"> za hodinu</label><p class="description">Bez živých komentárov hrá Rudo pripravené repliky. Hlas Ruda a repliky sú v <a href="<?php echo esc_url( admin_url( 'admin.php?page=my-snooker-sounds' ) ); ?>">Zvukoch</a> (skupina Komentátor Rudo).</p></td></tr>
