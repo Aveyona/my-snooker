@@ -162,6 +162,7 @@ function mysn_roadmap() {
 /** Denník zmien (najnovšie hore). */
 function mysn_changelog() {
 	return array(
+		array( '0.20.0', '17. 11. 2026', 'Zvuky série (ako kill zvuky vo Valorante): pri potopenej guli zaznie stupeň podľa poradia gule v sérii – každý vyšší a plnší, od 8. vrcholný zvuk, po skončení série znova od 1. V My Snooker → Zvuky nová skupina Séria: stupne 1 až 10 s vlastnými súbormi a doladením, nastavenie Vrchol, Krok série, rozdiel podľa hodnoty gule a Skúška celej série. Predvolené zvuky vygenerované v základnej sade.' ),
 		array( '0.19.12', '17. 11. 2026', 'Nedosiahneš na bielu: tágo sa namiesto zdvihnutia vytočí do strany okolo ruky na rukoväti – rukoväť ostáva pri hráčovi, špička mieri vedľa bielej.' ),
 		array( '0.19.11', '17. 11. 2026', 'Keď nedosiahneš na bielu (PC aj mobil), tágo sa plynulo zdvihne šikmo nad stôl – rukoväť hore, špička nad bielou, mimo mierenia; keď dosiahneš (smer, nádstavec, predĺženie), vráti sa do mierenia.' ),
 		array( '0.19.10', '17. 11. 2026', 'Mobil: hlásenie, z ktorého po odstránení klávesových skratiek nezostal žiadny text (napr. pri ligovej tabuli), sa už nezobrazí ako prázdny rámček.' ),

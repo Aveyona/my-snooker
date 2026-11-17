@@ -127,3 +127,13 @@ ball-hard/ball-hard-01.ogg: Nicholas A. Judy (The Designer's Choice) | CC0 1.0 |
 ball-hard/ball-hard-02.ogg: Nicholas A. Judy (The Designer's Choice) | CC0 1.0 | https://archive.org/details/Designers-Choice-Collection-Sports
 ball-hard/ball-hard-03.ogg: Nicholas A. Judy (The Designer's Choice) | CC0 1.0 | https://archive.org/details/designers-choice-complete (FOLEY/PROP/FOLYProp-...Billiards, Balls, Into Box; identical size to round-1 copy)
 ball-hard/ball-hard-04.ogg: Nicholas A. Judy (The Designer's Choice) | CC0 1.0 | https://archive.org/details/designers-choice-complete (FOLEY/PROP/FOLYProp-...Billiards, Balls, Into Box; identical size to round-1 copy)
+streak-1/streak-1.ogg: My Snooker (generované synteticky, 2026) | vlastné dielo, voľné použitie | tools/gen-streak-sounds.py
+streak-2/streak-2.ogg: My Snooker (generované synteticky, 2026) | vlastné dielo, voľné použitie | tools/gen-streak-sounds.py
+streak-3/streak-3.ogg: My Snooker (generované synteticky, 2026) | vlastné dielo, voľné použitie | tools/gen-streak-sounds.py
+streak-4/streak-4.ogg: My Snooker (generované synteticky, 2026) | vlastné dielo, voľné použitie | tools/gen-streak-sounds.py
+streak-5/streak-5.ogg: My Snooker (generované synteticky, 2026) | vlastné dielo, voľné použitie | tools/gen-streak-sounds.py
+streak-6/streak-6.ogg: My Snooker (generované synteticky, 2026) | vlastné dielo, voľné použitie | tools/gen-streak-sounds.py
+streak-7/streak-7.ogg: My Snooker (generované synteticky, 2026) | vlastné dielo, voľné použitie | tools/gen-streak-sounds.py
+streak-8/streak-8.ogg: My Snooker (generované synteticky, 2026) | vlastné dielo, voľné použitie | tools/gen-streak-sounds.py
+streak-9/streak-9.ogg: My Snooker (generované synteticky, 2026) | vlastné dielo, voľné použitie | tools/gen-streak-sounds.py
+streak-10/streak-10.ogg: My Snooker (generované synteticky, 2026) | vlastné dielo, voľné použitie | tools/gen-streak-sounds.py

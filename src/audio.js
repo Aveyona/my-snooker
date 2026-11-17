@@ -694,6 +694,47 @@ export class Sound {
 		setTimeout(() => this._ok() && this._tone(f * 1.5, 0.28, 0.1, 'sine', 1, out), 70);
 	}
 
+	/**
+	 * Séria: zvuk podľa toho, koľká potopená guľa v sérii je (n = 1, 2, 3…), ako kill zvuky vo Valorante.
+	 * cfg = { peak, step, value }: od stupňa peak hrá vrchol; stupeň bez súboru zahrá najbližší nižší so súborom
+	 * vyššie o step poltónov za stupeň; value = hodnotnejšia guľa o kúsok vyššie. Bez súborov generovaný cink.
+	 */
+	streak(n, value, o = {}, cfg = null) {
+		if (!this._ok()) {
+			return;
+		}
+		const c = cfg || this.streakCfg || { peak: 8, step: 2, value: 0 };
+		const peak = Math.max(2, Math.min(10, c.peak | 0 || 8));
+		const lv = Math.max(1, Math.min(peak, n | 0));
+		const extra = c.value ? (Math.max(1, Math.min(7, value | 0)) - 1) * 0.35 : 0;
+		for (let k = lv; k >= 1; k--) {
+			if (this.has('streak-' + k)) {
+				const top = lv === peak && k === lv;
+				this.play('streak-' + k, { ...o, vel: 0.85, pitch: (lv - k) * (+c.step || 0) + extra, room: top ? 1 : 0.7 });
+				return;
+			}
+		}
+		// generovaná náhrada: kovový cink, každý stupeň vyšší a plnší, vrchol s ozvenou akordu
+		const { out, k } = this._synthOut('score', o.pos);
+		const steps = [0, 2, 4, 5, 7, 9, 11, 12, 14, 16];
+		const f = 660 * k * Math.pow(2, (steps[lv - 1] + extra) / 12);
+		const g = 0.1 + lv * 0.006;
+		this._tone(f, 0.3 + lv * 0.02, g, 'sine', 1, out);
+		this._tone(f * 2.76, 0.12, g * 0.35, 'sine', 1, out);
+		if (lv >= 3) {
+			this._tone(f * 1.5, 0.28, g * 0.5, 'sine', 1, out);
+		}
+		if (lv >= 5) {
+			this._tone(f * 2, 0.25, g * 0.4, 'sine', 1, out);
+		}
+		if (lv >= 4) {
+			setTimeout(() => this._ok() && this._tone(f * 2, 0.22, g * 0.4, 'sine', 1, out), 75);
+		}
+		if (lv === peak) {
+			[1, 1.25, 1.5, 2].forEach((m, i) => setTimeout(() => this._ok() && this._tone(f * m * 2, 0.5, g * 0.3, 'sine', 1, out), 120 + i * 50));
+		}
+	}
+
 	/** Slučka zo slotu (napätie): on = hrá, inak sa plynulo stíši. */
 	loop(slot, on, o = {}) {
 		this.loops = this.loops || {};

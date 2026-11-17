@@ -133,6 +133,12 @@ function mysn_sound_fx_default( $slot ) {
 		'cough'          => array( 'Single cough of a spectator in a quiet arena', 0.8, 0 ),
 		'shush'          => array( 'Spectator saying shhh for silence', 1, 0 ),
 	);
+	if ( preg_match( '/^streak-(\d+)$/', $slot, $mm ) ) {
+		$n = (int) $mm[1];
+		return $n >= 8
+			? array( 'Epic game reward sound for a high kill streak: bright metallic ding chord with a short punchy impact burst and a long shimmering tail, video game UI, level ' . $n . ' of 10', 1.5, 0 )
+			: array( 'Short bright metallic ding for a kill streak in a tactical shooter video game, punchy, rising, level ' . $n . ' of 10 (higher level = higher pitch and fuller chord)', 0.8, 0 );
+	}
 	return $m[ $slot ] ?? array( 'Short sound effect', 0, 0 );
 }
 

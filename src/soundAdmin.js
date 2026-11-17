@@ -251,6 +251,8 @@ const playTypical = async (slot) => {
 		playGroup(g, T); // bez súboru: generovaná náhrada
 	} else if (slot === 'score') {
 		snd.score(4, { pos });
+	} else if (/^streak-\d+$/.test(slot)) {
+		snd.streak(parseInt(slot.slice(7), 10), 1, { pos }, { peak: 10, step: 0, value: 0 });
 	} else if (slot === 'door-creak') {
 		snd.doorCreak(pos);
 	} else if (slot === 'door-shut') {
@@ -582,6 +584,25 @@ for (const tr of document.querySelectorAll('tr[data-slot]')) {
 	if (tr.querySelector('.typical')) {
 		tr.querySelector('.typical').addEventListener('click', () => playTypical(tr.dataset.slot));
 	}
+}
+// séria: všetky stupne za sebou s aktuálnym (aj neuloženým) nastavením Vrchol, Krok a doladením
+const streakBtn = document.querySelector('.streak-all');
+if (streakBtn) {
+	streakBtn.addEventListener('click', async () => {
+		await ready();
+		const f = streakBtn.closest('form');
+		const cfg = {
+			peak: parseInt(f.querySelector('[name="streak[peak]"]').value, 10),
+			step: parseFloat(f.querySelector('[name="streak[step]"]').value) || 0,
+			value: f.querySelector('[name="streak[value]"]').checked ? 1 : 0,
+		};
+		for (let i = 1; i <= 10; i++) {
+			await prep('streak-' + i);
+		}
+		for (let i = 1; i <= cfg.peak; i++) {
+			setTimeout(() => snd.streak(i, 1, { pos: null }, cfg), (i - 1) * 650);
+		}
+	});
 }
 const mtr = document.querySelector('tr[data-music]');
 if (mtr) {

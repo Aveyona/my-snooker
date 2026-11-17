@@ -504,6 +504,8 @@ export function start(root, config = {}) {
 	rig.lowCfg = camLowCfg(config.camLow); // zostup popri tágu (My Snooker → Kamera)
 	rig.lowSide = lowSideFor(settings.camSide, config.user);
 	const sound = new Sound(config.sounds || {}); // nahrávky a doladenie z administrácie (My Snooker → Zvuky)
+	sound.streakCfg = config.streak || null; // zvuky série: vrchol, krok, rozdiel podľa hodnoty gule
+	let streakN = 0; // koľká potopená guľa v aktuálnej sérii (zvuk série)
 	sound.setVolume(settings.volume);
 	sound.setMode(settings.sound3d === 'stereo' ? 'stereo' : 'hrtf');
 	for (const [g, k] of [['table', 'volTable'], ['room', 'volRoom'], ['crowd', 'volCrowd']]) {
@@ -4740,7 +4742,8 @@ export function start(root, config = {}) {
 				if (c) {
 					ui.scorePop('+' + val, c.x, c.y, css(b.kind)); // čierna má biely obrys, je čitateľná
 				}
-				sound.score(val, { pos: pk ? { x: pk.x, y: R, z: pk.z } : null });
+				streakN++;
+				sound.streak(streakN, val, { pos: pk ? { x: pk.x, y: R, z: pk.z } : null });
 			}, t);
 			t += 260;
 		}
@@ -5242,6 +5245,10 @@ export function start(root, config = {}) {
 			shotTrack.brk0 = m && m.rules ? m.rules.brk : game.stats.run || 0;
 			shotTrack.solo0 = game.solo ? game.solo.rules.brk : game.stats.run || 0;
 			shotTrack.shooter = me;
+			// séria pokračuje len vtedy, keď hráč na ťahu už má body v sérii; inak sa zvuk série začne od 1
+			if (!(m && m.rules ? m.rules.brk : game.solo ? game.solo.rules.brk : game.stats.run || 0)) {
+				streakN = 0;
+			}
 		}
 		if (type === 'settle' && shotTrack.active) {
 			shotTrack.active = false;

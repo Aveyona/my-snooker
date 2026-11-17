@@ -64,7 +64,7 @@ function mysn_sound_slots() {
 		'jingle-start'   => array( 'Atmosféra', 'Znelka: začiatok zápasu', 'Krátka znelka pri príchode na štadión pred ligovým zápasom.', 'Krátka hudobná znelka, 2 až 5 s, stereo.' ),
 		'jingle-win'     => array( 'Atmosféra', 'Znelka: víťazstvo', 'Na konci zápasu na štadióne, keď v rádiu nie je označená víťazná skladba (★).', 'Víťazná fanfára, 3 až 8 s, stereo.' ),
 		'clock-tick'     => array( 'Atmosféra', 'Časomiera: tiknutie', 'Posledné sekundy času na úder v lige (každú sekundu). Bez nahrávky generované pípnutie.', 'Jedno tiknutie hodín, krátke.' ),
-		'score'          => array( 'Atmosféra', 'Body: +1 až +7', 'Pri pripísaní bodov za potopenú guľu (aj na obrazovke vyskočí +1, +5... vo farbe gule). Hra zvuk posunie vyššie podľa hodnoty gule: červená najnižšie, čierna najvyššie. Bez nahrávky generovaný zvonček.', 'Príjemný krátky zvuk zisku (cink), do 0,5 s; jedna nahrávka stačí, výšku mení hra.' ),
+		'score'          => array( 'Atmosféra', 'Body: +1 až +7', 'Pôvodný zvuk bodov podľa hodnoty gule. Pri potopenej guli teraz hrá skupina Séria (stupeň podľa poradia gule v sérii); tento zvuk ostáva ako záloha.', 'Príjemný krátky zvuk zisku (cink), do 0,5 s; jedna nahrávka stačí, výšku mení hra.' ),
 		'notify'         => array( 'Atmosféra', 'Upozornenie: zápas nájdený', 'Keď sa nájde ligový zápas. Bez nahrávky generovaný dvojtón.', 'Príjemný krátky signál, do 1 s.' ),
 		'player-drink'   => array( 'Hráč', 'Napitie sa vody', 'Hráč v partii klávesom N (aj v lige). Hrá z miesta hráča (3D), počujú ho súper aj diváci.', 'Dúšok vody a položenie pohára na stolík.' ),
 		'player-burp'    => array( 'Hráč', 'Grgnutie', 'Hráč v partii klávesom G. Hrá z jeho miesta (3D), počujú ho všetci. V lige je to nešportové: druhý raz v zápase napomenutie rozhodcu, od tretieho súper +4 body (spolu s prdnutím).', 'Grgnutie, krátke.' ),
@@ -83,6 +83,24 @@ function mysn_sound_slots() {
 	foreach ( function_exists( 'mysn_rudo_lines' ) ? mysn_rudo_lines() : array() as $id => $x ) {
 		$l[ $id ] = array( 'Komentátor Rudo', $x[0], 'Rudo z tribúny na štadióne (3D): ' . $x[1] . ' Hrá náhodný variant, Rudo hovorí najviac raz za pár sekúnd. Hráč ho môže vypnúť v Nastaveniach.', 'Slovensky, vtipne, ľudovo; každý riadok textu pri Generovať… je jeden variant.' );
 	}
+	// séria: stupne 1 až 10 (koľká potopená guľa v sérii), každý stupeň vlastný zvuk ako kill zvuky vo Valorante
+	$sx = array();
+	for ( $i = 1; $i <= 10; $i++ ) {
+		$sx[ 'streak-' . $i ] = array(
+			'Séria',
+			'Stupeň ' . $i . ( 1 === $i ? ' (prvá guľa)' : '' ),
+			'Hrá pri ' . $i . '. potopenej guli v sérii (namiesto zvuku Body). Od stupňa Vrchol (nastavenie Séria nižšie, predvolene 8) hrá vrcholný zvuk; stupne nad vrcholom sa nehrajú. Keď séria skončí, začína sa znova od 1. Stupeň bez súboru zahrá najbližší nižší stupeň vyššie o Krok série.',
+			$i < 8 ? 'Krátky kovový cink, každý stupeň vyšší a plnší (viac tónov naraz). Jeden súbor na stupeň.' : 'Vrcholný zvuk: cink s krátkym výbuchom a dlhším zvonivým dozvukom.',
+		);
+	}
+	$l2 = array();
+	foreach ( $l as $id => $x ) {
+		$l2[ $id ] = $x;
+		if ( 'notify' === $id ) {
+			$l2 += $sx;
+		}
+	}
+	$l = $l2;
 	// čísla série 1 až 147 (rozhodca ich hlási po každej potopenej guli): vlastná zbalená skupina hneď za rozhodcom
 	$out = array();
 	foreach ( $l as $id => $x ) {
@@ -184,6 +202,9 @@ function mysn_sound_spec( $id ) {
 		'notify'         => array( '0,3 až 1 s', 'priemer okolo −18 LUFS' ),
 		'score'          => array( '0,2 až 0,5 s', 'špička okolo −10 dBFS' ),
 	);
+	if ( 0 === strpos( $id, 'streak-' ) ) {
+		return array( '0,5 až 1,5 s (vrchol do 2 s)', 'špička okolo −6 dBFS' );
+	}
 	if ( isset( $m[ $id ] ) ) {
 		return $m[ $id ];
 	}
@@ -312,6 +333,16 @@ function mysn_sound_filename( $id ) {
 		'jingle-win' => 'jingle-victory',
 		'clock-tick' => 'clock-tick',
 		'score' => 'score-point',
+		'streak-1' => 'streak-level-01',
+		'streak-2' => 'streak-level-02',
+		'streak-3' => 'streak-level-03',
+		'streak-4' => 'streak-level-04',
+		'streak-5' => 'streak-level-05',
+		'streak-6' => 'streak-level-06',
+		'streak-7' => 'streak-level-07',
+		'streak-8' => 'streak-level-08',
+		'streak-9' => 'streak-level-09',
+		'streak-10' => 'streak-level-10',
 		'notify' => 'notify-match-found',
 		'player-drink' => 'player-drink-water',
 		'player-burp' => 'player-burp',
@@ -330,6 +361,16 @@ function mysn_sound_filename( $id ) {
 		return 'referee-break-' . substr( $id, 5 );
 	}
 	return isset( $m[ $id ] ) ? $m[ $id ] : $id;
+}
+
+/** Nastavenie série: vrchol (stupeň 2 až 10), krok v poltónoch pre stupne bez súboru, rozdiel podľa hodnoty gule. */
+function mysn_streak_cfg() {
+	$s = (array) get_option( 'mysn_streak', array() );
+	return array(
+		'peak'  => max( 2, min( 10, (int) ( $s['peak'] ?? 8 ) ) ),
+		'step'  => max( 0, min( 4, (float) ( $s['step'] ?? 2 ) ) ),
+		'value' => empty( $s['value'] ) ? 0 : 1,
+	);
 }
 
 /** Predvolené doladenie slotu. */
@@ -576,6 +617,16 @@ add_action( 'admin_post_mysn_sounds', function () {
 		$out[ $id ] = $s;
 	}
 	update_option( 'mysn_sounds', $out, false );
+	$sk = isset( $_POST['streak'] ) && is_array( $_POST['streak'] ) ? wp_unslash( $_POST['streak'] ) : array(); // phpcs:ignore WordPress.Security.ValidatedSanitizedInput
+	update_option(
+		'mysn_streak',
+		array(
+			'peak'  => max( 2, min( 10, (int) ( $sk['peak'] ?? 8 ) ) ),
+			'step'  => round( max( 0, min( 4, (float) ( $sk['step'] ?? 2 ) ) ), 1 ),
+			'value' => empty( $sk['value'] ) ? 0 : 1,
+		),
+		false
+	);
 	// hlasy skupín na generovanie (Rozhodca, Diváci)
 	$vs = isset( $_POST['voice'] ) && is_array( $_POST['voice'] ) ? wp_unslash( $_POST['voice'] ) : array(); // phpcs:ignore WordPress.Security.ValidatedSanitizedInput
 	$vo = array();
@@ -728,6 +779,18 @@ function mysn_admin_sounds_page() {
 						echo '<p><button type="button" class="button button-primary nums-all" data-lang="en">Vygenerovať chýbajúce čísla</button> <span class="nums-st description"></span></p><table><tbody>';
 					} else {
 						echo '<h2>' . esc_html( $group ) . '</h2>';
+						if ( 'Séria' === $group ) {
+							$st = mysn_streak_cfg();
+							echo '<div class="vbox"><span class="description" style="flex-basis:100%">Zvuk pri každej potopenej guli podľa toho, koľká je v sérii: 1. guľa stupeň 1, 2. guľa stupeň 2… (ako kill zvuky vo Valorante). Keď séria skončí (minutie, faul, koniec framu), začína sa znova od 1. Platí v tréningu, v hre o skóre aj v partii.</span>';
+							echo '<label>Vrchol od stupňa <select name="streak[peak]">';
+							for ( $i = 2; $i <= 10; $i++ ) {
+								echo '<option value="' . (int) $i . '"' . selected( $st['peak'], $i, false ) . '>' . (int) $i . '</option>';
+							}
+							echo '</select></label>';
+							echo '<label title="Stupeň bez vlastného súboru zahrá najbližší nižší stupeň vyššie o tento počet poltónov za každý stupeň">Krok série <input type="number" name="streak[step]" min="0" max="4" step="0.5" value="' . esc_attr( $st['step'] ) . '" style="width:64px"> poltónov</label>';
+							echo '<label><input type="checkbox" name="streak[value]" value="1"' . checked( $st['value'], 1, false ) . '> Hodnotnejšia guľa o kúsok vyššie (čierna najvyššie)</label>';
+							echo '<button type="button" class="button streak-all">Skúška celej série</button></div>';
+						}
 						if ( in_array( $group, array( 'Rozhodca', 'Diváci', 'Komentátor Rudo' ), true ) && empty( $vdone[ $group ] ) ) {
 							$vdone[ $group ] = 1; // Diváci sú na stránke dvakrát: výber hlasu len pri prvej
 							mysn_sound_voice_box( $group, $voices, $models );
