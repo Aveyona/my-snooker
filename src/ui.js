@@ -2894,7 +2894,15 @@ export class UI {
 		};
 		const home = ctx.venue === 'home';
 		const groups = [
-			{ name: 'Nastavenia', color: '#9aa4b2', items: [['set', 'Nastavenia', { a: 'settings' }]] },
+			{
+				name: 'Hra',
+				color: '#6fb3ff',
+				// položky menu hry (podľa stavu: Tréning, Hrať, Liga, Poslať výzvu, Pozerať hru, Účet…); ťuknutie
+				// stlačí pôvodné tlačidlo, takže robí presne to isté ako na desktope
+				items: [['set', 'Nastavenia', { a: 'settings' }], ...[...this.menuInv.querySelectorAll('button'), ...this.menuBtns.querySelectorAll('.mysn-btn')]
+					.filter((b) => b.dataset.act !== 'settings' && b.dataset.act !== 'roomMap' && b.style.display !== 'none')
+					.map((b) => [MM_ICON[b.dataset.act] || (b.classList.contains('mysn-login') ? 'user' : 'menu'), b.textContent, { el: b }])],
+			},
 			{
 				name: 'Herňa',
 				color: '#ffd34d',
@@ -2926,15 +2934,6 @@ export class UI {
 					!this.btnHand.disabled && ['hand', 'Biela do ruky', { a: 'hand' }],
 					!this.btnReset.disabled && ['reset', 'Nové rozostavenie', { a: 'reset' }],
 				].filter(Boolean),
-			},
-			{
-				name: 'Menu hry',
-				color: '#6fb3ff',
-				// položky menu hry (podľa stavu: Tréning, Hrať, Liga, Poslať výzvu, Pozerať hru, Účet…); ťuknutie
-				// stlačí pôvodné tlačidlo, takže robí presne to isté ako na desktope
-				items: [...this.menuInv.querySelectorAll('button'), ...this.menuBtns.querySelectorAll('.mysn-btn')]
-					.filter((b) => b.dataset.act !== 'settings' && b.dataset.act !== 'roomMap' && b.style.display !== 'none')
-					.map((b) => [MM_ICON[b.dataset.act] || (b.classList.contains('mysn-login') ? 'user' : 'menu'), b.textContent, { el: b }]),
 			},
 		];
 		const resumeBtn = this._mmAsMenu ? this.menuBtns.querySelector('[data-act="resume"]') : null;
