@@ -1930,6 +1930,7 @@ export function start(root, config = {}) {
 			chalkZoom = false;
 			room.selectChalk(CHALKS.indexOf(chalkById(settings.chalk)));
 			ui.openChalks(true, chalkById(settings.chalk).id, false);
+			rackCamMobile();
 		}
 	};
 	const exitView = (keepFree = false) => {
@@ -1977,6 +1978,18 @@ export function start(root, config = {}) {
 			controls.capture(); // s držaným Ctrl (keepFree) ostáva myš voľná
 		}
 	};
+	/** Mobil F2: kamera bližšie k tágam, na vybratom tágu (na výšku sa celý stojan nezmestí). */
+	const rackCamMobile = () => {
+		if (!ui.touchUI || view !== 'rack' || venue === 'league' || chalkZoom) {
+			return;
+		}
+		const v = room.rack;
+		const x = room.rackCueX(cueSpec.id, cueSpec.base);
+		const cx = x === null ? v.look.x : x;
+		rig.minViewZoom = 1;
+		rig.setViewZoom(1);
+		rig.setView(new THREE.Vector3(cx, v.look.y + 0.12, v.look.z + 1.75), new THREE.Vector3(cx, v.look.y + 0.08, v.look.z));
+	};
 	const pickCue = (id) => {
 		cueSpec = specFor(id);
 		settings.cue = cueSpec.id;
@@ -1990,6 +2003,7 @@ export function start(root, config = {}) {
 		ui.showView(view, rackNow(), cueSpec.id, rackInfoNow());
 		ui.setCueInfo(cueSpec);
 		updateScore();
+		rackCamMobile(); // mobil: kamera prejde k novo vybratému tágu
 	};
 
 	// špice tág (DB): druh, údery, opotrebenie; server počíta opotrebenie z úderov
@@ -3152,6 +3166,7 @@ export function start(root, config = {}) {
 			}
 			chalkZoom = false;
 			ui.openChalks(true, chalkById(settings.chalk).id, false);
+			rackCamMobile();
 		},
 		// kriedovanie v kresle: animácia pri kresle (vidia ju súper aj diváci), potom má tágo kriedu na ďalšie údery
 		chairChalk: () => {
@@ -3679,6 +3694,17 @@ export function start(root, config = {}) {
 		},
 		// mobil: ťuknutie vo voľnom pohľade na predmet ho otvorí
 		viewTap: (e) => {
+			if (view === 'rack' && venue !== 'league') {
+				// mobil F2: ťuknutie na tágo v stojane ho vyberie
+				const rr = renderer.domElement.getBoundingClientRect();
+				const ray = new THREE.Raycaster();
+				ray.setFromCamera(new THREE.Vector2(((e.clientX - rr.left) / rr.width) * 2 - 1, -((e.clientY - rr.top) / rr.height) * 2 + 1), rig.camera);
+				const id = room.rackCueAt(ray);
+				if (id && id !== cueSpec.id) {
+					pickCue(id);
+				}
+				return;
+			}
 			if (view !== 'free' || adminRoam) {
 				return;
 			}

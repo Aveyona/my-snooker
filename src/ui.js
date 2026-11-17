@@ -3044,7 +3044,7 @@ export class UI {
 				};
 				const idx = Math.max(0, cues.findIndex((c) => c.id === (sel && sel.id) || (sel && c.id === sel.base)));
 				const mid = h('div', 'mysn-rack-name', sel ? `<b>${esc(sel.name)}</b><span>${idx + 1} z ${cues.length} · Sila ${Math.round(sel.power * 100)} % · ${Math.round(sel.len * 100)} cm · špička ${esc(sel.tip)}</span>` : '');
-				top.append(nav('ArrowLeft', '‹'), mid, nav('ArrowRight', '›'));
+				top.append(nav('ArrowLeft', '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg>'), mid, nav('ArrowRight', '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg>')); // šípky ako SVG: presne v strede kruhu
 				const icons = h('div', 'mysn-rack-icons');
 				const ico = (key, label, fn) => {
 					const b = h('button', 'mysn-rack-ico' + (this._cpShow === key ? ' mysn-on' : ''), label);

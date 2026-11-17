@@ -1268,6 +1268,27 @@ export function buildRoomShell(scene, quality, opts = {}) {
 				c.rotation.y = on ? 0 : Math.sin(k * 3.1) * 0.5;
 			});
 		},
+		/** Mobil F2: ktoré tágo stojana je pod lúčom (ťuknutie prstom), id špecifikácie alebo null. */
+		rackCueAt(ray) {
+			const hit = ray.intersectObjects(rackCues.flatMap((rc) => [rc.group, rc.label]), true)[0];
+			if (!hit) {
+				return null;
+			}
+			const rc = rackCues.find((r) => r.label === hit.object || (() => {
+				for (let o = hit.object; o; o = o.parent) {
+					if (o === r.group) {
+						return true;
+					}
+				}
+				return false;
+			})());
+			return rc ? rc.spec.id : null;
+		},
+		/** Mobil F2: poloha x tága na stojane (podľa id alebo šablóny), null keď na stojane nie je. */
+		rackCueX(id, base) {
+			const rc = rackCues.find((r) => r.spec.id === id) || rackCues.find((r) => r.spec.id === base);
+			return rc ? rc.group.position.x : null;
+		},
 		/** Tágá a štítky stojana (na štadióne sa skryjú spolu s herňou). */
 		rackObjects: () => [...rackCues.flatMap((rc) => [rc.group, rc.label]), glow],
 		updateScore,
