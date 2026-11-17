@@ -321,11 +321,19 @@ export class UI {
 		if (this.touchUI) {
 			// mobil: klávesové skratky nemajú zmysel – každý text v rozhraní sa pred zobrazením prečistí (zátvorky
 			// a vety s klávesmi zmiznú); platí pre všetky okná, hlásenia a ponuky, aj tie, ktoré pribudnú neskôr
+			// hlásenie, z ktorého po prečistení nezostal žiadny text (napr. len vety s klávesmi), sa skryje
+			const empty = (n) => {
+				const box = n && n.parentElement && n.parentElement.closest('.mysn-toast, .mysn-msg');
+				if (box && !box.textContent.trim() && !box.querySelector('button')) {
+					box.classList.add('mysn-hidden');
+				}
+			};
 			const fix = (node) => {
 				if (node.nodeType === 3) {
 					const v = noKeys(node.nodeValue);
 					if (v !== node.nodeValue) {
 						node.nodeValue = v;
+						empty(node);
 					}
 					return;
 				}
@@ -337,6 +345,7 @@ export class UI {
 					const v = noKeys(t.nodeValue);
 					if (v !== t.nodeValue) {
 						t.nodeValue = v;
+						empty(t);
 					}
 				}
 			};
