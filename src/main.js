@@ -4719,8 +4719,47 @@ export function start(root, config = {}) {
 	 * Body po údere: pri každej potopenej guli vyskočí +hodnota vo farbe gule nad jamkou a zaznie zvuk bodov
 	 * (vyšší pri hodnotnejšej guli); pri faule Faul a body pre súpera.
 	 */
+	/**
+	 * Hneď pri páde gule: ak je podľa toho, čo sa zatiaľ stalo, zjavne platná (biela nespadla, prvý zásah aj
+	 * potopená guľa sú tie, ktoré sú na rade), body vyskočia a zaznie zvuk série hneď; inak až po zastavení gúľ.
+	 */
+	const potPopNow = (id) => {
+		const b = game.balls[id];
+		if (!b || !shotTrack.popped) {
+			return;
+		}
+		if (b.kind === 'white') {
+			shotTrack.whiteIn = true;
+			return;
+		}
+		const isRed = b.kind === 'red';
+		if (!isRed) {
+			shotTrack.colIn = (shotTrack.colIn || 0) + 1;
+		}
+		if (shotTrack.whiteIn || shotTrack.foul) {
+			return;
+		}
+		const rules = game.match ? game.match.rules : game.solo ? game.solo.rules : null;
+		if (rules) {
+			const on = rules.on;
+			const fitsOn = (k) => (on === 'red' ? k === 'red' : on === 'colour' ? k && k !== 'red' && k !== 'white' : k === on);
+			if (!fitsOn(b.kind) || !fitsOn(shotTrack.first) || (on !== 'red' && shotTrack.colIn > 1)) {
+				return; // nejasné (voľná guľa, viac farieb, iný prvý zásah): body sa ukážu až po zastavení gúľ
+			}
+		}
+		shotTrack.popped.add(id);
+		const pk = POCKETS[shotTrack.potAt[id]];
+		const val = COLOURS[b.kind].value;
+		const c = pk ? toScreen(pk.x, R + 0.05, pk.z) : null;
+		if (c) {
+			ui.scorePop('+' + val, c.x, c.y, '#' + COLOURS[b.kind].color.toString(16).padStart(6, '0'));
+		}
+		streakN++;
+		sound.streak(streakN, val, { pos: pk ? { x: pk.x, y: R, z: pk.z } : null });
+	};
 	const scorePops = (points) => {
-		const pots = shotTrack.pots.filter((id) => game.balls[id] && game.balls[id].kind !== 'white');
+		const popped = shotTrack.popped || new Set();
+		const pots = shotTrack.pots.filter((id) => game.balls[id] && game.balls[id].kind !== 'white' && !popped.has(id));
 		const css = (k) => '#' + COLOURS[k].color.toString(16).padStart(6, '0');
 		if (shotTrack.foul) {
 			const c = toScreen(0, R, 0);
@@ -4736,7 +4775,7 @@ export function start(root, config = {}) {
 		for (const id of pots) {
 			const b = game.balls[id];
 			const pk = POCKETS[shotTrack.potAt[id]];
-			const val = pots.length === 1 && points ? points : COLOURS[b.kind].value;
+			const val = pots.length === 1 && !popped.size && points ? points : COLOURS[b.kind].value;
 			setTimeout(() => {
 				const c = pk ? toScreen(pk.x, R + 0.05, pk.z) : null;
 				if (c) {
@@ -5235,6 +5274,10 @@ export function start(root, config = {}) {
 		}
 		if (type === 'shot') {
 			shotTrack.cush.clear();
+			shotTrack.popped = new Set(); // gule, ktorým sa body ukázali hneď pri páde
+			shotTrack.first = null; // prvá guľa, ktorú biela trafila
+			shotTrack.whiteIn = false;
+			shotTrack.colIn = 0; // koľko farieb už spadlo (pri farbe na rade smie len jedna)
 			shotTrack.pots = [];
 			shotTrack.potAt = {};
 			shotTrack.foul = 0;
@@ -5370,6 +5413,14 @@ export function start(root, config = {}) {
 					shotTrack.pots.push(e.a);
 					shotTrack.potAt[e.a] = e.pocket;
 					rudo.potNow(e.a); // Rudo vykríkne hneď, keď guľa spadne
+					potPopNow(e.a); // body a zvuk série hneď pri páde (ak je guľa zjavne platná)
+				}
+				if (e.type === 'ball' && !shotTrack.first) {
+					const a = game.balls[e.a];
+					const b = game.balls[e.b];
+					if (a && b && (a.kind === 'white' || b.kind === 'white')) {
+						shotTrack.first = a.kind === 'white' ? b.kind : a.kind;
+					}
 				}
 				if (e.type === 'ball') {
 					const a = game.balls[e.a];

@@ -162,6 +162,7 @@ function mysn_roadmap() {
 /** Denník zmien (najnovšie hore). */
 function mysn_changelog() {
 	return array(
+		array( '0.20.3', '17. 11. 2026', 'Body (+1, +5…) a zvuk série sa ukážu hneď pri páde gule, keď je zjavne platná (biela nespadla, prvý zásah a guľa sú na rade); nejasné prípady (voľná guľa, viac farieb naraz) až po zastavení gúľ ako doteraz.' ),
 		array( '0.20.2', '17. 11. 2026', 'Oprava: v My Snooker → Zvuky nehralo tlačidlo Prehrať ani skúška (box nastavení série zastavil skript administrácie).' ),
 		array( '0.20.1', '17. 11. 2026', 'PC: prvá položka menu hry je Pokračovať v hre (návrat do tréningu alebo do rozohraného framu o skóre).' ),
 		array( '0.20.0', '17. 11. 2026', 'Zvuky série (ako kill zvuky vo Valorante): pri potopenej guli zaznie stupeň podľa poradia gule v sérii – každý vyšší a plnší, od 8. vrcholný zvuk, po skončení série znova od 1. V My Snooker → Zvuky nová skupina Séria: stupne 1 až 10 s vlastnými súbormi a doladením, nastavenie Vrchol, Krok série, rozdiel podľa hodnoty gule a Skúška celej série. Predvolené zvuky vygenerované v základnej sade.' ),
