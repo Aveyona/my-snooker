@@ -3293,11 +3293,11 @@ export class UI {
 					].filter(Boolean),
 			},
 		];
-		groups.splice(2, 0, groups.splice(1, 1)[0]); // poradie: Režim hry, Herňa (miesto), Hra, Tréning
+		// poradie: Režim hry, Hra, Herňa (miesto), Tréning
 		const resumeBtn = this._mmAsMenu ? this.menuBtns.querySelector('[data-act="resume"]') : null;
 		if (this._mmAsMenu && !resumeBtn && !ctx.office) {
 			// úvod pred začiatkom hry: herňa a tréning ešte nemajú zmysel, najprv sa vyberá v Menu hry
-			groups[1].items = groups[1].items.filter((it) => it[2].k === 'F1');
+			groups[2].items = groups[2].items.filter((it) => it[2].k === 'F1');
 			groups[3].items = [];
 		}
 		this.mmenu.textContent = '';
