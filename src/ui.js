@@ -362,6 +362,20 @@ export class UI {
 					}
 				}
 			};
+			// mobil: naraz je otvorené len jedno okno – keď sa otvorí ďalšie (Nastavenia, Účet, Správa hry…),
+			// ostatné sa zavrú, aby sa neprekrývali
+			new MutationObserver((muts) => {
+				for (const m of muts) {
+					const t = m.target;
+					if (t.classList && t.classList.contains('mysn-panel') && !t.classList.contains('mysn-hidden') && /(^|\s)mysn-hidden(\s|$)/.test(m.oldValue || '')) {
+						for (const o of root.querySelectorAll('.mysn-panel:not(.mysn-hidden)')) {
+							if (o !== t && !o.contains(t) && !t.contains(o)) {
+								o.classList.add('mysn-hidden');
+							}
+						}
+					}
+				}
+			}).observe(root, { subtree: true, attributes: true, attributeFilter: ['class'], attributeOldValue: true });
 			fix(root);
 			new MutationObserver((muts) => {
 				for (const m of muts) {
