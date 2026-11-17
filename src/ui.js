@@ -2948,7 +2948,8 @@ export class UI {
 				// stlačí pôvodné tlačidlo, takže robí presne to isté ako na desktope
 				items: [['set', 'Nastavenia', { a: 'settings' }], ...[...this.menuInv.querySelectorAll('button'), ...this.menuBtns.querySelectorAll('.mysn-btn')]
 					.filter((b) => b.dataset.act !== 'settings' && b.dataset.act !== 'roomMap' && b.style.display !== 'none')
-					.map((b) => [MM_ICON[b.dataset.act] || (b.classList.contains('mysn-login') ? 'user' : 'menu'), b.textContent, { el: b }])],
+					.map((b) => [MM_ICON[b.dataset.act] || (b.classList.contains('mysn-login') ? 'user' : 'menu'), b.textContent, { el: b }, /^(Tréning|Hrať|Liga)$/.test(b.textContent.trim()) ? '#7CFC8A' : '']),
+				],
 			},
 			ctx.office
 				? {
@@ -3042,9 +3043,12 @@ export class UI {
 			sec.style.setProperty('--mm', g.color);
 			sec.appendChild(h('div', 'mysn-mm-h', g.name));
 			const grid = h('div', 'mysn-mm-grid');
-			for (const [ic, label, act] of g.items) {
+			for (const [ic, label, act, col] of g.items) {
 				const b = h('button', 'mysn-mm-it', `<span class="mysn-mm-ic"><svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${P[ic]}</svg></span><span class="mysn-mm-l"></span>`);
 				b.type = 'button';
+				if (col) {
+					b.style.setProperty('--mm', col); // režimy hry (Tréning, Hrať, Liga) zelenou
+				}
 				b.querySelector('.mysn-mm-l').textContent = label;
 				b.addEventListener('click', () => {
 					if (act.el) {
