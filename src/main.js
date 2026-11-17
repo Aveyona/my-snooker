@@ -1833,6 +1833,7 @@ export function start(root, config = {}) {
 		room.updateScore(game.stats, { cue: cueSpec.name, chalk, mode: match ? 'Partia cez internet' : so ? 'O najlepšie skóre' : 'Tréning', match, rows });
 	};
 	const enterView = (name) => {
+		rig.fitOff = false; // mobil na výšku: pevný pohľad sa rozšíri (stojan má vlastný bližší záber)
 		if (view === name) {
 			exitView();
 			return;
@@ -1986,6 +1987,7 @@ export function start(root, config = {}) {
 		const v = room.rack;
 		const x = room.rackCueX(cueSpec.id, cueSpec.base);
 		const cx = x === null ? v.look.x : x;
+		rig.fitOff = true;
 		rig.minViewZoom = 1;
 		rig.setViewZoom(1);
 		rig.setView(new THREE.Vector3(cx, v.look.y + 0.12, v.look.z + 1.75), new THREE.Vector3(cx, v.look.y + 0.08, v.look.z));

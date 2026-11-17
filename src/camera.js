@@ -210,8 +210,22 @@ export class CameraRig {
 		this.camera.aspect = w / h;
 		// na úzkej obrazovke (mobil na výšku) širší záber
 		this.baseFov = w / h < 1 ? 62 : 45;
-		this.camera.fov = this.baseFov / (this.viewZoom || 1);
+		this.camera.fov = this.fovNow();
 		this.camera.updateProjectionMatrix();
+	}
+
+	/**
+	 * Zorný uhol: pevné pohľady (rebríček, nástenka, skóre…) sú stavané na šírku; na výšku (mobil) sa záber
+	 * rozšíri, aby bolo vidno skoro celú šírku ako na PC (najviac 88° zvisle). fitOff = vlastný záber (stojan na mobile).
+	 */
+	fovNow() {
+		const a = this.camera.aspect || 1;
+		let f = this.baseFov || 45;
+		if (this.mode === 'view' && a < 1 && !this.fitOff) {
+			const want = THREE.MathUtils.radToDeg(2 * Math.atan(Math.tan(THREE.MathUtils.degToRad(36)) / a));
+			f = Math.max(f, Math.min(88, want));
+		}
+		return f / (this.viewZoom || 1);
 	}
 
 	/** Okamžitý presun kamery do pohľadu (prechod do inej miestnosti, bez letu cez steny). */
@@ -224,12 +238,17 @@ export class CameraRig {
 	/** Priblíženie v pohľade (F7 z kresla): 1 = normálne, viac = bližšie (užší záber). */
 	setViewZoom(z) {
 		this.viewZoom = Math.min(5, Math.max(this.minViewZoom || 1, z));
-		this.camera.fov = (this.baseFov || 45) / this.viewZoom;
+		this.camera.fov = this.fovNow();
 		this.camera.updateProjectionMatrix();
 	}
 
 	/** Posunie kameru k cieľu podľa režimu; cue = biela guľa, dir = smer mierenia, moving = gule sa hýbu. */
 	update(dt, cue, dir, moving) {
+		const fv = this.fovNow();
+		if (Math.abs(fv - this.camera.fov) > 0.01) {
+			this.camera.fov = fv; // zmena režimu (pevný pohľad / za tágom) na mobile na výšku
+			this.camera.updateProjectionMatrix();
+		}
 		if (this.mode === 'free') {
 			this.orbit.update();
 			clampToRoom(this.camera.position);
