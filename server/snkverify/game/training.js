@@ -40,10 +40,9 @@ export class Training {
 		}
 		this.history = [];
 		this.stats = { shots: 0, potted: 0, points: 0, best: this.stats.best, run: 0 };
-		this.state = 'aim';
 		this.dir = 0;
-		this.message = 'Nové rozostavenie.';
-		this.emit('change');
+		this.message = 'Nové rozostavenie: polož bielu do D.';
+		this.startPlace(); // biela v ruke v D ako pri rozbíjaní (emituje change)
 	}
 
 	canShoot() {

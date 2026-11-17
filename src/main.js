@@ -1479,7 +1479,8 @@ export function start(root, config = {}) {
 	const overlay = document.createElement('div');
 	root.appendChild(overlay);
 	let spin = { side: 0, top: 0 };
-	let placeCam = false;
+	let placeCam = false; // kamera je zhora kvôli kladeniu bielej (po položení späť za tágo)
+	let myPlaceWas = false;
 	let started = false;
 	let guestPlay = false; // neprihlásený návštevník trénuje (len tréning, bez ukladania a hry cez internet)
 	let escClosedAt = -1e9; // kedy Esc zavrelo menu (vtedy sa menu samo znova neotvorí)
@@ -3393,6 +3394,13 @@ export function start(root, config = {}) {
 				return;
 			}
 			if (view) {
+				return;
+			}
+			if (placeCam && rig.mode === 'top') {
+				// kladenie bielej zhora: Tab prepne za tágo (kladie sa ďalej odtiaľ)
+				placeCam = false;
+				topView = false;
+				rig.setMode('cue');
 				return;
 			}
 			topView = !topView;
@@ -5719,6 +5727,14 @@ export function start(root, config = {}) {
 		ui.showFree(ui.touchUI && (!view || view === 'free') && venue !== 'office' && !game.spectating && !ui.mainMenuOpen(), view === 'free');
 		ui.showTop(ui.touchUI && !view && venue !== 'office' && !game.spectating && !ui.mainMenuOpen() && (rig.mode === 'cue' || rig.mode === 'top'), rig.mode === 'top');
 		// pohľady (nástenka, stojan, rebríček…) majú vlastné Späť do hry; mobil potrebuje tlačidlo len pri stole zhora (Tab)
+		// biela v ruke (moja): kamera sa raz presunie zhora na stôl; po položení sa vráti za tágo (udalosť change)
+		const myPlace = game.state === 'place' && !game.spectating && !specView() && (!game.match || game.match.turn === game.match.me) && game.cue.on;
+		if (myPlace && !myPlaceWas && !view && !topView && rig.mode !== 'top') {
+			placeCam = true;
+			rig.setMode('top');
+			ui.sync(game, rig.mode);
+		}
+		myPlaceWas = myPlace;
 		ui.showBack(ui.touchUI && !ui.mainMenuOpen() && !ui.menuOpen() && (viewFromFree && view && view !== 'free'), viewFromFree);
 		if (ui.touchUI && ui._mmAsMenu && !ui.mainMenuOpen() && !ui.anyPanelOpen()) {
 			ui.openMainMenu(true); // mobil: po zavretí okna (Nastavenia, Účet…) sa vráti hlavné menu, ako menu hry na desktope

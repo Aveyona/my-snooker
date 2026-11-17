@@ -286,6 +286,14 @@ export class Controls {
 	}
 
 	move(e) {
+		const gp = this.game;
+		if (gp.state === 'place' && e.pointerType === 'mouse' && !this.captured && !this.blocked && this.rig.mode === 'top' && e.target === this.dom) {
+			// PC, pohľad zhora: biela v ruke ide presne pod kurzor (len v D), klik ju položí
+			const p = this.tablePoint(e);
+			if (p) {
+				gp.movePlace(p.x, p.z);
+			}
+		}
 		if (e.pointerType === 'touch' && this._tp.has(e.pointerId)) {
 			this._tp.set(e.pointerId, { x: e.clientX, y: e.clientY });
 			if (this._pinch) {
@@ -385,6 +393,13 @@ export class Controls {
 	}
 
 	up(e) {
+		const pd = this._drag;
+		if (pd && pd.id === e.pointerId && pd.kind === 'place' && e.pointerType === 'mouse' && e.button === 0 && this.rig.mode === 'top' && this.game.state === 'place') {
+			this._drag = null;
+			this.game.confirmPlace(); // PC zhora: klik položí bielu
+			this.game.aimAtNearest();
+			return;
+		}
 		if (e.pointerType === 'touch') {
 			this._tp.delete(e.pointerId);
 			if (this._pinch) {
