@@ -695,9 +695,17 @@ export class UI {
 			const lg = this.button('Liga', 'league', 'Kancelária ligy: registrácia, 4 ligy, body a sezóna na rok');
 			lg.classList.add('mysn-league-btn');
 			const tr = this.button('Tréning', kind === 'solo' ? 'training' : 'resume', 'Voľný tréning na stole s červeným súknom');
-			(trainFirst ? tr : play).classList.add('mysn-primary');
-			this.btnResume = trainFirst ? tr : play;
 			const enter = this.button('Pozerať hru', 'rooms', 'Otvorené partie: tréningy a hry s otvorenými dverami a ligové zápasy, dá sa ich sledovať');
+			if (!this.touchUI) {
+				// PC: prvá položka Pokračovať v hre (návrat k tomu, čo sa práve hrá: tréning alebo frame o skóre)
+				const cont = this.button('Pokračovať v hre', 'resume', kind === 'solo' ? 'Späť do rozohraného framu o najlepšie skóre' : 'Späť do tréningu');
+				cont.classList.add('mysn-primary');
+				this.btnResume = cont;
+				box.append(cont);
+			} else {
+				(trainFirst ? tr : play).classList.add('mysn-primary');
+				this.btnResume = trainFirst ? tr : play;
+			}
 			box.append(tr, play, lg, fr(), enter); // rebríček je na F8
 			if (this.opts.venue && this.opts.venue() === 'league') {
 				box.appendChild(this.button('Späť do herne', 'leagueHome'));
