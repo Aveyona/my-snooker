@@ -89,6 +89,14 @@ function mysn_rest_rudo_live( $req ) {
 	if ( ! function_exists( 'ai_writer_call_ai_chat' ) || ! function_exists( 'mysn_rv_tts_mp3' ) ) {
 		return new WP_Error( 'mysn', 'Živý komentár nie je dostupný.', array( 'status' => 404 ) );
 	}
+	// údaje komentára (mená, skóre, séria) berie server z rozhodnutia uloženého pri údere, nie od prehliadača
+	global $wpdb;
+	$row = $wpdb->get_row( $wpdb->prepare( 'SELECT `after` FROM ' . mysn_table( 'moves' ) . ' WHERE match_id = %d AND seq = %d ORDER BY id DESC LIMIT 1', $mid, (int) $k ), ARRAY_A ); // phpcs:ignore WordPress.DB
+	$rs  = $row ? json_decode( (string) $row['after'], true ) : null;
+	$dd  = isset( $rs['call']['rudo']['l'], $rs['call']['rudo']['d'] ) && $ev === $rs['call']['rudo']['l'] && is_array( $rs['call']['rudo']['d'] ) ? $rs['call']['rudo']['d'] : null;
+	if ( ! $dd ) {
+		return new WP_Error( 'mysn', 'Server tento komentár nepripravil.', array( 'status' => 404 ) );
+	}
 	$key = 'mysn_rudo_' . md5( $mid . '|' . $ev . '|' . $k );
 	$c   = get_transient( $key );
 	if ( is_array( $c ) ) {
@@ -121,12 +129,12 @@ function mysn_rest_rudo_live( $req ) {
 		return new WP_Error( 'mysn', 'Rudo už dnes veľa rozprával.', array( 'status' => 429 ) );
 	}
 	set_transient( 'mysn_rudo_n', $n + 1, HOUR_IN_SECONDS );
-	$who   = sanitize_text_field( mb_substr( (string) $req->get_param( 'who' ), 0, 40 ) );
-	$other = sanitize_text_field( mb_substr( (string) $req->get_param( 'other' ), 0, 40 ) );
-	$brk   = (int) $req->get_param( 'brk' );
-	$pts   = (int) $req->get_param( 'pts' );
-	$score = preg_replace( '/[^0-9:]/', '', (string) $req->get_param( 'score' ) );
-	$fr    = preg_replace( '/[^0-9:]/', '', (string) $req->get_param( 'frames' ) );
+	$who   = sanitize_text_field( mb_substr( (string) ( $dd['who'] ?? '' ), 0, 40 ) );
+	$other = sanitize_text_field( mb_substr( (string) ( $dd['other'] ?? '' ), 0, 40 ) );
+	$brk   = (int) ( $dd['brk'] ?? 0 );
+	$pts   = (int) ( $dd['pts'] ?? 0 );
+	$score = preg_replace( '/[^0-9:]/', '', (string) ( $dd['score'] ?? '' ) );
+	$fr    = preg_replace( '/[^0-9:]/', '', (string) ( $dd['frames'] ?? '' ) );
 	$v3    = function_exists( 'mysn_sound_voice' ) && 'eleven_v3' === ( mysn_sound_voice( 'Komentátor Rudo' )['model'] ?: ( function_exists( 'myrm_voice' ) ? myrm_voice( 'ja' )['model'] : '' ) );
 	$sys   = 'Si Rudo, starší slovenský fanúšik snookeru v čiernom oblečení, sedíš na tribúne a nahlas komentuješ ligový zápas. Stále sa snažíš robiť srandu: vtipné prirovnania, irónia, ľudové múdrosti, preháňanie, robíš si žarty aj zo seba. Hovoríš po slovensky, ľudovo a srdečne, bez vulgarizmov, bez urážok, bez politiky. Odpovedz len jednou vetou do 18 slov, bez úvodzoviek, bez emoji. Kto si: ' . mb_substr( mysn_rudo_desc(), 0, 1500 ) . ( $v3 ? ' Na začiatok vety daj jednu značku emócie v hranatých zátvorkách po anglicky podľa situácie, napríklad [laughs], [excited], [shouting], [sighs], [annoyed], [sarcastic].' : ' Bez zátvoriek.' );
 	$user  = strtr(
@@ -178,6 +186,261 @@ add_action(
 				'methods'             => 'POST',
 				'callback'            => 'mysn_rest_rudo_live',
 				'permission_callback' => 'is_user_logged_in',
+			)
+		);
+	}
+);
+
+/**
+ * Komentátor Rudo podľa servera (0.23.0): čo Rudo povie po údere, rozhoduje server zo svojho (overeného) stavu,
+ * nie prehliadač strelca. Vstup: zápas, strelec, stav pred úderom, stav po údere a výsledok overovača ($v, ak bežal:
+ * jeho stav, spadnuté gule a mantinely). Vráti array( rozhodnutie po údere, výkrik pri ďalšom údere, videné situácie ).
+ * Rozhodnutie: p = pripravená replika (slot, t = oneskorenie ms, v = variant), l = živý komentár (udalosť, d = údaje,
+ * f = náhradný slot, x = vždy), y = rozloženie gúľ (slot a variant, zahrá sa o chvíľu, keď Rudo práve nehovorí).
+ */
+function mysn_rudo_decide( $m, $me, $prev, $st, $v ) {
+	$seen = isset( $prev['rudo_seen'] ) && is_array( $prev['rudo_seen'] ) ? array_values( array_map( 'strval', $prev['rudo_seen'] ) ) : array();
+	if ( empty( $m['league'] ) || ! is_array( $st ) || empty( $st['rules']['scores'] ) ) {
+		return array( null, null, $seen );
+	}
+	$cfg  = function_exists( 'mysn_crowd' ) ? mysn_crowd() : array();
+	$rf   = array( 'low' => 0.5, 'high' => 1.7 )[ $cfg['rudo_freq'] ?? 'mid' ] ?? 1;
+	$rnd  = function () {
+		return wp_rand( 0, 999999 ) / 1000000;
+	};
+	$maybe = function ( $q ) use ( $rf, $rnd ) {
+		return $rnd() < min( 0.95, $q * $rf );
+	};
+	$names = array();
+	foreach ( array( (int) $m['p1'], (int) $m['p2'] ) as $u ) {
+		$x       = mysn_user( $u );
+		$names[] = is_array( $x ) && isset( $x['name'] ) ? (string) $x['name'] : '';
+	}
+	// hlásenie: od overovača (server ho vypočítal), inak z uloženého stavu (len známe čísla)
+	$c0 = ( $v && ! empty( $v['ok'] ) && isset( $v['state']['call'] ) && is_array( $v['state']['call'] ) ) ? $v['state']['call'] : ( isset( $st['call'] ) && is_array( $st['call'] ) ? $st['call'] : array() );
+	$c  = array();
+	foreach ( array( 'foul', 'brk', 'fw', 'won', 'snk', 'fb' ) as $k ) {
+		if ( isset( $c0[ $k ] ) && is_numeric( $c0[ $k ] ) ) {
+			$c[ $k ] = (int) $c0[ $k ];
+		}
+	}
+	$c['frame'] = ! empty( $c0['frame'] );
+	$c['over']  = ! empty( $st['rules']['over'] );
+	$rules      = $st['rules'];
+	$frames     = isset( $st['frames']['won'] ) ? $st['frames'] : ( isset( $prev['frames']['won'] ) ? $prev['frames'] : null );
+	$pr         = isset( $prev['rules']['scores'] ) ? $prev['rules'] : array( 'scores' => array( 0, 0 ), 'brk' => 0 );
+	$brk0       = (int) ( $pr['brk'] ?? 0 );
+	$lead       = (int) $pr['scores'][ $me ] - (int) $pr['scores'][ 1 - $me ];
+	$ctx        = function ( $w, $extra = array() ) use ( $names, $rules, $frames ) {
+		$w = 1 === (int) $w ? 1 : 0;
+		return array_merge(
+			array(
+				'who'    => $names[ $w ],
+				'other'  => $names[ 1 - $w ],
+				'score'  => (int) $rules['scores'][ $w ] . ':' . (int) $rules['scores'][ 1 - $w ],
+				'frames' => $frames ? (int) $frames['won'][ $w ] . ':' . (int) $frames['won'][ 1 - $w ] : '',
+			),
+			$extra
+		);
+	};
+	$live = function ( $ev, $w, $fb, $t, $extra = array(), $x = 1 ) use ( $ctx ) {
+		return array( 'l' => $ev, 'd' => $ctx( $w, $extra ), 'f' => $fb, 't' => $t, 'x' => $x );
+	};
+	$pool = function ( $slot, $t ) {
+		return array( 'p' => $slot, 't' => $t, 'v' => wp_rand( 0, 999999 ) );
+	};
+	// spadnuté gule: od overovača (s mantinelmi), inak z rozdielu gúľ pred a po údere
+	$pots  = array();
+	$white = false;
+	if ( $v && ! empty( $v['ok'] ) && isset( $v['ev']['pots'] ) && is_array( $v['ev']['pots'] ) ) {
+		foreach ( $v['ev']['pots'] as $p ) {
+			if ( 'white' === ( $p['kind'] ?? '' ) ) {
+				$white = true;
+			} else {
+				$pots[] = ! empty( $p['cush'] );
+			}
+		}
+	} elseif ( isset( $prev['balls'], $st['balls'] ) && is_array( $prev['balls'] ) && is_array( $st['balls'] ) ) {
+		$on = array();
+		foreach ( $st['balls'] as $b ) {
+			$on[ (int) ( $b['id'] ?? -1 ) ] = ! empty( $b['on'] );
+		}
+		foreach ( $prev['balls'] as $b ) {
+			if ( ! empty( $b['on'] ) && isset( $on[ (int) $b['id'] ] ) && ! $on[ (int) $b['id'] ] && 'white' !== ( $b['kind'] ?? '' ) ) {
+				$pots[] = false;
+			}
+		}
+		$white = ! empty( $c['foul'] ) && ! empty( $st['inHand'] );
+	}
+	$fn = $frames ? (int) ( $frames['n'] ?? 1 ) : 1;
+	$fm = $fn . ':';
+	$r  = null;
+	$brk = (int) ( $c['brk'] ?? 0 );
+	if ( $c['over'] ) {
+		$r = $live( 'match', $c['fw'] ?? $me, 'rudo-match', 3500 );
+	} elseif ( $c['frame'] ) {
+		$seen = array();
+		$r    = $live( 'frame', $c['fw'] ?? $me, 'rudo-frame', 3000 );
+	} elseif ( isset( $c['won'] ) ) {
+		$r = $live( 'won', $c['won'], 'rudo-won', 2500, array( 'brk' => $brk ) );
+	} elseif ( $brk >= 100 && $brk0 < 100 ) {
+		$r = $live( 'century', $me, 'rudo-century', 2500, array( 'brk' => $brk ) );
+	} elseif ( $brk >= 50 && $brk0 < 50 ) {
+		$r = $live( 'break50', $me, 'rudo-50', 2200, array( 'brk' => $brk ) );
+	} elseif ( ! empty( $c['foul'] ) ) {
+		$fb = $white ? 'rudo-white' : 'rudo-foul';
+		if ( $lead >= 20 && $maybe( 0.6 ) ) {
+			$r = $live( 'foullead', $me, 'rudo-foul', 2600, array( 'pts' => $c['foul'] ), 0 );
+		} else {
+			$r = $maybe( 0.45 ) ? $live( $white ? 'white' : 'foul', $me, $fb, 2600, array( 'pts' => $c['foul'] ), 0 ) : $pool( $fb, 2600 );
+		}
+	} elseif ( isset( $c['snk'] ) && ! in_array( $fm . 's' . $c['snk'], $seen, true ) && $maybe( 0.6 ) ) {
+		$seen[] = $fm . 's' . $c['snk'];
+		$r      = $live( 'snookers', $c['snk'], 'rudo-miss', 2600, array(), 0 );
+	} elseif ( isset( $c['fb'] ) && ! in_array( $fm . 'f' . $c['fb'], $seen, true ) && $maybe( 0.5 ) ) {
+		$seen[] = $fm . 'f' . $c['fb'];
+		$r      = $live( 'frameball', $c['fb'], 'rudo-nice', 2400, array(), 0 );
+	} elseif ( in_array( true, $pots, true ) || ( $pots && $brk >= 20 && $maybe( 0.15 ) ) ) {
+		$r = $maybe( 0.45 ) ? $live( 'nice', $me, 'rudo-nice', 1800, array( 'brk' => $brk ), 0 ) : $pool( 'rudo-nice', 1800 );
+	} elseif ( ! $pots ) {
+		if ( mysn_rudo_balls_edge( $st['balls'] ?? null ) ) {
+			$r = $maybe( 0.45 ) ? $live( 'edge', $me, 'rudo-edge', 1500, array(), 0 ) : $pool( 'rudo-edge', 1500 );
+		} elseif ( $maybe( 0.5 ) ) {
+			$r = $pool( 'rudo-miss', 1500 );
+		}
+	} elseif ( $maybe( 0.4 ) ) {
+		$r = $pool( 'rudo-pot', 1600 ); // bežná potopená guľa: často, ale nie pri každej
+	}
+	// zaujímavé rozloženie gúľ po údere: raz za frame pre každú situáciu
+	$y = mysn_rudo_layout( $st['balls'] ?? null, $fm, $seen );
+	if ( $y && $rnd() < min( 0.95, 0.55 * $rf ) ) {
+		$seen[] = $y[0];
+		$r      = is_array( $r ) ? $r : array();
+		$r['y'] = array( 'p' => $y[1], 'v' => wp_rand( 0, 999999 ) );
+	}
+	// výkrik „Je tam!“ pri ďalšom údere, keď spadne guľa
+	$nx = array( 'on' => $rnd() < min( 0.95, 0.35 * $rf ), 'v' => wp_rand( 0, 999999 ) );
+	return array( $r ?: null, $nx, array_slice( $seen, -40 ) );
+}
+
+/** Jamky hracej plochy (ako src/physics.js POCKETS). */
+function mysn_rudo_pockets() {
+	$l = 3.569 / 2 + 0.012;
+	$w = 1.778 / 2 + 0.012;
+	return array( array( -$l, -$w, 1 ), array( -$l, $w, 1 ), array( $l, -$w, 1 ), array( $l, $w, 1 ), array( 0, -1.778 / 2 - 0.034, 0 ), array( 0, 1.778 / 2 + 0.034, 0 ) );
+}
+
+/** Guľa (nie biela) blízko jamky; $c = vzdialenosť pre rohovú a strednú jamku. */
+function mysn_rudo_near_pocket( $balls, $c, $s ) {
+	if ( ! is_array( $balls ) ) {
+		return false;
+	}
+	foreach ( $balls as $b ) {
+		if ( empty( $b['on'] ) || 'white' === ( $b['kind'] ?? '' ) ) {
+			continue;
+		}
+		foreach ( mysn_rudo_pockets() as $p ) {
+			if ( hypot( (float) $b['x'] - $p[0], (float) $b['z'] - $p[1] ) < ( $p[2] ? $c : $s ) ) {
+				return true;
+			}
+		}
+	}
+	return false;
+}
+
+function mysn_rudo_balls_edge( $balls ) {
+	return mysn_rudo_near_pocket( $balls, 0.085, 0.075 );
+}
+
+/** Zaujímavé rozloženie gúľ: array( kľúč, slot ) prvej ešte nevidenej situácie vo frame, inak null. */
+function mysn_rudo_layout( $balls, $fm, $seen ) {
+	if ( ! is_array( $balls ) ) {
+		return null;
+	}
+	$R       = 0.02625;
+	$reds    = array();
+	$colours = array();
+	$cue     = null;
+	foreach ( $balls as $b ) {
+		if ( empty( $b['on'] ) ) {
+			continue;
+		}
+		$k = (string) ( $b['kind'] ?? '' );
+		if ( 'red' === $k ) {
+			$reds[] = $b;
+		} elseif ( 'white' === $k ) {
+			$cue = $b;
+		} else {
+			$colours[] = $k;
+		}
+	}
+	$n     = count( $reds );
+	$cands = array();
+	if ( 1 === $n ) {
+		$cands[] = array( 'lastred', 'rudo-lastred' );
+	}
+	if ( ! $n && array( 'black' ) === $colours ) {
+		$cands[] = array( 'black', 'rudo-black' );
+	}
+	if ( mysn_rudo_near_pocket( $balls, 0.1, 0.09 ) ) {
+		$cands[] = array( 'hang' . $n, 'rudo-hang' );
+	}
+	if ( $cue && ( 3.569 / 2 - abs( (float) $cue['x'] ) < $R * 1.6 || 1.778 / 2 - abs( (float) $cue['z'] ) < $R * 1.6 ) ) {
+		$cands[] = array( 'cush' . $n, 'rudo-cushion' );
+	}
+	if ( $n >= 5 && $n <= 13 ) {
+		$tight = 0;
+		for ( $i = 0; $i < $n; $i++ ) {
+			for ( $j = $i + 1; $j < $n; $j++ ) {
+				if ( hypot( (float) $reds[ $i ]['x'] - (float) $reds[ $j ]['x'], (float) $reds[ $i ]['z'] - (float) $reds[ $j ]['z'] ) < $R * 2.15 ) {
+					$tight++;
+				}
+			}
+		}
+		if ( $tight >= 5 ) {
+			$cands[] = array( 'cluster' . $n, 'rudo-cluster' );
+		}
+	}
+	foreach ( $cands as $cd ) {
+		if ( ! in_array( $fm . $cd[0], $seen, true ) ) {
+			return array( $fm . $cd[0], $cd[1] );
+		}
+	}
+	return null;
+}
+
+/**
+ * Rozhodnutie Ruda k úderu (GET rudo/call?m=zápas&k=úder): hráči aj diváci si ho stiahnu zo servera. pending = úder
+ * ešte nie je uložený (klient skúsi znova).
+ */
+function mysn_rest_rudo_call( $req ) {
+	global $wpdb;
+	$mid = (int) $req->get_param( 'm' );
+	$k   = (int) $req->get_param( 'k' );
+	if ( ! $mid || $k < 1 ) {
+		return new WP_Error( 'mysn', 'Chýba zápas.', array( 'status' => 400 ) );
+	}
+	$row = $wpdb->get_row( $wpdb->prepare( 'SELECT `after` FROM ' . mysn_table( 'moves' ) . ' WHERE match_id = %d AND seq = %d ORDER BY id DESC LIMIT 1', $mid, $k ), ARRAY_A ); // phpcs:ignore WordPress.DB
+	if ( ! $row ) {
+		return array( 'pending' => true );
+	}
+	$st = json_decode( (string) $row['after'], true );
+	return array(
+		'rudo' => isset( $st['call']['rudo'] ) && is_array( $st['call']['rudo'] ) ? $st['call']['rudo'] : null,
+		'nx'   => isset( $st['rudo_nx'] ) && is_array( $st['rudo_nx'] ) ? $st['rudo_nx'] : null,
+	);
+}
+
+add_action(
+	'rest_api_init',
+	function () {
+		register_rest_route(
+			'my-snooker/v1',
+			'/rudo/call',
+			array(
+				'methods'             => 'GET',
+				'callback'            => 'mysn_rest_rudo_call',
+				'permission_callback' => '__return_true',
 			)
 		);
 	}

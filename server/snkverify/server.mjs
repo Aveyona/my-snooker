@@ -11,7 +11,7 @@ import { Game } from './game/match.js';
 import { restore, inD, R } from './game/physics.js';
 
 const LK = '/etc/livekit.yaml';
-const VERSION = '3';
+const VERSION = '4';
 const TOL = 0.02; // najväčší povolený rozdiel polohy gule (m) medzi serverom a prehliadačom pred úderom
 
 function keys() {
@@ -215,11 +215,21 @@ export function verifyMove(before, shot, m, claim) {
 	if (!g.shoot(shot.power, shot.side, shot.top)) {
 		return { ok: false, error: 'Server úder nevedel vykonať.' };
 	}
-	g.finish();
+	const evs = g.finish();
 	if (!out) {
 		return { ok: false, error: 'Úder sa na serveri nedokončil.' };
 	}
 	const st = out.state;
+	// priebeh úderu pre komentátora Ruda (server rozhoduje, čo povie): spadnuté gule a gule, čo trafili mantinel
+	const cush = new Set();
+	const ev = { pots: [] };
+	for (const e of evs) {
+		if (e.type === 'cushion') {
+			cush.add(e.a);
+		} else if (e.type === 'pot') {
+			ev.pots.push({ id: e.a, kind: pre[e.a] ? g.balls[e.a].kind : '', cush: cush.has(e.a) });
+		}
+	}
 	const diff = [];
 	if (claim && claim.rules) {
 		const a = st.rules, b = claim.rules;
@@ -247,7 +257,7 @@ export function verifyMove(before, shot, m, claim) {
 			if (worst > TOL) diff.push('pos ' + Math.round(worst * 1000) + ' mm');
 		}
 	}
-	return { ok: true, same: diff.length === 0, diff, state: st, points: out.points, foul: !!out.foul, stat: shotStat(g, pre) };
+	return { ok: true, same: diff.length === 0, diff, state: st, points: out.points, foul: !!out.foul, stat: shotStat(g, pre), ev };
 }
 
 if (process.argv[1] && process.argv[1].endsWith('server.mjs')) {

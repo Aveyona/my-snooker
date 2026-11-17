@@ -530,6 +530,7 @@ function mysn_rest_settle( $req ) {
 	$cnote  = '';
 	$fixed  = false;
 	$lp     = 0;
+	$v      = null;
 	if ( function_exists( 'mysn_verify_move' ) && $prev ) {
 		$v = mysn_verify_move( $m, $me, $prev, $pending, $st );
 		if ( $v && ! empty( $v['ok'] ) && ! empty( $v['state'] ) ) {
@@ -575,6 +576,22 @@ function mysn_rest_settle( $req ) {
 			'rules'  => $pr,
 			'inHand' => ! empty( $prev['inHand'] ),
 		);
+	}
+	// komentátor Rudo (0.23.0): čo povie, rozhoduje server zo svojho stavu; návrh prehliadača sa zahodí
+	if ( isset( $st['call'] ) && is_array( $st['call'] ) ) {
+		unset( $st['call']['rudo'] );
+	}
+	unset( $st['rudo_nx'], $st['rudo_seen'] );
+	if ( function_exists( 'mysn_rudo_decide' ) ) {
+		list( $rr, $nx, $seen ) = mysn_rudo_decide( $m, $me, $prev, $st, $v );
+		if ( $rr ) {
+			$st['call']         = isset( $st['call'] ) && is_array( $st['call'] ) ? $st['call'] : array();
+			$st['call']['rudo'] = $rr;
+		}
+		if ( $nx ) {
+			$st['rudo_nx'] = $nx;
+		}
+		$st['rudo_seen'] = $seen;
 	}
 	$state = wp_json_encode( $st );
 	$rules = $st['rules'];

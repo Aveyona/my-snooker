@@ -162,6 +162,7 @@ function mysn_roadmap() {
 /** Denník zmien (najnovšie hore). */
 function mysn_changelog() {
 	return array(
+		array( '0.23.0', '17. 11. 2026', 'Komentátor Rudo podľa servera: čo Rudo po údere povie, vyberá server z overeného stavu (nie prehliadač strelca), živý komentár dostane mená a skóre zo servera, výkrik pri páde gule a poznámky k rozloženiu gúľ tiež určí server. Hráči aj diváci počujú to isté.' ),
 		array( '0.22.5', '17. 11. 2026', 'Administrácia Publikum a Rudo: nový posuvník Hlasitosť rozhodcu (0 až 400 %).' ),
 		array( '0.22.4', '17. 11. 2026', 'Hlasnejší rozhodca: hlas silnejší, na štadióne menej slabne so vzdialenosťou, menej dozvuku a diváci sa počas hlásenia stíšia.' ),
 		array( '0.22.3', '17. 11. 2026', 'Divák Rudo komentuje hlasnejšie: so vzdialenosťou slabne menej (asi 3× hlasnejší), má menej dozvuku, diváci sa počas jeho reči stíšia na 15 % a hlasitosť v administrácii sa dá nastaviť až na 400 %.' ),

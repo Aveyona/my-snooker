@@ -4587,7 +4587,7 @@ export function start(root, config = {}) {
 						watchInfo.callSeq = m.seq;
 						crowdPlay(m.call.crowd);
 						refCall(m.call);
-						rudo.exec(m.call.rudo, sp.id, m.seq);
+						rudo.fetchCall(sp.id, m.seq); // Rudo: rozhodnutie zo servera
 					}
 				} else if (m.k === 'w-shot') {
 					watchTurnAt = 0; // hráč vystrelil: časomiera sa zastaví do ďalšieho ťahu
@@ -5132,79 +5132,6 @@ export function start(root, config = {}) {
 				})
 				.catch(() => {});
 		};
-		/** Hlásenie rozhodcu po údere: Rudo k tomu niečo povie. */
-		const said = new Set(); // frame ball a snookery: raz za frame pre hráča
-		/**
-		 * Strelec po údere rozhodne, čo Rudo povie (rovnako pre súpera aj divákov, ide so stavom zápasu):
-		 * { p: zvuk zo zásoby } alebo { l: udalosť na živý komentár, d: mená a čísla, f: náhradný zvuk }.
-		 * Výnimočné chvíle (stovka, séria 50, koniec framu a zápasu) vždy naživo, ostatné občas naživo.
-		 */
-		const decide = (c, st) => {
-			const m = game.match;
-			if (!m || !m.league) {
-				return null;
-			}
-			const names = m.players.map((p) => p.name);
-			const sh = m.me; // strieľal som ja
-			const rules = (st && st.rules) || m.rules || {};
-			const frames = st && st.frames ? st.frames : m.frames;
-			const sc = (w) => (rules.scores ? `${rules.scores[w]}:${rules.scores[1 - w]}` : '');
-			const fr = (w) => (frames ? `${frames.won[w]}:${frames.won[1 - w]}` : '');
-			const ctx = (w, extra = {}) => ({ who: names[w] || '', other: names[1 - w] || '', score: sc(w), frames: fr(w), ...extra });
-			const live = (ev, w, fb, delay, extra, f = 1) => ({ l: ev, d: ctx(w, extra), f: fb, t: delay, x: f });
-			const pool = (slot, delay) => ({ p: slot, t: delay, v: Math.floor(Math.random() * 1e6) }); // v = variant repliky pre všetkých
-			const maybe = (q) => Math.random() < Math.min(0.95, q * rf()); // Ako často hovorí (administrácia)
-			if (c.over) {
-				return live('match', c.fw !== undefined ? c.fw : sh, 'rudo-match', 3500);
-			}
-			if (c.frame) {
-				said.clear();
-				return live('frame', c.fw !== undefined ? c.fw : sh, 'rudo-frame', 3000);
-			}
-			if (c.won !== undefined) {
-				return live('won', c.won, 'rudo-won', 2500, { brk: c.brk || 0 }); // po potlesku, vtipne k partii
-			}
-			if (c.brk >= 100 && shotTrack.brk0 < 100) {
-				return live('century', sh, 'rudo-century', 2500, { brk: c.brk });
-			}
-			if (c.brk >= 50 && shotTrack.brk0 < 50) {
-				return live('break50', sh, 'rudo-50', 2200, { brk: c.brk });
-			}
-			const white = shotTrack.pots.some((id) => game.balls[id] && game.balls[id].kind === 'white');
-			const pots = shotTrack.pots.filter((id) => game.balls[id] && game.balls[id].kind !== 'white');
-			if (c.foul) {
-				const fb = white ? 'rudo-white' : 'rudo-foul';
-				if (shotTrack.lead >= 20 && maybe(0.6)) {
-					return live('foullead', sh, 'rudo-foul', 2600, { pts: c.foul }, 0);
-				}
-				return maybe(0.45) ? live(white ? 'white' : 'foul', sh, fb, 2600, { pts: c.foul }, 0) : pool(fb, 2600);
-			}
-			const fm = (frames ? frames.n : 1) + ':';
-			if (c.snk !== undefined && !said.has(fm + 's' + c.snk) && maybe(0.6)) {
-				said.add(fm + 's' + c.snk);
-				return live('snookers', c.snk, 'rudo-miss', 2600, {}, 0);
-			}
-			if (c.fb !== undefined && !said.has(fm + 'f' + c.fb) && maybe(0.5)) {
-				said.add(fm + 'f' + c.fb);
-				return live('frameball', c.fb, 'rudo-nice', 2400, {}, 0);
-			}
-			if (pots.some((id) => shotTrack.cush.has(id)) || (pots.length && c.brk >= 20 && maybe(0.15))) {
-				return maybe(0.45) ? live('nice', sh, 'rudo-nice', 1800, { brk: c.brk || 0 }, 0) : pool('rudo-nice', 1800);
-			}
-			if (!pots.length) {
-				const edge = game.balls.some((b) => b.on && b.kind !== 'white' && POCKETS.some((p) => Math.hypot(b.p.x - p.x, b.p.z - p.z) < (p.corner ? 0.085 : 0.075)));
-				if (edge) {
-					return maybe(0.45) ? live('edge', sh, 'rudo-edge', 1500, {}, 0) : pool('rudo-edge', 1500);
-				}
-				if (maybe(0.5)) {
-					return pool('rudo-miss', 1500);
-				}
-			}
-			if (pots.length && maybe(0.4)) {
-				return pool('rudo-pot', 1600); // bežná potopená guľa: často, ale nie pri každej
-			}
-			return null;
-		};
 		/** Prehrá rozhodnutie Ruda (hráči aj diváci): mid = zápas, seq = úder (jeden živý komentár pre všetkých). */
 		const exec = (r, mid, seq) => {
 			if (!on() || !mid) {
@@ -5213,90 +5140,73 @@ export function start(root, config = {}) {
 			if (r && r.p) {
 				play(r.p, r.t || 1800, false, r.v);
 			} else if (r && r.l) {
-				live(r.l, { ...(r.d || {}), k: String(seq) }, r.f, r.t || 2000, !!r.x, mid);
+				live(r.l, { k: String(seq) }, r.f, r.t || 2000, !!r.x, mid); // mená a čísla si server vezme sám
 			}
 			clearTimeout(layoutT);
-			layoutT = setTimeout(layout, 5500); // po chvíli: zaujímavé rozloženie gúľ na stole
+			if (r && r.y && r.y.p) {
+				// po chvíli: zaujímavé rozloženie gúľ na stole (rozhodol server), keď Rudo práve nehovoril
+				layoutT = setTimeout(() => {
+					if (on() && game.state !== 'moving' && Date.now() - last >= 4000) {
+						play(r.y.p, 0, false, r.y.v);
+					}
+				}, 5500);
+			}
 		};
 		/**
-		 * Náhoda rovnaká u všetkých (hráči aj diváci majú ten istý stôl): číslo 0 až 1 z polôh gúľ a soli,
-		 * takže Rudo povie to isté všade bez posielania správ.
+		 * Rudo podľa servera (0.23.0): rozhodnutie k úderu (a výkrik pri ďalšom údere) si hráči aj diváci stiahnu
+		 * zo servera, ktorý ho vybral zo svojho overeného stavu. Kým server úder neuloží, skúša sa znova.
 		 */
-		const seeded = (salt) => {
-			let h = 2166136261 ^ salt;
-			for (const b of game.balls) {
-				if (b.on) {
-					h = Math.imul(h ^ (Math.round(b.p.x * 200) + 1000 * Math.round(b.p.z * 200)), 16777619);
-				}
+		let nx = null; // výkrik „Je tam!“ pri ďalšom údere: { on, v } od servera
+		let callKey = '';
+		const fetchCall = (mid, seq) => {
+			nx = null;
+			if (!on() || !mid || !(seq > 0) || !config.restUrl) {
+				return;
 			}
-			return ((h >>> 0) % 10000) / 10000;
+			const key = mid + ':' + seq;
+			callKey = key;
+			const t0 = Date.now();
+			const get = (n) => {
+				fetch(config.restUrl + 'rudo/call?m=' + mid + '&k=' + seq, { cache: 'no-store', credentials: 'omit' })
+					.then((r) => (r.ok ? r.json() : null))
+					.then((d) => {
+						if (callKey !== key) {
+							return; // medzitým prišiel ďalší úder
+						}
+						if (d && d.pending && n < 18) {
+							setTimeout(() => get(n + 1), 700);
+							return;
+						}
+						if (d && !d.pending) {
+							nx = d.nx || null;
+							const r = d.rudo;
+							if (r && r.t) {
+								r.t = Math.max(300, r.t - (Date.now() - t0)); // čakanie na server sa odráta z oneskorenia
+							}
+							exec(r, mid, seq);
+						}
+					})
+					.catch(() => n < 5 && setTimeout(() => get(n + 1), 1500));
+			};
+			get(0);
 		};
-		/** Počas úderu: guľa práve spadla, Rudo vykríkne (občas). */
+		/** Počas úderu: guľa práve spadla, Rudo vykríkne (ak to server pre tento úder určil). */
 		const potNow = (id) => {
 			const b = game.balls[id];
-			if (!on() || !b || b.kind === 'white' || Date.now() - last < 4000) {
+			if (!on() || !b || b.kind === 'white' || !nx || !nx.on || Date.now() - last < 4000) {
 				return;
 			}
-			if (seeded(id * 31 + 7) < Math.min(0.95, 0.35 * rf())) {
-				play('rudo-in', 150, false, Math.floor(seeded(id * 53 + 3) * 1e6));
-			}
+			const v = nx.v;
+			nx = null; // len raz za úder
+			play('rudo-in', 150, false, v);
 		};
-		/** Zaujímavé rozloženie gúľ po údere (keď Rudo práve nehovoril): raz za frame pre každú situáciu. */
 		let layoutT = 0;
-		const seen = new Set();
-		const layout = () => {
-			if (!on() || game.state === 'moving' || Date.now() - last < 4000) {
-				return;
-			}
-			const on2 = game.balls.filter((b) => b.on);
-			const reds = on2.filter((b) => b.kind === 'red');
-			const cue = on2.find((b) => b.kind === 'white');
-			const colours = on2.filter((b) => b.kind !== 'red' && b.kind !== 'white');
-			const frameKey = String(game.match ? game.match.frames ? game.match.frames.n : 1 : 0) + ':';
-			const mx = L / 2; // mantinely (hracia plocha)
-			const mz = W / 2;
-			const cands = [];
-			if (reds.length === 1) {
-				cands.push(['lastred', 'rudo-lastred']);
-			}
-			if (!reds.length && colours.length === 1 && colours[0].kind === 'black') {
-				cands.push(['black', 'rudo-black']);
-			}
-			if (on2.some((b) => b.kind !== 'white' && POCKETS.some((p) => Math.hypot(b.p.x - p.x, b.p.z - p.z) < (p.corner ? 0.1 : 0.09)))) {
-				cands.push(['hang' + reds.length, 'rudo-hang']); // guľa visí nad jamkou
-			}
-			if (cue && (mx - Math.abs(cue.p.x) < R * 1.6 || mz - Math.abs(cue.p.z) < R * 1.6)) {
-				cands.push(['cush' + reds.length, 'rudo-cushion']); // biela prilepená na mantineli
-			}
-			let tight = 0;
-			for (let i = 0; i < reds.length; i++) {
-				for (let j = i + 1; j < reds.length; j++) {
-					if (Math.hypot(reds[i].p.x - reds[j].p.x, reds[i].p.z - reds[j].p.z) < R * 2.15) {
-						tight++;
-					}
-				}
-			}
-			if (reds.length >= 5 && reds.length <= 13 && tight >= 5) {
-				cands.push(['cluster' + reds.length, 'rudo-cluster']); // kopa červených, ktorú treba rozbiť
-			}
-			const c = cands.find(([k]) => !seen.has(frameKey + k));
-			if (c && seeded(97) < Math.min(0.95, 0.55 * rf())) {
-				seen.add(frameKey + c[0]);
-				play(c[1], 0, false, Math.floor(seeded(131) * 1e6));
-			}
-		};
 		const start = () => {
-			said.clear();
-			seen.clear();
 			play('rudo-start', 4500, true, game.match ? game.match.id : 0);
 		};
-		return { decide, exec, start, potNow };
+		return { exec, fetchCall, start, potNow };
 	})();
 	game.decorateCall = (c, st) => {
-		const r = rudo.decide(c, st);
-		if (r) {
-			c.rudo = r;
-		}
 		const cr = crowdDecide(st, c.foul, c);
 		if (cr) {
 			cr.v = Math.floor(Math.random() * 1e6); // rovnaká nahrávka potlesku u všetkých
@@ -5440,7 +5350,7 @@ export function start(root, config = {}) {
 			crowdPlay(d.crowd); // publikum (rozhodol strelec)
 			refCall(d);
 			if (game.match) {
-				rudo.exec(d.rudo, game.match.id, game.match.seq); // komentátor Rudo (rozhodol strelec)
+				rudo.fetchCall(game.match.id, game.match.seq); // komentátor Rudo (rozhodol server)
 			}
 		}
 		if (type === 'shot') {
