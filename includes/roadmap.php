@@ -162,6 +162,7 @@ function mysn_roadmap() {
 /** Denník zmien (najnovšie hore). */
 function mysn_changelog() {
 	return array(
+		array( '0.19.7', '17. 11. 2026', 'Mobil: bez jednopísmenkových klávesových skratiek v zátvorkách – napr. rádio Zapnúť (P), Čítať (C), Zavrieť (M), Späť (Z).' ),
 		array( '0.19.6', '17. 11. 2026', 'Voľný pohľad: predmety v miestnosti sa dajú otvoriť priamo. PC: predmet v strede obrazovky sa rozsvieti, krátky klik ľavým ho otvorí (držanie ďalej posúva kameru dole), pravé tlačidlo vráti späť do voľného pohľadu na to isté miesto. Mobil: ťuknutie na predmet ho otvorí, vľavo dole tlačidlo ← panák Voľný pohľad vráti späť.' ),
 		array( '0.19.5', '17. 11. 2026', 'Po výbere Hrať (mobil aj PC) sa na 3 sekundy v strede obrazovky zobrazí nápis Hráš sám o najlepšie skóre za najkratší čas, pod ním Fauly sa odčítajú.' ),
 		array( '0.19.4', '17. 11. 2026', 'Mobil: kým miesto úderu nie je v strede bielej, namiesto popisu Miesto úderu je pod guľou žlté tlačidlo Do stredu – ťuknutie vráti bod do stredu (na PC to robí dvojklik kolieskom).' ),

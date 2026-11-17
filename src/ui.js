@@ -47,7 +47,7 @@ const TOUCH_WORDS = [
 	[/\bKlik\b/g, 'Ťuknutie'],
 ];
 function noKeys(t) {
-	if (!t || (!KEY_RE.test(t) && !MOUSE_RE.test(t) && !/\(\d\)|klik|Klik/.test(t))) {
+	if (!t || (!KEY_RE.test(t) && !MOUSE_RE.test(t) && !/\([A-Z\d]\)|klik|Klik/.test(t))) {
 		return t;
 	}
 	let s = t;
@@ -55,7 +55,7 @@ function noKeys(t) {
 		s = s.replace(re, to);
 	}
 	const bad = (x) => KEY_RE.test(x) || MOUSE_RE.test(x);
-	s = s.replace(/\s*\([^()]*\)/g, (m) => (bad(m) || /^\s*\(\d\)$/.test(m) ? '' : m));
+	s = s.replace(/\s*\([^()]*\)/g, (m) => (bad(m) || /^\s*\([A-Z\d]\)$/.test(m) ? '' : m));
 	if (KEY_RE.test(s) || (MOUSE_RE.test(s) && /[.!?]/.test(s))) {
 		// celé vety s klávesmi zmiznú; vety s myšou len v dlhšom texte (popisky tlačidiel a polí ostanú)
 		s = s
