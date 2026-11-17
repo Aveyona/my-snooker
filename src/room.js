@@ -302,6 +302,7 @@ export function buildRoomShell(scene, quality, opts = {}) {
 	// Dvere na kratšej stene (x = +RX), otvorené do herne; F6 ich otvorí alebo zatvorí
 	const DOOR = { at: 1.9, w: 1.0, h: 2.15 };
 	let doorHinge = null;
+	let doorLeaf = null; // krídlo dverí herne (klik naň otvorí alebo zatvorí dvere)
 	const DOOR_OPEN = THREE.MathUtils.degToRad(72);
 	const signs = {}; // svietiace cedule v chodbe (Kancelária, Obývačka): klik = prechod do miestnosti
 	const doorState = { open: false, angle: 0 }; // po načítaní zatvorené: partia je súkromná, kým hráč neotvorí dvere (F6)
@@ -377,7 +378,7 @@ export function buildRoomShell(scene, quality, opts = {}) {
 			wall.add(hinge);
 			doorHinge = hinge;
 			const leafMat = new THREE.MeshStandardMaterial({ color: 0x5a2f16, roughness: 0.45 });
-			add(new THREE.BoxGeometry(door.w - 0.04, door.h - 0.02, 0.045), leafMat, -(door.w - 0.04) / 2, door.h / 2, 0, hinge);
+			doorLeaf = add(new THREE.BoxGeometry(door.w - 0.04, door.h - 0.02, 0.045), leafMat, -(door.w - 0.04) / 2, door.h / 2, 0, hinge);
 			// výplne na krídle
 			for (const y of [0.55, 1.5]) {
 				for (const side of [-1, 1]) {
@@ -1201,6 +1202,8 @@ export function buildRoomShell(scene, quality, opts = {}) {
 		/** Miesta na státie pre online divákov: počet, miesto, oči diváka, výber zhora. */
 		/** Vypínač nástenných svietidiel: poloha (klik s Ctrl) a zapnutie alebo zhasnutie. */
 		lightSwitch: new THREE.Vector3(SW.x, SW.y, SW.z),
+		/** Stred krídla dverí herne vo svete (posúva sa s otváraním), alebo null. */
+		doorSpot: () => (doorLeaf ? doorLeaf.getWorldPosition(new THREE.Vector3()) : null),
 		setWallLamps,
 		spotCount: SPOTS.length,
 		spotPlace,

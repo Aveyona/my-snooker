@@ -978,6 +978,7 @@ export function start(root, config = {}) {
 			{ id: 'radio', key: 'f9', pos: new THREE.Vector3(RADIO.radio.x, RADIO.radio.top + 0.11, RADIO.radio.z), r: 0.3 },
 			{ id: 'mixer', key: 'f9', pos: new THREE.Vector3(RADIO.desk.x, RADIO.desk.top + 0.06, RADIO.desk.z), r: 0.45 },
 			{ id: 'switch', act: 'wallLamps', pos: room.lightSwitch, r: 0.13 }, // vypínač lámp pri dverách (len myšou)
+			...(room.doorSpot && room.doorSpot() ? [{ id: 'door', act: 'homeDoor', pos: room.doorSpot(), r: 1.05 }] : []), // dvere herne (ako F6)
 			{ id: 'paintSun', act: 'paintSun', pos: room.paintSun.look, r: 0.55 }, // obrazy (len myšou)
 			{ id: 'paintMoon', act: 'paintMoon', pos: room.paintMoon.look, r: 0.55 },
 			// chodba za dverami (F6): svietiace cedule do kancelárie a obývačky
@@ -2459,6 +2460,12 @@ export function start(root, config = {}) {
 			ui.setFree(false);
 			if (view === 'office') {
 				controls.capture();
+			}
+		},
+		// dvere herne: klik alebo ťuknutie na krídlo urobí to isté ako F6
+		homeDoor: () => {
+			if (controls.hooks.key) {
+				controls.hooks.key('f6');
 			}
 		},
 		officeWindow: () => {
