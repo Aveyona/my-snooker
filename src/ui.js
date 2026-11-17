@@ -139,6 +139,17 @@ export class UI {
 		this.spinBall = this.spinBox.querySelector('.mysn-spin-ball');
 		this.spinDot = this.spinBox.querySelector('.mysn-spin-dot');
 		this.bindSpin();
+		// mobil: kým bod nie je v strede, namiesto popisu Miesto úderu žlté tlačidlo Do stredu
+		this.spinReset = h('button', 'mysn-spin-reset', 'Do stredu');
+		this.spinReset.type = 'button';
+		for (const t of ['pointerdown', 'pointerup', 'mousedown', 'touchstart', 'touchend', 'wheel']) {
+			this.spinReset.addEventListener(t, (e) => e.stopPropagation());
+		}
+		this.spinReset.addEventListener('click', (e) => {
+			e.stopPropagation();
+			this.setSpin(0, 0);
+		});
+		this.spinBox.querySelector('.mysn-spin-label').after(this.spinReset);
 		// mobil: biely priehľadný kruh s okom, keď je zameraná guľa – drž a ťahaj = pohľad ako pravým tlačidlom myši
 		this.eyeBtn = h('button', 'mysn-eye', '<svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 12s3.6-6.5 10-6.5S22 12 22 12s-3.6 6.5-10 6.5S2 12 2 12z"/><circle cx="12" cy="12" r="3.2"/></svg>');
 		this.eyeBtn.type = 'button';
@@ -503,6 +514,7 @@ export class UI {
 		this.top = top;
 		this.spinDot.style.left = 50 + this.side * 40 + '%';
 		this.spinDot.style.top = 50 - this.top * 40 + '%';
+		this.spinBox.classList.toggle('mysn-spin-off', !!(this.side || this.top)); // mobil: ukáže Do stredu
 		this.opts.onSpin(this.side, this.top);
 	}
 

@@ -522,6 +522,8 @@ body.mysn-page { font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans
 .mysn-joyud button.mysn-on { background: #ffd34d66; border-color: #ffd34d; }
 .mysn-ui.mysn-freecam .mysn-tpower, .mysn-ui.mysn-freecam .mysn-spin, .mysn-ui.mysn-freecam .mysn-chalkbtn, .mysn-ui.mysn-freecam .mysn-finebtn, .mysn-ui.mysn-freecam .mysn-eye, .mysn-ui.mysn-freecam .mysn-contact, .mysn-ui.mysn-freecam .mysn-tools-toggle { display: none !important; }
 .mysn-joy i { display: block; width: 46px; height: 46px; border-radius: 50%; background: #ffffffcc; transition: transform .05s; }
+/* mobil: tlačidlo Do stredu pod Miestom úderu (na desktope skryté) */
+.mysn-spin-reset { display: none; margin: 2px auto 0; padding: 4px 12px; border: 0; border-radius: 11px; background: #ffd34d; color: #111; font: 700 12px system-ui, sans-serif; pointer-events: auto; -webkit-tap-highlight-color: transparent; }
 /* mobil: zameriavač – jemné mierenie (ako Shift), medzi kriedou a Miestom úderu */
 .mysn-finebtn { display: none; position: absolute; left: 8px; bottom: 196px; width: 48px; height: 48px; padding: 0; border-radius: 50%; border: 1.5px solid #ffffffcc; background: #ffffff26; color: #fff; align-items: center; justify-content: center; pointer-events: auto; -webkit-tap-highlight-color: transparent; }
 .mysn-finebtn.mysn-fine-on { color: #ffd34d; border-color: #ffd34d; background: #ffd34d40; }
@@ -549,6 +551,9 @@ body.mysn-page { font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans
 	.mysn-ui.mysn-tools-open .mysn-tpower { bottom: 180px; }
 	.mysn-eye.mysn-eye-on { display: flex; }
 	.mysn-chalkbtn { display: flex; }
+	/* Miesto úderu mimo stredu: namiesto popisu žlté tlačidlo Do stredu */
+	.mysn-spin.mysn-spin-off .mysn-spin-label { display: none; }
+	.mysn-spin.mysn-spin-off .mysn-spin-reset { display: inline-block; }
 	/* klávesové skratky na mobile nie sú: čísla položiek v ponuke Krieda a pomôcky, riadok nápovedy pre myš */
 	.mysn-tools-menu .mysn-btn > b, .mysn-hint { display: none !important; }
 	.mysn-mmbtn { display: inline-flex; align-items: center; }

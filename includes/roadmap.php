@@ -162,6 +162,7 @@ function mysn_roadmap() {
 /** Denník zmien (najnovšie hore). */
 function mysn_changelog() {
 	return array(
+		array( '0.19.4', '17. 11. 2026', 'Mobil: kým miesto úderu nie je v strede bielej, namiesto popisu Miesto úderu je pod guľou žlté tlačidlo Do stredu – ťuknutie vráti bod do stredu (na PC to robí dvojklik kolieskom).' ),
 		array( '0.19.3', '17. 11. 2026', 'Mobil: texty o myši sa nahrádzajú prstom – myšou = prstom, pohybom myši = ťahaním prsta, kolieskom priblížiš = dvoma prstami priblížiš, kliknutím/klikni = ťuknutím/ťukni, bielu položíš tlačidlom Hotovo. Vety, ktoré dávajú zmysel len s myšou (zachytenie, kurzor, koliesko, tlačidlá myši), na mobile zmiznú; popisky tlačidiel a polí ostávajú.' ),
 		array( '0.19.2', '17. 11. 2026', 'Mobil bez klávesových skratiek: každý text v rozhraní hry (okná, hlásenia, ponuky, pohľady) sa na mobile automaticky prečistí – zmiznú zátvorky s klávesmi (F3), (ako Shift), (7) a vety o klávesoch (napr. „Klávesy 1 až 7, Esc alebo F3 zavrie.“, „F1, Enter alebo Esc: späť do hry.“). V ponuke Krieda a pomôcky sa skryjú čísla 1 až 7, skrytý je aj riadok nápovedy pre myš. Platí aj pre texty, ktoré pribudnú neskôr. Desktop bez zmeny.' ),
 		array( '0.19.1', '17. 11. 2026', 'Mobil, hlavné menu ☰: dlaždica Nastavenia je červená.' ),
