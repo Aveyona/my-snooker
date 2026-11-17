@@ -162,6 +162,7 @@ function mysn_roadmap() {
 /** Denník zmien (najnovšie hore). */
 function mysn_changelog() {
 	return array(
+		array( '0.20.21', '17. 11. 2026', 'Mobil, nástenka v herni (Nápoveda): ovládanie prstom, tlačidlá na obrazovke a obrázok telefónu so 4 časťami obrazovky namiesto kláves, Ctrl a myši; texty o tágach, príslušenstve a rebríčku podľa mobilu. Stojan: ikona Predĺženie a zvýraznenie otvorenej ikony.' ),
 		array( '0.20.20', '17. 11. 2026', 'Mobil, kancelária: ťuknutím na predmet ho otvoríš (tabuľa ligy, notebook, kalendár, vizitka, stojan, nástenka, dvere ŠTADIÓN, lampa, špendlík na mape); pri priblíženom predmete dole ← Späť za stôl; pohľad za stolom na výšku sklonený nadol (stôl a tabuľa namiesto stropu); pri vstupe sa predmety na chvíľu rozsvietia.' ),
 		array( '0.20.19', '17. 11. 2026', 'Mobil ☰, skupina Hra: najprv Nastavenia a Príslušenstvo, potom režimy hry a ostatné.' ),
 		array( '0.20.18', '17. 11. 2026', 'Mobil ☰: Režim hry a Hra sú jedna skupina Hra (Tréning, Hrať, Liga, Poslať výzvu, Pozerať hru, Nastavenia, Príslušenstvo, Správa hry, Účet, Späť na web); bez dlaždice Nakriedovať (je v Príslušenstve).' ),

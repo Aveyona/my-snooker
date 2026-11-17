@@ -749,6 +749,8 @@ body.mysn-page { font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans
 	.mysn-rack-icons { position: absolute; right: 8px; top: 34%; display: flex; flex-direction: column; gap: 10px; pointer-events: auto; }
 	.mysn-rack-ico { width: 52px; height: 52px; border-radius: 50%; border: 1.5px solid #ffffffcc; background: #0c0f1499; color: #fff; font: 600 11px system-ui, sans-serif; padding: 0; }
 	.mysn-rack-ico:last-child { font: italic 700 18px Georgia, serif; }
+	.mysn-rack-ico.mysn-on { border-color: #ffd34d; color: #ffd34d; background: #ffd34d33; }
+	.mysn-rack-ico { line-height: 1.15; }
 	.mysn-cue-panel { display: none; top: auto; left: 0; right: 0; bottom: 0; width: auto; max-height: 62%; border-radius: 14px 14px 0 0; padding: 12px 14px 16px; background: #0c0f14f5; z-index: 9; }
 	.mysn-cue-panel[data-show] { display: flex; }
 	.mysn-cue-panel.mysn-hidden { display: none; }

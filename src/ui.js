@@ -1073,6 +1073,7 @@ export class UI {
 			x.addEventListener('click', (e) => {
 				e.stopPropagation();
 				this.chalkEl.classList.remove('mysn-chalks-on');
+				this.cpShow();
 			});
 			this.chalkEl.prepend(x);
 		}
@@ -2773,8 +2774,11 @@ export class UI {
 			delete this.cuePanel.dataset.show;
 		}
 		if (this.viewBox) {
+			// otvorená časť (alebo krieda, nasadené predĺženie) má ikonu žltú
+			const chalkOn = !!(this.chalkEl && this.chalkEl.classList.contains('mysn-chalks-on'));
 			for (const b of this.viewBox.querySelectorAll('.mysn-rack-ico')) {
-				b.classList.remove('mysn-on');
+				const key = b.dataset.k;
+				b.classList.toggle('mysn-on', key === 'ext' ? !!(this.opts.settings && this.opts.settings.cueExt) : key === 'chalk' ? chalkOn : !!k && key === k);
 			}
 		}
 	}
@@ -3054,8 +3058,10 @@ export class UI {
 				top.append(nav('ArrowLeft', '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg>'), mid, nav('ArrowRight', '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg>')); // šípky ako SVG: presne v strede kruhu
 				const icons = h('div', 'mysn-rack-icons');
 				const ico = (key, label, fn) => {
-					const b = h('button', 'mysn-rack-ico' + (this._cpShow === key ? ' mysn-on' : ''), label);
+					const on = this._cpShow === key || (key === 'chalk' && this.chalkEl && this.chalkEl.classList.contains('mysn-chalks-on'));
+					const b = h('button', 'mysn-rack-ico' + (on ? ' mysn-on' : ''), label);
 					b.type = 'button';
+					b.dataset.k = key;
 					b.addEventListener('click', (e) => {
 						e.stopPropagation();
 						fn(b);
@@ -3076,6 +3082,18 @@ export class UI {
 					if (this.chalkEl) {
 						this.chalkEl.classList.toggle('mysn-chalks-on');
 					}
+					this.cpShow();
+				});
+				// predĺženie tága: ťuknutie prepína 0 → 15 → 30 → 45 cm → dole (ako 6 a 7 v Príslušenstve)
+				const extLabel = () => {
+					const e = Math.round(((this.opts.settings && this.opts.settings.cueExt) || 0) * 100);
+					return e ? `Pred.<br>${e} cm` : 'Predĺž.';
+				};
+				ico('ext', extLabel(), (b) => {
+					const e = Math.round(((this.opts.settings && this.opts.settings.cueExt) || 0) * 100);
+					this.opts.onAction(e >= 45 ? 'cueExtOff' : 'cueExt');
+					b.innerHTML = extLabel();
+					b.classList.toggle('mysn-on', !!(this.opts.settings && this.opts.settings.cueExt));
 				});
 				ico('own', 'Vlastné', () => sheet('own'));
 				ico('info', 'i', () => sheet('info'));

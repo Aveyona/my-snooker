@@ -78,6 +78,121 @@ const PAPERS = [
 	},
 ];
 
+/** Mobil: rovnaká nástenka, ale ovládanie prstom a tlačidlami namiesto kláves, Ctrl a myši. */
+const PAPERS_TOUCH = [
+	{
+		title: 'Ovládanie prstom',
+		lines: [
+			'Ťahaj doľava a doprava: mierenie',
+			'   (vpravo hore alebo vľavo dole).',
+			'Vpravo dole: prst dole odtiahne tágo,',
+			'   rýchlo hore = úder, sila podľa rýchlosti.',
+			'Dva prsty: priblíženie a oddialenie.',
+			'Vľavo hore ťukni: chat.',
+			'Kruh s okom (keď mieriš na guľu): drž a ťahaj,',
+			'   hore priblíži, do strán krúži, dole k stolu.',
+			'Miesto úderu: posuň bod na bielej (falša),',
+			'   tlačidlo Do stredu ho vráti.',
+			'Po výstrele prst otáča kameru okolo bielej.',
+		],
+	},
+	{
+		title: 'Tlačidlá na obrazovke',
+		lines: [
+			'☰ hlavné menu: Hra, Herňa, Tréning.',
+			'Šípka dole v strede: spodný panel',
+			'   (citlivosť prsta, Späť, Biela do ruky).',
+			'Šípka na stôl: pohľad zhora (len pozeranie).',
+			'Panák: voľný pohľad, ovládač = chôdza,',
+			'   ▲ ▼ hore a dole, ťuk na predmet ho otvorí.',
+			'Modrý štvorček: príslušenstvo',
+			'   (krieda, nádstavce, predĺženie).',
+			'Zameriavač: jemné mierenie (niektoré tágá).',
+		],
+	},
+	{
+		title: 'Princíp hry',
+		lines: [
+			'Bielou guľou potápaj ostatné gule.',
+			'Body: červená 1, žltá 2, zelená 3,',
+			'hnedá 4, modrá 5, ružová 6, čierna 7.',
+			'Striedavo červená a farba.',
+			'Faul: súper dostane aspoň 4 body.',
+			'Hrať: jeden frame o najlepšie skóre,',
+			'   vyhráva najviac bodov za najkratší čas,',
+			'   fauly sa odčítajú, rebríček v ☰ Herňa.',
+			'Krieda (príslušenstvo): falše 5x, 3 údery.',
+			'Kruh hore: dotyk gúľ zhora,',
+			'   uhol a plnosť zásahu.',
+		],
+	},
+	{
+		title: 'Tágá (☰ Herňa)',
+		lines: [
+			'Desať tág, vyberáš šípkami ‹ ›',
+			'   alebo ťuknutím na tágo v stojane.',
+			'Ikony vpravo: Špica, Krieda, Vlastné, i.',
+			'Vlastné tágo zo šablóny, úpravy v rozpočte.',
+			'Špica: mäkká lepšie falše, tvrdá silnejšia,',
+			'   opotrebuje sa, od 80 % nepresná.',
+		],
+	},
+	{
+		title: 'Dosah a príslušenstvo',
+		lines: [
+			'Ruka na mostíku najviac 95 cm',
+			'   od mantinelu, ruka na rukoväti 55 cm.',
+			'Ďalej: krížik alebo pavúk',
+			'   alebo predĺženie 15, 30, 45 cm',
+			'   (modrý štvorček, len pri stole).',
+			'Červený nápis pri mierení: nedosiahneš.',
+			'Krížik ide aj pri mantineli, pavúky nie.',
+		],
+	},
+];
+
+/** Mobil: obrázok telefónu so 4 časťami obrazovky (papier vpravo dole namiesto myši). */
+function drawPhone(g, w) {
+	const x0 = -w / 2 + 70;
+	const y0 = -125;
+	const pw = 210;
+	const ph = 360;
+	g.fillStyle = '#222';
+	g.fillRect(x0 - 14, y0 - 20, pw + 28, ph + 40);
+	const zones = [
+		[0, 0, '#7ec8ff', '1'],
+		[1, 0, '#f2a65a', '2'],
+		[0, 1, '#f2a65a', '3'],
+		[1, 1, '#7CC97C', '4'],
+	];
+	for (const [cx, cy, col, n] of zones) {
+		g.fillStyle = col;
+		g.fillRect(x0 + cx * (pw / 2) + 2, y0 + cy * (ph / 2) + 2, pw / 2 - 4, ph / 2 - 4);
+		g.fillStyle = '#123524';
+		g.font = 'bold 60px Arial, sans-serif';
+		g.textAlign = 'center';
+		g.fillText(n, x0 + cx * (pw / 2) + pw / 4, y0 + cy * (ph / 2) + ph / 4);
+	}
+	g.textAlign = 'left';
+	const tx = x0 + pw + 50;
+	const rows = [
+		['1', 'vľavo hore: ťuk = chat'],
+		['2, 3', 'ťahaj do strán: mierenie'],
+		['4', 'vpravo dole: úder'],
+		['', 'prst dole = odtiahni,'],
+		['', 'rýchlo hore = úder'],
+	];
+	rows.forEach(([a, b], i) => {
+		const y = y0 + 40 + i * 70;
+		g.fillStyle = '#123524';
+		g.font = 'bold 31px Arial, sans-serif';
+		g.fillText(a, tx, y);
+		g.fillStyle = '#333';
+		g.font = '29px Arial, sans-serif';
+		g.fillText(b, tx + (a ? 90 : 90), y);
+	});
+}
+
 /** Obrázok myši s popisom tlačidiel (papier vpravo dole). */
 function drawMouse(g, w, h) {
 	const cx = -w / 2 + 170;
@@ -141,7 +256,7 @@ function drawMouse(g, w, h) {
 	lab(cy + 150, '#555', 'Pohyb bez tlačidla: mierenie', 'pomaly = jemne, Shift = ešte jemnejšie', 0, 60);
 }
 
-export function boardTexture() {
+export function boardTexture(touch = !!(window.matchMedia && window.matchMedia('(hover: none), (pointer: coarse)').matches)) {
 	const W = 3072;
 	const H = 1360;
 	const c = document.createElement('canvas');
@@ -175,8 +290,8 @@ export function boardTexture() {
 		[50, 850, 980, 470, 0.009],
 		[1090, 680, 920, 640, -0.006],
 	];
-	const papers = PAPERS.map((p, i) => ({ ...p, box: boxes[i] }));
-	papers.push({ title: 'Ovládanie myšou', mouse: true, box: [2050, 770, 970, 550, 0.008] });
+	const papers = (touch ? PAPERS_TOUCH : PAPERS).map((p, i) => ({ ...p, box: boxes[i] }));
+	papers.push({ title: touch ? 'Časti obrazovky' : 'Ovládanie myšou', mouse: true, box: [2050, 770, 970, 550, 0.008] });
 	papers.forEach((p, i) => {
 		const [x, y, w, h, rot] = p.box;
 		g.save();
@@ -199,7 +314,11 @@ export function boardTexture() {
 		g.fillRect(-w / 2 + 40, -h / 2 + 104, w - 80, 4);
 		if (p.mouse) {
 			g.textBaseline = 'middle';
-			drawMouse(g, w, h);
+			if (touch) {
+				drawPhone(g, w);
+			} else {
+				drawMouse(g, w, h);
+			}
 		} else {
 			g.fillStyle = '#222';
 			const lh = Math.min(44, (h - 140) / p.lines.length);
