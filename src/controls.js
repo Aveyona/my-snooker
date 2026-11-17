@@ -56,6 +56,9 @@ export class Controls {
 		document.addEventListener('pointerlockchange', () => {
 			// prehliadač pri zamknutí kurzora pošle jeden veľký falošný skok, ten ignorujeme
 			this._ignoreUntil = performance.now() + 60;
+			if (!this.captured) {
+				this.spinning = false; // uvoľnená myš: posúvanie miesta úderu kolieskom končí
+			}
 			if (this.hooks.lock) {
 				this.hooks.lock(this.captured);
 			}
@@ -552,6 +555,11 @@ export class Controls {
 		if (g.state === 'moving' && this.rig.mode === 'cue' && (e.buttons & 3) === 0) {
 			this.rig.turn((e.movementX || 0) * this.sens, (e.movementY || 0) * this.sens);
 			return;
+		}
+		if (this.spinning && e.pointerType === 'mouse' && (e.buttons & 4) === 0) {
+			// koliesko už nie je stlačené: pustenie, ktoré neprišlo ako pointerup (napr. pri inom držanom tlačidle
+			// prehliadač pošle len pointermove), inak by ďalší pohyb myši posúval miesto úderu až na vrch gule
+			this.spinning = false;
 		}
 		if (this.spinning) {
 			if (this.hooks.spin) {
