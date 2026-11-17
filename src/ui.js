@@ -3222,11 +3222,12 @@ export class UI {
 				color: '#6fb3ff',
 				// položky menu hry (podľa stavu: Tréning, Hrať, Liga, Poslať výzvu, Pozerať hru, Účet…); ťuknutie
 				// stlačí pôvodné tlačidlo, takže robí presne to isté ako na desktope
-				items: [...mirror.filter((it) => !OTHER.has(it[2].el.dataset.act)), ['set', 'Nastavenia', { a: 'settings' }, '#ff6b6b'],
-					// krieda a pomôcky (nádstavce, predĺženie) len pri stole: inak sivé s textom len pri stole
+				items: [['set', 'Nastavenia', { a: 'settings' }, '#ff6b6b'],
+					// príslušenstvo (krieda, nádstavce, predĺženie) len pri stole: inak sivé s textom len pri stole
 					...(ctx.office ? [] : [
 						['chalk', ctx.table ? 'Príslušenstvo' : 'Príslušenstvo · len pri stole', { a: 'tools', grey: !ctx.table }, ctx.table ? '#ffd34d' : '#8a8f98'],
 					]),
+					...mirror.filter((it) => !OTHER.has(it[2].el.dataset.act)),
 					...mirror.filter((it) => OTHER.has(it[2].el.dataset.act)),
 				],
 			},
