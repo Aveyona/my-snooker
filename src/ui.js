@@ -1324,6 +1324,25 @@ export class UI {
 		this._toastT = setTimeout(() => t.classList.add('mysn-hidden'), invite ? 30000 : 6000);
 	}
 
+	/** Krátky výrazný nápis v strede obrazovky (neblokuje ovládanie). */
+	banner(text, sub) {
+		if (!this.bannerBox) {
+			this.bannerBox = h('div', 'mysn-banner');
+			this.root.appendChild(this.bannerBox);
+		}
+		const b = this.bannerBox;
+		b.innerHTML = '';
+		b.appendChild(h('div', 'mysn-banner-main', esc(text)));
+		if (sub) {
+			b.appendChild(h('div', 'mysn-banner-sub', esc(sub)));
+		}
+		b.classList.remove('mysn-banner-on');
+		void b.offsetWidth;
+		b.classList.add('mysn-banner-on');
+		clearTimeout(this._bannerT);
+		this._bannerT = setTimeout(() => b.classList.remove('mysn-banner-on'), 3000);
+	}
+
 	hideToast() {
 		if (this.toastBox) {
 			this.toastBox.classList.add('mysn-hidden');

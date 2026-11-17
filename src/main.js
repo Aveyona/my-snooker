@@ -4168,6 +4168,7 @@ export function start(root, config = {}) {
 		controls.capture();
 		ui.sync(game, rig.mode);
 		updateScore();
+		ui.banner('Hráš sám o najlepšie skóre za najkratší čas', 'Fauly sa odčítajú');
 	};
 	// rebríček aj na stene herne (poháre a tabuľka)
 	const loadTrophies = async (d) => {

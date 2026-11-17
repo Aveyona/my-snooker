@@ -168,6 +168,11 @@ body.mysn-page { font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans
 .mysn-lobby-foot { display: flex; gap: 10px; align-items: center; justify-content: space-between; margin-top: 16px; }
 .mysn-lobby-foot .mysn-note { margin: 0; font-size: 12px; }
 .mysn-toast { position: absolute; top: 112px; left: 50%; transform: translateX(-50%); z-index: 6; display: flex; align-items: center; gap: 8px; background: #141a24f2; border: 1px solid #FACC15aa; border-radius: 12px; padding: 9px 12px; font-size: 14px; box-shadow: 0 6px 24px #000a; max-width: calc(100% - 32px); }
+.mysn-banner { position: absolute; top: 42%; left: 50%; transform: translate(-50%, -50%) scale(.96); z-index: 7; pointer-events: none; text-align: center; background: #0d121bdd; border: 1px solid #FACC15aa; border-radius: 16px; padding: 16px 26px; box-shadow: 0 10px 40px #000c; max-width: calc(100% - 40px); opacity: 0; transition: opacity .5s, transform .5s; }
+.mysn-banner-on { opacity: 1; transform: translate(-50%, -50%) scale(1); transition: opacity .25s, transform .25s; }
+.mysn-banner-main { font-size: 22px; font-weight: 700; color: #ffd34d; line-height: 1.25; }
+.mysn-banner-sub { margin-top: 6px; font-size: 15px; color: #e6e6e6; }
+@media (hover: none), (pointer: coarse) { .mysn-banner { padding: 12px 18px; } .mysn-banner-main { font-size: 18px; } .mysn-banner-sub { font-size: 13px; } }
 .mysn-sc.mysn-turn { color: #FACC15; }
 .mysn-sc.mysn-turn b { color: #FACC15; }
 .mysn-sc i { font-style: normal; font-size: 11px; color: #ff9b9b; }
