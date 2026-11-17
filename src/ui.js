@@ -2305,7 +2305,7 @@ export class UI {
 	/** Okno po súperovom faule: Hrám ja (1) alebo Nech hrá súper (2). opp = meno súpera, null = skryť. */
 	foulChoice(opp) {
 		if (!this.choiceEl) {
-			this.choiceEl = h('div', 'mysn-choice', '<div class="mysn-choice-t"></div><div class="mysn-choice-b"><button type="button" data-a="0">1 · Hrám ja</button><button type="button" data-a="1">2 · Nech hrá súper</button></div><div class="mysn-choice-n">Klikni s Ctrl alebo stlač 1 či 2. Úderom hráš sám.</div>');
+			this.choiceEl = h('div', 'mysn-choice', '<div class="mysn-choice-t"></div><div class="mysn-choice-b"><button type="button" data-a="0">1 · Hrám ja</button><button type="button" data-a="1">2 · Nech hrá súper znova</button></div><div class="mysn-choice-n">Klikni s Ctrl alebo stlač 1 či 2. Úderom hráš sám.</div>');
 			this.choiceEl.addEventListener('click', (e) => {
 				const b = e.target.closest('button');
 				if (b) {
@@ -2321,7 +2321,7 @@ export class UI {
 		this._choice = key;
 		this.choiceEl.style.display = opp ? '' : 'none';
 		if (opp) {
-			this.choiceEl.querySelector('.mysn-choice-t').textContent = `${opp} spravil faul. Hráš sám, alebo ho pošleš hrať znova z miesta, kde gule ostali?`;
+			this.choiceEl.querySelector('.mysn-choice-t').textContent = `${opp} spravil faul. Hráš sám (gule ostanú, ako ležia), alebo ho pošleš hrať znova (gule sa vrátia, ako boli pred faulom)?`;
 		}
 	}
 

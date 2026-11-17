@@ -557,6 +557,26 @@ function mysn_rest_settle( $req ) {
 			$cnote = mb_substr( (string) ( $v['error'] ?? '' ), 0, 250 );
 		}
 	}
+	// po faule: stav pred faulom berie server zo svojho uloženého stavu (biela tam, odkiaľ sa strieľalo), nie od klienta
+	unset( $st['prev'] );
+	if ( isset( $st['rules']['choice'] ) && empty( $st['rules']['over'] ) && is_array( $prev ) && isset( $prev['balls'], $prev['rules'] ) && is_array( $prev['balls'] ) ) {
+		$pb = $prev['balls'];
+		foreach ( $pb as $i => $b ) {
+			if ( isset( $b['kind'] ) && 'white' === $b['kind'] && isset( $pending['cx'], $pending['cz'] ) ) {
+				$pb[ $i ]['x']  = (float) $pending['cx'];
+				$pb[ $i ]['z']  = (float) $pending['cz'];
+				$pb[ $i ]['on'] = true;
+			}
+		}
+		$pr = $prev['rules'];
+		unset( $pr['choice'] );
+		$st['prev'] = array(
+			'balls'  => $pb,
+			'rules'  => $pr,
+			'inHand' => ! empty( $prev['inHand'] ),
+		);
+	}
+	$state = wp_json_encode( $st );
 	$rules = $st['rules'];
 	$turn  = 1 === (int) $rules['turn'] ? 1 : 0;
 	$over  = ! empty( $rules['over'] );
@@ -663,6 +683,18 @@ function mysn_rest_choice( $req ) {
 	}
 	$st['rules']['scores'] = $cur['rules']['scores']; // skóre sa voľbou nemení
 	unset( $st['rules']['choice'] );
+	// gule sa vrátia pred faul podľa stavu na serveri (klient ich nemôže postaviť inak)
+	if ( isset( $cur['prev']['balls'], $cur['prev']['rules'] ) && is_array( $cur['prev']['balls'] ) ) {
+		$scores                = $st['rules']['scores'];
+		$st['balls']           = $cur['prev']['balls'];
+		$st['inHand']          = ! empty( $cur['prev']['inHand'] );
+		$st['rules']           = $cur['prev']['rules'];
+		$st['rules']['scores'] = $scores;
+		$st['rules']['turn']   = $off;
+		$st['rules']['brk']    = 0;
+		unset( $st['rules']['choice'] );
+	}
+	unset( $st['prev'] );
 	if ( isset( $cur['conduct'] ) ) {
 		$st['conduct'] = $cur['conduct'];
 	}
@@ -724,6 +756,15 @@ function mysn_rest_timeout( $req ) {
 	$st    = $state ? json_decode( $state, true ) : null;
 	if ( ! $st || ! isset( $st['rules']['scores'], $st['rules']['turn'] ) ) {
 		return mysn_err( 'Chýba stav stola.' );
+	}
+	// faul za čas: gule sa nehýbali, stav pred faulom je uložený stav
+	unset( $st['prev'] );
+	$cur0 = $m['state'] ? json_decode( $m['state'], true ) : null;
+	if ( empty( $st['rules']['over'] ) && is_array( $cur0 ) && isset( $cur0['balls'], $cur0['rules'] ) ) {
+		$pr = $cur0['rules'];
+		unset( $pr['choice'] );
+		$st['prev'] = array( 'balls' => $cur0['balls'], 'rules' => $pr, 'inHand' => ! empty( $cur0['inHand'] ) );
+		$state      = wp_json_encode( $st );
 	}
 	$rules = $st['rules'];
 	$over  = ! empty( $rules['over'] );

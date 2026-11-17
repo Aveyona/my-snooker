@@ -12,6 +12,13 @@ import { evaluate, onLabel, newFrame, VALUE, snookered, remaining } from './rule
 
 const SOLO_KEY = 'mySnookerSolo';
 
+/** Pravidlá pred úderom bez voľby po faule (na vrátenie gúľ pred faul). */
+function prevRules(r) {
+	const o = { ...r, scores: [...r.scores] };
+	delete o.choice;
+	return o;
+}
+
 export class Game extends Training {
 	constructor() {
 		super();
@@ -222,6 +229,7 @@ export class Game extends Training {
 		m.best = Array.isArray(st.best) ? [...st.best] : [0, 0];
 		m.frames = st.frames && st.frames.of > 1 ? { of: st.frames.of | 0, won: [st.frames.won[0] | 0, st.frames.won[1] | 0], n: st.frames.n | 0 || 1 } : null; // zápas na viac framov
 		m.last = st.last || null; // posledný úder (pre divákov na štadióne)
+		m.prev = st.prev || null; // stav pred faulom (na vrátenie gúľ, keď súper pošle faulujúceho hrať znova)
 		this.remote = false;
 		this.message = st.msg || '';
 		if (m.rules.over) {
@@ -384,6 +392,9 @@ export class Game extends Training {
 		if (choice) {
 			res.state.choice = m.me;
 		}
+		// stav pred faulom: keď súper pošle faulujúceho hrať znova, gule sa vrátia sem (biela tam, odkiaľ sa hralo)
+		const before = this.history.length ? this.history[this.history.length - 1].snap : null;
+		const prev = choice && before ? { balls: before, rules: prevRules(m.rules), inHand: !!m.inHand } : undefined;
 		const fr = this.frameEnd(res.state);
 		const st = {
 			balls: snapshot(this.balls),
@@ -395,6 +406,7 @@ export class Game extends Training {
 				(res.state.over ? ` Koniec partie, víťaz: ${names[res.state.winner]}.` : res.state.turn !== m.me ? ` Na rade je ${names[res.state.turn]}.` : '') +
 				(choice ? ` ${names[res.state.turn]} rozhodne: hrá sám, alebo pošle súpera hrať znova.` : ''),
 			last: { by: m.me, points: res.points, foul: res.foul, penalty: res.penalty, brk: res.state.brk },
+			prev,
 			// najvyššia séria každého hráča v partii (do ligy)
 			best: (() => {
 				const b = [...(m.best || [0, 0])];
@@ -500,14 +512,16 @@ export class Game extends Training {
 		}
 		const off = m.rules.choice;
 		const names = m.players.map((p) => p.name);
-		const rules = { ...m.rules, scores: [...m.rules.scores], turn: off, free: false, brk: 0 };
+		// gule sa vrátia, ako boli pred faulom (biela tam, odkiaľ faulujúci hral); body za faul ostávajú
+		const pv = m.prev && Array.isArray(m.prev.balls) ? m.prev : null;
+		const rules = pv ? { ...pv.rules, scores: [...m.rules.scores], turn: off, brk: 0 } : { ...m.rules, scores: [...m.rules.scores], turn: off, free: false, brk: 0 };
 		delete rules.choice;
 		const st = {
-			balls: snapshot(this.balls),
+			balls: pv ? pv.balls.map((b) => ({ ...b })) : snapshot(this.balls),
 			rules,
-			inHand: !!m.inHand,
+			inHand: pv ? !!pv.inHand : !!m.inHand,
 			frames: m.frames || undefined,
-			msg: `${names[m.me]} posiela ${names[off]} hrať znova z miesta, kde gule ostali. Na rade je ${names[off]}.`,
+			msg: pv ? `${names[m.me]} posiela ${names[off]} hrať znova: gule sa vrátili, ako boli pred faulom. Na rade je ${names[off]}.` : `${names[m.me]} posiela ${names[off]} hrať znova z miesta, kde gule ostali. Na rade je ${names[off]}.`,
 			call: { again: true },
 			last: m.last || null,
 			best: [...(m.best || [0, 0])],
@@ -565,6 +579,7 @@ export class Game extends Training {
 			inHand: !!m.inHand || !this.cue.on, // biela v ruke ostáva súperovi
 			frames: m.frames || undefined,
 			call: { foul: res.penalty || 4, time: true, over: !!res.state.over },
+			prev: res.state.over ? undefined : { balls: snapshot(this.balls), rules: prevRules(m.rules), inHand: !!m.inHand || !this.cue.on },
 			msg: `${names[off]}: ${why}` + (res.state.over ? ` Koniec partie, víťaz: ${names[res.state.winner]}.` : ` Na rade je ${names[res.state.turn]}, rozhodne, či hrá sám, alebo pošle súpera hrať znova.`),
 			last: { by: off, points: 0, foul: true, penalty: res.penalty, brk: 0, timeout: true },
 			best: [...(m.best || [0, 0])],

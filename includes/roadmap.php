@@ -162,6 +162,7 @@ function mysn_roadmap() {
 /** Denník zmien (najnovšie hore). */
 function mysn_changelog() {
 	return array(
+		array( '0.22.0', '17. 11. 2026', 'Faul v partii a v lige: keď súper pošle faulujúceho hrať znova, gule sa vrátia, ako boli pred faulom (biela tam, odkiaľ hral, aj spadnuté gule späť na stôl), body za faul ostávajú. Platí pri každom faule (aj za čas) a bez obmedzenia počtu; stav pred faulom drží server, klient ho nemôže zmeniť. Pri Hrám ja ostanú gule, ako ležia.' ),
 		array( '0.21.3', '17. 11. 2026', 'Skokový úder s nakriedovanou špicou skočí o 20 % vyššie.' ),
 		array( '0.21.2', '17. 11. 2026', 'Skokový úder: pri silnejšom údere väčší skok (pri plnej sile silného tága asi 18 cm, ponad guľu asi od 75 % skutočnej sily).' ),
 		array( '0.21.1', '17. 11. 2026', 'Oprava skokového úderu: o skoku rozhoduje poloha bodu na bielej a sila na ukazovateli od 70 % (predtým ich zmenšila falša bez kriedy a sila tága, takže biela nevyskočila); výška skoku podľa skutočnej sily úderu (aj tága).' ),
