@@ -3218,20 +3218,14 @@ export class UI {
 		const OTHER = new Set(['account', 'staff', 'home']);
 		const groups = [
 			{
-				name: 'Režim hry',
-				color: '#7CFC8A',
-				items: mirror.filter((it) => !OTHER.has(it[2].el.dataset.act)),
-			},
-			{
 				name: 'Hra',
 				color: '#6fb3ff',
 				// položky menu hry (podľa stavu: Tréning, Hrať, Liga, Poslať výzvu, Pozerať hru, Účet…); ťuknutie
 				// stlačí pôvodné tlačidlo, takže robí presne to isté ako na desktope
-				items: [['set', 'Nastavenia', { a: 'settings' }, '#ff6b6b'],
+				items: [...mirror.filter((it) => !OTHER.has(it[2].el.dataset.act)), ['set', 'Nastavenia', { a: 'settings' }, '#ff6b6b'],
 					// krieda a pomôcky (nádstavce, predĺženie) len pri stole: inak sivé s textom len pri stole
 					...(ctx.office ? [] : [
 						['chalk', ctx.table ? 'Príslušenstvo' : 'Príslušenstvo · len pri stole', { a: 'tools', grey: !ctx.table }, ctx.table ? '#ffd34d' : '#8a8f98'],
-						['chalk', ctx.table ? 'Nakriedovať' : 'Nakriedovať · len pri stole', { a: 'chalkNow', grey: !ctx.table }, ctx.table ? '#ffd34d' : '#8a8f98'],
 					]),
 					...mirror.filter((it) => OTHER.has(it[2].el.dataset.act)),
 				],
@@ -3293,12 +3287,12 @@ export class UI {
 					].filter(Boolean),
 			},
 		];
-		// poradie: Režim hry, Hra, Herňa (miesto), Tréning
+		// poradie: Hra (režimy hry, potom Nastavenia, Príslušenstvo, Účet…), Herňa (miesto), Tréning
 		const resumeBtn = this._mmAsMenu ? this.menuBtns.querySelector('[data-act="resume"]') : null;
 		if (this._mmAsMenu && !resumeBtn && !ctx.office) {
 			// úvod pred začiatkom hry: herňa a tréning ešte nemajú zmysel, najprv sa vyberá v Menu hry
-			groups[2].items = groups[2].items.filter((it) => it[2].k === 'F1');
-			groups[3].items = [];
+			groups[1].items = groups[1].items.filter((it) => it[2].k === 'F1');
+			groups[2].items = [];
 		}
 		this.mmenu.textContent = '';
 		const close = h('button', 'mysn-mm-x', '✕');

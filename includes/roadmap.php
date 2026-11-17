@@ -162,6 +162,7 @@ function mysn_roadmap() {
 /** Denník zmien (najnovšie hore). */
 function mysn_changelog() {
 	return array(
+		array( '0.20.18', '17. 11. 2026', 'Mobil ☰: Režim hry a Hra sú jedna skupina Hra (Tréning, Hrať, Liga, Poslať výzvu, Pozerať hru, Nastavenia, Príslušenstvo, Správa hry, Účet, Späť na web); bez dlaždice Nakriedovať (je v Príslušenstve).' ),
 		array( '0.20.17', '17. 11. 2026', 'Mobil ☰: poradie Režim hry, Hra, Herňa, Tréning.' ),
 		array( '0.20.16', '17. 11. 2026', 'Mobil ☰: nové poradie – najprv Režim hry (Tréning, Hrať, Liga, Poslať výzvu, Pozerať hru…), potom Herňa (miesto), potom Hra (Nastavenia, Príslušenstvo, Nakriedovať, Správa hry, Účet, Späť na web) a Tréning.' ),
 		array( '0.20.15', '17. 11. 2026', 'Mobil ☰: bez dlaždice Stôl zhora (pohľad zhora má vlastné tlačidlo nad panákom).' ),
