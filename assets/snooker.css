@@ -564,6 +564,8 @@ body.mysn-page { font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans
 	.mysn-mmbtn { display: inline-flex; align-items: center; }
 	.mysn-barbtns .mysn-btn:not(.mysn-mmbtn) { display: none; }
 	.mysn-backbtn.mysn-back-on { display: block; }
+	.mysn-backbtn.mysn-back-free { left: 12px; bottom: 62px; transform: none; display: none; align-items: center; gap: 6px; padding: 10px 16px; }
+	.mysn-backbtn.mysn-back-free.mysn-back-on { display: flex; }
 	.mysn-ui.mysn-tools-open .mysn-chalkbtn { bottom: 428px; }
 	.mysn-finebtn.mysn-fine-can { display: flex; }
 	.mysn-ui.mysn-tools-open .mysn-finebtn { bottom: 368px; }

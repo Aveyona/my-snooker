@@ -895,7 +895,16 @@ export function start(root, config = {}) {
 		rig.setView(pos, pos.clone().add(dir));
 		rig.jump();
 		ui.showView(null);
-		ui.toast('Voľná kamera: myš rozhliadanie, šípky alebo W A S D posun, koliesko priblíženie, pravé alebo ľavé tlačidlo myši (aj E a Q) hore a dole, Shift rýchlejšie, Ctrl zastaví kameru. F3 ruky. Medzerník: späť za tágo.');
+		ui.toast(ui.touchUI ? 'Voľný pohľad: prstom sa rozhliadaš, ovládačom chodíš, ▲ a ▼ hore a dole. Ťukni na predmet (nástenka, stojan, poháre…) a otvorí sa; tlačidlo Voľný pohľad ťa z neho vráti sem.' : 'Voľná kamera: myš rozhliadanie, šípky alebo W A S D posun, koliesko priblíženie, držané pravé alebo ľavé tlačidlo myši (aj E a Q) hore a dole, Shift rýchlejšie, Ctrl zastaví kameru. Krátky klik na rozsvietený predmet v strede obrazovky ho otvorí, pravé tlačidlo ťa z neho vráti sem. F3 ruky. Medzerník: späť za tágo.');
+	};
+	/** Z pohľadu na predmet späť do voľného pohľadu na miesto, odkiaľ bol predmet otvorený. */
+	const backToFree = () => {
+		viewFromFree = false;
+		exitView(true);
+		freeCam();
+		if (!ui.touchUI) {
+			controls.capture();
+		}
 	};
 	/** Odchod z voľnej kamery: zapamätá si polohu a smer pohľadu. */
 	const freeLeave = () => {
@@ -911,6 +920,9 @@ export function start(root, config = {}) {
 	let freeZoomTo = 1; // voľná kamera: priblíženie kolieskom (plynulo k cieľu)
 	let freeUp = 0; // voľná kamera: držané tlačidlo myši (pravé = hore, ľavé = dole)
 	let freeDown = 0;
+	let viewFromFree = false; // pohľad na predmet otvorený z voľného pohľadu: návrat ide späť do voľného pohľadu
+	let freeClickT = 0; // PC: čas stlačenia ľavého tlačidla vo voľnom pohľade (krátky klik = otvoriť predmet)
+	let freeDownTimer = 0;
 	// --- voľná kamera s Ctrl: klikateľné predmety (jemne sa rozsvietia pod kurzorom, klik = ich kláves) ---
 	const hotRay = new THREE.Raycaster();
 	const hotMouse = new THREE.Vector2();
@@ -1028,17 +1040,12 @@ export function start(root, config = {}) {
 	/** Raz za 0,1 s: ktorý predmet je pod kurzorom (len vo voľnej kamere s držaným Ctrl). */
 	// predmety svietia s držaným Ctrl za tágom (hráč) aj vo voľnej kamere
 	const hotOn = () => view === 'office' || ((view === 'free' || (!view && !game.spectating && user)) && venue !== 'office');
-	const hotTick = (dt) => {
-		if (!hotOn() || !freeMouse || !hotMouseOk) {
-			hotSet(null);
-			return;
-		}
-		hotT -= dt;
-		if (hotT > 0) {
-			return;
-		}
-		hotT = 0.1;
-		hotRay.setFromCamera(hotMouse, rig.camera);
+	// PC vo voľnom pohľade (myš zachytená, bez kurzora): predmet v strede obrazovky sa rozsvieti, krátky klik ho otvorí
+	const hotCenter = () => view === 'free' && !freeMouse && !ui.touchUI && !adminRoam;
+	const HOT_C = new THREE.Vector2(0, 0);
+	/** Predmet na mieste obrazovky (ndc), alebo null. */
+	const hotPick = (ndc) => {
+		hotRay.setFromCamera(ndc, rig.camera);
 		hotRay.far = 25;
 		const hit = hotRay.intersectObjects(scene.children, true).find((x) => x.object.isMesh && !x.object.userData.hand && shown(x.object));
 		let best = null;
@@ -1050,7 +1057,32 @@ export function start(root, config = {}) {
 				}
 			}
 		}
-		hotSet(best ? best.h : null);
+		return best ? best.h : null;
+	};
+	/** Otvorí predmet z voľného pohľadu; návrat (pravé tlačidlo / tlačidlo na mobile) vráti späť do voľného pohľadu. */
+	const hotOpen = (h) => {
+		if (!h || h.pass) {
+			return;
+		}
+		if (h.act) {
+			actions[h.act]();
+			return;
+		}
+		hotSet(null);
+		controls.hooks.key(h.key);
+		viewFromFree = !!view && view !== 'free';
+	};
+	const hotTick = (dt) => {
+		if (!hotOn() || (!hotCenter() && (!freeMouse || !hotMouseOk))) {
+			hotSet(null);
+			return;
+		}
+		hotT -= dt;
+		if (hotT > 0) {
+			return;
+		}
+		hotT = 0.1;
+		hotSet(hotPick(hotCenter() ? HOT_C : hotMouse));
 	};
 	renderer.domElement.addEventListener('pointermove', (e) => {
 		const r = renderer.domElement.getBoundingClientRect();
@@ -1887,6 +1919,7 @@ export function start(root, config = {}) {
 			return;
 		}
 		const was = view;
+		viewFromFree = false;
 		if (was === 'free') {
 			freeLeave();
 			rig.snapNext = true; // späť za tágo hneď, bez preletu (rovnako ako skok do voľnej kamery)
@@ -2865,6 +2898,10 @@ export function start(root, config = {}) {
 		},
 		// mobil: Späť k stolu (z pohľadu na nástenku, stojan, rebríček… alebo zo stola zhora)
 		menuBack: () => {
+			if (viewFromFree && view && view !== 'free') {
+				backToFree();
+				return;
+			}
 			if (controls.hooks.key) {
 				controls.hooks.key(rig.mode === 'top' && !view ? 'Tab' : 'Escape');
 			}
@@ -3597,9 +3634,30 @@ export function start(root, config = {}) {
 			}
 			if (e.button === 0) {
 				freeDown = 0;
+				clearTimeout(freeDownTimer);
+				const short = freeClickT && performance.now() - freeClickT < 200;
+				freeClickT = 0;
+				if (short && view === 'free' && hotCenter() && hotNow) {
+					hotOpen(hotNow);
+				}
+			}
+		},
+		// mobil: ťuknutie vo voľnom pohľade na predmet ho otvorí
+		viewTap: (e) => {
+			if (view !== 'free' || adminRoam) {
+				return;
+			}
+			const r = renderer.domElement.getBoundingClientRect();
+			const h = hotPick(new THREE.Vector2(((e.clientX - r.left) / r.width) * 2 - 1, -((e.clientY - r.top) / r.height) * 2 + 1));
+			if (h) {
+				hotOpen(h);
 			}
 		},
 		viewDown: (e) => {
+			if (e.button === 2 && viewFromFree && view && !['free', 'office'].includes(view) && !game.spectating) {
+				backToFree(); // predmet otvorený z voľného pohľadu: pravé tlačidlo vráti späť do voľného pohľadu
+				return;
+			}
 			if (e.button === 2 && view && !['free', 'seat', 'seatPick', 'office', 'chalk'].includes(view) && !game.spectating) {
 				exitView(!!e.ctrlKey); // pravé tlačidlo v pohľade na predmet (stojan, nástenka, skóre, kreslo...): späť za tágo
 				if (e.ctrlKey) {
@@ -3615,7 +3673,14 @@ export function start(root, config = {}) {
 				if (e.button === 2) {
 					freeUp = 1;
 				} else {
-					freeDown = 1;
+					// krátky klik otvorí predmet v strede obrazovky; až držanie dlhšie než 0,2 s posúva kameru dole
+					freeClickT = performance.now();
+					clearTimeout(freeDownTimer);
+					freeDownTimer = setTimeout(() => {
+						if (freeClickT && view === 'free') {
+							freeDown = 1;
+						}
+					}, 200);
 				}
 				return;
 			}
@@ -5567,7 +5632,7 @@ export function start(root, config = {}) {
 		ui.showFine(cueSpec.fine > 0, controls.touchFineOn());
 		ui.showFree(ui.touchUI && (!view || view === 'free') && venue !== 'office' && !game.spectating && !ui.mainMenuOpen(), view === 'free');
 		// pohľady (nástenka, stojan, rebríček…) majú vlastné Späť do hry; mobil potrebuje tlačidlo len pri stole zhora (Tab)
-		ui.showBack(ui.touchUI && !ui.mainMenuOpen() && !ui.menuOpen() && !view && rig.mode === 'top');
+		ui.showBack(ui.touchUI && !ui.mainMenuOpen() && !ui.menuOpen() && ((!view && rig.mode === 'top') || (viewFromFree && view && view !== 'free')), viewFromFree);
 		if (ui.touchUI && ui._mmAsMenu && !ui.mainMenuOpen() && !ui.anyPanelOpen()) {
 			ui.openMainMenu(true); // mobil: po zavretí okna (Nastavenia, Účet…) sa vráti hlavné menu, ako menu hry na desktope
 		}

@@ -184,7 +184,7 @@ export class Controls {
 			}
 			if (e.pointerType === 'touch') {
 				// mobil: v pohľadoch (voľná kamera, kreslo, bar…) ťahanie prstom otáča pohľad ako myš
-				this._drag = { kind: 'touchLook', id: e.pointerId, x: e.clientX, y: e.clientY };
+				this._drag = { kind: 'touchLook', id: e.pointerId, x: e.clientX, y: e.clientY, x0: e.clientX, y0: e.clientY, t0: performance.now() };
 			}
 			return;
 		}
@@ -444,6 +444,10 @@ export class Controls {
 					this.aimAt(p);
 				}
 			}
+		}
+		const dd = this._drag;
+		if (dd && dd.id === e.pointerId && dd.kind === 'touchLook' && this.hooks.viewTap && Math.hypot(e.clientX - dd.x0, e.clientY - dd.y0) < 10 && performance.now() - dd.t0 < 350) {
+			this.hooks.viewTap(e); // mobil: krátke ťuknutie bez ťahania (vo voľnom pohľade otvorí predmet)
 		}
 		if (this._drag && this._drag.id === e.pointerId) {
 			this._drag = null;

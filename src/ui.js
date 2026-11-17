@@ -3184,11 +3184,20 @@ export class UI {
 	}
 
 	/** Mobil: tlačidlo Späť k stolu z pohľadu na stôl zhora (ostatné pohľady majú vlastné Späť do hry). */
-	showBack(on) {
+	showBack(on, free) {
 		on = !!on;
+		free = !!(on && free);
 		if (on !== this._backOn) {
 			this._backOn = on;
 			this.backBtn.classList.toggle('mysn-back-on', on);
+		}
+		if (free !== this._backFree) {
+			// z predmetu otvoreného vo voľnom pohľade: panák so šípkou = späť do voľného pohľadu
+			this._backFree = free;
+			this.backBtn.classList.toggle('mysn-back-free', free);
+			this.backBtn.innerHTML = free
+				? '← <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="4.5" r="2"/><path d="M12 7.5v6M12 13.5l-3 7M12 13.5l3 7M7 10.5h10"/></svg> Voľný pohľad'
+				: '← Späť k stolu';
 		}
 	}
 
