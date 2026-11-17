@@ -162,6 +162,7 @@ function mysn_roadmap() {
 /** Denník zmien (najnovšie hore). */
 function mysn_changelog() {
 	return array(
+		array( '0.20.6', '17. 11. 2026', 'Pohľad zhora (Tab, mobil tlačidlo) je len na pozeranie: mierenie ani úder sa v ňom nemenia (myš, prst ani šípky). Kladenie bielej zhora ostáva.' ),
 		array( '0.20.5', '17. 11. 2026', 'Biela v ruke: aj pri novom rozostavení v tréningu sa biela kladie do D. Pri kladení bielej (nový frame, partia, po faule) sa kamera sama presunie zhora na stôl, po položení späť za tágo; na PC biela ide pod kurzor a klik ju položí, Tab prepne za tágo.' ),
 		array( '0.20.4', '17. 11. 2026', 'Mobil: nad panákom nové tlačidlo Pohľad zhora (šípka dole na stôl, ako Tab na PC) – prepína medzi pohľadom zhora a za tágom, v pohľade zhora je žlté; samostatné tlačidlo Späť k stolu v pohľade zhora už netreba.' ),
 		array( '0.20.3', '17. 11. 2026', 'Body (+1, +5…) a zvuk série sa ukážu hneď pri páde gule, keď je zjavne platná (biela nespadla, prvý zásah a guľa sú na rade); nejasné prípady (voľná guľa, viac farieb naraz) až po zastavení gúľ ako doteraz.' ),

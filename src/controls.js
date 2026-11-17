@@ -237,6 +237,9 @@ export class Controls {
 		if (g.state !== 'aim') {
 			return;
 		}
+		if (this.rig.mode === 'top') {
+			return; // pohľad zhora je len na pozeranie: mierenie ani úder sa tu nemenia
+		}
 		if (e.pointerType === 'mouse') {
 			if (e.button === 0 && this.rig.mode !== 'free') {
 				if (!this.captured) {
@@ -561,7 +564,7 @@ export class Controls {
 			return;
 		}
 		// otáča sa len so zachytenou myšou (inak by sa tágo otáčalo aj pri ceste k tlačidlám)
-		if ((e.buttons & 3) !== 0 || g.state !== 'aim' || !this.captured) {
+		if ((e.buttons & 3) !== 0 || g.state !== 'aim' || !this.captured || this.rig.mode === 'top') {
 			return;
 		}
 		const dx = e.movementX || 0;
@@ -761,7 +764,7 @@ export class Controls {
 	/** Šípky (plynulé mierenie). Úder len myšou (ťahanie), klávesom sa neudiera. */
 	update(dt) {
 		const g = this.game;
-		if (g.state === 'aim' && !this.blocked) {
+		if (g.state === 'aim' && !this.blocked && this.rig.mode !== 'top') {
 			const fine = this._keys.has('Shift') !== !!this.fineAlways && this.cueSpec.fine > 0;
 			const speed = fine ? 0.015 : 0.35;
 			if (this._keys.has('ArrowLeft')) {
