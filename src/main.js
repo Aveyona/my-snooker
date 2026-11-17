@@ -4065,7 +4065,7 @@ export function start(root, config = {}) {
 	controls.sens = settings.mouseSens || 1; // šúpatko Otáčanie myšou
 	controls.strokeSens = settings.strokeSens || 1; // šúpatko Ťahanie tága
 	controls.panSens = settings.panSens || 1; // šúpatko Pravé tlačidlo
-	ui.menuCtx = () => ({ venue }); // mobil: hlavné menu ☰ vie, kde hráč je (herňa = všetky dlaždice)
+	ui.menuCtx = () => ({ venue, office: view === 'office' }); // mobil: hlavné menu ☰ vie, kde hráč je (herňa, kancelária, štadión)
 	controls.touchAimSens = settings.touchAimSens || 1; // mobil: Otáčanie prstom
 	controls.touchStrokeSens = settings.touchStrokeSens || 1; // mobil: Ťahanie tága prstom
 	controls.touchPanSens = settings.touchPanSens || 1; // mobil: Oko

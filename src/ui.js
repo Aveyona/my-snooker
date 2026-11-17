@@ -2913,6 +2913,14 @@ export class UI {
 			pause: '<path d="M8 5v14M16 5v14"/>',
 			check: '<path d="m5 12 5 5 9-10"/>',
 			x: '<path d="M6 6l12 12M18 6 6 18"/>',
+			calendar: '<rect x="4" y="5" width="16" height="16" rx="2"/><path d="M16 3v4M8 3v4M4 11h16"/>',
+			window: '<rect x="4" y="3" width="16" height="18" rx="1"/><path d="M12 3v18M4 12h16"/>',
+			laptop: '<rect x="5" y="5" width="14" height="10" rx="1"/><path d="M3 19h18"/>',
+			card: '<rect x="3" y="6" width="18" height="12" rx="2"/><circle cx="8.5" cy="12" r="2"/><path d="M13 10h5M13 14h4"/>',
+			search: '<circle cx="10.5" cy="10.5" r="6"/><path d="m15 15 5 5"/>',
+			pin: '<path d="M12 21s-6-5.5-6-11a6 6 0 0 1 12 0c0 5.5-6 11-6 11z"/><circle cx="12" cy="10" r="2"/>',
+			lamp: '<path d="M8 3h8l3 7H5zM12 10v8M8 21h8"/>',
+			book: '<path d="M4 5a2 2 0 0 1 2-2h13v16H6a2 2 0 0 0-2 2zM4 19V5M9 7h6"/>',
 			set: '<circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9 7 7M17 17l2.1 2.1M4.9 19.1 7 17M17 7l2.1-2.1"/>',
 			help: '<circle cx="12" cy="12" r="9"/><path d="M9.5 9a2.5 2.5 0 1 1 3.5 2.3c-.6.3-1 .8-1 1.5V14M12 17h.01"/>',
 			cue: '<path d="M3 21 16 8"/><path d="m15 6 3 3 2-2-3-3z"/>',
@@ -2932,7 +2940,6 @@ export class UI {
 			menu: '<path d="M4 6h16M4 12h16M4 18h16"/>',
 			web: '<circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18"/>',
 		};
-		const home = ctx.venue === 'home';
 		const groups = [
 			{
 				name: 'Hra',
@@ -2943,41 +2950,68 @@ export class UI {
 					.filter((b) => b.dataset.act !== 'settings' && b.dataset.act !== 'roomMap' && b.style.display !== 'none')
 					.map((b) => [MM_ICON[b.dataset.act] || (b.classList.contains('mysn-login') ? 'user' : 'menu'), b.textContent, { el: b }])],
 			},
-			{
-				name: 'Herňa',
-				color: '#ffd34d',
-				items: home
-					? [
-							['help', 'Nápoveda', { k: 'F1' }],
-							['cue', 'Tágá', { k: 'F2' }],
-							['chalk', 'Krieda', { k: 'F3' }],
-							['score', 'Skóre', { k: 'F4' }],
-							['trophy', 'Rebríček', { k: 'F8' }],
-							['radio', 'Rádio', { k: 'F9' }],
-							['door', 'Dvere', { k: 'F6' }],
-							['chair', 'Kreslo', { k: 'F7' }],
-							['bar', 'Bar', { k: 'F10' }],
-							['league', 'Liga', { k: 'F12' }],
-							['top', 'Stôl zhora', { k: 'Tab' }],
-							['map', 'Mapa', { k: 'm' }],
-						]
-					: [
-							['help', 'Nápoveda', { k: 'F1' }],
-							['map', 'Mapa', { k: 'm' }],
+			ctx.office
+				? {
+						// kancelária (ligy): klávesy kancelárie
+						name: 'Kancelária',
+						color: '#c39bff',
+						items: [
+							['help', 'Nástenka', { k: 'F1' }],
+							['cue', 'Moje tágá', { k: 'F2' }],
+							['calendar', 'Kalendár', { k: 'F3' }],
+							['score', 'Výsledky', { k: 'F4' }],
+							['window', 'Okno', { k: 'F6' }],
+							['laptop', 'Moja liga', { k: 'F7' }],
+							['card', 'Vizitka', { k: 'F8' }],
+							['search', 'Hľadať zápas', { k: 'F9' }],
+							['pin', 'Hráči ligy', { k: 'F10' }],
+							['lamp', 'Lampa', { k: 'F12' }],
 						],
-			},
+					}
+				: ctx.venue === 'league'
+					? {
+							// štadión (ligový zápas): klávesy štadióna
+							name: 'Štadión',
+							color: '#ff9f6b',
+							items: [
+								['book', 'Pravidlá', { k: 'F1' }],
+								['cue', 'Moje tágá', { k: 'F2' }],
+								['chalk', 'Krieda', { k: 'F3' }],
+								['score', 'Skóre', { k: 'F4' }],
+								['chair', 'Kreslo', { k: 'F7' }],
+								['lamp', 'Svetlá', { k: 'F12' }],
+								['top', 'Stôl zhora', { k: 'Tab' }],
+							],
+						}
+					: {
+							name: 'Herňa',
+							color: '#ffd34d',
+							items: [
+								['help', 'Nápoveda', { k: 'F1' }],
+								['cue', 'Tágá', { k: 'F2' }],
+								['chalk', 'Krieda', { k: 'F3' }],
+								['score', 'Skóre', { k: 'F4' }],
+								['trophy', 'Rebríček', { k: 'F8' }],
+								['radio', 'Rádio', { k: 'F9' }],
+								['door', 'Dvere', { k: 'F6' }],
+								['chair', 'Kreslo', { k: 'F7' }],
+								['bar', 'Bar', { k: 'F10' }],
+								['league', 'Liga', { k: 'F12' }],
+								['top', 'Stôl zhora', { k: 'Tab' }],
+							],
+						},
 			{
 				name: 'Tréning',
 				color: '#7CFC8A',
-				items: [
+				items: ctx.office || ctx.venue === 'league' ? [] : [
 					!this.btnUndo.disabled && ['undo', 'Späť', { a: 'undo' }],
 					!this.btnHand.disabled && ['hand', 'Biela do ruky', { a: 'hand' }],
 					!this.btnReset.disabled && ['reset', 'Nové rozostavenie', { a: 'reset' }],
-				].filter(Boolean),
+					].filter(Boolean),
 			},
 		];
 		const resumeBtn = this._mmAsMenu ? this.menuBtns.querySelector('[data-act="resume"]') : null;
-		if (this._mmAsMenu && !resumeBtn) {
+		if (this._mmAsMenu && !resumeBtn && !ctx.office) {
 			// úvod pred začiatkom hry: herňa a tréning ešte nemajú zmysel, najprv sa vyberá v Menu hry
 			groups[1].items = groups[1].items.filter((it) => it[2].k === 'F1');
 			groups[2].items = [];
@@ -3022,6 +3056,8 @@ export class UI {
 					this.openMainMenu(false);
 					if (asMenu && (act.k || act.a === 'undo' || act.a === 'hand' || act.a === 'reset') && resumeBtn) {
 						resumeBtn.click(); // najprv späť do hry (menu hry sa zavrie), potom kláves
+					} else if (asMenu && act.k && ctx.office) {
+						this.showMenu(false); // kancelária: menu sa zavrie, ostáva sa v kancelárii, potom kláves
 					}
 					if (act.k) {
 						this.opts.onAction('menuKey', act.k);
