@@ -162,6 +162,7 @@ function mysn_roadmap() {
 /** Denník zmien (najnovšie hore). */
 function mysn_changelog() {
 	return array(
+		array( '0.20.8', '17. 11. 2026', 'Okná v hre (Správa hry, mapa, vizitka, nástroje a ďalšie) majú okraje podľa šírky hry, nie okna prehliadača – na mobile už nesiahajú k okrajom.' ),
 		array( '0.20.7', '17. 11. 2026', 'Chat v hre (PC aj mobil): len posledné 2 správy (staršia polopriehľadná), klik alebo ťuk na ne otvorí písanie; pri písaní celá história s posuvníkom a tlačidlo ✕ na zavretie (ako Esc); na PC sa pri písaní uvoľní myš a po zatvorení sa znova zachytí.' ),
 		array( '0.20.6', '17. 11. 2026', 'Pohľad zhora (Tab, mobil tlačidlo) je len na pozeranie: mierenie ani úder sa v ňom nemenia (myš, prst ani šípky). Kladenie bielej zhora ostáva.' ),
 		array( '0.20.5', '17. 11. 2026', 'Biela v ruke: aj pri novom rozostavení v tréningu sa biela kladie do D. Pri kladení bielej (nový frame, partia, po faule) sa kamera sama presunie zhora na stôl, po položení späť za tágo; na PC biela ide pod kurzor a klik ju položí, Tab prepne za tágo.' ),

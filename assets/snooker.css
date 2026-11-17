@@ -250,7 +250,7 @@ body.mysn-page { font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans
 .mysn-in-office .mysn-stats { visibility: hidden; }
 .mysn-btn.mysn-league-btn { background: #7cc4f2; color: #0b2235; border-color: #a9dafa; font-weight: 600; }
 .mysn-btn.mysn-league-btn:hover { background: #95d1f7; }
-.mysn-card { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%) rotate(-1deg); width: min(560px, calc(100vw - 32px)); max-height: calc(100vh - 80px); overflow: auto; z-index: 40; padding: 22px 26px 18px; border-radius: 10px; background: linear-gradient(135deg, #b3121f, #6e0912); border: 3px solid #e9c46a; box-shadow: 0 18px 50px #000a, inset 0 0 0 6px #6e0912, inset 0 0 0 8px #e9c46a66; color: #fff4e6; }
+.mysn-card { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%) rotate(-1deg); width: min(560px, calc(100% - 32px)); max-height: calc(100vh - 80px); overflow: auto; z-index: 40; padding: 22px 26px 18px; border-radius: 10px; background: linear-gradient(135deg, #b3121f, #6e0912); border: 3px solid #e9c46a; box-shadow: 0 18px 50px #000a, inset 0 0 0 6px #6e0912, inset 0 0 0 8px #e9c46a66; color: #fff4e6; }
 .mysn-card.mysn-hidden { display: none; }
 .mysn-card-brand { text-align: center; font: 700 15px Georgia, serif; letter-spacing: 3px; color: #f4d98a; margin-bottom: 6px; }
 .mysn-card .mysn-news-head { justify-content: center; text-align: center; font: 700 24px Georgia, serif; color: #fff4e6; margin-bottom: 4px; }
@@ -261,7 +261,7 @@ body.mysn-page { font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans
 .mysn-card .mysn-btn.mysn-primary { background: #e9c46a; color: #4a0a10; border-color: #f4d98a; }
 /* kancelária: bez bočného panela; moje tágá (F2) v okne uprostred */
 .mysn-in-office .mysn-view:not(.mysn-office-rack) { display: none; }
-.mysn-in-office .mysn-view.mysn-office-float { left: 50%; top: 50%; right: auto; bottom: auto; transform: translate(-50%, -50%); width: min(520px, calc(100vw - 32px)); max-height: calc(100vh - 100px); overflow: auto; border-radius: 12px; background: #0c0f14f2; border: 1px solid #ffffff22; box-shadow: 0 18px 50px #000a; }
+.mysn-in-office .mysn-view.mysn-office-float { left: 50%; top: 50%; right: auto; bottom: auto; transform: translate(-50%, -50%); width: min(520px, calc(100% - 32px)); max-height: calc(100vh - 100px); overflow: auto; border-radius: 12px; background: #0c0f14f2; border: 1px solid #ffffff22; box-shadow: 0 18px 50px #000a; }
 .mysn-in-office .mysn-view.mysn-office-float .mysn-view-foot { display: none; }
 /* kancelária F2: pás tág dole ako stojan v herni */
 .mysn-in-office .mysn-view.mysn-office-rack { left: 0; right: 0; top: auto; bottom: 0; width: auto; max-height: 62vh; overflow: auto; padding: 12px 16px 16px; align-items: center; background: linear-gradient(#0c0f1400, #0c0f14ee 22%); }
@@ -293,7 +293,7 @@ body.mysn-page { font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans
 .mysn-watching .mysn-tools, .mysn-watching .mysn-power, .mysn-watching .mysn-spin { display: none; }
 .mysn-watching .mysn-hint { display: none; }
 /* stojan F2: priehľadný panel s nastaveniami tága vpravo */
-.mysn-cue-panel { position: absolute; top: 64px; right: 16px; width: min(320px, calc(100vw - 32px)); max-height: calc(100vh - 140px); overflow: auto; padding: 14px 16px; border-radius: 12px; background: #0c0f14b8; border: 1px solid #ffffff22; backdrop-filter: blur(6px); display: flex; flex-direction: column; gap: 8px; z-index: 6; }
+.mysn-cue-panel { position: absolute; top: 64px; right: 16px; width: min(320px, calc(100% - 32px)); max-height: calc(100vh - 140px); overflow: auto; padding: 14px 16px; border-radius: 12px; background: #0c0f14b8; border: 1px solid #ffffff22; backdrop-filter: blur(6px); display: flex; flex-direction: column; gap: 8px; z-index: 6; }
 .mysn-cue-panel.mysn-hidden { display: none; }
 .mysn-cue-panel h3 { margin: 0; color: #f2d48a; font-size: 18px; }
 .mysn-cp-kind { font-size: 11px; text-transform: uppercase; letter-spacing: .05em; color: #c9a24a; }
@@ -481,7 +481,7 @@ body.mysn-page { font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans
 .mysn-clock-pop { animation: mysn-clock-pop 0.9s ease-out; }
 @keyframes mysn-clock-pop { from { transform: translate(-50%, -50%) scale(1.5); opacity: 0.2; } 30% { opacity: 1; } to { transform: translate(-50%, -50%) scale(1); opacity: 0.85; } }
 /* Správa hry (admin a správca hry) */
-.mysn-staff { width: min(760px, calc(100vw - 32px)); max-height: calc(100vh - 80px); overflow: auto; }
+.mysn-staff { width: min(760px, calc(100% - 32px)); max-height: calc(100% - 80px); overflow: auto; }
 .mysn-staff h4 { margin: 14px 0 6px; font-size: 14px; opacity: .85; }
 .mysn-staff .mysn-live-row { flex-wrap: wrap; }
 .mysn-staff-acts { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; justify-content: flex-end; }
@@ -600,14 +600,14 @@ body.mysn-page { font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans
 .mysn-tour div { display: flex; gap: 6px; flex-wrap: wrap; }
 .mysn-tour .mysn-btn { width: auto; flex: 1; }
 /* Ponuka F3: krieda, pavúk, nové postavenie gúľ */
-.mysn-tools-menu { width: min(360px, calc(100vw - 32px)); display: flex; flex-direction: column; gap: 8px; }
+.mysn-tools-menu { width: min(360px, calc(100% - 32px)); display: flex; flex-direction: column; gap: 8px; }
 .mysn-tools-menu .mysn-btn { text-align: left; }
 .mysn-tools-menu .mysn-btn b { display: inline-block; min-width: 18px; color: #d4a72c; }
 .mysn-tools-menu .mysn-btn:disabled { opacity: .45; }
 .mysn-tools-menu .mysn-note { margin: -4px 0 2px; font-size: 12px; }
 .mysn-spin-note { font-size: 11px; color: #ffd34d; font-weight: 600; }
 /* Mapa miestností (M) */
-.mysn-roommap { width: min(720px, calc(100vw - 32px)); }
+.mysn-roommap { width: min(720px, calc(100% - 32px)); }
 .mysn-map-wrap { display: flex; gap: 16px; align-items: stretch; flex-wrap: wrap; }
 .mysn-map { flex: 1 1 300px; min-width: 260px; aspect-ratio: 1; background: #0c0f14; border-radius: 12px; border: 1px solid #ffffff1a; }
 .mysn-map .mysn-corr { fill: #2a2016; }
@@ -622,7 +622,7 @@ body.mysn-page { font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans
 .mysn-map-card { flex: 1 1 220px; display: flex; flex-direction: column; gap: 8px; }
 .mysn-map-card p { margin: 0; font-size: 13px; opacity: .85; }
 /* Telefón diváka (F1) */
-.mysn-spphone { width: min(320px, calc(100vw - 32px)); border-radius: 28px; border: 3px solid #2a2f3a; display: flex; flex-direction: column; gap: 8px; right: 24px; left: auto; }
+.mysn-spphone { width: min(320px, calc(100% - 32px)); border-radius: 28px; border: 3px solid #2a2f3a; display: flex; flex-direction: column; gap: 8px; right: 24px; left: auto; }
 .mysn-spphone-top { text-align: center; font-size: 12px; opacity: .7; }
 .mysn-sp-keys { display: flex; flex-direction: column; gap: 4px; font-size: 13px; }
 .mysn-sp-keys div { display: flex; gap: 10px; }
@@ -649,7 +649,7 @@ body.mysn-page { font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans
 .mysn-pop { position: absolute; z-index: 7; transform: translate(-50%, -50%); font: 800 34px/1 Arial, sans-serif; pointer-events: none; text-shadow: 0 0 2px #fff, 0 0 3px #fff, 0 2px 8px #000c; animation: mysn-pop 1.6s ease-out forwards; white-space: nowrap; }
 .mysn-pop-big { font-size: 26px; text-shadow: 0 2px 8px #000; }
 @keyframes mysn-pop { 0% { opacity: 0; transform: translate(-50%, -30%) scale(.6); } 12% { opacity: 1; transform: translate(-50%, -60%) scale(1.15); } 25% { transform: translate(-50%, -70%) scale(1); } 100% { opacity: 0; transform: translate(-50%, -260%) scale(1); } }
-.mysn-choice { position: absolute; left: 50%; top: 22%; transform: translateX(-50%); z-index: 8; width: min(440px, calc(100vw - 32px)); padding: 14px 16px; border-radius: 12px; background: #101826f0; border: 1px solid #facc15; box-shadow: 0 8px 28px #000c; text-align: center; }
+.mysn-choice { position: absolute; left: 50%; top: 22%; transform: translateX(-50%); z-index: 8; width: min(440px, calc(100% - 32px)); padding: 14px 16px; border-radius: 12px; background: #101826f0; border: 1px solid #facc15; box-shadow: 0 8px 28px #000c; text-align: center; }
 .mysn-choice-t { font-size: 14.5px; color: #fff; line-height: 1.4; }
 .mysn-choice-b { display: flex; gap: 10px; justify-content: center; margin: 12px 0 8px; }
 .mysn-choice-b button { flex: 1; padding: 9px 10px; border-radius: 8px; border: 1px solid #ffffff33; background: #1e2a40; color: #fff; font-weight: 700; cursor: pointer; }
