@@ -24,6 +24,23 @@ import { countryByCode } from './countries.js';
 const cueNameOf = (id) => cueById(id).name;
 const cueStateId = (c) => c.id;
 
+// mobil: odstráni z textu klávesové skratky – zátvorky s klávesmi „(F3)“, „(ako Shift)“, „(7)“ a celé vety o klávesoch
+const KEY_RE = /\bF(?:1[0-2]|[1-9])\b|\bEsc\b|\bEnter\b|\bCtrl\b|\bShift\b|\bTab\b|[Mm]edzerník|[Kk]láves|\bšípk|W A S D/;
+function noKeys(t) {
+	if (!t || !KEY_RE.test(t) && !/\(\d\)/.test(t)) {
+		return t;
+	}
+	let s = t.replace(/\s*\([^()]*\)/g, (m) => (KEY_RE.test(m) || /^\s*\(\d\)$/.test(m) ? '' : m));
+	if (KEY_RE.test(s)) {
+		s = s
+			.replace(/([.!?])\s+/g, '$1\u0000')
+			.split('\u0000')
+			.filter((x) => !KEY_RE.test(x))
+			.join(' ');
+	}
+	return s;
+}
+
 // mobil: ikonky položiek menu hry v hlavnom menu ☰ (podľa akcie tlačidla)
 const MM_ICON = {
 	resume: 'play', training: 'play', guestTraining: 'play', solo: 'trophy', league: 'league', lobby: 'swords', rooms: 'eye',
@@ -264,6 +281,39 @@ export class UI {
 		this._contactKey = '';
 		this.help = this.buildHelp();
 		root.appendChild(this.help);
+		if (this.touchUI) {
+			// mobil: klávesové skratky nemajú zmysel – každý text v rozhraní sa pred zobrazením prečistí (zátvorky
+			// a vety s klávesmi zmiznú); platí pre všetky okná, hlásenia a ponuky, aj tie, ktoré pribudnú neskôr
+			const fix = (node) => {
+				if (node.nodeType === 3) {
+					const v = noKeys(node.nodeValue);
+					if (v !== node.nodeValue) {
+						node.nodeValue = v;
+					}
+					return;
+				}
+				if (node.nodeType !== 1 || node.closest('input, textarea')) {
+					return;
+				}
+				const w = document.createTreeWalker(node, 4);
+				for (let t = w.nextNode(); t; t = w.nextNode()) {
+					const v = noKeys(t.nodeValue);
+					if (v !== t.nodeValue) {
+						t.nodeValue = v;
+					}
+				}
+			};
+			fix(root);
+			new MutationObserver((muts) => {
+				for (const m of muts) {
+					if (m.type === 'characterData') {
+						fix(m.target);
+					} else {
+						m.addedNodes.forEach(fix);
+					}
+				}
+			}).observe(root, { subtree: true, childList: true, characterData: true });
+		}
 	}
 
 	button(label, action, title, value) {

@@ -549,6 +549,8 @@ body.mysn-page { font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans
 	.mysn-ui.mysn-tools-open .mysn-tpower { bottom: 180px; }
 	.mysn-eye.mysn-eye-on { display: flex; }
 	.mysn-chalkbtn { display: flex; }
+	/* klávesové skratky na mobile nie sú: čísla položiek v ponuke Krieda a pomôcky, riadok nápovedy pre myš */
+	.mysn-tools-menu .mysn-btn > b, .mysn-hint { display: none !important; }
 	.mysn-mmbtn { display: inline-flex; align-items: center; }
 	.mysn-barbtns .mysn-btn:not(.mysn-mmbtn) { display: none; }
 	.mysn-backbtn.mysn-back-on { display: block; }

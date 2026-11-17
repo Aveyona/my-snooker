@@ -162,6 +162,7 @@ function mysn_roadmap() {
 /** Denník zmien (najnovšie hore). */
 function mysn_changelog() {
 	return array(
+		array( '0.19.2', '17. 11. 2026', 'Mobil bez klávesových skratiek: každý text v rozhraní hry (okná, hlásenia, ponuky, pohľady) sa na mobile automaticky prečistí – zmiznú zátvorky s klávesmi (F3), (ako Shift), (7) a vety o klávesoch (napr. „Klávesy 1 až 7, Esc alebo F3 zavrie.“, „F1, Enter alebo Esc: späť do hry.“). V ponuke Krieda a pomôcky sa skryjú čísla 1 až 7, skrytý je aj riadok nápovedy pre myš. Platí aj pre texty, ktoré pribudnú neskôr. Desktop bez zmeny.' ),
 		array( '0.19.1', '17. 11. 2026', 'Mobil, hlavné menu ☰: dlaždica Nastavenia je červená.' ),
 		array( '0.19.0', '17. 11. 2026', 'Mobil, hlavné menu ☰: režimy hry Tréning, Hrať a Liga sú v skupine Hra zelené, ostatné dlaždice ostávajú modré.' ),
 		array( '0.18.9', '17. 11. 2026', 'Mobil, hlavné menu ☰ podľa miesta: v kancelárii skupina Kancelária (Nástenka F1, Moje tágá F2, Kalendár F3, Výsledky F4, Okno F6, Moja liga F7, Vizitka F8, Hľadať zápas F9, Hráči ligy F10, Lampa F12), na štadióne skupina Štadión (Pravidlá F1, Moje tágá F2, Krieda F3, Skóre F4, Kreslo F7, Svetlá F12, Stôl zhora Tab), inde Herňa. Tréning len v herni. Mapa miestností sa na mobile nepoužíva (dlaždica zrušená).' ),
