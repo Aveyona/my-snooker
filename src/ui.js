@@ -24,6 +24,13 @@ import { countryByCode } from './countries.js';
 const cueNameOf = (id) => cueById(id).name;
 const cueStateId = (c) => c.id;
 
+// mobil: ikonky položiek menu hry v hlavnom menu ☰ (podľa akcie tlačidla)
+const MM_ICON = {
+	resume: 'play', training: 'play', guestTraining: 'play', solo: 'trophy', league: 'league', lobby: 'swords', rooms: 'eye',
+	staff: 'shield', account: 'user', home: 'web', resign: 'flag', pauseMatch: 'pause', leagueHome: 'door',
+	seatChange: 'chair', watchStop: 'x', accept: 'check', decline: 'x',
+};
+
 export class UI {
 	constructor(root, opts) {
 		this.root = root;
@@ -48,7 +55,14 @@ export class UI {
 		this.btnMain.setAttribute('aria-label', 'Hlavné menu');
 		this.btnMain.addEventListener('click', (e) => {
 			e.stopPropagation();
-			this.openMainMenu(!this.mainMenuOpen());
+			if (this.mainMenuOpen()) {
+				const x = this.mmenu.querySelector('.mysn-mm-x');
+				if (x) {
+					x.click(); // zavrie menu (v úvode pred hrou sa nezavrie, kým sa nevyberie)
+				}
+				return;
+			}
+			this.openMainMenu(true);
 		});
 		right.append(this.btnSet, this.btnHelp, this.btnMain);
 		bar.appendChild(right);
@@ -215,6 +229,7 @@ export class UI {
 	button(label, action, title, value) {
 		const b = h('button', 'mysn-btn', label);
 		b.type = 'button';
+		b.dataset.act = action; // mobil: hlavné menu ☰ podľa toho vyberie ikonku
 		if (title) {
 			b.title = title;
 		}
@@ -499,6 +514,7 @@ export class UI {
 			}
 			box.append(tr, a);
 			this.menuFoot.textContent = 'Tréning si môžeš zahrať aj bez prihlásenia. Hru o skóre, ligu, partie s priateľmi a vlastné tágá majú prihlásení používatelia webu Hedlajner.';
+			this.mmRefresh();
 			return;
 		}
 		const fr = () => {
@@ -520,6 +536,7 @@ export class UI {
 			back.classList.add('mysn-primary');
 			box.append(back, this.button('Zmeniť miesto', 'seatChange', 'F6: výber miesta zhora'), this.button('Prestať sledovať', 'watchStop'), this.button('Iná otvorená partia', 'rooms'), ...(this.opts.role ? [staffBtn()] : []), this.button('Nastavenia', 'settings'), this.button('Späť na web', 'home'));
 			this.menuFoot.textContent = 'Divák pozerá zo svojho miesta: myšou sa rozhliadaš, kolieskom približuješ. F4 skóre, F6 zmena miesta.';
+			this.mmRefresh();
 			return;
 		}
 		if (kind === 'match') {
@@ -552,6 +569,14 @@ export class UI {
 		}
 		box.appendChild(this.button('Späť na web', 'home'));
 		this.menuFoot.textContent = 'V hre sa myš zachytí v okne. Esc ju uvoľní a otvorí toto menu. F1 nápoveda na nástenke, F2 stojan s tágami.';
+		this.mmRefresh();
+	}
+
+	/** Mobil: obsah menu hry sa zmenil – otvorené hlavné menu ☰ sa prekreslí. */
+	mmRefresh() {
+		if (this.touchUI && this.mmenu && this.mainMenuOpen()) {
+			this.openMainMenu(true);
+		}
 	}
 
 	/** Účet hráča (menu Účet): d = null načítava sa, inak údaje z REST account. */
@@ -635,6 +660,25 @@ export class UI {
 		if (on && !this.menuOpen()) {
 			this._menuAt = performance.now(); // kedy sa menu otvorilo (Esc hneď potom ho nezavrie)
 		}
+		if (this.touchUI) {
+			// mobil: menu hry neexistuje, jeho položky sú v hlavnom menu ☰ (skupina Menu hry)
+			this.menu.classList.add('mysn-hidden');
+			const was = this._mmAsMenu && this.mainMenuOpen();
+			this._mmAsMenu = !!on;
+			if (on) {
+				if (!was) {
+					this.openMainMenu(true);
+				}
+			} else {
+				if (this.mainMenuOpen()) {
+					this.openMainMenu(false);
+				}
+				this.panel.classList.add('mysn-hidden');
+				this.help.classList.add('mysn-hidden');
+				this.menuNote('');
+			}
+			return;
+		}
 		this.menu.classList.toggle('mysn-hidden', !on);
 		if (!on) {
 			this.panel.classList.add('mysn-hidden');
@@ -644,7 +688,15 @@ export class UI {
 	}
 
 	menuOpen() {
+		if (this.touchUI) {
+			return !!this._mmAsMenu; // mobil: menu hry je v hlavnom menu ☰
+		}
 		return !this.menu.classList.contains('mysn-hidden');
+	}
+
+	/** Mobil: je otvorené nejaké okno (Nastavenia, Účet, výzva, mapa, prihlásenie…)? */
+	anyPanelOpen() {
+		return !!this.root.querySelector('.mysn-panel:not(.mysn-hidden), .mysn-auth:not(.mysn-hidden), .mysn-reader:not(.mysn-hidden), .mysn-phone:not(.mysn-hidden)');
 	}
 
 	/** Pozvánky do partie: v menu a ako krátka správa navrchu (aj počas tréningu). */
@@ -657,6 +709,10 @@ export class UI {
 			yes.classList.add('mysn-primary');
 			row.append(yes, this.button('Odmietnuť', 'decline', '', i.id));
 			this.menuInv.appendChild(row);
+		}
+		if (this._mmInvN !== inv.length) {
+			this._mmInvN = inv.length;
+			this.mmRefresh();
 		}
 		if (!this.toastBox) {
 			this.toastBox = h('div', 'mysn-toast mysn-hidden');
@@ -2808,6 +2864,15 @@ export class UI {
 		}
 		const ctx = (this.menuCtx && this.menuCtx()) || {};
 		const P = {
+			play: '<path d="M7 4v16l13-8z"/>',
+			swords: '<path d="M14.5 17.5 3 6V3h3l11.5 11.5M13 19l6-6M16 16l4 4M19 21l2-2"/>',
+			eye: '<path d="M2 12s3.6-6.5 10-6.5S22 12 22 12s-3.6 6.5-10 6.5S2 12 2 12z"/><circle cx="12" cy="12" r="3"/>',
+			user: '<circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/>',
+			shield: '<path d="M12 3 4 6v6c0 5 3.5 8 8 9 4.5-1 8-4 8-9V6z"/>',
+			flag: '<path d="M5 21V4M5 4h11l-2 4 2 4H5"/>',
+			pause: '<path d="M8 5v14M16 5v14"/>',
+			check: '<path d="m5 12 5 5 9-10"/>',
+			x: '<path d="M6 6l12 12M18 6 6 18"/>',
 			set: '<circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9 7 7M17 17l2.1 2.1M4.9 19.1 7 17M17 7l2.1-2.1"/>',
 			help: '<circle cx="12" cy="12" r="9"/><path d="M9.5 9a2.5 2.5 0 1 1 3.5 2.3c-.6.3-1 .8-1 1.5V14M12 17h.01"/>',
 			cue: '<path d="M3 21 16 8"/><path d="m15 6 3 3 2-2-3-3z"/>',
@@ -2865,18 +2930,37 @@ export class UI {
 			{
 				name: 'Menu hry',
 				color: '#6fb3ff',
-				items: [
-					['menu', 'Hrať, Liga, Výzva, Účet…', { a: 'menuGame' }],
-					['web', 'Späť na web', { a: 'menuWeb' }],
-				],
+				// položky menu hry (podľa stavu: Tréning, Hrať, Liga, Poslať výzvu, Pozerať hru, Účet…); ťuknutie
+				// stlačí pôvodné tlačidlo, takže robí presne to isté ako na desktope
+				items: [...this.menuInv.querySelectorAll('button'), ...this.menuBtns.querySelectorAll('.mysn-btn')]
+					.filter((b) => b.dataset.act !== 'settings' && b.dataset.act !== 'roomMap' && b.style.display !== 'none')
+					.map((b) => [MM_ICON[b.dataset.act] || (b.classList.contains('mysn-login') ? 'user' : 'menu'), b.textContent, { el: b }]),
 			},
 		];
+		const resumeBtn = this._mmAsMenu ? this.menuBtns.querySelector('[data-act="resume"]') : null;
+		if (this._mmAsMenu && !resumeBtn) {
+			// úvod pred začiatkom hry: herňa a tréning ešte nemajú zmysel, najprv sa vyberá v Menu hry
+			groups[1].items = groups[1].items.filter((it) => it[2].k === 'F1');
+			groups[2].items = [];
+		}
 		this.mmenu.textContent = '';
 		const close = h('button', 'mysn-mm-x', '✕');
 		close.type = 'button';
 		close.setAttribute('aria-label', 'Zavrieť menu');
-		close.addEventListener('click', () => this.openMainMenu(false));
+		close.addEventListener('click', () => {
+			if (this._mmAsMenu) {
+				if (resumeBtn) {
+					resumeBtn.click(); // ako Esc na desktope: pokračovať
+				}
+				return;
+			}
+			this.openMainMenu(false);
+		});
+		close.classList.toggle('mysn-hidden', !!(this._mmAsMenu && !resumeBtn));
 		this.mmenu.appendChild(close);
+		if (this._mmAsMenu && this.menuMode.textContent) {
+			this.mmenu.appendChild(h('div', 'mysn-mm-mode', esc(this.menuMode.textContent)));
+		}
 		for (const g of groups) {
 			if (!g.items.length) {
 				continue;
@@ -2890,7 +2974,16 @@ export class UI {
 				b.type = 'button';
 				b.querySelector('.mysn-mm-l').textContent = label;
 				b.addEventListener('click', () => {
+					if (act.el) {
+						this.openMainMenu(false);
+						act.el.click(); // pôvodné tlačidlo menu hry
+						return;
+					}
+					const asMenu = this._mmAsMenu;
 					this.openMainMenu(false);
+					if (asMenu && (act.k || act.a === 'undo' || act.a === 'hand' || act.a === 'reset') && resumeBtn) {
+						resumeBtn.click(); // najprv späť do hry (menu hry sa zavrie), potom kláves
+					}
 					if (act.k) {
 						this.opts.onAction('menuKey', act.k);
 					} else {

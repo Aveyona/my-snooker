@@ -5542,6 +5542,9 @@ export function start(root, config = {}) {
 		ui.showFine(cueSpec.fine > 0, controls.touchFineOn());
 		// pohľady (nástenka, stojan, rebríček…) majú vlastné Späť do hry; mobil potrebuje tlačidlo len pri stole zhora (Tab)
 		ui.showBack(ui.touchUI && !ui.mainMenuOpen() && !ui.menuOpen() && !view && rig.mode === 'top');
+		if (ui.touchUI && ui._mmAsMenu && !ui.mainMenuOpen() && !ui.anyPanelOpen()) {
+			ui.openMainMenu(true); // mobil: po zavretí okna (Nastavenia, Účet…) sa vráti hlavné menu, ako menu hry na desktope
+		}
 		updateFelt();
 		office.updateWindow(dt);
 		office.notebookTick(dt);

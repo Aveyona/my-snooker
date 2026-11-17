@@ -506,6 +506,7 @@ body.mysn-page { font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans
 .mysn-mmenu { position: absolute; inset: 0; z-index: 40; background: #0b0e13f2; overflow-y: auto; padding: 64px 18px 24px; box-sizing: border-box; pointer-events: auto; -webkit-overflow-scrolling: touch; font-family: system-ui, -apple-system, "Segoe UI", sans-serif; }
 .mysn-mm-x { position: absolute; top: 12px; right: 12px; width: 44px; height: 44px; border-radius: 50%; border: 1px solid #ffffff40; background: #ffffff14; color: #fff; font-size: 18px; }
 .mysn-mm-sec { margin-bottom: 18px; }
+.mysn-mm-mode { color: #cfd3da; font-size: 13px; margin: -40px 56px 20px 2px; min-height: 18px; }
 .mysn-mm-h { color: var(--mm); font-size: 13px; font-weight: 700; letter-spacing: .03em; margin: 0 2px 10px; }
 .mysn-mm-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px 8px; }
 .mysn-mm-it { display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 0; border: 0; background: none; color: #dde2ea; font: 500 12px/1.2 system-ui, sans-serif; text-align: center; -webkit-tap-highlight-color: transparent; }
