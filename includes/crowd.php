@@ -20,6 +20,7 @@ function mysn_crowd_defaults() {
 		'applause'  => 'real', // real = ako v snookri, off = vypnutý
 		'brk_clap'  => 20,     // potlesk po skončení série od toľkých bodov
 		'crowd_fx'  => 1,      // óóó, jooooj, smiech, kašľanie
+		'ref_vol'   => 1,      // hlasitosť rozhodcu (násobok, 0 až 4)
 	);
 }
 
@@ -40,13 +41,14 @@ function mysn_crowd_config() {
 		'applause' => 'off' === $c['applause'] ? 'off' : 'real',
 		'brkClap'  => max( 1, (int) $c['brk_clap'] ),
 		'crowdFx'  => (bool) $c['crowd_fx'],
+		'refVol'   => (float) $c['ref_vol'],
 	);
 }
 
 add_action(
 	'admin_menu',
 	function () {
-		add_submenu_page( 'my-snooker', 'My Snooker: Publikum a Rudo', 'Publikum a Rudo', 'manage_options', 'my-snooker-crowd', 'mysn_admin_crowd' );
+		add_submenu_page( 'my-snooker', 'My Snooker: Publikum, Rudo a rozhodca', 'Publikum a Rudo', 'manage_options', 'my-snooker-crowd', 'mysn_admin_crowd' );
 	},
 	22
 );
@@ -69,6 +71,7 @@ function mysn_admin_crowd() {
 				'applause'  => 'off' === ( $in['applause'] ?? '' ) ? 'off' : 'real',
 				'brk_clap'  => max( 1, min( 147, (int) ( $in['brk_clap'] ?? 20 ) ) ),
 				'crowd_fx'  => empty( $in['crowd_fx'] ) ? 0 : 1,
+				'ref_vol'   => max( 0, min( 4, (float) ( $in['ref_vol'] ?? 1 ) ) ),
 			),
 			false
 		);
@@ -89,6 +92,10 @@ function mysn_admin_crowd() {
 		<tr><th>Ako často hovorí</th><td><select name="rudo_freq"><option value="low" <?php selected( $c['rudo_freq'], 'low' ); ?>>Menej (asi o polovicu)</option><option value="mid" <?php selected( in_array( $c['rudo_freq'], array( 'low', 'high', 'key' ), true ) ? '' : 'mid', 'mid' ); ?>>Normálne</option><option value="high" <?php selected( $c['rudo_freq'], 'high' ); ?>>Viac (skoro pri každej príležitosti)</option><option value="key" <?php selected( $c['rudo_freq'], 'key' ); ?>>Len dôležité chvíle (séria 50, stovka, koniec framu a zápasu)</option></select><p class="description">Platí pre pády gúľ, fauly, minutia, pekné údery, rozloženie gúľ aj živé komentáre. Séria 50, stovka a koniec framu a zápasu zaznejú vždy.</p></td></tr>
 		<tr><th>Odstup medzi komentármi</th><td><input type="number" name="rudo_gap" min="1" max="30" value="<?php echo esc_attr( $c['rudo_gap'] ); ?>" style="width:70px"> s</td></tr>
 		<tr><th>Živé komentáre</th><td><label><input type="checkbox" name="rudo_live" value="1" <?php checked( $c['rudo_live'] ); ?>> Podľa situácie: AI (My AI Writer) napíše vetu s menami a skóre, ElevenLabs ju namluví</label><br><label>Najviac <input type="number" name="live_hour" min="0" max="500" value="<?php echo esc_attr( $c['live_hour'] ); ?>" style="width:80px"> za hodinu</label><p class="description">Bez živých komentárov hrá Rudo pripravené repliky. Hlas Ruda a repliky sú v <a href="<?php echo esc_url( admin_url( 'admin.php?page=my-snooker-sounds' ) ); ?>">Zvukoch</a> (skupina Komentátor Rudo).</p></td></tr>
+	</tbody></table>
+	<h2>Rozhodca</h2>
+	<table class="form-table"><tbody>
+		<tr><th>Hlasitosť</th><td><input type="range" name="ref_vol" min="0" max="4" step="0.05" value="<?php echo esc_attr( $c['ref_vol'] ); ?>" oninput="this.nextElementSibling.textContent=Math.round(this.value*100)+' %'"> <span><?php echo esc_html( round( $c['ref_vol'] * 100 ) ); ?> %</span><p class="description">Hlásenia rozhodcu vo všetkých herniach aj na štadióne. Hlas rozhodcu je v <a href="<?php echo esc_url( admin_url( 'admin.php?page=my-snooker-sounds' ) ); ?>">Zvukoch</a>.</p></td></tr>
 	</tbody></table>
 	<h2>Publikum</h2>
 	<table class="form-table"><tbody>
