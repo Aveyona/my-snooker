@@ -700,11 +700,20 @@ body.mysn-page { font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans
 .mysn-gchat-full .mysn-gchat-list { -webkit-mask-image: linear-gradient(to bottom, transparent 0, #000 64px); mask-image: linear-gradient(to bottom, transparent 0, #000 64px); }
 .mysn-gchat-msg { flex: none; margin-top: 4px; padding: 4px 10px; border-radius: 8px; background: #0c0f14b3; color: #f1f1f1; text-shadow: 0 1px 2px #000; overflow-wrap: anywhere; opacity: 0; transform: translateY(8px); transition: opacity .25s, transform .25s; }
 .mysn-gchat-msg.mysn-gchat-in { opacity: 1; transform: none; }
-/* v hre sa ukazuje len posledných 5 správ (mobil 3), staršie ostávajú v chate na webe */
-.mysn-gchat-list > .mysn-gchat-msg:not(:nth-last-child(-n+5)) { display: none; }
-@media (hover: none), (pointer: coarse) {
-	.mysn-gchat-list > .mysn-gchat-msg:not(:nth-last-child(-n+3)) { display: none; }
-}
+/* v hre len posledné 2 správy (staršia polopriehľadná), klik na ne otvorí písanie; pri písaní celá história s posuvníkom */
+.mysn-gchat-list > .mysn-gchat-msg:not(:nth-last-child(-n+2)) { display: none; }
+.mysn-gchat-list > .mysn-gchat-msg.mysn-gchat-in:nth-last-child(2) { opacity: .55; }
+.mysn-gchat-msg { pointer-events: auto; cursor: pointer; }
+.mysn-gchat-open .mysn-gchat-list { pointer-events: auto; overflow-y: auto; max-height: min(40vh, 320px); justify-content: flex-start; -webkit-mask-image: none; mask-image: none; padding: 4px 6px 4px 4px; border-radius: 10px; background: #0c0f1480; scrollbar-width: thin; scrollbar-color: #ffd34d99 transparent; overscroll-behavior: contain; }
+.mysn-gchat-open .mysn-gchat-list > .mysn-gchat-msg:first-child { margin-top: auto; }
+.mysn-gchat-open .mysn-gchat-list > .mysn-gchat-msg.mysn-gchat-msg { display: block; cursor: default; }
+.mysn-gchat-open .mysn-gchat-list > .mysn-gchat-msg.mysn-gchat-in { opacity: 1; }
+.mysn-gchat-open .mysn-gchat-list::-webkit-scrollbar { width: 8px; }
+.mysn-gchat-open .mysn-gchat-list::-webkit-scrollbar-thumb { background: #ffd34d99; border-radius: 4px; }
+.mysn-gchat-row { display: flex; gap: 6px; align-items: center; }
+.mysn-gchat-row input { flex: 1; min-width: 0; }
+.mysn-gchat-x { flex: none; width: 38px; height: 38px; border-radius: 50%; border: 2px solid #ffd34d99; background: #0c0f14e6; color: #fff; font: 700 16px system-ui, sans-serif; cursor: pointer; padding: 0; }
+.mysn-gchat-x:hover { background: #ffd34d; color: #111; }
 .mysn-gchat-msg b { color: #ffd34d; font-weight: 700; }
 .mysn-gchat-mine b { color: #7CFC8A; }
 .mysn-gchat-form { margin-top: 6px; pointer-events: auto; }

@@ -1481,6 +1481,8 @@ export function start(root, config = {}) {
 	let spin = { side: 0, top: 0 };
 	let placeCam = false; // kamera je zhora kvôli kladeniu bielej (po položení späť za tágo)
 	let myPlaceWas = false;
+	let chatUnlock = false; // chat práve uvoľnil myš (nie Esc)
+	let chatRelock = false; // po zatvorení chatu znova zachytiť myš
 	let started = false;
 	let guestPlay = false; // neprihlásený návštevník trénuje (len tréning, bez ukladania a hry cez internet)
 	let escClosedAt = -1e9; // kedy Esc zavrelo menu (vtedy sa menu samo znova neotvorí)
@@ -3569,6 +3571,10 @@ export function start(root, config = {}) {
 				controls.uncapture();
 				return;
 			}
+			if (!on && chatUnlock) {
+				chatUnlock = false; // písanie v chate uvoľnilo myš (aby sa dalo kliknúť na ✕ a posúvať históriu)
+				return;
+			}
 			if (!on && chat.isOpen()) {
 				chat.close(); // Esc pri písaní v chate: zavrie len chat, menu sa neotvorí
 				escClosedAt = performance.now();
@@ -4153,6 +4159,23 @@ export function start(root, config = {}) {
 		mrest: config.restUrl,
 		nonce: () => (online && online.net && online.net.nonce) || config.nonce,
 		// Enter inde: biela do ruky, pohľady (kreslo, noviny, stojan...), nájdený zápas, koniec partie; divák na svojom mieste píše normálne
+		// PC: pri písaní sa myš uvoľní (✕, posuvník histórie); po zatvorení sa znova zachytí do hry
+		onOpen: () => {
+			if (!ui.touchUI && controls.captured) {
+				chatUnlock = true;
+				chatRelock = true;
+				controls.uncapture();
+			}
+		},
+		onClose: () => {
+			chatUnlock = false;
+			if (chatRelock) {
+				chatRelock = false;
+				if (!ui.menuOpen() && (!view || view === 'free')) {
+					controls.capture();
+				}
+			}
+		},
 		canOpen: () => !!(user || guestPlay) && (game.spectating || game.state !== 'place') && (!view || ((game.spectating || specDemo) && view === 'seat')) && !ui.menuOpen() && !ui.foundOpen() && !ui.partyOpen() && !ui.cardOpen() && !ui.phoneOpen(),
 	});
 	let zoomSaveT = 0;

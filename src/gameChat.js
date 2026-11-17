@@ -39,7 +39,17 @@ export function gameChat(root, cfg, hooks = {}) {
 	const tabHint = document.createElement('small');
 	tabHint.textContent = 'Tab prepína';
 	tabs.append(tabM, tabS, tabHint);
-	form.append(tabs, input, note);
+	// riadok na písanie: políčko a ✕ (zavrie písanie, ako Esc)
+	const row0 = document.createElement('div');
+	row0.className = 'mysn-gchat-row';
+	const xBtn = document.createElement('button');
+	xBtn.type = 'button';
+	xBtn.className = 'mysn-gchat-x';
+	xBtn.textContent = '✕';
+	xBtn.title = 'Zavrieť písanie';
+	xBtn.setAttribute('aria-label', 'Zavrieť písanie');
+	row0.append(input, xBtn);
+	form.append(tabs, row0, note);
 	el.append(list, form);
 	root.appendChild(el);
 
@@ -123,8 +133,12 @@ export function gameChat(root, cfg, hooks = {}) {
 		const txt = document.createElement('span');
 		txt.textContent = esc(m.text);
 		row.append(who, txt);
+		const atEnd = list.scrollHeight - list.scrollTop - list.clientHeight < 40;
 		list.appendChild(row);
 		requestAnimationFrame(() => row.classList.add('mysn-gchat-in'));
+		if (isOpen && atEnd) {
+			list.scrollTop = list.scrollHeight; // pri písaní: nová správa sa ukáže, ak si nebol hore v histórii
+		}
 	};
 	const head = () => {
 		const h = { 'Content-Type': 'application/json' };
@@ -285,6 +299,8 @@ export function gameChat(root, cfg, hooks = {}) {
 		}
 		isOpen = true;
 		form.classList.remove('mysn-hidden');
+		el.classList.add('mysn-gchat-open'); // pri písaní viac správ a posuvník histórie
+		requestAnimationFrame(() => (list.scrollTop = list.scrollHeight));
 		flash('');
 		input.disabled = !(hooks.canWrite && hooks.canWrite());
 		if (ctxNow() !== mctx) {
@@ -305,6 +321,8 @@ export function gameChat(root, cfg, hooks = {}) {
 		input.value = '';
 		input.blur();
 		form.classList.add('mysn-hidden');
+		el.classList.remove('mysn-gchat-open');
+		list.scrollTop = list.scrollHeight;
 		hooks.onClose && hooks.onClose();
 		schedule();
 	};
@@ -387,6 +405,21 @@ export function gameChat(root, cfg, hooks = {}) {
 			fail('Správu sa nepodarilo odoslať, skús znova.');
 		}
 	};
+	// klik alebo ťuk na správy otvorí písanie; ✕ ho zavrie (do hry sa klik nedostane)
+	for (const t of ['pointerdown', 'mousedown', 'touchstart', 'wheel']) {
+		el.addEventListener(t, (e) => e.stopPropagation());
+	}
+	list.addEventListener('click', (e) => {
+		e.stopPropagation();
+		if (!isOpen && (!hooks.canOpen || hooks.canOpen())) {
+			open();
+		}
+	});
+	xBtn.addEventListener('click', (e) => {
+		e.preventDefault();
+		e.stopPropagation();
+		close();
+	});
 	form.addEventListener('submit', (e) => {
 		e.preventDefault();
 		send();
