@@ -533,7 +533,7 @@ const genOpen = (tr) => {
 	tr.querySelector('td.files').appendChild(box);
 };
 // výber hlasu skupiny: ukážka a meno hlasu
-for (const box of document.querySelectorAll('.vbox')) {
+for (const box of document.querySelectorAll('.vbox[data-group]')) { // len výber hlasu skupiny (nie nastavenia série)
 	const sel = box.querySelector('.vsel');
 	const nm = () => (box.querySelector('.vname').value = sel.value ? sel.selectedOptions[0].textContent.replace(/ \(.*$/, '') : '');
 	sel.addEventListener('change', nm);

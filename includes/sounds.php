@@ -781,7 +781,7 @@ function mysn_admin_sounds_page() {
 						echo '<h2>' . esc_html( $group ) . '</h2>';
 						if ( 'Séria' === $group ) {
 							$st = mysn_streak_cfg();
-							echo '<div class="vbox"><span class="description" style="flex-basis:100%">Zvuk pri každej potopenej guli podľa toho, koľká je v sérii: 1. guľa stupeň 1, 2. guľa stupeň 2… (ako kill zvuky vo Valorante). Keď séria skončí (minutie, faul, koniec framu), začína sa znova od 1. Platí v tréningu, v hre o skóre aj v partii.</span>';
+							echo '<div class="vbox streakbox"><span class="description" style="flex-basis:100%">Zvuk pri každej potopenej guli podľa toho, koľká je v sérii: 1. guľa stupeň 1, 2. guľa stupeň 2… (ako kill zvuky vo Valorante). Keď séria skončí (minutie, faul, koniec framu), začína sa znova od 1. Platí v tréningu, v hre o skóre aj v partii.</span>';
 							echo '<label>Vrchol od stupňa <select name="streak[peak]">';
 							for ( $i = 2; $i <= 10; $i++ ) {
 								echo '<option value="' . (int) $i . '"' . selected( $st['peak'], $i, false ) . '>' . (int) $i . '</option>';
