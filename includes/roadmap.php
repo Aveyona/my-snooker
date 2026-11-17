@@ -162,6 +162,7 @@ function mysn_roadmap() {
 /** Denník zmien (najnovšie hore). */
 function mysn_changelog() {
 	return array(
+		array( '0.20.11', '17. 11. 2026', 'Mobil, stojan s tágami (návrh D): stojan cez celú obrazovku, hore ‹ názov tága a hodnoty ›, vpravo okrúhle ikony Špica, Krieda, Vlastné a i – každá otvorí zdola len svoju časť (s ✕), dole Späť do hry.' ),
 		array( '0.20.10', '17. 11. 2026', 'Mobil, stojan s tágami (F2): hore vidno stojan, ‹ › na bokoch vyberajú tágo, dole panel vybraného tága (porovnanie tág 1 až 10 sa rozbalí ťuknutím) a pás tág s tlačidlami Kriedy (okno s ✕, po výbere sa zavrie) a Späť do hry.' ),
 		array( '0.20.9', '17. 11. 2026', 'Mobil: naraz je otvorené len jedno okno – otvorenie Nastavení, Účtu, Správy hry, nápovedy a ďalších zavrie ostatné otvorené okná.' ),
 		array( '0.20.8', '17. 11. 2026', 'Okná v hre (Správa hry, mapa, vizitka, nástroje a ďalšie) majú okraje podľa šírky hry, nie okna prehliadača – na mobile už nesiahajú k okrajom.' ),

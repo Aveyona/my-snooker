@@ -2727,6 +2727,49 @@ export class UI {
 			pros.appendChild(h('li', (c.base || c.id) === t.id ? 'mysn-on' : '', `<b>${esc(t.name)}</b><span class="mysn-pro">+ ${esc(p[0])}</span><span class="mysn-con">− ${esc(p[1])}</span>`));
 		}
 		cmp.appendChild(pros);
+		if (this.touchUI) {
+			// mobil: časti panela (info, špica, vlastné tágo); zobrazí sa len tá, ktorú otvorila ikona
+			let sec = 'info';
+			for (const el of [...P.children]) {
+				if (el.classList.contains('mysn-tip')) {
+					sec = 'tip';
+				} else if (sec === 'tip') {
+					sec = 'own';
+				}
+				if (el.classList.contains('mysn-cp-cmp')) {
+					sec = 'info';
+				}
+				el.dataset.sec = sec;
+			}
+			const x = h('button', 'mysn-cp-x', '✕');
+			x.type = 'button';
+			x.setAttribute('aria-label', 'Zavrieť');
+			x.addEventListener('click', (e) => {
+				e.stopPropagation();
+				this._cpShow = '';
+				this.cpShow();
+			});
+			P.prepend(x);
+			this.cpShow();
+		}
+	}
+
+	/** Mobil, stojan: ktorá časť panela tága je otvorená (tip, own, info; '' = zavretý). */
+	cpShow() {
+		if (!this.cuePanel) {
+			return;
+		}
+		const k = this._cpShow || '';
+		if (k) {
+			this.cuePanel.dataset.show = k;
+		} else {
+			delete this.cuePanel.dataset.show;
+		}
+		if (this.viewBox) {
+			for (const b of this.viewBox.querySelectorAll('.mysn-rack-ico')) {
+				b.classList.remove('mysn-on');
+			}
+		}
 	}
 
 	cardOpen() {
@@ -2949,6 +2992,10 @@ export class UI {
 		if (name !== 'rack' && this.cuePanel) {
 			this.cuePanel.classList.add('mysn-hidden');
 		}
+		if (name !== 'rack' && this._cpShow) {
+			this._cpShow = ''; // mobil: po odchode od stojana sa otvorená časť panela tága zavrie
+			this.cpShow();
+		}
 		box.classList.toggle('mysn-office-rack', name === 'office' && !!news && !!news.office && news.office.mode === 'cues');
 		if (name !== 'office' && this.cardBox) {
 			this.cardOverlay(false);
@@ -2982,9 +3029,12 @@ export class UI {
 			});
 			box.appendChild(list);
 			if (this.touchUI) {
-				// mobil: ‹ › na bokoch vyberajú tágo (ako šípky), Kriedy otvoria okno kried; panel tága je nad pásom tág
+				// mobil (návrh D): stojan cez celú obrazovku, hore ‹ názov › a hodnoty, vpravo okrúhle ikony
+				// (Špica, Krieda, Vlastné, i); každá otvorí zdola len svoju časť panela tága, dole Späť do hry
+				const sel = (news && news.rack && news.rack.sel) || cues.find((c) => c.id === selId) || cues[0];
+				const top = h('div', 'mysn-rack-top');
 				const nav = (k, t) => {
-					const b = h('button', 'mysn-rack-nav mysn-rack-' + (k === 'ArrowLeft' ? 'prev' : 'next'), t);
+					const b = h('button', 'mysn-rack-nav', t);
 					b.type = 'button';
 					b.addEventListener('click', (e) => {
 						e.stopPropagation();
@@ -2992,23 +3042,38 @@ export class UI {
 					});
 					return b;
 				};
-				box.append(nav('ArrowLeft', '‹'), nav('ArrowRight', '›'));
-				const kb = h('button', 'mysn-btn mysn-rack-chalkbtn', 'Kriedy');
-				kb.type = 'button';
-				kb.addEventListener('click', (e) => {
-					e.stopPropagation();
+				const idx = Math.max(0, cues.findIndex((c) => c.id === (sel && sel.id) || (sel && c.id === sel.base)));
+				const mid = h('div', 'mysn-rack-name', sel ? `<b>${esc(sel.name)}</b><span>${idx + 1} z ${cues.length} · Sila ${Math.round(sel.power * 100)} % · ${Math.round(sel.len * 100)} cm · špička ${esc(sel.tip)}</span>` : '');
+				top.append(nav('ArrowLeft', '‹'), mid, nav('ArrowRight', '›'));
+				const icons = h('div', 'mysn-rack-icons');
+				const ico = (key, label, fn) => {
+					const b = h('button', 'mysn-rack-ico' + (this._cpShow === key ? ' mysn-on' : ''), label);
+					b.type = 'button';
+					b.addEventListener('click', (e) => {
+						e.stopPropagation();
+						fn(b);
+					});
+					icons.appendChild(b);
+				};
+				const sheet = (key) => {
+					if (this.chalkEl) {
+						this.chalkEl.classList.remove('mysn-chalks-on');
+					}
+					this._cpShow = this._cpShow === key ? '' : key;
+					this.cpShow();
+				};
+				ico('tip', 'Špica', () => sheet('tip'));
+				ico('chalk', 'Krieda', () => {
+					this._cpShow = '';
+					this.cpShow();
 					if (this.chalkEl) {
 						this.chalkEl.classList.toggle('mysn-chalks-on');
 					}
 				});
-				this._rackChalkBtn = kb;
-				const on = list.querySelector('.mysn-on');
-				requestAnimationFrame(() => {
-					if (on) {
-						on.scrollIntoView({ block: 'nearest', inline: 'center' });
-					}
-					this.root.style.setProperty('--mysn-rackh', box.offsetHeight + 'px');
-				});
+				ico('own', 'Vlastné', () => sheet('own'));
+				ico('info', 'i', () => sheet('info'));
+				box.append(top, icons);
+				this._rackChalkBtn = null;
 			}
 			this.renderCuePanel((news && news.rack && news.rack.sel) || cues.find((c) => c.id === selId) || cues[0], (news && news.rack) || {});
 		}
@@ -3080,9 +3145,6 @@ export class UI {
 		if (name !== 'chalk' && name !== 'office') {
 			const back = this.button('Späť do hry', 'back');
 			back.classList.add('mysn-primary');
-			if (name === 'rack' && this.touchUI && this._rackChalkBtn) {
-				foot.appendChild(this._rackChalkBtn);
-			}
 			foot.appendChild(back);
 		}
 		box.appendChild(foot);

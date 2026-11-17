@@ -734,19 +734,29 @@ body.mysn-page { font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans
 .mysn-party-ver.bad { color: #ff9b9b; }
 
 
-/* mobil: stojan s tágami (F2) – hore 3D stojan, dole panel tága, úplne dole pás tág a Späť do hry */
+/* mobil: stojan s tágami (F2), návrh D – stojan cez celú obrazovku, hore názov, vpravo ikony, panely zdola */
 @media (hover: none), (pointer: coarse) {
-	.mysn-view.mysn-rack-panel { padding: 6px 8px 10px; gap: 6px; background: #0c0f14f0; }
-	.mysn-view.mysn-rack-panel > h3 { display: none; }
-	.mysn-view.mysn-rack-panel .mysn-cues { flex-wrap: nowrap; justify-content: flex-start; overflow-x: auto; width: 100%; max-width: none; padding-bottom: 4px; scrollbar-width: none; }
-	.mysn-view.mysn-rack-panel .mysn-cue { flex: none; width: 112px; padding: 6px 8px; font-size: 11px; }
-	.mysn-view.mysn-rack-panel .mysn-cue em, .mysn-view.mysn-rack-panel .mysn-cue > span:not(.mysn-cue-n):not(.mysn-cue-cat) { display: none; }
-	.mysn-cue-panel { top: auto; left: 0; right: 0; width: auto; bottom: var(--mysn-rackh, 150px); max-height: 40%; border-radius: 12px 12px 0 0; padding: 10px 12px; background: #0c0f14eb; z-index: 6; }
+	.mysn-view.mysn-rack-panel { top: 0; padding: 0; background: none; pointer-events: none; gap: 0; }
+	.mysn-view.mysn-rack-panel > h3, .mysn-view.mysn-rack-panel > .mysn-cues { display: none; }
+	.mysn-view.mysn-rack-panel .mysn-view-foot { position: absolute; left: 0; right: 0; bottom: 12px; pointer-events: auto; }
+	.mysn-view.mysn-rack-panel .mysn-view-foot > span { display: none; }
+	.mysn-rack-top { position: absolute; top: 58px; left: 8px; right: 8px; display: flex; align-items: center; gap: 8px; padding: 6px 8px; border-radius: 12px; background: #0c0f14cc; pointer-events: auto; }
+	.mysn-rack-name { flex: 1; min-width: 0; text-align: center; }
+	.mysn-rack-name b { display: block; color: #f2d48a; font-size: 16px; }
+	.mysn-rack-name span { display: block; font-size: 11.5px; color: #dfe3ea; }
+	.mysn-rack-nav { flex: none; width: 40px; height: 40px; border-radius: 50%; border: 1.5px solid #ffffffaa; background: #0006; color: #fff; font: 700 24px/1 system-ui, sans-serif; padding: 0; }
+	.mysn-rack-icons { position: absolute; right: 8px; top: 34%; display: flex; flex-direction: column; gap: 10px; pointer-events: auto; }
+	.mysn-rack-ico { width: 52px; height: 52px; border-radius: 50%; border: 1.5px solid #ffffffcc; background: #0c0f1499; color: #fff; font: 600 11px system-ui, sans-serif; padding: 0; }
+	.mysn-rack-ico:last-child { font: italic 700 18px Georgia, serif; }
+	.mysn-cue-panel { display: none; top: auto; left: 0; right: 0; bottom: 0; width: auto; max-height: 62%; border-radius: 14px 14px 0 0; padding: 12px 14px 16px; background: #0c0f14f5; z-index: 9; }
+	.mysn-cue-panel[data-show] { display: flex; }
+	.mysn-cue-panel.mysn-hidden { display: none; }
+	.mysn-cue-panel[data-show="tip"] > :not([data-sec="tip"]):not(.mysn-cp-x),
+	.mysn-cue-panel[data-show="own"] > :not([data-sec="own"]):not(.mysn-cp-x),
+	.mysn-cue-panel[data-show="info"] > :not([data-sec="info"]):not(.mysn-cp-x) { display: none; }
+	.mysn-cp-x { align-self: flex-end; flex: none; width: 36px; height: 36px; border-radius: 50%; border: 2px solid #ffd34d99; background: #0c0f14; color: #fff; font: 700 15px system-ui, sans-serif; padding: 0; margin-bottom: -30px; position: relative; z-index: 1; }
 	.mysn-cp-cmp summary { cursor: pointer; padding: 6px 0; color: #f2d48a; font-weight: 700; }
-	.mysn-rack-nav { position: absolute; bottom: calc(100% + 42vh); width: 44px; height: 64px; border-radius: 12px; border: 1.5px solid #ffffffaa; background: #0c0f14a0; color: #fff; font: 700 30px/1 system-ui, sans-serif; padding: 0; z-index: 7; }
-	.mysn-rack-prev { left: 8px; }
-	.mysn-rack-next { right: 8px; }
 	.mysn-chalks { display: none; }
-	.mysn-chalks.mysn-chalks-on { display: block; top: auto; left: 0; right: 0; bottom: var(--mysn-rackh, 150px); width: auto; max-height: 55%; border-radius: 12px 12px 0 0; z-index: 9; background: #0c0f14f5; }
+	.mysn-chalks.mysn-chalks-on { display: block; top: auto; left: 0; right: 0; bottom: 0; width: auto; max-height: 62%; border-radius: 14px 14px 0 0; z-index: 9; background: #0c0f14f5; }
 	.mysn-chalks-x { float: right; width: 36px; height: 36px; border-radius: 50%; border: 2px solid #ffd34d99; background: #0c0f14; color: #fff; font: 700 15px system-ui, sans-serif; padding: 0; }
 }
