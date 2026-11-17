@@ -137,9 +137,12 @@ export function restore(balls, snap) {
 	}
 }
 
-/** Je úder skokový? Bod úplne dole a dostatočná sila. */
+/**
+ * Je úder skokový? O skoku rozhoduje hra pred úderom (bod úplne dole a sila na ukazovateli od JUMP_POWER) a fyzike
+ * ho oznámi hodnotou top = -1; obyčajné údery majú top vždy nad JUMP_TOP.
+ */
 export function isJump(power, top) {
-	return top <= JUMP_TOP && power >= JUMP_POWER;
+	return top <= JUMP_TOP;
 }
 
 /* ---------- Úder ---------- */
@@ -164,10 +167,10 @@ export function strike(ball, dir, power, side = 0, top = 0) {
 	ball.h = 0;
 	ball.vy = 0;
 	if (isJump(power, top)) {
-		// skok: časť energie ide do súkna a biela odskočí nahor (od 0,5 m/s pri 70 % po 1,3 m/s pri plnej sile;
-		// ponad guľu preletí asi od 92 % sily),
+		// skok: časť energie ide do súkna a biela odskočí nahor (0,5 až 1,3 m/s podľa skutočnej sily úderu, teda
+		// aj podľa tága; ponad guľu preletí asi od 90 % skutočnej sily),
 		// dopredu letí pomalšie a so slabšou rotáciou
-		const p = Math.min(1, (Math.min(1, power) - JUMP_POWER) / (1 - JUMP_POWER));
+		const p = Math.max(0, Math.min(1, (Math.min(1, power) - 0.55) / 0.45));
 		ball.vy = 0.5 + 0.8 * p;
 		ball.v.x *= 0.8;
 		ball.v.z *= 0.8;

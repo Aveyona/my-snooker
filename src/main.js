@@ -23,7 +23,7 @@ import { UI } from './ui.js';
 import { Game, fmtTime } from './match.js';
 import { Online } from './online.js';
 import { remaining } from './rules.js';
-import { aimTrace, R, L, W, snapshot, restore, createRack, POCKETS, COLOURS, isJump } from './physics.js';
+import { aimTrace, R, L, W, snapshot, restore, createRack, POCKETS, COLOURS, isJump, JUMP_TOP, JUMP_POWER } from './physics.js';
 import { buildRackTriangle, rackLayout } from './rackTriangle.js';
 import { Replay } from './replay.js';
 import { CHALKS, chalkById } from './chalks.js';
@@ -2260,6 +2260,13 @@ export function start(root, config = {}) {
 			// predĺženie: väčšina úderov takmer presne, plná odchýlka len výnimočne (súčet troch náhodných čísel)
 			const r = (Math.random() + Math.random() + Math.random()) / 1.5 - 1;
 			game.dir += (r * extDeg * Math.PI) / 180;
+		}
+		// skokový úder: rozhoduje poloha bodu na bielej (nie falša zmenšená kriedou a tágom); fyzika ho pozná podľa
+		// top = -1, obyčajný úder sa preto drží nad hranicou skoku
+		if (!miscue && !stretchDeg && spin.top <= JUMP_TOP && rawPower >= JUMP_POWER) {
+			top = -1;
+		} else if (top <= JUMP_TOP) {
+			top = JUMP_TOP + 0.01;
 		}
 		const shot = game.shoot(power, side, top);
 		if (!shot) {
