@@ -2841,6 +2841,16 @@ export function start(root, config = {}) {
 				controls.hooks.key(k);
 			}
 		},
+		// mobil: ovládač chôdze vo voľnom pohľade (W A S D)
+		freeKeys: (k) => {
+			for (const c of ['w', 'a', 's', 'd']) {
+				if (String(k || '').includes(c)) {
+					controls._keys.add(c);
+				} else {
+					controls._keys.delete(c);
+				}
+			}
+		},
 		menuGame: () => {
 			controls.uncapture();
 			ui.showMenu(true, true);
@@ -5540,6 +5550,7 @@ export function start(root, config = {}) {
 		}
 		ui.showEye(rig.aimBall && aiming && rig.mode === 'cue' && !game.spectating);
 		ui.showFine(cueSpec.fine > 0, controls.touchFineOn());
+		ui.showFree(ui.touchUI && (!view || view === 'free') && venue !== 'office' && !game.spectating && !ui.mainMenuOpen(), view === 'free');
 		// pohľady (nástenka, stojan, rebríček…) majú vlastné Späť do hry; mobil potrebuje tlačidlo len pri stole zhora (Tab)
 		ui.showBack(ui.touchUI && !ui.mainMenuOpen() && !ui.menuOpen() && !view && rig.mode === 'top');
 		if (ui.touchUI && ui._mmAsMenu && !ui.mainMenuOpen() && !ui.anyPanelOpen()) {

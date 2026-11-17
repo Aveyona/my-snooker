@@ -162,6 +162,7 @@ function mysn_roadmap() {
 /** Denník zmien (najnovšie hore). */
 function mysn_changelog() {
 	return array(
+		array( '0.18.5', '17. 11. 2026', 'Mobil: panák nad kriedou = voľný pohľad (ako medzerník na desktope), vo voľnom pohľade je žltý a ťuknutie vráti za tágo. Vo voľnom pohľade ťahanie prstom otáča pohľad, ovládač vpravo dole chodí (ako W A S D), dva prsty približujú. Ťahanie prstom otáča pohľad aj v kresle a pri bare.' ),
 		array( '0.18.4', '17. 11. 2026', 'Mobil, hlavné menu ☰: prvá je skupina Hra (predtým Menu hry), jej prvá dlaždica sú Nastavenia; samostatná skupina Nastavenia zrušená.' ),
 		array( '0.18.3', '17. 11. 2026', 'Mobil: menu hry (Tréning, Hrať, Liga, Poslať výzvu, Pozerať hru, Správa hry, Účet, Späť na web, pozvánky…) samostatne neexistuje – všetky jeho položky sú v hlavnom menu ☰ v skupine Menu hry s ikonkami; na začiatku sa otvorí rovno ☰. V úvode pred hrou sa ☰ nedá zavrieť, kým sa nevyberie (ako menu na desktope); krížik počas hry = pokračovať. Po zavretí okna (Nastavenia, Účet, výzva) sa ☰ vráti. Desktop ostáva bez zmeny.' ),
 		array( '0.18.2', '17. 11. 2026', 'Chat v hre už nezakrýva Nastavenia, menu a ostatné okná – je pod nimi (nad hrou ostáva).' ),

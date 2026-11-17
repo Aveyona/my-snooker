@@ -513,6 +513,11 @@ body.mysn-page { font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans
 .mysn-mm-ic { width: 56px; height: 56px; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: var(--mm); border: 1.5px solid var(--mm); background: color-mix(in srgb, var(--mm) 15%, transparent); }
 .mysn-mm-it:active .mysn-mm-ic { background: color-mix(in srgb, var(--mm) 35%, transparent); }
 .mysn-backbtn { display: none; position: absolute; left: 50%; bottom: 56px; transform: translateX(-50%); padding: 12px 22px; border-radius: 24px; border: 0; background: #ffd34d; color: #111; font: 700 15px system-ui, sans-serif; z-index: 30; pointer-events: auto; box-shadow: 0 2px 10px #0008; }
+/* mobil: panák = voľný pohľad (nad kriedou) a ovládač chôdze vo voľnom pohľade */
+.mysn-freebtn { display: none; position: absolute; left: 8px; bottom: 316px; width: 48px; height: 48px; padding: 0; border-radius: 50%; border: 1.5px solid #ffffffcc; background: #ffffff26; color: #fff; align-items: center; justify-content: center; pointer-events: auto; z-index: 3; -webkit-tap-highlight-color: transparent; }
+.mysn-freebtn.mysn-free-on { color: #ffd34d; border-color: #ffd34d; background: #ffd34d40; }
+.mysn-joy { display: none; position: absolute; right: 16px; bottom: 24px; width: 120px; height: 120px; border-radius: 50%; border: 1.5px solid #ffffffaa; background: #ffffff1f; align-items: center; justify-content: center; pointer-events: auto; touch-action: none; z-index: 3; }
+.mysn-joy i { display: block; width: 46px; height: 46px; border-radius: 50%; background: #ffffffcc; transition: transform .05s; }
 /* mobil: zameriavač – jemné mierenie (ako Shift), medzi kriedou a Miestom úderu */
 .mysn-finebtn { display: none; position: absolute; left: 8px; bottom: 196px; width: 48px; height: 48px; padding: 0; border-radius: 50%; border: 1.5px solid #ffffffcc; background: #ffffff26; color: #fff; align-items: center; justify-content: center; pointer-events: auto; -webkit-tap-highlight-color: transparent; }
 .mysn-finebtn.mysn-fine-on { color: #ffd34d; border-color: #ffd34d; background: #ffd34d40; }
@@ -546,6 +551,9 @@ body.mysn-page { font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans
 	.mysn-ui.mysn-tools-open .mysn-chalkbtn { bottom: 428px; }
 	.mysn-finebtn.mysn-fine-can { display: flex; }
 	.mysn-ui.mysn-tools-open .mysn-finebtn { bottom: 368px; }
+	.mysn-freebtn.mysn-free-can { display: flex; }
+	.mysn-ui.mysn-tools-open .mysn-freebtn { bottom: 488px; }
+	.mysn-joy.mysn-joy-on { display: flex; }
 	.mysn-ui.mysn-viewing .mysn-finebtn, .mysn-watching .mysn-finebtn { display: none !important; }
 	.mysn-ui.mysn-viewing .mysn-chalkbtn, .mysn-watching .mysn-chalkbtn { display: none !important; }
 	/* horná lišta: Krieda F3 sa na mobile neukazuje (klávesy tu nie sú, stav kriedy je pod Miestom úderu) */

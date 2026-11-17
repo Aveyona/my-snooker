@@ -182,6 +182,10 @@ export class Controls {
 			if (this.hooks.viewDown) {
 				this.hooks.viewDown(e);
 			}
+			if (e.pointerType === 'touch') {
+				// mobil: v pohľadoch (voľná kamera, kreslo, bar…) ťahanie prstom otáča pohľad ako myš
+				this._drag = { kind: 'touchLook', id: e.pointerId, x: e.clientX, y: e.clientY };
+			}
 			return;
 		}
 		if (e.pointerType === 'mouse' && e.button === 2) {
@@ -311,6 +315,17 @@ export class Controls {
 			return;
 		}
 		const g = this.game;
+		if (d.kind === 'touchLook') {
+			const dx = e.clientX - d.x;
+			const dy = e.clientY - d.y;
+			d.x = e.clientX;
+			d.y = e.clientY;
+			if (this.hooks.look) {
+				const s = 1.6 * (this.touchAimSens || 1); // šúpatko Otáčanie prstom
+				this.hooks.look(dx * s, dy * s);
+			}
+			return;
+		}
 		if (d.kind === 'place') {
 			const p = this.tablePoint(e);
 			if (p) {

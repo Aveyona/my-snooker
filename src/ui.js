@@ -128,6 +128,23 @@ export class UI {
 			this.opts.onAction('touchFine');
 		});
 		root.appendChild(this.fineBtn);
+		// mobil: panák = voľný pohľad (ako medzerník na desktope), nad kriedou
+		this.freeBtn = h('button', 'mysn-freebtn', '<svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="4.5" r="2"/><path d="M12 7.5v6M12 13.5l-3 7M12 13.5l3 7M7 10.5h10"/></svg>');
+		this.freeBtn.type = 'button';
+		this.freeBtn.title = 'Voľný pohľad (ako medzerník)';
+		this.freeBtn.setAttribute('aria-label', 'Voľný pohľad');
+		for (const t of ['pointerdown', 'pointerup', 'mousedown', 'touchstart', 'touchend', 'wheel']) {
+			this.freeBtn.addEventListener(t, (e) => e.stopPropagation());
+		}
+		this.freeBtn.addEventListener('click', (e) => {
+			e.stopPropagation();
+			this.opts.onAction('menuKey', 'space');
+		});
+		root.appendChild(this.freeBtn);
+		// mobil: vo voľnom pohľade ovládač na chodenie vpravo dole (ako W A S D)
+		this.joy = h('div', 'mysn-joy', '<i></i>');
+		root.appendChild(this.joy);
+		this.bindJoy();
 
 		// Spodné tlačidlá
 		const tools = h('div', 'mysn-tools');
@@ -1661,7 +1678,7 @@ export class UI {
 				<li><b>Biela do ruky myšou:</b> bielu posúvaš pohybom myši, ľavým klikom ju položíš.</li>
 				<li><b>Úder myšou:</b> drž ľavé tlačidlo, ruka chytí tágo. Myš k sebe tágo odtiahne, pohyb dopredu ho posunie a pri dotyku bielej vystrelí. Sila je podľa toho, ako rýchlo pohneš dopredu. Pustením ľavého tlačidla úder zrušíš.</li>
 				<li><b>Miesto úderu myšou:</b> stlač a drž koliesko a pohybom myši posúvaj bod na bielej guli vľavo dole (hore guľa dopredu, dole guľa späť, do strán bočná falša). Dvojklik kolieskom vráti bod do stredu.</li>
-				<li><b>Mobil – 4 časti obrazovky:</b> vľavo hore ťukni = chat; vpravo hore a vľavo dole ťahaj doľava a doprava = mierenie (otáčanie pohľadu); vpravo dole = úder: prst ťahaj dole (odtiahneš tágo) a potom rýchlo hore, sila podľa rýchlosti. Dvoma prstami kdekoľvek priblížiš. Po výstrele, kým sa gule kotúľajú, prst kdekoľvek na obrazovke otáča kameru okolo bielej (doľava a doprava krúži, hore a dole nakláňa); keď gule zastanú, mieriš zo smeru, kam sa kamera pozerá. Citlivosť nastavíš v spodnom paneli (šípka dole v strede): Otáčanie prstom, Ťahanie tága a Oko; ukladajú sa zvlášť od nastavení myši. Nad Miestom úderu je modrý štvorček: ťuknutím otvoríš kriedu a pomôcky (ako F3). Pod ním je zameriavač (len pri tágu s jemným mierením): ťuknutím zapneš alebo vypneš jemné mierenie, zapnutý je žltý; po výstrele sa sám vypne. Keď mieriš na guľu, vedľa Miesta úderu je kruh s okom: drž ho a ťahaj prstom – hore priblížiš pohľad ku guli, do strán krúžiš okolo nej, dole spustíš kameru popri tágu (ako pravé tlačidlo myši).</li>
+				<li><b>Mobil – 4 časti obrazovky:</b> vľavo hore ťukni = chat; vpravo hore a vľavo dole ťahaj doľava a doprava = mierenie (otáčanie pohľadu); vpravo dole = úder: prst ťahaj dole (odtiahneš tágo) a potom rýchlo hore, sila podľa rýchlosti. Dvoma prstami kdekoľvek priblížiš. Po výstrele, kým sa gule kotúľajú, prst kdekoľvek na obrazovke otáča kameru okolo bielej (doľava a doprava krúži, hore a dole nakláňa); keď gule zastanú, mieriš zo smeru, kam sa kamera pozerá. Citlivosť nastavíš v spodnom paneli (šípka dole v strede): Otáčanie prstom, Ťahanie tága a Oko; ukladajú sa zvlášť od nastavení myši. Úplne hore vľavo je panák: voľný pohľad (ako medzerník) – prstom sa rozhliadaš, ovládačom vpravo dole chodíš, dvoma prstami priblížiš, panák ťa vráti za tágo. Nad Miestom úderu je modrý štvorček: ťuknutím otvoríš kriedu a pomôcky (ako F3). Pod ním je zameriavač (len pri tágu s jemným mierením): ťuknutím zapneš alebo vypneš jemné mierenie, zapnutý je žltý; po výstrele sa sám vypne. Keď mieriš na guľu, vedľa Miesta úderu je kruh s okom: drž ho a ťahaj prstom – hore priblížiš pohľad ku guli, do strán krúžiš okolo nej, dole spustíš kameru popri tágu (ako pravé tlačidlo myši).</li>
 				<li><b>Mierenie prstom:</b> za tágom ťahaj doľava a doprava (vpravo hore alebo vľavo dole), šípky na klávesnici. V pohľade zhora klikni na miesto, kam chceš mieriť, vo voľnej kamere naň krátko ťukni.</li>
 				<li><b>Detail dotyku:</b> kruh vpravo hore ukazuje zhora okamih, keď sa biela dotkne gule. Úder ide vždy nahor, červený bod je miesto dotyku. Pomocné čiary a šípky (kam pôjdu gule) v hre nie sú, mieri sa ako pri skutočnom stole.</li>
 				<li><b>Sila a úder:</b> ťahaj ukazovateľ sily vpravo nadol a pusť.</li>
@@ -3002,6 +3019,75 @@ export class UI {
 		if (on !== this._backOn) {
 			this._backOn = on;
 			this.backBtn.classList.toggle('mysn-back-on', on);
+		}
+	}
+
+	/** Mobil: panák (voľný pohľad) – on = zobraziť, active = práve som vo voľnom pohľade (žltý + ovládač chôdze). */
+	showFree(on, active) {
+		const k = (on ? 1 : 0) + (active ? 2 : 0);
+		if (k !== this._freeK) {
+			this._freeK = k;
+			this.freeBtn.classList.toggle('mysn-free-can', !!on);
+			this.freeBtn.classList.toggle('mysn-free-on', !!active);
+			this.joy.classList.toggle('mysn-joy-on', !!active);
+			if (!active && this.joyDir) {
+				this.joyDir(0, 0);
+			}
+		}
+	}
+
+	/** Ovládač chôdze: ťah od stredu = smer (hore dopredu, dole dozadu, do strán úkrok); posiela W A S D cez onAction. */
+	bindJoy() {
+		const knob = this.joy.querySelector('i');
+		let id = null;
+		let keys = '';
+		this.joyDir = (x, y) => {
+			knob.style.transform = `translate(${x * 34}px, ${y * 34}px)`;
+			const k = (y < -0.35 ? 'w' : y > 0.35 ? 's' : '') + (x < -0.35 ? 'a' : x > 0.35 ? 'd' : '');
+			if (k !== keys) {
+				keys = k;
+				this.opts.onAction('freeKeys', k);
+			}
+		};
+		const at = (e) => {
+			const r = this.joy.getBoundingClientRect();
+			let x = (e.clientX - (r.left + r.width / 2)) / (r.width / 2);
+			let y = (e.clientY - (r.top + r.height / 2)) / (r.height / 2);
+			const l = Math.hypot(x, y);
+			if (l > 1) {
+				x /= l;
+				y /= l;
+			}
+			this.joyDir(x, y);
+		};
+		this.joy.addEventListener('pointerdown', (e) => {
+			e.stopPropagation();
+			e.preventDefault();
+			id = e.pointerId;
+			try {
+				this.joy.setPointerCapture(id);
+			} catch (err) {
+				/* nie je podstatné */
+			}
+			at(e);
+		});
+		this.joy.addEventListener('pointermove', (e) => {
+			e.stopPropagation();
+			if (e.pointerId === id) {
+				at(e);
+			}
+		});
+		const end = (e) => {
+			e.stopPropagation();
+			if (e.pointerId === id) {
+				id = null;
+				this.joyDir(0, 0);
+			}
+		};
+		this.joy.addEventListener('pointerup', end);
+		this.joy.addEventListener('pointercancel', end);
+		for (const t of ['mousedown', 'touchstart', 'touchmove', 'touchend', 'click', 'wheel']) {
+			this.joy.addEventListener(t, (e) => e.stopPropagation());
 		}
 	}
 
