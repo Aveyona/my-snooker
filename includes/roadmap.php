@@ -162,6 +162,7 @@ function mysn_roadmap() {
 /** Denník zmien (najnovšie hore). */
 function mysn_changelog() {
 	return array(
+		array( '0.18.2', '17. 11. 2026', 'Chat v hre už nezakrýva Nastavenia, menu a ostatné okná – je pod nimi (nad hrou ostáva).' ),
 		array( '0.18.1', '17. 11. 2026', 'Mobil: tlačidlo Späť k stolu sa ukazuje len pri stole zhora (Tab); nástenka, stojan, rebríček a ostatné pohľady majú vlastné tlačidlo Späť do hry, aby neboli dve.' ),
 		array( '0.18.0', '17. 11. 2026', 'Mobil: hlavné menu ☰ úplne vpravo hore (Nastavenia a ? sú v ňom). Menu na celú obrazovku s okrúhlymi ikonami, farba podľa skupiny: Nastavenia; Herňa – Nápoveda (F1), Tágá (F2), Krieda (F3), Skóre (F4), Rebríček (F8), Rádio (F9), Dvere (F6), Kreslo (F7), Bar (F10), Liga (F12), Stôl zhora (Tab), Mapa (M); Tréning – Späť, Biela do ruky, Nové rozostavenie (len keď sa dajú); Menu hry a Späť na web. Dlaždica robí to isté ako kláves na desktope. V pohľade na nástenku, stojan, rebríček… a zo stola zhora je dole veľké tlačidlo Späť k stolu. Nástenka: v Princípe hry pribudol režim Hrať (jeden frame o najlepšie skóre, vyhráva najviac bodov za najkratší čas, fauly sa odčítajú).' ),
 		array( '0.17.2', '16. 11. 2026', 'Mobil: po výstrele, kým sa gule kotúľajú, prst kdekoľvek na obrazovke otáča kameru okolo bielej ako myš na desktope – doľava a doprava krúži, hore a dole nakláňa (šúpatko Otáčanie prstom). Krátke ťuknutie vľavo hore stále otvorí chat, dva prsty približujú. Keď gule zastanú, mieri sa zo smeru, kam sa kamera práve pozerá.' ),
