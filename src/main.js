@@ -3601,8 +3601,9 @@ export function start(root, config = {}) {
 				}
 				return;
 			}
-			if (view === 'free' && !freeMouse && (e.button === 2 || e.button === 0)) {
-				// voľná kamera: drž pravé tlačidlo = hore, ľavé = dole (s Ctrl fungujú tlačidlá normálne, klik na predmety)
+			if (view === 'free' && !freeMouse && e.pointerType !== 'touch' && (e.button === 2 || e.button === 0)) {
+				// voľná kamera: drž pravé tlačidlo = hore, ľavé = dole (s Ctrl fungujú tlačidlá normálne, klik na predmety);
+				// prst na mobile sa hlási ako ľavé tlačidlo – tam len otáča pohľad, hore a dole sú tlačidlá ▲ ▼
 				if (e.button === 2) {
 					freeUp = 1;
 				} else {

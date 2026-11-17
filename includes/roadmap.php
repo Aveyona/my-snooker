@@ -162,6 +162,7 @@ function mysn_roadmap() {
 /** Denník zmien (najnovšie hore). */
 function mysn_changelog() {
 	return array(
+		array( '0.18.7', '17. 11. 2026', 'Oprava mobil, voľný pohľad: dotyk prstom pri otáčaní pohľadu posúval kameru dole (prehliadač hlási prst ako ľavé tlačidlo myši, ktoré na PC kameru spúšťa). Prst teraz len otáča pohľad, hore a dole sú tlačidlá ▲ ▼.' ),
 		array( '0.18.6', '17. 11. 2026', 'Mobil, voľný pohľad: vedľa ovládača chôdze tlačidlá ▲ a ▼ (drž = kamera hore alebo dole, ako E a Q). Vo voľnom pohľade sa skryje ukazovateľ sily (prekrýval ovládač), Miesto úderu, krieda, zameriavač, oko, detail dotyku a šípka panela – ostáva panák a ovládanie chôdze.' ),
 		array( '0.18.5', '17. 11. 2026', 'Mobil: panák nad kriedou = voľný pohľad (ako medzerník na desktope), vo voľnom pohľade je žltý a ťuknutie vráti za tágo. Vo voľnom pohľade ťahanie prstom otáča pohľad, ovládač vpravo dole chodí (ako W A S D), dva prsty približujú. Ťahanie prstom otáča pohľad aj v kresle a pri bare.' ),
 		array( '0.18.4', '17. 11. 2026', 'Mobil, hlavné menu ☰: prvá je skupina Hra (predtým Menu hry), jej prvá dlaždica sú Nastavenia; samostatná skupina Nastavenia zrušená.' ),
