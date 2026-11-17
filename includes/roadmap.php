@@ -162,6 +162,7 @@ function mysn_roadmap() {
 /** Denník zmien (najnovšie hore). */
 function mysn_changelog() {
 	return array(
+		array( '0.19.1', '17. 11. 2026', 'Mobil, hlavné menu ☰: dlaždica Nastavenia je červená.' ),
 		array( '0.19.0', '17. 11. 2026', 'Mobil, hlavné menu ☰: režimy hry Tréning, Hrať a Liga sú v skupine Hra zelené, ostatné dlaždice ostávajú modré.' ),
 		array( '0.18.9', '17. 11. 2026', 'Mobil, hlavné menu ☰ podľa miesta: v kancelárii skupina Kancelária (Nástenka F1, Moje tágá F2, Kalendár F3, Výsledky F4, Okno F6, Moja liga F7, Vizitka F8, Hľadať zápas F9, Hráči ligy F10, Lampa F12), na štadióne skupina Štadión (Pravidlá F1, Moje tágá F2, Krieda F3, Skóre F4, Kreslo F7, Svetlá F12, Stôl zhora Tab), inde Herňa. Tréning len v herni. Mapa miestností sa na mobile nepoužíva (dlaždica zrušená).' ),
 		array( '0.18.8', '17. 11. 2026', 'Mobil: v pevných pohľadoch (nástenka, stojan s tágami, skóre, rebríček, rádio, obrazy, nástenka Liga…) sa pohľad posúva prstom ako mapa – kamera ide rovnobežne s objektom, neotáča sa (do strán asi 70 %, hore a dole 40 % vzdialenosti). Dva prsty približujú a odďaľujú (aj širšie ako pôvodný záber). Pri odchode z pohľadu sa posun aj priblíženie zrušia. Ťuknutia (výber tága a pod.) fungujú ako doteraz. Voľný pohľad, kreslo a bar sa naďalej otáčajú.' ),

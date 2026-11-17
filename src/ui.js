@@ -2946,7 +2946,7 @@ export class UI {
 				color: '#6fb3ff',
 				// položky menu hry (podľa stavu: Tréning, Hrať, Liga, Poslať výzvu, Pozerať hru, Účet…); ťuknutie
 				// stlačí pôvodné tlačidlo, takže robí presne to isté ako na desktope
-				items: [['set', 'Nastavenia', { a: 'settings' }], ...[...this.menuInv.querySelectorAll('button'), ...this.menuBtns.querySelectorAll('.mysn-btn')]
+				items: [['set', 'Nastavenia', { a: 'settings' }, '#ff6b6b'], ...[...this.menuInv.querySelectorAll('button'), ...this.menuBtns.querySelectorAll('.mysn-btn')]
 					.filter((b) => b.dataset.act !== 'settings' && b.dataset.act !== 'roomMap' && b.style.display !== 'none')
 					.map((b) => [MM_ICON[b.dataset.act] || (b.classList.contains('mysn-login') ? 'user' : 'menu'), b.textContent, { el: b }, /^(Tréning|Hrať|Liga)$/.test(b.textContent.trim()) ? '#7CFC8A' : '']),
 				],
