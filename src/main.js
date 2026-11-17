@@ -2841,6 +2841,11 @@ export function start(root, config = {}) {
 				controls.hooks.key(k);
 			}
 		},
+		// mobil: tlačidlá hore a dole vo voľnom pohľade (ako E a Q), d = 1 hore, -1 dole, 0 pustené
+		freeUpDown: (d) => {
+			freeUp = d > 0 ? 1 : 0;
+			freeDown = d < 0 ? 1 : 0;
+		},
 		// mobil: ovládač chôdze vo voľnom pohľade (W A S D)
 		freeKeys: (k) => {
 			for (const c of ['w', 'a', 's', 'd']) {

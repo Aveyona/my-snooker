@@ -141,10 +141,33 @@ export class UI {
 			this.opts.onAction('menuKey', 'space');
 		});
 		root.appendChild(this.freeBtn);
-		// mobil: vo voľnom pohľade ovládač na chodenie vpravo dole (ako W A S D)
+		// mobil: vo voľnom pohľade ovládač na chodenie vpravo dole (ako W A S D) a vedľa neho hore a dole (ako E a Q)
 		this.joy = h('div', 'mysn-joy', '<i></i>');
 		root.appendChild(this.joy);
 		this.bindJoy();
+		this.joyUD = h('div', 'mysn-joyud', '<button type="button" data-d="1" aria-label="Hore">▲</button><button type="button" data-d="-1" aria-label="Dole">▼</button>');
+		for (const b of this.joyUD.querySelectorAll('button')) {
+			const d = Number(b.dataset.d);
+			const on = (e) => {
+				e.stopPropagation();
+				e.preventDefault();
+				b.classList.add('mysn-on');
+				this.opts.onAction('freeUpDown', d);
+			};
+			const off = (e) => {
+				e.stopPropagation();
+				b.classList.remove('mysn-on');
+				this.opts.onAction('freeUpDown', 0);
+			};
+			b.addEventListener('pointerdown', on);
+			b.addEventListener('pointerup', off);
+			b.addEventListener('pointercancel', off);
+			b.addEventListener('pointerleave', off);
+		}
+		for (const t of ['mousedown', 'touchstart', 'touchend', 'click', 'wheel']) {
+			this.joyUD.addEventListener(t, (e) => e.stopPropagation());
+		}
+		root.appendChild(this.joyUD);
 
 		// Spodné tlačidlá
 		const tools = h('div', 'mysn-tools');
@@ -1678,7 +1701,7 @@ export class UI {
 				<li><b>Biela do ruky myšou:</b> bielu posúvaš pohybom myši, ľavým klikom ju položíš.</li>
 				<li><b>Úder myšou:</b> drž ľavé tlačidlo, ruka chytí tágo. Myš k sebe tágo odtiahne, pohyb dopredu ho posunie a pri dotyku bielej vystrelí. Sila je podľa toho, ako rýchlo pohneš dopredu. Pustením ľavého tlačidla úder zrušíš.</li>
 				<li><b>Miesto úderu myšou:</b> stlač a drž koliesko a pohybom myši posúvaj bod na bielej guli vľavo dole (hore guľa dopredu, dole guľa späť, do strán bočná falša). Dvojklik kolieskom vráti bod do stredu.</li>
-				<li><b>Mobil – 4 časti obrazovky:</b> vľavo hore ťukni = chat; vpravo hore a vľavo dole ťahaj doľava a doprava = mierenie (otáčanie pohľadu); vpravo dole = úder: prst ťahaj dole (odtiahneš tágo) a potom rýchlo hore, sila podľa rýchlosti. Dvoma prstami kdekoľvek priblížiš. Po výstrele, kým sa gule kotúľajú, prst kdekoľvek na obrazovke otáča kameru okolo bielej (doľava a doprava krúži, hore a dole nakláňa); keď gule zastanú, mieriš zo smeru, kam sa kamera pozerá. Citlivosť nastavíš v spodnom paneli (šípka dole v strede): Otáčanie prstom, Ťahanie tága a Oko; ukladajú sa zvlášť od nastavení myši. Úplne hore vľavo je panák: voľný pohľad (ako medzerník) – prstom sa rozhliadaš, ovládačom vpravo dole chodíš, dvoma prstami priblížiš, panák ťa vráti za tágo. Nad Miestom úderu je modrý štvorček: ťuknutím otvoríš kriedu a pomôcky (ako F3). Pod ním je zameriavač (len pri tágu s jemným mierením): ťuknutím zapneš alebo vypneš jemné mierenie, zapnutý je žltý; po výstrele sa sám vypne. Keď mieriš na guľu, vedľa Miesta úderu je kruh s okom: drž ho a ťahaj prstom – hore priblížiš pohľad ku guli, do strán krúžiš okolo nej, dole spustíš kameru popri tágu (ako pravé tlačidlo myši).</li>
+				<li><b>Mobil – 4 časti obrazovky:</b> vľavo hore ťukni = chat; vpravo hore a vľavo dole ťahaj doľava a doprava = mierenie (otáčanie pohľadu); vpravo dole = úder: prst ťahaj dole (odtiahneš tágo) a potom rýchlo hore, sila podľa rýchlosti. Dvoma prstami kdekoľvek priblížiš. Po výstrele, kým sa gule kotúľajú, prst kdekoľvek na obrazovke otáča kameru okolo bielej (doľava a doprava krúži, hore a dole nakláňa); keď gule zastanú, mieriš zo smeru, kam sa kamera pozerá. Citlivosť nastavíš v spodnom paneli (šípka dole v strede): Otáčanie prstom, Ťahanie tága a Oko; ukladajú sa zvlášť od nastavení myši. Úplne hore vľavo je panák: voľný pohľad (ako medzerník) – prstom sa rozhliadaš, ovládačom vpravo dole chodíš, ▲ a ▼ vedľa neho hore a dole, dvoma prstami priblížiš, panák ťa vráti za tágo. Nad Miestom úderu je modrý štvorček: ťuknutím otvoríš kriedu a pomôcky (ako F3). Pod ním je zameriavač (len pri tágu s jemným mierením): ťuknutím zapneš alebo vypneš jemné mierenie, zapnutý je žltý; po výstrele sa sám vypne. Keď mieriš na guľu, vedľa Miesta úderu je kruh s okom: drž ho a ťahaj prstom – hore priblížiš pohľad ku guli, do strán krúžiš okolo nej, dole spustíš kameru popri tágu (ako pravé tlačidlo myši).</li>
 				<li><b>Mierenie prstom:</b> za tágom ťahaj doľava a doprava (vpravo hore alebo vľavo dole), šípky na klávesnici. V pohľade zhora klikni na miesto, kam chceš mieriť, vo voľnej kamere naň krátko ťukni.</li>
 				<li><b>Detail dotyku:</b> kruh vpravo hore ukazuje zhora okamih, keď sa biela dotkne gule. Úder ide vždy nahor, červený bod je miesto dotyku. Pomocné čiary a šípky (kam pôjdu gule) v hre nie sú, mieri sa ako pri skutočnom stole.</li>
 				<li><b>Sila a úder:</b> ťahaj ukazovateľ sily vpravo nadol a pusť.</li>
@@ -3030,8 +3053,11 @@ export class UI {
 			this.freeBtn.classList.toggle('mysn-free-can', !!on);
 			this.freeBtn.classList.toggle('mysn-free-on', !!active);
 			this.joy.classList.toggle('mysn-joy-on', !!active);
+			this.joyUD.classList.toggle('mysn-joy-on', !!active);
+			this.root.classList.toggle('mysn-freecam', !!active); // vo voľnom pohľade bez ovládania tága
 			if (!active && this.joyDir) {
 				this.joyDir(0, 0);
+				this.opts.onAction('freeUpDown', 0);
 			}
 		}
 	}
