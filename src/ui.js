@@ -24,18 +24,44 @@ import { countryByCode } from './countries.js';
 const cueNameOf = (id) => cueById(id).name;
 const cueStateId = (c) => c.id;
 
-// mobil: odstráni z textu klávesové skratky – zátvorky s klávesmi „(F3)“, „(ako Shift)“, „(7)“ a celé vety o klávesoch
+// mobil: texty bez klávesových skratiek a bez myši – myš sa nahradí prstom, zátvorky a vety s klávesmi alebo
+// s tým, čo ide len myšou (zachytenie, kurzor, koliesko, tlačidlá myši), zmiznú
 const KEY_RE = /\bF(?:1[0-2]|[1-9])\b|\bEsc\b|\bEnter\b|\bCtrl\b|\bShift\b|\bTab\b|[Mm]edzerník|[Kk]láves|\bšípk|W A S D/;
+const MOUSE_RE = /[Mm]yš|kurzor|koliesk|ľavé tlačidl|pravé tlačidl|ľavým tlačidl|pravým tlačidl|zachyt/;
+const TOUCH_WORDS = [
+	[/keď myš nejde do strany \(pravé tlačidlo, myš dole\)/g, 'keď prst nejde do strany (oko, prst dole)'],
+	[/a polož ju ľavým tlačidlom myši/g, 'a polož ju tlačidlom Hotovo'],
+	[/Otáčaním kolieska priblížiš alebo vzdiališ/g, 'Dvoma prstami priblížiš alebo vzdiališ'],
+	[/kolieskom približuješ/g, 'dvoma prstami približuješ'],
+	[/kolieskom priblížiš/g, 'dvoma prstami priblížiš'],
+	[/\bpohybom myši\b/g, 'ťahaním prsta'],
+	[/\bPohybom myši\b/g, 'Ťahaním prsta'],
+	[/ľavým klikom/g, 'ťuknutím'],
+	[/\bmyšou\b/g, 'prstom'],
+	[/\bMyšou\b/g, 'Prstom'],
+	[/\bkliknutím\b/g, 'ťuknutím'],
+	[/\bKliknutím\b/g, 'Ťuknutím'],
+	[/\bklikni\b/g, 'ťukni'],
+	[/\bKlikni\b/g, 'Ťukni'],
+	[/\bklik\b/g, 'ťuknutie'],
+	[/\bKlik\b/g, 'Ťuknutie'],
+];
 function noKeys(t) {
-	if (!t || !KEY_RE.test(t) && !/\(\d\)/.test(t)) {
+	if (!t || (!KEY_RE.test(t) && !MOUSE_RE.test(t) && !/\(\d\)|klik|Klik/.test(t))) {
 		return t;
 	}
-	let s = t.replace(/\s*\([^()]*\)/g, (m) => (KEY_RE.test(m) || /^\s*\(\d\)$/.test(m) ? '' : m));
-	if (KEY_RE.test(s)) {
+	let s = t;
+	for (const [re, to] of TOUCH_WORDS) {
+		s = s.replace(re, to);
+	}
+	const bad = (x) => KEY_RE.test(x) || MOUSE_RE.test(x);
+	s = s.replace(/\s*\([^()]*\)/g, (m) => (bad(m) || /^\s*\(\d\)$/.test(m) ? '' : m));
+	if (KEY_RE.test(s) || (MOUSE_RE.test(s) && /[.!?]/.test(s))) {
+		// celé vety s klávesmi zmiznú; vety s myšou len v dlhšom texte (popisky tlačidiel a polí ostanú)
 		s = s
 			.replace(/([.!?])\s+/g, '$1\u0000')
 			.split('\u0000')
-			.filter((x) => !KEY_RE.test(x))
+			.filter((x) => !KEY_RE.test(x) && !MOUSE_RE.test(x))
 			.join(' ');
 	}
 	return s;
