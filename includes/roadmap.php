@@ -162,6 +162,7 @@ function mysn_roadmap() {
 /** Denník zmien (najnovšie hore). */
 function mysn_changelog() {
 	return array(
+		array( '0.20.4', '17. 11. 2026', 'Mobil: nad panákom nové tlačidlo Pohľad zhora (šípka dole na stôl, ako Tab na PC) – prepína medzi pohľadom zhora a za tágom, v pohľade zhora je žlté; samostatné tlačidlo Späť k stolu v pohľade zhora už netreba.' ),
 		array( '0.20.3', '17. 11. 2026', 'Body (+1, +5…) a zvuk série sa ukážu hneď pri páde gule, keď je zjavne platná (biela nespadla, prvý zásah a guľa sú na rade); nejasné prípady (voľná guľa, viac farieb naraz) až po zastavení gúľ ako doteraz.' ),
 		array( '0.20.2', '17. 11. 2026', 'Oprava: v My Snooker → Zvuky nehralo tlačidlo Prehrať ani skúška (box nastavení série zastavil skript administrácie).' ),
 		array( '0.20.1', '17. 11. 2026', 'PC: prvá položka menu hry je Pokračovať v hre (návrat do tréningu alebo do rozohraného framu o skóre).' ),

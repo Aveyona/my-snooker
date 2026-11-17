@@ -521,6 +521,7 @@ body.mysn-page { font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans
 /* mobil: panák = voľný pohľad (nad kriedou) a ovládač chôdze vo voľnom pohľade */
 .mysn-freebtn { display: none; position: absolute; left: 8px; bottom: 316px; width: 48px; height: 48px; padding: 0; border-radius: 50%; border: 1.5px solid #ffffffcc; background: #ffffff26; color: #fff; align-items: center; justify-content: center; pointer-events: auto; z-index: 3; -webkit-tap-highlight-color: transparent; }
 .mysn-freebtn.mysn-free-on { color: #ffd34d; border-color: #ffd34d; background: #ffd34d40; }
+.mysn-topbtn { bottom: 376px; }
 .mysn-joy { display: none; position: absolute; right: 16px; bottom: 24px; width: 120px; height: 120px; border-radius: 50%; border: 1.5px solid #ffffffaa; background: #ffffff1f; align-items: center; justify-content: center; pointer-events: auto; touch-action: none; z-index: 3; }
 .mysn-joyud { display: none; position: absolute; right: 146px; bottom: 30px; flex-direction: column; gap: 10px; pointer-events: auto; touch-action: none; z-index: 3; }
 .mysn-joyud button { width: 50px; height: 50px; border-radius: 50%; border: 1.5px solid #ffffffaa; background: #ffffff1f; color: #fff; font-size: 18px; padding: 0; -webkit-tap-highlight-color: transparent; }
@@ -571,6 +572,7 @@ body.mysn-page { font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans
 	.mysn-ui.mysn-tools-open .mysn-finebtn { bottom: 368px; }
 	.mysn-freebtn.mysn-free-can { display: flex; }
 	.mysn-ui.mysn-tools-open .mysn-freebtn { bottom: 488px; }
+	.mysn-ui.mysn-tools-open .mysn-topbtn { bottom: 548px; }
 	.mysn-joy.mysn-joy-on, .mysn-joyud.mysn-joy-on { display: flex; }
 	.mysn-ui.mysn-viewing .mysn-finebtn, .mysn-watching .mysn-finebtn { display: none !important; }
 	.mysn-ui.mysn-viewing .mysn-chalkbtn, .mysn-watching .mysn-chalkbtn { display: none !important; }

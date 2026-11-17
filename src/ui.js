@@ -195,6 +195,19 @@ export class UI {
 			this.opts.onAction('menuKey', 'space');
 		});
 		root.appendChild(this.freeBtn);
+		// mobil: pohľad zhora na stôl (ako Tab na PC), nad panákom
+		this.topBtn = h('button', 'mysn-freebtn mysn-topbtn', '<svg viewBox="0 0 56 56" width="30" height="30" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 35l16-8 16 8-16 8z"/><path d="M28 10v12M23 17l5 5 5-5"/></svg>');
+		this.topBtn.type = 'button';
+		this.topBtn.title = 'Pohľad zhora (ako Tab)';
+		this.topBtn.setAttribute('aria-label', 'Pohľad zhora');
+		for (const t of ['pointerdown', 'pointerup', 'mousedown', 'touchstart', 'touchend', 'wheel']) {
+			this.topBtn.addEventListener(t, (e) => e.stopPropagation());
+		}
+		this.topBtn.addEventListener('click', (e) => {
+			e.stopPropagation();
+			this.opts.onAction('menuKey', 'Tab');
+		});
+		root.appendChild(this.topBtn);
 		// mobil: vo voľnom pohľade ovládač na chodenie vpravo dole (ako W A S D) a vedľa neho hore a dole (ako E a Q)
 		this.joy = h('div', 'mysn-joy', '<i></i>');
 		root.appendChild(this.joy);
@@ -3219,6 +3232,16 @@ export class UI {
 	}
 
 	/** Mobil: panák (voľný pohľad) – on = zobraziť, active = práve som vo voľnom pohľade (žltý + ovládač chôdze). */
+	/** Mobil: tlačidlo pohľad zhora – on = zobraziť, active = práve som v pohľade zhora (žlté). */
+	showTop(on, active) {
+		const k = (on ? 1 : 0) + (active ? 2 : 0);
+		if (k !== this._topK) {
+			this._topK = k;
+			this.topBtn.classList.toggle('mysn-free-can', !!on);
+			this.topBtn.classList.toggle('mysn-free-on', !!active);
+		}
+	}
+
 	showFree(on, active) {
 		const k = (on ? 1 : 0) + (active ? 2 : 0);
 		if (k !== this._freeK) {

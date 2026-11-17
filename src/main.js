@@ -5717,8 +5717,9 @@ export function start(root, config = {}) {
 		ui.showEye(rig.aimBall && aiming && rig.mode === 'cue' && !game.spectating);
 		ui.showFine(cueSpec.fine > 0, controls.touchFineOn());
 		ui.showFree(ui.touchUI && (!view || view === 'free') && venue !== 'office' && !game.spectating && !ui.mainMenuOpen(), view === 'free');
+		ui.showTop(ui.touchUI && !view && venue !== 'office' && !game.spectating && !ui.mainMenuOpen() && (rig.mode === 'cue' || rig.mode === 'top'), rig.mode === 'top');
 		// pohľady (nástenka, stojan, rebríček…) majú vlastné Späť do hry; mobil potrebuje tlačidlo len pri stole zhora (Tab)
-		ui.showBack(ui.touchUI && !ui.mainMenuOpen() && !ui.menuOpen() && ((!view && rig.mode === 'top') || (viewFromFree && view && view !== 'free')), viewFromFree);
+		ui.showBack(ui.touchUI && !ui.mainMenuOpen() && !ui.menuOpen() && (viewFromFree && view && view !== 'free'), viewFromFree);
 		if (ui.touchUI && ui._mmAsMenu && !ui.mainMenuOpen() && !ui.anyPanelOpen()) {
 			ui.openMainMenu(true); // mobil: po zavretí okna (Nastavenia, Účet…) sa vráti hlavné menu, ako menu hry na desktope
 		}
