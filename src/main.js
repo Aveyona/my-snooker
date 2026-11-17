@@ -3532,6 +3532,10 @@ export function start(root, config = {}) {
 			ui.toast('Obrazovka má 4 časti: vľavo hore ťukni = chat, vpravo hore a vľavo dole ťahaj = mierenie, vpravo dole prst dole = odtiahneš tágo, rýchlo hore = úder. Dvoma prstami priblížiš.');
 		},
 		look: (dx, dy) => {
+			if (ui.touchUI && view && !LOOK.has(view)) {
+				rig.panView(dx, dy); // mobil: pevné pohľady (nástenka, stojan, skóre…) sa prstom posúvajú ako mapa
+				return;
+			}
 			if (!LOOK.has(view) || freeMouse || (view === 'seat' && seatScore)) {
 				return;
 			}
@@ -3547,6 +3551,10 @@ export function start(root, config = {}) {
 				return;
 			}
 			if (LOOK.has(view)) {
+				rig.setViewZoom((rig.viewZoom || 1) * Math.pow(0.85, steps));
+			} else if (ui.touchUI && view) {
+				// mobil: dva prsty v pevnom pohľade približujú a odďaľujú (aj trochu viac ako pôvodný záber)
+				rig.minViewZoom = 0.6;
 				rig.setViewZoom((rig.viewZoom || 1) * Math.pow(0.85, steps));
 			}
 		},

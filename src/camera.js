@@ -188,6 +188,22 @@ export class CameraRig {
 		this.setMode('view');
 		this.viewPos = pos;
 		this.viewLook = look;
+		this.viewPan = { x: 0, y: 0 }; // mobil: posunutie pohľadu prstom sa pri novom pohľade zruší
+	}
+
+	/**
+	 * Mobil: posúvanie pevného pohľadu prstom (nástenka, stojan, skóre…) ako mapa – kamera sa posúva rovnobežne
+	 * s objektom, neotáča sa. dx, dy = pohyb prsta v pixeloch.
+	 */
+	panView(dx, dy) {
+		if (this.mode !== 'view' || !this.viewPos || !this.viewLook) {
+			return;
+		}
+		const p = this.viewPan || (this.viewPan = { x: 0, y: 0 });
+		const dist = this.viewPos.distanceTo(this.viewLook);
+		const k = (dist * 0.0016) / (this.viewZoom || 1);
+		p.x = Math.max(-dist * 0.7, Math.min(dist * 0.7, p.x - dx * k));
+		p.y = Math.max(-dist * 0.4, Math.min(dist * 0.4, p.y + dy * k));
 	}
 
 	resize(w, h) {
@@ -232,6 +248,19 @@ export class CameraRig {
 			this.camera.up.set(0, 1, 0);
 			pos.copy(this.viewPos);
 			look.copy(this.viewLook);
+			const vp = this.viewPan;
+			if (vp && (vp.x || vp.y)) {
+				// posunutie rovnobežne s objektom (vpravo a hore z pohľadu kamery)
+				const f = this._vpF || (this._vpF = new THREE.Vector3());
+				const r = this._vpR || (this._vpR = new THREE.Vector3());
+				const u = this._vpU || (this._vpU = new THREE.Vector3());
+				f.copy(look).sub(pos).normalize();
+				r.crossVectors(f, this.camera.up).normalize();
+				u.crossVectors(r, f).normalize();
+				const off = r.multiplyScalar(vp.x).addScaledVector(u, vp.y);
+				pos.add(off);
+				look.add(off);
+			}
 		} else if (this.mode === 'top') {
 			const aspect = this.camera.aspect;
 			// výška tak, aby bol vidieť celý stôl (na šírku aj na výšku obrazovky)
