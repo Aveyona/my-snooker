@@ -1917,6 +1917,10 @@ export function start(root, config = {}) {
 				chairLook.yaw = Math.atan2(d.z, d.x);
 				chairLook.pitch = Math.atan2(d.y, Math.hypot(d.x, d.z));
 			}
+			if (name === 'office') {
+				officeTilt();
+				setTimeout(hotHint, 700); // mobil: krátko ukáže, na čo sa dá ťuknúť
+			}
 		}
 		if (name === 'trophies') {
 			refreshTrophies();
@@ -1978,6 +1982,76 @@ export function start(root, config = {}) {
 		if (!keepFree) {
 			controls.capture(); // s držaným Ctrl (keepFree) ostáva myš voľná
 		}
+	};
+	/** Kancelária: klik (PC s Ctrl) alebo ťuknutie (mobil) na vizitku, lampu, dvere alebo špendlík na mape. */
+	const officeClickAt = (cx, cy) => {
+		const r = renderer.domElement.getBoundingClientRect();
+		const ray = new THREE.Raycaster();
+		const at = new THREE.Vector2(((cx - r.left) / r.width) * 2 - 1, -((cy - r.top) / r.height) * 2 + 1);
+		ray.setFromCamera(at, rig.camera);
+		if (ray.intersectObject(office.card, false).length) {
+			actions.officeCard();
+			return;
+		}
+		if (ray.intersectObject(office.lamp, false).length) {
+			actions.officeLamp();
+			return;
+		}
+		if (ray.intersectObject(office.door, false).length) {
+			actions.officeDoor();
+			return;
+		}
+		const hit = ray.intersectObject(office.map, false)[0];
+		if (hit) {
+			// klik na špendlík krajiny: zoznam jej hráčov
+			const ll = office.mapLonLat(hit.point);
+			let best = null;
+			let bd = 5;
+			for (const p of officePlayers) {
+				const dd = Math.hypot(p.lon - ll.lon, p.lat - ll.lat);
+				if (dd < bd) {
+					bd = dd;
+					best = p;
+				}
+			}
+			if (best) {
+				const c = countryByCode(best.code);
+				const list = officePlayers.filter((p) => p.code === best.code).sort((a, b) => a.league - b.league || a.rank - b.rank);
+				ui.toast(`${c ? c.name : best.code} (${list.length}): ` + list.map((p) => `${p.name}, ${p.league}. liga, ${p.rank}. miesto, ${p.points} b.`).join(' · '));
+			}
+		}
+	};
+	/** Mobil na výšku v kancelárii: pohľad za stolom sa skloní nadol (stôl a tabuľa ligy namiesto stropu). */
+	const officeTilt = () => {
+		if (!ui.touchUI || view !== 'office' || officeFocusNow || (rig.camera.aspect || 1) >= 1) {
+			return;
+		}
+		chairLook.pitch = Math.max(-1.2, chairLook.pitch - 0.32);
+		const c = Math.cos(chairLook.pitch);
+		rig.viewLook.copy(rig.viewPos).add(new THREE.Vector3(Math.cos(chairLook.yaw) * c, Math.sin(chairLook.pitch), Math.sin(chairLook.yaw) * c));
+	};
+	/** Mobil: pri vstupe do kancelárie sa predmety, na ktoré sa dá ťuknúť, na chvíľu jemne rozsvietia. */
+	const hotHint = () => {
+		if (!ui.touchUI) {
+			return;
+		}
+		const lit = new Map();
+		for (const h of hotSpots()) {
+			for (const m of hotMeshes(h)) {
+				if (lit.has(m) || !m.material || !m.material.emissive) {
+					continue;
+				}
+				const g = m.material.clone();
+				g.emissive = m.material.emissive.clone().add(new THREE.Color(0x3a3220));
+				lit.set(m, m.material);
+				m.material = g;
+			}
+		}
+		setTimeout(() => {
+			for (const [m, mat] of lit) {
+				m.material = mat;
+			}
+		}, 1300);
 	};
 	/** Mobil F2: kamera bližšie k tágam, na vybratom tágu (na výšku sa celý stojan nezmestí). */
 	const rackCamMobile = () => {
@@ -2538,6 +2612,7 @@ export function start(root, config = {}) {
 			chairLook.yaw = Math.atan2(d.z, d.x);
 			chairLook.pitch = Math.atan2(d.y, Math.hypot(d.x, d.z));
 			rig.setViewZoom(officeFocusNow ? 1 : 0.85);
+			officeTilt(); // mobil: späť za stolom zas sklonený pohľad
 			ui.openLeagueRules(officeFocusNow === 'results'); // F4: vpravo pravidlá bodovania
 			// F7 notebook: vpravo panel Moje zápasy v lige (myš voľná na klikanie)
 			if (name === 'notebook' || ui.historyOpen()) {
@@ -2960,6 +3035,15 @@ export function start(root, config = {}) {
 		},
 		// mobil: Späť k stolu (z pohľadu na nástenku, stojan, rebríček… alebo zo stola zhora)
 		menuBack: () => {
+			if (view === 'office' && (officeFocusNow || officeMode === 'cues')) {
+				// mobil: Späť za stôl (ako pravé tlačidlo na PC)
+				if (officeMode === 'cues') {
+					actions.myCues();
+				} else {
+					actions.officeFocus(officeFocusNow);
+				}
+				return;
+			}
 			if (viewFromFree && view && view !== 'free') {
 				backToFree();
 				return;
@@ -3732,6 +3816,17 @@ export function start(root, config = {}) {
 		},
 		// mobil: ťuknutie vo voľnom pohľade na predmet ho otvorí
 		viewTap: (e) => {
+			if (view === 'office') {
+				// mobil, kancelária: ťuknutie na predmet ho otvorí (ako Ctrl + klik na PC); mapa: ťuk na špendlík
+				const rr = renderer.domElement.getBoundingClientRect();
+				const h = hotPick(new THREE.Vector2(((e.clientX - rr.left) / rr.width) * 2 - 1, -((e.clientY - rr.top) / rr.height) * 2 + 1));
+				if (h && !h.pass && h.key) {
+					controls.hooks.key(h.key);
+				} else {
+					officeClickAt(e.clientX, e.clientY);
+				}
+				return;
+			}
 			if (view === 'rack' && venue !== 'league') {
 				// mobil F2: ťuknutie na tágo v stojane ho vyberie
 				const rr = renderer.domElement.getBoundingClientRect();
@@ -3806,41 +3901,7 @@ export function start(root, config = {}) {
 					}
 					return;
 				}
-				const r = renderer.domElement.getBoundingClientRect();
-				const ray = new THREE.Raycaster();
-				const at = new THREE.Vector2(((e.clientX - r.left) / r.width) * 2 - 1, -((e.clientY - r.top) / r.height) * 2 + 1);
-				ray.setFromCamera(at, rig.camera);
-				if (ray.intersectObject(office.card, false).length) {
-					actions.officeCard();
-					return;
-				}
-				if (ray.intersectObject(office.lamp, false).length) {
-					actions.officeLamp();
-					return;
-				}
-				if (ray.intersectObject(office.door, false).length) {
-					actions.officeDoor();
-					return;
-				}
-				const hit = ray.intersectObject(office.map, false)[0];
-				if (hit) {
-					// klik na špendlík krajiny: zoznam jej hráčov
-					const ll = office.mapLonLat(hit.point);
-					let best = null;
-					let bd = 5;
-					for (const p of officePlayers) {
-						const dd = Math.hypot(p.lon - ll.lon, p.lat - ll.lat);
-						if (dd < bd) {
-							bd = dd;
-							best = p;
-						}
-					}
-					if (best) {
-						const c = countryByCode(best.code);
-						const list = officePlayers.filter((p) => p.code === best.code).sort((a, b) => a.league - b.league || a.rank - b.rank);
-						ui.toast(`${c ? c.name : best.code} (${list.length}): ` + list.map((p) => `${p.name}, ${p.league}. liga, ${p.rank}. miesto, ${p.points} b.`).join(' · '));
-					}
-				}
+				officeClickAt(e.clientX, e.clientY);
 			}
 			if (view === 'bar' && e.button === 0) {
 				// klik na telefón na barovom stolíku zväčší Môj účet; so zachytenou myšou sa mieri stredom obrazovky
@@ -5822,7 +5883,8 @@ export function start(root, config = {}) {
 			ui.sync(game, rig.mode);
 		}
 		myPlaceWas = myPlace;
-		ui.showBack(ui.touchUI && !ui.mainMenuOpen() && !ui.menuOpen() && (viewFromFree && view && view !== 'free'), viewFromFree);
+		const offBack = view === 'office' && !!(officeFocusNow || officeMode === 'cues');
+		ui.showBack(ui.touchUI && !ui.mainMenuOpen() && !ui.menuOpen() && ((viewFromFree && view && view !== 'free') || offBack), viewFromFree ? 'free' : offBack ? 'office' : '');
 		if (ui.touchUI && ui._mmAsMenu && !ui.mainMenuOpen() && !ui.anyPanelOpen()) {
 			ui.openMainMenu(true); // mobil: po zavretí okna (Nastavenia, Účet…) sa vráti hlavné menu, ako menu hry na desktope
 		}
