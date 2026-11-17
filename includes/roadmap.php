@@ -162,6 +162,7 @@ function mysn_roadmap() {
 /** Denník zmien (najnovšie hore). */
 function mysn_changelog() {
 	return array(
+		array( '0.22.2', '17. 11. 2026', 'Zrušené automatické zvýšenie miesta úderu pri mantineli (PC aj mobil): bod úderu ostáva v strede, kým ho hráč neposunie.' ),
 		array( '0.22.1', '17. 11. 2026', 'Oprava: miesto úderu niekedy po údere ostalo úplne hore na bielej – posúvanie kolieskom sa nevyplo, keď sa pustenie kolieska nedostalo do hry (pri inom držanom tlačidle alebo uvoľnení myši); teraz sa vypne vždy, keď koliesko nie je stlačené.' ),
 		array( '0.22.0', '17. 11. 2026', 'Faul v partii a v lige: keď súper pošle faulujúceho hrať znova, gule sa vrátia, ako boli pred faulom (biela tam, odkiaľ hral, aj spadnuté gule späť na stôl), body za faul ostávajú. Platí pri každom faule (aj za čas) a bez obmedzenia počtu; stav pred faulom drží server, klient ho nemôže zmeniť. Pri Hrám ja ostanú gule, ako ležia.' ),
 		array( '0.21.3', '17. 11. 2026', 'Skokový úder s nakriedovanou špicou skočí o 20 % vyššie.' ),

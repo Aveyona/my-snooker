@@ -14,7 +14,7 @@ import { zoomCfg, camLowCfg } from './camZoom.js';
 import { Crowd } from './fans.js';
 import { COUNTRIES, countryByCode } from './countries.js';
 import { BallViews } from './balls.js';
-import { Cue, AimGuide, spiderSpot, cushionTop, buildSpider, RESTS } from './cue.js';
+import { Cue, AimGuide, spiderSpot, buildSpider, RESTS } from './cue.js';
 import { Hands } from './hands.js';
 import { CameraRig } from './camera.js';
 import { Controls } from './controls.js';
@@ -5729,33 +5729,7 @@ export function start(root, config = {}) {
 			spiderMesh.position.set(spiderNow.x, spiderNow.y || 0, spiderNow.z); // krížik pri mantineli stojí na ráme
 			spiderMesh.rotation.set(0, -game.dir, 0);
 		}
-		// pri mantineli: úder automaticky vyššie na bielu (menej zdvihnuté tágo); hráč to môže doladiť
-		// na guli Miesto úderu, sklon tága (a s ním kamera) sa potom prispôsobí
-		if (aiming && game.cue.on && !spiderNow && !game.spectating) {
-			const ct = cushionTop(game.cue, game.dir, cueSpec.len || 1.45);
-			if (ct > 0.02) {
-				if (!cushAuto) {
-					cushAuto = { prev: spin.top, val: -1, user: false };
-				}
-				if (!cushAuto.user && Math.abs(spin.top - cushAuto.val) > 0.001 && cushAuto.val >= 0) {
-					cushAuto.user = true; // hráč si miesto úderu zmenil sám
-				}
-				if (!cushAuto.user) {
-					const want = Math.max(cushAuto.prev, ct);
-					if (Math.abs(want - spin.top) > 0.004) {
-						ui.setSpin(spin.side, want);
-					}
-					cushAuto.val = spin.top;
-				}
-				ui.spinNote(cushAuto.user ? '' : 'Vyššie (mantinel)');
-			} else if (cushAuto) {
-				if (!cushAuto.user) {
-					ui.setSpin(spin.side, cushAuto.prev);
-				}
-				cushAuto = null;
-				ui.spinNote('');
-			}
-		}
+		// (0.22.2) automatické zvýšenie miesta úderu pri mantineli je zrušené: bod ostáva, kde ho hráč nechal
 		// nádstavec súpera alebo sledovaného hráča (prichádza s mierením)
 		let restRemote = null;
 		const ra = watchAim && Array.isArray(watchAim.rest) ? watchAim.rest : null;
