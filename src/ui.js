@@ -3210,7 +3210,18 @@ export class UI {
 			menu: '<path d="M4 6h16M4 12h16M4 18h16"/>',
 			web: '<circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18"/>',
 		};
+		// tlačidlá menu hry: režimy hry (Tréning, Hrať, Liga, výzva, sledovanie, partia…) idú do prvej skupiny,
+		// účet, správa hry a návrat na web do skupiny Hra na konci
+		const mirror = [...this.menuInv.querySelectorAll('button'), ...this.menuBtns.querySelectorAll('.mysn-btn')]
+			.filter((b) => b.dataset.act !== 'settings' && b.dataset.act !== 'roomMap' && b.style.display !== 'none')
+			.map((b) => [MM_ICON[b.dataset.act] || (b.classList.contains('mysn-login') ? 'user' : 'menu'), b.textContent, { el: b }, /^(Tréning|Hrať|Liga)$/.test(b.textContent.trim()) ? '#7CFC8A' : '']);
+		const OTHER = new Set(['account', 'staff', 'home']);
 		const groups = [
+			{
+				name: 'Režim hry',
+				color: '#7CFC8A',
+				items: mirror.filter((it) => !OTHER.has(it[2].el.dataset.act)),
+			},
 			{
 				name: 'Hra',
 				color: '#6fb3ff',
@@ -3222,9 +3233,7 @@ export class UI {
 						['chalk', ctx.table ? 'Príslušenstvo' : 'Príslušenstvo · len pri stole', { a: 'tools', grey: !ctx.table }, ctx.table ? '#ffd34d' : '#8a8f98'],
 						['chalk', ctx.table ? 'Nakriedovať' : 'Nakriedovať · len pri stole', { a: 'chalkNow', grey: !ctx.table }, ctx.table ? '#ffd34d' : '#8a8f98'],
 					]),
-					...[...this.menuInv.querySelectorAll('button'), ...this.menuBtns.querySelectorAll('.mysn-btn')]
-					.filter((b) => b.dataset.act !== 'settings' && b.dataset.act !== 'roomMap' && b.style.display !== 'none')
-					.map((b) => [MM_ICON[b.dataset.act] || (b.classList.contains('mysn-login') ? 'user' : 'menu'), b.textContent, { el: b }, /^(Tréning|Hrať|Liga)$/.test(b.textContent.trim()) ? '#7CFC8A' : '']),
+					...mirror.filter((it) => OTHER.has(it[2].el.dataset.act)),
 				],
 			},
 			ctx.office
@@ -3284,11 +3293,12 @@ export class UI {
 					].filter(Boolean),
 			},
 		];
+		groups.splice(2, 0, groups.splice(1, 1)[0]); // poradie: Režim hry, Herňa (miesto), Hra, Tréning
 		const resumeBtn = this._mmAsMenu ? this.menuBtns.querySelector('[data-act="resume"]') : null;
 		if (this._mmAsMenu && !resumeBtn && !ctx.office) {
 			// úvod pred začiatkom hry: herňa a tréning ešte nemajú zmysel, najprv sa vyberá v Menu hry
 			groups[1].items = groups[1].items.filter((it) => it[2].k === 'F1');
-			groups[2].items = [];
+			groups[3].items = [];
 		}
 		this.mmenu.textContent = '';
 		const close = h('button', 'mysn-mm-x', '✕');
