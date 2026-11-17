@@ -5540,7 +5540,8 @@ export function start(root, config = {}) {
 		}
 		ui.showEye(rig.aimBall && aiming && rig.mode === 'cue' && !game.spectating);
 		ui.showFine(cueSpec.fine > 0, controls.touchFineOn());
-		ui.showBack(ui.touchUI && !ui.mainMenuOpen() && !ui.menuOpen() && ((view && view !== 'free' && view !== 'fiesta' && view !== 'office') || (!view && rig.mode === 'top')));
+		// pohľady (nástenka, stojan, rebríček…) majú vlastné Späť do hry; mobil potrebuje tlačidlo len pri stole zhora (Tab)
+		ui.showBack(ui.touchUI && !ui.mainMenuOpen() && !ui.menuOpen() && !view && rig.mode === 'top');
 		updateFelt();
 		office.updateWindow(dt);
 		office.notebookTick(dt);

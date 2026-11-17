@@ -2904,7 +2904,7 @@ export class UI {
 		}
 	}
 
-	/** Mobil: tlačidlo Späť k stolu (v pohľade na nástenku, stojan, rebríček… a v pohľade zhora). */
+	/** Mobil: tlačidlo Späť k stolu z pohľadu na stôl zhora (ostatné pohľady majú vlastné Späť do hry). */
 	showBack(on) {
 		on = !!on;
 		if (on !== this._backOn) {
