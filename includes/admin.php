@@ -166,7 +166,7 @@ function mysn_admin_matches( $limit = 30 ) {
 					<td><?php echo esc_html( mysn_user( $m['p1'] )['name'] . ' a ' . mysn_user( $m['p2'] )['name'] ); ?></td>
 					<td><?php echo (int) $m['score1'] . ' : ' . (int) $m['score2']; ?></td>
 					<td><?php echo (int) $m['moves']; ?></td>
-					<td><?php echo esc_html( ( $names[ $m['status'] ] ?? $m['status'] ) . ( 'resign' === $m['result'] ? ', vzdaná' : '' ) ); ?></td>
+					<td><?php echo esc_html( ( $names[ $m['status'] ] ?? $m['status'] ) . ( 'resign' === $m['result'] ? ', vzdaná' : ( 'disq' === $m['result'] ? ', diskvalifikácia' : '' ) ) ); ?></td>
 					<td><?php echo $m['winner'] ? esc_html( mysn_user( $m['winner'] )['name'] ) : ''; ?></td>
 					<td><?php echo esc_html( mysn_admin_delta( $m ) ); ?></td>
 					<td><?php echo (int) ( $m['elo1'] ?? 0 ) ? esc_html( sprintf( '%d (%+d) : %d (%+d)', $m['elo1'], $m['edel1'], $m['elo2'], $m['edel2'] ) ) : ''; ?></td>

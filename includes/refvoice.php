@@ -28,6 +28,8 @@ function mysn_rv_lines() {
 		'ref-time'      => array( 'Liga', 'Vypršal čas na úder', 'Čas.', 'Time.' ),
 		'ref-warning'   => array( 'Liga', 'Napomenutie (druhé nešportové správanie)', 'Napomenutie za nešportové správanie.', 'Warning, unsportsmanlike behaviour.' ),
 		'ref-penalty'   => array( 'Liga', 'Trest: súper +4', 'Trest, štyri body pre súpera.', 'Penalty, four points to the opponent.' ),
+		'ref-lastwarn'  => array( 'Liga', 'Posledné upozornenie (štvrté nešportové správanie)', 'Posledné upozornenie. Ďalšie nešportové správanie znamená diskvalifikáciu.', 'Final warning. Further unsportsmanlike behaviour means disqualification.' ),
+		'ref-disq'      => array( 'Liga', 'Diskvalifikácia (šieste nešportové správanie)', 'Hráč je diskvalifikovaný.', 'The player is disqualified.' ),
 		'ref-frameball' => array( 'Frame', 'Ďalšia guľa rozhodne frame', 'Frame ball.', 'Frame ball.' ),
 		'ref-snookers'  => array( 'Frame', 'Hráč na rade už potrebuje snookery', 'Potrebné snookery.', 'Snookers required.' ),
 		'ref-respot'    => array( 'Frame', 'Remíza: čierna späť na spot', 'Čierna späť na spot.', 'Re-spotted black.' ),

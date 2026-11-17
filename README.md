@@ -73,6 +73,7 @@ Server `live.hedlajner.sk` (Hetzner) poskytuje TURN pre spojenie hráčov a over
 - V kancelárii: kalendár sezóny a notebook na stole, výsledková tabuľa štyroch líg na zadnej stene, mapa sveta s hráčmi na ľavej stene (klik na ikonku ukáže hráča), stojan s mojimi tágami na pravej stene. Do zápasu si vyberieš 4 tágá a každé si môžeš upraviť (názov, farby, sila a falše).
 - Ligu ukladajú tabuľky `my_snooker_seasons` a `my_snooker_league`, údaje hráča sú v používateľskom poli `mysn_player`.
 - Ligové zápasy sa hrajú na štadióne (modrý stôl, diváci, rozhodca a komentátor Rudo), časomiera 45 s na ťah.
+- Nešportové správanie v lige (G grgnutie, H prdnutie, v zápase spolu): 2. napomenutie, 3. a 5. súper +4, 4. súper +4 a posledné upozornenie, 6. diskvalifikácia (súper vyhráva, ligové body ako pri bežnej výhre).
 - Komentátora Ruda riadi server: po overení úderu vyberie repliku (aj živý komentár cez AI a výkrik pri páde gule) zo svojho stavu, hráči aj diváci si ju stiahnu cez REST `rudo/call`.
 
 ## Poslať výzvu (partia alebo tréning cez internet)

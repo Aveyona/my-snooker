@@ -651,7 +651,8 @@ function mysn_rest_settle( $req ) {
  */
 /**
  * Nešportové správanie v ligovom zápase (grgnutie, prdnutie): server počíta prípady hráča v zápase.
- * 1. bez trestu, 2. napomenutie rozhodcom, od 3. súper +4 body (pripíšu sa aj do uloženého stavu).
+ * 1. bez trestu, 2. napomenutie rozhodcom, 3. a 5. súper +4 body (pripíšu sa aj do uloženého stavu),
+ * 4. súper +4 a posledné upozornenie, 6. diskvalifikácia: zápas končí, súper vyhráva (ligové body ako pri bežnej výhre).
  */
 function mysn_rest_conduct( $req ) {
 	$r = mysn_my_match( $req );
@@ -668,13 +669,36 @@ function mysn_rest_conduct( $req ) {
 	}
 	$c        = isset( $st['conduct'] ) && is_array( $st['conduct'] ) ? $st['conduct'] : array( 0, 0 );
 	$c[ $me ] = (int) $c[ $me ] + 1;
-	$level    = $c[ $me ] >= 3 ? 'penalty' : ( 2 === $c[ $me ] ? 'warning' : 'none' );
+	$n        = $c[ $me ];
+	$level    = $n >= 6 ? 'disq' : ( 4 === $n ? 'lastwarn' : ( $n >= 3 ? 'penalty' : ( 2 === $n ? 'warning' : 'none' ) ) );
+	$pts      = in_array( $level, array( 'penalty', 'lastwarn' ), true ) ? 4 : 0;
 	$st['conduct'] = $c;
-	if ( 'penalty' === $level ) {
-		$st['rules']['scores'][ 1 - $me ] = (int) $st['rules']['scores'][ 1 - $me ] + 4;
+	if ( $pts ) {
+		$st['rules']['scores'][ 1 - $me ] = (int) $st['rules']['scores'][ 1 - $me ] + $pts;
 	}
-	mysn_update_match( $m['id'], array( 'state' => wp_json_encode( $st ) ) );
-	return array( 'count' => $c[ $me ], 'level' => $level, 'points' => 'penalty' === $level ? 4 : 0 );
+	if ( 'disq' !== $level ) {
+		mysn_update_match( $m['id'], array( 'state' => wp_json_encode( $st ) ) );
+		return array( 'count' => $n, 'level' => $level, 'points' => $pts );
+	}
+	// diskvalifikácia: zápas končí, súper vyhráva; ligové body ako pri bežnej výhre (nahraté body víťaza)
+	$wid = 0 === $me ? (int) $m['p2'] : (int) $m['p1'];
+	mysn_update_match(
+		$m['id'],
+		array(
+			'state'  => wp_json_encode( $st ),
+			'status' => 'finished',
+			'result' => 'disq',
+			'winner' => $wid,
+		)
+	);
+	$best = isset( $st['best'] ) && is_array( $st['best'] ) ? array_map( 'intval', $st['best'] ) : array( 0, 0 );
+	mysn_league_apply( mysn_get_match( $m['id'] ), $wid, (int) $st['rules']['scores'][ 1 - $me ], false, $best );
+	return array(
+		'count'  => $n,
+		'level'  => 'disq',
+		'points' => 0,
+		'match'  => mysn_match_out( mysn_get_match( $m['id'] ), get_current_user_id() ),
+	);
 }
 
 function mysn_rest_choice( $req ) {

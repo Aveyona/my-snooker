@@ -1210,6 +1210,8 @@ export class UI {
 				resigned: ['Výhra, súper vzdal', 'win'],
 				disconnect: ['Prehra, výpadok spojenia', 'loss'],
 				'win-disconnect': ['Výhra, súperovi vypadlo spojenie', 'win'],
+				disq: ['Prehra, diskvalifikácia', 'loss'],
+				'win-disq': ['Výhra, súper diskvalifikovaný', 'win'],
 				annulled: ['Zrušený, obom vypadlo spojenie', 'void'],
 				live: ['Prebieha', 'void'],
 			}[r] || [r, 'void']

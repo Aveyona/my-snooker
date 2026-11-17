@@ -35,6 +35,9 @@ function mysn_hist_result( $m, $uid ) {
 	if ( 'disconnect' === $m['result'] ) {
 		return $won ? 'win-disconnect' : 'disconnect';
 	}
+	if ( 'disq' === $m['result'] ) {
+		return $won ? 'win-disq' : 'disq';
+	}
 	return $won ? 'win' : 'loss';
 }
 
@@ -51,8 +54,8 @@ function mysn_rest_history( $req ) {
 	foreach ( array_slice( $rows, 0, 20 ) as $m ) {
 		$me     = (int) $m['p1'] === $uid ? 0 : 1;
 		$res    = mysn_hist_result( $m, $uid );
-		$won    = in_array( $res, array( 'win', 'resigned', 'win-disconnect' ), true );
-		$lost   = in_array( $res, array( 'loss', 'resign', 'disconnect' ), true );
+		$won    = in_array( $res, array( 'win', 'resigned', 'win-disconnect', 'win-disq' ), true );
+		$lost   = in_array( $res, array( 'loss', 'resign', 'disconnect', 'disq' ), true );
 		$list[] = array(
 			'id'     => (int) $m['id'],
 			'date'   => (int) ( $m['updated'] ? $m['updated'] : $m['created'] ),
@@ -164,8 +167,8 @@ function mysn_rest_history_match( $req ) {
 	$first = $moves ? (int) $moves[0]['created'] : (int) $m['created'];
 	$last  = $moves ? (int) end( $moves )['created'] : (int) $m['updated'];
 	$res   = mysn_hist_result( $m, $uid );
-	$won   = in_array( $res, array( 'win', 'resigned', 'win-disconnect' ), true );
-	$lost  = in_array( $res, array( 'loss', 'resign', 'disconnect' ), true );
+	$won   = in_array( $res, array( 'win', 'resigned', 'win-disconnect', 'win-disq' ), true );
+	$lost  = in_array( $res, array( 'loss', 'resign', 'disconnect', 'disq' ), true );
 	$season = $m['season_id'] ? $wpdb->get_var( $wpdb->prepare( 'SELECT name FROM ' . mysn_table( 'seasons' ) . ' WHERE id = %d', (int) $m['season_id'] ) ) : ''; // phpcs:ignore
 	return array(
 		'id'       => (int) $m['id'],

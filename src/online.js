@@ -1046,13 +1046,13 @@ export class Online {
 				this.lastFiesta = {
 					winner: m.players[wi].name,
 					result: `${m.players[0].name} ${m.scores[0]} : ${m.scores[1]} ${m.players[1].name}`,
-					lines: [m.result === 'resign' ? `${m.players[1 - wi].name} sa vzdal partie` : m.result === 'disconnect' ? `${m.players[1 - wi].name} stratil spojenie` : m.result === 'timeout' ? 'rozhodol čas' : `Najvyššia séria: ${Math.max(best[0] || 0, best[1] || 0)}`, `Liga: víťaz +${Math.max(0, m.delta || 0)} bodov${m.elo && m.elo[wi] ? ` · ELO ${m.elo[wi]} (+${Math.abs(m.edel[wi])})` : ''}`],
+					lines: [m.result === 'disq' ? `${m.players[1 - wi].name} diskvalifikovaný za nešportové správanie` : m.result === 'resign' ? `${m.players[1 - wi].name} sa vzdal partie` : m.result === 'disconnect' ? `${m.players[1 - wi].name} stratil spojenie` : m.result === 'timeout' ? 'rozhodol čas' : `Najvyššia séria: ${Math.max(best[0] || 0, best[1] || 0)}`, `Liga: víťaz +${Math.max(0, m.delta || 0)} bodov${m.elo && m.elo[wi] ? ` · ELO ${m.elo[wi]} (+${Math.abs(m.edel[wi])})` : ''}`],
 					winId: m.winner,
 				};
 				this.wsend({ k: 'w-over', f: this.lastFiesta });
 			}
-			const wtext = wi < 0 ? 'Zápas skončil.' : m.result === 'disconnect' ? `${m.players[1 - wi].name} stratil spojenie, víťaz ${m.players[wi].name}.` : m.result === 'resign' ? `${m.players[1 - wi].name} sa vzdáva partie, víťaz ${m.players[wi].name}.` : `Zápas skončil, víťaz ${m.players[wi].name}, skóre ${m.scores[wi]} : ${m.scores[1 - wi]}.`;
-			this.stopMatch(m.result === 'disconnect' ? (won ? `${opp.name} stratil spojenie a zápas prehral. Víťazstvo je tvoje!` : 'Stratil si spojenie so zápasom a zápas je prehratý.') : m.result === 'resign' ? (won ? `${opp.name} sa vzdáva partie. Víťazstvo je tvoje!` : 'Partia je vzdaná.') : won ? `Víťazstvo je tvoje! Skóre ${m.scores[m.me]} : ${m.scores[1 - m.me]}.` : `Víťaz partie: ${opp.name}, skóre ${m.scores[1 - m.me]} : ${m.scores[m.me]}.`, wtext);
+			const wtext = wi < 0 ? 'Zápas skončil.' : m.result === 'disq' ? `${m.players[1 - wi].name} je diskvalifikovaný, víťaz ${m.players[wi].name}.` : m.result === 'disconnect' ? `${m.players[1 - wi].name} stratil spojenie, víťaz ${m.players[wi].name}.` : m.result === 'resign' ? `${m.players[1 - wi].name} sa vzdáva partie, víťaz ${m.players[wi].name}.` : `Zápas skončil, víťaz ${m.players[wi].name}, skóre ${m.scores[wi]} : ${m.scores[1 - wi]}.`;
+			this.stopMatch(m.result === 'disq' ? (won ? `${opp.name} je diskvalifikovaný za nešportové správanie. Víťazstvo je tvoje!` : 'Rozhodca ťa diskvalifikoval za opakované nešportové správanie. Zápas je prehratý.') : m.result === 'disconnect' ? (won ? `${opp.name} stratil spojenie a zápas prehral. Víťazstvo je tvoje!` : 'Stratil si spojenie so zápasom a zápas je prehratý.') : m.result === 'resign' ? (won ? `${opp.name} sa vzdáva partie. Víťazstvo je tvoje!` : 'Partia je vzdaná.') : won ? `Víťazstvo je tvoje! Skóre ${m.scores[m.me]} : ${m.scores[1 - m.me]}.` : `Víťaz partie: ${opp.name}, skóre ${m.scores[1 - m.me]} : ${m.scores[m.me]}.`, wtext);
 			return;
 		}
 		if (m.status === 'annulled') {

@@ -1355,7 +1355,7 @@ export function start(root, config = {}) {
 	 */
 	const condSeen = new Set();
 	const applyConduct = (c) => {
-		if (!c || !c.id || condSeen.has(c.id) || (c.level !== 'warning' && c.level !== 'penalty')) {
+		if (!c || !c.id || condSeen.has(c.id) || !['warning', 'penalty', 'lastwarn', 'disq'].includes(c.level)) {
 			return false;
 		}
 		condSeen.add(c.id);
@@ -1367,16 +1367,26 @@ export function start(root, config = {}) {
 			ui.toast(`Rozhodca: ${name}, napomenutie za nešportové správanie. Ďalší prehrešok: súper +4 body.`);
 			return true;
 		}
+		if (c.level === 'disq') {
+			// šieste nešportové správanie: rozhodca hráča diskvalifikuje, koniec zápasu príde zo servera
+			refVoice.say('ref-disq', 300);
+			ui.banner(`${name} je diskvalifikovaný`, 'Opakované nešportové správanie');
+			ui.toast(`Rozhodca: ${name} je diskvalifikovaný za opakované nešportové správanie.`);
+			return true;
+		}
 		const pts = Math.min(4, Math.max(0, Number(c.pts) || 4));
 		if (m && m.rules && m.rules.scores && !game.spectating && (c.who === 0 || c.who === 1)) {
 			m.rules.scores[1 - c.who] += pts;
 		}
-		refVoice.say('ref-penalty', 300);
+		refVoice.say(c.level === 'lastwarn' ? 'ref-lastwarn' : 'ref-penalty', 300);
+		if (c.level === 'lastwarn') {
+			ui.banner('Posledné upozornenie', `${name}: ďalšie nešportové správanie = diskvalifikácia`);
+		}
 		const sc = toScreen(0, R, 0);
 		if (sc) {
 			ui.scorePop(`Nešportové správanie · súper +${pts}`, sc.x, sc.y - 40, '#ff6b6b', true);
 		}
-		ui.toast(`Rozhodca: ${name}, nešportové správanie, súper dostáva ${pts} body.`);
+		ui.toast(`Rozhodca: ${name}, nešportové správanie, súper dostáva ${pts} body.${c.level === 'lastwarn' ? ' Posledné upozornenie: ďalšie nešportové správanie znamená diskvalifikáciu.' : ''}`);
 		return true;
 	};
 	const conductCheck = async () => {
@@ -1385,7 +1395,7 @@ export function start(root, config = {}) {
 			return;
 		}
 		const r = await online.net.call('conduct', { id: online.matchId }).catch(() => null);
-		if (!r || (r.level !== 'warning' && r.level !== 'penalty')) {
+		if (!r || !['warning', 'penalty', 'lastwarn', 'disq'].includes(r.level)) {
 			return;
 		}
 		const me = m.me ? 1 : 0;
@@ -1393,6 +1403,13 @@ export function start(root, config = {}) {
 		applyConduct(c);
 		online.rtcSendOpp({ k: 'cond', c });
 		online.wsend({ k: 'w-cond', c });
+		if (r.level === 'disq' && r.match) {
+			// diskvalifikácia: server zápas ukončil, súperovi hneď pošlem koniec a u seba ho zobrazím
+			setTimeout(() => {
+				online.rtcSendOpp({ k: 'info', m: r.match });
+				online.applyInfo(r.match);
+			}, 2500);
+		}
 	};
 	const playConf = (m) => {
 		if (!m || !m.id || confSeen.has(m.id)) {
