@@ -486,6 +486,8 @@ export function start(root, config = {}) {
 	let spiderOn = false; // hráč si vybral pavúka na najbližší úder
 	let spiderNow = null; // kde pavúk práve stojí (null = nie je na stole)
 	let spiderWarnT = 0;
+	let reachBad = false; // pri mierení nedosiahnem na bielu: tágo je zdvihnuté mimo mierenia
+	let reachLift = 0; // plynulý prechod zdvihnutia tága (0 až 1)
 	// pri mantineli: automaticky vyšší úder (tágo nemusí ísť strmo hore); hráč ho môže doladiť
 	let cushAuto = null; // { prev, val } kým platí automatické nastavenie
 	let fpsAvg = 60; // snímky za sekundu (Ctrl)
@@ -5559,6 +5561,19 @@ export function start(root, config = {}) {
 			}
 		}
 		cue.place(game.cue, game.dir, pull, watchAim ? watchAim.side || 0 : spin.side, watchAim ? watchAim.top || 0 : spin.top, (aiming || view === 'chalk' || (watchAim && !watchAim.place)) && game.cue.on, game.balls, spiderNow || restRemote);
+		// nedosiahneš na bielu: tágo sa plynulo zdvihne šikmo nad stôl (rukoväť hore, špička nad bielou), mimo mierenia;
+		// uhol pre kameru (cue.tilt) ostáva, mení sa len poloha a sklon modelu
+		reachLift += ((reachBad ? 1 : 0) - reachLift) * Math.min(1, dt * 6);
+		if (reachLift > 0.002 && cue.pivot.visible) {
+			const e = reachLift * reachLift * (3 - 2 * reachLift);
+			const ldx = Math.cos(game.dir);
+			const ldz = Math.sin(game.dir);
+			cue.pivot.position.x -= ldx * 0.05 * e;
+			cue.pivot.position.z -= ldz * 0.05 * e;
+			cue.pivot.position.y += 0.17 * e;
+			const lt = (cue.tilt || 0) + (0.62 - (cue.tilt || 0)) * e; // asi 35°
+			cue.pivot.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), new THREE.Vector3(-ldx * Math.cos(lt), Math.sin(lt), -ldz * Math.cos(lt)));
+		}
 		if (restRemote) {
 			const hh = cueYAt(restRemote.x, restRemote.z) - restRemote.y;
 			const rr = restRise(restRemote.x, restRemote.z, restRemote.y, hh);
@@ -5656,9 +5671,11 @@ export function start(root, config = {}) {
 		// dosah: pri mierení upozornenie, keď hráč nedosiahne na bielu (dĺžka tága, predĺženie, nádstavec)
 		if (game.state === 'aim' && !game.spectating && game.cue.on && !view) {
 			const r = reachInfo();
+			reachBad = !r.ok && !r.stretch;
 			ui.reachNote(r.ok ? '' : reachMsg(r), !!r.stretch);
 			ui.spinLock(r.stretch ? r.deg : 0); // natiahnutý úder: Miesto úderu je zamknuté v strede, nepresnosť pri tágu
 		} else {
+			reachBad = false;
 			ui.reachNote('');
 			ui.spinLock(0);
 		}
