@@ -162,6 +162,7 @@ function mysn_roadmap() {
 /** Denník zmien (najnovšie hore). */
 function mysn_changelog() {
 	return array(
+		array( '0.22.4', '17. 11. 2026', 'Hlasnejší rozhodca: hlas silnejší, na štadióne menej slabne so vzdialenosťou, menej dozvuku a diváci sa počas hlásenia stíšia.' ),
 		array( '0.22.3', '17. 11. 2026', 'Divák Rudo komentuje hlasnejšie: so vzdialenosťou slabne menej (asi 3× hlasnejší), má menej dozvuku, diváci sa počas jeho reči stíšia na 15 % a hlasitosť v administrácii sa dá nastaviť až na 400 %.' ),
 		array( '0.22.2', '17. 11. 2026', 'Zrušené automatické zvýšenie miesta úderu pri mantineli (PC aj mobil): bod úderu ostáva v strede, kým ho hráč neposunie.' ),
 		array( '0.22.1', '17. 11. 2026', 'Oprava: miesto úderu niekedy po údere ostalo úplne hore na bielej – posúvanie kolieskom sa nevyplo, keď sa pustenie kolieska nedostalo do hry (pri inom držanom tlačidle alebo uvoľnení myši); teraz sa vypne vždy, keď koliesko nie je stlačené.' ),

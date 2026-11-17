@@ -4978,7 +4978,11 @@ export function start(root, config = {}) {
 			busy = 1;
 			Promise.race([it.ready, new Promise((ok) => setTimeout(() => ok(false), 5000))]).then((ok) => {
 				const pos = venue === 'league' ? stadium.refPos() : null;
-				const len = ok && sound.fx(it.slot, { pos, room: 0.8 }) ? dur(it.slot) : 0;
+				// hlasnejší a zreteľnejší (0.22.4): slabšie tlmenie vzdialenosťou, menej dozvuku, diváci sa stíšia
+				const len = ok && sound.fx(it.slot, { pos, room: 0.35, dist: { ref: 3, roll: 0.35 }, gain: 1.6 }) ? dur(it.slot) : 0;
+				if (len) {
+					sound.duck('crowd', 0.2, len + 0.2);
+				}
 				setTimeout(() => {
 					busy = 0;
 					pump();
