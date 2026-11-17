@@ -2264,7 +2264,7 @@ export function start(root, config = {}) {
 		// skokový úder: rozhoduje poloha bodu na bielej (nie falša zmenšená kriedou a tágom); fyzika ho pozná podľa
 		// top = -1, obyčajný úder sa preto drží nad hranicou skoku
 		if (!miscue && !stretchDeg && spin.top <= JUMP_TOP && rawPower >= JUMP_POWER) {
-			top = -1;
+			top = chalk > 0 ? -1.2 : -1; // nakriedované: väčší skok
 		} else if (top <= JUMP_TOP) {
 			top = JUMP_TOP + 0.01;
 		}

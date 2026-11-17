@@ -171,7 +171,8 @@ export function strike(ball, dir, power, side = 0, top = 0) {
 		// aj podľa tága; ponad guľu preletí asi od 75 % skutočnej sily),
 		// dopredu letí pomalšie a so slabšou rotáciou
 		const p = Math.max(0, Math.min(1, (Math.min(1, power) - 0.55) / 0.45));
-		ball.vy = 0.5 + 1.4 * p; // 0,5 až 1,9 m/s: pri plnej sile asi 18 cm vysoko
+		// 0,5 až 1,9 m/s (pri plnej sile asi 18 cm vysoko); nakriedovaná špica (hra pošle top = -1,2) skočí o 20 % vyššie
+		ball.vy = (0.5 + 1.4 * p) * (top <= -1.1 ? 1.1 : 1);
 		ball.v.x *= 0.8;
 		ball.v.z *= 0.8;
 		ball.w.x *= 0.3;

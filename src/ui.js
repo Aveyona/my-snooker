@@ -565,7 +565,7 @@ export class UI {
 			this.spinBox.classList.toggle('mysn-spin-jump', jump);
 			const lb = this.spinBox.querySelector('.mysn-spin-label');
 			lb.textContent = jump ? 'Skokový úder' : 'Miesto úderu';
-			lb.title = jump ? `Biela vyskočí pri sile od ${Math.round(JUMP_POWER * 100)} %, ponad guľu asi od 92 %. Skok veľmi opotrebuje špicu (5 %).` : '';
+			lb.title = jump ? `Biela vyskočí pri sile od ${Math.round(JUMP_POWER * 100)} %, ponad guľu asi od 92 %. S kriedou skočí o 20 % vyššie. Skok veľmi opotrebuje špicu (5 %).` : '';
 		}
 		this.opts.onSpin(this.side, this.top);
 	}
