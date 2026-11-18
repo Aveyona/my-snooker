@@ -38,7 +38,7 @@ export class Sound {
 		this.volume = 0.8;
 		this.cfg = cfg || {};
 		this.bufs = {}; // slot → [AudioBuffer]
-		this.gvol = { table: 1, room: 1, crowd: 1 };
+		this.gvol = { table: 1, room: 1, crowd: 1, rudo: 1 }; // rudo = komentátor Rudo (0.30.7)
 		this.mode = 'hrtf'; // 'hrtf' (slúchadlá, 3D) alebo 'stereo' (reproduktory)
 		this.roomName = 'herna';
 		this._last = 0;

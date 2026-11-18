@@ -48,7 +48,7 @@ function lowSideFor(v, user) {
 
 function loadSettings() {
 	const mobile = /Android|iPhone|iPad|Mobile/i.test(navigator.userAgent);
-	const def = { tableDetail: 'fine', lines: false, quality: mobile ? 'low' : 'high', volume: 0.8, volTable: 1, volRoom: 1, volCrowd: 1, sound3d: 'hrtf', refLang: 'en', respot: true, contact: true, contactPos: 'topright', camSide: 'hand', afterShot: 'follow', oppCam: 'follow', camera: 'cue', cue: 'club' };
+	const def = { tableDetail: 'fine', lines: false, quality: mobile ? 'low' : 'high', volume: 0.8, volTable: 1, volRoom: 1, volCrowd: 1, volRudo: 1, sound3d: 'hrtf', refLang: 'en', respot: true, contact: true, contactPos: 'topright', camSide: 'hand', afterShot: 'follow', oppCam: 'follow', camera: 'cue', cue: 'club' };
 	try {
 		const raw = window.localStorage.getItem(STORE);
 		if (raw) {
@@ -511,7 +511,7 @@ export function start(root, config = {}) {
 	let streakN = 0; // koľká potopená guľa v aktuálnej sérii (zvuk série)
 	sound.setVolume(settings.volume);
 	sound.setMode(settings.sound3d === 'stereo' ? 'stereo' : 'hrtf');
-	for (const [g, k] of [['table', 'volTable'], ['room', 'volRoom'], ['crowd', 'volCrowd']]) {
+	for (const [g, k] of [['table', 'volTable'], ['room', 'volRoom'], ['crowd', 'volCrowd'], ['rudo', 'volRudo']]) {
 		sound.setGroupVolume(g, settings[k] === undefined ? 1 : +settings[k]);
 	}
 	const ballPos = (b) => (b ? { x: b.p.x, y: R, z: b.p.z } : null); // stôl je v strede scény, gule = poloha zvuku
@@ -4035,8 +4035,8 @@ export function start(root, config = {}) {
 			if (k === 'volume') {
 				sound.setVolume(v);
 			}
-			if (k === 'volTable' || k === 'volRoom' || k === 'volCrowd') {
-				sound.setGroupVolume({ volTable: 'table', volRoom: 'room', volCrowd: 'crowd' }[k], +v);
+			if (k === 'volTable' || k === 'volRoom' || k === 'volCrowd' || k === 'volRudo') {
+				sound.setGroupVolume({ volTable: 'table', volRoom: 'room', volCrowd: 'crowd', volRudo: 'rudo' }[k], +v);
 			}
 			if (k === 'sound3d') {
 				sound.setMode(v);

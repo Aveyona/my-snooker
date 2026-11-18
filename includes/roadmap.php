@@ -162,6 +162,7 @@ function mysn_roadmap() {
 /** Denník zmien (najnovšie hore). */
 function mysn_changelog() {
 	return array(
+		array( '0.30.7', '18. 11. 2026', 'Nastavenia: vlastná hlasitosť komentátora Ruda (0 až 200 %), nezávisle od divákov.' ),
 		array( '0.30.6', '18. 11. 2026', 'Diagnostika spojení: prepínač Zapnúť / Vypnúť zapisovanie výpadkov (predvolene vypnuté), pri vypnutom hra záznamy neposiela a test spojenia ukáže výsledok len hráčovi; podrobný záznam servera TURN vypnutý.' ),
 		array( '0.30.5', '18. 11. 2026', 'Oprava: po ligovom zápase Tréning (aj Hrať o najlepšie skóre) v menu vráti zo štadióna do herne.' ),
 		array( '0.30.4', '18. 11. 2026', 'Diagnostika priameho spojenia: Nastavenia → Otestovať spojenie (miestna sieť, verejná adresa, server TURN, spojenie cez TURN s odozvou), záznam výpadku s adresami oboch strán, krokom nadväzovania a chybami STUN/TURN, rozbor Komu vypadlo; prihlásenie na TURN platí 7 dní; server TURN zapisuje prihlásenia hráčov.' ),

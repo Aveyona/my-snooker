@@ -666,6 +666,7 @@ export class UI {
 			<label>Zvuky stola <input type="range" min="0" max="1.5" step="0.05" data-k="volTable"></label>
 			<label>Miestnosť (ambient, dvere) <input type="range" min="0" max="1.5" step="0.05" data-k="volRoom"></label>
 			<label>Diváci <input type="range" min="0" max="1.5" step="0.05" data-k="volCrowd"></label>
+			<label>Komentátor Rudo <input type="range" min="0" max="2" step="0.05" data-k="volRudo"></label>
 			<label>Priestorový zvuk
 				<select data-k="sound3d">
 					<option value="hrtf">Slúchadlá (3D zvuk)</option>
