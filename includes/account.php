@@ -80,19 +80,69 @@ function mysn_rest_account() {
 	);
 }
 
+/**
+ * Telefón Môj účet (0.29.0): zmena zobrazovaného mena. Meno 2 až 40 znakov, bez HTML.
+ */
+function mysn_rest_account_name( $req ) {
+	$uid  = get_current_user_id();
+	$name = trim( sanitize_text_field( (string) $req->get_param( 'name' ) ) );
+	if ( mb_strlen( $name ) < 2 || mb_strlen( $name ) > 40 ) {
+		return mysn_err( 'Meno musí mať 2 až 40 znakov.' );
+	}
+	$r = wp_update_user( array( 'ID' => $uid, 'display_name' => $name ) );
+	if ( is_wp_error( $r ) ) {
+		return mysn_err( $r->get_error_message() );
+	}
+	return array( 'ok' => true, 'name' => $name );
+}
+
+/**
+ * Telefón Môj účet (0.29.0): zmena hesla. Treba súčasné heslo (účty len cez Google bez hesla ho nemajú:
+ * vtedy sa heslo nastaví na webe). Po zmene ostane hráč prihlásený (nové prihlasovacie cookie).
+ */
+function mysn_rest_account_password( $req ) {
+	$uid = get_current_user_id();
+	$u   = get_userdata( $uid );
+	$old = (string) $req->get_param( 'old' );
+	$new = (string) $req->get_param( 'new' );
+	if ( ! $u || ! wp_check_password( $old, $u->user_pass, $uid ) ) {
+		return mysn_err( 'Súčasné heslo nie je správne.', 403 );
+	}
+	if ( strlen( $new ) < 8 ) {
+		return mysn_err( 'Nové heslo musí mať aspoň 8 znakov.' );
+	}
+	if ( $new === $old ) {
+		return mysn_err( 'Nové heslo je rovnaké ako súčasné.' );
+	}
+	wp_set_password( $new, $uid ); // odhlási všetky relácie
+	wp_set_current_user( $uid );
+	// nové prihlasovacie cookie hneď aj pre túto požiadavku, aby nový nonce platil pre ďalšie volania hry
+	add_action(
+		'set_logged_in_cookie',
+		function ( $cookie ) {
+			$_COOKIE[ LOGGED_IN_COOKIE ] = $cookie;
+		}
+	);
+	wp_set_auth_cookie( $uid, true, is_ssl() ); // v tejto hre ostane prihlásený
+	return array( 'ok' => true, 'nonce' => wp_create_nonce( 'wp_rest' ) );
+}
+
 add_action(
 	'rest_api_init',
 	function () {
+		$logged = function () {
+			return is_user_logged_in();
+		};
 		register_rest_route(
 			'my-snooker/v1',
 			'/account',
 			array(
 				'methods'             => 'GET',
 				'callback'            => 'mysn_rest_account',
-				'permission_callback' => function () {
-					return is_user_logged_in();
-				},
+				'permission_callback' => $logged,
 			)
 		);
+		register_rest_route( 'my-snooker/v1', '/account/name', array( 'methods' => 'POST', 'callback' => 'mysn_rest_account_name', 'permission_callback' => $logged ) );
+		register_rest_route( 'my-snooker/v1', '/account/password', array( 'methods' => 'POST', 'callback' => 'mysn_rest_account_password', 'permission_callback' => $logged ) );
 	}
 );

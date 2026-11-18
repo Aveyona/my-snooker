@@ -2454,6 +2454,11 @@ export class UI {
 	}
 
 	/** Telefón z baru (F10) zväčšený na obrazovku: stránka Môj účet webu Hedlajner. */
+	/**
+	 * Telefón Môj účet (0.29.0): aplikácia v telefóne na celú obrazovku (T, telefón pri bare). Záložky Profil
+	 * (údaje, zmena mena a hesla, web, odhlásenie), Snooker (liga, ELO, partie, skóre) a Nastavenia. Údaje
+	 * dodá hra cez phoneData (REST account).
+	 */
 	openPhone(on) {
 		if (!this.phone) {
 			if (!on) {
@@ -2463,59 +2468,138 @@ export class UI {
 			this.phone.innerHTML = `<div class="mysn-phone-dev"><div class="mysn-phone-notch"></div><div class="mysn-phone-scr"></div></div>`;
 			this.phone.addEventListener('click', (e) => {
 				if (e.target === this.phone) {
-					this.openPhone(false);
+					this.opts.onAction('phoneClose');
 				}
 			});
+			for (const t of ['keydown', 'mousedown', 'pointerdown', 'wheel']) {
+				this.phone.querySelector('.mysn-phone-dev').addEventListener(t, (e) => e.stopPropagation());
+			}
 			this.root.appendChild(this.phone);
+			this._phoneTab = 'profile';
 		}
 		const P = this.phone;
 		if (!on) {
 			P.classList.add('mysn-hidden');
 			return;
 		}
-		const scr = P.querySelector('.mysn-phone-scr');
-		const url = this.opts.accountUrl;
-		scr.innerHTML = '';
-		const bar = h('div', 'mysn-phone-bar', '<b>Môj účet</b>');
-		const close = this.button('Zavrieť (Esc)', 'phoneClose');
-		bar.appendChild(close);
-		scr.appendChild(bar);
-		if (!url) {
-			scr.appendChild(h('p', 'mysn-phone-msg', 'Môj účet je len pre prihlásených.'));
-		} else {
-			const fr = document.createElement('iframe');
-			fr.className = 'mysn-phone-frame';
-			fr.src = url;
-			fr.title = 'Môj účet';
-			const fallback = () => {
-				scr.querySelector('.mysn-phone-frame') && fr.remove();
-				const m = h('div', 'mysn-phone-msg', 'Nastavenie účtu sa tu nedá zobraziť. Otvor ho na webe:');
-				const a = h('a', 'mysn-btn mysn-primary', 'Otvoriť Môj účet');
-				a.href = url;
-				a.target = '_blank';
-				a.rel = 'noopener';
-				m.appendChild(a);
-				scr.appendChild(m);
-			};
-			fr.addEventListener('load', () => {
-				try {
-					// administrácia bez bočného menu a hornej lišty, aby sa zmestila do telefónu
-					const d = fr.contentDocument;
-					const st = d.createElement('style');
-					st.textContent = '#adminmenumain,#wpadminbar,#wpfooter,.notice-warning,.update-nag{display:none!important}#wpcontent,#wpbody-content{margin-left:0!important;padding-left:12px!important}html.wp-toolbar{padding-top:0!important}body{min-width:0!important}';
-					d.head.appendChild(st);
-				} catch (e) {
-					fallback(); // iná doména (subdoména hry): stránka sa do okna nedá vložiť
-				}
-			});
-			scr.appendChild(fr);
-			const open = h('a', 'mysn-phone-ext', 'Otvoriť na webe');
-			open.href = url;
-			open.target = '_blank';
-			open.rel = 'noopener';
-			scr.appendChild(open);
-		}
+		this._phoneD = null;
+		this._phoneErr = '';
+		this.phoneRender();
 		P.classList.remove('mysn-hidden');
+		this.opts.onAction('phoneLoad');
+	}
+
+	/** Údaje účtu do telefónu (d = null: načítava sa). */
+	phoneData(d, err = '') {
+		this._phoneD = d;
+		this._phoneErr = err;
+		if (this.phoneOpen()) {
+			this.phoneRender();
+		}
+	}
+
+	/** Výsledok akcie v telefóne (zmena mena, hesla): ok = true zelená, inak červená správa. */
+	phoneNote(msg, ok) {
+		const n = this.phone && this.phone.querySelector('.mysn-ph-note');
+		if (n) {
+			n.textContent = msg;
+			n.className = 'mysn-ph-note ' + (ok ? 'mysn-ph-ok' : 'mysn-ph-err');
+		}
+	}
+
+	phoneRender() {
+		const scr = this.phone.querySelector('.mysn-phone-scr');
+		const d = this._phoneD;
+		const tab = this._phoneTab || 'profile';
+		const row = (k, v) => `<div class="mysn-ph-row"><span>${esc(k)}</span><b>${v}</b></div>`;
+		const time = (x) => `${Math.floor(x / 60)}:${String(x % 60).padStart(2, '0')}`;
+		let body = '';
+		if (!this.opts.accountUrl && !d) {
+			body = '<p class="mysn-ph-empty">Môj účet je len pre prihlásených.</p>';
+		} else if (this._phoneErr) {
+			body = `<p class="mysn-ph-empty">${esc(this._phoneErr)}</p>`;
+		} else if (!d) {
+			body = '<p class="mysn-ph-empty">Načítavam účet…</p>';
+		} else if (tab === 'profile') {
+			body =
+				`<div class="mysn-ph-head">${d.avatar ? `<img src="${esc(d.avatar)}" alt="" width="72" height="72">` : `<i>${esc((d.name || '?').slice(0, 1))}</i>`}<b>${esc(d.name)}</b><span>${esc(d.email)}</span>${d.levelName ? `<em>Úroveň ${esc(String(d.level))}: ${esc(d.levelName)}</em>` : ''}</div>` +
+				`<div class="mysn-ph-card">${row('Meno', esc(d.name))}${row('E-mail', esc(d.email))}${row('Člen od', esc(d.registered))}</div>` +
+				`<details class="mysn-ph-card"><summary>Zmeniť meno</summary><form data-f="name"><input name="name" maxlength="40" value="${esc(d.name)}" autocomplete="nickname"><button class="mysn-btn mysn-primary">Uložiť meno</button></form></details>` +
+				`<details class="mysn-ph-card"><summary>Zmeniť heslo</summary><form data-f="pass"><input type="password" name="old" placeholder="Súčasné heslo" autocomplete="current-password"><input type="password" name="new" placeholder="Nové heslo (aspoň 8 znakov)" autocomplete="new-password"><input type="password" name="new2" placeholder="Nové heslo znova" autocomplete="new-password"><button class="mysn-btn mysn-primary">Zmeniť heslo</button><small>Účet len cez Google nemá heslo: nastav ho na webe.</small></form></details>` +
+				`<p class="mysn-ph-note"></p>` +
+				`<div class="mysn-ph-links">` +
+				(d.links.account ? `<a class="mysn-btn" href="${esc(d.links.account)}" target="_blank" rel="noopener">Môj účet na webe (súhlasy, údaje)</a>` : '') +
+				(d.links.shop ? `<a class="mysn-btn" href="${esc(d.links.shop)}" target="_blank" rel="noopener">Môj e-shop</a>` : '') +
+				`<a class="mysn-btn mysn-ph-out" href="${esc(d.links.logout)}">Odhlásiť sa</a></div>`;
+		} else if (tab === 'snooker') {
+			const lg = d.league;
+			body =
+				`<h4>Liga</h4><div class="mysn-ph-card">` +
+				(lg
+					? row('Prezývka', esc(lg.nick || d.name)) +
+						row('Sezóna', esc(lg.season)) +
+						(lg.league ? row('Liga a miesto', `${lg.league}. liga, ${lg.rank}. miesto`) + row('Body', String(lg.points)) + row('Výhry : prehry', `${lg.wins} : ${lg.losses}`) : row('Stav', 'zatiaľ bez zápasu')) +
+						(d.elo ? row('ELO', d.elo.games ? `${d.elo.elo} (${d.elo.games} z.)` : `${d.elo.elo} (začiatočná)`) : '')
+					: '<p class="mysn-ph-empty">V lige nie si. Registrácia je v kancelárii (menu Liga).</p>') +
+				`</div><h4>Partie a skóre</h4><div class="mysn-ph-card">` +
+				row('Partie cez internet', `${d.matches.played} (výhry ${d.matches.won})`) +
+				row('Z toho ligové', String(d.matches.league)) +
+				row('Hrať: framy', String(d.solo.frames)) +
+				row('Najlepšie skóre', d.solo.frames ? `${d.solo.best} b. za ${time(d.solo.time)}` : '—') +
+				row('Najvyšší brejk', String(d.solo.brk)) +
+				row('Vlastné tágá', `${d.cues} z 10`) +
+				`</div>`;
+		} else {
+			body =
+				`<div class="mysn-ph-links">` +
+				`<button type="button" class="mysn-btn mysn-primary" data-a="settings">Nastavenia hry</button>` +
+				`<button type="button" class="mysn-btn" data-a="helper">Pomocník (F1)</button>` +
+				`<button type="button" class="mysn-btn" data-a="roomMap">Mapa miestností (M)</button>` +
+				`</div><h4>Klávesy hráča</h4><div class="mysn-ph-card">` +
+				row('T', 'tento telefón') +
+				row('N', 'voda: silnejšia falša') +
+				row('G / H', 'grgnúť / prdnúť') +
+				row('Esc', 'menu') +
+				`</div>`;
+		}
+		const tabs = [
+			['profile', '👤', 'Profil'],
+			['snooker', '🎱', 'Snooker'],
+			['settings', '⚙️', 'Nastavenia'],
+		];
+		scr.innerHTML =
+			`<div class="mysn-phone-bar"><b>Môj účet</b><button type="button" class="mysn-btn" data-a="phoneClose">Zavrieť (Esc)</button></div>` +
+			`<div class="mysn-ph-body">${body}</div>` +
+			`<div class="mysn-ph-tabs">${tabs.map(([k, ic, t]) => `<button type="button" data-tab="${k}" class="${k === tab ? 'mysn-on' : ''}"><span>${ic}</span>${t}</button>`).join('')}</div>`;
+		scr.querySelectorAll('[data-tab]').forEach((b) =>
+			b.addEventListener('click', () => {
+				this._phoneTab = b.dataset.tab;
+				this.phoneRender();
+			}),
+		);
+		scr.querySelectorAll('[data-a]').forEach((b) =>
+			b.addEventListener('click', () => {
+				const a = b.dataset.a;
+				if (a !== 'phoneClose') {
+					this.opts.onAction('phoneClose');
+				}
+				this.opts.onAction(a);
+			}),
+		);
+		scr.querySelectorAll('form[data-f]').forEach((f) =>
+			f.addEventListener('submit', (e) => {
+				e.preventDefault();
+				const v = Object.fromEntries(new FormData(f));
+				if (f.dataset.f === 'name') {
+					this.opts.onAction('phoneName', v.name);
+				} else if (v.new !== v.new2) {
+					this.phoneNote('Nové heslá sa nezhodujú.', false);
+				} else {
+					this.opts.onAction('phonePass', { old: v.old, new: v.new });
+					f.reset();
+				}
+			}),
+		);
 	}
 
 	phoneOpen() {

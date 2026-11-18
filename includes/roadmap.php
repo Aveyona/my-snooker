@@ -162,6 +162,7 @@ function mysn_roadmap() {
 /** Denník zmien (najnovšie hore). */
 function mysn_changelog() {
 	return array(
+		array( '0.29.0', '18. 11. 2026', 'Telefón Môj účet (T, telefón pri bare) je aplikácia priamo v hre: záložka Profil (meno, e-mail, úroveň, člen od, zmena mena, zmena hesla, Môj účet na webe, e-shop, odhlásenie), Snooker (liga, body, ELO, partie, najlepšie skóre, brejk, tágá) a Nastavenia (nastavenia hry, pomocník, mapa, klávesy).' ),
 		array( '0.28.11', '18. 11. 2026', 'Nová klávesa T: telefón zo stolíka pri bare (Môj účet: profil, prihlásenie, súhlasy, nastavenia) na celú obrazovku odkiaľkoľvek, T alebo Esc ho zavrie. Na mobile v ponuke tlačidla s pohárom (📱 Telefón). Doplnené do nástenky F1 a bloku na štadióne.' ),
 		array( '0.28.10', '18. 11. 2026', 'Predmet otvorený vo voľnom pohľade (klik na obraz, nástenku…): Späť do hry, Esc, Enter aj ten istý kláves vrátia späť do voľného pohľadu na to isté miesto, nie ku stolu.' ),
 		array( '0.28.9', '18. 11. 2026', 'Guľa, ktorá vyletí zo stola, dopadne so zvukom podľa miestnosti (herňa koberec, štadión tvrdá podlaha; nové zvuky v administrácii). Oprava fyziky: guľa vrátená na stôl po vyletení (farba na spot, biela do ruky) už neostane visieť nad stolom.' ),

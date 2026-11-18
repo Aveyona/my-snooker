@@ -3796,6 +3796,42 @@ export function start(root, config = {}) {
 			}
 		},
 		phone: () => ui.openPhone(true),
+		/** Telefón Môj účet: údaje účtu (REST account), zmena mena a hesla. */
+		phoneLoad: async () => {
+			if (!online) {
+				ui.phoneData(null, user ? 'Účet sa nepodarilo načítať.' : 'Môj účet je len pre prihlásených.');
+				return;
+			}
+			try {
+				ui.phoneData(await online.net.call('account', null, 'GET'));
+			} catch (e) {
+				ui.phoneData(null, e.message || 'Účet sa nepodarilo načítať.');
+			}
+		},
+		phoneName: async (name) => {
+			try {
+				const r = await online.net.call('account/name', { name });
+				if (user && r && r.name) {
+					user.name = r.name;
+				}
+				await actions.phoneLoad();
+				ui.phoneNote('Meno je zmenené.', true);
+			} catch (e) {
+				ui.phoneNote(e.message || 'Meno sa nepodarilo zmeniť.', false);
+			}
+		},
+		phonePass: async (d) => {
+			try {
+				const r = await online.net.call('account/password', d);
+				if (r && r.nonce) {
+					online.net.nonce = r.nonce; // nové prihlásenie: ďalšie volania hry s novým kľúčom
+					config.nonce = r.nonce;
+				}
+				ui.phoneNote('Heslo je zmenené. Ostávaš prihlásený.', true);
+			} catch (e) {
+				ui.phoneNote(e.message || 'Heslo sa nepodarilo zmeniť.', false);
+			}
+		},
 		phoneClose: () => {
 			ui.openPhone(false);
 			if (view === 'bar' || (phoneFromKey && !view && !freeMouse)) {
