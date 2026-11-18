@@ -1104,6 +1104,10 @@ export class Online {
 			return;
 		}
 		this.info = m;
+		if (!!m.research !== !!this._research) {
+			this._research = !!m.research; // upozornenie: admin testuje pomocníka (AI)
+			this.hooks.status();
+		}
 		const opp = m.players[1 - m.me];
 		if (opp.online !== this.oppOnline) {
 			this.oppOnline = opp.online;
@@ -1136,6 +1140,11 @@ export class Online {
 			return;
 		}
 		if (m.status === 'annulled') {
+			if (m.result === 'cheat' || m.result === 'admin') {
+				// 0.34.0: zrušené pre podozrenie z podvádzania (alebo správcom)
+				this.stopMatch(m.result === 'cheat' ? 'Zápas je zrušený: kontrola férovej hry zistila údery, ktoré nehrá človek. Body sa nepočítajú.' : 'Zápas zrušil správca. Body sa nepočítajú.', 'Zápas je zrušený.');
+				return;
+			}
 			this.stopMatch('Ligový zápas je zrušený: obom hráčom vypadlo spojenie. Body sa nepočítajú.', 'Zápas je zrušený, obom hráčom vypadlo spojenie.');
 			return;
 		}
@@ -1210,6 +1219,9 @@ export class Online {
 
 	/** Text o stave spojenia a súpera pre lištu (prázdny, keď je všetko v poriadku). */
 	statusText() {
+		if (this.inMatch && this.info && this.info.research) {
+			return '⚠ Admin v tomto zápase testuje pomocníka (AI) na výskumné účely. Zápas sa nepočíta do ligy ani ELO.';
+		}
 		if (this.net.down) {
 			return 'Spojenie so serverom sa prerušilo, skúšam znova. Partia je uložená.';
 		}

@@ -237,6 +237,7 @@ function mysn_match_out( $m, $uid ) {
 		'scores'  => array( (int) $m['score1'], (int) $m['score2'] ),
 		'winner'  => (int) $m['winner'],
 		'result'  => $m['result'],
+		'research' => function_exists( 'mysn_ac_research' ) && mysn_ac_research( $m['id'] ) ? 1 : 0, // admin testuje pomocníka (AI): upozornenie pre súpera a divákov
 		'updated' => (int) $m['updated'],
 		'league'  => (int) ( $m['league'] ?? 0 ),
 		'tier'    => ! empty( $m['league'] ) ? mysn_match_tier( $m ) : 0, // číslo ligy (1 až 4) pre mantinel na štadióne
@@ -498,6 +499,10 @@ function mysn_rest_shot( $req ) {
 		return mysn_err( 'Nesprávne poradie úderu.', 409 );
 	}
 	$data        = json_decode( $shot, true );
+	// 0.34.0: úder, ktorý nevznikol rukou (program, AI): partia sa preruší a zruší, hráč sa suspenduje
+	if ( function_exists( 'mysn_ac_match_shot' ) && is_array( $data ) && mysn_ac_match_shot( $m, get_current_user_id(), $data ) ) {
+		return mysn_err( 'Partia bola zrušená: systém zistil, že údery nehrá človek.', 403 );
+	}
 	$data['seq'] = $seq;
 	$data['by']  = $me;
 	mysn_update_match( $m['id'], array( 'shot' => wp_json_encode( $data ) ) );
@@ -1091,6 +1096,13 @@ function mysn_rest_score( $req ) {
 		$bad = mysn_verify_sanity( $log, $claim );
 		if ( $bad ) {
 			return mysn_err( 'Skóre sa nedá uložiť: ' . $bad );
+		}
+	}
+	// 0.34.0: podvádzanie (úder nevznikol rukou) alebo suspendovaný hráč: skóre 0, nezapíše sa do rebríčka
+	if ( function_exists( 'mysn_ac_solo' ) ) {
+		$ac = mysn_ac_solo( $uid, $has ? $log : null, $claim );
+		if ( $ac ) {
+			return $ac;
 		}
 	}
 	$wpdb->insert(

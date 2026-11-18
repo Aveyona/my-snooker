@@ -6763,7 +6763,12 @@ const boot = () => {
 	const root = document.getElementById('mysn-app');
 	if (root && !root.dataset.started) {
 		root.dataset.started = '1';
-		window.MySnooker = start(root, window.MYSN_CONFIG || {});
+		const cfg = window.MYSN_CONFIG || {};
+		const app = start(root, cfg);
+		// 0.34.0: hra nie je verejne dostupná z konzoly (ochrana proti AI hráčom); len admin na ladenie
+		if (cfg.role === 'admin') {
+			window.MySnooker = app;
+		}
 	}
 };
 if (document.readyState === 'loading') {

@@ -162,6 +162,7 @@ function mysn_roadmap() {
 /** Denník zmien (najnovšie hore). */
 function mysn_changelog() {
 	return array(
+		array( '0.34.0', '19. 11. 2026', 'Ochrana proti AI hráčom (krok 1): hra už nie je verejne dostupná z konzoly (len admin); server zisťuje údery, ktoré nevznikli rukou (okrúhla sila úderu) – hra o skóre ukáže 0 a nezapíše sa, partia sa preruší a zruší, hráč dostane suspendáciu 7 dní alebo do rozhodnutia správcu (nemôže vyzývať ani hrať ligu); administrácia Podvádzanie: prípady, rozhodnutia, prehľad hier o skóre a partií; admin pri výskume nie je blokovaný, súper vidí upozornenie a zápas sa nepočíta do ligy ani ELO.' ),
 		array( '0.33.1', '19. 11. 2026', 'Liga sa hrá denne 15:00 – 19:00 UTC (obrazovka v herni aj papier v kancelárii, s miestnym časom).' ),
 		array( '0.33.0', '19. 11. 2026', 'Svetový snooker na obrazovke v herni: prebiehajúci turnaj, živé zápasy so stavom a najbližšie zápasy v miestnom čase zo snooker.org API (server sťahuje raz za 5 minút, zdroj uvedený); prístupová hodnota X-Requested-By sa zadáva v administrácii My Snooker → Svetový snooker, bez nej sa snímka nezobrazuje.' ),
 		array( '0.32.7', '19. 11. 2026', 'Liga sa hrá denne 17:00 – 21:00 UTC: oprava času na obrazovke v herni; v kancelárii na stole roztrhnutý papier s časom ligy v UTC aj v miestnom čase hráča (písané perom).' ),
