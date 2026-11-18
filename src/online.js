@@ -1020,6 +1020,23 @@ export class Online {
 		}
 	}
 
+	/**
+	 * Časomiera ligy podľa servera: začiatok ťahu sa prevezme zo servera (turnat), prepočítaný na hodiny prehliadača.
+	 * Len keď údaj patrí presne k ťahu na stole a čas beží (nie počas úderu); inak ostane miestny odhad.
+	 */
+	syncTurn(m) {
+		const g = this.game;
+		const gm = g.match;
+		if (!gm || !m || !m.league || !(m.turnat > 0) || !(m.nowms > 0) || m.tseq !== m.seq || m.seq !== gm.seq || !gm.turnAt || g.state === 'moving') {
+			return;
+		}
+		if (m.shot && m.shot.seq === gm.seq + 1) {
+			return; // úder už beží
+		}
+		const off = m.nowms - Date.now(); // o koľko idú hodiny servera napred
+		gm.turnAt = m.turnat * 1000 + 500 - off; // turnat je v celých sekundách: stred sekundy
+	}
+
 	applyInfo(m) {
 		const g = this.game;
 		if (!g.match || m.id !== this.matchId) {
@@ -1033,6 +1050,7 @@ export class Online {
 		}
 		g.match.players = m.players;
 		g.match.status = m.status;
+		this.syncTurn(m);
 		if (m.status === 'finished' && !(m.seq > g.match.seq)) {
 			const won = m.winner === m.players[m.me].id;
 			const ed = m.elo && m.elo[m.me] && m.edel ? m.edel[m.me] : 0;
@@ -1074,6 +1092,7 @@ export class Online {
 			}
 			this.aimTarget = null;
 			g.applyState(m.state, m.seq);
+			this.syncTurn(m);
 			this.wsend(this.matchWState());
 			if (m.status === 'finished') {
 				this.applyInfo(m);

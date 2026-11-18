@@ -239,6 +239,10 @@ function mysn_match_out( $m, $uid ) {
 		'league'  => (int) ( $m['league'] ?? 0 ),
 		'tier'    => ! empty( $m['league'] ) ? mysn_match_tier( $m ) : 0, // číslo ligy (1 až 4) pre mantinel na štadióne
 		'clock'   => ! empty( $m['league'] ) ? mysn_shot_clock( $m ) : 0, // čas na ťah (sekundy) podľa sezóny
+		// časomiera podľa servera: skutočný začiatok ťahu (s), ťah, ku ktorému patrí, a čas servera (ms) na prepočet hodín
+		'turnat'  => (int) ( $m['turnat'] ?? 0 ),
+		'tseq'    => (int) $m['seq'],
+		'nowms'   => (int) round( microtime( true ) * 1000 ),
 		'training' => 'training' === ( $m['kind'] ?? '' ),
 		'delta'   => max( 0, (int) ( $m['delta'] ?? 0 ) ),
 		'elo'     => array( (int) ( $m['elo1'] ?? 0 ), (int) ( $m['elo2'] ?? 0 ) ), // ELO po zápase (0 = nezapočítaný)
