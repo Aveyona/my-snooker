@@ -464,7 +464,7 @@ export function buildRoomShell(scene, quality, opts = {}) {
 		[-2.8, RZ, Math.PI],
 		[2.8, RZ, Math.PI],
 		[-RX, 0, Math.PI / 2],
-		[RX, -1.5, -Math.PI / 2],
+		// 0.32.4: svietidlo nad mixpultom (RX, -1,5) nahradila obrazovka s reklamou
 	];
 	const ambient = new THREE.AmbientLight(0xffe6c8, high ? 0.22 : 0.4);
 	scene.add(ambient);
@@ -745,8 +745,10 @@ export function buildRoomShell(scene, quality, opts = {}) {
 		return t === String(text || '') ? t : t.slice(0, -1) + '…';
 	};
 	/** Rebríček o najlepšie skóre na stene: poháre pre 1. až 3. miesto, tabuľka 4. až 10. */
+	let tvTop = []; // rebríček pre obrazovku nad mixpultom
 	const setTrophies = (top) => {
 		const rows = top || [];
+		tvTop = rows;
 		const medal = ['#e8b830', '#c9cdd3', '#b8733a'];
 		for (let r = 0; r < 3; r++) {
 			const { c, tex } = plaques[r];
@@ -905,11 +907,9 @@ export function buildRoomShell(scene, quality, opts = {}) {
 		g.strokeRect(14, 14, W - 28, Hh - 28);
 		g.fillStyle = '#f2d48a';
 		g.textAlign = 'center';
-		g.font = 'bold 62px Georgia, serif';
-		g.fillText('MY SNOOKER', W / 2, 92);
-		g.font = '34px Georgia, serif';
-		g.fillStyle = '#e8e2cf';
-		g.fillText((extra && extra.mode) || 'Tréning', W / 2, 140);
+		// 0.32.4: bez nápisu MY SNOOKER, herný režim je nadpis
+		g.font = 'bold 70px Georgia, serif';
+		g.fillText((extra && extra.mode) || 'Tréning', W / 2, 118);
 		const mt = extra && extra.match;
 		const rows = extra && extra.rows
 			? extra.rows
@@ -1335,6 +1335,143 @@ export function buildRoomShell(scene, quality, opts = {}) {
 		neon.castShadow = false;
 		neon.receiveShadow = false;
 		neon.renderOrder = 3;
+	}
+
+	// 0.32.4: obrazovka 65" na stene nad mixpultom (namiesto svietidla): striedajú sa snímky reklamy My Snooker,
+	// ligy, úspechov, Hedlajneru, e-shopu a rebríčka (živé údaje), každá 8 s, s plynulým prechodom
+	{
+		const TVW = 1.44;
+		const TVH = 0.81;
+		const TV = { x: RX - 0.035, y: FY + 1.68, z: -1.4 };
+		add(new THREE.BoxGeometry(0.04, TVH + 0.03, TVW + 0.03), new THREE.MeshStandardMaterial({ color: 0x0b0c0f, roughness: 0.35, metalness: 0.4 }), TV.x + 0.012, TV.y, TV.z);
+		const c = document.createElement('canvas');
+		c.width = 1280;
+		c.height = 720;
+		const tex = new THREE.CanvasTexture(c);
+		tex.colorSpace = THREE.SRGBColorSpace;
+		const scr = add(new THREE.PlaneGeometry(TVW - 0.02, TVH - 0.02), new THREE.MeshBasicMaterial({ map: tex, toneMapped: false }), TV.x - 0.009, TV.y, TV.z);
+		scr.rotation.y = -Math.PI / 2;
+		scr.castShadow = false;
+		const glow = new THREE.PointLight(0x6aa8ff, high ? 0.6 : 0, 2.6, 2);
+		glow.position.set(TV.x - 0.5, TV.y, TV.z);
+		scene.add(glow);
+		const BALLS = ['#c4161c', '#f2c418', '#0f7a3a', '#6b3a1e', '#1747b5', '#f08aa8', '#111'];
+		const ball = (g, x, y, r, col) => {
+			const gr = g.createRadialGradient(x - r * 0.35, y - r * 0.35, r * 0.1, x, y, r);
+			gr.addColorStop(0, '#ffffffcc');
+			gr.addColorStop(0.3, col);
+			gr.addColorStop(1, col);
+			g.fillStyle = gr;
+			g.beginPath();
+			g.arc(x, y, r, 0, Math.PI * 2);
+			g.fill();
+		};
+		const bg = (g, a, b) => {
+			const gr = g.createLinearGradient(0, 0, 1280, 720);
+			gr.addColorStop(0, a);
+			gr.addColorStop(1, b);
+			g.fillStyle = gr;
+			g.fillRect(0, 0, 1280, 720);
+		};
+		const txt = (g, t, x, y, size, col, w = 700, align = 'center') => {
+			g.fillStyle = col;
+			g.textAlign = align;
+			g.font = `${w} ${size}px "Segoe UI", Arial, sans-serif`;
+			g.fillText(t, x, y);
+		};
+		const SLIDES = [
+			(g) => {
+				bg(g, '#0b2a4d', '#05101f');
+				BALLS.forEach((col, i) => ball(g, 220 + i * 140, 520, 46, col));
+				txt(g, 'My Snooker', 640, 260, 150, '#ffd34d', 800);
+				txt(g, '3D snooker v prehliadači · PC aj mobil', 640, 345, 46, '#e8eefc', 500);
+				txt(g, 'snooker.hedlajner.sk', 640, 660, 44, '#7fb6ff', 600);
+			},
+			(g) => {
+				bg(g, '#0d3a1f', '#04140a');
+				txt(g, 'LIGA', 640, 220, 170, '#7CFC8A', 900);
+				txt(g, 'Celoročná liga proti skutočným hráčom', 640, 320, 50, '#fff', 600);
+				txt(g, 'Zápasy na štadióne s divákmi, rozhodcom a komentátorom Rudom', 640, 395, 36, '#cfe8d6', 500);
+				txt(g, 'Registrácia v kancelárii · menu Liga', 640, 560, 44, '#ffd34d', 700);
+			},
+			(g) => {
+				bg(g, '#2a1b05', '#0e0902');
+				for (const [i, col] of ['#c9874a', '#b8c2cc', '#e8b923', '#7fe3e0'].entries()) {
+					g.fillStyle = col;
+					g.beginPath();
+					g.arc(370 + i * 180, 470, 62, 0, Math.PI * 2);
+					g.fill();
+					g.fillStyle = '#1d2738';
+					g.beginPath();
+					g.arc(370 + i * 180, 470, 50, 0, Math.PI * 2);
+					g.fill();
+				}
+				txt(g, 'Zbieraj úspechy', 640, 200, 110, '#ffd34d', 800);
+				txt(g, 'Skúsenosti za každú guľu · swerve, massé, stovka, maximum…', 640, 290, 40, '#f4e6d0', 500);
+				txt(g, 'Telefón (T) → Úspechy', 640, 640, 40, '#e8eefc', 600);
+			},
+			(g) => {
+				bg(g, '#3a0a12', '#120206');
+				txt(g, 'HEDLAJNER', 640, 300, 150, '#fff', 900);
+				txt(g, 'Správy, videá a komunita', 640, 390, 52, '#ffb3be', 500);
+				txt(g, 'hedlajner.sk', 640, 600, 56, '#ffd34d', 700);
+			},
+			(g) => {
+				bg(g, '#1c1036', '#08050f');
+				txt(g, 'Hedlajner e-shop', 640, 290, 110, '#d7b8ff', 800);
+				txt(g, 'Tričká, doplnky a ďalšie', 640, 380, 52, '#fff', 500);
+				txt(g, 'eshop.hedlajner.sk', 640, 600, 56, '#ffd34d', 700);
+			},
+			(g) => {
+				bg(g, '#0b1f33', '#040a12');
+				txt(g, 'Najlepšie skóre', 640, 150, 90, '#ffd34d', 800);
+				const rows = (tvTop || []).slice(0, 5);
+				if (!rows.length) {
+					txt(g, 'Rebríček je zatiaľ prázdny – zahraj si o skóre!', 640, 380, 46, '#e8eefc', 500);
+				}
+				rows.forEach((p, i) => {
+					const y = 260 + i * 92;
+					txt(g, `${i + 1}.`, 260, y, 58, ['#e8b830', '#c9cdd3', '#b8733a', '#e8eefc', '#e8eefc'][i], 800, 'right');
+					txt(g, String((p.user && p.user.name) || 'Hráč').slice(0, 22), 300, y, 58, '#fff', 600, 'left');
+					txt(g, `${p.points} b.`, 1040, y, 58, '#7fb6ff', 700, 'right');
+				});
+				txt(g, 'F8 · rebríček v herni', 640, 690, 34, '#9fb4cc', 500);
+			},
+		];
+		const off = document.createElement('canvas');
+		off.width = 1280;
+		off.height = 720;
+		let cur = 0;
+		const paint = (i) => {
+			const g = off.getContext('2d');
+			g.clearRect(0, 0, 1280, 720);
+			SLIDES[i](g);
+		};
+		const show = (alpha) => {
+			const g = c.getContext('2d');
+			g.globalAlpha = alpha;
+			g.drawImage(off, 0, 0);
+			g.globalAlpha = 1;
+			tex.needsUpdate = true;
+		};
+		paint(0);
+		show(1);
+		setInterval(() => {
+			if (!scr.visible || (typeof document !== 'undefined' && document.hidden)) {
+				return;
+			}
+			cur = (cur + 1) % SLIDES.length;
+			paint(cur);
+			let k = 0;
+			const step = () => {
+				k++;
+				show(Math.min(1, k / 8 + 0.05)); // prelínanie cez ~0,5 s
+				if (k < 12) {
+					setTimeout(step, 40);
+				}
+			};
+			step();
+		}, 8000);
 	}
 
 	// Nástenné hodiny na stene s dverami (medzi svietidlom a dverami): merajú čas hrania, začínajú na 11:30
