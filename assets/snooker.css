@@ -817,3 +817,16 @@ body.mysn-page { font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans
 .mysn-ph-tabs button { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 8px 0 6px; border: 0; background: none; font: inherit; font-size: 11px; color: #5c6270; cursor: pointer; }
 .mysn-ph-tabs button span { font-size: 20px; line-height: 1; }
 .mysn-ph-tabs button.mysn-on { color: #1d2b45; font-weight: 700; }
+
+.mysn-ph-cue { display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 6px 0 12px; }
+.mysn-ph-cue svg { width: 100%; height: 26px; }
+.mysn-ph-cue b { font-size: 17px; }
+.mysn-ph-bar { height: 8px; border-radius: 4px; background: #e5e7eb; margin: 2px 0 8px; overflow: hidden; }
+.mysn-ph-bar i { display: block; height: 100%; border-radius: 4px; }
+.mysn-ph-hint { margin: 0 0 8px; font-size: 12px; color: #5c6270; }
+.mysn-ph-game { padding: 8px 12px; }
+.mysn-ph-g1, .mysn-ph-g2 { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+.mysn-ph-g1 span { font-size: 12px; font-weight: 700; }
+.mysn-ph-g2 { margin-top: 4px; font-size: 12px; color: #5c6270; }
+.mysn-ph-g2 b { color: #1d2327; font-size: 15px; }
+.mysn-ph-tabs button { font-size: 10px; }

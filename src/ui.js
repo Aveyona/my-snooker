@@ -2551,22 +2551,52 @@ export class UI {
 				row('Najvyšší brejk', String(d.solo.brk)) +
 				row('Vlastné tágá', `${d.cues} z 10`) +
 				`</div>`;
+		} else if (tab === 'cue') {
+			// moje tágo a príslušenstvo
+			const c = d.cue || {};
+			const bar = (v, col) => `<div class="mysn-ph-bar"><i style="width:${Math.round(Math.max(0, Math.min(1, v)) * 100)}%;background:${col}"></i></div>`;
+			const wear = c.tipWear || 0;
+			const kinds = { soft: 'mäkká', medium: 'stredná', hard: 'tvrdá' };
+			body =
+				`<div class="mysn-ph-cue"><svg viewBox="0 0 300 26" aria-hidden="true"><rect x="2" y="9" width="90" height="10" rx="4" fill="#2b1a0e"/><path d="M90 9 L284 11 L284 17 L90 19 Z" fill="#d7b27a"/><rect x="284" y="11" width="6" height="6" fill="#f3efe4"/><rect x="290" y="11" width="6" height="6" fill="#2f6fd6"/></svg><b>${esc(c.name || 'Tágo')}</b></div>` +
+				`<div class="mysn-ph-card">` +
+				row('Sila', `${Math.round((c.power || 1) * 100)} %`) +
+				row('Falše', `${Math.round((c.grip || 1) * 100)} %`) +
+				row('Dĺžka', `${Math.round((c.len || 1.45) * 100)} cm${c.ext ? ` + predĺženie ${Math.round(c.ext * 100)} cm` : ''}`) +
+				`</div><h4>Špica</h4><div class="mysn-ph-card">` +
+				row('Druh', `${kinds[c.tipKind] || 'stredná'} (${c.tipNo || 1}. špica)`) +
+				row('Opotrebovanie', `${Math.round(wear * 100)} %`) +
+				bar(wear, wear >= 0.9 ? '#e5484d' : wear >= 0.7 ? '#f59e0b' : '#2a9d5a') +
+				`<p class="mysn-ph-hint">${wear >= 0.8 ? 'Špica je nepresná, vymeň ju na stojane.' : wear >= 0.7 ? 'Špica horšie drží falše.' : 'Špica je v poriadku.'}</p>` +
+				`</div><h4>Krieda</h4><div class="mysn-ph-card">` +
+				row('Nakriedované', c.chalk > 0 ? `ešte ${c.chalk} ${c.chalk === 1 ? 'úder' : c.chalk < 5 ? 'údery' : 'úderov'}` : 'nie (falše slabšie)') +
+				`</div><div class="mysn-ph-links"><button type="button" class="mysn-btn mysn-primary" data-a="rack">Vymeniť tágo (F2)</button></div>`;
+		} else if (tab === 'games') {
+			// posledné zápasy (z Moje zápasy)
+			const lab = { win: ['Výhra', 1], loss: ['Prehra', 0], resign: ['Prehra, vzdal si', 0], resigned: ['Výhra, súper vzdal', 1], disconnect: ['Prehra, spojenie', 0], 'win-disconnect': ['Výhra, spojenie súpera', 1], disq: ['Prehra, diskvalifikácia', 0], 'win-disq': ['Výhra, súper diskv.', 1] };
+			const list = d.hist || [];
+			body = list.length
+				? list
+						.map((m) => {
+							const [t, ok] = lab[m.result] || [m.result, 0];
+							const dt = m.date ? new Date(m.date * 1000).toLocaleDateString('sk-SK', { day: 'numeric', month: 'numeric', year: 'numeric' }) : '';
+							return `<div class="mysn-ph-card mysn-ph-game"><div class="mysn-ph-g1"><b>${esc((m.opp && m.opp.name) || 'Súper')}</b><span class="${ok ? 'mysn-ph-ok' : 'mysn-ph-err'}">${esc(t)}</span></div><div class="mysn-ph-g2"><span>${esc(dt)}</span><b>${m.my} : ${m.their}</b><span>${m.delta ? (m.delta > 0 ? '+' : '') + m.delta + ' b.' : ''}${m.edel ? ` · ELO ${m.edel > 0 ? '+' : ''}${m.edel}` : ''}</span></div></div>`;
+						})
+						.join('') + '<p class="mysn-ph-hint">Všetky zápasy a záznamy úderov: kancelária, F7 Moje zápasy.</p>'
+				: '<p class="mysn-ph-empty">Zatiaľ žiadny ligový zápas.</p>';
 		} else {
 			body =
 				`<div class="mysn-ph-links">` +
 				`<button type="button" class="mysn-btn mysn-primary" data-a="settings">Nastavenia hry</button>` +
 				`<button type="button" class="mysn-btn" data-a="helper">Pomocník (F1)</button>` +
 				`<button type="button" class="mysn-btn" data-a="roomMap">Mapa miestností (M)</button>` +
-				`</div><h4>Klávesy hráča</h4><div class="mysn-ph-card">` +
-				row('T', 'tento telefón') +
-				row('N', 'voda: silnejšia falša') +
-				row('G / H', 'grgnúť / prdnúť') +
-				row('Esc', 'menu') +
 				`</div>`;
 		}
 		const tabs = [
 			['profile', '👤', 'Profil'],
 			['snooker', '🎱', 'Snooker'],
+			['cue', '🥢', 'Tágo'],
+			['games', '🏆', 'Zápasy'],
 			['settings', '⚙️', 'Nastavenia'],
 		];
 		scr.innerHTML =
@@ -2582,10 +2612,11 @@ export class UI {
 		scr.querySelectorAll('[data-a]').forEach((b) =>
 			b.addEventListener('click', () => {
 				const a = b.dataset.a;
-				if (a !== 'phoneClose') {
+				if (a === 'phoneClose') {
 					this.opts.onAction('phoneClose');
+				} else {
+					this.opts.onAction('phoneAct', a);
 				}
-				this.opts.onAction(a);
 			}),
 		);
 		scr.querySelectorAll('form[data-f]').forEach((f) =>

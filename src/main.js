@@ -3803,9 +3803,31 @@ export function start(root, config = {}) {
 				return;
 			}
 			try {
-				ui.phoneData(await online.net.call('account', null, 'GET'));
+				const [d, hi] = await Promise.all([online.net.call('account', null, 'GET'), online.net.call('history', null, 'GET').catch(() => null)]);
+				// 0.29.2: moje tágo a príslušenstvo (z hry) a posledné zápasy (Moje zápasy)
+				const tip = tipOf(cueSpec);
+				d.cue = { name: cueSpec.name, power: cueSpec.power, grip: cueSpec.grip, len: cueSpec.len, tipKind: tip.kind, tipWear: tip.wear || 0, tipNo: tip.no || 1, chalk, ext: settings.cueExt || 0 };
+				d.hist = hi && Array.isArray(hi.list) ? hi.list.slice(0, 5) : [];
+				ui.phoneData(d);
 			} catch (e) {
 				ui.phoneData(null, e.message || 'Účet sa nepodarilo načítať.');
+			}
+		},
+		/** Tlačidlo v telefóne: zavrie telefón a otvorí nastavenia, pomocníka, mapu alebo stojan. */
+		phoneAct: (a) => {
+			phoneFromKey = false;
+			ui.openPhone(false);
+			if (a === 'settings') {
+				controls.uncapture();
+				ui.showMenu(true);
+				ui.panel.classList.add('mysn-hidden');
+				actions.settings(); // nastavenia hry sa otvoria nad menu
+			} else if (a === 'helper') {
+				actions.helper();
+			} else if (a === 'roomMap') {
+				actions.roomMap();
+			} else if (a === 'rack') {
+				controls.hooks.key('f2');
 			}
 		},
 		phoneName: async (name) => {
