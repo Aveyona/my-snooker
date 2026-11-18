@@ -921,6 +921,14 @@ export function start(root, config = {}) {
 			controls.capture();
 		}
 	};
+	/** Odchod z pohľadu na predmet (Esc, Enter, Späť do hry): otvorený z voľného pohľadu = späť doň, inak za tágo. */
+	const leaveView = () => {
+		if (viewFromFree && view && view !== 'free') {
+			backToFree();
+		} else {
+			exitView();
+		}
+	};
 	/** Odchod z voľnej kamery: zapamätá si polohu a smer pohľadu. */
 	const freeLeave = () => {
 		freeMem = { venue, pos: rig.viewPos.clone(), yaw: chairLook.yaw, pitch: chairLook.pitch };
@@ -2047,7 +2055,7 @@ export function start(root, config = {}) {
 	const enterView = (name) => {
 		rig.fitOff = false; // mobil na výšku: pevný pohľad sa rozšíri (stojan má vlastný bližší záber)
 		if (view === name) {
-			exitView();
+			leaveView(); // ten istý kláves znova: späť (do voľného pohľadu, ak sa predmet otvoril z neho)
 			return;
 		}
 		if (view === 'free') {
@@ -3818,7 +3826,7 @@ export function start(root, config = {}) {
 			placeCam = false;
 			rig.setMode(topView ? 'top' : 'cue');
 		},
-		back: () => exitView(),
+		back: () => leaveView(), // Späť do hry: z predmetu otvoreného vo voľnom pohľade späť do voľného pohľadu
 		paintSun: () => {
 			hotSet(null);
 			freeMouse = false;
@@ -4543,7 +4551,7 @@ export function start(root, config = {}) {
 					return true;
 				}
 				if ((lk === 'escape' || lk === 'enter') && view !== 'chalk') {
-					exitView();
+					leaveView(); // predmet otvorený z voľného pohľadu: späť do voľného pohľadu
 					return true;
 				}
 				if (view === 'board' && (lk === 'arrowleft' || lk === 'arrowright')) {
