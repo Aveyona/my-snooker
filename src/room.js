@@ -1344,6 +1344,7 @@ export function buildRoomShell(scene, quality, opts = {}) {
 	}
 
 	const tvCtl = {}; // obrazovka nad mixpultom: tlačidlo, pohľad, zapnutie
+	let tvWorld = null; // svetový snooker zo snooker.org (0.33.0)
 	// 0.32.4: obrazovka 65" na stene nad mixpultom (namiesto svietidla): striedajú sa snímky reklamy My Snooker,
 	// ligy, úspechov, Hedlajneru, e-shopu a rebríčka (živé údaje), každá 8 s, s plynulým prechodom
 	{
@@ -1448,6 +1449,30 @@ export function buildRoomShell(scene, quality, opts = {}) {
 				txt(g, 'hedlajner.sk', 640, 600, 56, '#ffd34d', 700);
 			},
 			(g) => {
+				// svetový snooker teraz (snooker.org): turnaj, živé zápasy, najbližšie zápasy v miestnom čase
+				const w = tvWorld;
+				bg(g, '#101826', '#04070c');
+				txt(g, 'Svetový snooker', 640, 110, 76, '#ffd34d', 800);
+				if (w.event) {
+					txt(g, w.event.name + (w.event.city ? ` · ${w.event.city}` : ''), 640, 165, 38, '#e8eefc', 600);
+				}
+				const rows = w.live.length ? w.live.slice(0, 4) : w.next.slice(0, 4);
+				txt(g, w.live.length ? '● NAŽIVO' : 'Najbližšie zápasy', 640, 245, 40, w.live.length ? '#ff5a5a' : '#7fb6ff', 800);
+				rows.forEach((m, i) => {
+					const y = 330 + i * 86;
+					const cut = (t) => (t.length > 20 ? t.slice(0, 19) + '…' : t);
+					txt(g, cut(m.p1), 560, y, 44, '#fff', 600, 'right');
+					txt(g, cut(m.p2), 720, y, 44, '#fff', 600, 'left');
+					if (w.live.length) {
+						txt(g, `${m.s1} : ${m.s2}`, 640, y, 46, '#ffd34d', 800);
+					} else {
+						const d = m.t ? new Date(m.t * 1000) : null;
+						txt(g, d ? d.toLocaleTimeString('sk-SK', { hour: '2-digit', minute: '2-digit' }) : '–', 640, y, 40, '#ffd34d', 700);
+					}
+				});
+				txt(g, 'Zdroj: snooker.org', 1240, 700, 26, '#8fa3bd', 500, 'right');
+			},
+			(g) => {
 				// chat Hedlajner
 				bg(g, '#0b2f3a', '#03121a');
 				g.fillStyle = '#2fb4ff';
@@ -1470,6 +1495,7 @@ export function buildRoomShell(scene, quality, opts = {}) {
 				txt(g, 'chat.hedlajner.sk', 640, 660, 48, '#ffd34d', 700);
 			},
 		];
+		const WORLD = SLIDES.length - 3; // snímka Svetový snooker (pred chatom a Hedlajnerom)
 		const off = document.createElement('canvas');
 		off.width = 1280;
 		off.height = 720;
@@ -1493,6 +1519,9 @@ export function buildRoomShell(scene, quality, opts = {}) {
 				return;
 			}
 			cur = (cur + 1) % SLIDES.length;
+			if (SLIDES[cur] === SLIDES[WORLD] && !(tvWorld && tvWorld.on && (tvWorld.live.length || tvWorld.next.length))) {
+				cur = (cur + 1) % SLIDES.length; // svetový snooker len keď sú údaje
+			}
 			paint(cur);
 			let k = 0;
 			const step = () => {
@@ -1689,6 +1718,10 @@ export function buildRoomShell(scene, quality, opts = {}) {
 		tvView: tvCtl.view,
 		setTv(on) {
 			tvCtl.set(on);
+		},
+		/** Svetový snooker zo servera (snooker.org): { on, event, live, next } alebo null. */
+		setWorld(d) {
+			tvWorld = d && d.on ? { event: d.event || null, live: d.live || [], next: d.next || [], on: true } : null;
 		},
 		// 0.32.1: kriedová tabuľa Úspechy pri bare (Ctrl a klik)
 		achBoard: { pos: new THREE.Vector3(-RX + 1.6, ACHB.y, ACHB.z), look: new THREE.Vector3(-RX, ACHB.y, ACHB.z) },

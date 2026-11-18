@@ -119,6 +119,18 @@ export function start(root, config = {}) {
 	const applyRackLed = () => room.setRackLed(settings.rackLed === 'off' ? null : RACK_LED_HEX[settings.rackLed] || RACK_LED_HEX.warm);
 	applyRackLed();
 	room.setTv(settings.tvOn !== false); // obrazovka s reklamou nad mixpultom (0.32.6)
+	// svetový snooker na obrazovke (snooker.org cez server, 0.33.0): každých 5 minút
+	const worldLoad = () => {
+		if (!config.restUrl || document.hidden) {
+			return;
+		}
+		fetch(config.restUrl + 'world', { credentials: 'same-origin' })
+			.then((r) => (r.ok ? r.json() : null))
+			.then((d) => room.setWorld(d))
+			.catch(() => null);
+	};
+	setTimeout(worldLoad, 4000);
+	setInterval(worldLoad, 5 * 60 * 1000);
 	room.setWallLamps(settings.wallLamps !== false);
 	const shellObjs = scene.children.filter((o) => !preShell.has(o)); // herňa (steny, nábytok, svetlá)
 	const table = buildTable(renderer);
