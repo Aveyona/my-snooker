@@ -162,6 +162,7 @@ function mysn_roadmap() {
 /** Denník zmien (najnovšie hore). */
 function mysn_changelog() {
 	return array(
+		array( '0.30.4', '18. 11. 2026', 'Diagnostika priameho spojenia: Nastavenia → Otestovať spojenie (miestna sieť, verejná adresa, server TURN, spojenie cez TURN s odozvou), záznam výpadku s adresami oboch strán, krokom nadväzovania a chybami STUN/TURN, rozbor Komu vypadlo; prihlásenie na TURN platí 7 dní; server TURN zapisuje prihlásenia hráčov.' ),
 		array( '0.30.3', '18. 11. 2026', 'Diagnostika spojení: nový stĺpec Komu vypadlo – či vypadol internet nahlasujúcemu hráčovi, či server nepočul súpera, hra v pozadí, alebo padlo len priame spojenie medzi hráčmi; čas poslednej správy od súpera.' ),
 		array( '0.30.2', '18. 11. 2026', 'Pri ikone tága vedľa Miesta úderu sa ukazuje len uhol tága (stav špice je v riadku pod guľou).' ),
 		array( '0.30.1', '18. 11. 2026', 'Stav spojenia: keď vypadne priame spojenie so súperom a server ho stále vidí, hra napíše, že partia pokračuje na záložnom spojení cez server a dá sa dohrať (len bez vzájomného mierenia); presnejší text, keď súper stratí spojenie so serverom.' ),

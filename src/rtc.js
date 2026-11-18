@@ -46,6 +46,106 @@ const gathered = (pc, fresh = false) =>
 		});
 	});
 
+/** Druh kandidáta zo záznamu (host = miestna sieť, srflx/prflx = verejná adresa, relay = TURN). */
+const candType = (c) => {
+	const m = / typ (\w+)/.exec(typeof c === 'string' ? c : (c && c.candidate) || '');
+	return m ? m[1] : '';
+};
+/** Počty kandidátov podľa druhu v SDP alebo zozname. */
+const countCands = (into, list) => {
+	for (const c of list) {
+		const t = candType(c);
+		if (t) {
+			into[t] = (into[t] || 0) + 1;
+		}
+	}
+};
+const sdpCands = (sdp) => (sdp || '').split(/\r?\n/).filter((l) => l.startsWith('a=candidate'));
+const fmtCands = (c) => `miestna ${c.host || 0}, verejná ${(c.srflx || 0) + (c.prflx || 0)}, TURN ${c.relay || 0}`;
+
+/**
+ * Test spojenia (0.30.3): zozbiera vlastných kandidátov (miestna sieť, verejná adresa cez STUN, TURN) a skúsi
+ * spojenie dvoch spojení v tomto prehliadači len cez TURN (relay). Vráti { lc, errs, relayOk, rtt, ms, text }.
+ */
+export async function rtcSelfTest() {
+	const t0 = Date.now();
+	const out = { lc: {}, errs: [], relayOk: false, rtt: 0, ms: 0 };
+	if (typeof RTCPeerConnection !== 'function') {
+		out.text = 'Prehliadač nepodporuje WebRTC.';
+		return out;
+	}
+	const errTxt = (e) => `${(e.url || '').replace(/\?.*/, '')} ${e.errorCode || ''} ${e.errorText || ''}`.trim();
+	// 1. zber kandidátov (všetky servery)
+	const pc = new RTCPeerConnection({ iceServers: ICE });
+	pc.addEventListener('icecandidateerror', (e) => out.errs.push(errTxt(e)));
+	pc.createDataChannel('t');
+	await pc.setLocalDescription(await pc.createOffer());
+	await new Promise((res) => {
+		const t = setTimeout(res, 7000);
+		pc.addEventListener('icecandidate', (e) => {
+			if (!e.candidate) {
+				clearTimeout(t);
+				res();
+			} else {
+				countCands(out.lc, [e.candidate.candidate]);
+			}
+		});
+	});
+	pc.close();
+	// 2. spojenie len cez TURN (dve spojenia v tomto prehliadači, adresy si vymenia priamo)
+	const turn = ICE.filter((x) => [].concat(x.urls).some((u) => /^turns?:/.test(u)));
+	if (turn.length) {
+		const a = new RTCPeerConnection({ iceServers: turn, iceTransportPolicy: 'relay' });
+		const b = new RTCPeerConnection({ iceServers: turn, iceTransportPolicy: 'relay' });
+		a.addEventListener('icecandidateerror', (e) => out.errs.push('relay ' + errTxt(e)));
+		a.addEventListener('icecandidate', (e) => e.candidate && b.addIceCandidate(e.candidate).catch(() => null));
+		b.addEventListener('icecandidate', (e) => e.candidate && a.addIceCandidate(e.candidate).catch(() => null));
+		try {
+			const dc = a.createDataChannel('t');
+			const opened = new Promise((res) => {
+				const t = setTimeout(() => res(false), 9000);
+				dc.addEventListener('open', () => {
+					clearTimeout(t);
+					res(true);
+				});
+			});
+			b.addEventListener('datachannel', (e) => e.channel.addEventListener('message', (m) => e.channel.send(m.data)));
+			await a.setLocalDescription(await a.createOffer());
+			await b.setRemoteDescription(a.localDescription);
+			await b.setLocalDescription(await b.createAnswer());
+			await a.setRemoteDescription(b.localDescription);
+			out.relayOk = await opened;
+			if (out.relayOk) {
+				const ts = performance.now();
+				out.rtt = await new Promise((res) => {
+					const t = setTimeout(() => res(-1), 3000);
+					dc.addEventListener('message', () => {
+						clearTimeout(t);
+						res(Math.round(performance.now() - ts));
+					});
+					dc.send('ping');
+				});
+			}
+		} catch (e) {
+			out.errs.push('relay ' + e.message);
+		}
+		a.close();
+		b.close();
+	} else {
+		out.errs.push('TURN nie je nastavený');
+	}
+	out.ms = Date.now() - t0;
+	const pub = (out.lc.srflx || 0) + (out.lc.prflx || 0);
+	out.text = [
+		`Miestna sieť: ${out.lc.host ? '✓' : '✗'}`,
+		`Verejná adresa (STUN): ${pub ? '✓' : '✗'}`,
+		`TURN adresa: ${out.lc.relay ? '✓' : '✗'}`,
+		`Spojenie cez TURN: ${out.relayOk ? `✓${out.rtt > 0 ? ` (odozva ${out.rtt} ms)` : ''}` : '✗'}`,
+	].join(' · ');
+	out.cand = fmtCands(out.lc);
+	return out;
+}
+
 export class Rtc {
 	/**
 	 * hooks: { accept(from, tag) smie sa so mnou spojiť, open(peer), message(peer, msg), close(peer) }
@@ -70,6 +170,19 @@ export class Rtc {
 				}
 			});
 		}
+	}
+
+	/** Diagnostika spojenia pre záznam: kandidáti oboch strán, chyby STUN/TURN, krok nadväzovania. */
+	diagInfo(p) {
+		return {
+			cand: `ja: ${fmtCands(p.lc || {})} | súper: ${fmtCands(p.rc || {})}`,
+			lr: (p.lc && p.lc.relay) || 0,
+			rr: (p.rc && p.rc.relay) || 0,
+			rn: Object.values(p.rc || {}).reduce((a, b) => a + b, 0),
+			err: (p.errs || []).join('; '),
+			stage: p.state === 'open' ? 'otvorené' : p.stage || '',
+			secs: Math.round((Date.now() - (p.t0 || Date.now())) / 1000),
+		};
 	}
 
 	note(...a) {
@@ -125,7 +238,14 @@ export class Rtc {
 			this.drop(old, false);
 		}
 		const pc = new RTCPeerConnection({ iceServers: ICE });
-		const p = { uid, tag, offerer, cid, pc, dc: null, state: 'connecting', failed: false, t0: Date.now(), sent: false, late: [], remote: [], lastRx: 0, hbSeen: false, restarting: 0, round: 0 };
+		const p = { uid, tag, offerer, cid, pc, dc: null, state: 'connecting', failed: false, t0: Date.now(), sent: false, late: [], remote: [], lastRx: 0, hbSeen: false, restarting: 0, round: 0, lc: {}, rc: {}, errs: [], stage: 'začiatok' };
+		// diagnostika (0.30.3): druhy vlastných a súperových kandidátov, chyby STUN/TURN, kam sa nadväzovanie dostalo
+		pc.addEventListener('icecandidate', (e) => e.candidate && countCands(p.lc, [e.candidate.candidate]));
+		pc.addEventListener('icecandidateerror', (e) => {
+			if (p.errs.length < 6) {
+				p.errs.push(`${(e.url || '').replace(/\?.*/, '')} ${e.errorCode || ''} ${e.errorText || ''}`.trim());
+			}
+		});
 		// kandidáti, ktorí prišli po odoslaní ponuky alebo odpovede, sa dopošlú (naraz za 300 ms)
 		pc.addEventListener('icecandidate', (e) => {
 			if (!e.candidate || !p.sent || (p.state !== 'connecting' && !p.restarting)) {
@@ -144,7 +264,12 @@ export class Rtc {
 			}
 		});
 		this.peers.set(this.key(uid, tag), p);
-		pc.addEventListener('iceconnectionstatechange', () => this.note('ice', tag, uid, pc.iceConnectionState));
+		pc.addEventListener('iceconnectionstatechange', () => {
+			this.note('ice', tag, uid, pc.iceConnectionState);
+			if (p.state === 'connecting') {
+				p.stage = 'ICE ' + pc.iceConnectionState;
+			}
+		});
 		pc.addEventListener('connectionstatechange', () => {
 			const s = pc.connectionState;
 			this.note('pc', tag, uid, s);
@@ -237,6 +362,7 @@ export class Rtc {
 			p.sent = true;
 			this.note('offer', tag, uid, (sdp.match(/a=candidate/g) || []).length + ' cand');
 			this.arm(p, OPEN_MS + 6000); // druhá strana číta signály aj len pri pingu (každých 5 s)
+			p.stage = 'ponuka odoslaná';
 			await this.signal(uid, tag, { t: 'offer', cid: p.cid, sdp });
 			if (p.state === 'connecting') {
 				this.arm(p, OPEN_MS + 6000);
@@ -273,6 +399,8 @@ export class Rtc {
 					continue;
 				}
 				const np = this.newPeer(s.from, s.tag, false, d.cid);
+				countCands(np.rc, sdpCands(d.sdp));
+				np.stage = 'ponuka prijatá';
 				np.pc.addEventListener('datachannel', (e) => this.wire(np, e.channel));
 				try {
 					await np.pc.setRemoteDescription({ type: 'offer', sdp: d.sdp });
@@ -283,6 +411,7 @@ export class Rtc {
 						const sdp = np.pc.localDescription.sdp;
 						np.sent = true;
 						this.arm(np, OPEN_MS);
+						np.stage = 'odpoveď odoslaná';
 						await this.signal(s.from, s.tag, { t: 'answer', cid: d.cid, sdp });
 						if (np.state === 'connecting') {
 							this.arm(np, OPEN_MS);
@@ -297,6 +426,8 @@ export class Rtc {
 					this.note('answer ignored', p ? p.cid + '/' + d.cid + ' ' + p.pc.signalingState : 'no peer');
 				} else {
 					try {
+						countCands(p.rc, sdpCands(d.sdp));
+						p.stage = 'odpoveď prijatá';
 						await p.pc.setRemoteDescription({ type: 'answer', sdp: d.sdp });
 						this.note('answer set', s.tag, s.from);
 						this.arm(p, OPEN_MS); // odpoveď prišla, na otvorenie spojenia je opäť celý čas
@@ -311,6 +442,7 @@ export class Rtc {
 						this.arm(p, OPEN_MS); // druhá strana ešte dopĺňa kandidátov
 					}
 					p.remote.push(...d.c);
+					countCands(p.rc, d.c);
 					if (p.pc.remoteDescription) {
 						await this.addRemote(p);
 					}

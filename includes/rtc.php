@@ -66,7 +66,7 @@ function mysn_ice_servers( $uid = 0 ) {
 		include_once WP_CONTENT_DIR . '/my-chat-live.php';
 	}
 	if ( defined( 'MY_TURN_SECRET' ) && defined( 'MY_TURN_HOST' ) && MY_TURN_SECRET ) {
-		$user  = ( time() + DAY_IN_SECONDS ) . ':' . (int) $uid;
+		$user  = ( time() + 7 * DAY_IN_SECONDS ) . ':' . (int) $uid; // 0.30.3: 7 dní (hra býva otvorená aj cez noc)
 		$ice[] = array(
 			'urls'       => array( 'stun:' . MY_TURN_HOST . ':3478', 'turn:' . MY_TURN_HOST . ':3478?transport=udp', 'turn:' . MY_TURN_HOST . ':3478?transport=tcp' ),
 			'username'   => $user,
@@ -173,7 +173,7 @@ function mysn_rest_rtc_diag( $req ) {
 		'user'   => $uid,
 		'peer'   => (int) $req->get_param( 'peer' ),
 		'match'  => (int) $req->get_param( 'match' ),
-		'tag'    => 'match' === $req->get_param( 'tag' ) ? 'match' : 'watch',
+		'tag'    => in_array( $req->get_param( 'tag' ), array( 'match', 'test' ), true ) ? $req->get_param( 'tag' ) : 'watch',
 		'why'    => $clip( 'why', 120 ),
 		'path'   => $clip( 'path', 40 ),
 		'net'    => $clip( 'net', 60 ),
@@ -186,6 +186,13 @@ function mysn_rest_rtc_diag( $req ) {
 	$last['off']   = (int) (bool) $req->get_param( 'off' ); // prehliadač hlási, že nie je na internete
 	$last['down']  = (int) (bool) $req->get_param( 'down' ); // hre nejde spojenie so serverom
 	$last['rx']    = max( -1, min( 9999, (int) $req->get_param( 'rx' ) ) ); // pred koľkými s prišla od súpera posledná priama správa
+	$last['cand']  = $clip( 'cand', 160 ); // kandidáti oboch strán (miestna, verejná, TURN)
+	$last['err']   = $clip( 'err', 300 ); // chyby STUN/TURN z prehliadača
+	$last['stage'] = $clip( 'stage', 60 ); // kam sa nadväzovanie dostalo
+	$last['secs']  = max( 0, min( 99999, (int) $req->get_param( 'secs' ) ) );
+	$last['lr']    = (int) $req->get_param( 'lr' ); // moji kandidáti TURN
+	$last['rr']    = (int) $req->get_param( 'rr' ); // súperovi kandidáti TURN (-1 = test)
+	$last['rn']    = (int) $req->get_param( 'rn' ); // súperovi kandidáti spolu
 	$last['seenme'] = -1;
 	$last['seenop'] = -1;
 	if ( $last['match'] ) {

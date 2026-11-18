@@ -703,6 +703,10 @@ export class UI {
 				</select></label>
 			<label class="mysn-check"><input type="checkbox" data-k="respot"> Vracať farebné gule na spoty</label>
 			<p class="mysn-note">Zmena kvality sa prejaví po obnovení stránky.</p>
+			<div class="mysn-nettest">
+				<button type="button" class="mysn-btn" data-nettest>Otestovať spojenie</button>
+				<p class="mysn-note" data-nettest-out>Overí priame spojenie s inými hráčmi: miestnu sieť, verejnú adresu a náš server TURN (10 až 20 s). Výsledok sa uloží do diagnostiky.</p>
+			</div>
 
 			<button type="button" class="mysn-btn mysn-primary" data-close>Zavrieť</button>`;
 		for (const el of p.querySelectorAll('[data-k]')) {
@@ -718,6 +722,31 @@ export class UI {
 			});
 		}
 		p.querySelector('[data-close]').addEventListener('click', () => p.classList.add('mysn-hidden'));
+		// 0.30.3: test spojenia (WebRTC: STUN a TURN)
+		const tb = p.querySelector('[data-nettest]');
+		const to = p.querySelector('[data-nettest-out]');
+		tb.addEventListener('click', async () => {
+			if (!this.opts.netTest || tb.disabled) {
+				return;
+			}
+			tb.disabled = true;
+			to.textContent = 'Testujem spojenie…';
+			try {
+				const r = await this.opts.netTest();
+				const pub = (r.lc.srflx || 0) + (r.lc.prflx || 0);
+				const verdict = r.relayOk
+					? pub
+						? 'Spojenie je v poriadku: priame spojenie so súperom by malo fungovať.'
+						: 'Verejná adresa sa nenašla, ale cez náš server TURN spojenie funguje.'
+					: pub
+					? 'Server TURN nefunguje z tvojej siete (blokovaný port 3478 alebo firewall). Priame spojenie pôjde len so súperom, ktorý má otvorenú sieť.'
+					: 'Priame spojenie z tvojej siete nefunguje (ani verejná adresa, ani TURN). Partia pôjde len cez server, bez vzájomného mierenia.';
+				to.innerHTML = `<b>${r.text}</b><br>${verdict}${r.errs.length ? `<br><small>Chyby: ${r.errs.slice(0, 4).join('; ').replace(/[<>&]/g, '')}</small>` : ''}`;
+			} catch (e) {
+				to.textContent = 'Test sa nepodaril: ' + (e.message || e);
+			}
+			tb.disabled = false;
+		});
 		return p;
 	}
 

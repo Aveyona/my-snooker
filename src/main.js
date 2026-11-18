@@ -23,6 +23,7 @@ import { Sound } from './audio.js';
 import { UI } from './ui.js';
 import { Game, fmtTime } from './match.js';
 import { Online } from './online.js';
+import { rtcSelfTest } from './rtc.js';
 import { remaining } from './rules.js';
 import { aimTrace, R, L, W, snapshot, restore, createRack, POCKETS, COLOURS, isJump, JUMP_TOP, JUMP_POWER, ELEV_MAX } from './physics.js';
 import { buildRackTriangle, rackLayout } from './rackTriangle.js';
@@ -4067,6 +4068,12 @@ export function start(root, config = {}) {
 		accountUrl: config.accountUrl,
 		venue: () => venue,
 		settings,
+		netTest: async () => {
+			if (!online) {
+				return rtcSelfTest(); // neprihlásený: bez TURN, len STUN
+			}
+			return online.selfTest();
+		},
 		onAction: (name, value) => {
 			sound.unlock();
 			if (actions[name]) {

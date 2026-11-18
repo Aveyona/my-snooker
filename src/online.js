@@ -4,7 +4,7 @@
  * dostane súper a divák hneď. Server partiu len ukladá (úder a stav po údere) a vyhodnotí koniec a ligu;
  * po obnovení stránky sa rozohraná partia načíta zo servera a pokračuje sa v nej.
  */
-import { Rtc, setIce } from './rtc.js';
+import { Rtc, setIce, rtcSelfTest } from './rtc.js';
 import { snapshot } from './physics.js';
 
 const PING_MS = 5000;
@@ -470,8 +470,38 @@ export class Online {
 				off: typeof navigator.onLine === 'boolean' && !navigator.onLine ? 1 : 0, // 0.30.3: komu vypadlo
 				down: this.net.down ? 1 : 0,
 				rx: p.lastRx ? Math.round((now - p.lastRx) / 1000) : -1,
+				...this.rtc.diagInfo(p),
 			})
 			.catch(() => null);
+	}
+
+	/** Test spojenia z Nastavení (0.30.3): výsledok sa ukáže hráčovi a uloží do diagnostiky. */
+	async selfTest() {
+		const r = await rtcSelfTest();
+		const c = navigator.connection || {};
+		const ua = navigator.userAgent || '';
+		const br = (ua.match(/(Edg|OPR|Opera|Firefox|Chrome|Safari)\/[\d.]+/g) || []).pop() || '';
+		this.net
+			.call('rtc/diag', {
+				match: 0,
+				peer: 0,
+				tag: 'test',
+				why: 'test: ' + r.text,
+				path: '',
+				net: [c.type, c.effectiveType, c.rtt ? c.rtt + ' ms' : ''].filter(Boolean).join(' '),
+				ua: br + (/Mobile|Android|iPhone/.test(ua) ? ' mobil' : ''),
+				hidden: 0,
+				log: `Kandidáti: ${r.cand}\nChyby: ${r.errs.join('; ') || 'žiadne'}\nTrvanie: ${r.ms} ms`,
+				cand: 'ja: ' + r.cand,
+				lr: r.lc.relay || 0,
+				rr: -1,
+				rn: -1,
+				err: r.errs.join('; '),
+				stage: r.relayOk ? 'TURN funguje' : 'TURN nefunguje',
+				test: 1,
+			})
+			.catch(() => null);
+		return r;
 	}
 
 	rtcClose(p) {

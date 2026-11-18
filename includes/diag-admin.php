@@ -54,6 +54,9 @@ function mysn_diag_path( $path ) {
 function mysn_diag_who( $d ) {
 	$me = mysn_user( $d['user'] )['name'];
 	$op = $d['peer'] ? mysn_user( $d['peer'] )['name'] : 'súper';
+	if ( isset( $d['tag'] ) && 'test' === $d['tag'] ) {
+		return $me . ': test spojenia – ' . ( isset( $d['stage'] ) ? $d['stage'] : '' );
+	}
 	if ( ! isset( $d['seenme'] ) ) {
 		return '–';
 	}
@@ -68,6 +71,15 @@ function mysn_diag_who( $d ) {
 	}
 	if ( ! empty( $d['hidden'] ) ) {
 		return $me . ': hra v pozadí';
+	}
+	if ( isset( $d['rn'] ) && 0 === (int) $d['rn'] && false === strpos( (string) $d['why'], 'opravené' ) ) {
+		return $op . ': od neho neprišla žiadna adresa (ponuka alebo odpoveď sa cez server nedoručila, alebo jeho prehliadač nič nenašiel)';
+	}
+	if ( isset( $d['lr'] ) && '' !== (string) ( $d['cand'] ?? '' ) && 0 === (int) $d['lr'] ) {
+		return $me . ': nemá adresu na serveri TURN (jeho sieť blokuje port 3478 alebo zlyhalo prihlásenie na TURN)';
+	}
+	if ( isset( $d['rr'] ) && (int) $d['rn'] > 0 && 0 === (int) $d['rr'] ) {
+		return $op . ': nemá adresu na serveri TURN (jeho sieť blokuje port 3478 alebo zlyhalo prihlásenie na TURN)';
 	}
 	return 'Obaja sú na serveri: padlo len priame spojenie medzi nimi (sieť, firewall, NAT), nie internet';
 }
@@ -86,6 +98,9 @@ function mysn_admin_diag() {
 	$why      = array();
 	$paths    = array();
 	foreach ( $list as $d ) {
+		if ( isset( $d['tag'] ) && 'test' === $d['tag'] ) {
+			continue; // test spojenia z Nastavení nie je výpadok
+		}
 		if ( false !== strpos( $d['why'], 'opravené' ) ) {
 			++$repaired;
 		} else {
@@ -142,7 +157,18 @@ function mysn_admin_diag() {
 				<td><?php echo $d['peer'] ? esc_html( mysn_user( $d['peer'] )['name'] ) : ''; ?></td>
 				<td><?php echo (int) $d['match']; ?></td>
 				<td><?php echo esc_html( $d['why'] ) . ( $d['hidden'] ? ' <em>(hra v pozadí)</em>' : '' ); // phpcs:ignore ?></td>
-				<td><?php echo esc_html( mysn_diag_who( $d ) ) . ( isset( $d['rx'] ) && $d['rx'] >= 0 ? '<br><small>posledná správa od súpera pred ' . (int) $d['rx'] . ' s</small>' : '' ); // phpcs:ignore ?></td>
+				<td><?php
+				echo esc_html( mysn_diag_who( $d ) ) . ( isset( $d['rx'] ) && $d['rx'] >= 0 ? '<br><small>posledná správa od súpera pred ' . (int) $d['rx'] . ' s</small>' : '' ); // phpcs:ignore
+				if ( ! empty( $d['cand'] ) ) {
+					echo '<br><small>Adresy: ' . esc_html( $d['cand'] ) . '</small>';
+				}
+				if ( ! empty( $d['stage'] ) && 'test' !== ( $d['tag'] ?? '' ) ) {
+					echo '<br><small>Krok: ' . esc_html( $d['stage'] ) . ( ! empty( $d['secs'] ) ? ' (po ' . (int) $d['secs'] . ' s)' : '' ) . '</small>';
+				}
+				if ( ! empty( $d['err'] ) ) {
+					echo '<br><small style="color:#b32d2e">Chyby STUN/TURN: ' . esc_html( $d['err'] ) . '</small>';
+				}
+				?></td>
 				<td><?php echo esc_html( mysn_diag_path( $d['path'] ) ); ?></td>
 				<td><?php echo esc_html( $d['net'] ); ?></td>
 				<td><?php echo esc_html( $d['ua'] ); ?></td>
