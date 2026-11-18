@@ -150,6 +150,7 @@ export function isJump(power, top) {
 /** Najvyšší uhol tága (massé) v stupňoch a uhol, od ktorého sa počíta oblúk (tágo je vždy mierne zdvihnuté). */
 export const ELEV_MAX = 80;
 export const ELEV_BASE = 4;
+const CURVE_K = 2.5; // zosilnenie bočného trenia pri swerve a massé (0.30.9)
 
 /**
  * Úder tágom do bielej. dir = uhol smeru (radiány, 0 = +x), power 0..1, side a top -1..1 (miesto na guli:
@@ -176,12 +177,15 @@ export function strike(ball, dir, power, side = 0, top = 0, elev = 0) {
 	const k = (5 * V0) / (2 * R * R);
 	// ω = k · (b · (u' × c) + a · (right × c)); u' × c = (dz, 0, -dx), right × c = (dx·S, C, dz·S)
 	// massé: pri strmom tágu sa súkno pod bielou viac stlačí a oblúk je výraznejší (mk)
-	const mk = 4 * (1 + 0.3 * S * S); // 0.30.8: oblúk 4× silnejší, aby bol v hre viditeľný (swerve aj massé)
+	const mk = 4 * (1 + 0.3 * S * S); // 0.30.8: oblúk silnejší, aby bol v hre viditeľný (swerve aj massé)
 	ball.w.x = k * (b * dz + a * S * dx * mk);
 	ball.w.y = k * a * C;
 	ball.w.z = k * (-b * dx + a * S * dz * mk);
 	ball.h = 0;
 	ball.vy = 0;
+	// 0.30.9: pri swerve a massé trenie súkna stáča bielu do strany silnejšie (len do prvého nárazu), inak by
+	// oblúk obmedzený trením bol pri bežnej sile sotva viditeľný
+	ball.ck = th > 0 && a ? 1 + CURVE_K * Math.min(1, S * 3) : 0;
 	if (isJump(power, top)) {
 		// skok: časť energie ide do súkna a biela odskočí nahor (0,5 až 1,9 m/s podľa skutočnej sily úderu, teda
 		// aj podľa tága; ponad guľu preletí asi od 75 % skutočnej sily),
@@ -299,6 +303,7 @@ export class Physics {
 				b.v.x += J * ux;
 				b.v.z += J * uz;
 				a.moving = b.moving = true;
+				a.ck = b.ck = 0;
 				if (this.firstContact === null && (a.kind === 'white' || b.kind === 'white')) {
 					this.firstContact = a.kind === 'white' ? b : a;
 				}
@@ -372,12 +377,24 @@ function friction(b, h) {
 			v.z -= (2 / 7) * uz;
 			w.z = -v.x / R;
 			w.x = v.z / R;
+			b.ck = 0;
 		} else {
 			const ex = ux / u;
 			const ez = uz / u;
 			const a = MU_SLIDE * G * h;
 			v.x -= a * ex;
 			v.z -= a * ez;
+			if (b.ck > 1) {
+				// swerve, massé: zložka trenia kolmo na smer pohybu sa zosilní (oblúk), rýchlosť dopredu sa nemení
+				const s = Math.hypot(v.x, v.z);
+				if (s > 1e-3) {
+					const nx = -v.z / s;
+					const nz = v.x / s;
+					const lat = (ex * nx + ez * nz) * a * (b.ck - 1);
+					v.x -= lat * nx;
+					v.z -= lat * nz;
+				}
+			}
 			const alpha = ((5 * MU_SLIDE * G) / (2 * R)) * h;
 			w.x += alpha * ez;
 			w.z -= alpha * ex;
@@ -443,6 +460,7 @@ function cushionHit(b, c, events) {
 	b.v.x -= grip * sy * tx;
 	b.v.z -= grip * sy * tz;
 	b.w.y *= 0.55;
+	b.ck = 0;
 	// mantinel zastaví aj časť hornej/spodnej rotácie
 	b.w.x *= 0.7;
 	b.w.z *= 0.7;
