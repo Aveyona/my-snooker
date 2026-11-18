@@ -162,6 +162,7 @@ function mysn_roadmap() {
 /** Denník zmien (najnovšie hore). */
 function mysn_changelog() {
 	return array(
+		array( '0.31.2', '18. 11. 2026', 'Podsvietenie stojana bez bodového svetla: zmizla svetlá škvrna na doske pri štítkoch a na podlahe, ostáva LED pásik so žiarou.' ),
 		array( '0.31.1', '18. 11. 2026', 'Stojan s tágami (F2): výber farby LED podsvietenia – teplá a studená biela, zelená, modrá, červená, fialová, oranžová alebo vypnuté; voľba sa pamätá.' ),
 		array( '0.31.0', '18. 11. 2026', 'Stojan s tágami v herni: jemný LED pásik na spodnej lište pri zadnej stene svieti nahor (teplá biela), žiara na zadnej doske a slabé nasvietenie tág zospodu.' ),
 		array( '0.30.9', '18. 11. 2026', 'Swerve a massé ešte výraznejšie: pri zdvihnutom tágu s bočnou falšou súkno stáča bielu do strany silnejšie (do prvého nárazu), napr. 20° s polovičnou falšou pri strednej sile asi 70 cm do polovice stola, massé ostrý hák.' ),

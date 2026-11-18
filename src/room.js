@@ -563,7 +563,7 @@ export function buildRoomShell(scene, quality, opts = {}) {
 	}
 	const rackLed = {}; // LED podsvietenie stojana: pásik, žiara, svetlo
 	// 0.31.0: LED pásik na spodnej lište pri zadnej stene stojana, svieti nahor (návrh B): teplá biela, jemná žiara
-	// na zadnej doske (aditívny prechod) a slabé svetlo, ktoré zospodu nasvieti tágá
+	// na zadnej doske (aditívny prechod)
 	{
 		const ledMat = new THREE.MeshBasicMaterial({ color: 0xfff1d6 });
 		rackLed.mat = ledMat;
@@ -594,12 +594,7 @@ export function buildRoomShell(scene, quality, opts = {}) {
 		wash.position.set(RACK.x, FY + 0.155 + glowH / 2, -RZ + 0.0665);
 		wash.renderOrder = 2;
 		scene.add(wash);
-		if (high) {
-			const ledLight = new THREE.PointLight(0xffd9a0, 0.35, 1.8, 2);
-			ledLight.position.set(RACK.x, FY + 0.25, -RZ + 0.55);
-			scene.add(ledLight);
-			rackLed.light = ledLight;
-		}
+		// 0.31.2: bez bodového svetla (robilo svetlú škvrnu na doske a na podlahe), stačí pásik a žiara
 	}
 	const rackCues = [];
 	CUES.forEach((spec, i) => {
