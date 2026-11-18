@@ -5639,7 +5639,9 @@ export function start(root, config = {}) {
 			// a pomaly kráča ku guli, na ktorú sa mieri (zvyčajne červená)
 			const refDir = game.state === 'aim' || game.state === 'watch' || game.state === 'place' ? game.dir : null;
 			const refTr = refDir !== null && game.state !== 'place' && game.cue.on ? aimTrace(game.balls, game.cue, game.dir) : null;
-			stadium.update(dt, game.cue, refDir, game.state === 'moving', refTr && refTr.ball ? refTr.ball : null);
+			// kladenie bielej (aj súperovo): hráč stojí pri D, rozhodca tam nechodí
+			const refPlace = game.state === 'place' || (game.state === 'watch' && !!(game.match && game.match.inHand));
+			stadium.update(dt, game.cue, refDir, game.state === 'moving', refTr && refTr.ball ? refTr.ball : null, refPlace);
 			crowdLg.update(dt, game.cue);
 		} else {
 			crowdHome.update(dt, game.cue);

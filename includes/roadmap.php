@@ -162,6 +162,7 @@ function mysn_roadmap() {
 /** Denník zmien (najnovšie hore). */
 function mysn_changelog() {
 	return array(
+		array( '0.25.3', '18. 11. 2026', 'Rozhodca sa lepšie vyhýba hráčovi: kontroluje celú cestu okolo stola (nejde popri hráčovi, radšej počká), pri každom kroku, širší pás za bielou, pri kladení bielej nechodí k D a z cesty uhne rýchlejšie.' ),
 		array( '0.25.2', '18. 11. 2026', 'Hráč pokračuje napriek snookerom: keď mu chýba do 14 bodov, diváci tlieskajú; pri väčšom rozdiele sa zasmejú.' ),
 		array( '0.25.1', '18. 11. 2026', 'Na štadióne: keď hráč, ktorý potrebuje snookery, nevzdá a klikne Pokračovať, rozhodca ohlási The player plays on a diváci zareagujú (potlesk, jasot alebo óóó s potleskom), rovnako u hráčov aj divákov.' ),
 		array( '0.25.0', '18. 11. 2026', 'Ponuka vzdať sa: keď hráč na rade už potrebuje snookery (ani všetky body na stole nestačia), raz za frame mu hra ponúkne Vzdať frame (zápas na viac framov) alebo Vzdať partiu, prípadne Pokračovať. Nové vzdanie framu: súper frame vyhrá, hrá sa ďalší frame alebo zápas končí.' ),

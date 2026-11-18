@@ -604,15 +604,54 @@ export function buildStadium(scene, quality, clock = 45) {
 	refHead.rotation.order = 'YXZ'; // najprv otočenie do strany, potom sklon dole
 	const ref = { s: REF_SPOTS[0].s, target: REF_SPOTS[0].s, walk: 0, yaw: Math.PI };
 	let refSc = null; // scenár rozhodcu (animácia stavania gúľ): { x, z, yaw, walk, arm } alebo null
-	/** Zavadzia rozhodca na mieste (x, z) tágu? Pás za bielou v smere tága (aj miesto hráča a kamery). */
+	let refPlacing = false; // hráč kladie bielu (biela v ruke): stojí pri D na kratšej strane -x
+	/**
+	 * Zavadzia rozhodca na mieste (x, z) hráčovi? Pás za bielou v smere tága (tágo, hráč, nástavec a kamera,
+	 * 0.25.3: širší), pri kladení bielej aj celý koniec stola pri D.
+	 */
 	const refBlocked = (x, z, cb, dir) => {
+		if (refPlacing && x < -1.2 && Math.abs(z) < 1.4) {
+			return true;
+		}
+		if (dir === null || dir === undefined) {
+			return false;
+		}
 		const dx = Math.cos(dir);
 		const dz = Math.sin(dir);
 		const vx = x - cb.p.x;
 		const vz = z - cb.p.z;
 		const behind = -(vx * dx + vz * dz); // dozadu od bielej (kde je tágo, hráč a kamera)
 		const lat = Math.abs(vx * dz - vz * dx);
-		return behind > -0.3 && behind < 2.4 && lat < 0.85;
+		return behind > -0.4 && behind < 3.0 && lat < 1.1;
+	};
+	/**
+	 * Prejde rozhodca z from do to smerom sg (+1/-1) bez toho, aby vošiel hráčovi do cesty? Úsek, v ktorom už stojí
+	 * (odchod z cesty), sa nepočíta.
+	 */
+	const refPathFree = (from, to, sg, cb, dir) => {
+		const len = (((to - from) * sg) % PER + PER) % PER;
+		let leaving = true;
+		for (let t = 0; t <= len + 1e-6; t += 0.1) {
+			const p = perPoint(from + sg * Math.min(t, len));
+			const b = refBlocked(p.x, p.z, cb, dir);
+			if (!b) {
+				leaving = false;
+			} else if (!leaving) {
+				return false;
+			}
+		}
+		return true;
+	};
+	/** Najkratší voľný smer z from do to: { sg, len } alebo null (oba smery idú hráčovi do cesty). */
+	const refFreeWay = (from, to, cb, dir) => {
+		let best = null;
+		for (const sg of [1, -1]) {
+			const len = (((to - from) * sg) % PER + PER) % PER;
+			if ((!best || len < best.len) && refPathFree(from, to, sg, cb, dir)) {
+				best = { sg, len };
+			}
+		}
+		return best;
 	};
 	/** Najbližšie voľné stanovište (po obvode); rovnaký výpočet u všetkých hráčov aj divákov. */
 	const refChoose = (cb, dir) => {
@@ -626,8 +665,11 @@ export function buildStadium(scene, quality, clock = 45) {
 			if (refBlocked(sp.x, sp.z, cb, dir)) {
 				continue;
 			}
-			let d = Math.abs(sp.s - ref.s) % PER;
-			d = Math.min(d, PER - d) + sp.side * 20 + sidePen(sp.x, sp.z) * 3; // kratšie strany majú prednosť, dlhé strany (pred divákmi) len v núdzi, so skutočnými divákmi až nakoniec
+			const way = refFreeWay(ref.s, sp.s, cb, dir); // cesta tam nesmie viesť popri hráčovi
+			if (!way) {
+				continue;
+			}
+			const d = way.len + sp.side * 20 + sidePen(sp.x, sp.z) * 3; // kratšie strany majú prednosť, dlhé strany (pred divákmi) len v núdzi, so skutočnými divákmi až nakoniec
 			if (!best || d < best.d) {
 				best = { d, s: sp.s };
 			}
@@ -647,8 +689,8 @@ export function buildStadium(scene, quality, clock = 45) {
 		];
 		let best = null;
 		for (const c of cands) {
-			if (refBlocked(c.x, c.z, cb, dir)) {
-				continue;
+			if (refBlocked(c.x, c.z, cb, dir) || !refFreeWay(ref.s, perS(c.x, c.z), cb, dir)) {
+				continue; // miesto alebo cesta k nemu zavadzia hráčovi
 			}
 			const d = Math.hypot(c.x - ball.p.x, c.z - ball.p.z) + sidePen(c.x, c.z);
 			if (!best || d < best.d) {
@@ -1127,7 +1169,8 @@ export function buildStadium(scene, quality, clock = 45) {
 		 * Každý snímok: hlavy sledujú bielu, animácie tlieskania, faulu a vstávania. aimBall = guľa, na ktorú
 		 * sa práve mieri (rozhodca k nej pomaly kráča), null = nemieri sa.
 		 */
-		update(dt, cueBall, dir = null, moving = false, aimBall = null) {
+		update(dt, cueBall, dir = null, moving = false, aimBall = null, placing = false) {
+			refPlacing = !!placing && !moving;
 			updateFans(fans, dt, cueBall);
 			rackLightTick(dt);
 			chairChalkTick(dt);
@@ -1193,6 +1236,10 @@ export function buildStadium(scene, quality, clock = 45) {
 					refAim.id = -1;
 					refAim.t = 0;
 				}
+				// kladenie bielej: rozhodca odíde od D (hráč tam stojí)
+				if (refPlacing && refBlocked(referee.position.x, referee.position.z, cueBall, dir)) {
+					ref.target = refChoose(cueBall, dir);
+				}
 				// po príchode na miesto tam postojí aspoň REF_REST sekúnd (nepresúva sa príliš často); skôr len keď zavadzia tágu
 				if (ref.rest > 0 && ref.target !== prevTarget && !(dir !== null && !moving && refBlocked(referee.position.x, referee.position.z, cueBall, dir))) {
 					ref.target = prevTarget;
@@ -1203,19 +1250,45 @@ export function buildStadium(scene, quality, clock = 45) {
 				} else if (d < -PER / 2) {
 					d += PER;
 				}
+				const aiming = dir !== null && !moving && cueBall.on;
+				let wait = false;
 				if (Math.abs(d) > 0.01) {
 					// trasa: okolo strany so skutočnými divákmi radšej dlhšou cestou (smer sa počíta len pri zmene cieľa)
 					if (ref.routeTo !== ref.target) {
 						ref.routeTo = ref.target;
 						ref.route = refRoute(ref.s, ref.target);
 					}
+					// 0.25.3: cesta nesmie viesť popri hráčovi (kontroluje sa každý snímok, mierenie sa mení);
+					// keď ňou nejde ani jeden smer, počká mimo cesty hráča
+					if (aiming || refPlacing) {
+						if (!refPathFree(ref.s, ref.target, ref.route, cueBall, dir)) {
+							const way = refFreeWay(ref.s, ref.target, cueBall, dir);
+							if (way) {
+								ref.route = way.sg;
+							} else {
+								wait = true;
+							}
+						}
+					}
 					if (Math.sign(d) !== ref.route) {
 						d = d > 0 ? d - PER : d + PER;
 					}
 				}
-				const walking = Math.abs(d) > 0.01;
+				const here = perPoint(ref.s);
+				const inWay = (aiming || refPlacing) && refBlocked(here.x, here.z, cueBall, dir);
+				let step = 0;
+				if (Math.abs(d) > 0.01 && !wait) {
+					// k mierenej guli pomaly, inak asi 1 m/s; keď hráčovi zavadzia, uhne rýchlejšie
+					step = Math.sign(d) * Math.min(Math.abs(d), dt * (inWay ? 1.4 : slow ? 0.45 : 1.0));
+					if ((aiming || refPlacing) && !inWay) {
+						const nx = perPoint(ref.s + step);
+						if (refBlocked(nx.x, nx.z, cueBall, dir)) {
+							step = 0; // ďalší krok by viedol hráčovi do cesty: počká
+						}
+					}
+				}
+				const walking = step !== 0;
 				if (walking) {
-					const step = Math.sign(d) * Math.min(Math.abs(d), dt * (slow ? 0.45 : 1.0)); // k mierenej guli pomaly, z cesty tága asi 1 m/s
 					const a = perPoint(ref.s);
 					ref.s += step;
 					const b = perPoint(ref.s);
