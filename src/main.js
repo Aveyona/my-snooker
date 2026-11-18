@@ -1393,6 +1393,7 @@ export function start(root, config = {}) {
 		rig.setView(v.look.clone().add(new THREE.Vector3(0, 0, d)), v.look.clone());
 		ui.padNav(true, i, BOARD_COUNT, boardTitle(i, ui.touchUI));
 	};
+	let phoneFromKey = false; // telefón otvorený klávesom T (po zavretí sa myš vráti k tágu)
 	let waterNext = false; // napil som sa: ďalší môj úder má silnejšiu falšu (server to vie, inak by úder neprijal)
 	const playerSnd = (lk) => {
 		if (!PLAYER_SND[lk] || game.spectating || venue === 'office') {
@@ -2980,7 +2981,7 @@ export function start(root, config = {}) {
 			}
 		},
 		foundAccept: () => online && online.accept(true),
-		playerSnd: (k) => playerSnd(k), // mobil: tlačidlo hráčskych zvukov
+		playerSnd: (k) => (k === 't' ? actions.phoneKey() : playerSnd(k)), // mobil: tlačidlo hráčskych zvukov (aj telefón)
 		padPage: (d) => padTurn(d), // F1 blok na štadióne: listovanie tlačidlami
 		concede: (yes) => {
 			const frame = !!(concedeNow && concedeNow.info && concedeNow.info.frame);
@@ -3797,9 +3798,20 @@ export function start(root, config = {}) {
 		phone: () => ui.openPhone(true),
 		phoneClose: () => {
 			ui.openPhone(false);
-			if (view === 'bar') {
-				controls.capture(); // späť na rozhliadanie myšou
+			if (view === 'bar' || (phoneFromKey && !view && !freeMouse)) {
+				controls.capture(); // späť na rozhliadanie myšou (bar) alebo k tágu (otvorené klávesom T)
 			}
+			phoneFromKey = false;
+		},
+		/** T (0.28.11): telefón Môj účet (ten zo stolíka pri bare) na celú obrazovku odkiaľkoľvek; znova T zavrie. */
+		phoneKey: () => {
+			if (ui.phoneOpen()) {
+				actions.phoneClose();
+				return;
+			}
+			phoneFromKey = true;
+			controls.uncapture();
+			ui.openPhone(true);
 		},
 		radioToggle: () => radio.toggle(),
 		radioPick: (i) => radio.play(i),
@@ -4207,6 +4219,10 @@ export function start(root, config = {}) {
 		},
 		key: (k) => {
 			const lk = k.toLowerCase();
+			if (phoneFromKey && ui.phoneOpen() && (lk === 'escape' || lk === 't')) {
+				actions.phoneClose(); // telefón otvorený klávesom T: Esc alebo T ho zavrie
+				return true;
+			}
 			if (view === 'fiesta') {
 				// koniec zápasu: jedna pevná kamera, medzerník ani iné pohľady sa nepoužívajú; Esc menu, M mapa
 				if (lk === 'escape') {
@@ -4358,6 +4374,10 @@ export function start(root, config = {}) {
 				return true;
 			}
 			const typing = document.activeElement && /input|select|textarea/i.test(document.activeElement.tagName);
+			if (lk === 't' && !typing && !game.spectating && !ui.menuOpen()) {
+				actions.phoneKey(); // T: telefón Môj účet na celú obrazovku (znova T zavrie)
+				return true;
+			}
 			if (PLAYER_SND[lk] && !typing && venue !== 'office' && !game.spectating && !ui.menuOpen() && !ui.toolsOpen()) {
 				playerSnd(lk);
 				return true;

@@ -207,7 +207,7 @@ export class UI {
 		this.sndBtn.type = 'button';
 		this.sndBtn.title = 'Napiť sa, grgnúť, prdnúť';
 		this.sndBtn.setAttribute('aria-label', 'Hráčske zvuky');
-		this.sndPop = h('div', 'mysn-sndpop mysn-hidden', '<button type="button" data-k="n" title="Napiť sa vody (N): ďalší úder silnejšia falša"><span>💧</span><small>Voda</small></button><button type="button" data-k="g" title="Grgnúť (G)"><span>🫧</span><small>Grgnúť</small></button><button type="button" data-k="h" title="Prdnúť (H)"><span>💨</span><small>Prdnúť</small></button>');
+		this.sndPop = h('div', 'mysn-sndpop mysn-hidden', '<button type="button" data-k="n" title="Napiť sa vody (N): ďalší úder silnejšia falša"><span>💧</span><small>Voda</small></button><button type="button" data-k="g" title="Grgnúť (G)"><span>🫧</span><small>Grgnúť</small></button><button type="button" data-k="h" title="Prdnúť (H)"><span>💨</span><small>Prdnúť</small></button><button type="button" data-k="t" title="Telefón: Môj účet (T)"><span>📱</span><small>Telefón</small></button>');
 		for (const el of [this.sndBtn, this.sndPop]) {
 			for (const t of ['pointerdown', 'pointerup', 'mousedown', 'touchstart', 'touchend', 'wheel']) {
 				el.addEventListener(t, (e) => e.stopPropagation());
