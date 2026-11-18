@@ -56,6 +56,7 @@ function mysn_rest_account() {
 		'email'      => $u->user_email,
 		'avatar'     => get_avatar_url( $uid, array( 'size' => 128 ) ),
 		'registered' => mysql2date( 'j. n. Y', $u->user_registered ),
+		'nameNext'   => mysn_name_next( $uid ) ? wp_date( 'j. n. Y', mysn_name_next( $uid ) ) : '',
 		'level'      => $level,
 		'levelName'  => null !== $level && function_exists( 'my_users_level_name' ) ? my_users_level_name( $level ) : '',
 		'solo'       => array(
@@ -80,8 +81,14 @@ function mysn_rest_account() {
 	);
 }
 
+/** Kedy sa dá meno znova zmeniť (časová pečiatka), alebo 0 = už teraz (meno sa mení najviac raz za 30 dní). */
+function mysn_name_next( $uid ) {
+	$t = (int) get_user_meta( $uid, 'mysn_name_changed', true );
+	return $t && time() < $t + 30 * DAY_IN_SECONDS ? $t + 30 * DAY_IN_SECONDS : 0;
+}
+
 /**
- * Telefón Môj účet (0.29.0): zmena zobrazovaného mena. Meno 2 až 40 znakov, bez HTML.
+ * Telefón Môj účet (0.29.0): zmena zobrazovaného mena. Meno 2 až 40 znakov, bez HTML, najviac raz za 30 dní (0.29.1).
  */
 function mysn_rest_account_name( $req ) {
 	$uid  = get_current_user_id();
@@ -89,10 +96,19 @@ function mysn_rest_account_name( $req ) {
 	if ( mb_strlen( $name ) < 2 || mb_strlen( $name ) > 40 ) {
 		return mysn_err( 'Meno musí mať 2 až 40 znakov.' );
 	}
+	$u = get_userdata( $uid );
+	if ( $u && $name === $u->display_name ) {
+		return mysn_err( 'Toto meno už máš.' );
+	}
+	$next = mysn_name_next( $uid );
+	if ( $next ) {
+		return mysn_err( 'Meno sa dá meniť len raz za 30 dní. Znova ho môžeš zmeniť ' . wp_date( 'j. n. Y', $next ) . '.', 429 );
+	}
 	$r = wp_update_user( array( 'ID' => $uid, 'display_name' => $name ) );
 	if ( is_wp_error( $r ) ) {
 		return mysn_err( $r->get_error_message() );
 	}
+	update_user_meta( $uid, 'mysn_name_changed', time() );
 	return array( 'ok' => true, 'name' => $name );
 }
 

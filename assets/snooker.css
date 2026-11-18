@@ -808,7 +808,7 @@ body.mysn-page { font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans
 .mysn-ph-card small { color: #5c6270; font-size: 11px; }
 .mysn-ph-links { display: flex; flex-direction: column; gap: 8px; margin: 6px 0 10px; }
 .mysn-ph-links .mysn-btn { text-align: center; text-decoration: none; }
-.mysn-ph-out { color: #b3121f !important; }
+.mysn-ph-links .mysn-ph-out { color: #ff8a8a !important; border-color: #b3121f88; }
 .mysn-ph-note { min-height: 0; margin: 0 2px 8px; font-size: 13px; }
 .mysn-ph-ok { color: #157a3a; }
 .mysn-ph-err { color: #b3121f; }

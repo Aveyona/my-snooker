@@ -2524,7 +2524,9 @@ export class UI {
 			body =
 				`<div class="mysn-ph-head">${d.avatar ? `<img src="${esc(d.avatar)}" alt="" width="72" height="72">` : `<i>${esc((d.name || '?').slice(0, 1))}</i>`}<b>${esc(d.name)}</b><span>${esc(d.email)}</span>${d.levelName ? `<em>Úroveň ${esc(String(d.level))}: ${esc(d.levelName)}</em>` : ''}</div>` +
 				`<div class="mysn-ph-card">${row('Meno', esc(d.name))}${row('E-mail', esc(d.email))}${row('Člen od', esc(d.registered))}</div>` +
-				`<details class="mysn-ph-card"><summary>Zmeniť meno</summary><form data-f="name"><input name="name" maxlength="40" value="${esc(d.name)}" autocomplete="nickname"><button class="mysn-btn mysn-primary">Uložiť meno</button></form></details>` +
+				(d.nameNext
+					? `<div class="mysn-ph-card"><div class="mysn-ph-row"><span>Zmeniť meno</span><b>znova od ${esc(d.nameNext)}</b></div></div>`
+					: `<details class="mysn-ph-card"><summary>Zmeniť meno</summary><form data-f="name"><input name="name" maxlength="40" value="${esc(d.name)}" autocomplete="nickname"><button class="mysn-btn mysn-primary">Uložiť meno</button><small>Meno sa dá zmeniť len raz za 30 dní.</small></form></details>`) +
 				`<details class="mysn-ph-card"><summary>Zmeniť heslo</summary><form data-f="pass"><input type="password" name="old" placeholder="Súčasné heslo" autocomplete="current-password"><input type="password" name="new" placeholder="Nové heslo (aspoň 8 znakov)" autocomplete="new-password"><input type="password" name="new2" placeholder="Nové heslo znova" autocomplete="new-password"><button class="mysn-btn mysn-primary">Zmeniť heslo</button><small>Účet len cez Google nemá heslo: nastav ho na webe.</small></form></details>` +
 				`<p class="mysn-ph-note"></p>` +
 				`<div class="mysn-ph-links">` +
