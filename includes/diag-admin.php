@@ -17,6 +17,19 @@ add_action(
 );
 
 add_action(
+	'admin_post_mysn_diag_toggle',
+	function () {
+		if ( ! current_user_can( 'manage_options' ) ) {
+			wp_die( 'Nemáš oprávnenie.' );
+		}
+		check_admin_referer( 'mysn_diag_toggle' );
+		update_option( 'mysn_diag_on', get_option( 'mysn_diag_on', 0 ) ? 0 : 1, false );
+		wp_safe_redirect( admin_url( 'admin.php?page=my-snooker-diag' ) );
+		exit;
+	}
+);
+
+add_action(
 	'admin_post_mysn_diag_clear',
 	function () {
 		if ( ! current_user_can( 'manage_options' ) ) {
@@ -113,7 +126,14 @@ function mysn_admin_diag() {
 	}
 	arsort( $why );
 	arsort( $paths );
+	$on = (bool) get_option( 'mysn_diag_on', 0 );
 	?>
+	<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>" class="card" style="max-width:1100px;margin:0 0 14px;display:flex;align-items:center;gap:14px;flex-wrap:wrap">
+		<?php wp_nonce_field( 'mysn_diag_toggle' ); ?>
+		<input type="hidden" name="action" value="mysn_diag_toggle">
+		<p style="margin:0;flex:1;min-width:260px">Zapisovanie výpadkov spojenia je <b style="color:<?php echo $on ? '#00a32a' : '#b32d2e'; ?>"><?php echo $on ? 'zapnuté' : 'vypnuté'; ?></b>. Keď je zapnuté, hra hráčov posiela záznam pri každom výpadku priameho spojenia a výsledok testu spojenia z Nastavení. Hráči, ktorí majú hru otvorenú, začnú alebo prestanú posielať po obnovení stránky; server záznamy prijíma len pri zapnutom zapisovaní.</p>
+		<button class="button button-primary"><?php echo $on ? 'Vypnúť zapisovanie' : 'Zapnúť zapisovanie'; ?></button>
+	</form>
 	<p>Záznam pošle hra hráča, ktorému spojenie so súperom vypadlo alebo sa opravilo (najviac raz za 15 sekúnd). Uchováva sa posledných <?php echo (int) MYSN_DIAG_MAX; ?> záznamov.</p>
 	<div style="display:flex;gap:16px;flex-wrap:wrap;max-width:1100px">
 		<div class="card" style="margin:0;flex:1;min-width:260px">

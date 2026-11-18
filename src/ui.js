@@ -705,7 +705,7 @@ export class UI {
 			<p class="mysn-note">Zmena kvality sa prejaví po obnovení stránky.</p>
 			<div class="mysn-nettest">
 				<button type="button" class="mysn-btn" data-nettest>Otestovať spojenie</button>
-				<p class="mysn-note" data-nettest-out>Overí priame spojenie s inými hráčmi: miestnu sieť, verejnú adresu a náš server TURN (10 až 20 s). Výsledok sa uloží do diagnostiky.</p>
+				<p class="mysn-note" data-nettest-out>Overí priame spojenie s inými hráčmi: miestnu sieť, verejnú adresu a náš server TURN (10 až 20 s).</p>
 			</div>
 
 			<button type="button" class="mysn-btn mysn-primary" data-close>Zavrieť</button>`;

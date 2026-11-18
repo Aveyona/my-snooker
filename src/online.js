@@ -448,6 +448,9 @@ export class Online {
 	 * My Snooker, Diagnostika spojení). Najviac raz za 20 s.
 	 */
 	diag(p, why) {
+		if (!this.cfg.diag) {
+			return; // zapisovanie výpadkov je vypnuté (administrácia, Diagnostika spojení)
+		}
 		const now = Date.now();
 		if (now - (this._diagAt || 0) < 20000) {
 			return;
@@ -478,6 +481,9 @@ export class Online {
 	/** Test spojenia z Nastavení (0.30.3): výsledok sa ukáže hráčovi a uloží do diagnostiky. */
 	async selfTest() {
 		const r = await rtcSelfTest();
+		if (!this.cfg.diag) {
+			return r; // výsledok len pre hráča, zapisovanie je vypnuté
+		}
 		const c = navigator.connection || {};
 		const ua = navigator.userAgent || '';
 		const br = (ua.match(/(Edg|OPR|Opera|Firefox|Chrome|Safari)\/[\d.]+/g) || []).pop() || '';

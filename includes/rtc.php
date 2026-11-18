@@ -158,6 +158,9 @@ const MYSN_DIAG_MAX = 150;
 
 function mysn_rest_rtc_diag( $req ) {
 	$uid = get_current_user_id();
+	if ( ! get_option( 'mysn_diag_on', 0 ) ) {
+		return array( 'ok' => true, 'off' => 1 ); // zapisovanie je vypnuté (Diagnostika spojení)
+	}
 	$key = 'mysn_diag_' . $uid;
 	if ( get_transient( $key ) ) {
 		return array( 'ok' => true ); // najviac raz za 15 s od hráča
