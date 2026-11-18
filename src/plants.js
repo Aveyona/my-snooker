@@ -285,3 +285,80 @@ export function areca() {
 	}
 	return grp;
 }
+
+/**
+ * Malý kaktus v hlinenom kvetináči (0.32.5): rebrovaný stĺpik s dvoma ramenami, tŕne ako svetlé bodky na
+ * rebrách, na vrchu ružový kvet. Spodok kvetináča je v y = 0, výška asi 24 cm.
+ */
+export function cactus() {
+	const g = new THREE.Group();
+	const pot = new THREE.MeshStandardMaterial({ color: 0xb5562e, roughness: 0.85 });
+	const body = new THREE.MeshStandardMaterial({ color: 0x3f7a35, roughness: 0.75 });
+	const spineM = new THREE.MeshStandardMaterial({ color: 0xf1ead2, roughness: 0.6 });
+	// kvetináč s okrajom a hlinou
+	const p = new THREE.Mesh(new THREE.CylinderGeometry(0.052, 0.04, 0.075, 24), pot);
+	p.position.y = 0.0375;
+	const rim = new THREE.Mesh(new THREE.CylinderGeometry(0.057, 0.057, 0.016, 24), pot);
+	rim.position.y = 0.071;
+	const soil = new THREE.Mesh(new THREE.CylinderGeometry(0.049, 0.049, 0.006, 20), new THREE.MeshStandardMaterial({ color: 0x3a2a1c, roughness: 1 }));
+	soil.position.y = 0.074;
+	g.add(p, rim, soil);
+	// rebrovaný stĺpik: valec, ktorého obvod sa vlní (8 rebier), hore zaoblený
+	const rib = (r, h) => {
+		const geo = new THREE.CylinderGeometry(r, r * 1.05, h, 32, 6);
+		const pos = geo.attributes.position;
+		for (let i = 0; i < pos.count; i++) {
+			const x = pos.getX(i);
+			const z = pos.getZ(i);
+			const y = pos.getY(i);
+			const a = Math.atan2(z, x);
+			const k = (1 + 0.12 * Math.cos(a * 8)) * (y > h / 2 - r ? Math.sqrt(Math.max(0.05, 1 - ((y - (h / 2 - r)) / r) ** 2)) : 1);
+			pos.setX(i, x * k);
+			pos.setZ(i, z * k);
+		}
+		geo.computeVertexNormals();
+		return new THREE.Mesh(geo, body);
+	};
+	const main = rib(0.03, 0.15);
+	main.position.y = 0.074 + 0.075;
+	g.add(main);
+	// dve ramená (vodorovne von a potom hore)
+	for (const [sx, y0, len] of [[1, 0.13, 0.06], [-1, 0.16, 0.045]]) {
+		const out = new THREE.Mesh(new THREE.CylinderGeometry(0.014, 0.014, 0.035, 12), body);
+		out.rotation.z = (Math.PI / 2) * sx;
+		out.position.set(sx * 0.042, y0, 0);
+		const up = rib(0.016, len);
+		up.position.set(sx * 0.056, y0 + len / 2 - 0.004, 0);
+		g.add(out, up);
+	}
+	// tŕne: drobné svetlé bodky na rebrách
+	const sp = new THREE.SphereGeometry(0.0025, 4, 3);
+	for (let i = 0; i < 8; i++) {
+		const a = (i / 8) * Math.PI * 2;
+		for (let j = 0; j < 4; j++) {
+			const s = new THREE.Mesh(sp, spineM);
+			s.position.set(Math.cos(a) * 0.034, 0.1 + j * 0.03, Math.sin(a) * 0.034);
+			g.add(s);
+		}
+	}
+	// ružový kvet navrchu
+	const petal = new THREE.MeshStandardMaterial({ color: 0xff6fa8, roughness: 0.5, emissive: 0x401020, emissiveIntensity: 0.4 });
+	for (let i = 0; i < 6; i++) {
+		const pe = new THREE.Mesh(new THREE.SphereGeometry(0.011, 8, 6), petal);
+		const a = (i / 6) * Math.PI * 2;
+		pe.scale.set(1, 0.45, 0.6);
+		pe.position.set(Math.cos(a) * 0.011, 0.232, Math.sin(a) * 0.011);
+		pe.rotation.y = -a;
+		g.add(pe);
+	}
+	const mid = new THREE.Mesh(new THREE.SphereGeometry(0.006, 8, 6), new THREE.MeshStandardMaterial({ color: 0xffe27a, roughness: 0.6 }));
+	mid.position.y = 0.236;
+	g.add(mid);
+	g.traverse((o) => {
+		if (o.isMesh) {
+			o.castShadow = true;
+			o.receiveShadow = true;
+		}
+	});
+	return g;
+}

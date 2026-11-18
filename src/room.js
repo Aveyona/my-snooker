@@ -7,7 +7,7 @@ import { ACH, TIERS } from './achievements.js';
 import * as THREE from 'three';
 import { boardTexture, BOARD_TEX, BOARD_BOXES } from './board.js';
 import { lemonInGlass } from './lemon.js';
-import { sansevieria } from './plants.js';
+import { sansevieria, cactus } from './plants.js';
 import { CUES, buildCueMesh } from './cues.js';
 import { CHALKS } from './chalks.js';
 import { buildNewspaper, buildMagazine } from './newspaper.js';
@@ -803,6 +803,13 @@ export function buildRoomShell(scene, quality, opts = {}) {
 	};
 	setTrophies([]);
 
+	// 0.32.5: malý kaktus na komode pod tabuľou skóre (vpravo od rádia)
+	{
+		const k = cactus();
+		k.position.set(-ROOM.x + 0.25, ROOM.floor + 0.83, -0.42);
+		k.rotation.y = 0.6;
+		scene.add(k);
+	}
 	// Tabuľa na skóre (F4) a komoda na kratšej stene vľavo: zobrazuje body z hry
 	const SCORE = { y: FY + 1.62, w: 1.5, h: 0.84 };
 	// Nástenka Liga (F12) na ľavej stene vedľa tabule so skóre: štyri ligy s top 5, sezóna a moje miesto
