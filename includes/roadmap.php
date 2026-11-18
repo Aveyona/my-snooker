@@ -162,6 +162,7 @@ function mysn_roadmap() {
 /** Denník zmien (najnovšie hore). */
 function mysn_changelog() {
 	return array(
+		array( '0.31.4', '18. 11. 2026', 'Nápoveda: Shift + koliesko (uhol tága) na papieri Ovládanie myšou aj v Pomocníkovi (ovládanie); na papieri Princíp hry sú čísla gúľ vedľa gúľ, už neprekrývajú ďalší rad.' ),
 		array( '0.31.3', '18. 11. 2026', 'Zdvihnuté tágo (massé) už nezakryje pohľad: časť tága bližšie ako asi 40 cm od kamery plynulo zmizne (pod 14 cm úplne), špica a 30 cm za ňou ostávajú vždy viditeľné.' ),
 		array( '0.31.2', '18. 11. 2026', 'Podsvietenie stojana bez bodového svetla: zmizla svetlá škvrna na doske pri štítkoch a na podlahe, ostáva LED pásik so žiarou.' ),
 		array( '0.31.1', '18. 11. 2026', 'Stojan s tágami (F2): výber farby LED podsvietenia – teplá a studená biela, zelená, modrá, červená, fialová, oranžová alebo vypnuté; voľba sa pamätá.' ),

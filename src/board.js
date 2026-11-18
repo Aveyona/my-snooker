@@ -255,7 +255,7 @@ function drawMouse(g, w, h) {
 	g.fillRect(-14, -160, 28, 70);
 	g.strokeRect(-14, -160, 28, 70);
 	g.restore();
-	const lab = (y, color, t1, t2, x0, y0, t3 = '') => {
+	const lab = (y, color, t1, t2, x0, y0, t3 = '', c3 = '#b3121f') => {
 		g.strokeStyle = color;
 		g.lineWidth = 4;
 		g.beginPath();
@@ -270,14 +270,14 @@ function drawMouse(g, w, h) {
 		g.font = '25px Arial, sans-serif';
 		g.fillText(t2, cx + 170, y + 15);
 		if (t3) {
-			g.fillStyle = '#b3121f';
+			g.fillStyle = c3;
 			g.fillText(t3, cx + 170, y + 44);
 		}
 	};
 	lab(cy - 120, '#2f6fd6', 'Ľavé drž: ťahanie tága', 'myš k sebe odtiahne, dopredu úder', -60, -150);
-	lab(cy - 30, '#c9a24a', 'Koliesko: priblíženie', 'drž: miesto úderu (falša), dvojklik: stred', 0, -125);
-	lab(cy + 50, '#d9822b', 'Pravé drž: pohľad na guľu', 'doľava, doprava krúži, hore priblíži, dole k stolu', 60, -110, 'Pravý klik: späť (z nástenky, stojana, kresla…)');
-	lab(cy + 158, '#555', 'Pohyb bez tlačidla: mierenie', 'pomaly = jemne, Shift = ešte jemnejšie', 0, 60);
+	lab(cy - 30, '#c9a24a', 'Koliesko: priblíženie', 'drž: miesto úderu (falša), dvojklik: stred', 0, -125, 'Shift + koliesko: uhol tága (massé)', '#1d5fa8');
+	lab(cy + 78, '#d9822b', 'Pravé drž: pohľad na guľu', 'doľava, doprava krúži, hore priblíži, dole k stolu', 60, -110, 'Pravý klik: späť (z nástenky, stojana, kresla…)');
+	lab(cy + 180, '#555', 'Pohyb bez tlačidla: mierenie', 'pomaly = jemne, Shift = ešte jemnejšie', 0, 60);
 }
 
 /** Klávesa (kresba): zaoblený štvorček s tieňom a popisom. */
@@ -322,8 +322,8 @@ function ball(g, x, y, r, col, n) {
 		g.fillStyle = '#123524';
 		g.font = 'bold 22px Arial, sans-serif';
 		g.textAlign = 'center';
-		g.fillText(String(n), x, y + r + 24);
 		g.textAlign = 'left';
+		g.fillText(String(n), x + r + 7, y + 8); // číslo vpravo vedľa gule (pod guľou kolidovalo s ďalším radom)
 	}
 }
 
@@ -403,7 +403,7 @@ const DOODLES = {
 			}
 		}
 		const cols = [['#f2c418', 2], ['#0f7a3a', 3], ['#6b3a1e', 4], ['#1747b5', 5], ['#f08aa8', 6], ['#111', 7]];
-		cols.forEach(([c, n], i) => ball(g, x + 10 + (i % 3) * 70, y + 150 + Math.floor(i / 3) * 74, 17, c, n));
+		cols.forEach(([c, n], i) => ball(g, x + 10 + (i % 3) * 70, y + 165 + Math.floor(i / 3) * 56, 17, c, n));
 	},
 	cue(g, x, y) {
 		g.save();
