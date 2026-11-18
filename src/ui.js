@@ -3538,6 +3538,7 @@ export class UI {
 			trophies: 'Rebríček o najlepšie skóre: poháre pre troch najlepších, vpravo 4. až 10. miesto (body a celkový čas). F8, Enter alebo Esc: späť do hry.',
 			chalk: 'Kriedujem špičku tága. Falše budú 3 údery 5x silnejšie.',
 			paintSun: 'Obraz: úplné zatmenie Slnka nad jazerom. Enter, Esc alebo pravé tlačidlo myši: späť do hry.',
+			achBoard: 'Tabuľa Úspechy: úroveň a skúsenosti (XP), vľavo všeobecné úspechy, vpravo špeciálne údery; čiarky ukazujú, koľkokrát si to spravil. Podrobne v telefóne (T), záložka Úspechy. Enter, Esc alebo pravé tlačidlo myši: späť do hry.',
 			paintMoon: 'Obraz: zatmenie Mesiaca (krvavý Mesiac) nad jazerom. Enter, Esc alebo pravé tlačidlo myši: späť do hry.',
 		};
 		if (!(name === 'rack' && this.touchUI)) {

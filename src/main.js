@@ -1011,6 +1011,7 @@ export function start(root, config = {}) {
 			...(room.doorSpot && room.doorSpot() ? [{ id: 'door', act: 'homeDoor', pos: room.doorSpot(), r: 1.05 }] : []), // dvere herne (ako F6)
 			{ id: 'paintSun', act: 'paintSun', pos: room.paintSun.look, r: 0.55 }, // obrazy (len myšou)
 			{ id: 'paintMoon', act: 'paintMoon', pos: room.paintMoon.look, r: 0.55 },
+			{ id: 'achBoard', act: 'achBoard', pos: room.achBoard.look, r: 0.75 }, // kriedová tabuľa Úspechy pri bare
 			// chodba za dverami (F6): svietiace cedule do kancelárie a obývačky
 			...(room.signs.office ? [{ id: 'sign-office', act: 'goOffice', pos: wpos(room.signs.office.mesh), r: 0.2 }] : []),
 			...(room.signs.living ? [{ id: 'sign-living', act: 'goLiving', pos: wpos(room.signs.living.mesh), r: 0.2 }] : []),
@@ -3952,6 +3953,13 @@ export function start(root, config = {}) {
 			ui.setFree(false);
 			enterView('paintSun');
 		},
+		achBoard: () => {
+			hotSet(null);
+			freeMouse = false;
+			ui.setFree(false);
+			enterView('achBoard');
+			achRefresh();
+		},
 		paintMoon: () => {
 			hotSet(null);
 			freeMouse = false;
@@ -5562,6 +5570,19 @@ export function start(root, config = {}) {
 		clearTimeout(achQ.t);
 		achQ.t = setTimeout(achFlush, 1200);
 	};
+	/** Stav úspechov zo servera pre tabuľu pri bare (pri štarte a pri otvorení tabule). */
+	const achRefresh = async () => {
+		if (!user || !online) {
+			return;
+		}
+		try {
+			achData = await online.net.call('ach', null, 'GET');
+			room.setAch(achData);
+		} catch (e) {
+			// tabuľa ostane, ako bola
+		}
+	};
+	setTimeout(achRefresh, 2500);
 	const achFlush = async () => {
 		if (!achOn() || (!achQ.xp && !Object.keys(achQ.ev).length)) {
 			return;
@@ -5572,6 +5593,7 @@ export function start(root, config = {}) {
 		try {
 			const r = await online.net.call('ach/add', body);
 			achData = r;
+			room.setAch({ ...r, last: r && r.new && r.new.length ? r.new[r.new.length - 1] : null });
 			for (const n of (r && r.new) || []) {
 				ui.achPop(n.k, n.t);
 				sound.ding(n.t);

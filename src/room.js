@@ -3,6 +3,7 @@
  * lišty, tmavý strop s trámami, nástenné svietidlá, otvorené dvere do chodby a vybavenie: nástenka s nápovedou
  * (F1), stojan s tágami (F2), tabuľa na skóre, komoda, barový stolík so stoličkami, kreslá, obrazy a kvetina.
  */
+import { ACH, TIERS } from './achievements.js';
 import * as THREE from 'three';
 import { boardTexture, BOARD_TEX, BOARD_BOXES } from './board.js';
 import { lemonInGlass } from './lemon.js';
@@ -960,6 +961,172 @@ export function buildRoomShell(scene, quality, opts = {}) {
 	// Barový stolík a dve vysoké stoličky v rohu
 	const bx = -RX + 1.1;
 	const bz = RZ - 1.1;
+	// 0.32.1: kriedová tabuľa Úspechy na ľavej stene nad barovým stolíkom (medzi rohom a tabuľou skóre),
+	// čiarky po päť ako pri počítaní v bare, písmo kriedou (Caveat)
+	const ACHB = { z: RZ - 1.12, y: FY + 1.72, w: 1.3, h: 0.92 };
+	const achCanvas = document.createElement('canvas');
+	achCanvas.width = 2048;
+	achCanvas.height = Math.round((2048 * ACHB.h) / ACHB.w);
+	const achTex = new THREE.CanvasTexture(achCanvas);
+	achTex.colorSpace = THREE.SRGBColorSpace;
+	achTex.anisotropy = 4;
+	add(new THREE.BoxGeometry(0.05, ACHB.h + 0.1, ACHB.w + 0.1), woodMat, -RX + 0.03, ACHB.y, ACHB.z); // rám
+	const achPlane = add(new THREE.PlaneGeometry(ACHB.w, ACHB.h), new THREE.MeshStandardMaterial({ map: achTex, roughness: 0.92 }), -RX + 0.058, ACHB.y, ACHB.z);
+	achPlane.rotation.y = Math.PI / 2;
+	achPlane.castShadow = false;
+	add(new THREE.BoxGeometry(0.07, 0.025, ACHB.w + 0.06), woodMat, -RX + 0.06, ACHB.y - ACHB.h / 2 - 0.055, ACHB.z); // lišta na kriedu
+	for (const [dz, col, len] of [[0.38, 0xf4f1e8, 0.07], [0.27, 0xf4a8c0, 0.055]]) {
+		const ch = add(new THREE.CylinderGeometry(0.0055, 0.0055, len, 8), new THREE.MeshStandardMaterial({ color: col, roughness: 1 }), -RX + 0.075, ACHB.y - ACHB.h / 2 - 0.036, ACHB.z + dz);
+		ch.rotation.x = Math.PI / 2;
+	}
+	let achData = null;
+	let achPage = 0;
+	const drawAch = () => {
+		const g = achCanvas.getContext('2d');
+		const W = achCanvas.width;
+		const H = achCanvas.height;
+		// tabuľa: tmavá zelená, šmuhy po hubke
+		g.fillStyle = '#25322c';
+		g.fillRect(0, 0, W, H);
+		for (let i = 0; i < 70; i++) {
+			const x = (Math.sin(i * 12.9898) * 0.5 + 0.5) * W;
+			const y = (Math.sin(i * 78.233) * 0.5 + 0.5) * H;
+			const r = 60 + ((i * 37) % 160);
+			const gr = g.createRadialGradient(x, y, 0, x, y, r);
+			gr.addColorStop(0, 'rgba(230,235,225,0.035)');
+			gr.addColorStop(1, 'rgba(230,235,225,0)');
+			g.fillStyle = gr;
+			g.fillRect(x - r, y - r, r * 2, r * 2);
+		}
+		const chalk = (c = '#f1efe6') => {
+			g.fillStyle = c;
+			g.strokeStyle = c;
+			g.shadowColor = 'rgba(255,255,255,0.25)';
+			g.shadowBlur = 3;
+		};
+		const F = (sz, w = 500) => `${w} ${sz}px Caveat, "Segoe Print", "Bradley Hand", cursive`;
+		chalk();
+		g.textAlign = 'center';
+		g.textBaseline = 'alphabetic';
+		g.font = F(120, 700);
+		g.fillText('Úspechy', W / 2, 130);
+		const d = achData;
+		if (!d) {
+			g.font = F(64);
+			g.fillText('Prihlás sa a zbieraj úspechy', W / 2, H / 2);
+			g.font = F(48);
+			g.globalAlpha = 0.7;
+			g.fillText('každá potopená guľa = skúsenosti (XP)', W / 2, H / 2 + 80);
+			g.globalAlpha = 1;
+			achTex.needsUpdate = true;
+			return;
+		}
+		// úroveň, XP a pásik
+		g.font = F(66, 700);
+		g.textAlign = 'left';
+		g.fillText(`Úroveň ${d.level}`, 90, 225);
+		g.textAlign = 'right';
+		g.fillText(`${Number(d.xp).toLocaleString('sk-SK')} XP`, W - 90, 225);
+		const pct = Math.max(0, Math.min(1, (d.xp - d.from) / Math.max(1, d.next - d.from)));
+		g.lineWidth = 4;
+		g.strokeRect(90, 248, W - 180, 26);
+		g.globalAlpha = 0.6;
+		g.fillRect(94, 252, (W - 188) * pct, 18);
+		g.globalAlpha = 1;
+		// úspechy v dvoch stĺpcoch: názov, čiarky po päť (najviac 15, ďalej +n), stupeň alebo postup
+		// vľavo všeobecné, vpravo špeciálne údery
+		const gen = ACH.filter((a) => a.cat === 'gen');
+		const spec = ACH.filter((a) => a.cat === 'spec');
+		const per = Math.max(gen.length, spec.length);
+		const pages = 1;
+		achPage = 0;
+		const list = [...gen, ...Array(per - gen.length).fill(null), ...spec];
+		const colW = (W - 180) / 2;
+		const top = 345;
+		const rowH = (H - top - 120) / per;
+		list.forEach((a, i) => {
+			if (!a) {
+				return;
+			}
+			const col = Math.floor(i / per);
+			const x0 = 90 + col * (colW + 0) + (col ? 40 : 0);
+			const y = top + (i % per) * rowH + rowH * 0.7;
+			const n = (d.count && d.count[a.k]) || 0;
+			const t = (d.tier && d.tier[a.k]) || 0;
+			const th = (d.defs && d.defs[a.k]) || [];
+			const isNew = d.last && d.last.k === a.k;
+			chalk(isNew ? '#ffe27a' : '#f1efe6');
+			g.globalAlpha = n ? 1 : 0.5;
+			g.textAlign = 'left';
+			g.font = F(54, 500);
+			g.fillText(a.name, x0, y);
+			// čiarky
+			const tx = x0 + 330;
+			const marks = Math.min(15, n);
+			g.lineWidth = 4.5;
+			g.lineCap = 'round';
+			for (let m = 0; m < marks; m++) {
+				const grp = Math.floor(m / 5);
+				const k = m % 5;
+				const gx = tx + grp * 78;
+				const wob = Math.sin((i + 1) * (m + 3) * 1.7) * 3;
+				g.beginPath();
+				if (k < 4) {
+					g.moveTo(gx + k * 14 + wob * 0.3, y - 40);
+					g.lineTo(gx + k * 14 - wob * 0.3, y + 2);
+				} else {
+					g.moveTo(gx - 6, y - 8 + wob);
+					g.lineTo(gx + 50, y - 34 - wob);
+				}
+				g.stroke();
+			}
+			if (n > 15) {
+				g.font = F(40, 500);
+				g.fillText(`+${n - 15}`, tx + 3 * 78 + 6, y - 6);
+			}
+			g.textAlign = 'right';
+			g.font = F(46, 700);
+			const xr = x0 + colW - 40;
+			if (t) {
+				chalk(isNew ? '#ffe27a' : t === 4 ? '#bff4f2' : t === 3 ? '#ffe27a' : '#f1efe6');
+				g.fillText(TIERS[t - 1].name.toLowerCase(), xr, y);
+			} else {
+				g.globalAlpha = 0.6;
+				g.fillText(`${n} / ${th[0] || '?'}`, xr, y);
+			}
+			g.globalAlpha = 1;
+		});
+		// deliaca čiara a spodok: posledný úspech, strana
+		chalk();
+		g.globalAlpha = 0.5;
+		g.lineWidth = 3;
+		g.beginPath();
+		g.moveTo(W / 2 + 10, top);
+		g.lineTo(W / 2 + 4, H - 140);
+		g.stroke();
+		g.globalAlpha = 1;
+		g.textAlign = 'left';
+		if (d.last) {
+			const a = ACH.find((x) => x.k === d.last.k);
+			chalk('#ffe27a');
+			g.font = F(56, 700);
+			g.fillText(`Nové: ${a ? a.name : d.last.k} – ${TIERS[d.last.t - 1].name.toLowerCase()}!`, 90, H - 60);
+		}
+		if (pages > 1) {
+			chalk();
+			g.textAlign = 'right';
+			g.font = F(44);
+			g.globalAlpha = 0.75;
+			g.fillText(`strana ${achPage + 1} / ${pages}`, W - 90, H - 60);
+			g.globalAlpha = 1;
+		}
+		g.shadowBlur = 0;
+		achTex.needsUpdate = true;
+	};
+	drawAch();
+	if (document.fonts && document.fonts.load) {
+		Promise.all([document.fonts.load('700 60px Caveat'), document.fonts.load('500 60px Caveat', 'Úspechy čšťžľ')]).then(drawAch, () => null);
+	}
 	add(new THREE.CylinderGeometry(0.32, 0.32, 0.04, 32), darkWood, bx, FY + 1.05, bz);
 	// na barovom stolíku telefón s obrazovkou Môj účet (F10, klik ho zväčší) a dva poháre s vodou
 	const BT = FY + 1.07; // vrch stolíka
@@ -1283,6 +1450,17 @@ export function buildRoomShell(scene, quality, opts = {}) {
 		trophies: { pos: new THREE.Vector3(-0.17, FY + 1.62, -RZ + 2.05), look: new THREE.Vector3(-0.17, FY + 1.6, -RZ) },
 		// obrazy na prednej stene (Ctrl a klik): zatmenie Slnka a zatmenie Mesiaca
 		paintSun: { pos: new THREE.Vector3(2.8, FY + 1.72, RZ - 1.3), look: new THREE.Vector3(2.8, FY + 1.75, RZ) },
+		// 0.32.1: kriedová tabuľa Úspechy pri bare (Ctrl a klik)
+		achBoard: { pos: new THREE.Vector3(-RX + 1.6, ACHB.y, ACHB.z), look: new THREE.Vector3(-RX, ACHB.y, ACHB.z) },
+		/** Údaje tabule úspechov: { xp, level, from, next, count, tier, defs, last: { k, t } } alebo null. */
+		setAch(d) {
+			achData = d ? { ...(achData || {}), ...d, last: d.last || (achData && achData.last) || null } : null;
+			drawAch();
+		},
+		achTurn(dir) {
+			achPage = Math.max(0, achPage + dir);
+			drawAch();
+		},
 		paintMoon: { pos: new THREE.Vector3(-2.8, FY + 1.72, RZ - 1.3), look: new THREE.Vector3(-2.8, FY + 1.75, RZ) },
 		// F7: pohľad z kresla vpravo (sediaci) na stôl, v popredí noviny na stolíku
 		chair: { pos: new THREE.Vector3(1.0, FY + 1.12, RZ - 0.8), look: new THREE.Vector3(-0.2, FY + 0.62, 0.3) },
