@@ -162,6 +162,7 @@ function mysn_roadmap() {
 /** Denník zmien (najnovšie hore). */
 function mysn_changelog() {
 	return array(
+		array( '0.28.4', '18. 11. 2026', 'Nástenka F1, papier Ovládanie myšou: Ctrl (voľná myš a nastavenia myši) a medzerník (voľný pohľad, pravé drž hore, ľavé drž dole).' ),
 		array( '0.28.3', '18. 11. 2026', 'Menu: nová položka Pomocník (predposledná) otvorí nástenku s nápovedou v miestnosti, kde práve si (herňa, kancelária, štadión), ako F1.' ),
 		array( '0.28.2', '18. 11. 2026', 'Nástenka F1, papier Ovládanie myšou: pravý klik vráti späť (z nástenky, stojana, kresla…).' ),
 		array( '0.28.1', '18. 11. 2026', 'Nástenka F1 ako skutočná nástenka: rôzne papiere (linajkový, štvorčekový, žltý lístok, kartička), malé pripináčiky a páska, kresby (klávesy, WASD, Ctrl a pohár, gule, tágo s kriedou), menšie písmo a podrobnejšie ovládanie. Generovanie zvukových efektov čaká až 150 s.' ),

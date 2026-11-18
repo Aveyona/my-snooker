@@ -642,6 +642,22 @@ export function boardTexture(touch = !!(window.matchMedia && window.matchMedia('
 				drawMouse(g, w, h);
 			}
 			g.restore();
+			if (!touch) {
+				// vpravo hore: Ctrl (voľná myš a nastavenia myši) a medzerník (voľný pohľad, hore a dole tlačidlami)
+				const tx = -20;
+				const row = (y, key, kw, l1, l2) => {
+					keycap(g, tx, y, kw, 46, key, 21);
+					g.textBaseline = 'alphabetic';
+					g.fillStyle = '#123524';
+					g.font = 'bold 23px Arial, sans-serif';
+					g.fillText(l1, tx + kw + 16, y + 19);
+					g.fillStyle = '#333';
+					g.font = '21px Arial, sans-serif';
+					g.fillText(l2, tx + kw + 16, y + 44);
+				};
+				row(-h / 2 + 100, 'Ctrl', 78, 'drž: voľná myš', 'a nastavenia myši (šúpatká dole)');
+				row(-h / 2 + 156, 'medzerník', 128, 'voľný pohľad', 'pravé drž = hore, ľavé drž = dole');
+			}
 		} else {
 			g.fillStyle = '#23262e';
 			g.textBaseline = 'top';
