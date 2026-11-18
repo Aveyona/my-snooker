@@ -162,6 +162,7 @@ function mysn_roadmap() {
 /** Denník zmien (najnovšie hore). */
 function mysn_changelog() {
 	return array(
+		array( '0.28.6', '18. 11. 2026', 'Nástenka Liga v herni (aj tabule a karta v kancelárii) sa načíta hneď po štarte hry, nie až po kliknutí na ňu.' ),
 		array( '0.28.5', '18. 11. 2026', 'Voda s citrónom: pohár pri bare v herni (už len jeden), poháre na štadióne pri rozhodcovi a pri hráčoch majú plátok citróna na hladine aj na okraji; aj kresba na nástenke F1.' ),
 		array( '0.28.4', '18. 11. 2026', 'Nástenka F1, papier Ovládanie myšou: Ctrl (voľná myš a nastavenia myši) a medzerník (voľný pohľad, pravé drž hore, ľavé drž dole).' ),
 		array( '0.28.3', '18. 11. 2026', 'Menu: nová položka Pomocník (predposledná) otvorí nástenku s nápovedou v miestnosti, kde práve si (herňa, kancelária, štadión), ako F1.' ),

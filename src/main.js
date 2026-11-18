@@ -5051,6 +5051,9 @@ export function start(root, config = {}) {
 		});
 		online.seatCtx = seatCtxNow;
 		online.away = !lampOn; // zhasnutá lampa v kancelárii: nie som online
+		// 0.28.6: nástenka Liga (F12), tabule v kancelárii a karta hráča sa načítajú hneď po štarte (chvíľu po
+		// načítaní hry, aby nebrzdili štart), nie až po otvorení nástenky alebo kancelárie
+		setTimeout(() => refreshLeague().catch(() => {}), 2500);
 	}
 	// výzva z webového chatu (profil v My Chat → 🎱 Vyzvať na partiu): ?challenge=<id hráča> pošle pozvánku
 	const chq = new URLSearchParams(location.search);
