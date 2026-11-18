@@ -4277,8 +4277,16 @@ export function start(root, config = {}) {
 		},
 		key: (k) => {
 			const lk = k.toLowerCase();
-			if (phoneFromKey && ui.phoneOpen() && (lk === 'escape' || lk === 't')) {
-				actions.phoneClose(); // telefón otvorený klávesom T: Esc alebo T ho zavrie
+			if (ui.phoneOpen() && lk === 't') {
+				actions.phoneClose(); // T znova: telefón sa zavrie
+				return true;
+			}
+			if (ui.phoneOpen() && lk === 'escape' && !(view === 'bar')) {
+				// Esc: telefón sa zavrie a ukáže sa hlavné menu
+				phoneFromKey = false;
+				ui.openPhone(false);
+				controls.uncapture();
+				ui.showMenu(true);
 				return true;
 			}
 			if (view === 'fiesta') {

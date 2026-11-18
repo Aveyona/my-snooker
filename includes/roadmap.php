@@ -162,6 +162,7 @@ function mysn_roadmap() {
 /** Denník zmien (najnovšie hore). */
 function mysn_changelog() {
 	return array(
+		array( '0.29.3', '18. 11. 2026', 'Telefón: tlačidlo Zavrieť bez nesprávneho (Esc); Esc telefón zavrie a ukáže hlavné menu, T ho zavrie.' ),
 		array( '0.29.2', '18. 11. 2026', 'Telefón Môj účet: nové záložky Tágo (moje tágo, sila, falše, dĺžka, opotrebovanie špice s pruhom, krieda, Vymeniť tágo) a Zápasy (5 posledných ligových zápasov so skóre, bodmi a ELO). Oprava: tlačidlo Nastavenia hry v telefóne otvorí nastavenia. Zoznam klávesov z telefónu odstránený.' ),
 		array( '0.29.1', '18. 11. 2026', 'Telefón Môj účet: meno sa dá zmeniť len raz za 30 dní (kontroluje server, telefón ukáže, odkedy znova); čitateľnejšie tlačidlo Odhlásiť sa.' ),
 		array( '0.29.0', '18. 11. 2026', 'Telefón Môj účet (T, telefón pri bare) je aplikácia priamo v hre: záložka Profil (meno, e-mail, úroveň, člen od, zmena mena, zmena hesla, Môj účet na webe, e-shop, odhlásenie), Snooker (liga, body, ELO, partie, najlepšie skóre, brejk, tágá) a Nastavenia (nastavenia hry, pomocník, mapa, klávesy).' ),

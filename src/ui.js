@@ -870,6 +870,9 @@ export class UI {
 	}
 
 	showMenu(on, started) {
+		if (on && this.phoneOpen()) {
+			this.phone.classList.add('mysn-hidden'); // Esc: telefón sa zavrie a ukáže sa menu
+		}
 		if (on && !this.menuOpen()) {
 			this._menuAt = performance.now(); // kedy sa menu otvorilo (Esc hneď potom ho nezavrie)
 		}
@@ -2600,7 +2603,7 @@ export class UI {
 			['settings', '⚙️', 'Nastavenia'],
 		];
 		scr.innerHTML =
-			`<div class="mysn-phone-bar"><b>Môj účet</b><button type="button" class="mysn-btn" data-a="phoneClose">Zavrieť (Esc)</button></div>` +
+			`<div class="mysn-phone-bar"><b>Môj účet</b><button type="button" class="mysn-btn" data-a="phoneClose">Zavrieť</button></div>` +
 			`<div class="mysn-ph-body">${body}</div>` +
 			`<div class="mysn-ph-tabs">${tabs.map(([k, ic, t]) => `<button type="button" data-tab="${k}" class="${k === tab ? 'mysn-on' : ''}"><span>${ic}</span>${t}</button>`).join('')}</div>`;
 		scr.querySelectorAll('[data-tab]').forEach((b) =>
