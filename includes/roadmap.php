@@ -162,6 +162,7 @@ function mysn_roadmap() {
 /** Denník zmien (najnovšie hore). */
 function mysn_changelog() {
 	return array(
+		array( '0.25.1', '18. 11. 2026', 'Na štadióne: keď hráč, ktorý potrebuje snookery, nevzdá a klikne Pokračovať, rozhodca ohlási The player plays on a diváci zareagujú (potlesk, jasot alebo óóó s potleskom), rovnako u hráčov aj divákov.' ),
 		array( '0.25.0', '18. 11. 2026', 'Ponuka vzdať sa: keď hráč na rade už potrebuje snookery (ani všetky body na stole nestačia), raz za frame mu hra ponúkne Vzdať frame (zápas na viac framov) alebo Vzdať partiu, prípadne Pokračovať. Nové vzdanie framu: súper frame vyhrá, hrá sa ďalší frame alebo zápas končí.' ),
 		array( '0.24.1', '18. 11. 2026', 'Oprava časomiery v lige: čas na ťah sa počíta od skutočného začiatku ťahu na serveri (aj po prepnutí karty a obnovení stránky), nie od chvíle, keď ho prehliadač spracoval.' ),
 		array( '0.24.0', '17. 11. 2026', 'Nešportové správanie v lige: pri štvrtom grgnutí alebo prdnutí súper +4 a posledné upozornenie, pri piatom súper +4, pri šiestom rozhodca hráča diskvalifikuje (zápas končí, súper vyhráva, ligové body ako pri bežnej výhre). Nové hlásenia rozhodcu Posledné upozornenie a Diskvalifikácia.' ),

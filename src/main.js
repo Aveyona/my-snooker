@@ -1385,10 +1385,27 @@ export function start(root, config = {}) {
 	};
 	const condSeen = new Set();
 	const applyConduct = (c) => {
-		if (!c || !c.id || condSeen.has(c.id) || !['warning', 'penalty', 'lastwarn', 'disq'].includes(c.level)) {
+		if (!c || !c.id || condSeen.has(c.id) || !['warning', 'penalty', 'lastwarn', 'disq', 'playon'].includes(c.level)) {
 			return false;
 		}
 		condSeen.add(c.id);
+		if (c.level === 'playon') {
+			// hráč potrebuje snookery a nevzdal (0.25.1): len na štadióne, rozhodca ohlási a diváci zareagujú
+			if (venue !== 'league') {
+				return true;
+			}
+			const who = String(c.name || 'Hráč').slice(0, 40);
+			refVoice.say('ref-playon', 200);
+			let hsh = 0;
+			for (const ch of String(c.id)) {
+				hsh = (hsh * 31 + ch.charCodeAt(0)) >>> 0;
+			}
+			const k = hsh % 10; // rovnaká reakcia u všetkých (podľa zápasu a framu)
+			const r = k < 5 ? { s: 'applause-small', g: 1.1, v: hsh } : k < 8 ? { s: 'applause-big', n: 'crowd-cheer', v: hsh } : { s: 'crowd-wow', n: 'applause-small', v: hsh };
+			setTimeout(() => crowdPlay(r), 1900); // po hlásení rozhodcu
+			ui.toast(`${who} pokračuje, potrebuje snookery.`);
+			return true;
+		}
 		const pos = venue === 'league' ? stadium.refPos() : null;
 		const name = String(c.name || 'Hráč').slice(0, 40);
 		const m = game.match;
@@ -2792,11 +2809,21 @@ export function start(root, config = {}) {
 		},
 		foundAccept: () => online && online.accept(true),
 		concede: (yes) => {
-			const frame = !!(concedeNow && concedeNow.info.frame);
+			const frame = !!(concedeNow && concedeNow.info && concedeNow.info.frame);
+			const concedeKey = concedeNow && concedeNow.info ? concedeNow.info.key : '';
 			concedeNow = { key: '', seq: -1, info: null }; // zavrieť (do konca ťahu sa neukáže)
 			if (freeMouse) {
 				freeMouse = false;
 				ui.setFree(false);
+			}
+			const m = game.match;
+			if (!yes && online && m && venue === 'league' && concedeKey) {
+				// pokračujem: rozhodca a diváci na štadióne (súperovi a divákom ide správa ako pri nešportovom správaní)
+				const me = m.me ? 1 : 0;
+				const c = { id: concedeKey + ':playon', who: me, level: 'playon', name: (m.players && m.players[me] && m.players[me].name) || (user && user.name) || '' };
+				applyConduct(c);
+				online.rtcSendOpp({ k: 'cond', c });
+				online.wsend({ k: 'w-cond', c });
 			}
 			if (yes && online) {
 				if (frame) {
