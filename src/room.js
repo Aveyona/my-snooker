@@ -6,6 +6,7 @@
 import * as THREE from 'three';
 import { boardTexture, BOARD_TEX, BOARD_BOXES } from './board.js';
 import { lemonInGlass } from './lemon.js';
+import { sansevieria } from './plants.js';
 import { CUES, buildCueMesh } from './cues.js';
 import { CHALKS } from './chalks.js';
 import { buildNewspaper, buildMagazine } from './newspaper.js';
@@ -1146,18 +1147,13 @@ export function buildRoomShell(scene, quality, opts = {}) {
 	};
 	setClock(0);
 
-	// Kvetina v rohu pri dverách
+	// Kvetina v rohu pri dverách: svokrine jazyky v terakotovom kvetináči (0.28.7)
 	const px = RX - 0.5;
 	const pz = -RZ + 0.5;
-	add(new THREE.CylinderGeometry(0.2, 0.15, 0.4, 20), new THREE.MeshStandardMaterial({ color: 0x7a3b22, roughness: 0.7 }), px, FY + 0.2, pz);
-	const leafMat = new THREE.MeshStandardMaterial({ color: 0x2f6b2f, roughness: 0.7 });
-	for (let i = 0; i < 14; i++) {
-		const a = (i / 14) * Math.PI * 2;
-		const r = 0.08 + (i % 3) * 0.06;
-		const leaf = add(new THREE.SphereGeometry(0.11 + (i % 2) * 0.04, 10, 8), leafMat, px + Math.cos(a) * r, FY + 0.55 + (i % 4) * 0.18, pz + Math.sin(a) * r);
-		leaf.scale.set(1, 1.6, 0.5);
-		leaf.rotation.y = a;
-	}
+	const plant = sansevieria();
+	plant.position.set(px, FY, pz);
+	plant.rotation.y = 0.6;
+	scene.add(plant);
 
 	// miesta na státie pre online divákov (sledovanie tréningu alebo hry o skóre): pri stenách, mimo nábytku, tvárou k stolu
 	const SPOTS = [
