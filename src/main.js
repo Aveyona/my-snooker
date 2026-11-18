@@ -1401,7 +1401,10 @@ export function start(root, config = {}) {
 				hsh = (hsh * 31 + ch.charCodeAt(0)) >>> 0;
 			}
 			const k = hsh % 10; // rovnaká reakcia u všetkých (podľa zápasu a framu)
-			const r = k < 5 ? { s: 'applause-small', g: 1.1, v: hsh } : k < 8 ? { s: 'applause-big', n: 'crowd-cheer', v: hsh } : { s: 'crowd-wow', n: 'applause-small', v: hsh };
+			// x = o koľko bodov nestačí stôl (koľko treba získať snookermi): do 14 (asi dva snookery) diváci povzbudia,
+			// pri väčšom rozdiele sa zasmejú
+			const x = Number(c.x) || 0;
+			const r = x > 14 ? { s: 'laugh', g: x > 30 ? 1.2 : 1, v: hsh } : k < 5 ? { s: 'applause-small', g: 1.1, v: hsh } : k < 8 ? { s: 'applause-big', n: 'crowd-cheer', v: hsh } : { s: 'crowd-wow', n: 'applause-small', v: hsh };
 			setTimeout(() => crowdPlay(r), 1900); // po hlásení rozhodcu
 			ui.toast(`${who} pokračuje, potrebuje snookery.`);
 			return true;
@@ -2811,6 +2814,7 @@ export function start(root, config = {}) {
 		concede: (yes) => {
 			const frame = !!(concedeNow && concedeNow.info && concedeNow.info.frame);
 			const concedeKey = concedeNow && concedeNow.info ? concedeNow.info.key : '';
+			const concedeX = concedeNow && concedeNow.info ? concedeNow.info.lead - concedeNow.info.rem : 0;
 			concedeNow = { key: '', seq: -1, info: null }; // zavrieť (do konca ťahu sa neukáže)
 			if (freeMouse) {
 				freeMouse = false;
@@ -2820,7 +2824,7 @@ export function start(root, config = {}) {
 			if (!yes && online && m && venue === 'league' && concedeKey) {
 				// pokračujem: rozhodca a diváci na štadióne (súperovi a divákom ide správa ako pri nešportovom správaní)
 				const me = m.me ? 1 : 0;
-				const c = { id: concedeKey + ':playon', who: me, level: 'playon', name: (m.players && m.players[me] && m.players[me].name) || (user && user.name) || '' };
+				const c = { id: concedeKey + ':playon', who: me, level: 'playon', x: concedeX, name: (m.players && m.players[me] && m.players[me].name) || (user && user.name) || '' };
 				applyConduct(c);
 				online.rtcSendOpp({ k: 'cond', c });
 				online.wsend({ k: 'w-cond', c });
