@@ -1206,6 +1206,12 @@ export function buildStadium(scene, quality, clock = 45) {
 			drawPaper();
 			return { page: padPage, count: PAD_PAGES };
 		},
+		/** F1 blok: strana n (0 až 2). */
+		padGo(n) {
+			padPage = Math.max(0, Math.min(PAD_PAGES - 1, n | 0));
+			drawPaper();
+			return { page: padPage, count: PAD_PAGES };
+		},
 		/** Variant podsvietenia stojana (1 až 4). */
 		setRackStyle(n) {
 			rackStyle = RACK_STYLES[n] ? n : 1;

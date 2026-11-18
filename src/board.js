@@ -4,36 +4,50 @@
  */
 import * as THREE from 'three';
 
+// Nástenka 2 (0.28.0): 6 papierov v mriežke 3 x 2; F1 a potom 1 až 6 (alebo klik, šípky) priblíži papier.
+// Papier s myšou (alebo telefónom na mobile) je druhý.
 const PAPERS = [
 	{
 		title: 'Klávesy',
 		lines: [
-			'F1  táto nástenka   F2  stojan s tágami a kriedami',
-			'F3  príslušenstvo: 1 krieda, 2 krížik, 3 pavúk,',
-			'      4 vysoký pavúk, 5 nové postavenie,',
-			'      6 predĺženie tága, 7 predĺženie dole',
+			'F1  nástenka: 1 až 6 papier, šípky ďalší',
+			'F2  stojan s tágami a kriedami',
+			'F3  príslušenstvo: krieda, krížik, pavúky,',
+			'      nové postavenie, predĺženie tága',
 			'F4  tabuľa so skóre   F6  dvere (sledovanie)',
 			'F7  kreslo so správami (C noviny, V RSS)',
 			'F8  rebríček   F9  rádio (šípky, P)',
 			'F10 bar s telefónom   F12 nástenka Liga',
-			'Tab  stôl zhora (vo voľnej kamere náhľad)   M  mapa',
-			'Medzerník  voľná kamera   Esc  menu',
-			'Z späť, B biela do ruky, R nové rozostavenie,',
-			'S preskočiť, Enter polož bielu, šípky: jemné',
-			'V partii: N napiť sa, G grgnúť, H prdnúť (v lige trest)',
+			'Tab  stôl zhora   M  mapa miestností',
+			'Esc  menu   F5 obnoviť   F11 celá obrazovka',
+		],
+	},
+	null, // obrázok myši
+	{
+		title: 'Voľný pohľad',
+		lines: [
+			'Medzerník: do voľného pohľadu a späť.',
+			'Myš: rozhliadanie.',
+			'W A S D alebo šípky: chôdza, Shift rýchlo.',
+			'E alebo pravé drž: hore,',
+			'   Q alebo ľavé drž: dole.',
+			'Klik na predmet: otvorí ho (stojan, rádio…).',
+			'Pravé tlačidlo v predmete: späť',
+			'   do voľného pohľadu.',
+			'Tab: náhľad stola zhora   Esc: za tágo',
 		],
 	},
 	{
-		title: 'Ctrl a nastavenia myši',
+		title: 'Pri stole a Ctrl',
 		lines: [
-			'Ctrl drž: voľná myš, kurzor a tlačidlá dole.',
-			'Ctrl a klik na predmet: urobí jeho kláves.',
-			'Šúpatká pri Ctrl (0,3× až 3×, pamätajú sa):',
-			'   Otáčanie myšou: mierenie a kamera,',
-			'   Ťahanie tága: koľko ťahať na silný úder,',
-			'   Pravé tlačidlo: pohľad okolo gule.',
-			'Shift: jemné mierenie (tágá so Shift),',
-			'   na stojane sa dá zapnúť natrvalo.',
+			'Z späť   B biela do ruky   R nové rozostavenie',
+			'S preskočiť   Enter polož bielu',
+			'Šípky: jemné mierenie, Shift ešte jemnejšie.',
+			'Ctrl drž: voľná myš, kurzor a šúpatká dole',
+			'   (otáčanie, ťahanie tága, pravé tlačidlo).',
+			'Ctrl a klik na predmet: otvorí ho.',
+			'N napiť sa: ďalší úder silnejšia falša',
+			'G grgnúť   H prdnúť (v lige sa trestá)',
 		],
 	},
 	{
@@ -41,39 +55,25 @@ const PAPERS = [
 		lines: [
 			'Bielou guľou potápaj ostatné gule.',
 			'Body: červená 1, žltá 2, zelená 3,',
-			'hnedá 4, modrá 5, ružová 6, čierna 7.',
-			'Striedavo červená a farba.',
-			'Faul: súper dostane aspoň 4 body.',
-			'Hrať: jeden frame o najlepšie skóre,',
-			'   vyhráva najviac bodov za najkratší čas,',
+			'   hnedá 4, modrá 5, ružová 6, čierna 7.',
+			'Striedavo červená a farba (body za farbu,',
+			'   ktorá spadne), potom farby po poradí.',
+			'Faul: súper aspoň 4 body a vyberie, kto hrá.',
+			'Hrať: frame o najlepšie skóre za čas,',
 			'   fauly sa odčítajú, rebríček F8.',
-			'Krieda (F3): falše 5x, vydrží 3 údery.',
-			'Kruh dole: dotyk gúľ zhora,',
-			'   uhol a plnosť zásahu.',
+			'Kruh dole: dotyk gúľ, uhol a plnosť zásahu.',
 		],
 	},
 	{
-		title: 'Tágá (F2)',
+		title: 'Tágá a príslušenstvo',
 		lines: [
-			'Desať tág, vlastné tágo zo šablóny.',
-			'Úpravy v rozpočte: čo pridáš,',
-			'   inde sa ubere (otázniky vysvetlia).',
+			'F2: desať tág, vlastné tágo zo šablóny.',
 			'Špica: mäkká lepšie falše, tvrdá silnejšia,',
-			'   opotrebuje sa (asi 1000 úderov),',
-			'   od 80 % nepresná, vymeň ju na stojane.',
-			'Farba špice a kriedy sa dá vybrať.',
-		],
-	},
-	{
-		title: 'Dosah a pomôcky',
-		lines: [
-			'Ruka na mostíku najviac 95 cm',
-			'   od mantinelu, ruka na rukoväti 55 cm.',
-			'Ďalej: krížik alebo pavúk (F3, 2 až 4)',
-			'   alebo predĺženie 15, 30, 45 cm (6).',
+			'   opotrebuje sa, od 80 % nepresná (vymeň).',
+			'Krieda (F3): falše 5×, vydrží 3 údery.',
+			'Ruka dosiahne 95 cm od mantinelu,',
+			'   ďalej krížik, pavúk alebo predĺženie (F3).',
 			'Červený nápis pri mierení: nedosiahneš.',
-			'Krížik ide aj pri mantineli,',
-			'   pavúky nie.',
 		],
 	},
 ];
@@ -83,17 +83,26 @@ const PAPERS_TOUCH = [
 	{
 		title: 'Ovládanie prstom',
 		lines: [
-			'Ťahaj doľava a doprava: mierenie',
-			'   (vpravo hore alebo vľavo dole).',
+			'Ťahaj doľava a doprava: mierenie.',
 			'Vpravo dole: prst dole odtiahne tágo,',
 			'   rýchlo hore = úder, sila podľa rýchlosti.',
 			'Dva prsty: priblíženie a oddialenie.',
-			'Vľavo hore ťukni: chat.',
-			'Kruh s okom (keď mieriš na guľu): drž a ťahaj,',
-			'   hore priblíži, do strán krúži, dole k stolu.',
-			'Miesto úderu: posuň bod na bielej (falša),',
-			'   tlačidlo Do stredu ho vráti.',
+			'Kruh s okom: drž a ťahaj (hore priblíži,',
+			'   do strán krúži, dole k stolu).',
+			'Miesto úderu: posuň bod na bielej (falša).',
 			'Po výstrele prst otáča kameru okolo bielej.',
+		],
+	},
+	null, // obrázok telefónu
+	{
+		title: 'Voľný pohľad',
+		lines: [
+			'Panák vľavo: do voľného pohľadu a späť.',
+			'Ťahaj prstom: rozhliadanie.',
+			'Ovládač vpravo dole: chôdza.',
+			'▲ ▼ vpravo: hore a dole.',
+			'Ťuk na predmet: otvorí ho.',
+			'Späť (dole v strede): za tágo.',
 		],
 	},
 	{
@@ -102,12 +111,10 @@ const PAPERS_TOUCH = [
 			'☰ hlavné menu: Hra, Herňa, Tréning.',
 			'Šípka dole v strede: spodný panel',
 			'   (citlivosť prsta, Späť, Biela do ruky).',
-			'Šípka na stôl: pohľad zhora (len pozeranie).',
-			'Panák: voľný pohľad, ovládač = chôdza,',
-			'   ▲ ▼ hore a dole, ťuk na predmet ho otvorí.',
-			'Modrý štvorček: príslušenstvo',
-			'   (krieda, nádstavce, predĺženie).',
-			'Zameriavač: jemné mierenie (niektoré tágá).',
+			'Šípka na stôl: pohľad zhora.',
+			'Modrý štvorček: príslušenstvo.',
+			'Zameriavač: jemné mierenie.',
+			'Pohár: voda, grgnúť, prdnúť.',
 		],
 	},
 	{
@@ -115,41 +122,44 @@ const PAPERS_TOUCH = [
 		lines: [
 			'Bielou guľou potápaj ostatné gule.',
 			'Body: červená 1, žltá 2, zelená 3,',
-			'hnedá 4, modrá 5, ružová 6, čierna 7.',
-			'Striedavo červená a farba.',
-			'Faul: súper dostane aspoň 4 body.',
-			'Hrať: jeden frame o najlepšie skóre,',
-			'   vyhráva najviac bodov za najkratší čas,',
+			'   hnedá 4, modrá 5, ružová 6, čierna 7.',
+			'Striedavo červená a farba (body za farbu,',
+			'   ktorá spadne), potom farby po poradí.',
+			'Faul: súper aspoň 4 body a vyberie, kto hrá.',
+			'Hrať: frame o najlepšie skóre za čas,',
 			'   fauly sa odčítajú, rebríček v ☰ Herňa.',
-			'Krieda (príslušenstvo): falše 5x, 3 údery.',
-			'Kruh hore: dotyk gúľ zhora,',
-			'   uhol a plnosť zásahu.',
 		],
 	},
 	{
-		title: 'Tágá (☰ Herňa)',
+		title: 'Tágá a príslušenstvo',
 		lines: [
-			'Desať tág, vyberáš šípkami ‹ ›',
-			'   alebo ťuknutím na tágo v stojane.',
-			'Ikony vpravo: Špica, Krieda, Vlastné, i.',
-			'Vlastné tágo zo šablóny, úpravy v rozpočte.',
+			'☰ Herňa: stojan, desať tág (‹ › alebo ťuk),',
+			'   vlastné tágo zo šablóny.',
 			'Špica: mäkká lepšie falše, tvrdá silnejšia,',
 			'   opotrebuje sa, od 80 % nepresná.',
-		],
-	},
-	{
-		title: 'Dosah a príslušenstvo',
-		lines: [
-			'Ruka na mostíku najviac 95 cm',
-			'   od mantinelu, ruka na rukoväti 55 cm.',
-			'Ďalej: krížik alebo pavúk',
-			'   alebo predĺženie 15, 30, 45 cm',
-			'   (modrý štvorček, len pri stole).',
+			'Modrý štvorček: krieda (falše 5×, 3 údery),',
+			'   krížik, pavúk, predĺženie (pri stole).',
 			'Červený nápis pri mierení: nedosiahneš.',
-			'Krížik ide aj pri mantineli, pavúky nie.',
 		],
 	},
 ];
+
+/** Rozmery textúry nástenky a papiere [x, y, šírka, výška, natočenie] (aj pre priblíženie papiera). */
+export const BOARD_TEX = { W: 3072, H: 1360 };
+export const BOARD_BOXES = [
+	[50, 170, 960, 560, -0.006],
+	[1056, 170, 960, 560, 0.005],
+	[2062, 170, 960, 560, -0.006],
+	[50, 770, 960, 560, 0.006],
+	[1056, 770, 960, 560, -0.005],
+	[2062, 770, 960, 560, 0.006],
+];
+export const BOARD_COUNT = 6;
+/** Názov papiera (pre lištu pri priblížení). */
+export function boardTitle(i, touch = !!(window.matchMedia && window.matchMedia('(hover: none), (pointer: coarse)').matches)) {
+	const p = (touch ? PAPERS_TOUCH : PAPERS)[i];
+	return p ? p.title : touch ? 'Časti obrazovky' : 'Ovládanie myšou';
+}
 
 /** Mobil: obrázok telefónu so 4 časťami obrazovky (papier vpravo dole namiesto myši). */
 function drawPhone(g, w) {
@@ -257,8 +267,8 @@ function drawMouse(g, w, h) {
 }
 
 export function boardTexture(touch = !!(window.matchMedia && window.matchMedia('(hover: none), (pointer: coarse)').matches)) {
-	const W = 3072;
-	const H = 1360;
+	const W = BOARD_TEX.W;
+	const H = BOARD_TEX.H;
 	const c = document.createElement('canvas');
 	c.width = W;
 	c.height = H;
@@ -282,16 +292,8 @@ export function boardTexture(touch = !!(window.matchMedia && window.matchMedia('
 	g.textBaseline = 'middle';
 	g.fillText('Nápoveda', 0, 0);
 	g.restore();
-	// papiere: 3 stĺpce hore, dole 2 papiere a obrázok myši
-	const boxes = [
-		[50, 170, 1000, 640, -0.008],
-		[1090, 170, 920, 470, 0.01],
-		[2050, 170, 970, 560, -0.01],
-		[50, 850, 980, 470, 0.009],
-		[1090, 680, 920, 640, -0.006],
-	];
-	const papers = (touch ? PAPERS_TOUCH : PAPERS).map((p, i) => ({ ...p, box: boxes[i] }));
-	papers.push({ title: touch ? 'Časti obrazovky' : 'Ovládanie myšou', mouse: true, box: [2050, 770, 970, 550, 0.008] });
+	// papiere: mriežka 3 x 2 (na papieri číslo, ktorým sa priblíži)
+	const papers = (touch ? PAPERS_TOUCH : PAPERS).map((p, i) => (p ? { ...p, box: BOARD_BOXES[i] } : { title: touch ? 'Časti obrazovky' : 'Ovládanie myšou', mouse: true, box: BOARD_BOXES[i] }));
 	papers.forEach((p, i) => {
 		const [x, y, w, h, rot] = p.box;
 		g.save();
@@ -303,8 +305,13 @@ export function boardTexture(touch = !!(window.matchMedia && window.matchMedia('
 		g.fillRect(-w / 2, -h / 2, w, h);
 		g.fillStyle = ['#c0392b', '#2f6fd6', '#2a9d8f', '#c9a24a', '#7b3fb5', '#e8781e'][i];
 		g.beginPath();
-		g.arc(0, -h / 2 + 22, 14, 0, Math.PI * 2);
+		g.arc(w / 2 - 50, -h / 2 + 62, 30, 0, Math.PI * 2); // špendlík s číslom papiera (kláves 1 až 6)
 		g.fill();
+		g.fillStyle = '#fff';
+		g.font = 'bold 38px Arial, sans-serif';
+		g.textAlign = 'center';
+		g.textBaseline = 'middle';
+		g.fillText(String(i + 1), w / 2 - 50, -h / 2 + 64);
 		g.fillStyle = '#123524';
 		g.font = 'bold 48px Georgia, serif';
 		g.textAlign = 'left';

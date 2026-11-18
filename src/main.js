@@ -9,6 +9,7 @@ import { buildTable, buildRoom } from './table.js';
 import { buildRoomShell, ROOM } from './room.js';
 import { buildRadioCorner, RadioPlayer, RADIO } from './radio.js';
 import { buildStadium } from './stadium.js';
+import { BOARD_COUNT, boardTitle } from './board.js';
 import { buildOffice } from './office.js';
 import { zoomCfg, camLowCfg } from './camZoom.js';
 import { Crowd } from './fans.js';
@@ -1339,10 +1340,50 @@ export function start(root, config = {}) {
 	 * Hráč v partii (0.27.0): N napitie sa vody (ďalší úder silnejšia falša, 15x s kriedou), G grgnutie, H prdnutie
 	 * (súperovi sa zavlní obraz); v lige G a H: napomenutie, potom súper +4, pri šiestom diskvalifikácia.
 	 */
-	/** F1 blok na štadióne: ďalšia alebo predošlá strana. */
+	/** F1 blok na štadióne: ďalšia alebo predošlá strana; v herni ďalší papier nástenky. */
 	const padTurn = (d) => {
+		if (venue !== 'league') {
+			boardFocus(boardIdx < 0 ? (d > 0 ? 0 : BOARD_COUNT - 1) : (boardIdx + d + BOARD_COUNT) % BOARD_COUNT);
+			return;
+		}
 		const p = stadium.padTurn(d);
 		ui.padNav(true, p.page, p.count);
+	};
+	/**
+	 * F1 nástenka v herni (0.28.0): i = 0 až 5 priblíži papier (kamera tak, aby bol celý papier vidieť aj na
+	 * mobile na výšku), -1 = celá nástenka.
+	 */
+	let boardIdx = -1;
+	const boardClick = (e) => {
+		if (boardIdx >= 0) {
+			boardFocus(-1);
+			return;
+		}
+		const rr = renderer.domElement.getBoundingClientRect();
+		const ray = new THREE.Raycaster();
+		ray.setFromCamera(new THREE.Vector2(((e.clientX - rr.left) / rr.width) * 2 - 1, -((e.clientY - rr.top) / rr.height) * 2 + 1), rig.camera);
+		const i = room.boardPaperAt(ray);
+		if (i >= 0) {
+			boardFocus(i);
+		}
+	};
+	const boardFocus = (i) => {
+		if (view !== 'board' || venue === 'league') {
+			return;
+		}
+		boardIdx = i;
+		if (i < 0) {
+			rig.setView(room.board.pos, room.board.look.clone());
+			ui.padNav(true, -1, BOARD_COUNT, ui.touchUI ? 'Ťukni na papier' : '1 až 6 alebo klik: papier');
+			return;
+		}
+		const v = room.boardPaper(i);
+		const cam = rig.camera;
+		const vf = (cam.fov * Math.PI) / 180;
+		const hf = 2 * Math.atan(Math.tan(vf / 2) * cam.aspect);
+		const d = Math.max(0.26 / Math.tan(vf / 2), 0.44 / Math.tan(hf / 2)); // papier 0,81 x 0,47 m s okrajom
+		rig.setView(v.look.clone().add(new THREE.Vector3(0, 0, d)), v.look.clone());
+		ui.padNav(true, i, BOARD_COUNT, boardTitle(i, ui.touchUI));
 	};
 	let waterNext = false; // napil som sa: ďalší môj úder má silnejšiu falšu (server to vie, inak by úder neprijal)
 	const playerSnd = (lk) => {
@@ -2040,7 +2081,10 @@ export function start(root, config = {}) {
 			ui.openSnookerRules(false);
 			ui.openLeagueRules(false);
 		}
-		if (!(venue === 'league' && name === 'board')) {
+		if (name === 'board' && venue !== 'league') {
+			boardIdx = -1; // herňa: najprv celá nástenka, papier sa priblíži číslom, klikom alebo šípkami
+			ui.padNav(true, -1, BOARD_COUNT, ui.touchUI ? 'Ťukni na papier' : '1 až 6 alebo klik: papier');
+		} else if (!(venue === 'league' && name === 'board')) {
 			ui.padNav(false);
 		}
 		room.setRackView(name === 'rack');
@@ -2128,6 +2172,8 @@ export function start(root, config = {}) {
 		if (was === 'board') {
 			ui.openSnookerRules(false);
 			ui.openLeagueRules(false);
+			ui.padNav(false);
+			boardIdx = -1;
 		}
 		room.setRackView(false);
 		if (venue === 'league') {
@@ -4037,6 +4083,10 @@ export function start(root, config = {}) {
 		},
 		// mobil: ťuknutie vo voľnom pohľade na predmet ho otvorí
 		viewTap: (e) => {
+			if (view === 'board' && venue !== 'league') {
+				boardClick(e); // mobil: ťuk na papier nástenky ho priblíži
+				return;
+			}
 			if (view === 'office') {
 				// mobil, kancelária: ťuknutie na predmet ho otvorí (ako Ctrl + klik na PC); mapa: ťuk na špendlík
 				const rr = renderer.domElement.getBoundingClientRect();
@@ -4069,6 +4119,10 @@ export function start(root, config = {}) {
 			}
 		},
 		viewDown: (e) => {
+			if (view === 'board' && venue !== 'league' && e.button === 0 && e.pointerType !== 'touch') {
+				boardClick(e); // klik na papier nástenky ho priblíži (na celej nástenke), druhý klik späť
+				return;
+			}
 			if (e.button === 2 && viewFromFree && view && !['free', 'office'].includes(view) && !game.spectating) {
 				backToFree(); // predmet otvorený z voľného pohľadu: pravé tlačidlo vráti späť do voľného pohľadu
 				return;
@@ -4469,11 +4523,25 @@ export function start(root, config = {}) {
 					}
 					return true;
 				}
+				if (view === 'board' && /^[1-6]$/.test(lk)) {
+					// F1: číslo papiera (herňa 1 až 6) alebo strany bloku (štadión 1 až 3)
+					if (venue === 'league') {
+						const p = stadium.padGo(Number(lk) - 1);
+						ui.padNav(true, p.page, p.count);
+					} else {
+						boardFocus(Number(lk) - 1);
+					}
+					return true;
+				}
+				if (view === 'board' && venue !== 'league' && boardIdx >= 0 && (lk === 'escape' || lk === 'backspace')) {
+					boardFocus(-1); // z papiera späť na celú nástenku
+					return true;
+				}
 				if ((lk === 'escape' || lk === 'enter') && view !== 'chalk') {
 					exitView();
 					return true;
 				}
-				if (view === 'board' && venue === 'league' && (lk === 'arrowleft' || lk === 'arrowright')) {
+				if (view === 'board' && (lk === 'arrowleft' || lk === 'arrowright')) {
 					padTurn(lk === 'arrowleft' ? -1 : 1); // F1 blok na štadióne: listovanie
 					return true;
 				}

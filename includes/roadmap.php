@@ -162,6 +162,7 @@ function mysn_roadmap() {
 /** Denník zmien (najnovšie hore). */
 function mysn_changelog() {
 	return array(
+		array( '0.28.0', '18. 11. 2026', 'Nová nástenka F1 v herni: 6 papierov (Klávesy, Ovládanie myšou, Voľný pohľad, Pri stole a Ctrl, Princíp hry, Tágá a príslušenstvo; na mobile prstom a tlačidlami), papier sa priblíži klávesom 1 až 6, klikom alebo šípkami, Esc späť na celú nástenku. Blok na štadióne: strany aj klávesmi 1 až 3.' ),
 		array( '0.27.1', '18. 11. 2026', 'Voda, grgnutie a prdnutie aj v herni a pri tréningu: bez trestov, pri prdnutí sa zavlní obraz tebe, voda zvýši falšu (okrem hry o skóre). H už neotvára pomoc (pomoc je F1).' ),
 		array( '0.27.0', '18. 11. 2026', 'Hráčske klávesy majú účinok: N napitie vody (ďalší úder falša 15x, overuje server), G grgnutie a H prdnutie (na štadióne diváci pohoršene fuj a šomranie, Rudo sa ozve; pri prdnutí sa súperovi 3 s vlní obraz). Mobil: tlačidlo s pohárom vľavo otvorí Vodu, Grgnúť a Prdnúť. F1 blok na štadióne sa listuje (Klávesy, Správanie hráča, Situácie v hre), panely pravidiel a bodov ligy doplnené.' ),
 		array( '0.26.0', '18. 11. 2026', 'Domáce pravidlo pri hre na farbu: stačí najprv trafiť ktorúkoľvek farbu, body sú za farbu, ktorá spadne, aj keď ju potopí iná farba (nie faul). Dve farby naraz alebo červená ostávajú faul. Platí aj na overovacom serveri.' ),

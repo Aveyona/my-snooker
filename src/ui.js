@@ -3473,7 +3473,7 @@ export class UI {
 	}
 
 	/** F1 blok na štadióne: listovanie strán (‹ Strana 1/3 ›) dole v strede; on = false skryje. */
-	padNav(on, page = 0, count = 1) {
+	padNav(on, page = 0, count = 1, label = '') {
 		if (!this.padEl) {
 			this.padEl = h('div', 'mysn-padnav mysn-hidden', '<button type="button" data-d="-1" aria-label="Predošlá strana">‹</button><span></span><button type="button" data-d="1" aria-label="Ďalšia strana">›</button>');
 			for (const t of ['pointerdown', 'pointerup', 'mousedown', 'touchstart', 'touchend', 'wheel']) {
@@ -3490,7 +3490,7 @@ export class UI {
 		}
 		this.padEl.classList.toggle('mysn-hidden', !on);
 		if (on) {
-			this.padEl.querySelector('span').textContent = `Strana ${page + 1} / ${count}`;
+			this.padEl.querySelector('span').textContent = label ? (page >= 0 ? `${page + 1} / ${count}: ${label}` : label) : `Strana ${page + 1} / ${count}`;
 		}
 	}
 

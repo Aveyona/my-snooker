@@ -4,7 +4,7 @@
  * (F1), stojan s tágami (F2), tabuľa na skóre, komoda, barový stolík so stoličkami, kreslá, obrazy a kvetina.
  */
 import * as THREE from 'three';
-import { boardTexture } from './board.js';
+import { boardTexture, BOARD_TEX, BOARD_BOXES } from './board.js';
 import { CUES, buildCueMesh } from './cues.js';
 import { CHALKS } from './chalks.js';
 import { buildNewspaper, buildMagazine } from './newspaper.js';
@@ -1215,6 +1215,26 @@ export function buildRoomShell(scene, quality, opts = {}) {
 		markSpots,
 		pick: { pos: new THREE.Vector3(0, FY + 9.5, 0.6), look: new THREE.Vector3(0, FY, 0) },
 		board: { pos: new THREE.Vector3(BOARD.x, BOARD.y, -RZ + 2.05), look: new THREE.Vector3(BOARD.x, BOARD.y, -RZ) },
+		/** F1 nástenka (0.28.0): pohľad zblízka na papier i (0 až 5). */
+		boardPaper(i) {
+			const b = BOARD_BOXES[i];
+			if (!b) {
+				return null;
+			}
+			const x = BOARD.x - BOARD.w / 2 + ((b[0] + b[2] / 2) / BOARD_TEX.W) * BOARD.w;
+			const y = BOARD.y + BOARD.h / 2 - ((b[1] + b[3] / 2) / BOARD_TEX.H) * BOARD.h;
+			return { pos: new THREE.Vector3(x, y, -RZ + 0.78), look: new THREE.Vector3(x, y, -RZ) };
+		},
+		/** Papier nástenky pod lúčom (index 0 až 5), alebo -1. */
+		boardPaperAt(ray) {
+			const hit = ray.intersectObject(boardMesh, false)[0];
+			if (!hit || !hit.uv) {
+				return -1;
+			}
+			const px = hit.uv.x * BOARD_TEX.W;
+			const py = (1 - hit.uv.y) * BOARD_TEX.H;
+			return BOARD_BOXES.findIndex((b) => px >= b[0] && px <= b[0] + b[2] && py >= b[1] && py <= b[1] + b[3]);
+		},
 		rack: { pos: new THREE.Vector3(RACK.x + 0.3, FY + 1.2, -RZ + 3.3), look: new THREE.Vector3(RACK.x + 0.3, FY + 0.78, -RZ), zoom: 0.84 }, // celý stojan aj s poličkou na kriedy
 		score: { pos: new THREE.Vector3(-RX + 1.55, SCORE.y, 0), look: new THREE.Vector3(-RX, SCORE.y, 0) },
 		// F10: pohľad z baru (sediaci na stoličke), v popredí telefón a poháre s vodou, za nimi herňa
