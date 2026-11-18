@@ -162,6 +162,7 @@ function mysn_roadmap() {
 /** Denník zmien (najnovšie hore). */
 function mysn_changelog() {
 	return array(
+		array( '0.31.0', '18. 11. 2026', 'Stojan s tágami v herni: jemný LED pásik na spodnej lište pri zadnej stene svieti nahor (teplá biela), žiara na zadnej doske a slabé nasvietenie tág zospodu.' ),
 		array( '0.30.9', '18. 11. 2026', 'Swerve a massé ešte výraznejšie: pri zdvihnutom tágu s bočnou falšou súkno stáča bielu do strany silnejšie (do prvého nárazu), napr. 20° s polovičnou falšou pri strednej sile asi 70 cm do polovice stola, massé ostrý hák.' ),
 		array( '0.30.8', '18. 11. 2026', 'Swerve a massé: oblúk 4× silnejší, biela sa stáča viditeľne a postupne (napr. 20° s polovičnou bočnou falšou asi 70 cm na dĺžku stola), aj bez kriedy je oblúk badateľný.' ),
 		array( '0.30.7', '18. 11. 2026', 'Nastavenia: vlastná hlasitosť komentátora Ruda (0 až 200 %), nezávisle od divákov.' ),
