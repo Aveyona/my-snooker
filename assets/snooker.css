@@ -851,3 +851,23 @@ body.mysn-page { font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans
 .mysn-gchat-col:not(.mysn-gchat-open):not(.mysn-gchat-peek) .mysn-gchat-list { display: none; }
 @media (pointer: coarse) { .mysn-gchat-tog { height: 40px; width: 20px; } .mysn-gchat-col .mysn-gchat-tog { width: 32px; } }
 .mysn-gchat-empty:not(.mysn-gchat-open) .mysn-gchat-tog { display: none; }
+/* 0.32.0: Skúsenosti a Úspechy */
+.mysn-ach-lv { display: flex; align-items: center; gap: 12px; margin: 4px 0 8px; }
+.mysn-ach-lvn { flex: none; width: 64px; height: 64px; border-radius: 50%; background: radial-gradient(circle at 35% 30%, #ffe27a, #e8b923 60%, #a57a10); color: #2a1d00; display: flex; flex-direction: column; align-items: center; justify-content: center; box-shadow: 0 2px 8px #0008; }
+.mysn-ach-lvn span { font-size: 10px; font-weight: 700; text-transform: uppercase; }
+.mysn-ach-lvn b { font-size: 24px; line-height: 1; }
+.mysn-ach-xp { flex: 1; min-width: 0; }
+.mysn-ach-xp b { font-size: 16px; }
+.mysn-ach-xp small { color: #aab3c2; font-size: 11px; }
+.mysn-ach-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; }
+.mysn-ach-cell { display: flex; flex-direction: column; align-items: center; text-align: center; padding: 6px 2px; border-radius: 10px; background: #ffffff0d; }
+.mysn-ach-cell b { font-size: 11.5px; line-height: 1.2; margin-top: 3px; }
+.mysn-ach-cell span { font-size: 10.5px; color: #cfd6e2; }
+.mysn-ach-cell small { font-size: 10px; color: #8f99a8; }
+.mysn-ach-off { filter: grayscale(1) brightness(.75); opacity: .75; }
+.mysn-ach-pop { position: absolute; left: 50%; top: 86px; z-index: 30; display: flex; align-items: center; gap: 12px; max-width: min(440px, 92vw); padding: 10px 16px 10px 10px; border-radius: 14px; background: #0c0f14eb; border: 2px solid #ffd34d; color: #fff; box-shadow: 0 6px 24px #000a, 0 0 24px #ffd34d40; transform: translate(-50%, -20px) scale(.9); opacity: 0; transition: transform .35s cubic-bezier(.2,1.4,.4,1), opacity .3s; pointer-events: none; font-family: system-ui, sans-serif; }
+.mysn-ach-pop.mysn-on { transform: translate(-50%, 0) scale(1); opacity: 1; }
+.mysn-ach-pop span { display: block; font-size: 12px; color: #ffd34d; font-weight: 700; text-transform: uppercase; letter-spacing: .04em; }
+.mysn-ach-pop b { display: block; font-size: 18px; }
+.mysn-ach-pop small { display: block; font-size: 12px; color: #c9d1dc; }
+.mysn-ach-lvbig { flex: none; width: 60px; height: 60px; border-radius: 50%; background: radial-gradient(circle at 35% 30%, #ffe27a, #e8b923 60%, #a57a10); color: #2a1d00; font: 800 26px system-ui, sans-serif; display: flex; align-items: center; justify-content: center; }

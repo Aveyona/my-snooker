@@ -477,6 +477,23 @@ export class Sound {
 		s.start(t);
 	}
 
+	/** Úspech získaný (0.32.0): nahrávka slotu ach, inak generované cinknutie (trojzvuk, vyšší stupeň plnší). */
+	ding(tier = 1) {
+		if (!this._ok() || this.fx('ach')) {
+			return;
+		}
+		const { out, k } = this._synthOut('ach', null);
+		const notes = [1046.5, 1318.5, 1568, 2093].slice(0, Math.max(2, Math.min(4, tier + 1)));
+		notes.forEach((f, i) =>
+			setTimeout(() => {
+				if (this._ok()) {
+					this._tone(f * k, 0.5, 0.12, 'sine', 1, out);
+					this._tone(f * k * 2.01, 0.25, 0.04, 'sine', 1, out);
+				}
+			}, i * 90)
+		);
+	}
+
 	/** Generovaný zvuk so zohľadnením doladenia slotu (hlasitosť, tón) a priestoru. */
 	_synthOut(slot, pos) {
 		const p = this.par(slot);

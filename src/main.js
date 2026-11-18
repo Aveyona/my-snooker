@@ -24,6 +24,7 @@ import { UI } from './ui.js';
 import { Game, fmtTime } from './match.js';
 import { Online } from './online.js';
 import { rtcSelfTest } from './rtc.js';
+import { snookered } from './rules.js';
 import { remaining } from './rules.js';
 import { aimTrace, R, L, W, snapshot, restore, createRack, POCKETS, COLOURS, isJump, JUMP_TOP, JUMP_POWER, ELEV_MAX } from './physics.js';
 import { buildRackTriangle, rackLayout } from './rackTriangle.js';
@@ -2534,6 +2535,7 @@ export function start(root, config = {}) {
 		} else if (top <= JUMP_TOP) {
 			top = JUMP_TOP + 0.01;
 		}
+		const achPre = achBefore(); // úspechy: stav pred úderom (skóre, guľa na rade, zasnookrovanie)
 		const shot = game.shoot(power, side, top, elev);
 		if (!shot) {
 			game.dir = dir0;
@@ -2548,6 +2550,9 @@ export function start(root, config = {}) {
 				ui.toast('Massé! Špica −5 %.');
 			}
 			liftDeg = 0; // po údere sa tágo vráti na najmenší uhol
+			if (achPre) {
+				achCur = { ...achPre, dir: dir0, top: spin.top, side: spin.side, elev, trick: miscue ? '' : jumped ? 'jump' : masse && Math.abs(side) >= 0.1 ? 'masse' : trickShot ? 'swerve' : '', contact: null, hits: [], cannon: false };
+			}
 			if (jumped) {
 				ui.toast('Skokový úder! Špica −5 %.');
 			}
@@ -3844,7 +3849,8 @@ export function start(root, config = {}) {
 				return;
 			}
 			try {
-				const [d, hi] = await Promise.all([online.net.call('account', null, 'GET'), online.net.call('history', null, 'GET').catch(() => null)]);
+				const [d, hi, ach] = await Promise.all([online.net.call('account', null, 'GET'), online.net.call('history', null, 'GET').catch(() => null), online.net.call('ach', null, 'GET').catch(() => null)]);
+				d.ach = ach || achData; // 0.32.0: Skúsenosti a Úspechy
 				// 0.29.2: moje tágo a príslušenstvo (z hry) a posledné zápasy (Moje zápasy)
 				const tip = tipOf(cueSpec);
 				d.cue = { name: cueSpec.name, power: cueSpec.power, grip: cueSpec.grip, len: cueSpec.len, tipKind: tip.kind, tipWear: tip.wear || 0, tipNo: tip.no || 1, chalk, ext: settings.cueExt || 0 };
@@ -4891,6 +4897,7 @@ export function start(root, config = {}) {
 	};
 	refreshTrophies();
 	game.onSolo = async (r) => {
+		achAdd(0, { solo: 1, frames: 1 }); // dohraná hra o najlepšie skóre
 		// slávnostné ukončenie: skóre za čas, zápis do rebríčka, potom sa hneď začne nový frame
 		const res = online ? await online.saveScore(r) : { error: 'Skóre sa zapisuje len prihláseným.' };
 		const ok = res && !res.error;
@@ -5131,6 +5138,11 @@ export function start(root, config = {}) {
 				updateScore();
 			},
 			ended: async (text) => {
+				const lr = online && online.lastResult;
+				if (lr && lr.won && lr.id !== achWonSeen) {
+					achWonSeen = lr.id;
+					achAdd(0, lr.league ? { wins: 1, league: 1 } : { wins: 1 });
+				}
 				exitView();
 				// po ligovom zápase: ostávam na štadióne, tabuľa s víťazom a konfety (Späť do herne v menu);
 				// inak späť doma v herni, v menu je vybraný Tréning
@@ -5402,6 +5414,177 @@ export function start(root, config = {}) {
 				sound.streak(n, val, { pos: pk ? { x: pk.x, y: R, z: pk.z } : null });
 			}, t);
 			t += 260;
+		}
+	};
+
+	/* ---------- Skúsenosti (XP) a Úspechy (0.32.0) ---------- */
+	let achCur = null; // môj práve bežiaci úder: stav pred úderom a priebeh (prvý zásah, ďalšie nárazy)
+	let achSafety = false; // čakám, či súper po mojom safety niečo potopí
+	let achFrameSeen = null;
+	let achWonSeen = 0;
+	let achData = null; // posledný stav zo servera (telefón, Úspechy)
+	const achQ = { xp: 0, ev: {}, t: 0 };
+	const achOn = () => !!(user && online && !game.spectating);
+	/** Moje body teraz: partia, hra o skóre (bez trestných bodov), tréning. */
+	const achScore = () => {
+		const m = game.match;
+		if (m && m.rules) {
+			return m.rules.scores[m.me] || 0;
+		}
+		if (game.solo && game.solo.rules) {
+			return game.solo.rules.scores[0] || 0;
+		}
+		return game.stats.points || 0;
+	};
+	const achRules = () => (game.match ? game.match.rules : game.solo ? game.solo.rules : null);
+	const achBrk = () => {
+		const r = achRules();
+		return r ? r.brk || 0 : game.stats.run || 0;
+	};
+	/** Gule na rade pre hráča (red, colour = všetky farby, alebo jedna farba); bez pravidiel všetky. */
+	const achTargets = (on) => game.balls.filter((b) => b.on && b.kind !== 'white' && (!on || (on === 'red' ? b.kind === 'red' : on === 'colour' ? b.kind !== 'red' : b.kind === on)));
+	const achSnookered = (on) => {
+		const t = achTargets(on);
+		if (!t.length || !game.cue.on) {
+			return false;
+		}
+		return snookered(game.cue.p, t.map((b) => b.p), game.balls.filter((b) => b.on && b !== game.cue).map((b) => b.p), R);
+	};
+	const achBefore = () => {
+		if (!achOn() || (game.match && game.match.training)) {
+			return achOn() ? { score0: achScore(), brk0: achBrk(), on: null, snook: false } : null;
+		}
+		const r = achRules();
+		const on = r && !r.free ? r.on : null;
+		return { score0: achScore(), brk0: achBrk(), on, snook: !!on && achSnookered(on) };
+	};
+	/** Náraz gúľ počas môjho úderu: prvý zásah bielej, plant (guľa → guľa), cannon (biela → ďalšia guľa). */
+	const achBall = (ia, ib) => {
+		const c = achCur;
+		const w = game.cue.id;
+		if (!c.contact) {
+			if (ia === w || ib === w) {
+				const o = game.balls[ia === w ? ib : ia];
+				c.contact = { x: game.cue.p.x, z: game.cue.p.z, id: o.id, kind: o.kind, vx: o.v.x, vz: o.v.z };
+			}
+			return;
+		}
+		if (ia === w || ib === w) {
+			const o = ia === w ? ib : ia;
+			if (o !== c.contact.id) {
+				c.cannon = true;
+			}
+		} else {
+			c.hits.push([ia, ib]);
+		}
+	};
+	const fitsOn = (on, kind) => !on || (on === 'red' ? kind === 'red' : on === 'colour' ? kind && kind !== 'red' && kind !== 'white' : kind === on);
+	/** Po zastavení gúľ môjho úderu: XP a udalosti úspechov. */
+	const achSettle = (c) => {
+		const ev = {};
+		const add = (k, n = 1) => (ev[k] = (ev[k] || 0) + n);
+		const xp = Math.max(0, achScore() - c.score0);
+		const pots = shotTrack.pots.filter((id) => game.balls[id] && game.balls[id].kind !== 'white');
+		const whiteIn = shotTrack.pots.some((id) => game.balls[id] && game.balls[id].kind === 'white');
+		const legalFirst = !!c.contact && fitsOn(c.on, c.contact.kind) && !whiteIn;
+		const legalPot = legalFirst && xp > 0 && pots.length > 0;
+		if (legalPot) {
+			add('pots', pots.length);
+			const blacks = pots.filter((id) => game.balls[id].kind === 'black').length;
+			if (blacks) {
+				add('blacks', blacks);
+			}
+		}
+		const b1 = achBrk();
+		for (const [k, v] of [['brk20', 20], ['brk50', 50], ['century', 100], ['max147', 147]]) {
+			if (c.brk0 < v && b1 >= v) {
+				add(k);
+			}
+		}
+		if (legalFirst && c.trick) {
+			add(c.trick); // swerve, massé, skok: biela trafila správnu guľu
+		}
+		if (legalFirst && c.snook) {
+			add('escape'); // bol som zasnookrovaný a trafil som správnu guľu
+		}
+		if (legalPot) {
+			const ct = c.contact;
+			const aPotted = pots.includes(ct.id);
+			if (aPotted) {
+				const dx = Math.cos(c.dir);
+				const dz = Math.sin(c.dir);
+				const disp = (game.cue.p.x - ct.x) * dx + (game.cue.p.z - ct.z) * dz;
+				const ol = Math.hypot(ct.vx, ct.vz) || 1;
+				const straight = Math.abs((ct.vx * dx + ct.vz * dz) / ol) > 0.99; // do 8°
+				if (Math.abs(c.top) <= 0.35 && straight && Math.abs(disp) < 0.06 && game.cue.on) {
+					add('stop');
+				} else if (c.top >= 0.3 && disp >= 0.3 && game.cue.on) {
+					add('follow');
+				} else if (c.top <= -0.3 && disp <= -0.3 && game.cue.on) {
+					add('screw');
+				}
+			}
+			if (Math.abs(c.side) >= 0.3 && shotTrack.cush.has(game.cue.id)) {
+				add('side');
+			}
+			if (c.hits.some(([a, b]) => (a === ct.id && pots.includes(b) && b !== ct.id) || (b === ct.id && pots.includes(a) && a !== ct.id))) {
+				add('plant');
+			}
+			if (c.cannon) {
+				add('cannon');
+			}
+			if (pots.some((id) => shotTrack.cush.has(id))) {
+				add('double');
+			}
+		}
+		// partia: úder bez potopenia a faulu, súper je na rade
+		const m = game.match;
+		if (m && m.rules && !m.training && legalFirst && !pots.length && m.rules.turn !== m.me && !m.rules.over) {
+			achSafety = true;
+			if (achSnookered(m.rules.on)) {
+				add('snooker');
+			}
+		}
+		achAdd(xp, ev);
+	};
+	/** Pripočíta XP a udalosti, na server ich pošle naraz po chvíli (rýchle údery v tréningu). */
+	const achAdd = (xp, ev = {}) => {
+		if (!achOn()) {
+			return;
+		}
+		achQ.xp += xp;
+		for (const [k, v] of Object.entries(ev)) {
+			achQ.ev[k] = (achQ.ev[k] || 0) + v;
+		}
+		if (!achQ.xp && !Object.keys(achQ.ev).length) {
+			return;
+		}
+		clearTimeout(achQ.t);
+		achQ.t = setTimeout(achFlush, 1200);
+	};
+	const achFlush = async () => {
+		if (!achOn() || (!achQ.xp && !Object.keys(achQ.ev).length)) {
+			return;
+		}
+		const body = { xp: Math.min(160, achQ.xp), ev: achQ.ev };
+		achQ.xp = Math.max(0, achQ.xp - 160);
+		achQ.ev = {};
+		try {
+			const r = await online.net.call('ach/add', body);
+			achData = r;
+			for (const n of (r && r.new) || []) {
+				ui.achPop(n.k, n.t);
+				sound.ding(n.t);
+			}
+			if (r && r.up) {
+				ui.achPop('', 0, r.up);
+				sound.ding(4);
+			}
+		} catch (e) {
+			// výpadok: XP z tohto úderu sa nezapočíta, ďalšie áno
+		}
+		if (achQ.xp) {
+			achQ.t = setTimeout(achFlush, 1500);
 		}
 	};
 	/** Hlasitosť publika: štadión vždy, herňa len keď sedia skutoční diváci, inak ticho. */
@@ -5805,6 +5988,10 @@ export function start(root, config = {}) {
 	game.on((type, d) => {
 		if (type === 'call' && d) {
 			shotTrack.foul = d.foul || 0;
+			if ((d.frame || d.over) && game.match && !game.spectating && !game.match.training && (!achFrameSeen || achFrameSeen !== game.match.seq)) {
+				achFrameSeen = game.match.seq;
+				achAdd(0, { frames: 1 }); // dohraný frejm v partii
+			}
 			crowdPlay(d.crowd); // publikum (rozhodol strelec)
 			refCall(d);
 			if (game.match) {
@@ -5814,6 +6001,10 @@ export function start(root, config = {}) {
 		if (type === 'shot') {
 			if (d && d.remote) {
 				trickShot = false; // úder súpera
+			}
+			shotTrack.remote = !!(d && d.remote) || !!game.spectating;
+			if (!shotTrack.remote) {
+				achSafety = false; // ďalší môj úder: safety sa už nevyhodnocuje
 			}
 			shotTrack.cush.clear();
 			shotTrack.popped = new Set(); // gule, ktorým sa body ukázali hneď pri páde
@@ -5837,6 +6028,18 @@ export function start(root, config = {}) {
 			}
 		}
 		if (type === 'settle' && shotTrack.active) {
+			if (achCur && !achCur.done) {
+				const cur = achCur;
+				cur.done = true;
+				setTimeout(() => achSettle(cur), 0); // skóre a pravidlá sú už vyhodnotené
+			} else if (achSafety && game.match && shotTrack.remote) {
+				// súperov úder po mojom safety: nič nepotopil = safety sa podarilo
+				const potted = shotTrack.pots.some((id) => game.balls[id] && game.balls[id].kind !== 'white');
+				if (!potted) {
+					achAdd(0, { safety: 1 });
+				}
+				achSafety = false;
+			}
 			shotTrack.active = false;
 			// sólo frame: rozhodca hlási body v sérii (v zápase ich hlási pri hlásení rozhodcu)
 			const run = game.solo ? game.solo.rules.brk : game.stats.run || 0;
@@ -5958,6 +6161,9 @@ export function start(root, config = {}) {
 					(shotTrack.potT || (shotTrack.potT = {}))[e.a] = performance.now(); // čas pádu: body sa ukážu o POP_DELAY neskôr
 					rudo.potNow(e.a); // Rudo vykríkne hneď, keď guľa spadne
 					potPopNow(e.a); // body a zvuk série hneď pri páde (ak je guľa zjavne platná)
+				}
+				if (e.type === 'ball' && achCur && !achCur.done) {
+					achBall(e.a, e.b);
 				}
 				if (e.type === 'ball' && !shotTrack.first) {
 					const a = game.balls[e.a];

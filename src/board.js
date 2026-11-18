@@ -54,7 +54,7 @@ const PAPERS = [
 			'   Ctrl a klik na predmet: otvorí ho.',
 			'N voda (silnejšia falša na 1 úder)',
 			'G grgnúť   H prdnúť (v lige sa trestá)',
-			'T telefón: Môj účet, profil a nastavenia',
+			'T telefón: účet, úspechy a skúsenosti (XP)',
 		],
 	},
 	{

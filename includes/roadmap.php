@@ -162,6 +162,7 @@ function mysn_roadmap() {
 /** Denník zmien (najnovšie hore). */
 function mysn_changelog() {
 	return array(
+		array( '0.32.0', '18. 11. 2026', 'Skúsenosti (XP) a Úspechy: XP za každú potopenú guľu vo všetkých miestnostiach a úroveň hráča, 24 úspechov so stupňami bronz až platina (všeobecné a špeciálne údery: stop-ball, ťahák, späťák, bočná falša, swerve, massé, skok, plant, cannon, double, únik zo snookeru, safety, snooker), vlastné ikonky, cinknutie a oznámenie pri novom stupni, záložka Úspechy v telefóne (T), XP z doterajšej histórie.' ),
 		array( '0.31.7', '18. 11. 2026', 'Chat v hre sa dá schovať šípkou ‹ (PC aj mobil), schovaný ukáže jazýček › s počtom nových správ; Nastavenia → Chat v hre: Zobraziť správy, Len nové správy na chvíľu (8 s) alebo Skryť.' ),
 		array( '0.31.6', '18. 11. 2026', 'Body za potopenú guľu (+hodnota nad jamkou) a zvuk série sa ukážu 1 sekundu po páde gule (aj pri vyhodnotení po zastavení gúľ najskôr 1 s po páde).' ),
 		array( '0.31.5', '18. 11. 2026', 'Oprava blikania tága pri začiatku ťahu: miznutie tága pri kamere je plynulá priehľadnosť namiesto rozsypaných bodiek, ktoré pri prelete kamery blikali.' ),

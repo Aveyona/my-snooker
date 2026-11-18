@@ -1114,6 +1114,7 @@ export class Online {
 		this.syncTurn(m);
 		if (m.status === 'finished' && !(m.seq > g.match.seq)) {
 			const won = m.winner === m.players[m.me].id;
+			this.lastResult = { id: m.id, won, league: !!m.league }; // úspechy: výhra v partii a v lige (0.32.0)
 			const ed = m.elo && m.elo[m.me] && m.edel ? m.edel[m.me] : 0;
 			const lg = m.league ? ` Liga: ${won ? '+' : '-'}${Math.max(0, m.delta)} bodov.${ed ? ` ELO ${m.elo[m.me] - ed} → ${m.elo[m.me]} (${ed > 0 ? '+' : '−'}${Math.abs(ed)}).` : ''}` : '';
 			this.lastLeague = !!m.league;

@@ -4,6 +4,7 @@
 import { CHALKS } from './chalks.js';
 import { TIP_COLORS, BUDGET_KEYS, balanceAdj, CUES, CUE_PROS, tipInaccuracy, fineDefault } from './cues.js';
 import { R, COLOURS, POCKETS, JUMP_TOP, JUMP_POWER } from './physics.js';
+import { ACH, TIERS, achIcon } from './achievements.js';
 
 const esc = (t) => String(t || '').replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
 
@@ -1266,6 +1267,7 @@ export class UI {
 				li('Po faule', 'Súper si vyberie: hrá sám, alebo nechá hrať teba. Vtedy sa gule vrátia, ako stáli pred faulom.') +
 				li('Skokový úder', 'Bod úderu úplne dole a sila aspoň 70 %: biela vyskočí (s kriedou vyššie, po napitej vode ešte vyššie). Faul nie je, keď trafí guľu na rade. Vyletená zo stola je faul.') +
 				li('Uhol tága', 'Shift + koliesko (na mobile ťahanie ikony tága) zdvihne tágo až na 80°. S bočnou falšou sa biela stočí na stranu falše: 8 – 25° swerve (mierny oblúk), od 45° massé (veľký oblúk, väčší rozptyl, bez kriedy časté šmyknutie, špica −5 %). Pri mantineli je najmenší uhol daný. Keď taký úder trafí správnu guľu, diváci na štadióne jasajú.') +
+				li('Skúsenosti a úspechy', 'Každá potopená guľa dá toľko skúseností (XP), koľko je za ňu bodov, vo všetkých miestnostiach; z XP je úroveň hráča. Úspechy (bronz, striebro, zlato, platina) za potopené gule, série, výhry a špeciálne údery: stop-ball, ťahák, späťák, bočná falša, swerve, massé, skok, plant, cannon, double, únik zo snookeru, safety a snooker. Prehľad v telefóne (T), záložka Úspechy.') +
 				li('Vzdať frame', 'Keď už potrebuješ snookery, hra ponúkne vzdať frame (súper ho vyhrá) alebo pokračovať.') +
 				li('Správanie', 'Grgnutie a prdnutie sa v lige trestá: 2. napomenutie, 3. až 5. súper +4, 6. diskvalifikácia. Podrobne v bloku na strane 2.') +
 				li('Séria (brejk)', 'Kým hráč potápa, pokračuje. Keď nič nespadne, je na rade súper.') +
@@ -2614,6 +2616,41 @@ export class UI {
 		}
 	}
 
+	/** Získaný stupeň úspechu (alebo nová úroveň): ikonka s názvom na 3,5 s, viac naraz za sebou. */
+	achPop(k, tier, level = 0) {
+		this._achQ = this._achQ || [];
+		this._achQ.push({ k, tier, level });
+		if (this._achBusy) {
+			return;
+		}
+		const next = () => {
+			const it = this._achQ.shift();
+			if (!it) {
+				this._achBusy = false;
+				return;
+			}
+			this._achBusy = true;
+			const a = ACH.find((x) => x.k === it.k);
+			const el = h(
+				'div',
+				'mysn-ach-pop',
+				it.level
+					? `<div class="mysn-ach-lvbig">${it.level}</div><div><span>Nová úroveň skúseností</span><b>${it.level}. úroveň</b></div>`
+					: `${achIcon(it.k, it.tier, 64)}<div><span>Úspech: ${esc(TIERS[it.tier - 1].name)}</span><b>${esc(a ? a.name : it.k)}</b><small>${esc(a ? a.desc : '')}</small></div>`
+			);
+			this.root.appendChild(el);
+			requestAnimationFrame(() => el.classList.add('mysn-on'));
+			setTimeout(() => {
+				el.classList.remove('mysn-on');
+				setTimeout(() => {
+					el.remove();
+					next();
+				}, 400);
+			}, 3500);
+		};
+		next();
+	}
+
 	phoneRender() {
 		const scr = this.phone.querySelector('.mysn-phone-scr');
 		const d = this._phoneD;
@@ -2678,6 +2715,29 @@ export class UI {
 				`</div><h4>Krieda</h4><div class="mysn-ph-card">` +
 				row('Nakriedované', c.chalk > 0 ? `ešte ${c.chalk} ${c.chalk === 1 ? 'úder' : c.chalk < 5 ? 'údery' : 'úderov'}` : 'nie (falše slabšie)') +
 				`</div><div class="mysn-ph-links"><button type="button" class="mysn-btn mysn-primary" data-a="rack">Vymeniť tágo (F2)</button></div>`;
+		} else if (tab === 'ach') {
+			// 0.32.0: Skúsenosti (XP, úroveň) a Úspechy so stupňami
+			const a = d.ach;
+			if (!a) {
+				body = '<p class="mysn-ph-empty">Úspechy sa nepodarilo načítať.</p>';
+			} else {
+				const pct = Math.max(0, Math.min(1, (a.xp - a.from) / Math.max(1, a.next - a.from)));
+				const grid = (cat) =>
+					ACH.filter((x) => x.cat === cat)
+						.map((x) => {
+							const n = (a.count && a.count[x.k]) || 0;
+							const t = (a.tier && a.tier[x.k]) || 0;
+							const th = (a.defs && a.defs[x.k]) || [];
+							const need = t < th.length ? th[t] : 0;
+							return `<div class="mysn-ach-cell" title="${esc(x.desc)}">${achIcon(x.k, t, 54)}<b>${esc(x.name)}</b><span>${t ? esc(TIERS[t - 1].name) : 'zatiaľ nie'}</span><small>${n}${need ? ' / ' + need : ' ✓'}</small></div>`;
+						})
+						.join('');
+				body =
+					`<div class="mysn-ach-lv"><div class="mysn-ach-lvn"><span>Úroveň</span><b>${a.level}</b></div><div class="mysn-ach-xp"><b>${a.xp.toLocaleString('sk-SK')} XP</b><div class="mysn-ph-bar"><i style="width:${Math.round(pct * 100)}%;background:#ffd34d"></i></div><small>do ${a.level + 1}. úrovne ešte ${(a.next - a.xp).toLocaleString('sk-SK')} XP</small></div></div>` +
+					`<p class="mysn-ph-hint">Skúsenosti (XP) = všetky nahrané body. Úspechy majú stupne bronz, striebro, zlato a platina.</p>` +
+					`<h4>Všeobecné</h4><div class="mysn-ach-grid">${grid('gen')}</div>` +
+					`<h4>Špeciálne údery</h4><div class="mysn-ach-grid">${grid('spec')}</div>`;
+			}
 		} else if (tab === 'games') {
 			// posledné zápasy (z Moje zápasy)
 			const lab = { win: ['Výhra', 1], loss: ['Prehra', 0], resign: ['Prehra, vzdal si', 0], resigned: ['Výhra, súper vzdal', 1], disconnect: ['Prehra, spojenie', 0], 'win-disconnect': ['Výhra, spojenie súpera', 1], disq: ['Prehra, diskvalifikácia', 0], 'win-disq': ['Výhra, súper diskv.', 1] };
@@ -2703,6 +2763,7 @@ export class UI {
 			['profile', '👤', 'Profil'],
 			['snooker', '🎱', 'Snooker'],
 			['cue', '🥢', 'Tágo'],
+			['ach', '🏅', 'Úspechy'],
 			['games', '🏆', 'Zápasy'],
 			['settings', '⚙️', 'Nastavenia'],
 		];

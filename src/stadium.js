@@ -476,7 +476,7 @@ export function buildStadium(scene, quality, clock = 45) {
 			row('N', 'napiť sa vody: ďalší úder falša 15×', 230);
 			row('G', 'grgnúť: diváci aj Rudo sú pohoršení', 230);
 			row('H', 'prdnúť: súperovi sa 3 s vlní obraz', 230);
-			row('T', 'telefón: Môj účet a nastavenia', 230);
+			row('T', 'telefón: účet, úspechy a XP', 230);
 			row('Mobil', 'tlačidlo s pohárom vľavo', 230);
 			y += 10;
 			head('Nešportové správanie v lige (G a H)');
