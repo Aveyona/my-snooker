@@ -604,19 +604,20 @@ export function buildTable(renderer) {
 		// 0.25.6: podlaha už tiene z máp (lampy, hlavné svetlo) neprijíma, tieň stola na nej je len tento:
 		// tmavá plocha pod stolom s mäkkým okrajom a pri jamkách tieň košíkov so vzorom sieťky
 		const FLOOR = -0.815;
-		const ow = 2 * (hx + 0.6);
-		const od = 2 * (hz + 0.7);
+		const ow = 2 * (hx + 0.7);
+		const od = 2 * (hz + 0.8);
 		const c = document.createElement('canvas');
 		c.width = 512;
 		c.height = Math.round((512 * od) / ow);
 		const g = c.getContext('2d');
 		const px = c.width / ow; // pixely na meter
 		// vrstvy od okraja dovnútra: každá trochu tmavšia, rozmazaním vznikne plynulý prechod
-		g.filter = `blur(${Math.round(0.16 * px)}px)`;
+		// 0.25.7: veľké zaoblenie rohov (rozmazaný tieň zaobleného stola má okrúhle rohy, nie pravé uhly)
+		g.filter = `blur(${Math.round(0.2 * px)}px)`;
 		for (let i = 0; i < 7; i++) {
-			const m = (0.55 - i * 0.075) * px; // okraj vrstvy od okraja plochy
+			const m = (0.65 - i * 0.075) * px; // okraj vrstvy od okraja plochy
 			g.fillStyle = `rgba(0,0,0,${0.18 + i * 0.03})`;
-			const rr = Math.max(4, (0.35 - i * 0.04) * px);
+			const rr = Math.max(4, (0.45 + i * 0.06) * px); // väčšia vrstva = väčšie zaoblenie
 			g.beginPath();
 			g.roundRect(m, m, c.width - 2 * m, c.height - 2 * m, rr);
 			g.fill();
