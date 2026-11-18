@@ -4,6 +4,7 @@
  * (F1), stojan s tágami (F2), tabuľa na skóre, komoda, barový stolík so stoličkami, kreslá, obrazy a kvetina.
  */
 import { ACH, TIERS } from './achievements.js';
+import { leagueTimes } from './leagueTime.js';
 import * as THREE from 'three';
 import { boardTexture, BOARD_TEX, BOARD_BOXES } from './board.js';
 import { lemonInGlass } from './lemon.js';
@@ -1343,8 +1344,6 @@ export function buildRoomShell(scene, quality, opts = {}) {
 	}
 
 	const tvCtl = {}; // obrazovka nad mixpultom: tlačidlo, pohľad, zapnutie
-	// liga sa hrá denne od 15:00 UTC 4 hodiny (obrazovka ukáže aj miestny čas)
-	const LEAGUE_UTC = { from: 15, hours: 4 };
 	// 0.32.4: obrazovka 65" na stene nad mixpultom (namiesto svietidla): striedajú sa snímky reklamy My Snooker,
 	// ligy, úspechov, Hedlajneru, e-shopu a rebríčka (živé údaje), každá 8 s, s plynulým prechodom
 	{
@@ -1417,22 +1416,13 @@ export function buildRoomShell(scene, quality, opts = {}) {
 				txt(g, 'snooker.hedlajner.sk', 640, 660, 44, '#7fb6ff', 600);
 			},
 			(g) => {
-				// liga: denne 15:00 – 19:00 UTC, prepočet na miestny čas hráča
+				// liga: denne od 17:00 UTC 4 hodiny (src/leagueTime.js), prepočet na miestny čas hráča
 				bg(g, '#0d3a1f', '#04140a');
-				const d0 = new Date();
-				const from = new Date(Date.UTC(d0.getUTCFullYear(), d0.getUTCMonth(), d0.getUTCDate(), LEAGUE_UTC.from, 0));
-				const to = new Date(from.getTime() + LEAGUE_UTC.hours * 3600000);
-				const hm = (t) => t.toLocaleTimeString('sk-SK', { hour: '2-digit', minute: '2-digit' });
-				let tz = '';
-				try {
-					tz = Intl.DateTimeFormat().resolvedOptions().timeZone || '';
-				} catch (e) {
-					tz = '';
-				}
+				const lt = leagueTimes();
 				txt(g, 'LIGA', 640, 180, 150, '#7CFC8A', 900);
-				txt(g, `Hrá sa denne ${String(LEAGUE_UTC.from).padStart(2, '0')}:00 – ${String(LEAGUE_UTC.from + LEAGUE_UTC.hours).padStart(2, '0')}:00 UTC`, 640, 290, 54, '#fff', 700);
-				txt(g, `U teba: ${hm(from)} – ${hm(to)}`, 640, 400, 84, '#ffd34d', 800);
-				txt(g, tz ? `miestny čas (${tz.replace(/_/g, ' ')})` : 'miestny čas', 640, 455, 34, '#cfe8d6', 500);
+				txt(g, `Hrá sa denne ${lt.utc} UTC`, 640, 290, 54, '#fff', 700);
+				txt(g, `U teba: ${lt.local}`, 640, 400, 84, '#ffd34d', 800);
+				txt(g, lt.tz ? `miestny čas (${lt.tz})` : 'miestny čas', 640, 455, 34, '#cfe8d6', 500);
 				txt(g, 'Štadión, diváci, rozhodca a Rudo · registrácia v kancelárii', 640, 590, 36, '#cfe8d6', 500);
 			},
 			(g) => {

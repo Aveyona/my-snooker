@@ -10,6 +10,7 @@ import * as THREE from 'three';
 import { buildCueMesh } from './cues.js';
 import { feature } from 'topojson-client';
 import { countryByCode, ISO_NUM } from './countries.js';
+import { leagueTimes } from './leagueTime.js';
 
 export const OX = 40; // kancelária je 40 m od herne
 const FY = -0.815; // podlaha (stôl je o 4,5 cm nižší, ako turnajový)
@@ -274,6 +275,82 @@ export function buildOffice(scene) {
 	calFront.rotation.x = -0.35;
 	calFront.position.z = 0.02;
 	add(new THREE.CylinderGeometry(0.004, 0.004, 0.2, 8), brass, 0, 0.145, 0.0, calG).rotation.z = Math.PI / 2;
+
+	// 0.32.7: roztrhnutý papier pred kalendárom: kedy sa hrá liga (UTC aj miestny čas), písané perom
+	{
+		const pp = tex(600, 760);
+		const drawPaper = () => {
+			const g = pp.g;
+			const W = 600;
+			const H = 760;
+			g.clearRect(0, 0, W, H);
+			// papier s roztrhnutým horným a pravým okrajom (zubatá čiara)
+			g.beginPath();
+			g.moveTo(14, 40);
+			for (let x = 14; x <= W - 30; x += 18) {
+				g.lineTo(x, 26 + Math.sin(x * 0.37) * 9 + ((x * 7) % 11));
+			}
+			for (let y = 30; y <= H - 14; y += 18) {
+				g.lineTo(W - 22 + Math.sin(y * 0.41) * 8 + ((y * 5) % 9), y);
+			}
+			g.lineTo(14, H - 14);
+			g.closePath();
+			g.fillStyle = '#f3ecd9';
+			g.fill();
+			g.strokeStyle = 'rgba(120,100,70,0.35)';
+			g.lineWidth = 2;
+			g.stroke();
+			g.save();
+			g.clip();
+			// linajky a okraj
+			g.strokeStyle = 'rgba(70,110,170,0.28)';
+			g.lineWidth = 2;
+			for (let y = 150; y < H; y += 64) {
+				g.beginPath();
+				g.moveTo(0, y);
+				g.lineTo(W, y);
+				g.stroke();
+			}
+			g.strokeStyle = 'rgba(200,60,60,0.45)';
+			g.beginPath();
+			g.moveTo(80, 0);
+			g.lineTo(80, H);
+			g.stroke();
+			const lt = leagueTimes();
+			const pen = (t, x, y, sz, col = '#1c2b6b', w = 700) => {
+				g.fillStyle = col;
+				g.font = `${w} ${sz}px Caveat, "Segoe Print", "Bradley Hand", cursive`;
+				g.fillText(t, x, y);
+			};
+			g.textAlign = 'left';
+			pen('Liga – kedy sa hrá', 100, 128, 64);
+			pen('Denne', 100, 236, 52, '#1c2b6b', 500);
+			pen(`${lt.utc} UTC`, 100, 300, 60);
+			pen('U mňa (miestny čas):', 100, 428, 50, '#1c2b6b', 500);
+			pen(lt.local, 100, 500, 76, '#b3121f');
+			if (lt.tz) {
+				pen(lt.tz, 100, 556, 36, '#5a6478', 500);
+			}
+			pen('Nezabudni! →', 300, 680, 50, '#1c2b6b', 500);
+			// podčiarknutie miestneho času
+			g.strokeStyle = '#b3121f';
+			g.lineWidth = 4;
+			g.beginPath();
+			g.moveTo(100, 515);
+			g.quadraticCurveTo(260, 528, 430, 512);
+			g.stroke();
+			g.restore();
+			pp.t.needsUpdate = true;
+		};
+		drawPaper();
+		if (document.fonts && document.fonts.load) {
+			document.fonts.load('700 60px Caveat', 'Liga – kedy sa hrá U mňa').then(drawPaper, () => null);
+		}
+		const sheet = add(new THREE.PlaneGeometry(0.15, 0.19), new THREE.MeshStandardMaterial({ map: pp.t, transparent: true, alphaTest: 0.5, roughness: 0.95, side: THREE.DoubleSide }), -0.55, DT + 0.0025, DZ + 0.09);
+		sheet.rotation.order = 'YXZ';
+		sheet.rotation.set(-Math.PI / 2, 0.35, 0);
+		sheet.receiveShadow = true;
+	}
 
 	// výsledková tabuľa štyroch líg na zadnej stene (-z), cez celú stenu
 	const res = tex(2048, 900);
