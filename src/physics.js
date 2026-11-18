@@ -176,7 +176,7 @@ export function strike(ball, dir, power, side = 0, top = 0, elev = 0) {
 	const k = (5 * V0) / (2 * R * R);
 	// ω = k · (b · (u' × c) + a · (right × c)); u' × c = (dz, 0, -dx), right × c = (dx·S, C, dz·S)
 	// massé: pri strmom tágu sa súkno pod bielou viac stlačí a oblúk je výraznejší (mk)
-	const mk = 1 + 0.3 * S * S;
+	const mk = 4 * (1 + 0.3 * S * S); // 0.30.8: oblúk 4× silnejší, aby bol v hre viditeľný (swerve aj massé)
 	ball.w.x = k * (b * dz + a * S * dx * mk);
 	ball.w.y = k * a * C;
 	ball.w.z = k * (-b * dx + a * S * dz * mk);

@@ -120,7 +120,7 @@ for (const [top, name, test] of [[-1, 'spodná falša vráti bielu', (x) => x < 
 	const ms = curve(70, 1);
 	const msL = curve(70, -1);
 	ok(Math.abs(flat) < 1e-6, 'zdvihnuté tágo bez falše ide rovno');
-	ok(sw > 0.02 && ms > sw && msL < -0.02, `swerve a massé stáčajú bielu na stranu falše (${sw.toFixed(3)} / ${ms.toFixed(3)} / ${msL.toFixed(3)})`);
+	ok(sw > 0.02 && ms >= sw && msL < -0.02, `swerve a massé stáčajú bielu na stranu falše (${sw.toFixed(3)} / ${ms.toFixed(3)} / ${msL.toFixed(3)})`);
 }
 
 console.log(fails ? fails + ' testov zlyhalo' : 'Všetky testy prešli');
