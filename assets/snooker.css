@@ -525,6 +525,14 @@ body.mysn-page { font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans
 .mysn-freebtn { display: none; position: absolute; left: 8px; bottom: 316px; width: 48px; height: 48px; padding: 0; border-radius: 50%; border: 1.5px solid #ffffffcc; background: #ffffff26; color: #fff; align-items: center; justify-content: center; pointer-events: auto; z-index: 3; -webkit-tap-highlight-color: transparent; }
 .mysn-freebtn.mysn-free-on { color: #ffd34d; border-color: #ffd34d; background: #ffd34d40; }
 .mysn-topbtn { bottom: 376px; }
+.mysn-sndbtn { bottom: 436px; }
+.mysn-sndpop { position: absolute; left: 64px; bottom: 430px; z-index: 8; display: flex; gap: 8px; padding: 6px; border-radius: 14px; background: #0d121be6; border: 1px solid #ffffff33; pointer-events: auto; }
+.mysn-sndpop button { display: flex; flex-direction: column; align-items: center; gap: 2px; width: 58px; padding: 6px 0; border-radius: 10px; border: 1px solid #ffffff2e; background: #ffffff14; color: #fff; font: inherit; }
+.mysn-sndpop button span { font-size: 22px; line-height: 1; }
+.mysn-sndpop button small { font-size: 11px; }
+.mysn-ui.mysn-water .mysn-spin-dot { background: #2fb4ff; box-shadow: 0 0 10px #2fb4ff; }
+.mysn-ui.mysn-tools-open .mysn-sndbtn { bottom: 608px; }
+.mysn-ui.mysn-tools-open .mysn-sndpop { bottom: 602px; }
 .mysn-joy { display: none; position: absolute; right: 16px; bottom: 24px; width: 120px; height: 120px; border-radius: 50%; border: 1.5px solid #ffffffaa; background: #ffffff1f; align-items: center; justify-content: center; pointer-events: auto; touch-action: none; z-index: 3; }
 .mysn-joyud { display: none; position: absolute; right: 146px; bottom: 30px; flex-direction: column; gap: 10px; pointer-events: auto; touch-action: none; z-index: 3; }
 .mysn-joyud button { width: 50px; height: 50px; border-radius: 50%; border: 1.5px solid #ffffffaa; background: #ffffff1f; color: #fff; font-size: 18px; padding: 0; -webkit-tap-highlight-color: transparent; }
@@ -776,3 +784,7 @@ body.mysn-page { font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans
 @media (hover: none), (pointer: coarse) {
 	.mysn-spin.mysn-spin-off.mysn-spin-jump .mysn-spin-label { display: block; }
 }
+
+/* F1 blok na štadióne: listovanie strán */
+.mysn-padnav { position: absolute; left: 50%; bottom: 64px; transform: translateX(-50%); z-index: 8; display: flex; align-items: center; gap: 12px; padding: 6px 10px; border-radius: 24px; background: #0d121be6; border: 1px solid #FACC15aa; pointer-events: auto; font-size: 14px; color: #fff; }
+.mysn-padnav button { width: 40px; height: 40px; border-radius: 50%; border: 1px solid #ffffff44; background: #ffffff14; color: #FACC15; font: 700 24px/1 Arial, sans-serif; cursor: pointer; }

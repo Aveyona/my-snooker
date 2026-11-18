@@ -202,6 +202,30 @@ export class UI {
 			this.opts.onAction('menuKey', 'space');
 		});
 		root.appendChild(this.freeBtn);
+		// mobil: hráčske zvuky (0.27.0): jedno tlačidlo, ťuknutie otvorí vedľa neho napitie, grgnutie a prdnutie
+		this.sndBtn = h('button', 'mysn-freebtn mysn-sndbtn', '<svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 3h10l-1.4 16.2a2 2 0 0 1-2 1.8h-3.2a2 2 0 0 1-2-1.8z"/><path d="M7.6 9.5h8.8"/></svg>');
+		this.sndBtn.type = 'button';
+		this.sndBtn.title = 'Napiť sa, grgnúť, prdnúť';
+		this.sndBtn.setAttribute('aria-label', 'Hráčske zvuky');
+		this.sndPop = h('div', 'mysn-sndpop mysn-hidden', '<button type="button" data-k="n" title="Napiť sa vody (N): ďalší úder silnejšia falša"><span>💧</span><small>Voda</small></button><button type="button" data-k="g" title="Grgnúť (G)"><span>🫧</span><small>Grgnúť</small></button><button type="button" data-k="h" title="Prdnúť (H)"><span>💨</span><small>Prdnúť</small></button>');
+		for (const el of [this.sndBtn, this.sndPop]) {
+			for (const t of ['pointerdown', 'pointerup', 'mousedown', 'touchstart', 'touchend', 'wheel']) {
+				el.addEventListener(t, (e) => e.stopPropagation());
+			}
+		}
+		this.sndBtn.addEventListener('click', (e) => {
+			e.stopPropagation();
+			this.sndPop.classList.toggle('mysn-hidden');
+		});
+		this.sndPop.addEventListener('click', (e) => {
+			e.stopPropagation();
+			const b = e.target.closest('button');
+			if (b) {
+				this.sndPop.classList.add('mysn-hidden');
+				this.opts.onAction('playerSnd', b.dataset.k);
+			}
+		});
+		root.append(this.sndBtn, this.sndPop);
 		// mobil: pohľad zhora na stôl (ako Tab na PC), nad panákom
 		this.topBtn = h('button', 'mysn-freebtn mysn-topbtn', '<svg viewBox="0 0 56 56" width="30" height="30" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 35l16-8 16 8-16 8z"/><path d="M28 10v12M23 17l5 5 5-5"/></svg>');
 		this.topBtn.type = 'button';
@@ -1042,6 +1066,8 @@ export class UI {
 					li('Štart', 'Každý hráč začína sezónu so 147 bodmi.') +
 					li('Výhra', 'Víťaz dostane toľko bodov, koľko nahral vo frame. Porazený presne toľko stratí.') +
 					li('Vzdanie', 'Keď súper vzdá alebo stratí spojenie, víťaz dostane najmenej 30 bodov.') +
+					li('Vzdaný frame', 'Keď súper vzdá rozhodujúci frame, víťaz dostane body nahraté v tom frame, ako pri bežnej výhre.') +
+					li('Diskvalifikácia', 'Pri šiestom nešportovom správaní (grgnutie, prdnutie) súper vyhrá. Body dostane ako pri bežnej výhre, aj s trestnými +4.') +
 					li('Silnejší súper', 'Výhra hráča z nižšej ligy nad hráčom z vyššej ligy sa ráta 1,5-krát.') +
 					li('Spodok', 'Porazený s kladnými bodmi klesne najviac na 0.') +
 					li('Symbolická výhra', 'Keď má porazený 0 alebo menej, víťaz dostane +1 a porazený stratí 1 (môže ísť do mínusu).') +
@@ -1131,6 +1157,10 @@ export class UI {
 				li('Faul', 'Zlá guľa, žiadny dotyk, spadnutá biela alebo guľa, ktorá nie je na rade. Súper dostane 4 body alebo hodnotu gule, ak je vyššia (najviac 7), a je na rade.') +
 				li('Biela v ruke', 'Po spadnutí bielej ju súper položí kdekoľvek do D.') +
 				li('Voľná guľa', 'Keď je hráč po faule zasnookrovaný, môže hrať ľubovoľnú farbu ako guľu na rade.') +
+				li('Po faule', 'Súper si vyberie: hrá sám, alebo nechá hrať teba. Vtedy sa gule vrátia, ako stáli pred faulom.') +
+				li('Skokový úder', 'Bod úderu úplne dole a sila aspoň 70 %: biela vyskočí. Faul nie je, keď trafí guľu na rade. Vyletená zo stola je faul.') +
+				li('Vzdať frame', 'Keď už potrebuješ snookery, hra ponúkne vzdať frame (súper ho vyhrá) alebo pokračovať.') +
+				li('Správanie', 'Grgnutie a prdnutie sa v lige trestá: 2. napomenutie, 3. až 5. súper +4, 6. diskvalifikácia. Podrobne v bloku na strane 2.') +
 				li('Séria (brejk)', 'Kým hráč potápa, pokračuje. Keď nič nespadne, je na rade súper.') +
 				li('Čas na úder', `V lige ${clock} sekúnd, inak faul za čas.`) +
 				li('Koniec frame', 'Keď spadne posledná čierna. Vyhráva hráč s viac bodmi.') +
@@ -3440,6 +3470,44 @@ export class UI {
 			this.topBtn.classList.toggle('mysn-free-can', !!on);
 			this.topBtn.classList.toggle('mysn-free-on', !!active);
 		}
+	}
+
+	/** F1 blok na štadióne: listovanie strán (‹ Strana 1/3 ›) dole v strede; on = false skryje. */
+	padNav(on, page = 0, count = 1) {
+		if (!this.padEl) {
+			this.padEl = h('div', 'mysn-padnav mysn-hidden', '<button type="button" data-d="-1" aria-label="Predošlá strana">‹</button><span></span><button type="button" data-d="1" aria-label="Ďalšia strana">›</button>');
+			for (const t of ['pointerdown', 'pointerup', 'mousedown', 'touchstart', 'touchend', 'wheel']) {
+				this.padEl.addEventListener(t, (e) => e.stopPropagation());
+			}
+			this.padEl.addEventListener('click', (e) => {
+				const b = e.target.closest('button');
+				if (b) {
+					e.stopPropagation();
+					this.opts.onAction('padPage', Number(b.dataset.d));
+				}
+			});
+			this.root.appendChild(this.padEl);
+		}
+		this.padEl.classList.toggle('mysn-hidden', !on);
+		if (on) {
+			this.padEl.querySelector('span').textContent = `Strana ${page + 1} / ${count}`;
+		}
+	}
+
+	/** Mobil: tlačidlo hráčskych zvukov (len hráč v partii). */
+	showSnd(on) {
+		if (!!on !== this._sndK) {
+			this._sndK = !!on;
+			this.sndBtn.classList.toggle('mysn-free-can', !!on);
+			if (!on) {
+				this.sndPop.classList.add('mysn-hidden');
+			}
+		}
+	}
+
+	/** Napitá voda: ďalší úder silnejšia falša (Miesto úderu je modré). */
+	setWater(on) {
+		this.root.classList.toggle('mysn-water', !!on);
 	}
 
 	showFree(on, active) {

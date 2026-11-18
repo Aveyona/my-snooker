@@ -1326,7 +1326,98 @@ export function start(root, config = {}) {
 		}
 		const crowd = !String(m.s).startsWith('player-');
 		sound.fx(m.s, { pos: crowd && m.seat < 0 ? null : pos, gain: crowd ? 0.9 : 1 });
+		if (m.s === 'player-burp' || m.s === 'player-fart') {
+			grossReact(m);
+			// prdnutie súpera: hráčovi (nie divákovi, nie tomu, kto prdol) sa zavlní obraz
+			if (m.s === 'player-fart' && !game.spectating && game.match && !game.match.training && user && uid !== String(user.id)) {
+				waveScreen(3000);
+			}
+		}
 		return true;
+	};
+	/**
+	 * Hráč v partii (0.27.0): N napitie sa vody (ďalší úder silnejšia falša, 15x s kriedou), G grgnutie, H prdnutie
+	 * (súperovi sa zavlní obraz); v lige G a H: napomenutie, potom súper +4, pri šiestom diskvalifikácia.
+	 */
+	/** F1 blok na štadióne: ďalšia alebo predošlá strana. */
+	const padTurn = (d) => {
+		const p = stadium.padTurn(d);
+		ui.padNav(true, p.page, p.count);
+	};
+	let waterNext = false; // napil som sa: ďalší môj úder má silnejšiu falšu (server to vie, inak by úder neprijal)
+	const playerSnd = (lk) => {
+		if (!PLAYER_SND[lk] || !game.match || game.match.training || game.spectating) {
+			return;
+		}
+		const c = rig.camera.position;
+		if (!sendSnd(PLAYER_SND[lk], { x: c.x, y: c.y - 0.15, z: c.z })) {
+			return;
+		}
+		if (lk === 'n') {
+			if (online && online.matchId && online.net) {
+				online.net
+					.call('drink', { id: online.matchId })
+					.then((r) => {
+						if (r && r.ok) {
+							waterNext = true;
+							ui.setWater(true);
+							ui.toast('Napil si sa vody: ďalší úder má silnejšiu falšu (Miesto úderu je modré).');
+						}
+					})
+					.catch(() => {});
+			}
+		} else if (game.match.league) {
+			conductCheck();
+		}
+	};
+	/** Prdnutie súpera: obraz sa na 3 s zavlní (ako horúci vzduch), najsilnejšie na začiatku. */
+	let waveT = 0;
+	const waveScreen = (ms = 3000) => {
+		const cv = renderer.domElement;
+		let svg = document.getElementById('mysn-wave-svg');
+		if (!svg) {
+			svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+			svg.id = 'mysn-wave-svg';
+			svg.setAttribute('width', '0');
+			svg.setAttribute('height', '0');
+			svg.style.position = 'absolute';
+			svg.innerHTML = '<filter id="mysn-wave" x="-5%" y="-5%" width="110%" height="110%"><feTurbulence type="turbulence" baseFrequency="0.006 0.02" numOctaves="2" seed="3" result="n"/><feDisplacementMap in="SourceGraphic" in2="n" scale="0" xChannelSelector="R" yChannelSelector="G"/></filter>';
+			document.body.appendChild(svg);
+		}
+		const turb = svg.querySelector('feTurbulence');
+		const disp = svg.querySelector('feDisplacementMap');
+		const t0 = performance.now();
+		cancelAnimationFrame(waveT);
+		cv.style.filter = 'url(#mysn-wave)';
+		const step = (t) => {
+			const k = (t - t0) / ms;
+			if (k >= 1) {
+				cv.style.filter = '';
+				return;
+			}
+			const a = Math.sin(Math.min(1, k * 6) * Math.PI * 0.5) * (1 - k); // rýchlo nabehne, potom slabne
+			disp.setAttribute('scale', String(Math.round(60 * a)));
+			turb.setAttribute('baseFrequency', `${0.006 + 0.002 * Math.sin(t / 180)} ${0.02 + 0.006 * Math.cos(t / 140)}`);
+			waveT = requestAnimationFrame(step);
+		};
+		waveT = requestAnimationFrame(step);
+	};
+	/** Grgnutie alebo prdnutie na štadióne: diváci pohoršene (fuj, šomranie), Rudo sa ozve. Rovnako u všetkých. */
+	const grossReact = (m) => {
+		if (venue !== 'league') {
+			return;
+		}
+		let hsh = 0;
+		for (const ch of String(m.id)) {
+			hsh = (hsh * 31 + ch.charCodeAt(0)) >>> 0;
+		}
+		setTimeout(() => {
+			const g = crowdGain();
+			if (g && CROWD.crowdFx !== false && !sound.fx('crowd-disgust', { gain: g * 1.2, pick: hsh })) {
+				sound.fx('crowd-ooh', { gain: g * 1.2, pick: hsh }); // kým nie je vygenerovaný zvuk Fuj
+			}
+		}, 600);
+		rudo.gross(hsh);
 	};
 	/** Môj zvuk: zahrám ho, divák ho pošle hráčom, hráč súperovi a svojim divákom. */
 	const sendSnd = (slot, p) => {
@@ -1930,9 +2021,14 @@ export function start(root, config = {}) {
 		if (venue === 'league' && name === 'board') {
 			ui.openSnookerRules(true, config.clock || 45);
 			ui.openLeagueRules(true, 'F1 alebo Esc: späť do hry');
+			const p = stadium.padTurn(0);
+			ui.padNav(true, p.page, p.count);
 		} else if (ui.snRulesEl && !ui.snRulesEl.classList.contains('mysn-hidden')) {
 			ui.openSnookerRules(false);
 			ui.openLeagueRules(false);
+		}
+		if (!(venue === 'league' && name === 'board')) {
+			ui.padNav(false);
 		}
 		room.setRackView(name === 'rack');
 		if (venue === 'league') {
@@ -2298,7 +2394,9 @@ export function start(root, config = {}) {
 		// tvrdosť špičky: najväčšia sila tága; mäkká špička lepšie drží falše
 		let power = Math.min(1, rawPower * cueSpec.power * TK.power);
 		// krieda: nakriedovaná špička prenesie miesto úderu (falšu) naplno, bez kriedy len pätinu
-		const k = cueSpec.grip * (chalk > 0 ? 1 : CHALK_SPIN) * TK.spin * wearK;
+		// napitá voda (0.27.0): falša 15x oproti úderu bez kriedy (s kriedou 3x viac, bez kriedy 11x), jeden úder
+		const wk = waterNext ? (chalk > 0 ? 3 : 11) : 1;
+		const k = cueSpec.grip * (chalk > 0 ? 1 : CHALK_SPIN) * TK.spin * wearK * wk;
 		let side = stretchDeg ? 0 : spin.side * k; // natiahnutý úder: bez falše, len stredom
 		let top = stretchDeg ? 0 : spin.top * k;
 		const missChance = (tip.wear >= 1 ? 0.3 : tip.wear >= 0.9 ? 0.1 : 0) * (cueSpec.miscueK || 1); // menšia špica sa šmýka ľahšie
@@ -2351,6 +2449,10 @@ export function start(root, config = {}) {
 				ui.toast('Šmyk tága! Špica je opotrebovaná, vymeň ju na stojane (F2).');
 			}
 			spiderOn = false; // pavúk platí na jeden úder
+			if (waterNext) {
+				waterNext = false; // voda platí na jeden úder
+				ui.setWater(false);
+			}
 			ui.setSpin(0, 0); // po údere sa Miesto úderu vráti do stredu
 			cushAuto = null;
 			ui.spinNote('');
@@ -2811,6 +2913,8 @@ export function start(root, config = {}) {
 			}
 		},
 		foundAccept: () => online && online.accept(true),
+		playerSnd: (k) => playerSnd(k), // mobil: tlačidlo hráčskych zvukov
+		padPage: (d) => padTurn(d), // F1 blok na štadióne: listovanie tlačidlami
 		concede: (yes) => {
 			const frame = !!(concedeNow && concedeNow.info && concedeNow.info.frame);
 			const concedeKey = concedeNow && concedeNow.info ? concedeNow.info.key : '';
@@ -4175,11 +4279,7 @@ export function start(root, config = {}) {
 			}
 			const typing = document.activeElement && /input|select|textarea/i.test(document.activeElement.tagName);
 			if (PLAYER_SND[lk] && !typing && game.match && !game.match.training && !game.spectating && !ui.menuOpen() && !ui.toolsOpen()) {
-				// hráč v partii: N napitie sa vody, G grgnutie, H prdnutie (v lige G a H: napomenutie, potom súper +4)
-				const c = rig.camera.position;
-				if (sendSnd(PLAYER_SND[lk], { x: c.x, y: c.y - 0.15, z: c.z }) && game.match.league && lk !== 'n') {
-					conductCheck();
-				}
+				playerSnd(lk);
 				return true;
 			}
 			if (lk === 'm' && !typing && (!view || view === 'free' || (view === 'office' && !officeMode)) && !game.spectating && !ui.menuOpen()) {
@@ -4358,6 +4458,10 @@ export function start(root, config = {}) {
 				}
 				if ((lk === 'escape' || lk === 'enter') && view !== 'chalk') {
 					exitView();
+					return true;
+				}
+				if (view === 'board' && venue === 'league' && (lk === 'arrowleft' || lk === 'arrowright')) {
+					padTurn(lk === 'arrowleft' ? -1 : 1); // F1 blok na štadióne: listovanie
 					return true;
 				}
 				if (view === 'rack' && (lk === 'arrowleft' || lk === 'arrowright')) {
@@ -5297,7 +5401,9 @@ export function start(root, config = {}) {
 		const start = () => {
 			play('rudo-start', 4500, true, game.match ? game.match.id : 0);
 		};
-		return { exec, fetchCall, start, potNow };
+		/** Grgnutie alebo prdnutie hráča: pohoršená replika (rovnaký variant u všetkých). */
+		const gross = (v) => play('rudo-gross', 1900, true, v);
+		return { exec, fetchCall, start, potNow, gross };
 	})();
 	game.decorateCall = (c, st) => {
 		const cr = crowdDecide(st, c.foul, c);
@@ -5872,6 +5978,7 @@ export function start(root, config = {}) {
 		ui.showEye(rig.aimBall && aiming && rig.mode === 'cue' && !game.spectating);
 		ui.showFine(cueSpec.fine > 0, controls.touchFineOn());
 		ui.showFree(ui.touchUI && (!view || view === 'free') && venue !== 'office' && !game.spectating && !ui.mainMenuOpen(), view === 'free');
+		ui.showSnd(ui.touchUI && !!game.match && !game.match.training && !game.spectating && !view && venue !== 'office' && !ui.mainMenuOpen());
 		ui.showTop(ui.touchUI && !view && venue !== 'office' && !game.spectating && !ui.mainMenuOpen() && (rig.mode === 'cue' || rig.mode === 'top'), rig.mode === 'top');
 		// pohľady (nástenka, stojan, rebríček…) majú vlastné Späť do hry; mobil potrebuje tlačidlo len pri stole zhora (Tab)
 		// biela v ruke (moja): kamera sa raz presunie zhora na stôl; po položení sa vráti za tágo (udalosť change)

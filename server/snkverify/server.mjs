@@ -11,7 +11,7 @@ import { Game } from './game/match.js';
 import { restore, inD, R } from './game/physics.js';
 
 const LK = '/etc/livekit.yaml';
-const VERSION = '4';
+const VERSION = '5';
 const TOL = 0.02; // najväčší povolený rozdiel polohy gule (m) medzi serverom a prehliadačom pred úderom
 
 function keys() {
@@ -181,7 +181,8 @@ export function verifyMove(before, shot, m, claim) {
 	if (!s.every(num)) {
 		return { ok: false, error: 'Neplatný úder.' };
 	}
-	if (shot.power < 0 || shot.power > 1.0001 || Math.hypot(shot.side, shot.top) > 1.6) {
+	// napitá voda (server nastaví shot.w): falša až 3x silnejšia
+	if (shot.power < 0 || shot.power > 1.0001 || Math.hypot(shot.side, shot.top) > (shot.w ? 4.8 : 1.6)) {
 		return { ok: false, error: 'Sila alebo falša mimo hraníc.', cheat: true };
 	}
 	const me = m.me === 1 ? 1 : 0;

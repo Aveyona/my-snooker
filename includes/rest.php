@@ -38,6 +38,7 @@ add_action(
 			'timeout' => 'mysn_rest_timeout',
 			'choice' => 'mysn_rest_choice',
 			'conduct' => 'mysn_rest_conduct',
+			'drink'   => 'mysn_rest_drink',
 			'concede' => 'mysn_rest_concede',
 			'leave'  => 'mysn_rest_leave',
 			'resume' => 'mysn_rest_resume',
@@ -528,6 +529,14 @@ function mysn_rest_settle( $req ) {
 		$st['conduct'] = $prev['conduct']; // počet nešportových správaní hráčov sa prenáša (klient ho neposiela)
 		$state         = wp_json_encode( $st );
 	}
+	// napitá voda (0.27.0): tento úder smie mať silnejšiu falšu (overovač pustí väčšiu), potom sa minie
+	$water = isset( $prev['water'] ) && is_array( $prev['water'] ) ? array( (int) $prev['water'][0], (int) $prev['water'][1] ) : array( 0, 0 );
+	if ( is_array( $pending ) ) {
+		$pending['w'] = $water[ $me ] ? 1 : 0; // rozhoduje server, nie prehliadač
+	}
+	$water[ $me ] = 0;
+	$st['water']  = $water;
+	$state        = wp_json_encode( $st );
 	// 0.11.1: server úder prehrá zo stavu, ktorý má uložený; pri nezhode platí jeho stav (oba prehliadače sa zosúladia)
 	$points = max( 0, (int) $req->get_param( 'points' ) );
 	$foul   = $req->get_param( 'foul' ) ? 1 : 0;
@@ -659,6 +668,27 @@ function mysn_rest_settle( $req ) {
  * 1. bez trestu, 2. napomenutie rozhodcom, 3. a 5. súper +4 body (pripíšu sa aj do uloženého stavu),
  * 4. súper +4 a posledné upozornenie, 6. diskvalifikácia: zápas končí, súper vyhráva (ligové body ako pri bežnej výhre).
  */
+/** Hráč sa napil vody (N): jeho ďalší úder smie mať silnejšiu falšu. Nie počas úderu. */
+function mysn_rest_drink( $req ) {
+	$r = mysn_my_match( $req );
+	if ( is_wp_error( $r ) ) {
+		return $r;
+	}
+	list( $m, $me ) = $r;
+	if ( 'active' !== $m['status'] || $m['shot'] ) {
+		return array( 'ok' => false );
+	}
+	$st = $m['state'] ? json_decode( $m['state'], true ) : null;
+	if ( ! $st || ! isset( $st['rules']['scores'] ) ) {
+		return array( 'ok' => false );
+	}
+	$w        = isset( $st['water'] ) && is_array( $st['water'] ) ? array( (int) $st['water'][0], (int) $st['water'][1] ) : array( 0, 0 );
+	$w[ $me ] = 1;
+	$st['water'] = $w;
+	mysn_update_match( $m['id'], array( 'state' => wp_json_encode( $st ) ) );
+	return array( 'ok' => true );
+}
+
 function mysn_rest_conduct( $req ) {
 	$r = mysn_my_match( $req );
 	if ( is_wp_error( $r ) ) {

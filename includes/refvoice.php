@@ -131,6 +131,7 @@ function mysn_sound_fx_default( $slot ) {
 		'ovation'        => array( 'Standing ovation with cheering in a large indoor arena', 6, 0 ),
 		'crowd-ooh'      => array( 'Disappointed audience groan, aww, in an arena', 2, 0 ),
 		'crowd-wow'      => array( 'Amazed audience ooh in an arena', 2, 0 ),
+		'crowd-disgust'  => array( 'Disgusted audience in an arena reacting to a rude noise, people shouting eww and yuck, then disapproving grumbling and murmuring', 3.5, 0 ),
 		'laugh'          => array( 'Audience laughing briefly in an arena', 2.5, 0 ),
 		'whistle'        => array( 'Appreciative whistle from a spectator in an arena', 1.2, 0 ),
 		'cough'          => array( 'Single cough of a spectator in a quiet arena', 0.8, 0 ),

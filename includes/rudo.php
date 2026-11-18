@@ -32,6 +32,7 @@ function mysn_rudo_lines() {
 		'rudo-50'      => array( 'Séria 50', 'Keď séria prekročí 50 bodov.', "Päťdesiatka! Ide mu to ako po masle!\nUž je ich päťdesiat, a ešte nekončí!\nTento chlapec je dnes v ráži!\nPolstovka! Kto ho zastaví?" ),
 		'rudo-century' => array( 'Stovka (náhrada)', 'Stovka v sérii. Najprv skúsi živý komentár cez AI, tento zvuk hrá, keď sa nepodarí.', "Stovka! Toto som chcel vidieť!\nSto bodov! Klobúk dole!\nCentury! Takéto niečo sa nevidí každý deň!" ),
 		'rudo-won'     => array( 'Rozhodujúci náskok', 'Súper už potrebuje snookery (po potlesku publika; najprv skúsi živý komentár).', "Tak, a je to doma. Ostatné je už len formalita.\nTeraz už môže súper len dúfať v zázrak.\nNo, tak toto sa už nedá dohnať ani na bicykli.\nSúper môže pomaly baliť tágo.\nA je vymaľované. Ja idem pre pivo, kým to dohrajú." ),
+		'rudo-gross'   => array( 'Grgnutie alebo prdnutie hráča', 'Hráč grgol alebo prdol (pohoršene a nahlas).', "Fuj! Tak toto snáď nie! Sme na štadióne, nie v krčme!\nNo fuj, ty prasa! Toto sa nerobí!\nČo to bolo?! Dajte mu niekto mätu!\nPreboha, tu sa nedá dýchať! Otvorte okná!\nTo je hanba! Za mojich čias by ho vyhodili!\nFuj! Aj moja svokra má lepšie spôsoby!" ),
 		'rudo-frame'   => array( 'Koniec framu', 'Koniec framu v zápase na viac framov.', "Frame je doma! Ideme ďalej.\nTak tento frame bol na nervy.\nJeden frame za nami, ešte nekončíme.\nKto by to bol povedal!" ),
 		'rudo-match'   => array( 'Koniec zápasu (náhrada)', 'Koniec zápasu. Najprv skúsi živý komentár cez AI, tento zvuk hrá, keď sa nepodarí.', "A je to! Gratulujem víťazovi!\nKoniec! Ideme na pivo!\nTo bol zápas, aký sa len tak nevidí!\nTak, a teraz domov. Ale bolo to krásne." ),
 	);
@@ -49,7 +50,7 @@ function mysn_rudo_mood( $what ) {
 	$m    = array(
 		'century' => 'excited', 'break50' => 'excited', '50' => 'excited', 'match' => 'excited', 'frame' => 'excited', 'nice' => 'excited', 'start' => 'excited', 'pot' => 'laugh',
 		'foul' => 'annoyed', 'white' => 'laugh', 'foullead' => 'laugh', 'miss' => 'sad', 'edge' => 'sad',
-		'snookers' => 'tense', 'frameball' => 'tense', 'won' => 'laugh', 'in' => 'excited', 'lastred' => 'tense', 'black' => 'tense', 'hang' => 'laugh', 'cushion' => 'sad', 'cluster' => 'annoyed',
+		'snookers' => 'tense', 'frameball' => 'tense', 'won' => 'laugh', 'in' => 'excited', 'lastred' => 'tense', 'black' => 'tense', 'hang' => 'laugh', 'cushion' => 'sad', 'cluster' => 'annoyed', 'gross' => 'annoyed',
 	);
 	return $m[ $what ] ?? '';
 }

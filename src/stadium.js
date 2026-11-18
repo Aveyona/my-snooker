@@ -359,7 +359,15 @@ export function buildStadium(scene, quality, clock = 45) {
 	}
 	// F1: blok (notes so špirálou) s klávesmi a ovládaním, leží na stolíku medzi pohármi (text čitateľný od stola)
 	const PAPER = { x: 2.6, z: BZ - 0.55, w: 0.3, h: 0.4 };
-	const paper = canvasTex(900, 1200, (g, w, h) => {
+	// 0.27.0: blok má viac strán (listuje sa šípkami ← →): klávesy, správanie hráča, situácie v hre
+	const PAD_PAGES = 3;
+	let padPage = 0;
+	const paper = canvasTex(900, 1200);
+	const drawPaper = () => {
+		const g = paper.g;
+		const w = paper.c.width;
+		const h = paper.c.height;
+		g.clearRect(0, 0, w, h);
 		// papier s jemným tieňovaním, linajkami a červeným okrajom
 		const bg = g.createLinearGradient(0, 0, w, h);
 		bg.addColorStop(0, '#fbf8ef');
@@ -399,13 +407,14 @@ export function buildStadium(scene, quality, clock = 45) {
 			g.stroke();
 		}
 		// hlavička
+		const titles = ['Klávesy a ovládanie', 'Správanie hráča', 'Situácie v hre'];
 		g.textAlign = 'left';
 		g.fillStyle = '#b3121f';
 		g.font = 'bold 22px Arial, sans-serif';
 		g.fillText('MY SNOOKER · ŠTADIÓN', 120, 118);
 		g.fillStyle = '#1d3f8f';
 		g.font = 'bold 50px Georgia, serif';
-		g.fillText('Klávesy a ovládanie', 120, 172);
+		g.fillText(titles[padPage], 120, 172);
 		let y = 240;
 		const head = (t) => {
 			g.fillStyle = '#b3121f';
@@ -413,51 +422,90 @@ export function buildStadium(scene, quality, clock = 45) {
 			g.fillText(t, 120, y);
 			y += 44;
 		};
-		const row = (k, t) => {
+		const row = (k, t, kw = 325) => {
 			g.fillStyle = '#1d3f8f';
 			g.font = 'bold 27px Arial, sans-serif';
 			g.fillText(k, 120, y - 8);
 			g.fillStyle = '#23262e';
 			g.font = '27px Arial, sans-serif';
-			g.fillText(t, 325, y - 8);
+			g.fillText(t, kw, y - 8);
 			y += 44;
 		};
-		head('Klávesy');
-		row('F1', 'tento blok, pravidlá snookeru a ligy');
-		row('F2', 'môj stojan s tágami');
-		row('F3', 'krieda a nádstavce');
-		row('F4', 'skóre na veľkej obrazovke');
-		row('F7', 'moje kreslo');
-		row('F12', 'bodové svetlá (na ťahu)');
-		row('Tab', 'pohľad zhora');
-		row('Medzerník', 'voľná kamera');
-		row('Ctrl', 'voľná myš, klik na predmety');
-		row('Esc', 'menu  ·  F5 obnoviť  ·  F11 celá obrazovka');
-		y += 10;
-		head('Myš');
-		row('Pohyb', 'mierenie (Shift jemnejšie)');
-		row('Ľavé drž', 'odtiahni tágo a pošli ho dopredu');
-		row('Koliesko drž', 'miesto úderu na bielej (falša)');
-		row('Pravé drž', 'posun pohľadu okolo gule');
-		row('Koliesko', 'priblíženie a oddialenie');
-		// upozornenie na čas
-		y += 14;
-		g.fillStyle = '#fde8e8';
-		g.strokeStyle = '#b3121f';
-		g.lineWidth = 3;
-		g.beginPath();
-		g.roundRect(118, y - 40, w - 160, 64, 10);
-		g.fill();
-		g.stroke();
-		g.fillStyle = '#b3121f';
-		g.font = 'bold 30px Arial, sans-serif';
-		g.textAlign = 'center';
-		g.fillText(`Na úder máš ${clock} sekúnd, inak faul za čas.`, 118 + (w - 160) / 2, y + 2);
+		const box = (t) => {
+			y += 14;
+			g.fillStyle = '#fde8e8';
+			g.strokeStyle = '#b3121f';
+			g.lineWidth = 3;
+			g.beginPath();
+			g.roundRect(118, y - 40, w - 160, 64, 10);
+			g.fill();
+			g.stroke();
+			g.fillStyle = '#b3121f';
+			g.font = 'bold 28px Arial, sans-serif';
+			g.textAlign = 'center';
+			g.fillText(t, 118 + (w - 160) / 2, y + 2);
+			g.textAlign = 'left';
+		};
+		if (padPage === 0) {
+			head('Klávesy');
+			row('F1', 'tento blok (← → listovať)');
+			row('F2', 'môj stojan s tágami');
+			row('F3', 'krieda a nádstavce');
+			row('F4', 'skóre na veľkej obrazovke');
+			row('F7', 'moje kreslo');
+			row('F12', 'bodové svetlá (na ťahu)');
+			row('Tab', 'pohľad zhora');
+			row('Medzerník', 'voľná kamera');
+			row('Ctrl', 'voľná myš, klik na predmety');
+			row('Esc', 'menu  ·  F5 obnoviť  ·  F11 celá obrazovka');
+			y += 10;
+			head('Myš');
+			row('Pohyb', 'mierenie (Shift jemnejšie)');
+			row('Ľavé drž', 'odtiahni tágo a pošli ho dopredu');
+			row('Koliesko drž', 'miesto úderu na bielej (falša)');
+			row('Pravé drž', 'posun pohľadu okolo gule');
+			row('Koliesko', 'priblíženie a oddialenie');
+			box(`Na úder máš ${clock} sekúnd, inak faul za čas.`);
+		} else if (padPage === 1) {
+			head('Klávesy hráča (v partii)');
+			row('N', 'napiť sa vody: ďalší úder falša 15×', 230);
+			row('G', 'grgnúť: diváci aj Rudo sú pohoršení', 230);
+			row('H', 'prdnúť: súperovi sa 3 s vlní obraz', 230);
+			row('Mobil', 'tlačidlo s pohárom vľavo', 230);
+			y += 10;
+			head('Nešportové správanie v lige (G a H)');
+			row('1.', 'bez trestu', 230);
+			row('2.', 'napomenutie rozhodcom', 230);
+			row('3.', 'súper +4 body', 230);
+			row('4.', 'súper +4 a posledné upozornenie', 230);
+			row('5.', 'súper +4 body', 230);
+			row('6.', 'diskvalifikácia, súper vyhráva', 230);
+			box('Voda sa netrestá. Prehrešky počíta server.');
+		} else {
+			head('Na farbu (po červenej)');
+			row('Farba', 'body za farbu, ktorá spadne,', 290);
+			row('', 'aj keď ju potopí iná farba', 290);
+			row('Dve farby', 'naraz spadnuté sú faul', 290);
+			y += 10;
+			head('Po súperovom faule');
+			row('Hrám ja', 'hráš, ako gule stoja', 290);
+			row('Súper hrá', 'gule sa vrátia pred faul', 290);
+			y += 10;
+			head('Skokový úder');
+			row('Bod dole', 'sila aspoň 70 %, s kriedou vyššie', 290);
+			y += 10;
+			head('Potrebuješ snookery');
+			row('Vzdať', 'súper vyhrá frame (alebo partiu)', 290);
+			row('Pokračovať', 'rozhodca a diváci zareagujú', 290);
+		}
 		g.fillStyle = '#5c6270';
 		g.font = 'italic 25px Georgia, serif';
-		g.fillText('Vľavo pravidlá snookeru, vpravo body ligy', w / 2 + 40, h - 72);
+		g.textAlign = 'center';
+		g.fillText(`Strana ${padPage + 1} / ${PAD_PAGES}  ·  ← → listovať  ·  vľavo pravidlá, vpravo body ligy`, w / 2 + 40, h - 72);
 		g.fillText('F1 alebo Esc: späť do hry', w / 2 + 40, h - 32);
-	});
+		paper.t.needsUpdate = true;
+	};
+	drawPaper();
 	// pero vedľa bloku
 	const pen = new THREE.Group();
 	const penBody = new THREE.Mesh(new THREE.CylinderGeometry(0.0055, 0.0055, 0.14, 14), new THREE.MeshStandardMaterial({ color: 0x14223f, roughness: 0.3, metalness: 0.4 }));
@@ -1152,6 +1200,12 @@ export function buildStadium(scene, quality, clock = 45) {
 		setRackLight,
 		chairChalk,
 		CHALK_T,
+		/** F1 blok: listovanie (d = +1 / -1), vráti stranu; d = 0 = späť na prvú stranu. */
+		padTurn(d) {
+			padPage = d ? (padPage + d + PAD_PAGES) % PAD_PAGES : 0;
+			drawPaper();
+			return { page: padPage, count: PAD_PAGES };
+		},
 		/** Variant podsvietenia stojana (1 až 4). */
 		setRackStyle(n) {
 			rackStyle = RACK_STYLES[n] ? n : 1;
