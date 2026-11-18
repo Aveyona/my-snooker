@@ -561,10 +561,12 @@ export function buildRoomShell(scene, quality, opts = {}) {
 			scene.add(c);
 		}
 	}
+	const rackLed = {}; // LED podsvietenie stojana: pásik, žiara, svetlo
 	// 0.31.0: LED pásik na spodnej lište pri zadnej stene stojana, svieti nahor (návrh B): teplá biela, jemná žiara
 	// na zadnej doske (aditívny prechod) a slabé svetlo, ktoré zospodu nasvieti tágá
 	{
 		const ledMat = new THREE.MeshBasicMaterial({ color: 0xfff1d6 });
+		rackLed.mat = ledMat;
 		const led = new THREE.Mesh(new THREE.BoxGeometry(rackW - 0.04, 0.006, 0.012), ledMat);
 		led.position.set(RACK.x, FY + 0.153, -RZ + 0.075);
 		scene.add(led);
@@ -573,10 +575,11 @@ export function buildRoomShell(scene, quality, opts = {}) {
 		c.height = 128;
 		const g = c.getContext('2d');
 		const gr = g.createLinearGradient(0, 128, 0, 0);
-		gr.addColorStop(0, 'rgba(255,214,160,0.4)');
-		gr.addColorStop(0.12, 'rgba(255,200,140,0.22)');
-		gr.addColorStop(0.45, 'rgba(255,190,120,0.07)');
-		gr.addColorStop(1, 'rgba(255,190,120,0)');
+		// biely prechod, farbu dáva materiál (farba podsvietenia sa dá zmeniť pri stojane, 0.31.1)
+		gr.addColorStop(0, 'rgba(255,255,255,0.4)');
+		gr.addColorStop(0.12, 'rgba(255,255,255,0.22)');
+		gr.addColorStop(0.45, 'rgba(255,255,255,0.07)');
+		gr.addColorStop(1, 'rgba(255,255,255,0)');
 		g.fillStyle = gr;
 		g.fillRect(0, 0, 8, 128);
 		const tex = new THREE.CanvasTexture(c);
@@ -584,8 +587,10 @@ export function buildRoomShell(scene, quality, opts = {}) {
 		const glowH = 1.0;
 		const wash = new THREE.Mesh(
 			new THREE.PlaneGeometry(rackW - 0.02, glowH),
-			new THREE.MeshBasicMaterial({ map: tex, transparent: true, blending: THREE.AdditiveBlending, depthWrite: false })
+			new THREE.MeshBasicMaterial({ map: tex, color: 0xffd6a0, transparent: true, blending: THREE.AdditiveBlending, depthWrite: false })
 		);
+		rackLed.wash = wash;
+		rackLed.led = led;
 		wash.position.set(RACK.x, FY + 0.155 + glowH / 2, -RZ + 0.0665);
 		wash.renderOrder = 2;
 		scene.add(wash);
@@ -593,6 +598,7 @@ export function buildRoomShell(scene, quality, opts = {}) {
 			const ledLight = new THREE.PointLight(0xffd9a0, 0.35, 1.8, 2);
 			ledLight.position.set(RACK.x, FY + 0.25, -RZ + 0.55);
 			scene.add(ledLight);
+			rackLed.light = ledLight;
 		}
 	}
 	const rackCues = [];
@@ -1292,6 +1298,18 @@ export function buildRoomShell(scene, quality, opts = {}) {
 		magazine: { pos: new THREE.Vector3(MG.x + 0.02, CT.top + 0.5, MG.z + 0.2), look: new THREE.Vector3(MG.x, CT.top, MG.z - 0.01) },
 		rssItems: mag.items,
 		selectCue,
+		/** Farba LED podsvietenia stojana (číslo farby), null = vypnuté. */
+		setRackLed(col) {
+			// vypnuté: pásik tmavý, bez žiary a svetla (viditeľnosť riadi prepínanie miestností, preto nie visible)
+			const on = col !== null && col !== undefined;
+			const c = new THREE.Color(on ? col : 0x000000);
+			rackLed.wash.material.color.copy(c);
+			rackLed.mat.color.copy(on ? c.clone().lerp(new THREE.Color(0xffffff), 0.55) : new THREE.Color(0x2a2a2a)); // pásik svieti takmer bielo, s nádychom farby
+			if (rackLed.light) {
+				rackLed.light.color.copy(c);
+				rackLed.light.intensity = on ? 0.35 : 0;
+			}
+		},
 		setRackView(on) {
 			rackView = !!on;
 			selectCue(lastSel[0], lastSel[1]);

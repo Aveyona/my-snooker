@@ -74,6 +74,18 @@ const MM_ICON = {
 	seatChange: 'chair', watchStop: 'x', accept: 'check', decline: 'x',
 };
 
+/** Farby LED podsvietenia stojana s tágami: kľúč, názov, farba tlačidla (farba svetla je v main.js RACK_LED_HEX). */
+export const RACK_LEDS = [
+	['warm', 'Teplá biela', '#ffd6a0'],
+	['cool', 'Studená biela', '#e3efff'],
+	['green', 'Zelená', '#4fd18a'],
+	['blue', 'Modrá', '#4f9dff'],
+	['red', 'Červená', '#ff5a5a'],
+	['purple', 'Fialová', '#b070ff'],
+	['orange', 'Oranžová', '#ff9a40'],
+	['off', 'Vypnuté', '#3a3a3a'],
+];
+
 export class UI {
 	constructor(root, opts) {
 		this.root = root;
@@ -3314,6 +3326,27 @@ export class UI {
 				list.appendChild(card);
 			});
 			box.appendChild(list);
+			// 0.31.1: farba LED podsvietenia stojana
+			{
+				const cur = (this.opts.settings && this.opts.settings.rackLed) || 'warm';
+				const row = h('div', 'mysn-rackled', '<span>Podsvietenie</span>');
+				for (const [k, name, css] of RACK_LEDS) {
+					const b = h('button', 'mysn-rackled-b' + (k === cur ? ' mysn-on' : ''), k === 'off' ? '✕' : '');
+					b.type = 'button';
+					b.title = name;
+					b.setAttribute('aria-label', 'Podsvietenie: ' + name);
+					b.style.background = css;
+					b.addEventListener('click', (e) => {
+						e.stopPropagation();
+						for (const x of row.querySelectorAll('.mysn-rackled-b')) {
+							x.classList.toggle('mysn-on', x === b);
+						}
+						this.opts.onAction('rackLed', k);
+					});
+					row.appendChild(b);
+				}
+				box.appendChild(row);
+			}
 			if (this.touchUI) {
 				// mobil (návrh D): stojan cez celú obrazovku, hore ‹ názov › a hodnoty, vpravo okrúhle ikony
 				// (Špica, Krieda, Vlastné, i); každá otvorí zdola len svoju časť panela tága, dole Späť do hry

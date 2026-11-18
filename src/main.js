@@ -48,7 +48,7 @@ function lowSideFor(v, user) {
 
 function loadSettings() {
 	const mobile = /Android|iPhone|iPad|Mobile/i.test(navigator.userAgent);
-	const def = { tableDetail: 'fine', lines: false, quality: mobile ? 'low' : 'high', volume: 0.8, volTable: 1, volRoom: 1, volCrowd: 1, volRudo: 1, sound3d: 'hrtf', refLang: 'en', respot: true, contact: true, contactPos: 'topright', camSide: 'hand', afterShot: 'follow', oppCam: 'follow', camera: 'cue', cue: 'club' };
+	const def = { tableDetail: 'fine', lines: false, quality: mobile ? 'low' : 'high', volume: 0.8, volTable: 1, volRoom: 1, volCrowd: 1, volRudo: 1, rackLed: 'warm', sound3d: 'hrtf', refLang: 'en', respot: true, contact: true, contactPos: 'topright', camSide: 'hand', afterShot: 'follow', oppCam: 'follow', camera: 'cue', cue: 'club' };
 	try {
 		const raw = window.localStorage.getItem(STORE);
 		if (raw) {
@@ -113,6 +113,10 @@ export function start(root, config = {}) {
 	const roomBase = buildRoom(scene, settings.quality);
 	const preShell = new Set(scene.children);
 	const room = buildRoomShell(scene, settings.quality, { news: config.news, rss: config.rss, site: config.site, user: config.user });
+	// LED podsvietenie stojana s tágami (farba sa vyberá pri stojane, F2)
+	const RACK_LED_HEX = { warm: 0xffd6a0, cool: 0xdfeaff, green: 0x4fd18a, blue: 0x4f9dff, red: 0xff5050, purple: 0xb070ff, orange: 0xff9a40 };
+	const applyRackLed = () => room.setRackLed(settings.rackLed === 'off' ? null : RACK_LED_HEX[settings.rackLed] || RACK_LED_HEX.warm);
+	applyRackLed();
 	room.setWallLamps(settings.wallLamps !== false);
 	const shellObjs = scene.children.filter((o) => !preShell.has(o)); // herňa (steny, nábytok, svetlá)
 	const table = buildTable(renderer);
@@ -3949,6 +3953,11 @@ export function start(root, config = {}) {
 			enterView('paintMoon');
 		},
 		cuePick: (id) => pickCue(id),
+		rackLed: (k) => {
+			settings.rackLed = k;
+			saveSettings(settings);
+			applyRackLed();
+		},
 		// vlastné tágo zo šablóny (stojan F2): nové, úprava, zmazanie
 		cueNew: async (baseId) => {
 			if (!online) {
