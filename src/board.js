@@ -368,9 +368,28 @@ const DOODLES = {
 		g.lineTo(gx + 50, gy + 84);
 		g.lineTo(gx + 60, gy);
 		g.stroke();
+		// plátok citróna na okraji pohára
+		const lx = gx + 54;
+		const ly = gy + 6;
+		g.fillStyle = '#e8c21a';
+		g.beginPath();
+		g.arc(lx, ly, 17, 0, Math.PI * 2);
+		g.fill();
+		g.fillStyle = '#f6dc4a';
+		g.beginPath();
+		g.arc(lx, ly, 13, 0, Math.PI * 2);
+		g.fill();
+		g.strokeStyle = '#fbf3d2';
+		g.lineWidth = 1.5;
+		for (let k = 0; k < 8; k++) {
+			g.beginPath();
+			g.moveTo(lx, ly);
+			g.lineTo(lx + Math.cos((k * Math.PI) / 4) * 13, ly + Math.sin((k * Math.PI) / 4) * 13);
+			g.stroke();
+		}
 		g.fillStyle = '#3a6a8f';
 		g.font = 'italic 20px Georgia, serif';
-		g.fillText('N', gx + 70, gy + 60);
+		g.fillText('N', gx + 76, gy + 60);
 	},
 	balls(g, x, y) {
 		// trojuholník červených a farby s bodmi

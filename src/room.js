@@ -5,6 +5,7 @@
  */
 import * as THREE from 'three';
 import { boardTexture, BOARD_TEX, BOARD_BOXES } from './board.js';
+import { lemonInGlass } from './lemon.js';
 import { CUES, buildCueMesh } from './cues.js';
 import { CHALKS } from './chalks.js';
 import { buildNewspaper, buildMagazine } from './newspaper.js';
@@ -989,10 +990,10 @@ export function buildRoomShell(scene, quality, opts = {}) {
 		phoneTex.needsUpdate = true;
 	};
 	setPhone(opts.user || null);
-	// dva poháre s vodou
+	// pohár s vodou a citrónom (0.28.5: jeden)
 	const glassMat = new THREE.MeshStandardMaterial({ color: 0xe8f4ff, transparent: true, opacity: 0.22, roughness: 0.05, metalness: 0.1, side: THREE.DoubleSide, depthWrite: false });
 	const waterMat = new THREE.MeshStandardMaterial({ color: 0x9fd4ff, transparent: true, opacity: 0.45, roughness: 0.05, metalness: 0.05, depthWrite: false });
-	for (const [gx, gz] of [[0.2, 0.05], [0.11, 0.17]]) {
+	for (const [gx, gz] of [[0.2, 0.05]]) {
 		const gl = add(new THREE.CylinderGeometry(0.036, 0.03, 0.12, 28, 1, true), glassMat, bx + gx, BT + 0.06, bz + gz);
 		gl.castShadow = false;
 		const bottom = add(new THREE.CylinderGeometry(0.03, 0.03, 0.008, 28), glassMat, bx + gx, BT + 0.004, bz + gz);
@@ -1001,6 +1002,9 @@ export function buildRoomShell(scene, quality, opts = {}) {
 		water.castShadow = false;
 		water.renderOrder = 1;
 		gl.renderOrder = 2;
+		const lem = lemonInGlass(0.033, BT + 0.088, BT + 0.12);
+		lem.position.set(bx + gx, 0, bz + gz);
+		scene.add(lem);
 	}
 	add(new THREE.CylinderGeometry(0.03, 0.03, 1.03, 12), brassMat, bx, FY + 0.53, bz);
 	add(new THREE.CylinderGeometry(0.22, 0.25, 0.03, 24), brassMat, bx, FY + 0.015, bz);

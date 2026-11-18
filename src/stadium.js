@@ -9,6 +9,7 @@ import { buildCueMesh } from './cues.js';
 import { buildFan, reactFans, updateFans, buildReferee } from './fans.js';
 import { Confetti } from './confetti.js';
 import { stadiumFloorTexture } from './stadiumFloors.js';
+import { lemonInGlass } from './lemon.js';
 
 const FY = -0.815; // podlaha (rovnako ako v herni)
 
@@ -356,6 +357,9 @@ export function buildStadium(scene, quality, clock = 45) {
 	for (const gx of [2.96]) {
 		add(new THREE.CylinderGeometry(0.035, 0.03, 0.12, 20, 1, true), glass, gx, FY + 0.82, BZ - 0.55).castShadow = false;
 		add(new THREE.CylinderGeometry(0.031, 0.029, 0.075, 20), water, gx, FY + 0.76 + 0.04, BZ - 0.55).castShadow = false;
+		const lem = lemonInGlass(0.031, FY + 0.8375, FY + 0.88);
+		lem.position.set(gx, 0, BZ - 0.55);
+		root.add(lem);
 	}
 	// F1: blok (notes so špirálou) s klávesmi a ovládaním, leží na stolíku medzi pohármi (text čitateľný od stola)
 	const PAPER = { x: 2.6, z: BZ - 0.55, w: 0.3, h: 0.4 };
@@ -551,6 +555,9 @@ export function buildStadium(scene, quality, clock = 45) {
 		add(new THREE.CylinderGeometry(0.16, 0.18, 0.02, 24), wood, tx, FY + 0.01, cz);
 		add(new THREE.CylinderGeometry(0.035, 0.03, 0.12, 20, 1, true), glass, tx + 0.11, top + 0.06, cz - p.dz * 0.06).castShadow = false;
 		add(new THREE.CylinderGeometry(0.031, 0.029, 0.075, 20), water, tx + 0.11, top + 0.04, cz - p.dz * 0.06).castShadow = false;
+		const lem = lemonInGlass(0.031, top + 0.0775, top + 0.12);
+		lem.position.set(tx + 0.11, 0, cz - p.dz * 0.06);
+		root.add(lem);
 		// menovka: dve šikmé kartičky (strecha), text z oboch strán
 		const card = canvasTex(512, 160, (g, w, h) => {
 			g.fillStyle = '#f7f4ea';
