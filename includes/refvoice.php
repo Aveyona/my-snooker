@@ -266,11 +266,14 @@ function mysn_el_sfx_mp3( $prompt, $dur = 0, $loop = false ) {
 		$body['loop']     = true; // plynulo opakovateľná slučka (model v2)
 		$body['model_id'] = 'eleven_text_to_sound_v2';
 	}
+	if ( function_exists( 'set_time_limit' ) ) {
+		@set_time_limit( 180 ); // phpcs:ignore WordPress.PHP.NoSilencedErrors
+	}
 	return mysn_el_mp3(
 		wp_remote_post(
 			'https://api.elevenlabs.io/v1/sound-generation?output_format=mp3_44100_128',
 			array(
-				'timeout' => 90,
+				'timeout' => 150, // 0.28.1: zvukové efekty občas trvajú dlhšie ako 90 s
 				'headers' => array( 'xi-api-key' => $key, 'Content-Type' => 'application/json', 'Accept' => 'audio/mpeg' ),
 				'body'    => wp_json_encode( $body ),
 			)
