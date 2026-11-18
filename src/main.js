@@ -5329,6 +5329,8 @@ export function start(root, config = {}) {
 	 * Hneď pri páde gule: ak je podľa toho, čo sa zatiaľ stalo, zjavne platná (biela nespadla, prvý zásah aj
 	 * potopená guľa sú tie, ktoré sú na rade), body vyskočia a zaznie zvuk série hneď; inak až po zastavení gúľ.
 	 */
+	const POP_DELAY = 1000; // 0.31.6: body a zvuk série sa ukážu 1 s po páde gule
+	const popWait = (id) => Math.max(0, ((shotTrack.potT && shotTrack.potT[id]) || performance.now()) + POP_DELAY - performance.now());
 	const potPopNow = (id) => {
 		const b = game.balls[id];
 		if (!b || !shotTrack.popped) {
@@ -5356,12 +5358,14 @@ export function start(root, config = {}) {
 		shotTrack.popped.add(id);
 		const pk = POCKETS[shotTrack.potAt[id]];
 		const val = COLOURS[b.kind].value;
-		const c = pk ? toScreen(pk.x, R + 0.05, pk.z) : null;
-		if (c) {
-			ui.scorePop('+' + val, c.x, c.y, '#' + COLOURS[b.kind].color.toString(16).padStart(6, '0'));
-		}
-		streakN++;
-		sound.streak(streakN, val, { pos: pk ? { x: pk.x, y: R, z: pk.z } : null });
+		const n = ++streakN;
+		setTimeout(() => {
+			const c = pk ? toScreen(pk.x, R + 0.05, pk.z) : null;
+			if (c) {
+				ui.scorePop('+' + val, c.x, c.y, '#' + COLOURS[b.kind].color.toString(16).padStart(6, '0'));
+			}
+			sound.streak(n, val, { pos: pk ? { x: pk.x, y: R, z: pk.z } : null });
+		}, popWait(id));
 	};
 	const scorePops = (points) => {
 		const popped = shotTrack.popped || new Set();
@@ -5379,16 +5383,17 @@ export function start(root, config = {}) {
 		}
 		let t = 0;
 		for (const id of pots) {
+			t = Math.max(t, popWait(id)); // najskôr 1 s po páde gule
 			const b = game.balls[id];
 			const pk = POCKETS[shotTrack.potAt[id]];
 			const val = pots.length === 1 && !popped.size && points ? points : COLOURS[b.kind].value;
+			const n = ++streakN;
 			setTimeout(() => {
 				const c = pk ? toScreen(pk.x, R + 0.05, pk.z) : null;
 				if (c) {
 					ui.scorePop('+' + val, c.x, c.y, css(b.kind)); // čierna má biely obrys, je čitateľná
 				}
-				streakN++;
-				sound.streak(streakN, val, { pos: pk ? { x: pk.x, y: R, z: pk.z } : null });
+				sound.streak(n, val, { pos: pk ? { x: pk.x, y: R, z: pk.z } : null });
 			}, t);
 			t += 260;
 		}
@@ -5811,6 +5816,7 @@ export function start(root, config = {}) {
 			shotTrack.colIn = 0; // koľko farieb už spadlo (pri farbe na rade smie len jedna)
 			shotTrack.pots = [];
 			shotTrack.potAt = {};
+			shotTrack.potT = {};
 			shotTrack.foul = 0;
 			shotTrack.active = true;
 			const m = game.match;
@@ -5943,6 +5949,7 @@ export function start(root, config = {}) {
 				} else if (e.type === 'pot') {
 					shotTrack.pots.push(e.a);
 					shotTrack.potAt[e.a] = e.pocket;
+					(shotTrack.potT || (shotTrack.potT = {}))[e.a] = performance.now(); // čas pádu: body sa ukážu o POP_DELAY neskôr
 					rudo.potNow(e.a); // Rudo vykríkne hneď, keď guľa spadne
 					potPopNow(e.a); // body a zvuk série hneď pri páde (ak je guľa zjavne platná)
 				}
