@@ -300,6 +300,8 @@ export class Physics {
 					b.on = false;
 					b.moving = false;
 					b.potted = { x: pk.x, z: pk.z, vx: b.v.x, vz: b.v.z, t: this.time };
+					b.h = 0; // 0.28.9: guľa vrátená na stôl (spot, biela do ruky) nesmie ostať visieť vo vzduchu
+					b.vy = 0;
 					this.events.push({ type: 'pot', a: b.id, pocket: POCKETS.indexOf(pk), speed: Math.hypot(b.v.x, b.v.z) });
 					break;
 				}
@@ -316,6 +318,8 @@ export class Physics {
 					b.on = false;
 					b.moving = false;
 					b.potted = { x: b.p.x, z: b.p.z, vx: b.v.x, vz: b.v.z, t: this.time, off: true };
+					b.h = 0; // 0.28.9: po vrátení na stôl leží na súkne (inak ostala visieť nad stolom)
+					b.vy = 0;
 					// pre pravidlá ako guľa v jamke (biela mimo stola = faul, biela do ruky), jamka -1
 					this.events.push({ type: 'pot', a: b.id, pocket: -1, off: true, speed: Math.hypot(b.v.x, b.v.z) });
 				}

@@ -5801,6 +5801,15 @@ export function start(root, config = {}) {
 					sound.cushion(e.speed * 0.8, { pos: ballPos(game.balls[e.a]) }); // dopad skákajúcej gule na súkno
 				} else if (e.type === 'pot' && e.off) {
 					sound.cushion(Math.max(1, e.speed), { pos: ballPos(game.balls[e.a]) }); // guľa vyletela zo stola
+					// 0.28.9: dopadne na zem kúsok za stolom (herňa koberec, štadión tvrdá podlaha)
+					const ob = game.balls[e.a];
+					if (ob && ob.potted) {
+						const k = 1 + 0.35 / Math.max(0.3, Math.hypot(ob.potted.x, ob.potted.z));
+						const fp = { x: ob.potted.x * k, y: -0.78, z: ob.potted.z * k };
+						const fs = venue === 'league' ? 'ball-floor-hard' : 'ball-floor-carpet';
+						const t0 = performance.now();
+						sound.ensure(fs).then((ok) => ok && setTimeout(() => sound.fx(fs, { pos: fp }), Math.max(0, 380 - (performance.now() - t0))));
+					}
 					ui.toast(game.balls[e.a] && game.balls[e.a].kind === 'white' ? 'Biela vyletela zo stola!' : 'Guľa vyletela zo stola!');
 				} else if (e.type === 'pot') {
 					const pk = POCKETS[e.pocket];

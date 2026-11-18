@@ -162,6 +162,7 @@ function mysn_roadmap() {
 /** Denník zmien (najnovšie hore). */
 function mysn_changelog() {
 	return array(
+		array( '0.28.9', '18. 11. 2026', 'Guľa, ktorá vyletí zo stola, dopadne so zvukom podľa miestnosti (herňa koberec, štadión tvrdá podlaha; nové zvuky v administrácii). Oprava fyziky: guľa vrátená na stôl po vyletení (farba na spot, biela do ruky) už neostane visieť nad stolom.' ),
 		array( '0.28.8', '18. 11. 2026', 'Kvetina: listy svokriných jazykov rastú z pôdy v strede kvetináča, už netrčia cez jeho stenu.' ),
 		array( '0.28.7', '18. 11. 2026', 'Herňa: nová kvetina v rohu pri dverách, svokrine jazyky (vysoké pruhované listy so žltým okrajom) v terakotovom kvetináči.' ),
 		array( '0.28.6', '18. 11. 2026', 'Nástenka Liga v herni (aj tabule a karta v kancelárii) sa načíta hneď po štarte hry, nie až po kliknutí na ňu.' ),
