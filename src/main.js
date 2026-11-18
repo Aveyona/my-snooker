@@ -3347,6 +3347,11 @@ export function start(root, config = {}) {
 			saveSettings(settings);
 		},
 		// Mapa miestností (M alebo menu): výber miestnosti; štadión len počas ligy, admin kedykoľvek
+		/** Menu Pomocník: nástenka s nápovedou v aktuálnej miestnosti (herňa, kancelária, štadión), ako F1. */
+		helper: () => {
+			ui.showMenu(false);
+			controls.hooks.key('f1');
+		},
 		roomMap: () => {
 			if (ui.roomMapOpen()) {
 				ui.openRoomMap(false);

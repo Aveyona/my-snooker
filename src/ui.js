@@ -779,6 +779,7 @@ export class UI {
 			}
 			box.append(...common());
 		}
+		box.appendChild(this.button('Pomocník', 'helper', 'Nástenka s nápovedou v miestnosti, kde práve si (ako F1)'));
 		box.appendChild(this.button('Späť na web', 'home'));
 		this.menuFoot.textContent = 'V hre sa myš zachytí v okne. Esc ju uvoľní a otvorí toto menu. F1 nápoveda na nástenke, F2 stojan s tágami.';
 		this.mmRefresh();
