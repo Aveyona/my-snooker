@@ -229,8 +229,9 @@ export function sansevieria() {
 		geo.computeVertexNormals();
 		const leaf = new THREE.Mesh(geo, mat);
 		const a = r() * Math.PI * 2;
-		const rr = inner ? r() * 0.05 : 0.07 + r() * 0.08;
-		leaf.position.set(Math.cos(a) * rr, p.top - 0.02, Math.sin(a) * rr);
+		// 0.28.8: listy rastú z pôdy v strede kvetináča (okraj listu nesmie trčať cez stenu kvetináča)
+		const rr = inner ? r() * 0.035 : 0.04 + r() * 0.045;
+		leaf.position.set(Math.cos(a) * rr, p.top + 0.005, Math.sin(a) * rr);
 		leaf.rotation.order = 'YXZ';
 		leaf.rotation.y = r() * Math.PI;
 		const tilt = inner ? 0.06 : 0.2;
