@@ -412,6 +412,7 @@ export class Online {
 	rtcOpen(p) {
 		if (p.tag === 'match') {
 			this.oppOnline = true;
+			this.rtcWasOpen = this.matchId; // v tomto zápase už priame spojenie bežalo (výpadok = záložné spojenie)
 			this.hooks.status();
 			const g = this.game;
 			this.rtc.send(p, { k: 'hello', seq: g.match ? g.match.seq : -1 });
@@ -1175,11 +1176,25 @@ export class Online {
 		if (this.inMatch && !this.rtc.supported) {
 			return 'Prehliadač nepodporuje priame spojenie WebRTC, partia so súperom nemôže pokračovať.';
 		}
-		if (this.inMatch && !this.oppOnline) {
+		if (this.inMatch && this.opp && (!this.oppOnline || !this.rtc.isOpen(this.opp, 'match'))) {
+			// 0.30.1: priame spojenie vypadlo, ale server súpera vidí: partia ide ďalej cez server (záložné spojenie)
+			const inf = this.info;
+			const srvOpp = inf && inf.players && inf.players[1 - inf.me];
+			if (srvOpp && srvOpp.online && !this.rtc.isOpen(this.opp, 'match')) {
+				return this.rtcWasOpen !== this.matchId
+					? 'Nadväzujem priame spojenie so súperom. Partia zatiaľ beží cez server a dá sa hrať, len nevidíte navzájom mierenie.'
+					: 'Priame spojenie so súperom vypadlo. Partia pokračuje na záložnom spojení cez server a dá sa normálne dohrať, len nevidíte navzájom mierenie. Priame spojenie skúšam obnoviť.';
+			}
+			if (this.oppOnline) {
+				return ''; // server ešte nepotvrdil súpera, priame spojenie sa práve nadväzuje
+			}
+			if (!srvOpp) {
+				return 'Nadväzujem spojenie so súperom.';
+			}
 			const lg = this.game.match && this.game.match.league;
 			return lg
-				? 'Obnovujem priame spojenie so súperom (WebRTC). Partia pokračuje, stav stola sa medzitým berie zo servera. Ak sa súper do 2 minút nevráti, zápas prehrá.'
-				: 'Nadväzujem priame spojenie so súperom (WebRTC). Ak sa súper nevráti, po 10 minútach sa partia preruší a dá sa v nej pokračovať neskôr.';
+				? 'Súper stratil spojenie so serverom. Partia na neho čaká; ak sa do 2 minút nevráti, zápas prehrá.'
+				: 'Súper stratil spojenie so serverom. Ak sa nevráti, po 10 minútach sa partia preruší a dá sa v nej pokračovať neskôr.';
 		}
 		return '';
 	}
