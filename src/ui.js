@@ -2616,6 +2616,41 @@ export class UI {
 		}
 	}
 
+	/**
+	 * Popis úspechu pri kriedovej tabuli (0.32.2): myš nad riadkom (na mobile ťuk). k = kľúč alebo null (skryť),
+	 * x, y = poloha kurzora, d = stav zo servera (počty, stupne, prahy).
+	 */
+	achTip(k, x, y, d) {
+		let el = this._achTip;
+		if (!k) {
+			if (el) {
+				el.classList.remove('mysn-on');
+			}
+			this._achTipK = '';
+			return;
+		}
+		if (!el) {
+			el = this._achTip = h('div', 'mysn-achtip');
+			this.root.appendChild(el);
+		}
+		if (this._achTipK !== k) {
+			this._achTipK = k;
+			const a = ACH.find((z) => z.k === k);
+			const n = (d && d.count && d.count[k]) || 0;
+			const t = (d && d.tier && d.tier[k]) || 0;
+			const th = (d && d.defs && d.defs[k]) || [];
+			const ladder = th
+				.map((need, i) => `<li class="${i < t ? 'mysn-done' : i === t ? 'mysn-next' : ''}"><i style="background:${TIERS[i].ring}"></i>${esc(TIERS[i].name)}<b>${need}×</b>${i < t ? '<em>✓</em>' : i === t ? `<em>${n} / ${need}</em>` : ''}</li>`)
+				.join('');
+			el.innerHTML = `<div class="mysn-achtip-h">${achIcon(k, t, 58)}<div><b>${esc(a ? a.name : k)}</b><span>${t ? esc(TIERS[t - 1].name) : 'zatiaľ nezískaný'} · ${n}×</span></div></div><p>${esc(a ? a.desc : '')}</p><ul>${ladder}</ul>`;
+		}
+		const r = this.root.getBoundingClientRect();
+		const w = 300;
+		el.style.left = Math.max(8, Math.min(r.width - w - 8, x - r.left + 18)) + 'px';
+		el.style.top = Math.max(8, Math.min(r.height - 260, y - r.top + 14)) + 'px';
+		el.classList.add('mysn-on');
+	}
+
 	/** Získaný stupeň úspechu (alebo nová úroveň): ikonka s názvom na 3,5 s, viac naraz za sebou. */
 	achPop(k, tier, level = 0) {
 		this._achQ = this._achQ || [];

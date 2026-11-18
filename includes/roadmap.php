@@ -162,6 +162,7 @@ function mysn_roadmap() {
 /** Denník zmien (najnovšie hore). */
 function mysn_changelog() {
 	return array(
+		array( '0.32.3', '19. 11. 2026', 'Tabuľa Úspechy: myš nad riadkom (na mobile ťuk) ukáže kriedovú kartu s popisom úspechu, počtom a stupňami (bronz až platina, splnené ✓, ďalší s postupom); čiarky sa už neprekrývajú s dlhým názvom.' ),
 		array( '0.32.2', '19. 11. 2026', 'Herňa: šikmý neónový nápis My Snooker na prednej stene medzi obrazmi – písmená ako duté žlté svietiace trubice, pod nimi zelené tágo a červená guľa, žiara na stene.' ),
 		array( '0.32.1', '18. 11. 2026', 'Kriedová tabuľa Úspechy v herni pri bare: úroveň a XP s pásikom, vľavo všeobecné a vpravo špeciálne údery, čiarky po päť ako pri počítaní, stupeň alebo postup, posledný nový úspech žltou kriedou; písmo písané kriedou (Caveat); Ctrl a klik ju priblíži.' ),
 		array( '0.32.0', '18. 11. 2026', 'Skúsenosti (XP) a Úspechy: XP za každú potopenú guľu vo všetkých miestnostiach a úroveň hráča, 24 úspechov so stupňami bronz až platina (všeobecné a špeciálne údery: stop-ball, ťahák, späťák, bočná falša, swerve, massé, skok, plant, cannon, double, únik zo snookeru, safety, snooker), vlastné ikonky, cinknutie a oznámenie pri novom stupni, záložka Úspechy v telefóne (T), XP z doterajšej histórie.' ),

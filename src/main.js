@@ -930,6 +930,7 @@ export function start(root, config = {}) {
 	};
 	/** Odchod z pohľadu na predmet (Esc, Enter, Späť do hry): otvorený z voľného pohľadu = späť doň, inak za tágo. */
 	const leaveView = () => {
+		ui.achTip(null);
 		if (viewFromFree && view && view !== 'free') {
 			backToFree();
 		} else {
@@ -1370,6 +1371,19 @@ export function start(root, config = {}) {
 	 * mobile na výšku), -1 = celá nástenka.
 	 */
 	let boardIdx = -1;
+	// 0.32.2: popis úspechu pri kriedovej tabuli – myš nad riadkom (na mobile ťuk)
+	const achHover = (e) => {
+		if (view !== 'achBoard') {
+			ui.achTip(null);
+			return;
+		}
+		const rr = renderer.domElement.getBoundingClientRect();
+		const ray = new THREE.Raycaster();
+		ray.setFromCamera(new THREE.Vector2(((e.clientX - rr.left) / rr.width) * 2 - 1, -((e.clientY - rr.top) / rr.height) * 2 + 1), rig.camera);
+		ui.achTip(room.achAt(ray), e.clientX, e.clientY, achData);
+	};
+	renderer.domElement.addEventListener('pointermove', (e) => e.pointerType === 'mouse' && achHover(e));
+	renderer.domElement.addEventListener('pointerdown', (e) => e.pointerType !== 'mouse' && achHover(e));
 	const boardClick = (e) => {
 		if (boardIdx >= 0) {
 			boardFocus(-1);
@@ -2190,6 +2204,7 @@ export function start(root, config = {}) {
 		}
 	};
 	const exitView = (keepFree = false) => {
+		ui.achTip(null);
 		if (!view) {
 			return;
 		}

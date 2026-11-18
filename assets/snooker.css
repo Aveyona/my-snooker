@@ -877,3 +877,17 @@ body.mysn-page { font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans
 @font-face { font-family: 'Caveat'; font-style: normal; font-weight: 700; font-display: swap; src: url(fonts/caveat-latin-700-normal.woff2) format('woff2'); unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD; }
 @font-face { font-family: 'Caveat'; font-style: normal; font-weight: 700; font-display: swap; src: url(fonts/caveat-latin-ext-700-normal.woff2) format('woff2'); unicode-range: U+0100-02AF, U+0304, U+0308, U+0329, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF; }
 @font-face { font-family: 'Kaushan Script'; font-style: normal; font-weight: 400; font-display: swap; src: url(fonts/kaushan-script-latin-400-normal.woff2) format('woff2'); } /* neón My Snooker (0.32.2) */
+/* 0.32.2: popis úspechu pri kriedovej tabuli (moderná kriedová karta) */
+.mysn-achtip { position: absolute; z-index: 25; width: 300px; box-sizing: border-box; padding: 12px 14px 10px; border-radius: 14px; background: #1f2b26f2; border: 1.5px solid #f1efe655; box-shadow: 0 10px 30px #000b, inset 0 0 40px #ffffff08; color: #f1efe6; font-family: Caveat, "Segoe Print", cursive; pointer-events: none; opacity: 0; transform: translateY(6px); transition: opacity .15s, transform .15s; }
+.mysn-achtip.mysn-on { opacity: 1; transform: none; }
+.mysn-achtip-h { display: flex; align-items: center; gap: 10px; }
+.mysn-achtip-h b { display: block; font-size: 28px; font-weight: 700; line-height: 1; }
+.mysn-achtip-h span { font-size: 19px; color: #ffe27a; }
+.mysn-achtip p { margin: 8px 0 6px; font-size: 20px; line-height: 1.15; }
+.mysn-achtip ul { list-style: none; margin: 0; padding: 6px 0 0; border-top: 1px dashed #f1efe655; }
+.mysn-achtip li { display: flex; align-items: center; gap: 8px; font-size: 19px; opacity: .6; }
+.mysn-achtip li i { width: 12px; height: 12px; border-radius: 50%; flex: none; }
+.mysn-achtip li b { margin-left: auto; font-weight: 700; }
+.mysn-achtip li em { font-style: normal; color: #ffe27a; min-width: 56px; text-align: right; }
+.mysn-achtip li.mysn-done, .mysn-achtip li.mysn-next { opacity: 1; }
+.mysn-achtip li.mysn-done em { color: #7CFC8A; }

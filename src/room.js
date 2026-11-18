@@ -981,6 +981,7 @@ export function buildRoomShell(scene, quality, opts = {}) {
 	}
 	let achData = null;
 	let achPage = 0;
+	let achRows = []; // riadky tabule (pre popis pri myši): { k, x, y, w, h } v pixeloch textúry
 	const drawAch = () => {
 		const g = achCanvas.getContext('2d');
 		const W = achCanvas.width;
@@ -1044,6 +1045,7 @@ export function buildRoomShell(scene, quality, opts = {}) {
 		const colW = (W - 180) / 2;
 		const top = 345;
 		const rowH = (H - top - 120) / per;
+		achRows = [];
 		list.forEach((a, i) => {
 			if (!a) {
 				return;
@@ -1060,9 +1062,12 @@ export function buildRoomShell(scene, quality, opts = {}) {
 			g.textAlign = 'left';
 			g.font = F(54, 500);
 			g.fillText(a.name, x0, y);
-			// čiarky
-			const tx = x0 + 330;
-			const marks = Math.min(15, n);
+			achRows.push({ k: a.k, x: x0 - 10, y: y - rowH * 0.75, w: colW - 30, h: rowH });
+			// čiarky: za názvom (dlhý názov ich posunie), najviac toľko skupín, koľko sa zmestí pred stupeň
+			const tx = x0 + Math.max(330, g.measureText(a.name).width + 34);
+			const space = x0 + colW - 40 - 190 - tx;
+			const groups = Math.max(0, Math.min(3, Math.floor(space / 78)));
+			const marks = Math.min(groups * 5, n);
 			g.lineWidth = 4.5;
 			g.lineCap = 'round';
 			for (let m = 0; m < marks; m++) {
@@ -1080,9 +1085,9 @@ export function buildRoomShell(scene, quality, opts = {}) {
 				}
 				g.stroke();
 			}
-			if (n > 15) {
+			if (n > marks && groups > 0) {
 				g.font = F(40, 500);
-				g.fillText(`+${n - 15}`, tx + 3 * 78 + 6, y - 6);
+				g.fillText(`+${n - marks}`, tx + groups * 78 + 6, y - 6);
 			}
 			g.textAlign = 'right';
 			g.font = F(46, 700);
@@ -1516,6 +1521,17 @@ export function buildRoomShell(scene, quality, opts = {}) {
 		setAch(d) {
 			achData = d ? { ...(achData || {}), ...d, last: d.last || (achData && achData.last) || null } : null;
 			drawAch();
+		},
+		/** Úspech pod lúčom myši (kľúč) alebo null. */
+		achAt(ray) {
+			const hit = ray.intersectObject(achPlane)[0];
+			if (!hit || !hit.uv) {
+				return null;
+			}
+			const px = hit.uv.x * achCanvas.width;
+			const py = (1 - hit.uv.y) * achCanvas.height;
+			const r = achRows.find((b) => px >= b.x && px <= b.x + b.w && py >= b.y && py <= b.y + b.h);
+			return r ? r.k : null;
 		},
 		achTurn(dir) {
 			achPage = Math.max(0, achPage + dir);
