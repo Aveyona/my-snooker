@@ -2686,6 +2686,9 @@ export function start(root, config = {}) {
 				return fromOffice(() => actions.training());
 			}
 			game.stopSolo();
+			if (venue === 'league' && !game.match) {
+				setVenue('home'); // 0.30.5: po ligovom zápase Tréning z menu vráti do herne (admin trénuje na štadióne cez mapu)
+			}
 			if (!restoreTraining()) {
 				game.aimAtNearest();
 			}
@@ -4830,6 +4833,9 @@ export function start(root, config = {}) {
 		}
 		ui.trainingFirst = false;
 		exitView();
+		if (venue === 'league') {
+			setVenue('home'); // o najlepšie skóre sa hrá v herni
+		}
 		ui.showLeaderboard(null);
 		topView = false;
 		game.startSolo(fresh);
