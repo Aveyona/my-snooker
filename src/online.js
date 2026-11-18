@@ -467,6 +467,9 @@ export class Online {
 				ua: br + (/Mobile|Android|iPhone/.test(ua) ? ' mobil' : ''),
 				hidden: document.visibilityState === 'hidden' ? 1 : 0,
 				log: this.rtc.log.slice(-60).join('\n'),
+				off: typeof navigator.onLine === 'boolean' && !navigator.onLine ? 1 : 0, // 0.30.3: komu vypadlo
+				down: this.net.down ? 1 : 0,
+				rx: p.lastRx ? Math.round((now - p.lastRx) / 1000) : -1,
 			})
 			.catch(() => null);
 	}

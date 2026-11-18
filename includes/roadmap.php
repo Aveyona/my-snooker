@@ -162,6 +162,7 @@ function mysn_roadmap() {
 /** Denník zmien (najnovšie hore). */
 function mysn_changelog() {
 	return array(
+		array( '0.30.3', '18. 11. 2026', 'Diagnostika spojení: nový stĺpec Komu vypadlo – či vypadol internet nahlasujúcemu hráčovi, či server nepočul súpera, hra v pozadí, alebo padlo len priame spojenie medzi hráčmi; čas poslednej správy od súpera.' ),
 		array( '0.30.2', '18. 11. 2026', 'Pri ikone tága vedľa Miesta úderu sa ukazuje len uhol tága (stav špice je v riadku pod guľou).' ),
 		array( '0.30.1', '18. 11. 2026', 'Stav spojenia: keď vypadne priame spojenie so súperom a server ho stále vidí, hra napíše, že partia pokračuje na záložnom spojení cez server a dá sa dohrať (len bez vzájomného mierenia); presnejší text, keď súper stratí spojenie so serverom.' ),
 		array( '0.30.0', '18. 11. 2026', 'Nové techniky úderov: uhol tága Shift + koliesko (mobil: ťahanie ikony tága) od najmenšieho možného po 80°, uhol pri Mieste úderu; swerve a massé (bočná falša pri zdvihnutom tágu stáča bielu), massé s väčším rozptylom, šmykom bez kriedy a špicou −5 %; vyšší skok po napitej vode; diváci na štadióne jasajú pri takom úspešnom úderi; overovač na serveri overí uhol.' ),

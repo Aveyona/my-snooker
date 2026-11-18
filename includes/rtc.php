@@ -181,6 +181,24 @@ function mysn_rest_rtc_diag( $req ) {
 		'hidden' => (int) (bool) $req->get_param( 'hidden' ),
 		'log'    => $clip( 'log', 6000 ),
 	);
+	// 0.30.3: komu spojenie vypadlo – kedy server naposledy počul oboch hráčov (podľa zápasu) a stav prehliadača
+	$last = &$list[ count( $list ) - 1 ];
+	$last['off']   = (int) (bool) $req->get_param( 'off' ); // prehliadač hlási, že nie je na internete
+	$last['down']  = (int) (bool) $req->get_param( 'down' ); // hre nejde spojenie so serverom
+	$last['rx']    = max( -1, min( 9999, (int) $req->get_param( 'rx' ) ) ); // pred koľkými s prišla od súpera posledná priama správa
+	$last['seenme'] = -1;
+	$last['seenop'] = -1;
+	if ( $last['match'] ) {
+		$mm = mysn_get_match( $last['match'] );
+		if ( $mm ) {
+			$now  = time();
+			$mine = 0 === mysn_side( $mm, $uid ) ? 'seen1' : 'seen2';
+			$oth  = 'seen1' === $mine ? 'seen2' : 'seen1';
+			$last['seenme'] = max( 0, $now - (int) $mm[ $mine ] );
+			$last['seenop'] = max( 0, $now - (int) $mm[ $oth ] );
+		}
+	}
+	unset( $last );
 	update_option( 'mysn_rtc_diag', array_slice( $list, -MYSN_DIAG_MAX ), false );
 	return array( 'ok' => true );
 }

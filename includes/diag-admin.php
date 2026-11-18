@@ -47,6 +47,31 @@ function mysn_diag_path( $path ) {
 	return $a . ( $b && $b !== $a ? ' / ' . $b : '' ) . ( isset( $p[1] ) ? ' (' . strtoupper( $p[1] ) . ')' : '' );
 }
 
+/**
+ * Komu spojenie vypadlo (0.30.3): hráč = ten, kto záznam poslal. Podľa toho, či je prehliadač na internete, či
+ * server počuje oboch hráčov (MYSN_ONLINE) a či bola hra v pozadí.
+ */
+function mysn_diag_who( $d ) {
+	$me = mysn_user( $d['user'] )['name'];
+	$op = $d['peer'] ? mysn_user( $d['peer'] )['name'] : 'súper';
+	if ( ! isset( $d['seenme'] ) ) {
+		return '–';
+	}
+	if ( ! empty( $d['off'] ) || ! empty( $d['down'] ) ) {
+		return $me . ': ' . ( ! empty( $d['off'] ) ? 'prehliadač bez internetu' : 'nejde spojenie so serverom' );
+	}
+	if ( $d['seenop'] > MYSN_ONLINE ) {
+		return $op . ': server ho nepočul ' . (int) $d['seenop'] . ' s (vypadol mu internet alebo zavrel hru)';
+	}
+	if ( $d['seenme'] > MYSN_ONLINE ) {
+		return $me . ': server ho nepočul ' . (int) $d['seenme'] . ' s';
+	}
+	if ( ! empty( $d['hidden'] ) ) {
+		return $me . ': hra v pozadí';
+	}
+	return 'Obaja sú na serveri: padlo len priame spojenie medzi nimi (sieť, firewall, NAT), nie internet';
+}
+
 function mysn_admin_diag() {
 	$list = get_option( 'mysn_rtc_diag', array() );
 	$list = is_array( $list ) ? array_reverse( $list ) : array();
@@ -105,10 +130,10 @@ function mysn_admin_diag() {
 		</div>
 	</div>
 	<table class="widefat striped" style="margin-top:16px;max-width:1300px">
-		<thead><tr><th>Kedy</th><th>Hráč</th><th>Súper</th><th>Zápas</th><th>Čo sa stalo</th><th>Cesta</th><th>Sieť</th><th>Prehliadač</th><th>Záznam</th></tr></thead>
+		<thead><tr><th>Kedy</th><th>Nahlásil</th><th>Súper</th><th>Zápas</th><th>Čo sa stalo</th><th>Komu vypadlo</th><th>Cesta</th><th>Sieť</th><th>Prehliadač</th><th>Záznam</th></tr></thead>
 		<tbody>
 		<?php if ( ! $list ) : ?>
-			<tr><td colspan="9">Zatiaľ žiadny záznam. Objaví sa, keď hráčom v zápase vypadne alebo sa opraví spojenie.</td></tr>
+			<tr><td colspan="10">Zatiaľ žiadny záznam. Objaví sa, keď hráčom v zápase vypadne alebo sa opraví spojenie.</td></tr>
 		<?php endif; ?>
 		<?php foreach ( $list as $d ) : ?>
 			<tr>
@@ -117,6 +142,7 @@ function mysn_admin_diag() {
 				<td><?php echo $d['peer'] ? esc_html( mysn_user( $d['peer'] )['name'] ) : ''; ?></td>
 				<td><?php echo (int) $d['match']; ?></td>
 				<td><?php echo esc_html( $d['why'] ) . ( $d['hidden'] ? ' <em>(hra v pozadí)</em>' : '' ); // phpcs:ignore ?></td>
+				<td><?php echo esc_html( mysn_diag_who( $d ) ) . ( isset( $d['rx'] ) && $d['rx'] >= 0 ? '<br><small>posledná správa od súpera pred ' . (int) $d['rx'] . ' s</small>' : '' ); // phpcs:ignore ?></td>
 				<td><?php echo esc_html( mysn_diag_path( $d['path'] ) ); ?></td>
 				<td><?php echo esc_html( $d['net'] ); ?></td>
 				<td><?php echo esc_html( $d['ua'] ); ?></td>
