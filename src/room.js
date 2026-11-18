@@ -1417,7 +1417,7 @@ export function buildRoomShell(scene, quality, opts = {}) {
 				txt(g, 'snooker.hedlajner.sk', 640, 660, 44, '#7fb6ff', 600);
 			},
 			(g) => {
-				// liga: denne od 17:00 UTC 4 hodiny (src/leagueTime.js), prepočet na miestny čas hráča
+				// liga: denne od 15:00 UTC 4 hodiny (src/leagueTime.js), prepočet na miestny čas hráča
 				bg(g, '#0d3a1f', '#04140a');
 				const lt = leagueTimes();
 				txt(g, 'LIGA', 640, 180, 150, '#7CFC8A', 900);

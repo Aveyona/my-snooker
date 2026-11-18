@@ -162,6 +162,7 @@ function mysn_roadmap() {
 /** Denník zmien (najnovšie hore). */
 function mysn_changelog() {
 	return array(
+		array( '0.33.1', '19. 11. 2026', 'Liga sa hrá denne 15:00 – 19:00 UTC (obrazovka v herni aj papier v kancelárii, s miestnym časom).' ),
 		array( '0.33.0', '19. 11. 2026', 'Svetový snooker na obrazovke v herni: prebiehajúci turnaj, živé zápasy so stavom a najbližšie zápasy v miestnom čase zo snooker.org API (server sťahuje raz za 5 minút, zdroj uvedený); prístupová hodnota X-Requested-By sa zadáva v administrácii My Snooker → Svetový snooker, bez nej sa snímka nezobrazuje.' ),
 		array( '0.32.7', '19. 11. 2026', 'Liga sa hrá denne 17:00 – 21:00 UTC: oprava času na obrazovke v herni; v kancelárii na stole roztrhnutý papier s časom ligy v UTC aj v miestnom čase hráča (písané perom).' ),
 		array( '0.32.6', '19. 11. 2026', 'Obrazovka nad mixpultom: reklama My Snooker, liga (hrá sa denne 15:00 – 19:00 UTC, aj prepočet na miestny čas hráča), úspechy, chat Hedlajner a Hedlajner; bez e-shopu a rebríčka; tlačidlo zapnutia pod obrazovkou (Ctrl a klik), stav sa pamätá, predvolene zapnutá.' ),

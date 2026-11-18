@@ -1,8 +1,8 @@
 /*
- * My Snooker: kedy sa hrá liga (0.32.7) – denne od 17:00 UTC 4 hodiny. Spoločné pre obrazovku v herni
+ * My Snooker: kedy sa hrá liga (0.32.7) – denne od 15:00 UTC 4 hodiny. Spoločné pre obrazovku v herni
  * a roztrhnutý papier na stole v kancelárii; miestny čas podľa časového pásma prehliadača hráča.
  */
-export const LEAGUE_UTC = { from: 17, hours: 4 };
+export const LEAGUE_UTC = { from: 15, hours: 4 };
 
 /** { utc: '17:00 – 21:00', local: '18:00 – 22:00', tz: 'Europe/Bratislava' } pre dnešný deň. */
 export function leagueTimes() {
