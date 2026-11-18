@@ -1393,6 +1393,7 @@ export function start(root, config = {}) {
 		rig.setView(v.look.clone().add(new THREE.Vector3(0, 0, d)), v.look.clone());
 		ui.padNav(true, i, BOARD_COUNT, boardTitle(i, ui.touchUI));
 	};
+	let noMenuUntil = 0; // telefón (T) uvoľnil myš: uvoľnenie kurzora vtedy neotvorí hlavné menu (aj pri rýchlom T T)
 	let phoneFromKey = false; // telefón otvorený klávesom T (po zavretí sa myš vráti k tágu)
 	let waterNext = false; // napil som sa: ďalší môj úder má silnejšiu falšu (server to vie, inak by úder neprijal)
 	const playerSnd = (lk) => {
@@ -3855,6 +3856,7 @@ export function start(root, config = {}) {
 			}
 		},
 		phoneClose: () => {
+			noMenuUntil = performance.now() + 1500; // oneskorené uvoľnenie kurzora po rýchlom T T menu neotvorí
 			ui.openPhone(false);
 			if (view === 'bar' || (phoneFromKey && !view && !freeMouse)) {
 				controls.capture(); // späť na rozhliadanie myšou (bar) alebo k tágu (otvorené klávesom T)
@@ -3868,6 +3870,7 @@ export function start(root, config = {}) {
 				return;
 			}
 			phoneFromKey = true;
+			noMenuUntil = performance.now() + 1500;
 			controls.uncapture();
 			ui.openPhone(true);
 		},
@@ -4072,7 +4075,7 @@ export function start(root, config = {}) {
 				freeMouse = false;
 				ui.setFree(false);
 				ui.showMenu(false);
-			} else if (finePointer && (!view || view === 'seat' || view === 'free') && !freeMouse && !ui.partyOpen() && !ui.toolsOpen() && !ui.roomMapOpen() && performance.now() - escClosedAt > 1500) {
+			} else if (finePointer && (!view || view === 'seat' || view === 'free') && !freeMouse && !ui.partyOpen() && !ui.toolsOpen() && !ui.roomMapOpen() && !ui.phoneOpen() && performance.now() > noMenuUntil && performance.now() - escClosedAt > 1500) {
 				ui.showMenu(true, started);
 			}
 		},
