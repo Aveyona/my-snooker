@@ -49,7 +49,7 @@ function lowSideFor(v, user) {
 
 function loadSettings() {
 	const mobile = /Android|iPhone|iPad|Mobile/i.test(navigator.userAgent);
-	const def = { tableDetail: 'fine', lines: false, quality: mobile ? 'low' : 'high', volume: 0.8, volTable: 1, volRoom: 1, volCrowd: 1, volRudo: 1, rackLed: 'warm', chatMode: 'show', sound3d: 'hrtf', refLang: 'en', respot: true, contact: true, contactPos: 'topright', camSide: 'hand', afterShot: 'follow', oppCam: 'follow', camera: 'cue', cue: 'club' };
+	const def = { tableDetail: 'fine', lines: false, quality: mobile ? 'low' : 'high', volume: 0.8, volTable: 1, volRoom: 1, volCrowd: 1, volRudo: 1, rackLed: 'warm', chatMode: 'show', tvOn: true, sound3d: 'hrtf', refLang: 'en', respot: true, contact: true, contactPos: 'topright', camSide: 'hand', afterShot: 'follow', oppCam: 'follow', camera: 'cue', cue: 'club' };
 	try {
 		const raw = window.localStorage.getItem(STORE);
 		if (raw) {
@@ -118,6 +118,7 @@ export function start(root, config = {}) {
 	const RACK_LED_HEX = { warm: 0xffd6a0, cool: 0xdfeaff, green: 0x4fd18a, blue: 0x4f9dff, red: 0xff5050, purple: 0xb070ff, orange: 0xff9a40 };
 	const applyRackLed = () => room.setRackLed(settings.rackLed === 'off' ? null : RACK_LED_HEX[settings.rackLed] || RACK_LED_HEX.warm);
 	applyRackLed();
+	room.setTv(settings.tvOn !== false); // obrazovka s reklamou nad mixpultom (0.32.6)
 	room.setWallLamps(settings.wallLamps !== false);
 	const shellObjs = scene.children.filter((o) => !preShell.has(o)); // herňa (steny, nábytok, svetlá)
 	const table = buildTable(renderer);
@@ -1013,6 +1014,7 @@ export function start(root, config = {}) {
 			{ id: 'paintSun', act: 'paintSun', pos: room.paintSun.look, r: 0.55 }, // obrazy (len myšou)
 			{ id: 'paintMoon', act: 'paintMoon', pos: room.paintMoon.look, r: 0.55 },
 			{ id: 'achBoard', act: 'achBoard', pos: room.achBoard.look, r: 0.75 }, // kriedová tabuľa Úspechy pri bare
+			{ id: 'tvPower', act: 'tvPower', pos: room.tvButton, r: 0.12 }, // tlačidlo obrazovky nad mixpultom
 			// chodba za dverami (F6): svietiace cedule do kancelárie a obývačky
 			...(room.signs.office ? [{ id: 'sign-office', act: 'goOffice', pos: wpos(room.signs.office.mesh), r: 0.2 }] : []),
 			...(room.signs.living ? [{ id: 'sign-living', act: 'goLiving', pos: wpos(room.signs.living.mesh), r: 0.2 }] : []),
@@ -3967,6 +3969,12 @@ export function start(root, config = {}) {
 			freeMouse = false;
 			ui.setFree(false);
 			enterView('paintSun');
+		},
+		tvPower: () => {
+			settings.tvOn = settings.tvOn === false;
+			saveSettings(settings);
+			room.setTv(settings.tvOn);
+			ui.toast(settings.tvOn ? 'Obrazovka zapnutá.' : 'Obrazovka vypnutá.');
 		},
 		achBoard: () => {
 			hotSet(null);

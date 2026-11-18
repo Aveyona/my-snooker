@@ -162,6 +162,7 @@ function mysn_roadmap() {
 /** Denník zmien (najnovšie hore). */
 function mysn_changelog() {
 	return array(
+		array( '0.32.6', '19. 11. 2026', 'Obrazovka nad mixpultom: reklama My Snooker, liga (hrá sa denne 15:00 – 19:00 UTC, aj prepočet na miestny čas hráča), úspechy, chat Hedlajner a Hedlajner; bez e-shopu a rebríčka; tlačidlo zapnutia pod obrazovkou (Ctrl a klik), stav sa pamätá, predvolene zapnutá.' ),
 		array( '0.32.5', '19. 11. 2026', 'Herňa: malý kaktus s ružovým kvetom v hlinenom kvetináči na komode pod tabuľou skóre.' ),
 		array( '0.32.4', '19. 11. 2026', 'Herňa: nad mixpultom namiesto svietidla obrazovka 65" s reklamou (My Snooker, liga, úspechy, Hedlajner, e-shop, živý rebríček, každá snímka 8 s s prelínaním); tabuľa skóre bez nápisu MY SNOOKER, herný režim je väčší nadpis.' ),
 		array( '0.32.3', '19. 11. 2026', 'Tabuľa Úspechy: myš nad riadkom (na mobile ťuk) ukáže kriedovú kartu s popisom úspechu, počtom a stupňami (bronz až platina, splnené ✓, ďalší s postupom); čiarky sa už neprekrývajú s dlhým názvom.' ),
