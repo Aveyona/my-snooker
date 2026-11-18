@@ -20,7 +20,23 @@ const MYSN_SUSP_DAYS = 7;
 /** Je sila „okrúhla“ (najviac 2 desatinné miesta, napr. 0.5 alebo 0.65; plná sila sa nepočíta)? */
 function mysn_ac_round( $p ) {
 	$p = (float) $p;
-	return $p > 0.001 && $p < 0.999 && abs( $p * 100 - round( $p * 100 ) ) < 1e-6;
+	if ( ! ( $p > 0.001 && $p < 0.999 && abs( $p * 100 - round( $p * 100 ) ) < 1e-6 ) ) {
+		return false;
+	}
+	// okrúhle hodnoty, ktoré vznikajú aj pri hre človeka: plný úder tágom (sila tága × špica), šmyk (× 0,35), najslabší úder 0,03
+	static $human = null;
+	if ( null === $human ) {
+		$human = array( '0.03' => 1 );
+		foreach ( array( 0.8, 0.9, 0.75, 1, 0.65, 0.85, 0.72 ) as $c ) {
+			foreach ( array( 0.97, 1, 1.03 ) as $t ) {
+				$v = min( 1, $c * $t );
+				$human[ number_format( $v, 4, '.', '' ) ] = 1;
+				$human[ number_format( $v * 0.35, 4, '.', '' ) ] = 1;
+			}
+		}
+		$human['0.0105'] = 1;
+	}
+	return ! isset( $human[ number_format( round( $p, 2 ), 4, '.', '' ) ] );
 }
 
 /** Vyhodnotenie zoznamu síl: { n, round, share, cheat } (podvod: aspoň 6 okrúhlych a aspoň 60 % úderov). */
