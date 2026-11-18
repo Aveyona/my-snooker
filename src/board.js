@@ -251,7 +251,7 @@ function drawMouse(g, w, h) {
 	g.fillRect(-14, -160, 28, 70);
 	g.strokeRect(-14, -160, 28, 70);
 	g.restore();
-	const lab = (y, color, t1, t2, x0, y0) => {
+	const lab = (y, color, t1, t2, x0, y0, t3 = '') => {
 		g.strokeStyle = color;
 		g.lineWidth = 4;
 		g.beginPath();
@@ -265,11 +265,15 @@ function drawMouse(g, w, h) {
 		g.fillStyle = '#333';
 		g.font = '25px Arial, sans-serif';
 		g.fillText(t2, cx + 170, y + 15);
+		if (t3) {
+			g.fillStyle = '#b3121f';
+			g.fillText(t3, cx + 170, y + 44);
+		}
 	};
 	lab(cy - 120, '#2f6fd6', 'Ľavé drž: ťahanie tága', 'myš k sebe odtiahne, dopredu úder', -60, -150);
 	lab(cy - 30, '#c9a24a', 'Koliesko: priblíženie', 'drž: miesto úderu (falša), dvojklik: stred', 0, -125);
-	lab(cy + 60, '#d9822b', 'Pravé drž: pohľad na guľu', 'doľava, doprava krúži, hore priblíži, dole k stolu', 60, -110);
-	lab(cy + 150, '#555', 'Pohyb bez tlačidla: mierenie', 'pomaly = jemne, Shift = ešte jemnejšie', 0, 60);
+	lab(cy + 50, '#d9822b', 'Pravé drž: pohľad na guľu', 'doľava, doprava krúži, hore priblíži, dole k stolu', 60, -110, 'Pravý klik: späť (z nástenky, stojana, kresla…)');
+	lab(cy + 158, '#555', 'Pohyb bez tlačidla: mierenie', 'pomaly = jemne, Shift = ešte jemnejšie', 0, 60);
 }
 
 /** Klávesa (kresba): zaoblený štvorček s tieňom a popisom. */

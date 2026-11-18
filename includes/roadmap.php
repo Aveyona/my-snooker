@@ -162,6 +162,7 @@ function mysn_roadmap() {
 /** Denník zmien (najnovšie hore). */
 function mysn_changelog() {
 	return array(
+		array( '0.28.2', '18. 11. 2026', 'Nástenka F1, papier Ovládanie myšou: pravý klik vráti späť (z nástenky, stojana, kresla…).' ),
 		array( '0.28.1', '18. 11. 2026', 'Nástenka F1 ako skutočná nástenka: rôzne papiere (linajkový, štvorčekový, žltý lístok, kartička), malé pripináčiky a páska, kresby (klávesy, WASD, Ctrl a pohár, gule, tágo s kriedou), menšie písmo a podrobnejšie ovládanie. Generovanie zvukových efektov čaká až 150 s.' ),
 		array( '0.28.0', '18. 11. 2026', 'Nová nástenka F1 v herni: 6 papierov (Klávesy, Ovládanie myšou, Voľný pohľad, Pri stole a Ctrl, Princíp hry, Tágá a príslušenstvo; na mobile prstom a tlačidlami), papier sa priblíži klávesom 1 až 6, klikom alebo šípkami, Esc späť na celú nástenku. Blok na štadióne: strany aj klávesmi 1 až 3.' ),
 		array( '0.27.1', '18. 11. 2026', 'Voda, grgnutie a prdnutie aj v herni a pri tréningu: bez trestov, pri prdnutí sa zavlní obraz tebe, voda zvýši falšu (okrem hry o skóre). H už neotvára pomoc (pomoc je F1).' ),
