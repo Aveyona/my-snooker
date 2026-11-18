@@ -1920,7 +1920,7 @@ export class UI {
 				<li><b>Miesto úderu:</b> klikni na bielu guľu vľavo dole. Hore znamená guľu dopredu, dole guľu späť, do strán bočnú falšu. Dvojklik vráti stred.</li>
 				<li><b>Kamera:</b> vždy za tágom, otáčaním kolieska priblížiš alebo vzdiališ. Pri kladení bielej do D sa kamera sama prepne zhora.</li>
 				<li><b>Biela do ruky:</b> posuň bielu v D a potvrď tlačidlom Hotovo alebo klávesom Enter.</li>
-				<li><b>Klávesy:</b> Z späť, B biela do ruky, R nové rozostavenie, S preskočiť, H pomoc.</li>
+				<li><b>Klávesy:</b> Z späť, B biela do ruky, R nové rozostavenie, S preskočiť, F1 pomoc. N voda, G grgnúť, H prdnúť.</li>
 			</ul>
 			<button type="button" class="mysn-btn mysn-primary" data-close>Rozumiem</button>`;
 		p.querySelector('[data-close]').addEventListener('click', () => p.classList.add('mysn-hidden'));

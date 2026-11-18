@@ -1346,15 +1346,25 @@ export function start(root, config = {}) {
 	};
 	let waterNext = false; // napil som sa: ďalší môj úder má silnejšiu falšu (server to vie, inak by úder neprijal)
 	const playerSnd = (lk) => {
-		if (!PLAYER_SND[lk] || !game.match || game.match.training || game.spectating) {
+		if (!PLAYER_SND[lk] || game.spectating || venue === 'office') {
 			return;
 		}
+		const net = !!(game.match && !game.match.training && online && online.matchId); // partia so súperom
 		const c = rig.camera.position;
 		if (!sendSnd(PLAYER_SND[lk], { x: c.x, y: c.y - 0.15, z: c.z })) {
 			return;
 		}
 		if (lk === 'n') {
-			if (online && online.matchId && online.net) {
+			if (!net) {
+				// herňa a tréning (0.27.1): voda platí hneď; v hre o skóre (rebríček) by sa nedala overiť, falšu nezvýši
+				if (game.solo) {
+					ui.toast('V hre o skóre voda falšu nezvýši (výsledok overuje server).');
+				} else {
+					waterNext = true;
+					ui.setWater(true);
+					ui.toast('Napil si sa vody: ďalší úder má silnejšiu falšu (Miesto úderu je modré).');
+				}
+			} else if (online.net) {
 				online.net
 					.call('drink', { id: online.matchId })
 					.then((r) => {
@@ -1366,8 +1376,11 @@ export function start(root, config = {}) {
 					})
 					.catch(() => {});
 			}
-		} else if (game.match.league) {
-			conductCheck();
+		} else if (game.match && game.match.league) {
+			conductCheck(); // tresty len v lige
+		}
+		if (lk === 'h' && !net) {
+			waveScreen(3000); // herňa a tréning: súper nie je, zavlní sa obraz mne
 		}
 	};
 	/** Prdnutie súpera: obraz sa na 3 s zavlní (ako horúci vzduch), najsilnejšie na začiatku. */
@@ -4278,7 +4291,7 @@ export function start(root, config = {}) {
 				return true;
 			}
 			const typing = document.activeElement && /input|select|textarea/i.test(document.activeElement.tagName);
-			if (PLAYER_SND[lk] && !typing && game.match && !game.match.training && !game.spectating && !ui.menuOpen() && !ui.toolsOpen()) {
+			if (PLAYER_SND[lk] && !typing && venue !== 'office' && !game.spectating && !ui.menuOpen() && !ui.toolsOpen()) {
 				playerSnd(lk);
 				return true;
 			}
@@ -5978,7 +5991,7 @@ export function start(root, config = {}) {
 		ui.showEye(rig.aimBall && aiming && rig.mode === 'cue' && !game.spectating);
 		ui.showFine(cueSpec.fine > 0, controls.touchFineOn());
 		ui.showFree(ui.touchUI && (!view || view === 'free') && venue !== 'office' && !game.spectating && !ui.mainMenuOpen(), view === 'free');
-		ui.showSnd(ui.touchUI && !!game.match && !game.match.training && !game.spectating && !view && venue !== 'office' && !ui.mainMenuOpen());
+		ui.showSnd(ui.touchUI && !game.spectating && !view && venue !== 'office' && !ui.mainMenuOpen());
 		ui.showTop(ui.touchUI && !view && venue !== 'office' && !game.spectating && !ui.mainMenuOpen() && (rig.mode === 'cue' || rig.mode === 'top'), rig.mode === 'top');
 		// pohľady (nástenka, stojan, rebríček…) majú vlastné Späť do hry; mobil potrebuje tlačidlo len pri stole zhora (Tab)
 		// biela v ruke (moja): kamera sa raz presunie zhora na stôl; po položení sa vráti za tágo (udalosť change)
