@@ -38,6 +38,7 @@ add_action(
 			'timeout' => 'mysn_rest_timeout',
 			'choice' => 'mysn_rest_choice',
 			'conduct' => 'mysn_rest_conduct',
+			'concede' => 'mysn_rest_concede',
 			'leave'  => 'mysn_rest_leave',
 			'resume' => 'mysn_rest_resume',
 			'score'  => 'mysn_rest_score',
@@ -702,6 +703,111 @@ function mysn_rest_conduct( $req ) {
 		'level'  => 'disq',
 		'points' => 0,
 		'match'  => mysn_match_out( mysn_get_match( $m['id'] ), get_current_user_id() ),
+	);
+}
+
+/**
+ * Vzdať frame (zápas na viac framov): hráč na rade frame vzdá, súper ho vyhrá. Nový stav (ďalší frame alebo koniec
+ * zápasu) zostaví server sám z uloženého stavu, prehliadač posiela len číslo ťahu.
+ */
+function mysn_rest_concede( $req ) {
+	global $wpdb;
+	$r = mysn_my_match( $req );
+	if ( is_wp_error( $r ) ) {
+		return $r;
+	}
+	list( $m, $me ) = $r;
+	$seq            = (int) $req->get_param( 'seq' );
+	if ( (int) $m['seq'] >= $seq ) {
+		return array( 'ok' => true, 'match' => mysn_match_out( $m, get_current_user_id() ) ); // už zapísané
+	}
+	if ( 'active' !== $m['status'] || (int) $m['turn'] !== $me || $m['shot'] || (int) $m['seq'] + 1 !== $seq ) {
+		return mysn_err( 'Frame sa teraz nedá vzdať.', 409 );
+	}
+	$cur = $m['state'] ? json_decode( $m['state'], true ) : null;
+	$f   = is_array( $cur ) && isset( $cur['frames']['of'], $cur['frames']['won'] ) ? $cur['frames'] : null;
+	if ( ! $f || (int) $f['of'] < 2 || ! isset( $cur['rules']['scores'] ) || ! empty( $cur['rules']['over'] ) ) {
+		return mysn_err( 'Vzdať frame sa dá len v zápase na viac framov.', 409 );
+	}
+	$w      = 1 - $me;
+	$won    = array( (int) $f['won'][0], (int) $f['won'][1] );
+	$won[ $w ]++;
+	$n      = max( 1, (int) ( $f['n'] ?? 1 ) );
+	$of     = (int) $f['of'];
+	$names  = array( mysn_user( $m['p1'] )['name'], mysn_user( $m['p2'] )['name'] );
+	$scores = array( (int) $cur['rules']['scores'][0], (int) $cur['rules']['scores'][1] );
+	$over   = $won[ $w ] >= (int) ceil( $of / 2 );
+	$msg    = $names[ $me ] . ' vzdáva frame. Frame ' . $n . ' vyhral ' . $names[ $w ] . ' (' . $scores[0] . ':' . $scores[1] . '). ';
+	if ( $over ) {
+		$st           = $cur;
+		$st['rules']['over']   = true;
+		$st['rules']['winner'] = $w;
+		$st['frames'] = array( 'of' => $of, 'won' => $won, 'n' => $n );
+		$st['msg']    = $msg . 'Koniec partie, víťaz: ' . $names[ $w ] . '. Vo framoch ' . $won[0] . ':' . $won[1] . '.';
+		$st['call']   = array( 'over' => true, 'fw' => $w, 'conc' => $me );
+		unset( $st['prev'], $st['rudo_nx'] );
+	} else {
+		$t  = 1 === ( ( $n + 1 ) % 2 ) ? 0 : 1; // ďalší frame rozbíja striedavo (nepárne p1, párne p2)
+		$st = array(
+			'balls'  => null,
+			'rules'  => array(
+				'scores' => array( 0, 0 ),
+				'turn'   => $t,
+				'on'     => 'red',
+				'brk'    => 0,
+				'over'   => false,
+				'winner' => null,
+			),
+			'inHand' => true,
+			'frames' => array( 'of' => $of, 'won' => $won, 'n' => $n + 1 ),
+			'msg'    => $msg . 'Stav vo framoch ' . $won[0] . ':' . $won[1] . ', rozbíja ' . $names[ $t ] . '.',
+			'call'   => array( 'frame' => true, 'fw' => $w, 'conc' => $me ),
+		);
+		foreach ( array( 'best', 'conduct' ) as $k ) {
+			if ( isset( $cur[ $k ] ) ) {
+				$st[ $k ] = $cur[ $k ];
+			}
+		}
+	}
+	$state = wp_json_encode( $st );
+	$now   = time();
+	$wpdb->insert(
+		mysn_table( 'moves' ),
+		array(
+			'match_id' => (int) $m['id'],
+			'seq'      => $seq,
+			'user_id'  => get_current_user_id(),
+			'shot'     => wp_json_encode( array( 'concede' => 1 ) ),
+			'after'    => $state,
+			'points'   => 0,
+			'foul'     => 0,
+			'created'  => $now,
+		)
+	);
+	$rules = $st['rules'];
+	$data  = array(
+		'seq'    => $seq,
+		'state'  => $state,
+		'turn'   => 1 === (int) $rules['turn'] ? 1 : 0,
+		'shot'   => null,
+		'aim'    => null,
+		'score1' => max( 0, (int) $rules['scores'][0] ),
+		'score2' => max( 0, (int) $rules['scores'][1] ),
+		'turnat' => $now,
+	);
+	if ( $over ) {
+		$data['status'] = 'finished';
+		$data['winner'] = 0 === $w ? (int) $m['p1'] : (int) $m['p2'];
+		$data['result'] = 'frame';
+	}
+	mysn_update_match( $m['id'], $data );
+	if ( $over && ! empty( $m['league'] ) ) {
+		$best = isset( $st['best'] ) && is_array( $st['best'] ) ? array_map( 'intval', $st['best'] ) : array( 0, 0 );
+		mysn_league_apply( mysn_get_match( $m['id'] ), $data['winner'], $scores[ $w ], false, $best );
+	}
+	return array(
+		'ok'    => true,
+		'match' => mysn_match_out( mysn_get_match( $m['id'] ), get_current_user_id() ),
 	);
 }
 

@@ -835,6 +835,27 @@ export class Online {
 		this._toBusy = false;
 	}
 
+	/** Vzdať frame (zápas na viac framov): nový stav zostaví server, ide súperovi a divákom. */
+	async concedeFrame() {
+		const g = this.game;
+		const m = g.match;
+		if (!m || !this.matchId || this._concBusy) {
+			return;
+		}
+		this._concBusy = true;
+		try {
+			await this.flush();
+			const r = await this.net.call('concede', { id: this.matchId, seq: m.seq + 1 });
+			if (r && r.match) {
+				this.rtcSendOpp({ k: 'info', m: r.match });
+				this.applyInfo(r.match);
+			}
+		} catch (e) {
+			this.hooks.toast(e.message || 'Frame sa nepodarilo vzdať.');
+		}
+		this._concBusy = false;
+	}
+
 	/** Po súperovom faule: again = pošlem súpera hrať znova (stav ide súperovi, divákom a na server), inak hrám sám. */
 	foulChoice(again) {
 		const r = this.game.foulChoice(again);

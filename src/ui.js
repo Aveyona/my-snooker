@@ -2331,6 +2331,34 @@ export class UI {
 		return !!this._choice;
 	}
 
+	/**
+	 * Ponuka vzdať sa, keď už ani všetky body na stole nestačia (potrebné snookery): info = { key, lead, rem, frame }
+	 * (frame = zápas na viac framov: Vzdať frame, inak Vzdať partiu), null = skryť.
+	 */
+	concede(info) {
+		if (!this.concEl) {
+			this.concEl = h('div', 'mysn-choice mysn-conc', '<div class="mysn-choice-t"></div><div class="mysn-choice-b"><button type="button" data-a="0">Pokračovať</button><button type="button" data-a="1" class="mysn-conc-go"></button></div><div class="mysn-choice-n"></div>');
+			this.concEl.addEventListener('click', (e) => {
+				const b = e.target.closest('button');
+				if (b) {
+					this.opts.onAction('concede', b.dataset.a === '1');
+				}
+			});
+			this.root.appendChild(this.concEl);
+		}
+		const key = info ? info.key + ':' + info.lead + ':' + info.rem : '';
+		if (this._conc === key) {
+			return;
+		}
+		this._conc = key;
+		this.concEl.style.display = info ? '' : 'none';
+		if (info) {
+			this.concEl.querySelector('.mysn-choice-t').innerHTML = `<b>Na výhru potrebuješ snookery</b><br>Súper vedie o ${info.lead} ${info.lead === 1 ? 'bod' : info.lead < 5 ? 'body' : 'bodov'}, na stole zostáva ${info.rem}.`;
+			this.concEl.querySelector('.mysn-conc-go').textContent = info.frame ? 'Vzdať frame' : 'Vzdať partiu';
+			this.concEl.querySelector('.mysn-choice-n').textContent = this.touchUI ? 'Úderom hráš ďalej.' : 'Klikni s Ctrl. Úderom hráš ďalej.';
+		}
+	}
+
 	reachNote(text, stretch = false) {
 		if (!this.reachEl) {
 			this.reachEl = h('div', 'mysn-reach');

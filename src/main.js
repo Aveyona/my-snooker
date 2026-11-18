@@ -1353,6 +1353,36 @@ export function start(root, config = {}) {
 	 * Nešportové správanie v lige (G grgnutie, H prdnutie): server počíta prehrešky hráča v zápase,
 	 * druhý raz napomenutie rozhodcu, od tretieho súper +4 body. Správa { id, who, level, pts, name } ide súperovi a divákom.
 	 */
+	/**
+	 * Ponuka vzdať sa (0.25.0): keď som na rade a už mi ani všetky body na stole nestačia (potrebujem snookery),
+	 * raz za frame ukážem Vzdať frame (zápas na viac framov) alebo Vzdať partiu; Pokračovať alebo úder ju zavrie.
+	 */
+	const concedeSeen = new Set();
+	let concedeNow = null; // { key, seq, info }: práve zobrazená ponuka
+	const concedeInfo = () => {
+		const m = game.match;
+		const myTurn = online && online.matchId && m && !m.training && !game.spectating && m.rules && !m.rules.over && m.turn === m.me && (game.state === 'aim' || game.state === 'place') && !game.choicePending && view !== 'office';
+		if (!myTurn) {
+			concedeNow = null;
+			return null;
+		}
+		if (concedeNow) {
+			return concedeNow.seq === m.seq ? concedeNow.info : null;
+		}
+		const key = online.matchId + ':' + (m.frames ? m.frames.n : 1);
+		if (concedeSeen.has(key)) {
+			return null;
+		}
+		const reds = game.balls.filter((b) => b.on && b.kind === 'red').length;
+		const rem = remaining(m.rules, reds);
+		const lead = m.rules.scores[1 - m.me] - m.rules.scores[m.me];
+		if (lead - rem <= 0) {
+			return null;
+		}
+		concedeSeen.add(key); // len raz za frame
+		concedeNow = { key, seq: m.seq, info: { key, lead, rem, frame: !!m.frames } };
+		return concedeNow.info;
+	};
 	const condSeen = new Set();
 	const applyConduct = (c) => {
 		if (!c || !c.id || condSeen.has(c.id) || !['warning', 'penalty', 'lastwarn', 'disq'].includes(c.level)) {
@@ -2761,6 +2791,21 @@ export function start(root, config = {}) {
 			}
 		},
 		foundAccept: () => online && online.accept(true),
+		concede: (yes) => {
+			const frame = !!(concedeNow && concedeNow.info.frame);
+			concedeNow = { key: '', seq: -1, info: null }; // zavrieť (do konca ťahu sa neukáže)
+			if (freeMouse) {
+				freeMouse = false;
+				ui.setFree(false);
+			}
+			if (yes && online) {
+				if (frame) {
+					online.concedeFrame();
+				} else {
+					online.leave('resign');
+				}
+			}
+		},
 		foulChoice: (again) => {
 			if (online) {
 				online.foulChoice(!!again);
@@ -5824,6 +5869,7 @@ export function start(root, config = {}) {
 			ui.spinLock(0);
 		}
 		ui.foulChoice(game.choicePending && view !== 'office' ? game.match.players[1 - game.match.me].name : null); // po súperovom faule: Hrám ja alebo Nech hrá súper
+		ui.concede(concedeInfo()); // potrebné snookery: ponuka vzdať frame alebo partiu
 		// krieda na špici: po nakriedovaní, údere alebo zmene kriedy sa tágo v ruke prekreslí (súper ho vidí tiež)
 		const lvl = chalk >= 3 ? 1 : chalk === 2 ? 0.75 : chalk === 1 ? 0.45 : 0;
 		if (cueSpec) {
