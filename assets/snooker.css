@@ -36,7 +36,10 @@ body.mysn-page { font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans
 .mysn-spin-ball::before { content: ""; position: absolute; inset: 20%; border-radius: 50%; border: 1px dashed #0004; }
 .mysn-spin-dot { position: absolute; left: 50%; top: 50%; width: 14px; height: 14px; margin: -7px 0 0 -7px; border-radius: 50%; background: #2f6fd6; border: 2px solid #fff; box-shadow: 0 0 4px #000; pointer-events: none; }
 .mysn-spin-wrap { display: flex; align-items: flex-end; gap: 8px; }
-.mysn-spin-cue { width: 28px; height: 84px; filter: drop-shadow(0 2px 4px #000a); pointer-events: none; overflow: visible; }
+.mysn-spin-cue { width: 28px; height: 84px; filter: drop-shadow(0 2px 4px #000a); pointer-events: auto; overflow: visible; cursor: ew-resize; touch-action: none; }
+.mysn-sc-body { transition: transform .12s; }
+.mysn-spin-cue .mysn-sc-elev { font-size: 12px; }
+.mysn-sc-locked { cursor: not-allowed; }
 .mysn-spin-cue text { font: bold 11px Arial, sans-serif; paint-order: stroke; stroke: #000a; stroke-width: 2.5px; }
 .mysn-sc-warn { display: none; }
 .mysn-st-ext { color: #fbbf24; }

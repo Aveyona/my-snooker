@@ -162,6 +162,7 @@ function mysn_roadmap() {
 /** Denník zmien (najnovšie hore). */
 function mysn_changelog() {
 	return array(
+		array( '0.30.0', '18. 11. 2026', 'Nové techniky úderov: uhol tága Shift + koliesko (mobil: ťahanie ikony tága) od najmenšieho možného po 80°, uhol pri Mieste úderu; swerve a massé (bočná falša pri zdvihnutom tágu stáča bielu), massé s väčším rozptylom, šmykom bez kriedy a špicou −5 %; vyšší skok po napitej vode; diváci na štadióne jasajú pri takom úspešnom úderi; overovač na serveri overí uhol.' ),
 		array( '0.29.4', '18. 11. 2026', 'Oprava: rýchle klikanie T (telefón) už neotvorí hlavné menu.' ),
 		array( '0.29.3', '18. 11. 2026', 'Telefón: tlačidlo Zavrieť bez nesprávneho (Esc); Esc telefón zavrie a ukáže hlavné menu, T ho zavrie.' ),
 		array( '0.29.2', '18. 11. 2026', 'Telefón Môj účet: nové záložky Tágo (moje tágo, sila, falše, dĺžka, opotrebovanie špice s pruhom, krieda, Vymeniť tágo) a Zápasy (5 posledných ligových zápasov so skóre, bodmi a ELO). Oprava: tlačidlo Nastavenia hry v telefóne otvorí nastavenia. Zoznam klávesov z telefónu odstránený.' ),

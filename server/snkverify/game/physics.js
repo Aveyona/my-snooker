@@ -147,23 +147,39 @@ export function isJump(power, top) {
 
 /* ---------- Úder ---------- */
 
+/** Najvyšší uhol tága (massé) v stupňoch a uhol, od ktorého sa počíta oblúk (tágo je vždy mierne zdvihnuté). */
+export const ELEV_MAX = 80;
+export const ELEV_BASE = 4;
+
 /**
  * Úder tágom do bielej. dir = uhol smeru (radiány, 0 = +x), power 0..1, side a top -1..1 (miesto na guli:
- * vpravo/vľavo a hore/dole; najviac pol polomeru od stredu, ďalej by tágo skĺzlo).
+ * vpravo/vľavo a hore/dole; najviac pol polomeru od stredu, ďalej by tágo skĺzlo), elev = uhol tága nad súknom
+ * v stupňoch (0.30.0).
+ *
+ * Zdvihnuté tágo (uhol θ nad ELEV_BASE) mieri šikmo dolu: do bielej ide len vodorovná časť rýchlosti (cos θ),
+ * zvislá sa stratí v súkne. Bočná falša pri zdvihnutom tágu dostane os rotácie naklonenú v smere úderu
+ * (sin θ): bod dotyku so súknom sa šmýka do strany a trenie bielu stáča na stranu falše – swerve (malý uhol)
+ * a massé (veľký uhol, výrazný oblúk). Os otáčania pri falši: right × c = (dx·sin θ, cos θ, dz·sin θ).
  */
-export function strike(ball, dir, power, side = 0, top = 0) {
-	const V = Math.max(0.05, Math.min(1, power)) * V_MAX;
+export function strike(ball, dir, power, side = 0, top = 0, elev = 0) {
+	const th = (Math.max(0, Math.min(ELEV_MAX, +elev || 0) - ELEV_BASE) * Math.PI) / 180;
+	const S = Math.sin(th);
+	const C = Math.cos(th);
+	const V0 = Math.max(0.05, Math.min(1, power)) * V_MAX;
+	const V = V0 * C;
 	const dx = Math.cos(dir);
 	const dz = Math.sin(dir);
 	ball.v.x = V * dx;
 	ball.v.z = V * dz;
 	const a = side * 0.5 * R;
 	const b = top * 0.5 * R;
-	const k = (5 * V) / (2 * R * R);
-	// ω = k · (b · (up × dir) + a · (right × dir)); up × dir = (dz, 0, -dx), right × dir = (0, 1, 0)
-	ball.w.x = k * b * dz;
-	ball.w.y = k * a;
-	ball.w.z = -k * b * dx;
+	const k = (5 * V0) / (2 * R * R);
+	// ω = k · (b · (u' × c) + a · (right × c)); u' × c = (dz, 0, -dx), right × c = (dx·S, C, dz·S)
+	// massé: pri strmom tágu sa súkno pod bielou viac stlačí a oblúk je výraznejší (mk)
+	const mk = 1 + 0.3 * S * S;
+	ball.w.x = k * (b * dz + a * S * dx * mk);
+	ball.w.y = k * a * C;
+	ball.w.z = k * (-b * dx + a * S * dz * mk);
 	ball.h = 0;
 	ball.vy = 0;
 	if (isJump(power, top)) {
@@ -171,8 +187,9 @@ export function strike(ball, dir, power, side = 0, top = 0) {
 		// aj podľa tága; ponad guľu preletí asi od 75 % skutočnej sily),
 		// dopredu letí pomalšie a so slabšou rotáciou
 		const p = Math.max(0, Math.min(1, (Math.min(1, power) - 0.55) / 0.45));
-		// 0,5 až 1,9 m/s (pri plnej sile asi 18 cm vysoko); nakriedovaná špica (hra pošle top = -1,2) skočí o 20 % vyššie
-		ball.vy = (0.5 + 1.4 * p) * (top <= -1.1 ? 1.1 : 1);
+		// 0,5 až 1,9 m/s (pri plnej sile asi 18 cm vysoko); nakriedovaná špica (hra pošle top = -1,2) skočí o 10 %
+		// vyššie, po napitej vode (top = -1,5, 0.30.0) o 35 %
+		ball.vy = (0.5 + 1.4 * p) * (top <= -1.4 ? 1.35 : top <= -1.1 ? 1.1 : 1);
 		ball.v.x *= 0.8;
 		ball.v.z *= 0.8;
 		ball.w.x *= 0.3;

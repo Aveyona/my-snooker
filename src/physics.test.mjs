@@ -106,5 +106,22 @@ for (const [top, name, test] of [[-1, 'spodná falša vráti bielu', (x) => x < 
 	ok(res[0] !== res[1] && res[2] !== res[1] && Math.sign(res[0] - res[1]) !== Math.sign(res[2] - res[1]), 'ľavá a pravá falša odrazia na opačné strany (' + res.map((x) => x.toFixed(3)).join(' / ') + ')');
 }
 
+// 9. Uhol tága (0.30.0): swerve a massé stáčajú bielu na stranu falše, väčší uhol viac, bez falše rovno.
+{
+	const curve = (elev, side) => {
+		const cue = { id: 0, kind: 'white', p: { x: -1.6, z: 0 }, v: { x: 0, z: 0 }, w: { x: 0, y: 0, z: 0 }, on: true, moving: false };
+		const ph = new Physics([cue]);
+		strike(cue, 0, 0.2, side, 0, elev);
+		for (let i = 0; i < 20000 && cue.moving && !ph.events.length; i++) ph.step(1 / 1000);
+		return cue.p.z;
+	};
+	const flat = curve(30, 0);
+	const sw = curve(15, 1);
+	const ms = curve(70, 1);
+	const msL = curve(70, -1);
+	ok(Math.abs(flat) < 1e-6, 'zdvihnuté tágo bez falše ide rovno');
+	ok(sw > 0.02 && ms > sw && msL < -0.02, `swerve a massé stáčajú bielu na stranu falše (${sw.toFixed(3)} / ${ms.toFixed(3)} / ${msL.toFixed(3)})`);
+}
+
 console.log(fails ? fails + ' testov zlyhalo' : 'Všetky testy prešli');
 process.exit(fails ? 1 : 0);

@@ -49,7 +49,7 @@ export class Training {
 		return this.state === 'aim';
 	}
 
-	shoot(power, side = 0, top = 0) {
+	shoot(power, side = 0, top = 0, elev = 0) {
 		if (!this.canShoot()) {
 			return false;
 		}
@@ -61,7 +61,10 @@ export class Training {
 		this.physics.firstContact = null;
 		this.lastPots = [];
 		const shot = { dir: this.dir, power, side, top, cx: this.cue.p.x, cz: this.cue.p.z };
-		strike(this.cue, this.dir, power, side, top);
+		if (elev > 0) {
+			shot.e = elev; // uhol tága (0.30.0)
+		}
+		strike(this.cue, this.dir, power, side, top, elev);
 		this.stats.shots++;
 		this.state = 'moving';
 		this.message = '';

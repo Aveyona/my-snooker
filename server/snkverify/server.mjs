@@ -11,7 +11,7 @@ import { Game } from './game/match.js';
 import { restore, inD, R } from './game/physics.js';
 
 const LK = '/etc/livekit.yaml';
-const VERSION = '5';
+const VERSION = '6';
 const TOL = 0.02; // najväčší povolený rozdiel polohy gule (m) medzi serverom a prehliadačom pred úderom
 
 function keys() {
@@ -71,11 +71,12 @@ export function replay(log, claim, opts = {}) {
 	for (let i = 0; i < log.length; i++) {
 		const e = log[i];
 		const s = e && e.s;
-		if (!Array.isArray(s) || s.length !== 6 || !s.every(num)) {
+		if (!Array.isArray(s) || (s.length !== 6 && s.length !== 7) || !s.every(num)) {
 			return { ok: false, error: `Úder ${i + 1}: neplatné údaje.`, at: i };
 		}
 		const [dir, power, side, top, cx, cz] = s;
-		if (power < 0 || power > 1.0001 || Math.hypot(side, top) > 1.6) {
+		const elev = s.length === 7 ? s[6] : 0; // uhol tága (0.30.0)
+		if (power < 0 || power > 1.0001 || Math.hypot(side, top) > 1.6 || elev < 0 || elev > 80.5) {
 			return { ok: false, error: `Úder ${i + 1}: sila alebo falša mimo hraníc.`, at: i, cheat: true };
 		}
 		const place = g.state === 'place';
@@ -129,7 +130,7 @@ export function replay(log, claim, opts = {}) {
 		g.dir = dir;
 		const t0 = g.physics.time;
 		const pre = g.balls.map((x) => ({ x: x.p.x, z: x.p.z }));
-		if (!g.shoot(power, side, top)) {
+		if (!g.shoot(power, side, top, elev)) {
 			return { ok: false, error: `Úder ${i + 1}: server úder nevedel vykonať.`, at: i };
 		}
 		g.finish();
@@ -182,7 +183,8 @@ export function verifyMove(before, shot, m, claim) {
 		return { ok: false, error: 'Neplatný úder.' };
 	}
 	// napitá voda (server nastaví shot.w): falša až 3x silnejšia
-	if (shot.power < 0 || shot.power > 1.0001 || Math.hypot(shot.side, shot.top) > (shot.w ? 4.8 : 1.6)) {
+	const elev = shot.e === undefined ? 0 : shot.e; // uhol tága (0.30.0), najviac 80° (massé)
+	if (!num(elev) || elev < 0 || elev > 80.5 || shot.power < 0 || shot.power > 1.0001 || Math.hypot(shot.side, shot.top) > (shot.w ? 4.8 : 1.6)) {
 		return { ok: false, error: 'Sila alebo falša mimo hraníc.', cheat: true };
 	}
 	const me = m.me === 1 ? 1 : 0;
@@ -213,7 +215,7 @@ export function verifyMove(before, shot, m, claim) {
 	}
 	g.dir = shot.dir;
 	const pre = g.balls.map((x) => ({ x: x.p.x, z: x.p.z }));
-	if (!g.shoot(shot.power, shot.side, shot.top)) {
+	if (!g.shoot(shot.power, shot.side, shot.top, elev)) {
 		return { ok: false, error: 'Server úder nevedel vykonať.' };
 	}
 	const evs = g.finish();

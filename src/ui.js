@@ -141,7 +141,7 @@ export class UI {
 		this.bindPower();
 
 		// Falše
-		this.spinBox = h('div', 'mysn-spin', '<div class="mysn-spin-wrap"><div class="mysn-spin-ball"><div class="mysn-spin-dot"></div></div><svg class="mysn-spin-cue" viewBox="0 0 40 120"><defs><linearGradient id="mysnCueG"><stop offset="0" stop-color="#0005"/><stop offset=".45" stop-color="#fff2"/><stop offset="1" stop-color="#0006"/></linearGradient></defs><text class="mysn-sc-pct" x="20" y="11" text-anchor="middle"></text><rect x="10" y="62" width="20" height="58" fill="#c9a26b"/><rect x="10" y="46" width="20" height="16" fill="#f3ead2"/><path class="mysn-sc-tip"/><path class="mysn-sc-chalk"/><g class="mysn-sc-ext"><rect x="10" y="104" width="20" height="16" fill="#3b3f46"/><rect x="9" y="102" width="22" height="3" fill="#c9ccd2"/></g><g class="mysn-sc-warn"><path d="M44 22 L57 46 H31 Z" fill="#dc2626" stroke="#fff" stroke-width="2" stroke-linejoin="round"/><text x="44" y="43" text-anchor="middle">!</text></g><rect x="10" y="46" width="20" height="74" fill="url(#mysnCueG)" opacity=".7"/></svg></div><div class="mysn-spin-label">Miesto úderu</div><div class="mysn-spin-stat"><span class="mysn-st-tip"></span><span class="mysn-st-chalk"></span><span class="mysn-st-ext"></span></div>');
+		this.spinBox = h('div', 'mysn-spin', '<div class="mysn-spin-wrap"><div class="mysn-spin-ball"><div class="mysn-spin-dot"></div></div><svg class="mysn-spin-cue" viewBox="0 0 40 120"><defs><linearGradient id="mysnCueG"><stop offset="0" stop-color="#0005"/><stop offset=".45" stop-color="#fff2"/><stop offset="1" stop-color="#0006"/></linearGradient></defs><text class="mysn-sc-pct" x="20" y="11" text-anchor="middle"></text><g class="mysn-sc-body"><rect x="10" y="62" width="20" height="58" fill="#c9a26b"/><rect x="10" y="46" width="20" height="16" fill="#f3ead2"/><path class="mysn-sc-tip"/><path class="mysn-sc-chalk"/><g class="mysn-sc-ext"><rect x="10" y="104" width="20" height="16" fill="#3b3f46"/><rect x="9" y="102" width="22" height="3" fill="#c9ccd2"/></g><rect x="10" y="46" width="20" height="74" fill="url(#mysnCueG)" opacity=".7"/></g><g class="mysn-sc-warn"><path d="M44 22 L57 46 H31 Z" fill="#dc2626" stroke="#fff" stroke-width="2" stroke-linejoin="round"/><text x="44" y="43" text-anchor="middle">!</text></g><text class="mysn-sc-elev" x="36" y="30"></text></svg></div><div class="mysn-spin-label">Miesto úderu</div><div class="mysn-spin-stat"><span class="mysn-st-tip"></span><span class="mysn-st-chalk"></span><span class="mysn-st-ext"></span></div>');
 		root.appendChild(this.spinBox);
 		this.spinBall = this.spinBox.querySelector('.mysn-spin-ball');
 		this.spinDot = this.spinBox.querySelector('.mysn-spin-dot');
@@ -498,6 +498,60 @@ export class UI {
 		this.spinBall.addEventListener('pointermove', (e) => drag === e.pointerId && set(e));
 		this.spinBall.addEventListener('pointerup', () => (drag = null));
 		this.spinBall.addEventListener('dblclick', () => this.setSpin(0, 0));
+		// 0.30.0: uhol tága ťahaním ikony tága (špica je ukotvená, tágo sa otáča okolo nej)
+		const cueSvg = this.spinBox.querySelector('.mysn-spin-cue');
+		let edrag = null;
+		const eset = (e) => {
+			const r = cueSvg.getBoundingClientRect();
+			const sc = r.height / 120;
+			const px = r.left + 20 * sc;
+			const py = r.top + 30 * sc;
+			const deg = (Math.atan2(e.clientX - px, Math.max(1, e.clientY - py)) * 180) / Math.PI + 4;
+			if (this.opts.onElev) {
+				this.opts.onElev(Math.round(Math.max(0, Math.min(80, deg))));
+			}
+		};
+		cueSvg.addEventListener('pointerdown', (e) => {
+			e.preventDefault();
+			e.stopPropagation();
+			edrag = e.pointerId;
+			try {
+				cueSvg.setPointerCapture(e.pointerId);
+			} catch (err) {
+				/* nie je podstatné */
+			}
+			eset(e);
+		});
+		cueSvg.addEventListener('pointermove', (e) => edrag === e.pointerId && eset(e));
+		cueSvg.addEventListener('pointerup', () => (edrag = null));
+		cueSvg.addEventListener('pointercancel', () => (edrag = null));
+		cueSvg.addEventListener('dblclick', () => this.opts.onElev && this.opts.onElev(0));
+	}
+
+	/**
+	 * Uhol tága pri Mieste úderu (0.30.0): ikona tága sa nakloní okolo špice, vedľa uhol v stupňoch. min = najmenší
+	 * uhol podľa polohy (mantinel, gule za bielou), locked = s nádstavcom pevný.
+	 */
+	setElev(deg, min, locked) {
+		const d = Math.round(deg);
+		const forced = min > 6 && deg <= min + 0.5;
+		const key = d + '|' + forced + '|' + locked + '|' + Math.round(min);
+		if (key === this._elevKey) {
+			return;
+		}
+		this._elevKey = key;
+		const q = (c) => this.spinBox.querySelector(c);
+		q('.mysn-sc-body').setAttribute('transform', `rotate(${-Math.max(0, deg - 4)} 20 30)`);
+		const t = q('.mysn-sc-elev');
+		t.textContent = d + '°' + (forced || locked ? ' 🔒' : '');
+		t.setAttribute('fill', locked ? '#9ca3af' : d >= 45 ? '#ff8a8a' : d >= 8 ? '#ffd34d' : '#e8eefc');
+		const kind = d >= 45 ? 'massé' : d >= 8 ? 'swerve (s bočnou falšou)' : 'bežný úder';
+		q('.mysn-spin-cue').classList.toggle('mysn-sc-locked', !!locked);
+		const tt = document.createElementNS('http://www.w3.org/2000/svg', 'title');
+		tt.textContent = locked
+			? `Uhol tága ${d}°: s nádstavcom je pevný.`
+			: `Uhol tága ${d}° – ${kind}.${forced ? ` Pri mantineli alebo guli za bielou najmenej ${Math.round(min)}°.` : ''} Shift + koliesko mení uhol (s Ctrl po 5°), najviac 80°.`;
+		t.appendChild(tt);
 	}
 
 	/**
@@ -589,7 +643,7 @@ export class UI {
 			this.spinBox.classList.toggle('mysn-spin-jump', jump);
 			const lb = this.spinBox.querySelector('.mysn-spin-label');
 			lb.textContent = jump ? 'Skokový úder' : 'Miesto úderu';
-			lb.title = jump ? `Biela vyskočí pri sile od ${Math.round(JUMP_POWER * 100)} %, ponad guľu asi od 92 %. S kriedou skočí o 20 % vyššie. Skok veľmi opotrebuje špicu (5 %).` : '';
+			lb.title = jump ? `Biela vyskočí pri sile od ${Math.round(JUMP_POWER * 100)} %, ponad guľu asi od 92 %. S kriedou skočí vyššie, po napitej vode ešte vyššie. Skok veľmi opotrebuje špicu (5 %).` : '';
 		}
 		this.opts.onSpin(this.side, this.top);
 	}
@@ -1162,7 +1216,8 @@ export class UI {
 				li('Biela v ruke', 'Po spadnutí bielej ju súper položí kdekoľvek do D.') +
 				li('Voľná guľa', 'Keď je hráč po faule zasnookrovaný, môže hrať ľubovoľnú farbu ako guľu na rade.') +
 				li('Po faule', 'Súper si vyberie: hrá sám, alebo nechá hrať teba. Vtedy sa gule vrátia, ako stáli pred faulom.') +
-				li('Skokový úder', 'Bod úderu úplne dole a sila aspoň 70 %: biela vyskočí. Faul nie je, keď trafí guľu na rade. Vyletená zo stola je faul.') +
+				li('Skokový úder', 'Bod úderu úplne dole a sila aspoň 70 %: biela vyskočí (s kriedou vyššie, po napitej vode ešte vyššie). Faul nie je, keď trafí guľu na rade. Vyletená zo stola je faul.') +
+				li('Uhol tága', 'Shift + koliesko (na mobile ťahanie ikony tága) zdvihne tágo až na 80°. S bočnou falšou sa biela stočí na stranu falše: 8 – 25° swerve (mierny oblúk), od 45° massé (veľký oblúk, väčší rozptyl, bez kriedy časté šmyknutie, špica −5 %). Pri mantineli je najmenší uhol daný. Keď taký úder trafí správnu guľu, diváci na štadióne jasajú.') +
 				li('Vzdať frame', 'Keď už potrebuješ snookery, hra ponúkne vzdať frame (súper ho vyhrá) alebo pokračovať.') +
 				li('Správanie', 'Grgnutie a prdnutie sa v lige trestá: 2. napomenutie, 3. až 5. súper +4, 6. diskvalifikácia. Podrobne v bloku na strane 2.') +
 				li('Séria (brejk)', 'Kým hráč potápa, pokračuje. Keď nič nespadne, je na rade súper.') +

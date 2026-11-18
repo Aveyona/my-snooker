@@ -81,6 +81,8 @@ const PAPERS = [
 			'Ruka dosiahne 95 cm od mantinelu,',
 			'   ďalej krížik, pavúk alebo predĺženie (F3).',
 			'Červený nápis pri mierení: nedosiahneš.',
+			'Shift + koliesko: uhol tága (do 80°),',
+			'   s bočnou falšou oblúk: swerve, od 45° massé.',
 		],
 	},
 ];
@@ -97,6 +99,7 @@ const PAPERS_TOUCH = [
 			'Kruh s okom: drž a ťahaj (hore priblíži,',
 			'   do strán krúži, dole k stolu).',
 			'Miesto úderu: posuň bod na bielej (falša).',
+			'Ikona tága vedľa: ťahaj = uhol tága (massé).',
 			'Po výstrele prst otáča kameru okolo bielej.',
 		],
 	},

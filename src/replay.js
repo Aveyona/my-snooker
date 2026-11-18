@@ -78,7 +78,7 @@ export class Replay {
 		this.phys.events = [];
 		this.phys.firstContact = null;
 		this.phys.acc = 0;
-		strike(c, s.dir, s.power, s.side, s.top);
+		strike(c, s.dir, s.power, s.side, s.top, s.e || 0);
 		this.anim = { to: from + 1, t: 0 };
 	}
 

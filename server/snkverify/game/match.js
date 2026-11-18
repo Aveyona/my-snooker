@@ -250,15 +250,18 @@ export class Game extends Training {
 		this.emit('change');
 	}
 
-	shoot(power, side = 0, top = 0) {
+	shoot(power, side = 0, top = 0, elev = 0) {
 		if (!this.canShoot()) {
 			return false;
 		}
 		const c = this.cue;
 		const shot = { dir: this.dir, power, side, top, cx: c.p.x, cz: c.p.z };
+		if (elev > 0) {
+			shot.e = elev; // uhol tága (0.30.0)
+		}
 		// hra o skóre: vstupy úderu a polohy gúľ pred ním (server frame prehrá a overí výsledok)
-		const rec = this.solo && !this.match && Array.isArray(this.solo.log) ? { s: [this.dir, power, side, top, c.p.x, c.p.z], b: this.balls.map((b) => [b.p.x, b.p.z, b.on ? 1 : 0]) } : null;
-		if (!super.shoot(power, side, top)) {
+		const rec = this.solo && !this.match && Array.isArray(this.solo.log) ? { s: elev > 0 ? [this.dir, power, side, top, c.p.x, c.p.z, elev] : [this.dir, power, side, top, c.p.x, c.p.z], b: this.balls.map((b) => [b.p.x, b.p.z, b.on ? 1 : 0]) } : null;
+		if (!super.shoot(power, side, top, elev)) {
 			return false;
 		}
 		if (rec) {
@@ -287,7 +290,7 @@ export class Game extends Training {
 		this.physics.events = [];
 		this.physics.firstContact = null;
 		this.lastPots = [];
-		strike(c, shot.dir, shot.power, shot.side, shot.top);
+		strike(c, shot.dir, shot.power, shot.side, shot.top, shot.e || 0);
 		this.remote = !own;
 		if (this.match) {
 			this.match.turnAt = 0; // súper vystrelil: časomiera sa zastaví

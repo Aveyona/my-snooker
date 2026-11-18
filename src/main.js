@@ -24,7 +24,7 @@ import { UI } from './ui.js';
 import { Game, fmtTime } from './match.js';
 import { Online } from './online.js';
 import { remaining } from './rules.js';
-import { aimTrace, R, L, W, snapshot, restore, createRack, POCKETS, COLOURS, isJump, JUMP_TOP, JUMP_POWER } from './physics.js';
+import { aimTrace, R, L, W, snapshot, restore, createRack, POCKETS, COLOURS, isJump, JUMP_TOP, JUMP_POWER, ELEV_MAX } from './physics.js';
 import { buildRackTriangle, rackLayout } from './rackTriangle.js';
 import { Replay } from './replay.js';
 import { CHALKS, chalkById } from './chalks.js';
@@ -286,6 +286,7 @@ export function start(root, config = {}) {
 		rest: spiderNow ? [REST_KINDS.indexOf(restKind), +spiderNow.x.toFixed(4), +spiderNow.z.toFixed(4), +(spiderNow.y || 0).toFixed(3), +spiderNow.tilt.toFixed(4)] : 0,
 		ch: chalkT >= 0 ? +chalkT.toFixed(2) : -1,
 		cc: chalkById(settings.chalk).color, // farba mojej kriedy (stopy na súkne u súpera a divákov)
+		el: liftDeg ? +liftDeg.toFixed(1) : 0, // uhol tága (0.30.0)
 	});
 	let remoteRest = null; // { kind, mesh } nádstavec súpera alebo sledovaného hráča
 	/**
@@ -1701,6 +1702,19 @@ export function start(root, config = {}) {
 	const overlay = document.createElement('div');
 	root.appendChild(overlay);
 	let spin = { side: 0, top: 0 };
+	let liftDeg = 0; // 0.30.0: uhol tága zvolený hráčom (Shift + koliesko, mobil ťahanie ikony); 0 = najmenší možný
+	let trickShot = false; // posledný úder bol swerve, massé alebo skok (diváci jasajú, keď trafí správnu guľu)
+	const curElev = () => (cue.tiltTarget ? (cue.tiltTarget * 180) / Math.PI : 0);
+	const minElev = () => (cue.minTilt ? (cue.minTilt * 180) / Math.PI : 4);
+	/** Nastaví uhol tága (stupne): pod najmenší možný sa nedá, nad 80° tiež nie. */
+	const setLift = (deg) => {
+		if (cue.tiltLocked) {
+			ui.toast('S nádstavcom je uhol tága pevný.');
+			return;
+		}
+		const mn = minElev();
+		liftDeg = deg <= mn + 0.4 ? 0 : Math.min(ELEV_MAX, deg);
+	};
 	let placeCam = false; // kamera je zhora kvôli kladeniu bielej (po položení späť za tágo)
 	let myPlaceWas = false;
 	let chatUnlock = false; // chat práve uvoľnil myš (nie Esc)
@@ -2497,12 +2511,25 @@ export function start(root, config = {}) {
 		}
 		// skokový úder: rozhoduje poloha bodu na bielej (nie falša zmenšená kriedou a tágom); fyzika ho pozná podľa
 		// top = -1, obyčajný úder sa preto drží nad hranicou skoku
+		// uhol tága (0.30.0): swerve a massé; pri strmom tágu (od 45°) väčší rozptyl a bez kriedy častý šmyk
+		const elev = +curElev().toFixed(1);
+		const masse = elev >= 45;
+		if (!miscue && masse && !chalk && Math.hypot(spin.side, spin.top) > 0.25 && Math.random() < 0.35) {
+			miscue = true;
+			power *= 0.35;
+			game.dir += (Math.random() - 0.5) * 0.12;
+			side = 0;
+			top = 0;
+		}
+		if (!miscue && elev >= 30) {
+			game.dir += ((Math.random() * 2 - 1) * ((elev - 30) / 50) * 1.5 * Math.PI) / 180;
+		}
 		if (!miscue && !stretchDeg && spin.top <= JUMP_TOP && rawPower >= JUMP_POWER) {
-			top = chalk > 0 ? -1.2 : -1; // nakriedované: väčší skok
+			top = waterNext ? -1.5 : chalk > 0 ? -1.2 : -1; // nakriedované: väčší skok, po napitej vode ešte väčší
 		} else if (top <= JUMP_TOP) {
 			top = JUMP_TOP + 0.01;
 		}
-		const shot = game.shoot(power, side, top);
+		const shot = game.shoot(power, side, top, elev);
 		if (!shot) {
 			game.dir = dir0;
 		}
@@ -2510,7 +2537,12 @@ export function start(root, config = {}) {
 			controls.touchFine = false; // mobil: jemné mierenie (zameriavač) sa po výstrele vypne, ako pustený Shift
 			game.dir = dir0; // smer mierenia ostáva (odklon platí len pre tento úder)
 			const jumped = isJump(power, top);
-			tipStroke(cueSpec, power, jumped);
+			trickShot = !miscue && (jumped || (liftDeg > 0 && elev >= 8 && Math.abs(side) >= 0.15));
+			tipStroke(cueSpec, power, jumped || masse);
+			if (masse && !miscue) {
+				ui.toast('Massé! Špica −5 %.');
+			}
+			liftDeg = 0; // po údere sa tágo vráti na najmenší uhol
 			if (jumped) {
 				ui.toast('Skokový úder! Špica −5 %.');
 			}
@@ -4045,6 +4077,7 @@ export function start(root, config = {}) {
 		onPower: (p, charging) => controls.setPower(p, charging),
 		onRelease: () => controls.release(),
 		onSpin: (side, top) => (spin = { side, top }),
+		onElev: (deg) => setLift(deg),
 	});
 
 	const controls = new Controls(renderer.domElement, rig, game, {
@@ -4053,6 +4086,7 @@ export function start(root, config = {}) {
 		// dosah tága: keď hráč nedosiahne na bielu, tágo sa neodtiahne (upozornenie je pri mierení)
 		canStroke: () => game.spectating || !game.cue.on || reachInfo().ok || !!reachInfo().stretch,
 		spinReset: () => ui.setSpin(0, 0),
+		elev: (d) => setLift(Math.round(curElev()) + d),
 		spin: (dx, dy) => ui.setSpin(Math.max(-1, Math.min(1, ui.side + dx)), Math.max(-1, Math.min(1, ui.top + dy))),
 		lock: (on) => {
 			ui.setLock(on);
@@ -5665,8 +5699,14 @@ export function start(root, config = {}) {
 		const rules = (st && st.rules) || (m && m.rules) || null;
 		const brk = rules ? rules.brk : game.stats.run || 0;
 		const turnKept = rules ? rules.turn === shotTrack.shooter : true;
+		const trick = trickShot;
+		trickShot = false;
 		if (c.frame || c.over) {
 			return null; // koniec framu: veľké ovácie po hlásení rozhodcu
+		}
+		// 0.30.0: swerve, massé alebo skok, ktorý trafil správnu guľu: na štadióne diváci jasajú a tlieskajú
+		if (trick && venue === 'league' && !foul && !shotTrack.foul && game.physics.firstContact) {
+			return { s: 'crowd-cheer', g: 1, n: 'applause-big' };
 		}
 		if (c.won !== undefined) {
 			return { s: 'applause-big', g: 0.9 }; // rozhodujúci náskok: súper už potrebuje snookery
@@ -5739,6 +5779,9 @@ export function start(root, config = {}) {
 			}
 		}
 		if (type === 'shot') {
+			if (d && d.remote) {
+				trickShot = false; // úder súpera
+			}
 			shotTrack.cush.clear();
 			shotTrack.popped = new Set(); // gule, ktorým sa body ukázali hneď pri páde
 			shotTrack.first = null; // prvá guľa, ktorú biela trafila
@@ -6074,7 +6117,10 @@ export function start(root, config = {}) {
 				cue.setSpec(cueSpec);
 			}
 		}
-		cue.place(game.cue, game.dir, pull, watchAim ? watchAim.side || 0 : spin.side, watchAim ? watchAim.top || 0 : spin.top, (aiming || view === 'chalk' || (watchAim && !watchAim.place)) && game.cue.on, game.balls, spiderNow || restRemote);
+		cue.place(game.cue, game.dir, pull, watchAim ? watchAim.side || 0 : spin.side, watchAim ? watchAim.top || 0 : spin.top, (aiming || view === 'chalk' || (watchAim && !watchAim.place)) && game.cue.on, game.balls, spiderNow || restRemote, (((watchAim ? watchAim.el || 0 : liftDeg) || 0) * Math.PI) / 180);
+		if (!watchAim && cue.pivot.visible) {
+			ui.setElev(curElev(), minElev(), !!cue.tiltLocked);
+		}
 		// nedosiahneš na bielu: tágo sa plynulo vytočí do strany okolo ruky na rukoväti (rukoväť ostáva pri hráčovi,
 		// špička mieri vedľa bielej, mimo mierenia); uhol pre kameru (cue.tilt) sa nemení
 		reachLift += ((reachBad ? 1 : 0) - reachLift) * Math.min(1, dt * 6);
@@ -6232,7 +6278,7 @@ export function start(root, config = {}) {
 			office.notebookDraw((g, w, h) => replay.draw(g, w, h));
 			ui.replayBar(true, replay.playing, replay.speed);
 		}
-		rig.cueTilt = cue.pivot.visible ? cue.tilt || 0 : 0;
+		rig.cueTilt = cue.pivot.visible ? Math.min(cue.tilt || 0, 0.7) : 0; // kamera nejde vyššie ako pri 40° (massé až 80°)
 		rig.cueAxis = cue.pivot.visible && cue.back ? { tip: cue.pivot.position, back: cue.back } : null; // zostup kamery obchádza tágo
 		// po údere: keď gule zastanú a som na rade, mierim zo smeru, z ktorého sa kamera práve pozerá na bielu
 		// (kamera sa neotáča, len sa plynulo spustí za tágo); v partii aj po súperovom údere

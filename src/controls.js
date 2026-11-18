@@ -697,6 +697,14 @@ export class Controls {
 			return;
 		}
 		e.preventDefault();
+		if (e.shiftKey && this.hooks.elev) {
+			// 0.30.0: Shift + koliesko = uhol tága (nahor zdvihne), s Ctrl po 5°; so Shift posiela prehliadač často deltaX
+			const d = e.deltaY || e.deltaX;
+			if (d) {
+				this.hooks.elev((d < 0 ? 1 : -1) * (e.ctrlKey ? 5 : 1));
+			}
+			return;
+		}
 		// rýchlejšie a vo väčšom rozsahu: jeden krok kolieska asi o 20 %, od celkového pohľadu až tesne k bielej
 		const steps = Math.max(-4, Math.min(4, e.deltaY / (e.deltaMode === 1 ? 3 : 100)));
 		if (this.panning) {

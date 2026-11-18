@@ -7,6 +7,7 @@ import { buildCueMesh } from './cues.js';
 
 const TILT = THREE.MathUtils.degToRad(4); // tágo je mierne zdvihnuté nad mantinel
 const MAX_TILT = THREE.MathUtils.degToRad(40);
+const ELEV_MAX_RAD = THREE.MathUtils.degToRad(80); // massé (0.30.0)
 const EDGE_H = 0.049 + 0.004; // vrch dreveného rámu nad súknom a malá rezerva
 const OUTER = 0.17; // mantinel a rám za hranou hracej plochy
 const BALL_GAP = 0.003; // rezerva medzi tágom a guľou, ktorú tágo prechádza ponad
@@ -273,7 +274,7 @@ export class Cue {
 	 * Umiestni tágo za bielu: smer dir, odtiahnutie podľa sily, miesto úderu (side, top).
 	 * balls: gule na stole; tágo sa nad ne zdvihne ako nad mantinel (len vzhľad, úder sa nemení).
 	 */
-	place(cue, dir, pull, side, top, visible, balls, spider = null) {
+	place(cue, dir, pull, side, top, visible, balls, spider = null, lift = 0) {
 		this.pivot.visible = visible;
 		if (!visible) {
 			return;
@@ -337,12 +338,28 @@ export class Cue {
 			}
 		}
 		want = Math.min(want, MAX_TILT); // guľa tesne za bielou: ďalej sa nezdvíha
-		this.tilt = this.tilt === undefined ? want : this.tilt + (want - this.tilt) * 0.25;
+		// 0.30.0: uhol tága zvolený hráčom (Shift + koliesko), najmenej toľko, koľko vyžaduje poloha; s pavúkom pevný
+		this.minTilt = want;
+		this.tiltLocked = !!spider;
+		const target = spider ? want : Math.max(want, Math.min(ELEV_MAX_RAD, lift || 0));
+		this.tiltTarget = target;
+		this.tilt = this.tilt === undefined ? target : this.tilt + (target - this.tilt) * 0.25;
 		const tilt = this.tilt;
-		const tipY = base + gap * Math.tan(tilt);
-		this.pivot.position.set(tipX, tipY, tipZ);
+		const ct = Math.cos(tilt);
+		const st = Math.sin(tilt);
+		// špica pri guli: bod úderu leží v rovine kolmej na os tága (pri strmom tágu je na guli vyššie a vzadu),
+		// špica stojí na osi tága kúsok pred povrchom gule (pri malom uhle ako predtým)
+		const a = side * 0.5 * R;
+		const bb = top * 0.5 * R;
+		const sd = Math.sqrt(Math.max(0, R * R - a * a - bb * bb)) + gap;
+		const fwd = bb * st - sd * ct;
+		const tipY2 = R + bb * ct + sd * st;
+		// pri malom uhle ostáva pôvodná poloha špice, so zdvíhaním plynulo prejde na polohu na osi tága
+		const f = Math.max(0, Math.min(1, (tilt - TILT) / 0.15));
+		const oy = base + gap * Math.tan(Math.min(tilt, MAX_TILT));
+		this.pivot.position.set(tipX + (cue.p.x + dx * fwd + rx * a - tipX) * f, oy + (tipY2 - oy) * f, tipZ + (cue.p.z + dz * fwd + rz * a - tipZ) * f);
 		// os tága (+y skupiny) má smerovať dozadu a hore
-		const back = new THREE.Vector3(-dx * Math.cos(tilt), Math.sin(tilt), -dz * Math.cos(tilt));
+		const back = new THREE.Vector3(-dx * ct, st, -dz * ct);
 		this.pivot.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), back);
 		this.back = back; // os tága od špičky dozadu (kamera pri zostupe popri tágu ho obchádza)
 	}

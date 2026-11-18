@@ -467,6 +467,7 @@ export function buildStadium(scene, quality, clock = 45) {
 			row('Pohyb', 'mierenie (Shift jemnejšie)');
 			row('Ľavé drž', 'odtiahni tágo a pošli ho dopredu');
 			row('Koliesko drž', 'miesto úderu na bielej (falša)');
+			row('Shift+koliesko', 'uhol tága (swerve, massé)');
 			row('Pravé drž', 'posun pohľadu okolo gule');
 			row('Koliesko', 'priblíženie a oddialenie');
 			box(`Na úder máš ${clock} sekúnd, inak faul za čas.`);
@@ -497,7 +498,11 @@ export function buildStadium(scene, quality, clock = 45) {
 			row('Súper hrá', 'gule sa vrátia pred faul', 290);
 			y += 10;
 			head('Skokový úder');
-			row('Bod dole', 'sila aspoň 70 %, s kriedou vyššie', 290);
+			row('Bod dole', 'sila 70 %+, s kriedou a vodou vyššie', 290);
+			y += 10;
+			head('Uhol tága a falša');
+			row('8 – 25°', 'swerve: mierny oblúk', 290);
+			row('45 – 80°', 'massé: veľký oblúk, bez kriedy šmyk', 290);
 			y += 10;
 			head('Potrebuješ snookery');
 			row('Vzdať', 'súper vyhrá frame (alebo partiu)', 290);
