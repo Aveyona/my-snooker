@@ -245,7 +245,53 @@ export function buildSpider(shaftYaw = 0.22, rise = 0.16, kind = 'spider') {
 	return g;
 }
 
+/**
+ * 0.31.3: časť tága blízko kamery sa plynulo stratí (rozptýlené vynechanie pixelov, bez priehľadnosti), aby
+ * zdvihnuté tágo (massé) nezakrylo pohľad. Pod FADE_NEAR m od kamery nie je vidno nič, od FADE_FAR úplne.
+ */
+const FADE = { cam: { value: new THREE.Vector3(0, 100, 0) }, tip: { value: new THREE.Vector3(0, -100, 0) }, near: { value: 0.14 }, far: { value: 0.4 } }; // špica a 30 cm za ňou nemiznú nikdy
+function fadeNearCamera(root) {
+	root.traverse((o) => {
+		for (const m of [].concat(o.material || [])) {
+			if (!m || m.userData.camFade) {
+				continue;
+			}
+			m.userData.camFade = true;
+			const prev = m.onBeforeCompile;
+			m.onBeforeCompile = (sh, r) => {
+				if (prev) {
+					prev(sh, r);
+				}
+				sh.uniforms.uFadeCam = FADE.cam;
+				sh.uniforms.uFadeNear = FADE.near;
+				sh.uniforms.uFadeFar = FADE.far;
+				sh.uniforms.uFadeTip = FADE.tip;
+				sh.vertexShader = sh.vertexShader
+					.replace('#include <common>', '#include <common>\nvarying vec3 vFadeW;')
+					.replace('#include <project_vertex>', '#include <project_vertex>\nvFadeW = (modelMatrix * vec4(transformed, 1.0)).xyz;');
+				sh.fragmentShader = sh.fragmentShader
+					.replace('#include <common>', '#include <common>\nvarying vec3 vFadeW;\nuniform vec3 uFadeCam;\nuniform float uFadeNear;\nuniform float uFadeFar;\nuniform vec3 uFadeTip;')
+					.replace(
+						'#include <clipping_planes_fragment>',
+						'#include <clipping_planes_fragment>\n{ float fdK = max(smoothstep(uFadeNear, uFadeFar, distance(vFadeW, uFadeCam)), 1.0 - smoothstep(0.18, 0.32, distance(vFadeW, uFadeTip))); if (fdK < 0.999) { float nz = fract(52.9829189 * fract(dot(gl_FragCoord.xy, vec2(0.06711056, 0.00583715)))); if (nz > fdK) discard; } }'
+					);
+			};
+			const key = m.customProgramCacheKey ? m.customProgramCacheKey.bind(m) : () => '';
+			m.customProgramCacheKey = () => key() + '|camfade';
+			m.needsUpdate = true;
+		}
+	});
+}
+
 export class Cue {
+	/** Poloha kamery pre miznutie tága pri kamere (volá sa každý snímok). */
+	static fadeFrom(pos, tip) {
+		FADE.cam.value.copy(pos);
+		if (tip) {
+			FADE.tip.value.copy(tip);
+		}
+	}
+
 	constructor(scene, spec) {
 		this.pivot = new THREE.Group();
 		scene.add(this.pivot);
@@ -267,6 +313,7 @@ export class Cue {
 		}
 		this.spec = spec;
 		this.group = buildCueMesh(spec);
+		fadeNearCamera(this.group);
 		this.pivot.add(this.group);
 	}
 

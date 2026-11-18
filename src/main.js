@@ -6469,6 +6469,7 @@ export function start(root, config = {}) {
 		}
 		stadium.setSpot(flagOn('w-spot') && venue === 'league');
 		lcdRender();
+		Cue.fadeFrom(rig.camera.position, cue.pivot.position); // tágo blízko kamery sa stratí (massé)
 		renderer.render(scene, rig.camera);
 		miniTable();
 		requestAnimationFrame(frame);
