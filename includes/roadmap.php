@@ -162,6 +162,7 @@ function mysn_roadmap() {
 /** Denník zmien (najnovšie hore). */
 function mysn_changelog() {
 	return array(
+		array( '0.31.5', '18. 11. 2026', 'Oprava blikania tága pri začiatku ťahu: miznutie tága pri kamere je plynulá priehľadnosť namiesto rozsypaných bodiek, ktoré pri prelete kamery blikali.' ),
 		array( '0.31.4', '18. 11. 2026', 'Nápoveda: Shift + koliesko (uhol tága) na papieri Ovládanie myšou aj v Pomocníkovi (ovládanie); na papieri Princíp hry sú čísla gúľ vedľa gúľ, už neprekrývajú ďalší rad.' ),
 		array( '0.31.3', '18. 11. 2026', 'Zdvihnuté tágo (massé) už nezakryje pohľad: časť tága bližšie ako asi 40 cm od kamery plynulo zmizne (pod 14 cm úplne), špica a 30 cm za ňou ostávajú vždy viditeľné.' ),
 		array( '0.31.2', '18. 11. 2026', 'Podsvietenie stojana bez bodového svetla: zmizla svetlá škvrna na doske pri štítkoch a na podlahe, ostáva LED pásik so žiarou.' ),

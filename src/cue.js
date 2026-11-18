@@ -246,7 +246,7 @@ export function buildSpider(shaftYaw = 0.22, rise = 0.16, kind = 'spider') {
 }
 
 /**
- * 0.31.3: časť tága blízko kamery sa plynulo stratí (rozptýlené vynechanie pixelov, bez priehľadnosti), aby
+ * 0.31.3: časť tága blízko kamery sa plynulo stratí (od 0.31.5 priehľadnosťou), aby
  * zdvihnuté tágo (massé) nezakrylo pohľad. Pod FADE_NEAR m od kamery nie je vidno nič, od FADE_FAR úplne.
  */
 const FADE = { cam: { value: new THREE.Vector3(0, 100, 0) }, tip: { value: new THREE.Vector3(0, -100, 0) }, near: { value: 0.14 }, far: { value: 0.4 } }; // špica a 30 cm za ňou nemiznú nikdy
@@ -273,11 +273,13 @@ function fadeNearCamera(root) {
 					.replace('#include <common>', '#include <common>\nvarying vec3 vFadeW;\nuniform vec3 uFadeCam;\nuniform float uFadeNear;\nuniform float uFadeFar;\nuniform vec3 uFadeTip;')
 					.replace(
 						'#include <clipping_planes_fragment>',
-						'#include <clipping_planes_fragment>\n{ float fdK = max(smoothstep(uFadeNear, uFadeFar, distance(vFadeW, uFadeCam)), 1.0 - smoothstep(0.18, 0.32, distance(vFadeW, uFadeTip))); if (fdK < 0.999) { float nz = fract(52.9829189 * fract(dot(gl_FragCoord.xy, vec2(0.06711056, 0.00583715)))); if (nz > fdK) discard; } }'
-					);
+						'#include <clipping_planes_fragment>\nfloat fdK = max(smoothstep(uFadeNear, uFadeFar, distance(vFadeW, uFadeCam)), 1.0 - smoothstep(0.18, 0.32, distance(vFadeW, uFadeTip)));\nif (fdK < 0.02) discard;'
+					)
+					.replace('#include <dithering_fragment>', '#include <dithering_fragment>\ngl_FragColor.a *= fdK;');
 			};
 			const key = m.customProgramCacheKey ? m.customProgramCacheKey.bind(m) : () => '';
-			m.customProgramCacheKey = () => key() + '|camfade';
+			m.customProgramCacheKey = () => key() + '|camfade2';
+			m.transparent = true; // 0.31.5: plynulá priehľadnosť namiesto rozsypaných bodiek (pri pohybe kamery blikali)
 			m.needsUpdate = true;
 		}
 	});
