@@ -34,7 +34,7 @@ Server `live.hedlajner.sk` (Hetzner) poskytuje TURN pre spojenie hráčov a over
 - biela v ruke (nové rozostavenie, začiatok frame, po faule): kamera sa sama presunie zhora na stôl, biela ide pod kurzor a klik ju položí, potom späť za tágo
 - voľný pohľad (medzerník, na mobile panák): klik alebo ťuk na predmet ho otvorí (nástenka, stojan, poháre, dvere…), pravé tlačidlo alebo tlačidlo Voľný pohľad vráti späť na to isté miesto
 - zvuky série: pri potopenej guli zaznie stupeň podľa poradia gule v sérii (1 až 10, od 8. vrchol), body vyskočia hneď pri páde gule; predvolené zvuky sú v `assets/sounds/streak-*`, v administrácii (My Snooker, Zvuky) skupina Séria
-- chat v hre: posledné 2 správy, klik na ne otvorí písanie s celou históriou a posuvníkom, ✕ zavrie
+- chat v hre: posledné 2 správy, klik na ne otvorí písanie s celou históriou a posuvníkom, ✕ zavrie; šípka ‹ vľavo správy schová (jazýček › s počtom nových správ ich ukáže), Nastavenia → Chat v hre: Zobraziť správy, Len nové správy na chvíľu (8 s) alebo Skryť
 - priehľadná 3D šípka vo farbe trafenej gule ukazuje, kam guľa pôjde
 - rádio so stanicami z My Player: retro rádio na komode, mixpult a dva reproduktory pri pravej stene, priestorový zvuk z reproduktorov, mixpult mení hlasitosť, basy, výšky a vyváženie (F9)
 - barový stolík s telefónom (Môj účet, F10) a dvoma pohármi s vodou

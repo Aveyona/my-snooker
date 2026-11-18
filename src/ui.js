@@ -708,6 +708,12 @@ export class UI {
 					<option value="follow">Sledovať bielu</option>
 					<option value="top">Pohľad zhora na stôl</option>
 				</select></label>
+			<label>Chat v hre
+				<select data-k="chatMode">
+					<option value="show">Zobraziť správy</option>
+					<option value="peek">Len nové správy na chvíľu (8 s)</option>
+					<option value="hide">Skryť (šípka › ich ukáže)</option>
+				</select></label>
 			<label>Kamera, keď hrá súper (liga)
 				<select data-k="oppCam">
 					<option value="follow">Sledovať súpera</option>

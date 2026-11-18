@@ -840,3 +840,14 @@ body.mysn-page { font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans
 .mysn-rackled-b { width: 22px; height: 22px; border-radius: 50%; border: 2px solid #ffffff40; padding: 0; cursor: pointer; color: #ddd; font: 700 11px system-ui, sans-serif; line-height: 18px; box-shadow: 0 1px 4px #0008; -webkit-tap-highlight-color: transparent; }
 .mysn-rackled-b:hover { border-color: #ffffffb0; }
 .mysn-rackled-b.mysn-on { border-color: #ffd34d; box-shadow: 0 0 0 2px #ffd34d80, 0 0 10px #ffd34d60; }
+/* 0.31.7: schovanie chatu šípkou (Nastavenia: Chat v hre) */
+.mysn-gchat { position: absolute; }
+.mysn-gchat-tog { position: absolute; left: -16px; top: 0; width: 16px; height: 34px; padding: 0; border: 0; border-radius: 0 8px 8px 0; background: #0c0f14b3; color: #ffd34d; font: 700 16px system-ui, sans-serif; cursor: pointer; pointer-events: auto; display: flex; align-items: center; justify-content: center; -webkit-tap-highlight-color: transparent; }
+.mysn-gchat-tog:hover { background: #ffd34d; color: #111; }
+.mysn-gchat-tog i { font-style: normal; line-height: 1; }
+.mysn-gchat-tog em { position: absolute; left: 12px; top: -6px; min-width: 16px; height: 16px; padding: 0 3px; box-sizing: border-box; border-radius: 8px; background: #dc2626; color: #fff; font: 700 10px/16px system-ui, sans-serif; font-style: normal; text-align: center; }
+.mysn-gchat-tog em:empty { display: none; }
+.mysn-gchat-col .mysn-gchat-tog { width: 26px; left: -16px; border-radius: 0 10px 10px 0; }
+.mysn-gchat-col:not(.mysn-gchat-open):not(.mysn-gchat-peek) .mysn-gchat-list { display: none; }
+@media (pointer: coarse) { .mysn-gchat-tog { height: 40px; width: 20px; } .mysn-gchat-col .mysn-gchat-tog { width: 32px; } }
+.mysn-gchat-empty:not(.mysn-gchat-open) .mysn-gchat-tog { display: none; }

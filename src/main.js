@@ -48,7 +48,7 @@ function lowSideFor(v, user) {
 
 function loadSettings() {
 	const mobile = /Android|iPhone|iPad|Mobile/i.test(navigator.userAgent);
-	const def = { tableDetail: 'fine', lines: false, quality: mobile ? 'low' : 'high', volume: 0.8, volTable: 1, volRoom: 1, volCrowd: 1, volRudo: 1, rackLed: 'warm', sound3d: 'hrtf', refLang: 'en', respot: true, contact: true, contactPos: 'topright', camSide: 'hand', afterShot: 'follow', oppCam: 'follow', camera: 'cue', cue: 'club' };
+	const def = { tableDetail: 'fine', lines: false, quality: mobile ? 'low' : 'high', volume: 0.8, volTable: 1, volRoom: 1, volCrowd: 1, volRudo: 1, rackLed: 'warm', chatMode: 'show', sound3d: 'hrtf', refLang: 'en', respot: true, contact: true, contactPos: 'topright', camSide: 'hand', afterShot: 'follow', oppCam: 'follow', camera: 'cue', cue: 'club' };
 	try {
 		const raw = window.localStorage.getItem(STORE);
 		if (raw) {
@@ -4044,6 +4044,9 @@ export function start(root, config = {}) {
 			if (k === 'volume') {
 				sound.setVolume(v);
 			}
+			if (k === 'chatMode' && chat.setMode) {
+				chat.setMode(v);
+			}
 			if (k === 'volTable' || k === 'volRoom' || k === 'volCrowd' || k === 'volRudo') {
 				sound.setGroupVolume({ volTable: 'table', volRoom: 'room', volCrowd: 'crowd', volRudo: 'rudo' }[k], +v);
 			}
@@ -4747,6 +4750,9 @@ export function start(root, config = {}) {
 		},
 		canOpen: () => !!(user || guestPlay) && (game.spectating || game.state !== 'place') && (!view || ((game.spectating || specDemo) && view === 'seat')) && !ui.menuOpen() && !ui.foundOpen() && !ui.partyOpen() && !ui.cardOpen() && !ui.phoneOpen(),
 	});
+	if (chat.setMode) {
+		chat.setMode(settings.chatMode); // Nastavenia: Chat v hre (0.31.7)
+	}
 	let zoomSaveT = 0;
 	controls.sens = settings.mouseSens || 1; // šúpatko Otáčanie myšou
 	controls.strokeSens = settings.strokeSens || 1; // šúpatko Ťahanie tága

@@ -50,8 +50,53 @@ export function gameChat(root, cfg, hooks = {}) {
 	xBtn.setAttribute('aria-label', 'Zavrieť písanie');
 	row0.append(input, xBtn);
 	form.append(tabs, row0, note);
-	el.append(list, form);
+	// 0.31.7: šípka na schovanie správ (‹), schovaný chat ukáže jazýček › s počtom nových správ
+	const tog = document.createElement('button');
+	tog.type = 'button';
+	tog.className = 'mysn-gchat-tog';
+	tog.innerHTML = '<i>‹</i><em></em>';
+	el.append(tog, list, form);
 	root.appendChild(el);
+	let mode = 'show'; // Nastavenia, Chat v hre: show = zobraziť, peek = nové správy na chvíľu, hide = skryť
+	let collapsed = false;
+	let unread = 0;
+	let peekT = 0;
+	const drawTog = () => {
+		el.classList.toggle('mysn-gchat-col', collapsed);
+		el.classList.toggle('mysn-gchat-empty', !list.querySelector('.mysn-gchat-msg'));
+		tog.querySelector('i').textContent = collapsed ? '›' : '‹';
+		const b = tog.querySelector('em');
+		b.textContent = collapsed && unread ? String(Math.min(99, unread)) : '';
+		tog.title = collapsed ? (unread ? `Zobraziť chat (${unread} nových správ)` : 'Zobraziť chat') : 'Schovať chat';
+		tog.setAttribute('aria-label', tog.title);
+	};
+	const setCollapsed = (c) => {
+		collapsed = !!c;
+		if (!collapsed) {
+			unread = 0;
+		}
+		clearTimeout(peekT);
+		el.classList.remove('mysn-gchat-peek');
+		drawTog();
+	};
+	tog.addEventListener('click', (e) => {
+		e.preventDefault();
+		e.stopPropagation();
+		setCollapsed(!collapsed);
+	});
+	/** Nová správa pri schovanom chate: počet na jazýčku, v režime Len nové správy na chvíľu sa na 8 s ukáže. */
+	const noteNew = (mine) => {
+		if (!collapsed || mine || isOpen) {
+			return;
+		}
+		unread++;
+		drawTog();
+		if (mode === 'peek') {
+			el.classList.add('mysn-gchat-peek');
+			clearTimeout(peekT);
+			peekT = setTimeout(() => el.classList.remove('mysn-gchat-peek'), 8000);
+		}
+	};
 
 	let last = 0;
 	let busy = false;
@@ -60,6 +105,7 @@ export function gameChat(root, cfg, hooks = {}) {
 	let ws = null;
 	let wsTry = 0;
 	let isOpen = false;
+	let initDone = false; // prvé načítanie správ sa do nových nepočíta
 	let closedAt = 0;
 	const seen = new Set();
 	// chat zápasu
@@ -133,6 +179,10 @@ export function gameChat(root, cfg, hooks = {}) {
 		const txt = document.createElement('span');
 		txt.textContent = esc(m.text);
 		row.append(who, txt);
+		if (initDone) {
+			noteNew(!!m.mine);
+		}
+		el.classList.remove('mysn-gchat-empty');
 		const atEnd = list.scrollHeight - list.scrollTop - list.clientHeight < 40;
 		list.appendChild(row);
 		requestAnimationFrame(() => row.classList.add('mysn-gchat-in'));
@@ -460,7 +510,14 @@ export function gameChat(root, cfg, hooks = {}) {
 
 	poll();
 	wsConnect();
+	setTimeout(() => (initDone = true), 4000);
+	drawTog();
 	return {
+		/** Režim z Nastavení: show, peek alebo hide; zmena režimu nastaví aj schovanie. */
+		setMode(m) {
+			mode = m === 'peek' || m === 'hide' ? m : 'show';
+			setCollapsed(mode !== 'show');
+		},
 		open,
 		close,
 		isOpen: () => isOpen,
