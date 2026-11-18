@@ -46,11 +46,13 @@ export function buildStadium(scene, quality, clock = 45) {
 	const floor = add(new THREE.PlaneGeometry(40, 30), new THREE.MeshStandardMaterial({ color: 0x07080b, roughness: 0.25, metalness: 0.5 }), 0, FY, 0);
 	floor.rotation.x = -Math.PI / 2;
 	floor.castShadow = false;
+	floor.receiveShadow = false; // tieň stola kreslí stôl sám (mäkký, so sieťkami)
 	// podlaha vnútri mantinelov: čierna lesklá s tmavosivým kobercom pod stolom a svietiacim modrým LED pásom
 	const ledFloor = stadiumFloorTexture('led', 8.4, 6.2, quality);
 	const carpet = add(new THREE.PlaneGeometry(8.4, 6.2), new THREE.MeshStandardMaterial({ map: ledFloor.map, emissive: 0xffffff, emissiveMap: ledFloor.emissive, emissiveIntensity: 1.2, roughness: 0.35, metalness: 0.3 }), 0, FY + 0.002, 0);
 	carpet.rotation.x = -Math.PI / 2;
 	carpet.castShadow = false;
+	carpet.receiveShadow = false;
 
 	// nízke mantinely s reklamami okolo hracieho priestoru
 	const ads = ['MY SNOOKER', 'HEDLAJNER', 'LIGA', 'MY SNOOKER', 'HEDLAJNER.SK', 'LIGA'];

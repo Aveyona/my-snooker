@@ -264,6 +264,14 @@ export function buildTable(renderer) {
 	cloth.receiveShadow = true;
 	cloth.name = 'cloth';
 	group.add(cloth);
+	// spodok hracej dosky (0.25.6): súkno je viditeľné len zhora, zdola cez pás medzi rámom a zapustenou skriňou
+	// bolo vidno dovnútra stola (aj gule); doska zdola je tmavé drevo s otvormi jamiek
+	const underMat = new THREE.MeshStandardMaterial({ color: 0x1a0f09, roughness: 0.9, metalness: 0, alphaMap: holes, alphaTest: 0.5 });
+	const under = new THREE.Mesh(cloth.geometry, underMat);
+	under.rotation.x = Math.PI / 2; // lícom dole
+	under.position.y = -0.004;
+	under.castShadow = true;
+	group.add(under);
 
 	const hx = L / 2;
 	const hz = W / 2;
@@ -593,9 +601,11 @@ export function buildTable(renderer) {
 	// Mäkký tieň pod stolom (0.25.5): tmavá plocha s rozmazanými okrajmi na podlahe a tmavšie kruhy pod nohami,
 	// pri každej kvalite (svetlo lámp bez tieňov inak presvecuje podlahu pod stolom); herňa, kancelária aj štadión
 	{
+		// 0.25.6: podlaha už tiene z máp (lampy, hlavné svetlo) neprijíma, tieň stola na nej je len tento:
+		// tmavá plocha pod stolom s mäkkým okrajom a pri jamkách tieň košíkov so vzorom sieťky
 		const FLOOR = -0.815;
-		const ow = 2 * (hx + 0.55);
-		const od = 2 * (hz + 0.55);
+		const ow = 2 * (hx + 0.6);
+		const od = 2 * (hz + 0.7);
 		const c = document.createElement('canvas');
 		c.width = 512;
 		c.height = Math.round((512 * od) / ow);
@@ -603,10 +613,10 @@ export function buildTable(renderer) {
 		const px = c.width / ow; // pixely na meter
 		// vrstvy od okraja dovnútra: každá trochu tmavšia, rozmazaním vznikne plynulý prechod
 		g.filter = `blur(${Math.round(0.16 * px)}px)`;
-		for (let i = 0; i < 6; i++) {
-			const m = (0.5 - i * 0.07) * px; // okraj vrstvy od okraja plochy
-			g.fillStyle = `rgba(0,0,0,${0.16 + i * 0.03})`;
-			const rr = Math.max(4, (0.3 - i * 0.03) * px);
+		for (let i = 0; i < 7; i++) {
+			const m = (0.55 - i * 0.075) * px; // okraj vrstvy od okraja plochy
+			g.fillStyle = `rgba(0,0,0,${0.18 + i * 0.03})`;
+			const rr = Math.max(4, (0.35 - i * 0.04) * px);
 			g.beginPath();
 			g.roundRect(m, m, c.width - 2 * m, c.height - 2 * m, rr);
 			g.fill();
@@ -621,6 +631,46 @@ export function buildTable(renderer) {
 		sh.castShadow = false;
 		sh.receiveShadow = false;
 		group.add(sh);
+		// tiene košíkov pod jamkami: svetlo lampy nad nimi premietne sieťku na podlahu kúsok von od stola
+		const nc = document.createElement('canvas');
+		nc.width = nc.height = 128;
+		const ng = nc.getContext('2d');
+		ng.save();
+		ng.beginPath();
+		ng.arc(64, 64, 60, 0, Math.PI * 2);
+		ng.clip();
+		ng.strokeStyle = 'rgba(0,0,0,0.85)';
+		ng.lineWidth = 2.2;
+		for (let k = -128; k < 256; k += 13) {
+			ng.beginPath();
+			ng.moveTo(k, 0);
+			ng.lineTo(k + 128, 128);
+			ng.moveTo(k + 128, 0);
+			ng.lineTo(k, 128);
+			ng.stroke();
+		}
+		ng.restore();
+		// guľatý obrys košíka a mäkké stmavnutie (gule v košíku), smerom von slabne
+		ng.globalCompositeOperation = 'destination-in';
+		const ngr = ng.createRadialGradient(64, 64, 20, 64, 64, 62);
+		ngr.addColorStop(0, 'rgba(0,0,0,1)');
+		ngr.addColorStop(1, 'rgba(0,0,0,0)');
+		ng.fillStyle = ngr;
+		ng.fillRect(0, 0, 128, 128);
+		ng.globalCompositeOperation = 'source-over';
+		const netShTex = new THREE.CanvasTexture(nc);
+		const netShMat = new THREE.MeshBasicMaterial({ map: netShTex, transparent: true, depthWrite: false, opacity: 0.55 });
+		for (const p of POCKETS) {
+			const lx = p.corner ? Math.sign(p.x) * 1.1 : 0; // najbližšia lampa
+			const k = (1.62 + 0.815) / (1.62 + 0.25); // z lampy cez košík (asi 25 cm pod stolom) na podlahu
+			const m = new THREE.Mesh(new THREE.PlaneGeometry(0.42, 0.42), netShMat);
+			m.rotation.x = -Math.PI / 2;
+			m.rotation.z = Math.atan2(p.z, p.x - lx);
+			m.scale.set(1.35, 1, 1); // pretiahnutý smerom od lampy
+			m.position.set(lx + (p.x - lx) * k, FLOOR + 0.0035, p.z * k);
+			m.renderOrder = -1;
+			group.add(m);
+		}
 		// pod každou nohou malý tmavší kruh (dotyk s podlahou)
 		const lc = document.createElement('canvas');
 		lc.width = lc.height = 64;
@@ -720,8 +770,8 @@ export function buildTable(renderer) {
 		for (const n of Object.keys(sets)) {
 			sets[n].visible = n === k;
 		}
-		clothSimple.alphaMap = clothDetail.alphaMap = sets[k].userData.holes;
-		clothSimple.needsUpdate = clothDetail.needsUpdate = true;
+		clothSimple.alphaMap = clothDetail.alphaMap = underMat.alphaMap = sets[k].userData.holes;
+		clothSimple.needsUpdate = clothDetail.needsUpdate = underMat.needsUpdate = true;
 	};
 	setPockets('black');
 	const setFelt = (name) => {
@@ -746,7 +796,7 @@ export function buildRoom(scene, quality) {
 	const floor = new THREE.Mesh(new THREE.PlaneGeometry(2 * ROOM.x, 2 * ROOM.z), new THREE.MeshStandardMaterial({ map: floorTex, roughness: 0.7, metalness: 0 }));
 	floor.rotation.x = -Math.PI / 2;
 	floor.position.y = -0.815;
-	floor.receiveShadow = true;
+	floor.receiveShadow = false; // tieň stola kreslí buildTable (mäkký, so sieťkami); z máp tieňov bol ostrý a nesprávny
 	scene.add(floor);
 
 	// zdola sa odráža zelené súkno, preto zelenkavé svetlo zospodu
