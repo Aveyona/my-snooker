@@ -590,6 +590,60 @@ export function buildTable(renderer) {
 		}
 	}
 
+	// Mäkký tieň pod stolom (0.25.5): tmavá plocha s rozmazanými okrajmi na podlahe a tmavšie kruhy pod nohami,
+	// pri každej kvalite (svetlo lámp bez tieňov inak presvecuje podlahu pod stolom); herňa, kancelária aj štadión
+	{
+		const FLOOR = -0.815;
+		const ow = 2 * (hx + 0.55);
+		const od = 2 * (hz + 0.55);
+		const c = document.createElement('canvas');
+		c.width = 512;
+		c.height = Math.round((512 * od) / ow);
+		const g = c.getContext('2d');
+		const px = c.width / ow; // pixely na meter
+		// vrstvy od okraja dovnútra: každá trochu tmavšia, rozmazaním vznikne plynulý prechod
+		g.filter = `blur(${Math.round(0.16 * px)}px)`;
+		for (let i = 0; i < 6; i++) {
+			const m = (0.5 - i * 0.07) * px; // okraj vrstvy od okraja plochy
+			g.fillStyle = `rgba(0,0,0,${0.16 + i * 0.03})`;
+			const rr = Math.max(4, (0.3 - i * 0.03) * px);
+			g.beginPath();
+			g.roundRect(m, m, c.width - 2 * m, c.height - 2 * m, rr);
+			g.fill();
+		}
+		const tex = new THREE.CanvasTexture(c);
+		tex.colorSpace = THREE.SRGBColorSpace;
+		const shMat = new THREE.MeshBasicMaterial({ map: tex, transparent: true, depthWrite: false, opacity: 0.9 });
+		const sh = new THREE.Mesh(new THREE.PlaneGeometry(ow, od), shMat);
+		sh.rotation.x = -Math.PI / 2;
+		sh.position.y = FLOOR + 0.003;
+		sh.renderOrder = -1;
+		sh.castShadow = false;
+		sh.receiveShadow = false;
+		group.add(sh);
+		// pod každou nohou malý tmavší kruh (dotyk s podlahou)
+		const lc = document.createElement('canvas');
+		lc.width = lc.height = 64;
+		const lg = lc.getContext('2d');
+		const grd = lg.createRadialGradient(32, 32, 4, 32, 32, 32);
+		grd.addColorStop(0, 'rgba(0,0,0,0.75)');
+		grd.addColorStop(1, 'rgba(0,0,0,0)');
+		lg.fillStyle = grd;
+		lg.fillRect(0, 0, 64, 64);
+		const legTex = new THREE.CanvasTexture(lc);
+		const legMat = new THREE.MeshBasicMaterial({ map: legTex, transparent: true, depthWrite: false });
+		const legSh = new THREE.PlaneGeometry(0.34, 0.34);
+		for (const lx of [-1, -0.33, 0.33, 1]) {
+			for (const lz of [-1, 1]) {
+				const m = new THREE.Mesh(legSh, legMat);
+				m.rotation.x = -Math.PI / 2;
+				m.position.set(lx * (hx - 0.17), FLOOR + 0.004, lz * (hz - 0.13));
+				m.renderOrder = -1;
+				group.add(m);
+			}
+		}
+	}
+
 	// Kovové značky (diamanty) na ráme
 	const markSimple = new THREE.MeshStandardMaterial({ color: 0xd9c38a, metalness: 0.8, roughness: 0.3 });
 	const markPearl = new THREE.MeshPhysicalMaterial({ color: 0xf3eee4, metalness: 0, roughness: 0.2, iridescence: 0.8, iridescenceIOR: 1.6, clearcoat: 1 });
@@ -714,9 +768,12 @@ export function buildRoom(scene, quality) {
 		const spot = new THREE.SpotLight(0xfff4e0, 11, 6, Math.PI / 3.4, 0.6, 1.6);
 		spot.position.set(x, LAMP_Y - 0.05, 0);
 		spot.target.position.set(x, 0, 0);
-		spot.castShadow = quality === 'high' && x === 0;
+		// 0.25.5: pri vysokej kvalite vrhajú tieň všetky tri lampy (krajné s menšou presnosťou), svetlo krajných
+		// tak neprechádza cez stôl; pri nižšej kvalite podlahu pod stolom zatieni mäkký tieň (buildTable)
+		spot.castShadow = quality === 'high';
 		if (spot.castShadow) {
-			spot.shadow.mapSize.set(2048, 2048);
+			const sz = x === 0 ? 2048 : 1024;
+			spot.shadow.mapSize.set(sz, sz);
 			spot.shadow.bias = -0.0004;
 			spot.shadow.radius = 3;
 		}
@@ -743,7 +800,7 @@ export function buildRoom(scene, quality) {
 		key.position.set(0.2, 3, 0.15);
 		key.castShadow = true;
 		key.shadow.mapSize.set(2048, 2048);
-		const s = 2.1;
+		const s = 2.7; // celý stôl aj s tieňom na podlahe (inak sa tieň oreže rovnou čiarou)
 		Object.assign(key.shadow.camera, { left: -s, right: s, top: s, bottom: -s, near: 1, far: 5 });
 		key.shadow.bias = -0.0003;
 		scene.add(key);

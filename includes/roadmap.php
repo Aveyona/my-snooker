@@ -162,6 +162,7 @@ function mysn_roadmap() {
 /** Denník zmien (najnovšie hore). */
 function mysn_changelog() {
 	return array(
+		array( '0.25.5', '18. 11. 2026', 'Tiene pod stolom: mäkký tieň na podlahe pod stolom a pod nohami (každá kvalita, herňa aj štadión), pri vysokej kvalite vrhajú tieň všetky tri lampy, tieň hlavného svetla sa už neoreže.' ),
 		array( '0.25.4', '18. 11. 2026', 'Veľký odpočet času na úder a veľké hlásenia (Hráš sám…, posledné upozornenie, diskvalifikácia) sú dole nad ovládaním a menšie, stred obrazovky ostáva voľný na mierenie.' ),
 		array( '0.25.3', '18. 11. 2026', 'Rozhodca sa lepšie vyhýba hráčovi: kontroluje celú cestu okolo stola (nejde popri hráčovi, radšej počká), pri každom kroku, širší pás za bielou, pri kladení bielej nechodí k D a z cesty uhne rýchlejšie.' ),
 		array( '0.25.2', '18. 11. 2026', 'Hráč pokračuje napriek snookerom: keď mu chýba do 14 bodov, diváci tlieskajú; pri väčšom rozdiele sa zasmejú.' ),
