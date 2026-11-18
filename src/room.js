@@ -1272,6 +1272,66 @@ export function buildRoomShell(scene, quality, opts = {}) {
 		add(new THREE.BoxGeometry(1.0, 0.76, 0.04), new THREE.MeshStandardMaterial({ color: 0x8a6a2a, metalness: 0.6, roughness: 0.4 }), x, FY + 1.75, RZ - 0.02);
 	}
 
+	// 0.32.2: neónový nápis My Snooker na prednej stene medzi obrazmi (návrh D): šikmý, písmená ako duté
+	// svietiace trubice (žltá), pod nápisom zelené tágo a červená guľa; žiara sa sčíta so stenou (aditívne)
+	{
+		const NW = 2.6;
+		const NH = 1.18;
+		const c = document.createElement('canvas');
+		c.width = 2048;
+		c.height = Math.round((2048 * NH) / NW);
+		const tex = new THREE.CanvasTexture(c);
+		tex.colorSpace = THREE.SRGBColorSpace;
+		const drawNeon = () => {
+			const g = c.getContext('2d');
+			g.clearRect(0, 0, c.width, c.height);
+			g.save();
+			g.translate(c.width / 2, c.height / 2);
+			g.rotate((-9 * Math.PI) / 180);
+			g.lineJoin = 'round';
+			g.lineCap = 'round';
+			g.textAlign = 'center';
+			g.textBaseline = 'middle';
+			g.font = '270px "Kaushan Script", "Brush Script MT", cursive';
+			// trubica: široká žiara, užšia farebná a biele jadro
+			const tube = (fn, col, core) => {
+				for (const [w, blur, a, cc] of [[30, 70, 0.55, col], [16, 30, 0.8, col], [8, 10, 1, col], [3.2, 0, 1, core]]) {
+					g.globalAlpha = a;
+					g.strokeStyle = cc;
+					g.shadowColor = col;
+					g.shadowBlur = blur;
+					g.lineWidth = w;
+					fn();
+				}
+				g.globalAlpha = 1;
+				g.shadowBlur = 0;
+			};
+			tube(() => g.strokeText('My Snooker', 0, -40), '#ffc21a', '#fffbe6');
+			tube(() => {
+				g.beginPath();
+				g.moveTo(-720, 170);
+				g.lineTo(560, 120);
+				g.stroke();
+			}, '#3dff6a', '#e8ffea');
+			tube(() => {
+				g.beginPath();
+				g.arc(640, 116, 42, 0, Math.PI * 2);
+				g.stroke();
+			}, '#ff3b3b', '#ffe6e6');
+			g.restore();
+			tex.needsUpdate = true;
+		};
+		drawNeon();
+		if (document.fonts && document.fonts.load) {
+			document.fonts.load('270px "Kaushan Script"', 'My Snooker').then(drawNeon, () => null);
+		}
+		const neon = add(new THREE.PlaneGeometry(NW, NH), new THREE.MeshBasicMaterial({ map: tex, transparent: true, blending: THREE.AdditiveBlending, depthWrite: false, toneMapped: false }), 0, FY + 1.78, RZ - 0.03);
+		neon.rotation.y = Math.PI;
+		neon.castShadow = false;
+		neon.receiveShadow = false;
+		neon.renderOrder = 3;
+	}
+
 	// Nástenné hodiny na stene s dverami (medzi svietidlom a dverami): merajú čas hrania, začínajú na 11:30
 	const clock = new THREE.Group();
 	clock.position.set(RX - 0.02, FY + 2.0, 0.35);
