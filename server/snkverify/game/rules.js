@@ -127,7 +127,10 @@ export function evaluate(state, shot) {
 			points = balls.filter((k) => k === 'red').length;
 		}
 	} else if (s.on === 'colour') {
-		const nom = hit && hit !== 'red' ? hit : null;
+		// Domáce pravidlo (0.26.0): na farbu stačí, aby biela najprv trafila ľubovoľnú farbu; nominovaná je farba,
+		// ktorá spadne (aj keď ju potopí iná farba). Spadnú dve farby alebo červená: faul ako doteraz.
+		const potCols = balls.filter((k) => k !== 'red');
+		const nom = hit && hit !== 'red' ? (potCols.length === 1 ? potCols[0] : hit) : null;
 		if (!hit) {
 			foul = 'Biela netrafila žiadnu guľu.';
 		} else if (!nom) {

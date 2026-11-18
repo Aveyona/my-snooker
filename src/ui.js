@@ -1126,7 +1126,7 @@ export class UI {
 				'<h3>Pravidlá snookeru</h3><ul>' +
 				li('Cieľ', 'Nahrať vo frame viac bodov ako súper.') +
 				li('Hodnoty gúľ', `<span class="mysn-balls">${ball('#b3121f', 1)} ${ball('#f2c418', 2)} ${ball('#0f7a3a', 3)} ${ball('#6b3a1e', 4)} ${ball('#1747b5', 5)} ${ball('#f08aa8', 6)} ${ball('#111', 7)}</span>`) +
-				li('Poradie', 'Striedavo červená a ľubovoľná farba. Farba sa vracia na svoj spot, kým sú na stole červené. Potom farby po poradí od žltej po čiernu.') +
+				li('Poradie', 'Striedavo červená a ľubovoľná farba. Na farbu stačí najprv trafiť ktorúkoľvek farbu, body sú za farbu, ktorá spadne (aj keď ju potopí iná farba), dve farby naraz sú faul. Farba sa vracia na svoj spot, kým sú na stole červené. Potom farby po poradí od žltej po čiernu.') +
 				li('Prvý dotyk', 'Biela musí ako prvú trafiť guľu, ktorá je na rade.') +
 				li('Faul', 'Zlá guľa, žiadny dotyk, spadnutá biela alebo guľa, ktorá nie je na rade. Súper dostane 4 body alebo hodnotu gule, ak je vyššia (najviac 7), a je na rade.') +
 				li('Biela v ruke', 'Po spadnutí bielej ju súper položí kdekoľvek do D.') +

@@ -45,11 +45,24 @@ t('farba po červenej', () => {
 	assert.deepEqual(r.respot, ['black']);
 	assert.equal(r.state.on, 'red');
 });
-t('nominovaná iná farba spadla: faul', () => {
-	const s = { ...newFrame(), on: 'colour' };
+t('farba potopená inou farbou: body za potopenú', () => {
+	const s = { ...newFrame(), on: 'colour', scores: [1, 0], brk: 1 };
 	const r = evaluate(s, { first: 'blue', pots: ['pink'], reds: 10 });
+	assert.equal(r.foul, false);
+	assert.equal(r.state.scores[0], 7);
+	assert.deepEqual(r.respot, ['pink']);
+	assert.equal(r.state.on, 'red');
+});
+t('na farbu spadli dve farby: faul', () => {
+	const s = { ...newFrame(), on: 'colour' };
+	const r = evaluate(s, { first: 'blue', pots: ['pink', 'blue'], reds: 10 });
 	assert.equal(r.foul, true);
 	assert.equal(r.penalty, 6);
+});
+t('na farbu prvá červená: faul aj keď farba spadne', () => {
+	const s = { ...newFrame(), on: 'colour' };
+	const r = evaluate(s, { first: 'red', pots: ['pink'], reds: 10 });
+	assert.equal(r.foul, true);
 });
 t('biela spadla: faul a biela do ruky', () => {
 	const r = evaluate(newFrame(), { first: 'red', pots: ['red', 'white'], reds: 14 });

@@ -162,6 +162,7 @@ function mysn_roadmap() {
 /** Denník zmien (najnovšie hore). */
 function mysn_changelog() {
 	return array(
+		array( '0.26.0', '18. 11. 2026', 'Domáce pravidlo pri hre na farbu: stačí najprv trafiť ktorúkoľvek farbu, body sú za farbu, ktorá spadne, aj keď ju potopí iná farba (nie faul). Dve farby naraz alebo červená ostávajú faul. Platí aj na overovacom serveri.' ),
 		array( '0.25.7', '18. 11. 2026', 'Tieň pod stolom má zaoblené rohy ako stôl a mäkký okraj, ktorý sa už nikde neoreže.' ),
 		array( '0.25.6', '18. 11. 2026', 'Stôl zdola už nemá dieru: hracia doska má tmavý spodok (cez pás pri boku bolo vidno dovnútra stola). Tieň stola na podlahe je len mäkký tieň pod stolom a tiene košíkov so vzorom sieťky, ostré nesprávne tiene z lámp na podlahe zmizli (herňa aj štadión).' ),
 		array( '0.25.5', '18. 11. 2026', 'Tiene pod stolom: mäkký tieň na podlahe pod stolom a pod nohami (každá kvalita, herňa aj štadión), pri vysokej kvalite vrhajú tieň všetky tri lampy, tieň hlavného svetla sa už neoreže.' ),
