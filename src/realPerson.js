@@ -21,6 +21,12 @@ const DOWN = new THREE.Vector3(0, -1, 0);
 const texLoader = new THREE.TextureLoader();
 
 let realOn = true;
+/** Náhľad póz (ladenie): všetci diváci v jednej póze (null = každý svoju). */
+let poseOverride = null;
+export function setPoseOverride(p) {
+	poseOverride = p || null;
+}
+window.__mysnPose = setPoseOverride; // náhľad póz z konzoly (len vzhľad)
 /** Realistické postavy zapnuté (Nastavenia); vypnuté = nové postavy ostanú jednoduché. */
 export function setRealPeople(on) {
 	realOn = !!on;
@@ -400,11 +406,12 @@ export function realFan(fan, dir, name = 'model', extra = null) {
 		// 0.38.5: každý divák sedí inak (póza podľa fan.phase): ruky na kolenách alebo stehnách, prekrížené ruky,
 		// predklon s lakťami na kolenách, ruka pod bradou, záklon; nohy od seba alebo pri sebe. Dlane dosadnú presne
 		// (ohnutie v lakti sa dopočíta: dvojkĺbová IK), pri tlieskaní a reakciách ruky preberajú kĺby diváka.
-		const POSES = ['knees', 'thighs', 'cross', 'forward', 'chin', 'back', 'knees2', 'thighs2'];
+		const POSES = ['C', 'F', 'E']; // 0.38.9: vybrané Robom – ruky v lone, predklon s dlaňami medzi kolenami, skrížené ruky
 		const seed = Math.abs(Math.round((fan.phase || 0) * 1000)) + (dir.length * 7);
-		const pose = fan.standing ? 'stand' : POSES[seed % POSES.length];
+		const pose0 = fan.standing ? 'stand' : POSES[seed % POSES.length];
+		let pose = pose0;
 		const spread = 0.05 + ((seed >> 3) % 4) * 0.035; // kolená od seba
-		const lean = { forward: 0.42, chin: 0.18, back: -0.12, cross: -0.05 }[pose] || 0.03 * ((seed % 3) - 1);
+		const leanOf = (p) => ({ F: 0.42, E: -0.04, C: 0.02, forward: 0.42, chin: 0.18, back: -0.12, cross: -0.05 }[p] ?? 0.03 * ((seed % 3) - 1));
 		const thighSit = [-1, 1].map((sx) => new THREE.Vector3(sx * spread, -0.12, 1).normalize());
 		const thighUp = fan.standing ? DOWN : new THREE.Vector3(0, -1, 0.3).normalize();
 		const calfSit = [-1, 1].map((sx) => new THREE.Vector3(sx * spread * 0.4, -1, pose === 'back' ? 0.35 : 0.1).normalize());
@@ -448,7 +455,9 @@ export function realFan(fan, dir, name = 'model', extra = null) {
 		const knee = (i) => (t.J.calf[i] ? t.relPos(t.J.calf[i].b) : new THREE.Vector3((i ? 1 : -1) * 0.1, 0.1, 0.45));
 		const tgt = [new THREE.Vector3(), new THREE.Vector3()];
 		const pol = pose === 'cross' ? [new THREE.Vector3(-0.3, -1, 0.45), new THREE.Vector3(0.3, -1, 0.45)] : pose === 'forward' ? [new THREE.Vector3(-0.6, -0.8, 0.2), new THREE.Vector3(0.6, -0.8, 0.2)] : [new THREE.Vector3(-1, -0.4, -0.5), new THREE.Vector3(1, -0.4, -0.5)];
+		const pelB = t.bone('Pelvis');
 		ready = (dt = 1 / 60) => {
+			pose = fan.standing ? 'stand' : poseOverride || pose0;
 			// nohy: v sede stehná dopredu, lýtka dolu; pri vstávaní (telo vyššie o 0,25 m) sa narovnajú
 			const up = fan.standing ? 1 : Math.max(0, Math.min(1, (root.position.y - fan.baseBody) / 0.25));
 			for (let i = 0; i < 2; i++) {
@@ -457,7 +466,7 @@ export function realFan(fan, dir, name = 'model', extra = null) {
 			}
 			// chrbát: predklon alebo záklon podľa pózy (pri vstávaní rovno)
 			if (spineB && spineW0) {
-				ql.setFromAxisAngle(ax, lean * (1 - up));
+				ql.setFromAxisAngle(ax, leanOf(pose) * (1 - up));
 				qx.copy(ql).multiply(spineW0);
 				t.rel(spineB.parent, qp).invert();
 				spineB.quaternion.copy(qp.multiply(qx));
@@ -467,7 +476,39 @@ export function realFan(fan, dir, name = 'model', extra = null) {
 			const k0 = knee(0);
 			const k1 = knee(1);
 			const chest = t.headB ? t.relPos(t.headB).add(v.set(0, -0.3, 0.12)) : v.set(0, 0.45, 0.12);
+			const hip = pelB ? t.relPos(pelB) : v.set(0, 0.12, 0);
+			const hx = hip.x;
+			const hy = hip.y;
+			const hz = hip.z;
 			switch (pose) {
+				case 'A': // dlane na stehnách v polovici, blízko tela
+					tgt[0].set(hx - 0.09, 0, 0).lerp(k0, 0.55).add(v.set(0.0, 0.075, 0));
+					tgt[0].y = (hy + k0.y) / 2 + 0.07;
+					tgt[1].set(hx + 0.09, 0, 0).lerp(k1, 0.55);
+					tgt[1].y = (hy + k1.y) / 2 + 0.07;
+					tgt[0].z = (hz + k0.z) / 2;
+					tgt[1].z = (hz + k1.z) / 2;
+					break;
+				case 'B': // dlane na kolenách, lakte mierne do strán
+					tgt[0].copy(k0).add(v.set(0.0, 0.075, -0.03));
+					tgt[1].copy(k1).add(v.set(0.0, 0.075, -0.03));
+					break;
+				case 'C': // ruky spojené v lone
+					tgt[0].set(hx - 0.03, hy + 0.11, hz + 0.2);
+					tgt[1].set(hx + 0.03, hy + 0.13, hz + 0.22);
+					break;
+				case 'D': // pravá na stehne, ľavá v lone
+					tgt[0].set((hx - 0.09 + k0.x) / 2, (hy + k0.y) / 2 + 0.07, (hz + k0.z) / 2);
+					tgt[1].set(hx + 0.01, hy + 0.12, hz + 0.21);
+					break;
+				case 'E': // predlaktia skrížené cez brucho
+					tgt[0].set(hx + 0.02, hy + 0.21, hz + 0.21);
+					tgt[1].set(hx - 0.02, hy + 0.25, hz + 0.23);
+					break;
+				case 'F': // predklon, lakte na stehnách, dlane spolu medzi kolenami
+					tgt[0].set(-0.03, (k0.y + k1.y) / 2 - 0.02, (k0.z + k1.z) / 2 - 0.04);
+					tgt[1].set(0.03, (k0.y + k1.y) / 2 - 0.01, (k0.z + k1.z) / 2 - 0.02);
+					break;
 				case 'cross': // prekrížené ruky: dlane na opačných ramenách, lakte dolu pri tele
 					tgt[0].set(0.15, chest.y + 0.02, chest.z - 0.03);
 					tgt[1].set(-0.15, chest.y - 0.03, chest.z - 0.01);
@@ -496,6 +537,21 @@ export function realFan(fan, dir, name = 'model', extra = null) {
 			}
 			if (pose === 'chin') {
 				pol[0].set(-0.3, -1, 0.2);
+			} else if (pose === 'E') {
+				pol[0].set(-0.7, -0.5, 0.6);
+				pol[1].set(0.7, -0.5, 0.6);
+			} else if (pose === 'C' || pose === 'D') {
+				pol[0].set(-0.5, -1, -0.2);
+				pol[1].set(0.5, -1, -0.2);
+			} else if (pose === 'F') {
+				pol[0].set(-0.6, -0.8, 0.2);
+				pol[1].set(0.6, -0.8, 0.2);
+			} else if (!poseOverride) {
+				pol[0].set(-1, -0.4, -0.5);
+				pol[1].set(1, -0.4, -0.5);
+			} else {
+				pol[0].set(-1, -0.6, -0.4);
+				pol[1].set(1, -0.6, -0.4);
 			}
 			reach(0, tgt[0], pol[0]);
 			reach(1, tgt[1], pol[1]);
