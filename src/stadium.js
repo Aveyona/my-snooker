@@ -110,22 +110,31 @@ export function buildStadium(scene, quality, clock = 45) {
 	// číslo stoličky: strana (0 = +z, 1 = -z) × 175 + rad × 25 + (miesto + 12); rovnaké číslovanie má server
 	const seatMeshes = []; // [sedadlo, operadlo] podľa čísla stoličky (výber miesta divákom)
 	const ROWS = 7; // radov sedadiel na dlhej tribúne
+	// 0.38.6: proporcie ako na skutočnej tribúne: stupeň 0,85 m hlboký a 0,42 m vysoký, sedadlo vzadu na stupni
+	// 0,42 m nad jeho podlahou, nohy majú miesto pred sedadlom na tom istom stupni
+	const ROW_D = 0.85;
+	const ROW_Z0 = BZ + 0.95; // stred prvého stupňa
+	const SEAT_BACK = 0.17; // sedadlo posunuté dozadu od stredu stupňa
+	const seatY = (row) => FY + 0.42 * (row + 1) + 0.42; // sedák (výška, kde sedí divák)
+	const pedMat = new THREE.MeshStandardMaterial({ color: 0x1a1c22, roughness: 0.6, metalness: 0.3 });
 	// 0.37.0: v rohoch tribún pri pódiách hráčov sedadlá nie sú (šikmo: v prvom rade od 2 m od stredu, vzadu ďalej);
 	// rovnaké pravidlo má server (includes/watch.php, mysn_seat_gone)
 	const seatGone = (row, s) => Math.abs(s * 0.4) > 2.05 + 0.62 * row + 1e-6;
 	for (const side of [-1, 1]) {
 		for (let row = 0; row < ROWS; row++) {
-			const z = side * (BZ + 0.9 + row * 0.75);
-			const y = FY + 0.25 + row * 0.42;
+			const z = side * (ROW_Z0 + row * ROW_D);
+			const sy = seatY(row);
+			const zs = z + side * SEAT_BACK;
 			const half = Math.min(5, 2.05 + 0.62 * row + 0.2); // stupeň len pod stoličkami (rohy sú voľné pre pódiá hráčov)
-			add(new THREE.BoxGeometry(2 * half, 0.42 + row * 0.42, 0.75), stepMat, 0, FY + (0.42 + row * 0.42) / 2, z);
+			add(new THREE.BoxGeometry(2 * half, 0.42 + row * 0.42, ROW_D), stepMat, 0, FY + (0.42 + row * 0.42) / 2, z);
 			for (let s = -12; s <= 12; s++) {
 				if (seatGone(row, s)) {
 					continue;
 				}
-				const seat = add(new THREE.BoxGeometry(0.34, 0.07, 0.32), seatMat, s * 0.4, y + 0.24, z);
-				const back = add(new THREE.BoxGeometry(0.34, 0.32, 0.05), seatMat, s * 0.4, y + 0.42, z + side * 0.16);
-				seat.castShadow = back.castShadow = false;
+				const seat = add(new THREE.BoxGeometry(0.36, 0.07, 0.36), seatMat, s * 0.4, sy - 0.035, zs);
+				const back = add(new THREE.BoxGeometry(0.36, 0.4, 0.05), seatMat, s * 0.4, sy + 0.17, zs + side * 0.19);
+				const ped = add(new THREE.BoxGeometry(0.07, 0.36, 0.07), pedMat, s * 0.4, sy - 0.25, zs + side * 0.05);
+				seat.castShadow = back.castShadow = ped.castShadow = false;
 				const idx = (side > 0 ? 0 : 175) + row * 25 + s + 12;
 				seat.userData.seat = back.userData.seat = idx;
 				seatMeshes[idx] = [seat, back];
@@ -143,7 +152,7 @@ export function buildStadium(scene, quality, clock = 45) {
 		if (row >= ROWS || seatGone(row, (r % 25) - 12)) {
 			return null;
 		}
-		return { x: ((r % 25) - 12) * 0.4, y: FY + 0.25 + row * 0.42 + 0.24, z: side * (BZ + 0.9 + row * 0.75), rot: side > 0 ? Math.PI : 0, standing: false, row, side };
+		return { x: ((r % 25) - 12) * 0.4, y: seatY(row), z: side * (ROW_Z0 + row * ROW_D + SEAT_BACK), rot: side > 0 ? Math.PI : 0, standing: false, row, side };
 	};
 	const seatOf = (x, side, row) => (side > 0 ? 0 : 175) + row * 25 + Math.round(x / 0.4) + 12;
 	// tribúny vzadu za kratšími stranami (nižšie, bez sedadiel, len tmavé stupne)
