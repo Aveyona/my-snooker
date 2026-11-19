@@ -180,6 +180,7 @@ function mysn_roadmap() {
 /** Denník zmien (najnovšie hore). */
 function mysn_changelog() {
 	return array(
+		array( '0.36.1', '19. 11. 2026', 'Zadanie ochrany proti podvádzaniu doplnené o výsledky testu obídenia krokov 0.34 – 0.36 a návrhy opráv (docs/ANTICHEAT-PLAN.md).' ),
 		array( '0.36.0', '19. 11. 2026', 'Ochrana proti AI hráčom (krok 3): hra pri každom údere posiela serveru, či úder vznikol ťahom tága (myš, prst, ukazovateľ sily), či bolo nad hrou cudzie plátno (napr. čiary predikcie) a či niekto neprepísal funkcie hry. Údery zavolané priamo z kódu (3), čiary nad hrou (2 údery) alebo prepísaná hra (1) = podvod: hra o skóre ukáže 0, partia sa zruší, suspendácia. Zbiera sa aj priebeh mierenia pred úderom na neskoršie vyhodnotenie.' ),
 		array( '0.35.0', '19. 11. 2026', 'Ochrana proti AI hráčom (krok 2): overovač pri každej spadnutej guli zistí rozsah smeru, v ktorom guľa ešte spadne, a kde v ňom bol úder. Človek trafí rozsah rôzne (namerané 0,44 – 0,51), program stred. Hra o skóre s presnosťou ako program ukáže 0 a nezapíše sa, partia sa zruší (od 12 ťažkých úderov), hráč dostane suspendáciu; hraničné hry ostanú správcovi na kontrolu so zápisom úderov. Administrácia Podvádzanie: presnosť zahrania podľa hráča.' ),
 		array( '0.34.2', '19. 11. 2026', 'Plán vývoja: etapa 8 Ochrana proti podvádzaniu – snímky obrazovky pri podozrení so súhlasom, skrytá kontrola klienta, vlastný model na čiary, galéria snímok pre admina, čiary predikcie v tréningu; zadanie v docs/ANTICHEAT-PLAN.md.' ),

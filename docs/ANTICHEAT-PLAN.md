@@ -136,3 +136,21 @@ Pod existujúcou stránkou My Snooker → Podvádzanie:
 
 - Druhý monitor, druhé zariadenie alebo mobil vedľa počítača snímky nezachytia → preto štatistika presnosti.
 - Skúsený programátor vie obísť kontroly v prehliadači → ich úloha je zvýšiť námahu a dať signál do skóre podozrenia.
+
+## Test obídenia ochrany 0.34 – 0.36 (19. 11. 2026, v noci)
+
+Na požiadanie Aveyona robot (plánovač nad naklonovanou fyzikou z konzoly, účet admina) hral hru o skóre
+a „maskoval sa“. Každý krok ochrany sa dal obísť niekoľkými riadkami JavaScriptu:
+
+| Ochrana | Ako sa obišla | Návrh opravy |
+|---|---|---|
+| Okrúhla sila (0.34) | plánovač skúša sily s náhodnými desatinami (`0.2 + rand·0.02 + rand·1e-4`) | ponechať ako lacný filter; rozhodovať podľa sily vypočítanej zo záznamu ťahu (nižšie) |
+| Presnosť v okne (0.35) | robot si sám vypočíta okno (rovnaký algoritmus ako `precision.mjs`) a zahrá náhodne v polohe c = 0,3 – 0,8 → priemer ~0,5 ako človek | sledovať aj **mieru netrafenia ťažkých úderov** – robot netrafí nikdy (0 chýb z ~30), človek pri okne < 1° často; rozdelenie c porovnať s hráčom, nielen priemer |
+| Úder rukou (0.36) | `game._tm = { k: 'm', n: 12, ov: 0, tp: 0, aj: 40, at: 2500 }` pred `game.shoot()` – údaje sú na objekte hry a dajú sa zapísať | údaje ťahu držať v closure (WeakMap), posielať **surový priebeh ťahu** (vzorky rýchlosti myši) a server z neho prepočíta silu – musí sedieť so silou úderu × tágo × špica |
+| Priebeh mierenia (0.36) | plynulé natáčanie `game.dir` s prekmitom a šumom (30 – 55 krokov, 45 – 80 ms), náhodné pauzy 1,5 – 4,5 s | porovnať priebeh mierenia s pohybmi myši (`pointermove` udalosti, `isTrusted`); `dir` bez udalostí myši = program |
+| Prepísané funkcie (0.36) | nič sa neprepisuje – simulácia beží cez `S.shoot.call(falošnýObjekt)` a `new Physics(kópia)` | samotná kópia fyziky sa zistiť nedá; dôležité je, aby k hre nebol prístup (pozri nižšie) |
+| Cudzie plátno (0.36) | robot čiary nekreslí; čiary sa dajú kresliť aj do iného okna, na druhý monitor, pod 20 % plochy alebo s priehľadnosťou < 0,05 | v poriadku ako signál; snímky obrazovky pri podozrení (kroky 4 – 7) |
+| Skrytie z konzoly (0.34) | test bežal pod účtom admina (`window.MySnooker` dostupný); bežný hráč sa k hre dostane cez zarážku (breakpoint) v DevTools v minifikovanom kóde | ponechať; doplniť skrytú kontrolu s nonce (krok 3) |
+
+Záver: kontroly v prehliadači zvyšujú námahu, ale rozhodovať musí server – prepočet sily zo surového ťahu,
+miera netrafenia ťažkých úderov a pri podozrení snímky obrazovky.
