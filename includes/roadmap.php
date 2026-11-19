@@ -180,6 +180,7 @@ function mysn_roadmap() {
 /** Denník zmien (najnovšie hore). */
 function mysn_changelog() {
 	return array(
+		array( '0.38.0', '19. 11. 2026', 'Štadión: realistický rozhodca (model Microsoft Rocketbox, licencia MIT) v bielej košeli, čiernej veste a nohaviciach, s bielymi rukavicami a motýlikom. Hýbe sa ako doteraz (chôdza okolo stola, hlava sleduje bielu, stavanie gúľ); model sa stiahne až pri príchode na štadión (asi 0,75 MB), dovtedy je jednoduchá postava.' ),
 		array( '0.37.4', '19. 11. 2026', 'Štadión: stolík rozhodcu (s blokom F1 a pohárom) je posunutý úplne do rohu k mantinelom, aby nezavadzal pri stole. Na štadióne nefunguje F6 (dvere tam nie sú) a nápoveda ho neukazuje; divák mení miesto F6 ako doteraz.' ),
 		array( '0.37.3', '19. 11. 2026', 'Štadión: pódiá hráčov (kreslo, stolík, stojan) sú posunuté za mantinel do rohov tribún k divákom; stupne tribún sú len pod stoličkami, rohy sú voľné.' ),
 		array( '0.37.2', '19. 11. 2026', 'Štadión: pohľad z kresla (F7) ešte o 15 cm vyššie.' ),

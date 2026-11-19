@@ -7,6 +7,7 @@
 import * as THREE from 'three';
 import { buildCueMesh } from './cues.js';
 import { buildFan, reactFans, updateFans, buildReferee } from './fans.js';
+import { realReferee } from './realPerson.js';
 import { Confetti } from './confetti.js';
 import { stadiumFloorTexture } from './stadiumFloors.js';
 import { lemonInGlass } from './lemon.js';
@@ -693,6 +694,8 @@ export function buildStadium(scene, quality, clock = 45) {
 		[-1.3, -RZ0, 1], [-0.2, -RZ0, 1], [1.1, -RZ0, 1],
 	].map(([x, z, side]) => ({ x, z, side, s: perS(x, z) }));
 	const referee = buildReferee();
+	let refReal = null; // realistický model rozhodcu (0.38.0)
+	let realPeople = true;
 	root.add(referee);
 	const refHead = referee.userData.head;
 	refHead.rotation.order = 'YXZ'; // najprv otočenie do strany, potom sklon dole
@@ -1428,6 +1431,17 @@ export function buildStadium(scene, quality, clock = 45) {
 				refHead.rotation.y += (hy - refHead.rotation.y) * Math.min(1, dt * 3);
 				refHead.rotation.x = walking ? 0.15 : 0.35; // pozerá dole na stôl
 			}
+			if (root.visible) {
+				// 0.38.0: realistický rozhodca (načíta sa pri prvom príchode na štadión)
+				if (!refReal && realPeople) {
+					refReal = realReferee(referee);
+				}
+				refReal && refReal.sync();
+			}
+		},
+		/** Realistické postavy (Nastavenia): vypnuté = jednoduché postavy (slabé zariadenia). */
+		setRealPeople(on) {
+			realPeople = !!on;
 		},
 		/** Stoličky pre online divákov: počet, obsadené kulisou, miesto, oči diváka a výber zhora. */
 		seatCount: 350,
