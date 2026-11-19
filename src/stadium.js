@@ -1018,7 +1018,7 @@ export function buildStadium(scene, quality, clock = 45) {
 		const [sx, sz] = p.stand;
 		const ax = Math.sign(-sx); // stojan je natočený k stolu (+x alebo -x)
 		return {
-			chair: { pos: new THREE.Vector3(cx, PY + 1.35, cz + p.dz * 0.05), look: new THREE.Vector3(cx * 0.3, FY + 0.7, 0) },
+			chair: { pos: new THREE.Vector3(cx, PY + 1.5, cz + p.dz * 0.05), look: new THREE.Vector3(cx * 0.3, FY + 0.7, 0) },
 			rack: { pos: new THREE.Vector3(sx + ax * 1.7, PY + 1.15, sz), look: new THREE.Vector3(sx, PY + 0.68, sz), zoom: 0.72 }, // celý stojan aj s hrotmi tág
 		};
 	});
