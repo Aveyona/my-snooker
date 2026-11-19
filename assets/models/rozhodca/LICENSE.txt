@@ -1,4 +1,5 @@
 Postava rozhodcu: Business_Male_04 z Microsoft Rocketbox (https://github.com/microsoft/Microsoft-Rocketbox).
+Chôdza: animácia m_walk_neutral_01 (len nohy, panva, chrbát) uložená ako chodza.json.
 Textúry zmenšené na 1024 px a prefarbené (biela košeľa, čierna vesta a nohavice, biele rukavice). Licencia MIT:
 
 MIT License

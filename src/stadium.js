@@ -1436,7 +1436,7 @@ export function buildStadium(scene, quality, clock = 45) {
 				if (!refReal && realPeople) {
 					refReal = realReferee(referee);
 				}
-				refReal && refReal.sync();
+				refReal && refReal.sync(dt);
 			}
 		},
 		/** Realistické postavy (Nastavenia): vypnuté = jednoduché postavy (slabé zariadenia). */
