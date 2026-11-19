@@ -557,6 +557,10 @@ function mysn_rest_settle( $req ) {
 			if ( ! empty( $v['stat'] ) && (float) $v['stat']['d'] > 1.2 ) {
 				$lp = ! empty( $v['stat']['pot'] ) ? 2 : 1;
 			}
+			// 0.35.0: presnosť zahrania (okno smeru); pri podozrení sa partia zruší
+			if ( ! empty( $v['pw'] ) && function_exists( 'mysn_ac_match_prec' ) && mysn_ac_match_prec( $m, get_current_user_id(), $v['pw'] ) ) {
+				return mysn_err( 'Partia bola zrušená: systém zistil, že údery nehrá človek.', 403 );
+			}
 			if ( ! empty( $v['same'] ) ) {
 				$chk = 1;
 			} else {
@@ -1123,7 +1127,10 @@ function mysn_rest_score( $req ) {
 	$id  = (int) $wpdb->insert_id;
 	$ver = $has ? mysn_verify_score( $id ) : 0;
 	$out = array( 'saved' => $id, 'ver' => $ver );
-	if ( 1 === $ver ) {
+	if ( 4 === $ver ) {
+		// 0.35.0: podvod podľa presnosti: hráčovi 0 bodov, nič iné
+		$out = array( 'saved' => $id, 'ver' => 1, 'verified' => array( 'points' => 0, 'shots' => $shots, 'fouls' => (int) $claim['fouls'], 'brk' => 0, 'note' => '' ) );
+	} elseif ( 1 === $ver ) {
 		$out['verified'] = $wpdb->get_row( $wpdb->prepare( "SELECT points, shots, fouls, brk, note FROM $t WHERE id = %d", $id ), ARRAY_A ); // phpcs:ignore
 	} elseif ( 3 === $ver ) {
 		$out['rejected'] = (string) $wpdb->get_var( $wpdb->prepare( "SELECT note FROM $t WHERE id = %d", $id ) ); // phpcs:ignore

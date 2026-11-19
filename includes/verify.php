@@ -99,6 +99,16 @@ function mysn_verify_score( $id ) {
 		}
 	}
 	$big = abs( (int) ( $claim['points'] ?? 0 ) - (int) $d['points'] ) >= 5;
+	// 0.35.0: presnosť zahrania ako program → zamietnuté (hráč uvidí 0)
+	if ( function_exists( 'mysn_ac_solo_prec' ) && mysn_ac_solo_prec( $id, $row, $d ) ) {
+		return 4;
+	}
+	// hraničná presnosť: zápis úderov sa nechá na kontrolu
+	$pr   = isset( $d['pr'] ) && is_array( $d['pr'] ) ? $d['pr'] : array();
+	$near = ! empty( $pr['n'] ) && $pr['n'] >= 5 && null !== $pr['mean'] && $pr['mean'] < 0.3;
+	if ( $near ) {
+		$diff[] = sprintf( 'presnosť %d ťažkých, stred %s', (int) $pr['n'], number_format( (float) $pr['mean'], 2, ',', '' ) );
+	}
 	$wpdb->update(
 		$t,
 		array(
@@ -107,11 +117,11 @@ function mysn_verify_score( $id ) {
 			'shots'  => (int) $d['shots'],
 			'fouls'  => (int) $d['fouls'],
 			'brk'    => (int) $d['brk'],
-			'flag'   => $big ? 1 : 0,
+			'flag'   => $big || $near ? 1 : 0,
 			'ln'     => (int) ( $d['ln'] ?? 0 ),
 			'lk'     => (int) ( $d['lk'] ?? 0 ),
-			'note'   => $diff ? mb_substr( 'Server vypočítal inak: ' . implode( ', ', $diff ), 0, 250 ) : '',
-			'vlog'   => $big ? $row['vlog'] : null, // zápis sa nechá len pri podozrení (miesto v databáze)
+			'note'   => $diff ? mb_substr( 'Server: ' . implode( ', ', $diff ), 0, 250 ) : '',
+			'vlog'   => $big || $near ? $row['vlog'] : null, // zápis sa nechá len pri podozrení (miesto v databáze)
 		),
 		array( 'id' => $id )
 	);

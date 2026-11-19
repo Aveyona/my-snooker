@@ -9,9 +9,10 @@ import fs from 'node:fs';
 import crypto from 'node:crypto';
 import { Game } from './game/match.js';
 import { restore, inD, R } from './game/physics.js';
+import { shotWindow, precisionSummary } from './precision.mjs';
 
 const LK = '/etc/livekit.yaml';
-const VERSION = '6';
+const VERSION = '7';
 const TOL = 0.02; // najväčší povolený rozdiel polohy gule (m) medzi serverom a prehliadačom pred úderom
 
 function keys() {
@@ -67,7 +68,8 @@ export function replay(log, claim, opts = {}) {
 	g.onSolo = (r) => { result = r; };
 	g.startSolo(true);
 	let sim = 0;
-	const st = { ln: 0, lk: 0 }; // dlhé údery (nad 1,2 m): počet a koľkokrát trafená guľa spadla
+	const st = { ln: 0, lk: 0 };
+	const wins = []; // dlhé údery (nad 1,2 m): počet a koľkokrát trafená guľa spadla
 	for (let i = 0; i < log.length; i++) {
 		const e = log[i];
 		const s = e && e.s;
@@ -129,7 +131,7 @@ export function replay(log, claim, opts = {}) {
 		}
 		g.dir = dir;
 		const t0 = g.physics.time;
-		const pre = g.balls.map((x) => ({ x: x.p.x, z: x.p.z }));
+		const pre = g.balls.map((x) => ({ x: x.p.x, z: x.p.z, on: x.on }));
 		if (!g.shoot(power, side, top, elev)) {
 			return { ok: false, error: `Úder ${i + 1}: server úder nevedel vykonať.`, at: i };
 		}
@@ -139,6 +141,10 @@ export function replay(log, claim, opts = {}) {
 		}
 		sim += g.physics.time - t0;
 		const ss = shotStat(g, pre);
+		if (ss && ss.pot) {
+			// presnosť zahrania (0.35.0): poloha smeru v okne, v ktorom guľa ešte spadne
+			wins.push(shotWindow(pre, { dir, power, side, top, e: elev, cx: pre[0].x, cz: pre[0].z }));
+		}
 		if (ss && ss.d > 1.2) {
 			st.ln++;
 			st.lk += ss.pot ? 1 : 0;
@@ -157,7 +163,7 @@ export function replay(log, claim, opts = {}) {
 	if (!result) {
 		return { ok: false, error: 'Frame sa podľa servera neskončil (posledný úder ho nedohral).', mismatch: true };
 	}
-	const out = { ok: true, points: result.points, shots: result.shots, fouls: result.fouls, brk: result.brk, sim: Math.round(sim), ln: st.ln, lk: st.lk };
+	const out = { ok: true, points: result.points, shots: result.shots, fouls: result.fouls, brk: result.brk, sim: Math.round(sim), ln: st.ln, lk: st.lk, pr: precisionSummary(wins) };
 	// čas framu: nemôže byť kratší ako čas, keď sa gule hýbali, plus aspoň pol sekundy na každý úder
 	if (claim && num(claim.seconds) && claim.seconds + 2 < sim + 0.5 * out.shots) {
 		return { ...out, ok: false, error: `Čas framu ${claim.seconds} s je kratší, než je možné (gule sa hýbali ${Math.round(sim)} s).`, cheat: true };
@@ -214,7 +220,7 @@ export function verifyMove(before, shot, m, claim) {
 		return { ok: false, error: 'Partia na serveri nečaká na úder.' };
 	}
 	g.dir = shot.dir;
-	const pre = g.balls.map((x) => ({ x: x.p.x, z: x.p.z }));
+	const pre = g.balls.map((x) => ({ x: x.p.x, z: x.p.z, on: x.on }));
 	if (!g.shoot(shot.power, shot.side, shot.top, elev)) {
 		return { ok: false, error: 'Server úder nevedel vykonať.' };
 	}
@@ -260,7 +266,9 @@ export function verifyMove(before, shot, m, claim) {
 			if (worst > TOL) diff.push('pos ' + Math.round(worst * 1000) + ' mm');
 		}
 	}
-	return { ok: true, same: diff.length === 0, diff, state: st, points: out.points, foul: !!out.foul, stat: shotStat(g, pre), ev };
+	const stat = shotStat(g, pre);
+	const pw = stat && stat.pot ? shotWindow(pre, { ...shot, e: elev, cx: pre[0].x, cz: pre[0].z }) : null; // presnosť (0.35.0)
+	return { ok: true, same: diff.length === 0, diff, state: st, points: out.points, foul: !!out.foul, stat, pw, ev };
 }
 
 if (process.argv[1] && process.argv[1].endsWith('server.mjs')) {

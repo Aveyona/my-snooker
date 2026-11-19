@@ -165,6 +165,15 @@ function mysn_ac_match_shot( $m, $uid, $shot ) {
 		return false;
 	}
 	$why = sprintf( 'Okrúhla sila úderu: %d z %d úderov (%d %%).', $ev['round'], $ev['n'], round( 100 * $ev['share'] ) );
+	$ok  = mysn_ac_match_cheat( $m, $uid, $why, $ev );
+	if ( $ok ) {
+		delete_transient( $key );
+	}
+	return $ok;
+}
+
+/** Podvod v partii: admin = výskum (zápas mimo ligy, upozornenie), inak partia zrušená a prípad. Vráti true pri zrušení. */
+function mysn_ac_match_cheat( $m, $uid, $why, $ev ) {
 	if ( mysn_is_admin_user( $uid ) ) {
 		$res = get_option( 'mysn_ac_research', array() );
 		$res = is_array( $res ) ? $res : array();
@@ -178,7 +187,71 @@ function mysn_ac_match_shot( $m, $uid, $shot ) {
 	}
 	mysn_update_match( $m['id'], array( 'status' => 'annulled', 'result' => 'cheat', 'shot' => null, 'aim' => null ) );
 	mysn_cheat_case( $uid, 'match', $m['id'], $why, $ev );
-	delete_transient( $key );
+	return true;
+}
+
+/**
+ * Presnosť zahrania (0.35.0): okno smeru, v ktorom guľa ešte spadne (w v stupňoch), a poloha skutočného smeru
+ * v ňom (c: 0 stred, 1 okraj). Ťažké údery = okno užšie ako 1°. Človek trafí okno rôzne (priemer okolo 0,5),
+ * program stred. Podozrenie: aspoň 12 ťažkých úderov a priemer pod 0,18.
+ */
+function mysn_ac_prec_eval( $wins ) {
+	$hard = array();
+	foreach ( (array) $wins as $w ) {
+		if ( is_array( $w ) && isset( $w['w'], $w['c'] ) && (float) $w['w'] < 1 ) {
+			$hard[] = (float) $w['c'];
+		}
+	}
+	$n    = count( $hard );
+	$mean = $n ? array_sum( $hard ) / $n : null;
+	return array( 'n' => $n, 'mean' => null === $mean ? null : round( $mean, 3 ), 'cheat' => $n >= 12 && $mean < 0.18 );
+}
+
+/** Partia: okno úderu z overovača; pri podozrení partiu zruší (admin: výskum). Vráti true pri zrušení. */
+function mysn_ac_match_prec( $m, $uid, $pw ) {
+	if ( ! is_array( $pw ) || ! isset( $pw['w'], $pw['c'] ) ) {
+		return false;
+	}
+	$key  = 'mysn_ac_p' . (int) $m['id'] . '_' . (int) $uid;
+	$wins = get_transient( $key );
+	$wins = is_array( $wins ) ? $wins : array();
+	$wins[] = array( 'w' => (float) $pw['w'], 'c' => (float) $pw['c'] );
+	set_transient( $key, array_slice( $wins, -60 ), DAY_IN_SECONDS );
+	// dlhodobá štatistika hráča (administrácia): posledných 300 hodnotených úderov
+	$all   = get_user_meta( (int) $uid, 'mysn_prec', true );
+	$all   = is_array( $all ) ? $all : array();
+	$all[] = array( round( (float) $pw['w'], 3 ), round( (float) $pw['c'], 3 ) );
+	update_user_meta( (int) $uid, 'mysn_prec', array_slice( $all, -300 ) );
+	$ev = mysn_ac_prec_eval( $wins );
+	if ( ! $ev['cheat'] ) {
+		return false;
+	}
+	$why = sprintf( 'Presnosť ako program: %d ťažkých úderov, priemerná odchýlka od stredu %s (človek okolo 0,5).', $ev['n'], number_format( (float) $ev['mean'], 2, ',', '' ) );
+	$ok  = mysn_ac_match_cheat( $m, $uid, $why, $ev );
+	if ( $ok ) {
+		delete_transient( $key );
+	}
+	return $ok;
+}
+
+/** Hra o skóre po overení: podozrivá presnosť → zamietnuté, prípad a suspendácia. Vráti true, ak hráčovi ukázať 0. */
+function mysn_ac_solo_prec( $id, $row, $d ) {
+	$pr = isset( $d['pr'] ) && is_array( $d['pr'] ) ? $d['pr'] : null;
+	if ( ! $pr || empty( $pr['cheat'] ) || ! empty( $GLOBALS['mysn_ac_skip_prec'] ) ) {
+		return false;
+	}
+	global $wpdb;
+	$uid = (int) $row['user_id'];
+	$why = sprintf( 'Presnosť ako program: %d ťažkých úderov, priemerná odchýlka od stredu %s (človek okolo 0,5).', (int) $pr['n'], number_format( (float) $pr['mean'], 2, ',', '' ) );
+	mysn_cheat_case( $uid, 'solo', $id, $why, $pr );
+	if ( mysn_is_admin_user( $uid ) ) {
+		return false; // admin (výskum): skóre platí
+	}
+	$wpdb->update(
+		mysn_table( 'scores' ),
+		array( 'ver' => 3, 'flag' => 1, 'points' => max( 0, (int) $d['points'] ), 'shots' => (int) $d['shots'], 'fouls' => (int) $d['fouls'], 'brk' => (int) $d['brk'], 'note' => mb_substr( 'Podvádzanie: ' . $why, 0, 250 ), 'vlog' => $row['vlog'] ),
+		array( 'id' => (int) $id )
+	);
 	return true;
 }
 
@@ -248,7 +321,9 @@ add_action(
 				if ( $c['id'] === $cid && 'solo' === $c['kind'] ) {
 					$wpdb->update( mysn_table( 'scores' ), array( 'ver' => 2, 'flag' => 0, 'tries' => 0 ), array( 'id' => (int) $c['ref'] ) );
 					if ( function_exists( 'mysn_verify_score' ) ) {
+						$GLOBALS['mysn_ac_skip_prec'] = true; // správca rozhodol: presnosť sa znova neposudzuje
 						mysn_verify_score( (int) $c['ref'] );
+						unset( $GLOBALS['mysn_ac_skip_prec'] );
 					}
 				}
 			}
@@ -297,7 +372,7 @@ function mysn_admin_cheat() {
 	if ( isset( $_GET['ok'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification
 		echo '<div class="notice notice-success is-dismissible"><p>Uložené.</p></div>';
 	}
-	echo '<p>Hra zisťuje údery, ktoré nevznikli rukou hráča (okrúhla sila úderu, typická pre program alebo AI). Hra o skóre: hráč vidí 0 bodov, skóre sa nezapíše. Partia: preruší sa a zruší. Hráč dostane dočasnú suspendáciu ' . (int) MYSN_SUSP_DAYS . ' dní (nemôže vyzývať ani hrať ligu) alebo kým nerozhodneš. Admin sa neblokuje (výskum), súper vidí upozornenie a zápas sa nepočíta do ligy.</p>';
+	echo '<p>Hra zisťuje údery, ktoré nevznikli rukou hráča: okrúhla sila úderu a presnosť zahrania ako program (stred rozsahu, v ktorom guľa spadne). Hra o skóre: hráč vidí 0 bodov, skóre sa nezapíše. Partia: preruší sa a zruší. Hráč dostane dočasnú suspendáciu ' . (int) MYSN_SUSP_DAYS . ' dní (nemôže vyzývať ani hrať ligu) alebo kým nerozhodneš. Admin sa neblokuje (výskum), súper vidí upozornenie a zápas sa nepočíta do ligy.</p>';
 	// filter
 	$tabs = array( 'open' => 'Na rozhodnutie', 'all' => 'Všetky', 'confirmed' => 'Potvrdené', 'banned' => 'Zablokovaní', 'cleared' => 'Zrušené podozrenie', 'research' => 'Výskum (admin)' );
 	echo '<p>';
@@ -377,6 +452,24 @@ function mysn_admin_cheat() {
 	}
 	if ( ! $agg ) {
 		echo '<tr><td colspan="7">Žiadne údaje.</td></tr>';
+	}
+	echo '</tbody></table>';
+	// presnosť zahrania podľa hráča (overovač, posledných 300 spadnutých úderov v partiách)
+	$pu = $wpdb->get_results( "SELECT user_id, meta_value FROM {$wpdb->usermeta} WHERE meta_key = 'mysn_prec'", ARRAY_A ); // phpcs:ignore
+	echo '<h2>Partie: presnosť zahrania</h2><p>Pri každej spadnutej guli overovač zistí rozsah smeru, v ktorom by guľa ešte spadla, a kde v ňom bol skutočný úder (0 = presne stred, 1 = okraj). Človek trafí rozsah rôzne, priemer okolo 0,5 (namerané u hráčov 0,44 – 0,51). Program hrá stred: podozrenie pod 0,18 (partia sa zruší pri aspoň 12 ťažkých úderoch).</p><table class="widefat striped" style="max-width:700px"><thead><tr><th>Hráč</th><th>Hodnotené údery</th><th>Ťažké (okno pod 1°)</th><th>Priemer od stredu</th></tr></thead><tbody>';
+	$any = false;
+	foreach ( (array) $pu as $r ) {
+		$all = maybe_unserialize( $r['meta_value'] );
+		if ( ! is_array( $all ) || ! $all ) {
+			continue;
+		}
+		$ev  = mysn_ac_prec_eval( array_map( function ( $x ) { return array( 'w' => $x[0], 'c' => $x[1] ); }, $all ) );
+		$hot = $ev['n'] >= 12 && $ev['mean'] < 0.25;
+		$any = true;
+		echo '<tr' . ( $hot ? ' style="background:#fde8e8"' : '' ) . '><td>' . esc_html( $name( $r['user_id'] ) ) . '</td><td>' . count( $all ) . '</td><td>' . (int) $ev['n'] . '</td><td>' . ( null === $ev['mean'] ? '—' : esc_html( number_format( (float) $ev['mean'], 2, ',', '' ) ) ) . ( $hot ? ' ⚠' : '' ) . '</td></tr>';
+	}
+	if ( ! $any ) {
+		echo '<tr><td colspan="4">Zatiaľ žiadne údaje (zbierajú sa od verzie 0.35.0).</td></tr>';
 	}
 	echo '</tbody></table></div>';
 }
