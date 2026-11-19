@@ -116,7 +116,8 @@ export function buildStadium(scene, quality, clock = 45) {
 		for (let row = 0; row < ROWS; row++) {
 			const z = side * (BZ + 0.9 + row * 0.75);
 			const y = FY + 0.25 + row * 0.42;
-			add(new THREE.BoxGeometry(10, 0.42 + row * 0.42, 0.75), stepMat, 0, FY + (0.42 + row * 0.42) / 2, z);
+			const half = Math.min(5, 2.05 + 0.62 * row + 0.2); // stupeň len pod stoličkami (rohy sú voľné pre pódiá hráčov)
+			add(new THREE.BoxGeometry(2 * half, 0.42 + row * 0.42, 0.75), stepMat, 0, FY + (0.42 + row * 0.42) / 2, z);
 			for (let s = -12; s <= 12; s++) {
 				if (seatGone(row, s)) {
 					continue;
@@ -542,20 +543,21 @@ export function buildStadium(scene, quality, clock = 45) {
 	// každý má svoju stoličku (F7) a vedľa nej svoj stojan s tágami do zápasu (F2), tágo v ruke na stojane chýba
 	const chairMat = new THREE.MeshStandardMaterial({ color: 0x1a1a1f, roughness: 0.5 });
 	const PL = [
-		{ chair: [-2.6, BZ - 0.55], dz: 1, stand: [-3.8, 2.56], rot: Math.PI / 2 },
-		{ chair: [2.6, -(BZ - 0.55)], dz: -1, stand: [3.8, -2.56], rot: -Math.PI / 2 },
+		{ chair: [-3.35, BZ + 0.75], dz: 1, stand: [-4.45, BZ + 0.75], rot: Math.PI / 2 },
+		{ chair: [3.35, -(BZ + 0.75)], dz: -1, stand: [4.45, -(BZ + 0.75)], rot: -Math.PI / 2 },
 	];
-	// 0.37.0: kreslo, stolík a stojan hráča stoja na čiernom vyvýšenom pódiu (PY nad podlahou) s modrou LED hranou
+	// 0.37.0: kreslo, stolík a stojan hráča stoja na čiernom vyvýšenom pódiu (od 0.37.3 v rohu tribúny pri divákoch) (PY nad podlahou) s modrou LED hranou
 	const PY = FY + PODIUM_H;
 	const podMat = new THREE.MeshStandardMaterial({ color: 0x08090c, roughness: 0.4, metalness: 0.25 });
 	const podLed = new THREE.MeshBasicMaterial({ color: 0x3d8bff });
 	for (const p of PL) {
 		const sg = Math.sign(p.chair[0]); // x: -1 hráč 1, +1 hráč 2 (zrkadlovo)
 		const sz = Math.sign(p.chair[1]); // z: +1 hráč 1, -1 hráč 2
-		const x0 = 1.6;
-		const x1 = 4.15;
-		const z0 = 2.03;
-		const z1 = 3.05;
+		// 0.37.3: pódium je za mantinelom v rohu tribúny (kde nie sú stoličky ani stupne)
+		const x0 = 2.35;
+		const x1 = 4.85;
+		const z0 = BZ + 0.08;
+		const z1 = BZ + 1.25;
 		const w = x1 - x0;
 		const d = z1 - z0;
 		const cx = sg * (x0 + w / 2);
@@ -649,7 +651,7 @@ export function buildStadium(scene, quality, clock = 45) {
 	// rozhodca: stojí na jednom z 12 stanovíšť okolo stola a hlavou sleduje bielu; keď by zavadzal tágu
 	// (alebo stál medzi kamerou za tágom a stolom), obíde stôl na najbližšie voľné stanovište
 	const RX0 = 2.85; // obdĺžnik, po ktorom chodí okolo stola (asi meter od rámu)
-	const RZ0 = 1.9; // pred pódiami hráčov
+	const RZ0 = 2.0;
 	const PER = 4 * (RX0 + RZ0); // obvod
 	/** Bod na obvode podľa vzdialenosti s (0 = roh -x,-z, ide po -z strane k +x, potom +x koniec...). */
 	const perPoint = (sv) => {
