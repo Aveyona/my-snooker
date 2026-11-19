@@ -105,6 +105,12 @@ function loadModel(dir, name, done) {
 					}
 					return T[n];
 				};
+				const getN = (n) => {
+					if (!T[n]) {
+						T[n] = texLoader.load(url(n)); // normálová mapa (lineárne farby)
+					}
+					return T[n];
+				};
 				const mgr = new THREE.LoadingManager();
 				mgr.setURLModifier((u) => (/\.(tga|png|jpg)$/i.test(u) && !u.startsWith(pre) ? 'data:,' : u)); // textúry z FBX (cesty z 3ds Max) nie
 				new FBXLoader(mgr).load(
@@ -122,7 +128,9 @@ function loadModel(dir, name, done) {
 									// pramene vlasov, obočie, mihalnice (priehľadné)
 									return new THREE.MeshStandardMaterial({ map: get('hair.png'), transparent: true, alphaTest: 0.35, depthWrite: false, side: THREE.DoubleSide, roughness: 0.8 });
 								}
-								return new THREE.MeshStandardMaterial({ map: get(n.includes('head') ? 'head.jpg' : 'body.jpg'), roughness: n.includes('head') ? 0.62 : 0.8 });
+								// 0.38.5: normálové mapy (záhyby látky, tvár) – svetlá štadióna sa odrážajú prirodzene
+								const hd = n.includes('head');
+								return new THREE.MeshStandardMaterial({ map: get(hd ? 'head.jpg' : 'body.jpg'), normalMap: getN(hd ? 'head_n.jpg' : 'body_n.jpg'), roughness: hd ? 0.55 : 0.72 });
 							});
 							o.material = ms.length === 1 ? ms[0] : ms;
 						});
@@ -381,31 +389,128 @@ export function realFan(fan, dir, name = 'model', extra = null) {
 		hideSimple(fan.f, keep);
 		const v = new THREE.Vector3();
 		const qp = new THREE.Quaternion();
-		const thighSit = new THREE.Vector3(0, -0.12, 1).normalize();
+		// 0.38.5: každý divák sedí inak (póza podľa fan.phase): ruky na kolenách alebo stehnách, prekrížené ruky,
+		// predklon s lakťami na kolenách, ruka pod bradou, záklon; nohy od seba alebo pri sebe. Dlane dosadnú presne
+		// (ohnutie v lakti sa dopočíta: dvojkĺbová IK), pri tlieskaní a reakciách ruky preberajú kĺby diváka.
+		const POSES = ['knees', 'thighs', 'cross', 'forward', 'chin', 'back', 'knees2', 'thighs2'];
+		const seed = Math.abs(Math.round((fan.phase || 0) * 1000)) + (dir.length * 7);
+		const pose = fan.standing ? 'stand' : POSES[seed % POSES.length];
+		const spread = 0.05 + ((seed >> 3) % 4) * 0.035; // kolená od seba
+		const lean = { forward: 0.42, chin: 0.18, back: -0.12, cross: -0.05 }[pose] || 0.03 * ((seed % 3) - 1);
+		const thighSit = [-1, 1].map((sx) => new THREE.Vector3(sx * spread, -0.12, 1).normalize());
 		const thighUp = fan.standing ? DOWN : new THREE.Vector3(0, -1, 0.3).normalize();
-		const calfSit = fan.standing ? DOWN : new THREE.Vector3(0, -1, 0.1).normalize();
-		ready = () => {
+		const calfSit = [-1, 1].map((sx) => new THREE.Vector3(sx * spread * 0.4, -1, pose === 'back' ? 0.35 : 0.1).normalize());
+		const spineB = t.bone('Spine');
+		const spineW0 = spineB ? t.rel(spineB).clone() : null;
+		const ql = new THREE.Quaternion();
+		const qx = new THREE.Quaternion();
+		const ax = new THREE.Vector3(1, 0, 0);
+		const len = (a, b) => (a && b ? t.relPos(a.b).distanceTo(t.relPos(b.b)) : 0.28);
+		const LU = [0, 1].map((i) => len(t.J.upper[i], t.J.fore[i]));
+		const LF = [0, 1].map((i) => (t.J.fore[i] ? t.relPos(t.J.fore[i].b).distanceTo(t.relPos(t.bone(i ? 'L_Hand' : 'R_Hand'))) : 0.26));
+		const S = new THREE.Vector3();
+		const T = new THREE.Vector3();
+		const E = new THREE.Vector3();
+		const d = new THREE.Vector3();
+		const pole = new THREE.Vector3();
+		const armBones = [t.J.upper[0], t.J.fore[0], t.J.upper[1], t.J.fore[1]].filter(Boolean).map((j) => j.b);
+		const idleQ = armBones.map(() => new THREE.Quaternion());
+		let actW = 0;
+		/** Dvojkĺbová IK: rameno i siahne dlaňou na bod tgt (priestor tela), lakeť smerom pol. */
+		const reach = (i, tgt, pol) => {
+			const ju = t.J.upper[i];
+			const jf = t.J.fore[i];
+			if (!ju || !jf) {
+				return;
+			}
+			S.copy(t.relPos(ju.b));
+			d.copy(tgt).sub(S);
+			const a = LU[i];
+			const b = LF[i];
+			const dist = Math.min(Math.max(d.length(), Math.abs(a - b) + 0.01), (a + b) * 0.999);
+			d.normalize();
+			const cosA = (a * a + dist * dist - b * b) / (2 * a * dist);
+			const sinA = Math.sqrt(Math.max(0, 1 - cosA * cosA));
+			pole.copy(pol).addScaledVector(d, -pol.dot(d)).normalize();
+			E.copy(S).addScaledVector(d, a * cosA).addScaledVector(pole, a * sinA);
+			t.set(ju, v.copy(E).sub(S).normalize());
+			T.copy(S).addScaledVector(d, dist);
+			t.set(jf, v.copy(T).sub(E).normalize());
+		};
+		const knee = (i) => (t.J.calf[i] ? t.relPos(t.J.calf[i].b) : new THREE.Vector3((i ? 1 : -1) * 0.1, 0.1, 0.45));
+		const tgt = [new THREE.Vector3(), new THREE.Vector3()];
+		const pol = pose === 'forward' ? [new THREE.Vector3(-0.6, -0.8, 0.2), new THREE.Vector3(0.6, -0.8, 0.2)] : [new THREE.Vector3(-1, -0.4, -0.5), new THREE.Vector3(1, -0.4, -0.5)];
+		ready = (dt = 1 / 60) => {
 			// nohy: v sede stehná dopredu, lýtka dolu; pri vstávaní (telo vyššie o 0,25 m) sa narovnajú
 			const up = fan.standing ? 1 : Math.max(0, Math.min(1, (root.position.y - fan.baseBody) / 0.25));
 			for (let i = 0; i < 2; i++) {
-				t.set(t.J.thigh[i], v.copy(thighSit).lerp(thighUp, up).normalize());
-				t.set(t.J.calf[i], calfSit);
+				t.set(t.J.thigh[i], v.copy(thighSit[i]).lerp(thighUp, up).normalize());
+				t.set(t.J.calf[i], fan.standing ? DOWN : v.copy(calfSit[i]).lerp(DOWN, up).normalize());
 			}
-			// ruky podľa kĺbov diváka (rameno aj predlaktie visia v kĺbe dolu)
-			fan.arms.forEach((a) => {
-				const i = a.sx < 0 ? 0 : 1;
-				t.rel(a.sh, qp);
-				t.set(t.J.upper[i], v.copy(DOWN).applyQuaternion(qp));
-				t.rel(a.el, qp);
-				t.set(t.J.fore[i], v.copy(DOWN).applyQuaternion(qp));
-			});
+			// chrbát: predklon alebo záklon podľa pózy (pri vstávaní rovno)
+			if (spineB && spineW0) {
+				ql.setFromAxisAngle(ax, lean * (1 - up));
+				qx.copy(ql).multiply(spineW0);
+				t.rel(spineB.parent, qp).invert();
+				spineB.quaternion.copy(qp.multiply(qx));
+			}
+			fbx.updateMatrixWorld(true);
+			// ruky v pokoji (póza)
+			const k0 = knee(0);
+			const k1 = knee(1);
+			const chest = t.headB ? t.relPos(t.headB).add(v.set(0, -0.3, 0.12)) : v.set(0, 0.45, 0.12);
+			switch (pose) {
+				case 'cross': // prekrížené ruky na hrudi
+					tgt[0].set(0.1, chest.y - 0.02, chest.z + 0.03);
+					tgt[1].set(-0.1, chest.y - 0.06, chest.z + 0.06);
+					break;
+				case 'forward': // predklon, lakte na stehnách, dlane spolu medzi kolenami
+					tgt[0].set(-0.03, (k0.y + k1.y) / 2 - 0.02, (k0.z + k1.z) / 2 - 0.04);
+					tgt[1].set(0.03, (k0.y + k1.y) / 2 - 0.01, (k0.z + k1.z) / 2 - 0.02);
+					break;
+				case 'chin': // pravá ruka pod bradou, ľavá na kolene
+					tgt[0].copy(t.headB ? t.relPos(t.headB).add(v.set(0, 0.0, 0.1)) : chest);
+					tgt[1].copy(k1).add(v.set(0, 0.06, -0.06));
+					break;
+				case 'thighs':
+				case 'thighs2':
+				case 'back': // dlane na stehnách bližšie k telu
+					tgt[0].copy(k0).add(v.set(0.02, 0.06, pose === 'back' ? -0.25 : -0.17));
+					tgt[1].copy(k1).add(v.set(-0.02, 0.06, pose === 'back' ? -0.22 : -0.17));
+					break;
+				case 'stand': // stojaci: ruky voľne pri tele
+					tgt[0].copy(t.relPos(t.J.thigh[0] ? t.J.thigh[0].b : fbx)).add(v.set(-0.12, -0.12, 0.04));
+					tgt[1].copy(t.relPos(t.J.thigh[1] ? t.J.thigh[1].b : fbx)).add(v.set(0.12, -0.12, 0.04));
+					break;
+				default: // dlane na kolenách
+					tgt[0].copy(k0).add(v.set(0.01, 0.07, -0.05));
+					tgt[1].copy(k1).add(v.set(-0.01, 0.07, -0.05));
+			}
+			if (pose === 'chin') {
+				pol[0].set(-0.3, -1, 0.2);
+			}
+			reach(0, tgt[0], pol[0]);
+			reach(1, tgt[1], pol[1]);
+			armBones.forEach((b, i) => idleQ[i].copy(b.quaternion));
+			// reakcie (tlieskanie, chytanie sa za hlavu, vstávanie): ruky podľa kĺbov diváka, plynulý prechod
+			actW += ((fan.act ? 1 : 0) - actW) * Math.min(1, dt * 6);
+			if (actW > 0.01) {
+				fan.arms.forEach((a) => {
+					const i = a.sx < 0 ? 0 : 1;
+					t.rel(a.sh, qp);
+					t.set(t.J.upper[i], v.copy(DOWN).applyQuaternion(qp));
+					t.rel(a.el, qp);
+					t.set(t.J.fore[i], v.copy(DOWN).applyQuaternion(qp));
+				});
+				armBones.forEach((b, i) => b.quaternion.slerp(idleQ[i], 1 - actW));
+			}
 			t.follow(t.headB, t.headW0, fan.head);
 		};
 	});
 	return {
-		sync() {
+		sync(dt) {
 			if (ready) {
-				ready();
+				ready(dt);
 			}
 		},
 		get loaded() {

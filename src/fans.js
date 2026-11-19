@@ -149,7 +149,7 @@ export function updateFans(fans, dt, cueBall) {
 		}
 		fan.body.position.y = fan.baseBody + up * 0.25;
 		if (fan.real) {
-			fan.real.sync(); // realistický model podľa kĺbov (0.38.3)
+			fan.real.sync(dt); // realistický model podľa kĺbov (0.38.3)
 		}
 	}
 }

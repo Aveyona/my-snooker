@@ -208,7 +208,7 @@ export function buildStadium(scene, quality, clock = 45) {
 	const fill = new THREE.HemisphereLight(0x6c7aa8, 0x07080b, 0.35);
 	root.add(fill);
 	for (const z of [-4.5, 4.5]) {
-		const s = new THREE.SpotLight(0xdfe8ff, 9, 14, Math.PI / 5, 0.7, 1.4);
+		const s = new THREE.SpotLight(0xdfe8ff, 4.5, 14, Math.PI / 5, 0.7, 1.4); // 0.38.5: tribúny tlmenejšie ako stôl
 		s.position.set(0, trussY, z);
 		s.target.position.set(0, FY + 1.5, z * 1.3);
 		root.add(s, s.target);
@@ -546,8 +546,8 @@ export function buildStadium(scene, quality, clock = 45) {
 	// každý má svoju stoličku (F7) a vedľa nej svoj stojan s tágami do zápasu (F2), tágo v ruke na stojane chýba
 	const chairMat = new THREE.MeshStandardMaterial({ color: 0x1a1a1f, roughness: 0.5 });
 	const PL = [
-		{ chair: [-3.35, BZ + 0.75], dz: 1, stand: [-4.45, BZ + 0.75], rot: Math.PI / 2 },
-		{ chair: [3.35, -(BZ + 0.75)], dz: -1, stand: [4.45, -(BZ + 0.75)], rot: -Math.PI / 2 },
+		{ chair: [-3.35, BZ + 0.88], dz: 1, stand: [-4.45, BZ + 0.82], rot: Math.PI / 2 },
+		{ chair: [3.35, -(BZ + 0.88)], dz: -1, stand: [4.45, -(BZ + 0.82)], rot: -Math.PI / 2 },
 	];
 	// 0.37.0: kreslo, stolík a stojan hráča stoja na čiernom vyvýšenom pódiu (od 0.37.3 v rohu tribúny pri divákoch) (PY nad podlahou) s modrou LED hranou
 	const PY = FY + PODIUM_H;
@@ -560,7 +560,7 @@ export function buildStadium(scene, quality, clock = 45) {
 		const x0 = 2.35;
 		const x1 = 4.85;
 		const z0 = BZ + 0.08;
-		const z1 = BZ + 1.25;
+		const z1 = BZ + 1.36;
 		const w = x1 - x0;
 		const d = z1 - z0;
 		const cx = sg * (x0 + w / 2);
@@ -569,6 +569,9 @@ export function buildStadium(scene, quality, clock = 45) {
 		// LED hrana po hornom okraji na stranách k stolu
 		add(new THREE.BoxGeometry(w, 0.012, 0.012), podLed, cx, PY - 0.006, sz * (z0 - 0.003)).castShadow = false;
 		add(new THREE.BoxGeometry(0.012, 0.012, d), podLed, sg * (x0 - 0.003), PY - 0.006, cz).castShadow = false;
+		// 0.38.5: schodík na pódium z uličky pred prvým radom (bočná strana pódia bližšie k stredu)
+		add(new THREE.BoxGeometry(0.3, PODIUM_H / 2, 0.42), podMat, sg * (x0 - 0.15), FY + PODIUM_H / 4, sz * (BZ + 0.3));
+		add(new THREE.BoxGeometry(0.012, 0.012, 0.42), podLed, sg * (x0 - 0.303), FY + PODIUM_H / 2 - 0.006, sz * (BZ + 0.3)).castShadow = false;
 	}
 	// kreslo hráča: čalúnené (tmavá koža), sedák, vysoké operadlo a opierky rúk, operadlo ďalej od stola
 	const leather = new THREE.MeshStandardMaterial({ color: 0x3a1d14, roughness: 0.45, metalness: 0.05 });
@@ -1051,8 +1054,8 @@ export function buildStadium(scene, quality, clock = 45) {
 		root.add(fan.f);
 		fans.push(fan);
 	});
-	// 0.38.4: ďalší diváci-kulisy roztrúsení po tribúnach (rovnaký zoznam má server: MYSN_SEATS_DECOR)
-	const EXTRA = [39, 57, 65, 93, 96, 117, 123, 129, 131, 148, 150, 159, 170, 192, 217, 237, 243, 265, 270, 292, 297, 315, 316, 322, 325, 333, 344];
+	// 0.38.4: ďalší diváci-kulisy roztrúsení po tribúnach (0.38.5: bližšie k stredu, najviac 2,8 m od stredu) (rovnaký zoznam má server: MYSN_SEATS_DECOR)
+	const EXTRA = [7, 15, 31, 37, 67, 68, 87, 89, 116, 119, 138, 139, 155, 187, 192, 209, 215, 236, 238, 262, 269, 280, 289, 308, 317, 332];
 	const SHIRTS = [0x2f6fd6, 0xc0392b, 0x2a9d8f, 0xe0a526, 0x6c4fb3, 0x3d3d44, 0xd35400, 0x27ae60, 0x8e44ad, 0xecf0f1];
 	EXTRA.forEach((idx, i) => {
 		const p = seatPlace(idx);
