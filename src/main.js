@@ -564,9 +564,10 @@ export function start(root, config = {}) {
 		const roam = view === 'free' && adminRoam;
 		const lg = venue === 'league';
 		const inOffice = view === 'office';
-		const showHome = roam || (!lg && !inOffice);
-		const showStadium = roam || lg;
-		const showOffice = roam || inOffice;
+		// prehliadka admina: herňa a štadión stoja okolo toho istého stola, ukáže sa len tá, kam som išiel (kancelária pri herni)
+		const showHome = !lg && (roam || !inOffice);
+		const showStadium = lg;
+		const showOffice = inOffice || (roam && !lg);
 		const key = `${showHome}${showStadium}${showOffice}`;
 		if (key === sceneShown) {
 			return;
@@ -578,10 +579,10 @@ export function start(root, config = {}) {
 		stadium.root.visible = showStadium;
 		office.root.visible = showOffice;
 		for (const o of roomBase.lampParts) {
-			o.visible = !lg || roam; // na štadióne svietia na stôl tie isté svetlá, ale tienidlá nahrádza svietidlo s obrazovkami
+			o.visible = !lg; // na štadióne svietia na stôl tie isté svetlá, ale tienidlá nahrádza svietidlo s obrazovkami
 		}
 		table.group.visible = !inOffice || roam;
-		room.setRackHidden(!showHome || (lg && !roam)); // tágá stojana herne (vybraté tágo sa skryje správne)
+		room.setRackHidden(!showHome || lg); // tágá stojana herne (vybraté tágo sa skryje správne)
 	};
 	// online diváci: na štadióne sedia na stoličkách, v herni stoja pri stenách
 	const crowdLg = new Crowd(stadium.root);
