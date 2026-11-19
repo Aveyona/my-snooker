@@ -120,12 +120,12 @@ export const POCKET_STYLES = {
 	wide: { cutCorner: 0.06, cutMid: 0.056, rimR: 0.016, rim: 0xe2c595, rimRough: 0.5, rimMetal: 0.05, liner: 0xe8d2a8 },
 	// 0.39.0 (návrh D): turnajové jamky – otvor presne ako diera (fyzika 54 / 52 mm), bez širokej obruby,
 	// mantinely končia väčším oblúkom (čeľuste), tmavý tenký lem; sieťka a padanie gúľ ako doteraz
-	tour: { cutCorner: 0.054, cutMid: 0.052, rimR: 0.0045, rim: 0x151515, rimRough: 0.5, rimMetal: 0.1, liner: 0x141414, round: 0.03, holeIn: 0.003 },
+	tour: { cutCorner: 0.054, cutMid: 0.052, rimR: 0.0045, rim: 0x151515, rimRough: 0.5, rimMetal: 0.1, liner: 0x141414, round: 0.03, holeIn: 0.003, slot: true },
 };
 const FELT_POCKETS = { blue: 'tour', green: 'tour', red: 'tour' };
 
 /** Maska súkna: biela = súkno, čierna = otvor jamky (cez otvor vidieť do košíka). */
-function pocketHoles(cc = 0.071, cm = 0.065, inset = 0.008) {
+function pocketHoles(cc = 0.071, cm = 0.065, inset = 0.008, slots = null) {
 	const w = 1024;
 	const h = Math.round((w * (W + 2 * RAIL)) / (L + 2 * RAIL));
 	const c = document.createElement('canvas');
@@ -136,6 +136,21 @@ function pocketHoles(cc = 0.071, cm = 0.065, inset = 0.008) {
 	g.fillRect(0, 0, w, h);
 	const sx = w / (L + 2 * RAIL);
 	g.fillStyle = '#000000';
+	if (slots) {
+		// 0.39.2: jamka v tvare U – otvor od stredu diery po zadný polkruh
+		g.strokeStyle = '#000000';
+		g.lineCap = 'round';
+		const X = (x) => (x + L / 2 + RAIL) * sx;
+		const Z = (z) => (z + W / 2 + RAIL) * sx;
+		for (const q of slots) {
+			g.lineWidth = 2 * (q.hw - inset) * sx;
+			g.beginPath();
+			g.moveTo(X(q.p.x), Z(q.p.z));
+			g.lineTo(X(q.c.x), Z(q.c.z));
+			g.stroke();
+		}
+		return new THREE.CanvasTexture(c);
+	}
 	for (const p of POCKETS) {
 		g.beginPath();
 		g.arc((p.x + L / 2 + RAIL) * sx, (p.z + W / 2 + RAIL) * sx, ((p.corner ? cc : cm) - inset) * sx, 0, Math.PI * 2);
@@ -326,7 +341,39 @@ export function buildTable(renderer) {
 		}
 		const ROUND = PK.round || 0.016; // polomer zaoblenia nosa mantinelu pri jamke
 		// výrezy jamiek v ráme (viac dreva okolo jamky, užší otvor): na ich okraji končia aj mantinely
-		const CUTS = POCKETS.map((p) => ({ x: p.x, z: p.z, r: p.corner ? PK.cutCorner : PK.cutMid, corner: p.corner }));
+		// 0.39.2: jamka v tvare U – rovné rovnobežné steny od konca čeľustí (ako vo fyzike: roh 57 mm od rohu, stred ±48 mm)
+		// a vzadu polkruh. K = roh / stred hrany, d = smer von, n = kolmo, hw = polovica šírky, c = stred polkruhu.
+		const SLOTS = POCKETS.map((p) => {
+			const sx = Math.sign(p.x) || 1;
+			const sz = Math.sign(p.z);
+			const K = p.corner ? { x: sx * hx, z: sz * hz } : { x: 0, z: sz * hz };
+			const d = p.corner ? { x: sx / Math.SQRT2, z: sz / Math.SQRT2 } : { x: 0, z: sz };
+			const n = { x: -d.z, z: d.x };
+			const hw = p.corner ? CG / Math.SQRT2 : MG;
+			const back = p.corner ? 0.085 : 0.075;
+			return { p, K, d, n, hw, tc: back, c: { x: K.x + d.x * back, z: K.z + d.z * back }, corner: p.corner };
+		});
+		const slotPush = (x, z) => {
+			// bod vo vnútri jamky posunie na jej stenu (mantinel končí na stene jamky)
+			for (const q of SLOTS) {
+				const rx = x - q.K.x;
+				const rz = z - q.K.z;
+				const t = rx * q.d.x + rz * q.d.z;
+				const sn = rx * q.n.x + rz * q.n.z;
+				if (t > q.tc) {
+					const ox = x - q.c.x;
+					const oz = z - q.c.z;
+					const dd = Math.hypot(ox, oz);
+					if (dd < q.hw && dd > 1e-6) {
+						return { x: q.c.x + (ox / dd) * q.hw, z: q.c.z + (oz / dd) * q.hw };
+					}
+				} else if (t > -0.12 && Math.abs(sn) < q.hw) {
+					const ns = (sn >= 0 ? 1 : -1) * q.hw;
+					return { x: q.K.x + q.d.x * t + q.n.x * ns, z: q.K.z + q.d.z * t + q.n.z * ns };
+				}
+			}
+			return null;
+		};
 		// Prierez mantinelu ako na skutočnom stole (d = vzdialenosť od nosa dozadu, y = výška): spodok je
 		// podrezaný, nos v 2/3 výšky gule, vrch sa zošikmí a plynulo prejde k drevenému rámu. Žiadna kolmá stena.
 		const PROFILE = [
@@ -398,16 +445,12 @@ export function buildTable(renderer) {
 					pos.push(path[i].x + ox * d, y, path[i].z + oz * d);
 				}
 			}
-			// koniec mantinelu pri jamke: guma končí na okraji výrezu jamky (nie vo vnútri jamky)
+			// koniec mantinelu pri jamke: guma končí na stene jamky (tvar U)
 			for (let v = 0; v < pos.length; v += 3) {
-				for (const q of CUTS) {
-					const ox = pos[v] - q.x;
-					const oz = pos[v + 2] - q.z;
-					const dd = Math.hypot(ox, oz);
-					if (dd < q.r && dd > 1e-6) {
-						pos[v] = q.x + (ox / dd) * q.r;
-						pos[v + 2] = q.z + (oz / dd) * q.r;
-					}
+				const q = slotPush(pos[v], pos[v + 2]);
+				if (q) {
+					pos[v] = q.x;
+					pos[v + 2] = q.z;
 				}
 			}
 			const P = PROFILE.length;
@@ -433,76 +476,57 @@ export function buildTable(renderer) {
 			sg.add(m);
 		}
 
-		// Výrezy jamiek v ráme: rohové a stredné, zaoblené
-		const pocketCut = CUTS;
-		// Vnútorný okraj rámu (zadná strana mantinelov) spolu s výrezmi jamiek ako jeden obrys
+		// Výrezy jamiek v ráme (tvar U): obrys rámu zvnútra = okraj mantinelov a pri každej jamke steny + polkruh
 		const ix = hx + RAIL;
 		const iz = hz + RAIL;
 		const holePts = [];
-		const arcPts = (c, from, to, n) => {
-			const out = [];
-			for (let i = 0; i <= n; i++) {
-				const a = from + ((to - from) * i) / n;
-				out.push({ x: c.x + Math.cos(a) * c.r, z: c.z + Math.sin(a) * c.r });
-			}
-			return out;
-		};
 		const rims = [];
+		const outlines = [];
+		const wallT = (q, s0) => {
+			// kde stena jamky vyjde z vnútorného obdĺžnika rámu
+			const bx = q.K.x + q.n.x * s0;
+			const bz = q.K.z + q.n.z * s0;
+			let t = Infinity;
+			if (Math.abs(q.d.x) > 1e-9) {
+				t = Math.min(t, (Math.sign(q.d.x) * ix - bx) / q.d.x);
+			}
+			if (Math.abs(q.d.z) > 1e-9) {
+				t = Math.min(t, (Math.sign(q.d.z) * iz - bz) / q.d.z);
+			}
+			return t;
+		};
 		const norm = (a) => {
 			while (a < 0) a += Math.PI * 2;
 			return a;
 		};
-		// obchádzame proti smeru hodinových ručičiek (v rovine x, z): horný okraj z = +iz sprava doľava atď.
-		const cTR = pocketCut.find((p) => p.corner && p.x > 0 && p.z > 0);
-		const cTL = pocketCut.find((p) => p.corner && p.x < 0 && p.z > 0);
-		const cBL = pocketCut.find((p) => p.corner && p.x < 0 && p.z < 0);
-		const cBR = pocketCut.find((p) => p.corner && p.x > 0 && p.z < 0);
-		const mT = pocketCut.find((p) => !p.corner && p.z > 0);
-		const mB = pocketCut.find((p) => !p.corner && p.z < 0);
-		const cornerArc = (c, sx, sz) => {
-			// priesečníky kruhu s okrajmi z = sz*iz (vodorovný) a x = sx*ix (zvislý)
-			const dzEdge = sz * iz - c.z;
-			const xOnZ = c.x - sx * Math.sqrt(Math.max(0, c.r * c.r - dzEdge * dzEdge));
-			const dxEdge = sx * ix - c.x;
-			const zOnX = c.z - sz * Math.sqrt(Math.max(0, c.r * c.r - dxEdge * dxEdge));
-			const aZ = Math.atan2(sz * iz - c.z, xOnZ - c.x);
-			const aX = Math.atan2(zOnX - c.z, sx * ix - c.x);
-			return { aZ, aX };
-		};
-		const middleArc = (c, sz) => {
-			const dz = sz * iz - c.z;
-			const w = Math.sqrt(Math.max(0, c.r * c.r - dz * dz));
-			return { aRight: Math.atan2(dz, w), aLeft: Math.atan2(dz, -w) };
-		};
-		const pushArc = (c, a0, a1, ccw) => {
-			let from = a0;
-			let to = a1;
-			if (ccw) {
-				while (to < from) to += Math.PI * 2;
-			} else {
-				while (to > from) to -= Math.PI * 2;
+		const slotOut = SLOTS.map((q) => {
+			const pts = [];
+			const at = (t, s0) => ({ x: q.K.x + q.d.x * t + q.n.x * s0, z: q.K.z + q.d.z * t + q.n.z * s0 });
+			const tA = wallT(q, q.hw);
+			const tB = wallT(q, -q.hw);
+			for (let i = 0; i <= 4; i++) {
+				pts.push(at(tA + ((q.tc - tA) * i) / 4, q.hw));
 			}
-			const pts = arcPts(c, from, to, 24);
-			holePts.push(...pts);
-			rims.push(pts);
-		};
-		{
-			const arcs = [];
-			for (const [c, sx, sz] of [[cTR, 1, 1], [cTL, -1, 1], [cBL, -1, -1], [cBR, 1, -1]]) {
-				const k = cornerArc(c, sx, sz);
-				// po smere proti hodinám: z vodorovného do zvislého okraja alebo naopak podľa kvadrantu
-				const first = sx * sz > 0 ? k.aX : k.aZ;
-				const last = sx * sz > 0 ? k.aZ : k.aX;
-				arcs.push({ c, a0: first, a1: last });
+			for (let i = 1; i < 20; i++) {
+				const a = (Math.PI * i) / 20;
+				pts.push({ x: q.c.x + q.n.x * Math.cos(a) * q.hw + q.d.x * Math.sin(a) * q.hw, z: q.c.z + q.n.z * Math.cos(a) * q.hw + q.d.z * Math.sin(a) * q.hw });
 			}
-			for (const [c, sz] of [[mT, 1], [mB, -1]]) {
-				const k = middleArc(c, sz);
-				arcs.push({ c, a0: sz > 0 ? k.aRight : k.aLeft, a1: sz > 0 ? k.aLeft : k.aRight });
+			for (let i = 0; i <= 4; i++) {
+				pts.push(at(q.tc + ((tB - q.tc) * i) / 4, -q.hw));
 			}
-			arcs.sort((p, q) => norm(Math.atan2(p.c.z, p.c.x)) - norm(Math.atan2(q.c.z, q.c.x)));
-			for (const a of arcs) {
-				pushArc(a.c, a.a0, a.a1, true);
+			// poradie proti smeru hodinových ručičiek okolo stola
+			const A = pts[0];
+			const B = pts[pts.length - 1];
+			if (A.x * B.z - A.z * B.x < 0) {
+				pts.reverse();
 			}
+			return { q, pts, ang: norm(Math.atan2(q.c.z, q.c.x)) };
+		});
+		slotOut.sort((u, v) => u.ang - v.ang);
+		for (const o of slotOut) {
+			holePts.push(...o.pts);
+			rims.push(o.pts);
+			outlines.push(o);
 		}
 		const R0 = 0.07; // zaoblenie vonkajších rohov rámu
 		const frame = new THREE.Shape();
@@ -531,27 +555,36 @@ export function buildTable(renderer) {
 		// Jamky: čierny otvor v súkne, kožený lem po okraji výrezu v ráme a pod ním košík zo sieťky
 		const plateMat = new THREE.MeshStandardMaterial({ color: PK.rim, roughness: PK.rimRough, metalness: PK.rimMetal });
 		const linerMat = PK.liner == null ? plateMat : new THREE.MeshStandardMaterial({ color: PK.liner, roughness: 0.6, metalness: 0.05 }); // obruba jamky ako na turnajových stoloch
-		for (const p of pocketCut) {
-			// krátka kožená výstelka jamky a pod rámom košík zo sieťky (spadnuté gule v ňom ostávajú vidieť)
-			const well = new THREE.Mesh(new THREE.CylinderGeometry(p.r * 0.9, BASKET.top, 0.03, 40, 1, true), leatherMat);
-			well.position.set(p.x, -0.012, p.z);
+		for (const o of outlines) {
+			const q = o.q;
+			// košík zo sieťky pod jamkou (medzi stredom diery a zadným polkruhom), spadnuté gule v ňom ostávajú vidieť
+			const bc = { x: (q.p.x + q.c.x) / 2, z: (q.p.z + q.c.z) / 2 };
+			const well = new THREE.Mesh(new THREE.CylinderGeometry(q.hw * 1.05, BASKET.top, 0.03, 40, 1, true), leatherMat);
+			well.position.set(bc.x, -0.012, bc.z);
 			sg.add(well);
-			// svetlá kožená výstelka steny výrezu (od rámu po súkno), ako na turnajových stoloch
-			// len oblúk na strane rámu (k stolu je ústie jamky otvorené)
-			const ox = p.corner ? Math.sign(p.x) : 0;
-			const oz = Math.sign(p.z);
-			const span = p.corner ? Math.PI * 1.0 : Math.PI * 0.9;
-			const phi = Math.atan2(ox, oz);
-			const liner = new THREE.Mesh(new THREE.CylinderGeometry(p.r - 0.0075, p.r - 0.0075, fy + 0.02, 40, 1, true, phi - span / 2, span), linerMat);
+			// tmavá výstelka stien jamky (rovné steny aj polkruh, od súkna po vrch rámu)
+			const vs = [];
+			for (const pt of o.pts) {
+				vs.push(pt.x, -0.02, pt.z, pt.x, fy, pt.z);
+			}
+			const ix2 = [];
+			for (let i = 0; i < o.pts.length - 1; i++) {
+				const a0 = i * 2;
+				ix2.push(a0, a0 + 2, a0 + 1, a0 + 1, a0 + 2, a0 + 3);
+			}
+			const lg = new THREE.BufferGeometry();
+			lg.setAttribute('position', new THREE.Float32BufferAttribute(vs, 3));
+			lg.setIndex(ix2);
+			lg.computeVertexNormals();
+			const liner = new THREE.Mesh(lg, linerMat);
 			liner.material.side = THREE.DoubleSide;
-			liner.position.set(p.x, (fy - 0.02) / 2, p.z);
 			sg.add(liner);
 			const bag = new THREE.Mesh(basketGeo, netMat);
-			bag.position.set(p.x, BASKET.y, p.z);
+			bag.position.set(bc.x, BASKET.y, bc.z);
 			sg.add(bag);
 			const ring = new THREE.Mesh(new THREE.TorusGeometry(BASKET.top, 0.006, 8, 40), leatherMat);
 			ring.rotation.x = Math.PI / 2;
-			ring.position.set(p.x, BASKET.y, p.z);
+			ring.position.set(bc.x, BASKET.y, bc.z);
 			sg.add(ring);
 			// otvor v súkne robí maska súkna (pocketHoles), cez neho vidieť do košíka
 		}
@@ -561,7 +594,7 @@ export function buildTable(renderer) {
 			rim.castShadow = true;
 			sg.add(rim);
 		}
-		sg.userData.holes = pocketHoles(PK.cutCorner, PK.cutMid, PK.holeIn ?? 0.008);
+		sg.userData.holes = pocketHoles(PK.cutCorner, PK.cutMid, PK.holeIn ?? 0.008, PK.slot ? SLOTS : null);
 		return sg;
 	};
 	const sets = {};
