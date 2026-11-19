@@ -154,3 +154,75 @@ a „maskoval sa“. Každý krok ochrany sa dal obísť niekoľkými riadkami J
 
 Záver: kontroly v prehliadači zvyšujú námahu, ale rozhodovať musí server – prepočet sily zo surového ťahu,
 miera netrafenia ťažkých úderov a pri podozrení snímky obrazovky.
+
+## Krok 3b: Výzva zo servera pri najmenšom podozrení (plán, 19. 11. 2026)
+
+Rozhodnutie Aveyona: výzva sa pošle **pri najmenšom podozrení**. Cieľ: hra musí dokázať, že beží nezmenený kód
+a že úder urobila ruka. Upravená hra odpovie zle, hra s vyhodenými kontrolami neodpovie vôbec.
+
+### Spúšťače (stačí jeden)
+
+- úder z novej hry bez údajov o ruke, prekryv nad hrou, prepísaná funkcia (0.36),
+- jedna „neľudská“ sila (okrúhla, nie plný úder ani šmyk),
+- presnosť v okne: aspoň 5 ťažkých úderov s priemerom pod 0,3,
+- séria ťažkých úderov bez netrafenia (napr. 6 za sebou s oknom pod 0,5°),
+- mierenie bez pohybov myši alebo prsta (`dir` sa mení, `pointermove` nie),
+- úder do 1,5 s od začiatku mierenia pri ťažkej guli,
+- skóre podozrenia > 0 (krok 2), nový účet v prvých 3 hrách,
+- **náhodná kontrola** pre každého (napr. 1 zo 10 hier), aby sa spúšťače nedali vyčítať – na rozhodnutie Aveyona.
+
+### Priebeh
+
+1. Server vytvorí výzvu: náhodné číslo (nonce, 128 bitov), náhodný výber kontrol zo zásobníka, lehota.
+   Uloží ju u seba (hráč + partia alebo frame), nikdy neodíde do prehliadača zoznam správnych odpovedí.
+2. Výzva ide **v bežnej odpovedi** (úder, stav partie, rebríček) pod nenápadným názvom, nie samostatným volaním.
+3. Hra vypočíta odpoveď: odtlačok (HMAC s nonce) z výsledkov kontrol a priloží ju k **ďalšej bežnej požiadavke**.
+4. Server odpoveď porovná. Lehota: do 2 ďalších požiadaviek alebo 30 s.
+
+### Kontroly v zásobníku
+
+- **Odtlačok kódu:** `toString()` kľúčových funkcií (úder, fyzika `step`/`advance`/`strike`, ovládanie, kontrola,
+  odosielanie na server). Očakávané odtlačky vytvorí build (`npm run build` → `includes/fingerprints.php`, len na
+  serveri). Kontrola aj toho, že samotné `Function.prototype.toString` nie je prepísané.
+- **Surový záznam ťahu** posledného úderu (vzorky polohy myši alebo prsta s časom, len `isTrusted` udalosti).
+  Server z neho prepočíta silu tým istým vzorcom ako hra × tágo × špica – musí sedieť so silou úderu (návrh
+  testovacieho agenta: zapísané `_tm` už nestačí).
+- **Mierenie vs. myš:** počet `pointermove` udalostí počas mierenia a ich súvis so zmenami smeru.
+- **Prostredie:** cudzie plátno, neznáme globálne premenné, počet plátien, či je hra prístupná z `window`.
+- Údaje kontroly sú v closure (WeakMap), nie na objekte hry.
+- Kód výzvy sa pri každej verzii mení (iné poradie, iné názvy, iný výber kontrol).
+
+### Vyhodnotenie
+
+| Výsledok | Následok |
+|---|---|
+| správna odpoveď | podozrenie mierne klesne, hra pokračuje |
+| zlý odtlačok kódu | **podvod hneď**: partia zrušená, hra o skóre 0, suspendácia 7 dní, prípad |
+| sila nesedí so záznamom ťahu | podvod hneď (ako vyššie) |
+| bez odpovede v lehote | 1. raz nová výzva; 2. raz podvod |
+| stará verzia hry | hra sa musí obnoviť (stránka sa načíta znova), až potom rankovaná hra |
+| admin | len zápis (výskum), súper vidí upozornenie |
+| tréning | len zápis |
+
+### Hra o skóre
+
+Frame beží v prehliadači bez spojenia so serverom. Doplní sa tichý „tep“ (každých ~10 úderov alebo 60 s),
+ktorým server môže poslať výzvu; frame bez tepu sa pri odoslaní neprijme do rebríčka.
+
+### Administrácia
+
+Pri prípade: história výziev (kedy, prečo, ktoré kontroly, čo nesedelo), záznam ťahu vs. sila úderu.
+
+### Fázy
+
+1. Infraštruktúra výzvy v partiách: vytvorenie, doručenie, odpoveď, odtlačky z buildu, následky.
+2. Surový záznam ťahu + prepočet sily na serveri; mierenie vs. myš.
+3. Tep a výzva v hre o skóre.
+4. Spúšťače zo štatistiky (netrafenie ťažkých úderov, rýchle údery) a náhodná kontrola.
+5. Test s testovacím agentom: vyhodiť kontroly, prepísať `toString`, lokálna úprava súboru, robot cez `_tm`.
+
+### Obmedzenia
+
+Kto rozlúšti kód výzvy, môže počítať správne odpovede z pôvodného kódu a hrať upraveným (alebo robotom,
+ktorý funkcie neprepisuje). Výzva to výrazne predraží a každou verziou sa mení. Robota, ktorý hýbe skutočnou
+myšou zvonku (program v počítači), zachytí len štatistika a snímky obrazovky (kroky 2, 4 – 7).
