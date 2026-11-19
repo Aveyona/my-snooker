@@ -1,0 +1,138 @@
+# My Snooker – plán ochrany proti podvádzaniu (anti-cheat)
+
+Zadanie spísané 19. 11. 2026 podľa dohody s Aveyonom. Nadväzuje na krok 1 (0.34.0 – 0.34.1, `includes/anticheat.php`).
+
+## Prečo
+
+Test 18. – 19. 11. 2026 ukázal dva typy podvodu:
+
+1. **AI hráč z konzoly.** Skript v konzole prehliadača naklonoval fyziku hry (`new Physics(kópia gúľ)`), pred každým úderom
+   nasimuloval stovky variantov (smer, sila, falša) a cez `game.shoot()` zahral najlepší. Výsledok: frame 126 bodov
+   bez chyby, 1. miesto v rebríčku, server výsledok overil (prehral frame, nekontroloval, kto hral).
+   → Krok 1 (0.34.0) už hru skryl z konzoly a chytá okrúhlu silu úderov. Šikovnejší podvodník však pridá k sile šum.
+2. **Čiary predikcie.** Skript nakreslil na priehľadné plátno nad hrou dráhu bielej aj zasiahnutej gule (počítané
+   rovnakou fyzikou, presné na milimeter). Človek s nimi trafí aj ťažký strih za 5 sekúnd. Úder robí rukou, takže
+   kontrola okrúhlej sily ho nezachytí.
+
+Žiadna kontrola v prehliadači nie je nepriestrelná (kód beží u hráča). Ochrana sa preto skladá z vrstiev
+a rozhodujúce vyhodnotenie je na serveri.
+
+## Prehľad postupu
+
+```
+bežný hráč ──► hrá bez dialógu
+                │  server a klient zbierajú skóre podozrenia
+                ▼
+skóre ≥ prah „čiastočne podozrivý" ──► dialóg: overenie anti-cheatom, povoliť snímanie obrazovky
+                │                                   │
+          súhlasí                              nesúhlasí ──► len tréning (s čiarami predikcie)
+                ▼
+rankované partie sa snímajú ──► predkontrola rozdielu ──► vlastný model na čiary ──► admin rozhodne
+                │
+séria čistých partií ──► skóre klesne pod prah ──► snímanie sa vypne
+```
+
+Rankované režimy: liga, výzvy (partie cez internet), hra o najlepšie skóre. Tréning je vždy bez kontroly.
+
+## Krok 2: Skóre podozrenia
+
+- Číslo 0 – 100 pri každom hráčovi (user meta), s časom poslednej zmeny.
+- Zdroje (každý pridá body, váhy v nastaveniach):
+  - okrúhla sila úderov (krok 1),
+  - **presnosť podľa obtiažnosti**: server z logu úderu vypočíta obtiažnosť (uhol strihu, vzdialenosť biela → guľa
+    a guľa → jamka, šírka jamky z uhla, blokovanie). Porovná úspešnosť ťažkých úderov s bežným hráčom.
+    Rozdiel je štatisticky jasný po 20 – 30 úderoch,
+  - telemetria mierenia (krok 3),
+  - výsledok skrytej kontroly klienta (krok 3) – zlá alebo chýbajúca odpoveď,
+  - nadväzuje na „presnosť hráčov (dlhé údery)“ z 0.11.2.
+- Pokles: každá čistá rankovaná partia uberie body, skóre časom klesá.
+- Prahy (nastaviteľné): **čiastočne podozrivý** (napr. 30) → dialóg na snímanie; **podozrivý** (napr. 70) →
+  doterajší postup z kroku 1 (suspendácia, prípad v administrácii Podvádzanie).
+
+## Krok 3: Skrytá kontrola klienta za behu
+
+Hash súboru `snooker.js` nestačí – podvod z testu súbor vôbec neupravil, kód pridal až za behu.
+
+- **Výzva servera s nonce:** v náhodnom momente partie server pošle náhodné číslo a zoznam kontrol (v odpovedi na bežnú
+  požiadavku, nie samostatným volaním). Klient vypočíta rýchly hash (FNV-1a alebo xxHash) z nonce a z výsledkov kontrol
+  a pošle ho späť s ďalšou bežnou požiadavkou. Nesedí alebo chýba → skóre podozrenia.
+- **Kontroly:**
+  - `toString()` kľúčových funkcií (shoot, step, advance, release, update ovládania) – prepísanie alebo obalenie zmení hash,
+  - cudzie prvky nad hrou: `MutationObserver` na `document.body` – nový `<canvas>`, `<svg>` alebo prvok s vysokým `z-index`
+    nad plátnom hry (čiary z testu by chytil hneď),
+  - nečakané globálne premenné na `window`,
+  - prepísané `HTMLCanvasElement.prototype.toDataURL`, `navigator.mediaDevices.getDisplayMedia`, `requestAnimationFrame`,
+  - úder bez predchádzajúceho ťahu tága z ovládania (myš, prst) – `shoot()` zavolaný priamo.
+- **Telemetria mierenia:** krátky záznam smeru tága za posledné 2 – 3 s pred úderom (vzorky po ~50 ms). Človek mieri
+  „tam a späť“ s dolaďovaním; s čiarami vidno pomalé skenovanie a zastavenie presne na uhle. Vyhodnotenie na serveri.
+- Kontrolný kód minifikovať spolu s hrou, názvy nenápadné; meniť ho pri vydaniach.
+
+## Krok 4: Dialóg súhlasu so snímaním obrazovky
+
+- Zobrazí sa len hráčovi so skóre ≥ prah „čiastočne podozrivý“, pred štartom rankovanej partie.
+- Text (návrh): *„Pri tvojom účte je potrebné overenie férovej hry. Počas partie budeme v náhodných chvíľach robiť snímky
+  celej obrazovky. Snímky slúžia len na kontrolu podvádzania, uchovávame ich N dní a vidí ich iba správca. Bez súhlasu
+  môžeš hrať tréning.“* + Súhlasím / Len tréning.
+- Súhlas sa zapíše (čas, verzia textu, user id).
+- Technicky: `navigator.mediaDevices.getDisplayMedia({ video: { displaySurface: 'monitor' } })`.
+  - Po povolení kontrola `track.getSettings().displaySurface === 'monitor'` – zdieľanie karty alebo okna sa odmietne.
+  - Udalosť `ended` (hráč zastavil zdieľanie): liga – prerušenie ako pri výpadku spojenia, hra o skóre – výsledok neplatný.
+  - Mobil (iOS Safari, Android Chrome) `getDisplayMedia` nepodporuje → podozrivý hráč na mobile môže hrať len tréning.
+
+## Krok 5: Snímanie a ukladanie
+
+- Snímky v náhodných intervaloch (20 – 90 s) a pred náhodne vybranými údermi; JPEG, kvalita ~0,6, max. šírka 1920 px.
+- Ku každej snímke aj **vnútorný obrázok hry** (`renderer.domElement` hneď po vykreslení snímky, alebo
+  `preserveDrawingBuffer`) a metadáta: čas, číslo úderu, smer a sila tága, veľkosť a poloha okna.
+- Odoslanie cez REST do **neverejného priečinka** (mimo verejného `uploads`, alebo `deny from all`), zoradené podľa partie.
+- Automatické mazanie po N dňoch (nastavenie, predvolene 30) cez WP-Cron.
+
+## Krok 6: Predkontrola rozdielu (server)
+
+- Hra vie, čo má byť na obrazovke. Server nájde oblasť okna hry v snímke obrazovky (podľa metadát), zmenší ju na veľkosť
+  vnútorného obrázka a porovná pixely v oblasti stola.
+- Rozdiel nad prah (tenké čiary, krúžky, text) → snímka „podozrivá“ → pošle sa modelu. Inak sa model nevolá (šetrí výkon).
+
+## Krok 7: Vlastný model na hľadanie čiar
+
+- Model beží u nás (adresa a kľúč v nastaveniach WordPressu, nie v repozitári).
+- Vstup: snímka obrazovky, vnútorný obrázok, metadáta. Výstup: `{ verdict: clean|lines|other, confidence, boxes[] }`.
+- Volá sa pre snímky z predkontroly a pre všetky snímky partií, ktoré štatistika označí ako podozrivé.
+- Výsledok sa pridá k partii a zvýši alebo zníži skóre podozrenia.
+
+## Krok 8: Trénovacie dáta pre model
+
+- Nástroj pre admina v tréningu: pri náhodných rozloženiach a kamerách uloží dvojice snímok **so čiarami / bez čiar**.
+- Variácie čiar: farba, hrúbka 1 – 4 px, priehľadnosť 20 – 100 %, plné aj prerušované, len dráha bielej, len cieľová guľa,
+  krúžok miesta dotyku, text so silou, bodky namiesto čiar.
+- Pridať aj „iné“ prekryvy (okná, OBS, chat), aby model nehlásil všetko ako čiary.
+
+## Krok 9: Administrácia – Kontrola partií
+
+Pod existujúcou stránkou My Snooker → Podvádzanie:
+
+- zoznam všetkých snímaných partií (hráč, režim, dátum, skóre podozrenia, verdikt),
+- detail partie: **galéria všetkých snímok** s časovou osou a číslom úderu, vedľa vnútorný obrázok a mapa rozdielu,
+  verdikt modelu s vyznačenými oblasťami, log úderov a presnosť podľa obtiažnosti,
+- tlačidlá Potvrdiť výsledok / Zamietnuť (podvod) – zamietnutie použije postup z kroku 1,
+- admin si môže pozrieť snímky z každej snímanej partie.
+
+## Krok 10: Čiary predikcie v tréningu
+
+- Oficiálna pomôcka len v tréningu, tlačidlo Čiary: ZAP/VYP, nikdy v rankovaných režimoch.
+- Kópia stola sa simuluje tým istým kódom fyziky (`src/physics.js`) pri zmene smeru alebo sily (najviac ~10× za sekundu),
+  dráhy sa kreslia na prekryv: biela prerušovane, zasiahnutá guľa plnou čiarou vo svojej farbe, bodka kde guľa zastane,
+  krúžok miesta dotyku, text „spadne: …“.
+- Kým hráč neťahá tágo, počíta sa s predvolenou silou; počas ťahu so skutočnou. Zahrnúť aj falšu a uhol tága.
+- Prekryv z tréningu musí kontrola z kroku 3 poznať a v rankovanom režime nesmie existovať.
+
+## GDPR
+
+- Snímky obrazovky sú osobné údaje (môžu zachytiť aj iné okná). Informovať v dialógu a v zásadách ochrany súkromia:
+  účel (férová hra), rozsah, doba uchovania, kto má prístup.
+- Uložiť záznam súhlasu, umožniť jeho odvolanie (= len tréning) a zmazanie snímok na žiadosť.
+
+## Obmedzenia
+
+- Druhý monitor, druhé zariadenie alebo mobil vedľa počítača snímky nezachytia → preto štatistika presnosti.
+- Skúsený programátor vie obísť kontroly v prehliadači → ich úloha je zvýšiť námahu a dať signál do skóre podozrenia.

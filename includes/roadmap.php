@@ -156,12 +156,31 @@ function mysn_roadmap() {
 				array( 'Šípky na čakanie', 0 ),
 			),
 		),
+		array(
+			'n'      => 8,
+			'title'  => 'Ochrana proti podvádzaniu – snímky obrazovky a vlastný model',
+			'status' => 'next',
+			'goal'   => 'Viacvrstvová ochrana: skóre podozrenia, skrytá kontrola klienta, pri podozrení snímanie obrazovky so súhlasom, kontrola vlastným modelom na čiary a galéria snímok pre admina. Zadanie: docs/ANTICHEAT-PLAN.md.',
+			'items'  => array(
+				array( 'Krok 1: hra skrytá z konzoly, okrúhla sila úderov, suspendácia a administrácia Podvádzanie (0.34.0 – 0.34.1)', 1 ),
+				array( 'Krok 2: skóre podozrenia hráča (presnosť podľa obtiažnosti úderov, okrúhla sila, kontroly klienta), pokles po čistých partiách, prahy', 0 ),
+				array( 'Krok 3: skrytá kontrola klienta za behu (výzva servera s nonce, hash funkcií hry, cudzie prvky nad hrou, telemetria mierenia)', 0 ),
+				array( 'Krok 4: dialóg pri podozrení – overenie anti-cheatom a súhlas so snímaním celej obrazovky, bez súhlasu len tréning', 0 ),
+				array( 'Krok 5: náhodné snímky obrazovky počas partie s vnútorným obrázkom hry, neverejné uloženie, mazanie po N dňoch', 0 ),
+				array( 'Krok 6: predkontrola rozdielu snímky a vnútorného obrázka na serveri', 0 ),
+				array( 'Krok 7: napojenie vlastného modelu na hľadanie čiar (adresa v nastaveniach)', 0 ),
+				array( 'Krok 8: generátor trénovacích snímok so čiarami a bez nich', 0 ),
+				array( 'Krok 9: administrácia Kontrola partií – galéria snímok z každej partie, verdikt modelu, potvrdenie alebo zamietnutie', 0 ),
+				array( 'Krok 10: čiary predikcie dráhy gúľ ako pomôcka v tréningu (zap/vyp)', 0 ),
+			),
+		),
 	);
 }
 
 /** Denník zmien (najnovšie hore). */
 function mysn_changelog() {
 	return array(
+		array( '0.34.2', '19. 11. 2026', 'Plán vývoja: etapa 8 Ochrana proti podvádzaniu – snímky obrazovky pri podozrení so súhlasom, skrytá kontrola klienta, vlastný model na čiary, galéria snímok pre admina, čiary predikcie v tréningu; zadanie v docs/ANTICHEAT-PLAN.md.' ),
 		array( '0.34.1', '19. 11. 2026', 'Ochrana proti AI hráčom: okrúhla sila, ktorá vzniká aj pri hre človeka (plný úder tágom so špicou, šmyk tága, najslabší úder), sa už nepovažuje za podozrivú.' ),
 		array( '0.34.0', '19. 11. 2026', 'Ochrana proti AI hráčom (krok 1): hra už nie je verejne dostupná z konzoly (len admin); server zisťuje údery, ktoré nevznikli rukou (okrúhla sila úderu) – hra o skóre ukáže 0 a nezapíše sa, partia sa preruší a zruší, hráč dostane suspendáciu 7 dní alebo do rozhodnutia správcu (nemôže vyzývať ani hrať ligu); administrácia Podvádzanie: prípady, rozhodnutia, prehľad hier o skóre a partií; admin pri výskume nie je blokovaný, súper vidí upozornenie a zápas sa nepočíta do ligy ani ELO.' ),
 		array( '0.33.1', '19. 11. 2026', 'Liga sa hrá denne 15:00 – 19:00 UTC (obrazovka v herni aj papier v kancelárii, s miestnym časom).' ),
