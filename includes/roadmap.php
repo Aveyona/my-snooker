@@ -180,6 +180,7 @@ function mysn_roadmap() {
 /** Denník zmien (najnovšie hore). */
 function mysn_changelog() {
 	return array(
+		array( '0.38.2', '19. 11. 2026', 'Štadión: realistický komentátor Rudo (Rocketbox, MIT) – celý v čiernom, dlhé biele vlasy po plecia a čierne zrkadlové okuliare; sedí na tribúne, otáča hlavu za bielou, tlieska, vstáva a chytá sa za hlavu ako doteraz. Model sa stiahne pri príchode na štadión (asi 1 MB).' ),
 		array( '0.38.1', '19. 11. 2026', 'Rozhodca chodí podľa nahratého pohybu človeka (Rocketbox, chôdza): ohýba kolená, došľapuje na päty, hýbe panvou a chrbtom; rýchlosť krokov podľa toho, ako rýchlo ide (pomaly k mierenej guli, rýchlejšie, keď uhýba). V stoji plynulo prejde do postoja.' ),
 		array( '0.38.0', '19. 11. 2026', 'Štadión: realistický rozhodca (model Microsoft Rocketbox, licencia MIT) v bielej košeli, čiernej veste a nohaviciach, s bielymi rukavicami a motýlikom. Hýbe sa ako doteraz (chôdza okolo stola, hlava sleduje bielu, stavanie gúľ); model sa stiahne až pri príchode na štadión (asi 0,75 MB), dovtedy je jednoduchá postava.' ),
 		array( '0.37.4', '19. 11. 2026', 'Štadión: stolík rozhodcu (s blokom F1 a pohárom) je posunutý úplne do rohu k mantinelom, aby nezavadzal pri stole. Na štadióne nefunguje F6 (dvere tam nie sú) a nápoveda ho neukazuje; divák mení miesto F6 ako doteraz.' ),

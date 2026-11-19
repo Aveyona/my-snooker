@@ -7,7 +7,7 @@
 import * as THREE from 'three';
 import { buildCueMesh } from './cues.js';
 import { buildFan, reactFans, updateFans, buildReferee } from './fans.js';
-import { realReferee } from './realPerson.js';
+import { realReferee, realSeated, rudoExtras } from './realPerson.js';
 import { Confetti } from './confetti.js';
 import { stadiumFloorTexture } from './stadiumFloors.js';
 import { lemonInGlass } from './lemon.js';
@@ -695,6 +695,7 @@ export function buildStadium(scene, quality, clock = 45) {
 	].map(([x, z, side]) => ({ x, z, side, s: perS(x, z) }));
 	const referee = buildReferee();
 	let refReal = null; // realistický model rozhodcu (0.38.0)
+	let rudoReal = null; // realistický Rudo (0.38.2)
 	let realPeople = true;
 	root.add(referee);
 	const refHead = referee.userData.head;
@@ -1435,8 +1436,10 @@ export function buildStadium(scene, quality, clock = 45) {
 				// 0.38.0: realistický rozhodca (načíta sa pri prvom príchode na štadión)
 				if (!refReal && realPeople) {
 					refReal = realReferee(referee);
+					rudoReal = realSeated(rudo.fan, 'rudo', 'rudo', rudoExtras); // 0.38.2: realistický Rudo
 				}
 				refReal && refReal.sync(dt);
+				rudoReal && rudoReal.sync(dt);
 			}
 		},
 		/** Realistické postavy (Nastavenia): vypnuté = jednoduché postavy (slabé zariadenia). */
