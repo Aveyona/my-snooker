@@ -1051,6 +1051,21 @@ export function buildStadium(scene, quality, clock = 45) {
 		root.add(fan.f);
 		fans.push(fan);
 	});
+	// 0.38.4: ďalší diváci-kulisy roztrúsení po tribúnach (rovnaký zoznam má server: MYSN_SEATS_DECOR)
+	const EXTRA = [39, 57, 65, 93, 96, 117, 123, 129, 131, 148, 150, 159, 170, 192, 217, 237, 243, 265, 270, 292, 297, 315, 316, 322, 325, 333, 344];
+	const SHIRTS = [0x2f6fd6, 0xc0392b, 0x2a9d8f, 0xe0a526, 0x6c4fb3, 0x3d3d44, 0xd35400, 0x27ae60, 0x8e44ad, 0xecf0f1];
+	EXTRA.forEach((idx, i) => {
+		const p = seatPlace(idx);
+		if (!p) {
+			return;
+		}
+		reserved.add(idx);
+		const fan = buildFan({ skin: [0xe0b48e, 0xc78e66, 0x8d5b3e, 0xd9a07a][i % 4], shirt: SHIRTS[i % SHIRTS.length], hair: [0x3a2414, 0x111111, 0x9a6a2a, 0x5a3a20][i % 4] }, false, i * 0.73);
+		fan.f.position.set(p.x, p.y, p.z);
+		fan.f.rotation.y = p.rot;
+		root.add(fan.f);
+		fans.push(fan);
+	});
 
 	// komentátor Rudo (0.13.1): celý v čiernom, čierne zrkadlové okuliare, dlhé biele vlasy; sedí sám v strede
 	// tretieho radu na strane rozhodcu (+z), stoličky vedľa neho sú pre online divákov obsadené
@@ -1103,6 +1118,17 @@ export function buildStadium(scene, quality, clock = 45) {
 		fans.push(fan);
 		return { fan, head: () => ({ x: rp.x, y: rp.y + 0.9, z: rp.z }) };
 	})();
+
+	// 0.38.4: realistické postavy – modely sa sťahujú na pozadí po jednej (startRealPeople v main.js), objavujú sa postupne
+	if (realPeople) {
+		refReal = realReferee(referee);
+		rudo.fan.real = realFan(rudo.fan, 'rudo', 'rudo', rudoExtras);
+		fans.forEach((f, i) => {
+			if (f !== rudo.fan && !f.real) {
+				f.real = realFan(f, SPECTATORS[i % SPECTATORS.length]);
+			}
+		});
+	}
 
 	// konfety: dážď zo stropu po zápase, dávky od divákov (kulisa aj online diváci, F7)
 	const confetti = new Confetti(root, FY);
@@ -1433,16 +1459,6 @@ export function buildStadium(scene, quality, clock = 45) {
 			}
 			if (root.visible) {
 				// 0.38.0: realistický rozhodca (načíta sa pri prvom príchode na štadión)
-				if (!refReal && realPeople) {
-					refReal = realReferee(referee);
-					rudo.fan.real = realFan(rudo.fan, 'rudo', 'rudo', rudoExtras); // 0.38.2: realistický Rudo
-					// 0.38.3: realistickí diváci-kulisy (každý iný model)
-					fans.forEach((f, i) => {
-						if (f !== rudo.fan && !f.real) {
-							f.real = realFan(f, SPECTATORS[i % SPECTATORS.length]);
-						}
-					});
-				}
 				refReal && refReal.sync(dt);
 			}
 		},

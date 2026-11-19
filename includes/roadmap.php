@@ -180,6 +180,7 @@ function mysn_roadmap() {
 /** Denník zmien (najnovšie hore). */
 function mysn_changelog() {
 	return array(
+		array( '0.38.4', '19. 11. 2026', 'Realistické postavy sa sťahujú na pozadí po načítaní stránky (po jednej, aby nebrzdili hru) a objavujú sa postupne. Na tribúnach je 27 ďalších divákov (spolu 32 a Rudo), desať rôznych postáv (päť mužov, päť žien); ich stoličky sú pre online divákov obsadené.' ),
 		array( '0.38.3', '19. 11. 2026', 'Realistickí diváci (Rocketbox, MIT): šesť postáv (traja muži, tri ženy) pre divákov-kulisy na štadióne aj online divákov (sediacich na štadióne, stojacich v herni); tlieskajú, vstávajú, chytajú sa za hlavu a sledujú bielu ako doteraz. Model sa stiahne raz a každý divák má svoju kópiu.' ),
 		array( '0.38.2', '19. 11. 2026', 'Štadión: realistický komentátor Rudo (Rocketbox, MIT) – celý v čiernom, dlhé biele vlasy po plecia a čierne zrkadlové okuliare; sedí na tribúne, otáča hlavu za bielou, tlieska, vstáva a chytá sa za hlavu ako doteraz. Model sa stiahne pri príchode na štadión (asi 1 MB).' ),
 		array( '0.38.1', '19. 11. 2026', 'Rozhodca chodí podľa nahratého pohybu človeka (Rocketbox, chôdza): ohýba kolená, došľapuje na päty, hýbe panvou a chrbtom; rýchlosť krokov podľa toho, ako rýchlo ide (pomaly k mierenej guli, rýchlejšie, keď uhýba). V stoji plynulo prejde do postoja.' ),

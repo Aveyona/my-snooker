@@ -23,6 +23,7 @@ import { Sound } from './audio.js';
 import { UI } from './ui.js';
 import { Game, fmtTime } from './match.js';
 import { Integrity } from './integrity.js';
+import { startRealPeople } from './realPerson.js';
 import { Online } from './online.js';
 import { rtcSelfTest } from './rtc.js';
 import { snookered } from './rules.js';
@@ -141,6 +142,13 @@ export function start(root, config = {}) {
 	const game = new Game();
 	const integrity = new Integrity(renderer.domElement, root); // kontrola férovej hry (0.36.0)
 	integrity.bind(game);
+	// 0.38.4: realistické postavy (rozhodca, Rudo, diváci) sa začnú sťahovať na pozadí, keď je stránka načítaná
+	const realGo = () => setTimeout(startRealPeople, 2500);
+	if (document.readyState === 'complete') {
+		realGo();
+	} else {
+		window.addEventListener('load', realGo, { once: true });
+	}
 	const user = config.user || null; // hrať môžu len prihlásení
 	game.respot = !!settings.respot;
 	// tréning: rozloženie gúľ a štatistika prežijú obnovenie stránky (F5); ukladá sa po údere a po zásahu hráča

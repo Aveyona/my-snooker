@@ -26,7 +26,52 @@ export function setRealPeople(on) {
 	realOn = !!on;
 }
 
-const cache = new Map(); // priečinok -> Promise({ fbx, url })
+const cache = new Map(); // priečinok -> Promise(fbx)
+
+// 0.38.4: postavy sa sťahujú na pozadí po jednej (aby nebrzdili hru ani načítanie stránky) a objavujú sa postupne
+let started = false;
+const queue = []; // čakajúce sťahovania (funkcie, ktoré vrátia Promise)
+let busy = false;
+const pump = () => {
+	if (!started || busy || !queue.length) {
+		return;
+	}
+	busy = true;
+	const job = queue.shift();
+	job().finally(() => {
+		busy = false;
+		setTimeout(pump, 150);
+	});
+};
+/** Spustí sťahovanie postáv (po načítaní stránky, keď hra beží). */
+export function startRealPeople() {
+	if (!started) {
+		started = true;
+		pump();
+	}
+}
+const applyQ = []; // výmena jednoduchej postavy za model: jedna za druhou (bez trhnutia hry)
+let applying = false;
+const applyNext = () => {
+	const fn = applyQ.shift();
+	if (!fn) {
+		applying = false;
+		return;
+	}
+	try {
+		fn();
+	} catch (e) {
+		// postava ostane jednoduchá
+	}
+	setTimeout(applyNext, 120);
+};
+const scheduleApply = (fn) => {
+	applyQ.push(fn);
+	if (!applying) {
+		applying = true;
+		setTimeout(applyNext, 0);
+	}
+};
 
 /**
  * Načíta model z assets/models/<dir>: <name>.fbx, body.jpg, head.jpg (a hair.png pre priehľadné vlasy).
@@ -43,6 +88,15 @@ function loadModel(dir, name, done) {
 		cache.set(
 			dir,
 			new Promise((resolve, reject) => {
+				queue.push(() => new Promise((done2) => {
+					const ok = (x) => {
+						resolve(x);
+						done2();
+					};
+					const bad = (e) => {
+						reject(e);
+						done2();
+					};
 				const T = {};
 				const get = (n) => {
 					if (!T[n]) {
@@ -73,17 +127,19 @@ function loadModel(dir, name, done) {
 							o.material = ms.length === 1 ? ms[0] : ms;
 						});
 						fbx.scale.setScalar(0.01); // centimetre
-						resolve(fbx);
+						ok(fbx);
 					},
 					undefined,
-					reject,
+					bad,
 				);
+				}));
+				pump();
 			}),
 		);
 	}
 	cache
 		.get(dir)
-		.then((fbx) => done(cloneSkinned(fbx), url))
+		.then((fbx) => scheduleApply(() => done(cloneSkinned(fbx), url)))
 		.catch(() => {});
 }
 
@@ -299,6 +355,11 @@ export function realFan(fan, dir, name = 'model', extra = null) {
 	let ready = null;
 	const root = fan.body;
 	loadModel(dir, name, (fbx) => {
+		fbx.traverse((o) => {
+			if (o.isMesh) {
+				o.castShadow = false; // diváci bez tieňov (výkon pri plnej tribúne)
+			}
+		});
 		root.add(fbx);
 		root.updateMatrixWorld(true);
 		const t0 = rigTools(root, fbx);
@@ -399,5 +460,5 @@ export function rudoExtras(holder) {
 	}
 }
 
-/** Modely divákov (assets/models/divak1 – divak6: traja muži, tri ženy). */
-export const SPECTATORS = ['divak1', 'divak2', 'divak3', 'divak4', 'divak5', 'divak6'];
+/** Modely divákov (assets/models/divak1 – divak10: päť mužov, päť žien). */
+export const SPECTATORS = ['divak1', 'divak2', 'divak3', 'divak4', 'divak5', 'divak6', 'divak7', 'divak8', 'divak9', 'divak10'];
