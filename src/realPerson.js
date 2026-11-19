@@ -408,7 +408,7 @@ export function realFan(fan, dir, name = 'model', extra = null) {
 		// (ohnutie v lakti sa dopočíta: dvojkĺbová IK), pri tlieskaní a reakciách ruky preberajú kĺby diváka.
 		const POSES = ['C', 'F', 'E']; // 0.38.9: vybrané Robom – ruky v lone, predklon s dlaňami medzi kolenami, skrížené ruky
 		const seed = Math.abs(Math.round((fan.phase || 0) * 1000)) + (dir.length * 7);
-		const pose0 = fan.standing ? 'stand' : POSES[seed % POSES.length];
+		const pose0 = fan.standing ? 'stand' : fan.pose || POSES[seed % POSES.length]; // fan.pose: póza určená na mieste
 		let pose = pose0;
 		const spread = 0.05 + ((seed >> 3) % 4) * 0.035; // kolená od seba
 		const leanOf = (p) => ({ G1: 0.5, G2: 0.55, G3: 0.4, G4: 0.5, G5: 0.42, G6: 0.25, F: 0.42, E: -0.04, C: 0.02, forward: 0.42, chin: 0.18, back: -0.12, cross: -0.05 }[p] ?? 0.03 * ((seed % 3) - 1));
@@ -546,6 +546,10 @@ export function realFan(fan, dir, name = 'model', extra = null) {
 					tgt[0].z = (hz + k0.z) / 2;
 					tgt[1].z = (hz + k1.z) / 2;
 					break;
+				case 'S': // ruky voľne vedľa tela, dlane na sedadle pri bokoch
+					tgt[0].set(hx - 0.2, hy - 0.07, hz + 0.06);
+					tgt[1].set(hx + 0.2, hy - 0.07, hz + 0.06);
+					break;
 				case 'B': // dlane na kolenách, lakte mierne do strán
 					tgt[0].copy(k0).add(v.set(0.0, 0.075, -0.03));
 					tgt[1].copy(k1).add(v.set(0.0, 0.075, -0.03));
@@ -594,6 +598,12 @@ export function realFan(fan, dir, name = 'model', extra = null) {
 			}
 			if (pose === 'chin') {
 				pol[0].set(-0.3, -1, 0.2);
+			} else if (pose === 'S') {
+				pol[0].set(-0.4, 0.1, -1);
+				pol[1].set(0.4, 0.1, -1);
+			} else if (pose === 'B') {
+				pol[0].set(-1, -0.3, -0.4);
+				pol[1].set(1, -0.3, -0.4);
 			} else if (pose === 'E') {
 				pol[0].set(-0.7, -0.5, 0.6);
 				pol[1].set(0.7, -0.5, 0.6);
