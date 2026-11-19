@@ -1247,6 +1247,7 @@ export function start(root, config = {}) {
 		setTimeout(() => {
 			venue = v;
 			const lg = v === 'league';
+			ui.setStadium(lg);
 			sceneShown = null; // viditeľnosť miestností nastaví sceneCull v najbližšom snímku
 			room.setRackHidden(lg);
 			if (lg) {
@@ -4586,6 +4587,9 @@ export function start(root, config = {}) {
 			if (lk === 'f6' && view === 'office') {
 				actions.officeWindow(); // v kancelárii F6 otvorí alebo zatvorí okno
 				return true;
+			}
+			if (lk === 'f6' && venue === 'league') {
+				return true; // 0.37.4: na štadióne dvere nie sú
 			}
 			if (lk === 'f6') {
 				// dvere herne: otvoriť alebo zatvoriť (so zvukom); otvorené dvere = partiu môžu sledovať iní (Pozerať hru)

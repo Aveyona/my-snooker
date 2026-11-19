@@ -2227,14 +2227,22 @@ export class UI {
 		this._hintText();
 	}
 
+	/** Na štadióne nie sú dvere (F6 sa v nápovede neukazuje). */
+	setStadium(on) {
+		this._stadium = !!on;
+		if (this.hint) {
+			this._hintText();
+		}
+	}
+
 	_hintText() {
 		const t = this._free
 			? 'Myš je voľná, kým držíš Ctrl. Po pustení sa vráti na tágo.'
 			: this._stroke
 			? 'Ruka drží tágo: myš k sebe odtiahne, dopredu vystrelí. Pustením ľavého tlačidla zrušíš.'
 			: this._lock
-				? `${this._cueName}: mier pohybom myši${this._cueFine ? ' (Shift jemne)' : ''}, ľavé tlačidlo drž a striel. F1 nápoveda, F2 tágá, F3 krieda, F4 skóre, F6 dvere, Tab zhora, Esc menu.`
-				: 'Klikni do hry, myš sa zachytí v okne. F1 nápoveda, F2 tágá, F3 krieda, F4 skóre, F6 dvere, Tab zhora.';
+				? `${this._cueName}: mier pohybom myši${this._cueFine ? ' (Shift jemne)' : ''}, ľavé tlačidlo drž a striel. F1 nápoveda, F2 tágá, F3 krieda, F4 skóre${this._stadium ? '' : ', F6 dvere'}, Tab zhora, Esc menu.`
+				: `Klikni do hry, myš sa zachytí v okne. F1 nápoveda, F2 tágá, F3 krieda, F4 skóre${this._stadium ? '' : ', F6 dvere'}, Tab zhora.`;
 		this.hint.textContent = t;
 		this.hint.classList.toggle('mysn-hint-on', !!(this._stroke || this._free));
 	}
