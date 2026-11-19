@@ -217,7 +217,7 @@ export function buildStadium(scene, quality, clock = 45) {
 	const fill = new THREE.HemisphereLight(0x6c7aa8, 0x07080b, 0.35);
 	root.add(fill);
 	for (const z of [-4.5, 4.5]) {
-		const s = new THREE.SpotLight(0xdfe8ff, 4.5, 14, Math.PI / 5, 0.7, 1.4); // 0.38.5: tribúny tlmenejšie ako stôl
+		const s = new THREE.SpotLight(0xdfe8ff, 9, 14, Math.PI / 5, 0.7, 1.4);
 		s.position.set(0, trussY, z);
 		s.target.position.set(0, FY + 1.5, z * 1.3);
 		root.add(s, s.target);
@@ -1046,9 +1046,9 @@ export function buildStadium(scene, quality, clock = 45) {
 	// ich stoličky sú pre online divákov vždy obsadené
 	const fans = [];
 	const decor = [
-		[-1.6, 1, { skin: 0xe0b48e, shirt: 0x2f6fd6, hair: 0x3a2414 }],
-		[0.4, 1, { skin: 0xc78e66, shirt: 0xc0392b, hair: 0x111111 }],
-		[2.0, 1, { skin: 0x8d5b3e, shirt: 0x2a9d8f, hair: 0x9a6a2a }],
+		[-0.4, 1, { skin: 0xe0b48e, shirt: 0x2f6fd6, hair: 0x3a2414 }], // 0.38.8: dvaja vedľa seba, tretí o stoličku ďalej
+		[0.0, 1, { skin: 0xc78e66, shirt: 0xc0392b, hair: 0x111111 }],
+		[0.8, 1, { skin: 0x8d5b3e, shirt: 0x2a9d8f, hair: 0x9a6a2a }],
 		[0.8, -1, { skin: 0xd9a07a, shirt: 0xe0a526, hair: 0x5a3a20 }],
 		[1.2, -1, { skin: 0xa8714f, shirt: 0x6c4fb3, hair: 0x222222 }],
 	];

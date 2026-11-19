@@ -116,6 +116,14 @@ function loadModel(dir, name, done) {
 				new FBXLoader(mgr).load(
 					url(name + '.fbx'),
 					(fbx) => {
+						// 0.38.8: model z 3ds Max má v sebe okolité svetlo (AmbientLight) – každá postava by presvetlila celú scénu
+						const lights = [];
+						fbx.traverse((o) => {
+							if (o.isLight) {
+								lights.push(o);
+							}
+						});
+						lights.forEach((l) => l.parent && l.parent.remove(l));
 						fbx.traverse((o) => {
 							if (!o.isMesh) {
 								return;
@@ -439,7 +447,7 @@ export function realFan(fan, dir, name = 'model', extra = null) {
 		};
 		const knee = (i) => (t.J.calf[i] ? t.relPos(t.J.calf[i].b) : new THREE.Vector3((i ? 1 : -1) * 0.1, 0.1, 0.45));
 		const tgt = [new THREE.Vector3(), new THREE.Vector3()];
-		const pol = pose === 'forward' ? [new THREE.Vector3(-0.6, -0.8, 0.2), new THREE.Vector3(0.6, -0.8, 0.2)] : [new THREE.Vector3(-1, -0.4, -0.5), new THREE.Vector3(1, -0.4, -0.5)];
+		const pol = pose === 'cross' ? [new THREE.Vector3(-0.3, -1, 0.45), new THREE.Vector3(0.3, -1, 0.45)] : pose === 'forward' ? [new THREE.Vector3(-0.6, -0.8, 0.2), new THREE.Vector3(0.6, -0.8, 0.2)] : [new THREE.Vector3(-1, -0.4, -0.5), new THREE.Vector3(1, -0.4, -0.5)];
 		ready = (dt = 1 / 60) => {
 			// nohy: v sede stehná dopredu, lýtka dolu; pri vstávaní (telo vyššie o 0,25 m) sa narovnajú
 			const up = fan.standing ? 1 : Math.max(0, Math.min(1, (root.position.y - fan.baseBody) / 0.25));
@@ -460,9 +468,9 @@ export function realFan(fan, dir, name = 'model', extra = null) {
 			const k1 = knee(1);
 			const chest = t.headB ? t.relPos(t.headB).add(v.set(0, -0.3, 0.12)) : v.set(0, 0.45, 0.12);
 			switch (pose) {
-				case 'cross': // prekrížené ruky na hrudi
-					tgt[0].set(0.1, chest.y - 0.02, chest.z + 0.03);
-					tgt[1].set(-0.1, chest.y - 0.06, chest.z + 0.06);
+				case 'cross': // prekrížené ruky: dlane na opačných ramenách, lakte dolu pri tele
+					tgt[0].set(0.15, chest.y + 0.02, chest.z - 0.03);
+					tgt[1].set(-0.15, chest.y - 0.03, chest.z - 0.01);
 					break;
 				case 'forward': // predklon, lakte na stehnách, dlane spolu medzi kolenami
 					tgt[0].set(-0.03, (k0.y + k1.y) / 2 - 0.02, (k0.z + k1.z) / 2 - 0.04);
