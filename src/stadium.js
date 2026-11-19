@@ -353,24 +353,26 @@ export function buildStadium(scene, quality, clock = 45) {
 		spotHead.quaternion.copy(spotBeam.quaternion);
 	};
 
-	// stolík rozhodcu a stoličky hráčov
+	// stolík rozhodcu (0.37.4: úplne v rohu pri mantineloch, aby nezavadzal pri stole) a stoličky hráčov
+	const RTX = 3.65;
+	const RTZ = BZ - 0.3;
 	const wood = new THREE.MeshStandardMaterial({ color: 0x2a1508, roughness: 0.4 });
-	add(new THREE.BoxGeometry(0.9, 0.04, 0.45), wood, 2.6, FY + 0.74, BZ - 0.55);
+	add(new THREE.BoxGeometry(0.9, 0.04, 0.45), wood, RTX, FY + 0.74, RTZ);
 	for (const sx of [-1, 1]) {
-		add(new THREE.BoxGeometry(0.04, 0.72, 0.4), wood, 2.6 + sx * 0.42, FY + 0.36, BZ - 0.55);
+		add(new THREE.BoxGeometry(0.04, 0.72, 0.4), wood, RTX + sx * 0.42, FY + 0.36, RTZ);
 	}
 	const glass = new THREE.MeshStandardMaterial({ color: 0xe8f4ff, transparent: true, opacity: 0.25, roughness: 0.05, depthWrite: false });
 	// jeden pohár s vodou na kraji stolíka (hráči majú vodu na svojich stolíkoch pri kreslách)
 	const water = new THREE.MeshStandardMaterial({ color: 0x9fd4ff, transparent: true, opacity: 0.55, roughness: 0.05, metalness: 0 });
-	for (const gx of [2.96]) {
-		add(new THREE.CylinderGeometry(0.035, 0.03, 0.12, 20, 1, true), glass, gx, FY + 0.82, BZ - 0.55).castShadow = false;
-		add(new THREE.CylinderGeometry(0.031, 0.029, 0.075, 20), water, gx, FY + 0.76 + 0.04, BZ - 0.55).castShadow = false;
+	for (const gx of [RTX + 0.36]) {
+		add(new THREE.CylinderGeometry(0.035, 0.03, 0.12, 20, 1, true), glass, gx, FY + 0.82, RTZ).castShadow = false;
+		add(new THREE.CylinderGeometry(0.031, 0.029, 0.075, 20), water, gx, FY + 0.76 + 0.04, RTZ).castShadow = false;
 		const lem = lemonInGlass(0.031, FY + 0.8375, FY + 0.88);
-		lem.position.set(gx, 0, BZ - 0.55);
+		lem.position.set(gx, 0, RTZ);
 		root.add(lem);
 	}
 	// F1: blok (notes so špirálou) s klávesmi a ovládaním, leží na stolíku medzi pohármi (text čitateľný od stola)
-	const PAPER = { x: 2.6, z: BZ - 0.55, w: 0.3, h: 0.4 };
+	const PAPER = { x: RTX, z: RTZ, w: 0.3, h: 0.4 };
 	// 0.27.0: blok má viac strán (listuje sa šípkami ← →): klávesy, správanie hráča, situácie v hre
 	const PAD_PAGES = 3;
 	let padPage = 0;
@@ -1208,7 +1210,7 @@ export function buildStadium(scene, quality, clock = 45) {
 		refPos: () => ({ x: referee.position.x, y: FY + 1.6, z: referee.position.z }),
 		/** Pohľady na štadióne: F4 skóre = veľká obrazovka nad tribúnou za kratšou stranou. */
 		views: {
-			board: { pos: new THREE.Vector3(2.6, FY + 1.28, BZ - 0.55 - 0.16), look: new THREE.Vector3(2.6, FY + 0.76, BZ - 0.55 + 0.005) }, // F1 návod na stolíku
+			board: { pos: new THREE.Vector3(RTX, FY + 1.28, RTZ - 0.16), look: new THREE.Vector3(RTX, FY + 0.76, RTZ + 0.005) }, // F1 návod na stolíku
 			chair0: sideViews[0].chair, // F7 hráč 1
 			chair1: sideViews[1].chair, // F7 hráč 2
 			rack0: sideViews[0].rack, // F2 stojan hráča 1

@@ -180,6 +180,7 @@ function mysn_roadmap() {
 /** Denník zmien (najnovšie hore). */
 function mysn_changelog() {
 	return array(
+		array( '0.37.4', '19. 11. 2026', 'Štadión: stolík rozhodcu (s blokom F1 a pohárom) je posunutý úplne do rohu k mantinelom, aby nezavadzal pri stole.' ),
 		array( '0.37.3', '19. 11. 2026', 'Štadión: pódiá hráčov (kreslo, stolík, stojan) sú posunuté za mantinel do rohov tribún k divákom; stupne tribún sú len pod stoličkami, rohy sú voľné.' ),
 		array( '0.37.2', '19. 11. 2026', 'Štadión: pohľad z kresla (F7) ešte o 15 cm vyššie.' ),
 		array( '0.37.1', '19. 11. 2026', 'Štadión: pohľad z kresla (F7) je o 30 cm vyššie.' ),
