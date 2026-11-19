@@ -180,6 +180,7 @@ function mysn_roadmap() {
 /** Denník zmien (najnovšie hore). */
 function mysn_changelog() {
 	return array(
+		array( '0.39.0', '19. 11. 2026', 'Turnajové jamky (návrh D) na všetkých stoloch: otvor v ráme je presne taký ako diera (54 mm v rohu, 52 mm v strede), bez širokej svetlej obruby, len tenký tmavý lem; mantinely končia väčším oblúkom do jamky. Sieťka, padanie gúľ aj fyzika ostávajú.' ),
 		array( '0.38.13', '19. 11. 2026', 'Diváci majú uvoľnené ruky: prsty sú mierne pokrčené a pri dlaniach na kolenách obopínajú koleno (predtým rovné, stuhnuté prsty).' ),
 		array( '0.38.12', '19. 11. 2026', 'Diváci: dlane na kolenách (aj na stehnách a sedadle) ležia naplocho s prstami cez koleno, už nezasahujú do nohavíc.' ),
 		array( '0.38.11', '19. 11. 2026', 'Štadión: dvaja diváci vedľa seba už nemajú ruky cez seba – žena má ruky voľne vedľa tela na sedadle, muž dlane na kolenách.' ),

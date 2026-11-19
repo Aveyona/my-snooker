@@ -118,11 +118,14 @@ export const POCKET_STYLES = {
 	tight: { cutCorner: 0.058, cutMid: 0.054, rimR: 0.009, rim: 0xd8b47e, rimRough: 0.5, rimMetal: 0.05, liner: null },
 	black: { cutCorner: 0.062, cutMid: 0.058, rimR: 0.012, rim: 0x1a1a1a, rimRough: 0.45, rimMetal: 0.1, liner: 0x161616 },
 	wide: { cutCorner: 0.06, cutMid: 0.056, rimR: 0.016, rim: 0xe2c595, rimRough: 0.5, rimMetal: 0.05, liner: 0xe8d2a8 },
+	// 0.39.0 (návrh D): turnajové jamky – otvor presne ako diera (fyzika 54 / 52 mm), bez širokej obruby,
+	// mantinely končia väčším oblúkom (čeľuste), tmavý tenký lem; sieťka a padanie gúľ ako doteraz
+	tour: { cutCorner: 0.054, cutMid: 0.052, rimR: 0.0045, rim: 0x151515, rimRough: 0.5, rimMetal: 0.1, liner: 0x141414, round: 0.03, holeIn: 0.003 },
 };
-const FELT_POCKETS = { blue: 'tight', green: 'black', red: 'wide' };
+const FELT_POCKETS = { blue: 'tour', green: 'tour', red: 'tour' };
 
 /** Maska súkna: biela = súkno, čierna = otvor jamky (cez otvor vidieť do košíka). */
-function pocketHoles(cc = 0.071, cm = 0.065) {
+function pocketHoles(cc = 0.071, cm = 0.065, inset = 0.008) {
 	const w = 1024;
 	const h = Math.round((w * (W + 2 * RAIL)) / (L + 2 * RAIL));
 	const c = document.createElement('canvas');
@@ -135,7 +138,7 @@ function pocketHoles(cc = 0.071, cm = 0.065) {
 	g.fillStyle = '#000000';
 	for (const p of POCKETS) {
 		g.beginPath();
-		g.arc((p.x + L / 2 + RAIL) * sx, (p.z + W / 2 + RAIL) * sx, ((p.corner ? cc : cm) - 0.008) * sx, 0, Math.PI * 2);
+		g.arc((p.x + L / 2 + RAIL) * sx, (p.z + W / 2 + RAIL) * sx, ((p.corner ? cc : cm) - inset) * sx, 0, Math.PI * 2);
 		g.fill();
 	}
 	return new THREE.CanvasTexture(c);
@@ -321,7 +324,7 @@ export function buildTable(renderer) {
 			const b = { x: sx * hx, z: hz - CG };
 			cushions.push({ long: false, a, b, ab: jawEnd(a.x, a.z, sx * 1, -1), bb: jawEnd(b.x, b.z, sx * 1, 1) });
 		}
-		const ROUND = 0.016; // polomer zaoblenia nosa mantinelu pri jamke
+		const ROUND = PK.round || 0.016; // polomer zaoblenia nosa mantinelu pri jamke
 		// výrezy jamiek v ráme (viac dreva okolo jamky, užší otvor): na ich okraji končia aj mantinely
 		const CUTS = POCKETS.map((p) => ({ x: p.x, z: p.z, r: p.corner ? PK.cutCorner : PK.cutMid, corner: p.corner }));
 		// Prierez mantinelu ako na skutočnom stole (d = vzdialenosť od nosa dozadu, y = výška): spodok je
@@ -558,7 +561,7 @@ export function buildTable(renderer) {
 			rim.castShadow = true;
 			sg.add(rim);
 		}
-		sg.userData.holes = pocketHoles(PK.cutCorner, PK.cutMid);
+		sg.userData.holes = pocketHoles(PK.cutCorner, PK.cutMid, PK.holeIn ?? 0.008);
 		return sg;
 	};
 	const sets = {};
