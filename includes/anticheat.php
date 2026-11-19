@@ -60,6 +60,47 @@ function mysn_ac_eval_powers( $powers ) {
 	);
 }
 
+/** Hra v prehliadači je od verzie 0.36.0 (posiela údaje o ruke a prekryve pri každom úderi). */
+function mysn_ac_newclient() {
+	$v = isset( $_SERVER['HTTP_X_MYSN_V'] ) ? sanitize_text_field( wp_unslash( $_SERVER['HTTP_X_MYSN_V'] ) ) : '';
+	return '' !== $v && version_compare( $v, '0.36.0', '>=' );
+}
+
+/**
+ * Kontrola klienta (0.36.0): údaje k úderom (null = úder ich nemá). Úder bez nich z novej hry = zavolaný priamo
+ * z kódu; ov = cudzie plátno nad hrou počas mierenia (čiary predikcie); tp = prepísané funkcie hry.
+ * Podvod: aspoň 3 údery bez ruky, 2 údery s prekryvom alebo 1 s prepísanou hrou.
+ */
+function mysn_ac_tm_eval( $tms, $training = false ) {
+	$c = array( 'n' => 0, 'nohand' => 0, 'ov' => 0, 'tp' => 0 );
+	foreach ( (array) $tms as $t ) {
+		++$c['n'];
+		if ( ! is_array( $t ) ) {
+			$c['nohand'] += 'X' === $t ? 1 : 0; // X = úder z novej hry bez údajov; null = staršia hra (nehodnotí sa)
+			continue;
+		}
+		if ( ! $training && ! empty( $t['ov'] ) ) {
+			++$c['ov'];
+		}
+		if ( ! empty( $t['tp'] ) ) {
+			++$c['tp'];
+		}
+	}
+	$why = array();
+	if ( $c['nohand'] >= 3 ) {
+		$why[] = sprintf( '%d úderov bez ťahu tága (zavolané priamo z kódu)', $c['nohand'] );
+	}
+	if ( $c['ov'] >= 2 ) {
+		$why[] = sprintf( 'cudzie plátno nad hrou (čiary predikcie) pri %d úderoch', $c['ov'] );
+	}
+	if ( $c['tp'] >= 1 ) {
+		$why[] = 'prepísané funkcie hry';
+	}
+	$c['cheat'] = (bool) $why;
+	$c['why']   = $why ? 'Kontrola hry: ' . implode( ', ', $why ) . '.' : '';
+	return $c;
+}
+
 /** Do kedy je hráč suspendovaný (0 = nie je). */
 function mysn_susp_until( $uid ) {
 	$t = (int) get_user_meta( (int) $uid, 'mysn_susp', true );
@@ -109,12 +150,42 @@ function mysn_ac_solo( $uid, $log, $claim ) {
 			)
 		);
 	}
-	if ( ! $ev['cheat'] && ! $susp ) {
+	$tv = array( 'cheat' => false );
+	if ( is_array( $log ) ) {
+		// frame rozohraný v staršej hre: údery pred prvým s údajmi sa nehodnotia; frame bez údajov z novej hry = program
+		$tms  = array();
+		$seen = false;
+		$new  = mysn_ac_newclient();
+		foreach ( $log as $e ) {
+			$t = is_array( $e ) && isset( $e['t'] ) && is_array( $e['t'] ) ? $e['t'] : null;
+			if ( $t ) {
+				$seen = true;
+			}
+			$tms[] = $t;
+		}
+		if ( $new ) {
+			$first = $seen ? null : 0;
+			foreach ( $tms as $i => $t ) {
+				if ( is_array( $t ) && null === $first ) {
+					$first = $i;
+				}
+				if ( null === $t && null !== $first && $i >= $first ) {
+					$tms[ $i ] = 'X';
+				}
+			}
+		}
+		$tv = mysn_ac_tm_eval( $tms );
+	}
+	if ( ! $ev['cheat'] && ! $tv['cheat'] && ! $susp ) {
 		return null;
 	}
 	global $wpdb;
 	$t   = mysn_table( 'scores' );
-	$why = $ev['cheat'] ? sprintf( 'Okrúhla sila úderu: %d z %d úderov (%d %%).', $ev['round'], $ev['n'], round( 100 * $ev['share'] ) ) : 'Hráč je suspendovaný.';
+	$why = $ev['cheat'] ? sprintf( 'Okrúhla sila úderu: %d z %d úderov (%d %%).', $ev['round'], $ev['n'], round( 100 * $ev['share'] ) ) : ( $tv['cheat'] ? $tv['why'] : 'Hráč je suspendovaný.' );
+	if ( $tv['cheat'] ) {
+		$ev = array_merge( $ev, array( 'tm' => $tv ) );
+		$ev['cheat'] = true;
+	}
 	$wpdb->insert(
 		$t,
 		array(
@@ -155,6 +226,17 @@ function mysn_ac_solo( $uid, $log, $claim ) {
  * (admin: neruší sa, zápas sa nepočíta do ligy a súper vidí upozornenie). Vráti true, keď partiu zrušil.
  */
 function mysn_ac_match_shot( $m, $uid, $shot ) {
+	// kontrola klienta (0.36.0): ruka, prekryv, prepísaná hra
+	$tk  = 'mysn_ac_t' . (int) $m['id'] . '_' . (int) $uid;
+	$tms = get_transient( $tk );
+	$tms = is_array( $tms ) ? $tms : array();
+	$tms[] = isset( $shot['tm'] ) && is_array( $shot['tm'] ) ? array_intersect_key( $shot['tm'], array_flip( array( 'k', 'n', 'ov', 'tp', 'aj', 'at' ) ) ) : ( mysn_ac_newclient() ? 'X' : null );
+	set_transient( $tk, array_slice( $tms, -60 ), DAY_IN_SECONDS );
+	$tv = mysn_ac_tm_eval( $tms, 'training' === ( $m['kind'] ?? '' ) );
+	if ( $tv['cheat'] && mysn_ac_match_cheat( $m, $uid, $tv['why'], $tv ) ) {
+		delete_transient( $tk );
+		return true;
+	}
 	$key = 'mysn_ac_m' . (int) $m['id'] . '_' . (int) $uid;
 	$pw  = get_transient( $key );
 	$pw  = is_array( $pw ) ? $pw : array();
@@ -372,7 +454,7 @@ function mysn_admin_cheat() {
 	if ( isset( $_GET['ok'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification
 		echo '<div class="notice notice-success is-dismissible"><p>Uložené.</p></div>';
 	}
-	echo '<p>Hra zisťuje údery, ktoré nevznikli rukou hráča: okrúhla sila úderu a presnosť zahrania ako program (stred rozsahu, v ktorom guľa spadne). Hra o skóre: hráč vidí 0 bodov, skóre sa nezapíše. Partia: preruší sa a zruší. Hráč dostane dočasnú suspendáciu ' . (int) MYSN_SUSP_DAYS . ' dní (nemôže vyzývať ani hrať ligu) alebo kým nerozhodneš. Admin sa neblokuje (výskum), súper vidí upozornenie a zápas sa nepočíta do ligy.</p>';
+	echo '<p>Hra zisťuje údery, ktoré nevznikli rukou hráča: okrúhla sila úderu, presnosť zahrania ako program (stred rozsahu, v ktorom guľa spadne) a kontrola hry v prehliadači (úder bez ťahu tága, cudzie plátno s čiarami nad hrou, prepísané funkcie hry). Hra o skóre: hráč vidí 0 bodov, skóre sa nezapíše. Partia: preruší sa a zruší. Hráč dostane dočasnú suspendáciu ' . (int) MYSN_SUSP_DAYS . ' dní (nemôže vyzývať ani hrať ligu) alebo kým nerozhodneš. Admin sa neblokuje (výskum), súper vidí upozornenie a zápas sa nepočíta do ligy.</p>';
 	// filter
 	$tabs = array( 'open' => 'Na rozhodnutie', 'all' => 'Všetky', 'confirmed' => 'Potvrdené', 'banned' => 'Zablokovaní', 'cleared' => 'Zrušené podozrenie', 'research' => 'Výskum (admin)' );
 	echo '<p>';

@@ -16,6 +16,7 @@ export class Net {
 	constructor(cfg) {
 		this.base = cfg.restUrl || '/wp-json/my-snooker/v1/';
 		this.nonce = cfg.nonce || '';
+		this.ver = cfg.version || '';
 		this.down = false; // posledná požiadavka zlyhala (výpadok spojenia)
 	}
 
@@ -26,7 +27,7 @@ export class Net {
 				method,
 				credentials: 'same-origin',
 				cache: 'no-store',
-				headers: { 'Content-Type': 'application/json', 'X-WP-Nonce': this.nonce },
+				headers: { 'Content-Type': 'application/json', 'X-WP-Nonce': this.nonce, 'X-Mysn-V': this.ver },
 				body: body ? JSON.stringify(body) : undefined,
 			});
 		} catch (e) {

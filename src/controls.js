@@ -427,6 +427,7 @@ export class Controls {
 					const sp = Math.max(0, Math.min(1, this.strokeSpeed()));
 					if (fwd && sp > 0.03 && this.strokePull < 0.6) {
 						this.endStroke();
+						this.lastStroke = { k: 't', n: this._nmv | 0 };
 						this.hooks.shoot(sp);
 					} else {
 						this.endStroke();
@@ -611,6 +612,7 @@ export class Controls {
 	}
 
 	startStroke() {
+		this._nmv = 0; // pohyby ruky počas ťahu (kontrola férovej hry)
 		if (!this.game.canShoot()) {
 			return;
 		}
@@ -646,6 +648,7 @@ export class Controls {
 		}
 		const now = performance.now();
 		const prev = this.strokePull;
+		this._nmv = (this._nmv || 0) + 1;
 		const ss = this.touchStroke ? this.touchStrokeSens || 1 : this.strokeSens || 1; // šúpatko Ťahanie tága (myš) alebo Ťahanie tága prstom
 		this.strokePull = Math.max(-0.02, Math.min(1, prev + (dy * ss) / this.strokePx));
 		this._max = Math.max(this._max, this.strokePull);
@@ -657,6 +660,7 @@ export class Controls {
 		this.power = Math.max(0, Math.min(1, sp));
 		if (this.strokePull <= 0.004 && prev > 0.004 && this._max > 0.02 && dy < 0) {
 			const p = Math.max(0.03, Math.min(1, sp));
+			this.lastStroke = { k: this.touchStroke ? 't' : 'm', n: this._nmv | 0 };
 			this.endStroke();
 			this.hooks.shoot(p);
 		}
@@ -764,6 +768,7 @@ export class Controls {
 
 	/** Ukazovateľ sily (volá rozhranie). */
 	setPower(p, charging) {
+		this._nbar = charging ? (this._nbar || 0) + 1 : this._nbar; // pohyby po ukazovateli sily
 		this.power = Math.max(0, Math.min(1, p));
 		this.charging = charging;
 	}
@@ -773,6 +778,8 @@ export class Controls {
 		this.charging = false;
 		this.power = 0;
 		if (p > 0.02) {
+			this.lastStroke = { k: 'b', n: this._nbar | 0 };
+			this._nbar = 0;
 			this.hooks.shoot(p);
 		}
 	}

@@ -22,6 +22,7 @@ import { Controls } from './controls.js';
 import { Sound } from './audio.js';
 import { UI } from './ui.js';
 import { Game, fmtTime } from './match.js';
+import { Integrity } from './integrity.js';
 import { Online } from './online.js';
 import { rtcSelfTest } from './rtc.js';
 import { snookered } from './rules.js';
@@ -138,6 +139,8 @@ export function start(root, config = {}) {
 	scene.add(table.group);
 
 	const game = new Game();
+	const integrity = new Integrity(renderer.domElement, root); // kontrola férovej hry (0.36.0)
+	integrity.bind(game);
 	const user = config.user || null; // hrať môžu len prihlásení
 	game.respot = !!settings.respot;
 	// tréning: rozloženie gúľ a štatistika prežijú obnovenie stránky (F5); ukladá sa po údere a po zásahu hráča
@@ -2566,6 +2569,11 @@ export function start(root, config = {}) {
 			top = JUMP_TOP + 0.01;
 		}
 		const achPre = achBefore(); // úspechy: stav pred úderom (skóre, guľa na rade, zasnookrovanie)
+		if (controls.lastStroke) {
+			integrity.setStroke(controls.lastStroke.k, controls.lastStroke.n);
+			controls.lastStroke = null;
+		}
+		game._tm = integrity.take(); // údaje k úderu pre server (ruka, prekryv, mierenie)
 		const shot = game.shoot(power, side, top, elev);
 		if (!shot) {
 			game.dir = dir0;
@@ -6196,6 +6204,7 @@ export function start(root, config = {}) {
 		const dt = Math.min(0.05, (now - last) / 1000);
 		last = now;
 		controls.update(dt);
+		integrity.frame(game.dir, game.state === 'aim' && !game.spectating);
 		sound.setListener(rig.camera); // poslucháč = kamera (3D zvuk)
 		sound.setRoom(view === 'office' ? 'office' : venue === 'league' ? 'stadium' : 'herna');
 		// napätie: na štadióne pri rozhodujúcom údere (na stole už len čierna), kým sa mieri

@@ -261,6 +261,14 @@ export class Game extends Training {
 		}
 		// hra o skóre: vstupy úderu a polohy gúľ pred ním (server frame prehrá a overí výsledok)
 		const rec = this.solo && !this.match && Array.isArray(this.solo.log) ? { s: elev > 0 ? [this.dir, power, side, top, c.p.x, c.p.z, elev] : [this.dir, power, side, top, c.p.x, c.p.z], b: this.balls.map((b) => [b.p.x, b.p.z, b.on ? 1 : 0]) } : null;
+		if (this._tm) {
+			// kontrola férovej hry (0.36.0): ruka, prekryv, mierenie; úder zavolaný priamo z kódu ich nemá
+			shot.tm = this._tm;
+			if (rec) {
+				rec.t = this._tm;
+			}
+			this._tm = null;
+		}
 		if (!super.shoot(power, side, top, elev)) {
 			return false;
 		}
