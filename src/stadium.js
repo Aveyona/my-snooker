@@ -1050,7 +1050,7 @@ export function buildStadium(scene, quality, clock = 45) {
 		[0.0, 1, { skin: 0xc78e66, shirt: 0xc0392b, hair: 0x111111 }, 'S'], // ruky vedľa tela
 		[0.8, 1, { skin: 0x8d5b3e, shirt: 0x2a9d8f, hair: 0x9a6a2a }],
 		[0.8, -1, { skin: 0xd9a07a, shirt: 0xe0a526, hair: 0x5a3a20 }],
-		[1.2, -1, { skin: 0xa8714f, shirt: 0x6c4fb3, hair: 0x222222 }],
+		[1.2, -1, { skin: 0xa8714f, shirt: 0x6c4fb3, hair: 0x222222 }, 'S'], // 0.39.1: ruky vedľa tela
 	];
 	const reserved = new Set();
 	decor.forEach(([x, side, colors, pose], i) => {

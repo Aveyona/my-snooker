@@ -140,7 +140,9 @@ function loadModel(dir, name, done) {
 								const n = (mt.name || '').toLowerCase();
 								if (n.includes('opacity')) {
 									// pramene vlasov, obočie, mihalnice (priehľadné)
-									return new THREE.MeshStandardMaterial({ map: get('hair.png'), transparent: true, alphaTest: 0.35, depthWrite: false, side: THREE.DoubleSide, roughness: 0.8 });
+									const hm = new THREE.MeshStandardMaterial({ map: get('hair.png'), transparent: true, alphaTest: 0.35, depthWrite: false, side: THREE.DoubleSide, roughness: 0.8 });
+									hm.name = 'opacity';
+									return hm;
 								}
 								// 0.38.5: normálové mapy (záhyby látky, tvár) – svetlá štadióna sa odrážajú prirodzene
 								const hd = n.includes('head');
@@ -148,6 +150,9 @@ function loadModel(dir, name, done) {
 							});
 							o.material = ms.length === 1 ? ms[0] : ms;
 						});
+						if (dir === 'divak3') {
+							takePonytail(fbx); // 0.39.1: chvost vlasov dostane Rudo, divákovi ostanú krátke vlasy
+						}
 						fbx.scale.setScalar(0.01); // centimetre
 						ok(fbx);
 					},
@@ -163,6 +168,147 @@ function loadModel(dir, name, done) {
 		.get(dir)
 		.then((fbx) => scheduleApply(() => done(cloneSkinned(fbx), url)))
 		.catch(() => {});
+}
+
+const ponytails = new Map(); // geometria chvosta vlasov (s kostrou zdrojového modelu)
+
+/**
+ * 0.39.1: z modelu vyberie chvost vlasov (trojuholníky hlavy a prameňov za hlavou pod temenom), uloží ich
+ * ako samostatnú geometriu a v modeli ich zruší (zhodí do jedného bodu).
+ */
+function takePonytail(fbx) {
+	fbx.updateMatrixWorld(true);
+	let sm = null;
+	fbx.traverse((o) => {
+		if (o.isSkinnedMesh && !sm) {
+			sm = o;
+		}
+	});
+	const hb = fbx.getObjectByName('Bip01_Head');
+	if (!sm || !hb || sm.geometry.index) {
+		return;
+	}
+	const head = hb.getWorldPosition(new THREE.Vector3()); // svet modelu (3ds Max má inú os hore než mesh)
+	const headL = sm.worldToLocal(head.clone());
+	const geo = sm.geometry;
+	const pos = geo.attributes.position;
+	const parts = [[], []]; // [hlava (textúra hlavy), pramene (priehľadné)]
+	const c = new THREE.Vector3();
+	const q = new THREE.Vector3();
+	for (const g of geo.groups) {
+		if (g.materialIndex === 0) {
+			continue; // telo
+		}
+		for (let i = g.start; i < g.start + g.count; i += 3) {
+			c.set(0, 0, 0);
+			for (let k = 0; k < 3; k++) {
+				c.add(q.fromBufferAttribute(pos, i + k).applyMatrix4(sm.matrixWorld));
+			}
+			c.multiplyScalar(1 / 3);
+			if (c.z < head.z - 5 && c.y < head.y + 4) {
+				parts[g.materialIndex === 1 ? 0 : 1].push(i);
+			}
+		}
+	}
+	if (!parts[0].length && !parts[1].length) {
+		return;
+	}
+	const out = new THREE.BufferGeometry();
+	const names = Object.keys(geo.attributes);
+	const n = (parts[0].length + parts[1].length) * 3;
+	for (const k of names) {
+		const src = geo.attributes[k];
+		out.setAttribute(k, new THREE.BufferAttribute(new src.array.constructor(n * src.itemSize), src.itemSize, src.normalized));
+	}
+	let w = 0;
+	parts.forEach((list, pi) => {
+		const start = w;
+		for (const i of list) {
+			for (let k = 0; k < 3; k++) {
+				for (const nm of names) {
+					const s2 = geo.attributes[nm];
+					const d = out.attributes[nm];
+					for (let e = 0; e < s2.itemSize; e++) {
+						d.array[w * s2.itemSize + e] = s2.array[(i + k) * s2.itemSize + e];
+					}
+				}
+				w++;
+			}
+			// v modeli trojuholník zrušiť
+			for (let k = 0; k < 3; k++) {
+				pos.setXYZ(i + k, headL.x, headL.y, headL.z);
+			}
+		}
+		out.addGroup(start, w - start, pi);
+	});
+	pos.needsUpdate = true;
+	ponytails.set('divak3', { geo: out, bones: sm.skeleton.bones.map((b) => b.name), inv: sm.skeleton.boneInverses.map((m) => m.clone()), bind: sm.bindMatrix.clone() });
+}
+
+let whiteHair = null;
+/** Biele vlasy (pramene) pre chvost Ruda: textúra kreslená v hre. */
+function whiteHairTex() {
+	if (!whiteHair) {
+		const c = document.createElement('canvas');
+		c.width = c.height = 256;
+		const g = c.getContext('2d');
+		g.fillStyle = '#d9d8d2';
+		g.fillRect(0, 0, 256, 256);
+		for (let i = 0; i < 2500; i++) {
+			const x = Math.random() * 256;
+			const y = Math.random() * 256;
+			const v = 170 + Math.floor(Math.random() * 85);
+			g.strokeStyle = `rgba(${v},${v},${v - 4},0.5)`;
+			g.lineWidth = 0.8;
+			g.beginPath();
+			g.moveTo(x, y);
+			g.lineTo(x + (Math.random() - 0.5) * 6, y + 14 + Math.random() * 20);
+			g.stroke();
+		}
+		whiteHair = new THREE.CanvasTexture(c);
+		whiteHair.colorSpace = THREE.SRGBColorSpace;
+	}
+	return whiteHair;
+}
+
+/** 0.39.1: chvost vlasov z modelu fromDir na postavu fbx (rovnaká kostra Bip01), biely (textúry z toDir). */
+function transplantHair(fbx, fromDir, toDir) {
+	const base = assetsBase();
+	if (!base) {
+		return;
+	}
+	loadModel(fromDir, 'model', () => {
+		const pt = ponytails.get(fromDir);
+		let dst = null;
+		fbx.traverse((o) => {
+			if (o.isSkinnedMesh && !dst) {
+				dst = o;
+			}
+		});
+		if (!pt || !dst) {
+			return;
+		}
+		const byName = {};
+		dst.skeleton.bones.forEach((b) => (byName[b.name] = b));
+		const sk = new THREE.Skeleton(
+			pt.bones.map((nm) => byName[nm] || dst.skeleton.bones[0]),
+			pt.inv.map((m) => m.clone()),
+		);
+		const tex = (nm) => {
+			const t = texLoader.load(base.path + 'models/' + toDir + '/' + nm + base.q);
+			t.colorSpace = THREE.SRGBColorSpace;
+			return t;
+		};
+		const mats = [
+			new THREE.MeshStandardMaterial({ map: whiteHairTex(), roughness: 0.8 }),
+			new THREE.MeshStandardMaterial({ map: tex('hair_long.png'), transparent: true, alphaTest: 0.35, depthWrite: false, side: THREE.DoubleSide, roughness: 0.85 }),
+		];
+		const hair = new THREE.SkinnedMesh(pt.geo, mats);
+		hair.frustumCulled = false;
+		hair.castShadow = true;
+		dst.parent.add(hair);
+		hair.bind(sk, pt.bind.clone());
+	});
 }
 
 /** Pomôcky na natáčanie kostí v priestore postavy (root). */
@@ -398,7 +544,7 @@ export function realFan(fan, dir, name = 'model', extra = null) {
 		fbx.traverse((o) => keep.add(o));
 		const holder = headHolder(t);
 		if (holder && extra) {
-			extra(holder, t);
+			extra(holder, t, fbx);
 			holder.traverse((o) => keep.add(o));
 		}
 		hideSimple(fan.f, keep);
@@ -687,7 +833,10 @@ export function realFan(fan, dir, name = 'model', extra = null) {
 }
 
 /** Doplnky Ruda na hlavu: čierne zrkadlové okuliare (holder: osi postavy, metre). */
-export function rudoExtras(holder) {
+export function rudoExtras(holder, t, fbx) {
+	if (fbx) {
+		transplantHair(fbx, 'divak3', 'rudo'); // 0.39.1: dlhé vlasy do chvosta (biele)
+	}
 	// 0.38.10: krátke biele vlasy a biele fúzy sú v textúre hlavy (head.jpg)
 	const lens = new THREE.MeshStandardMaterial({ color: 0x15151a, metalness: 1, roughness: 0.06, envMapIntensity: 1.5 });
 	const frame = new THREE.MeshStandardMaterial({ color: 0x050505, roughness: 0.3 });
