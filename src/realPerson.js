@@ -411,7 +411,7 @@ export function realFan(fan, dir, name = 'model', extra = null) {
 		const pose0 = fan.standing ? 'stand' : POSES[seed % POSES.length];
 		let pose = pose0;
 		const spread = 0.05 + ((seed >> 3) % 4) * 0.035; // kolená od seba
-		const leanOf = (p) => ({ F: 0.42, E: -0.04, C: 0.02, forward: 0.42, chin: 0.18, back: -0.12, cross: -0.05 }[p] ?? 0.03 * ((seed % 3) - 1));
+		const leanOf = (p) => ({ G1: 0.5, G2: 0.55, G3: 0.4, G4: 0.5, G5: 0.42, G6: 0.25, F: 0.42, E: -0.04, C: 0.02, forward: 0.42, chin: 0.18, back: -0.12, cross: -0.05 }[p] ?? 0.03 * ((seed % 3) - 1));
 		const thighSit = [-1, 1].map((sx) => new THREE.Vector3(sx * spread, -0.12, 1).normalize());
 		const thighUp = fan.standing ? DOWN : new THREE.Vector3(0, -1, 0.3).normalize();
 		const calfSit = [-1, 1].map((sx) => new THREE.Vector3(sx * spread * 0.4, -1, pose === 'back' ? 0.35 : 0.1).normalize());
@@ -454,6 +454,21 @@ export function realFan(fan, dir, name = 'model', extra = null) {
 		};
 		const knee = (i) => (t.J.calf[i] ? t.relPos(t.J.calf[i].b) : new THREE.Vector3((i ? 1 : -1) * 0.1, 0.1, 0.45));
 		const tgt = [new THREE.Vector3(), new THREE.Vector3()];
+		const elb = [new THREE.Vector3(), new THREE.Vector3()];
+		let useElb = false;
+		/** Rameno mieri na lakeť e, predlaktie z lakťa na dlaň h (pózy s lakťami na kolenách). */
+		const aim2 = (i, e, h) => {
+			const ju = t.J.upper[i];
+			const jf = t.J.fore[i];
+			if (!ju || !jf) {
+				return;
+			}
+			S.copy(t.relPos(ju.b));
+			d.copy(e).sub(S).normalize();
+			t.set(ju, d);
+			E.copy(S).addScaledVector(d, LU[i]); // skutočný lakeť (dĺžka ramena)
+			t.set(jf, v.copy(h).sub(E).normalize());
+		};
 		const pol = pose === 'cross' ? [new THREE.Vector3(-0.3, -1, 0.45), new THREE.Vector3(0.3, -1, 0.45)] : pose === 'forward' ? [new THREE.Vector3(-0.6, -0.8, 0.2), new THREE.Vector3(0.6, -0.8, 0.2)] : [new THREE.Vector3(-1, -0.4, -0.5), new THREE.Vector3(1, -0.4, -0.5)];
 		const pelB = t.bone('Pelvis');
 		ready = (dt = 1 / 60) => {
@@ -480,7 +495,49 @@ export function realFan(fan, dir, name = 'model', extra = null) {
 			const hx = hip.x;
 			const hy = hip.y;
 			const hz = hip.z;
+			useElb = false;
+			const head = t.headB ? t.relPos(t.headB) : new THREE.Vector3(0, 0.75, 0.1);
+			const mid = (k, sx, f) => new THREE.Vector3(hx + sx * 0.09, hy, hz).lerp(k, f);
 			switch (pose) {
+				case 'G1': // lakte na kolenách, dlane zopäté pred kolenami
+					useElb = true;
+					elb[0].copy(k0).add(v.set(0.02, 0.06, -0.02));
+					elb[1].copy(k1).add(v.set(-0.02, 0.06, -0.02));
+					tgt[0].set(-0.02, (k0.y + k1.y) / 2 + 0.12, (k0.z + k1.z) / 2 + 0.14);
+					tgt[1].set(0.02, (k0.y + k1.y) / 2 + 0.13, (k0.z + k1.z) / 2 + 0.15);
+					break;
+				case 'G2': // lakte na kolenách, brada opretá o dlane
+					useElb = true;
+					elb[0].copy(k0).add(v.set(0.02, 0.06, 0));
+					elb[1].copy(k1).add(v.set(-0.02, 0.06, 0));
+					tgt[0].copy(head).add(v.set(-0.03, -0.02, 0.08));
+					tgt[1].copy(head).add(v.set(0.03, -0.02, 0.08));
+					break;
+				case 'G3': // predlaktia na stehnách, dlane voľne cez kolená
+					useElb = true;
+					elb[0].copy(mid(k0, -1, 0.45)).add(v.set(0, 0.07, 0));
+					elb[1].copy(mid(k1, 1, 0.45)).add(v.set(0, 0.07, 0));
+					tgt[0].copy(k0).add(v.set(0.01, 0.04, 0.1));
+					tgt[1].copy(k1).add(v.set(-0.01, 0.04, 0.1));
+					break;
+				case 'G4': // lakte na kolenách, ruky voľne visia pred holeňami
+					useElb = true;
+					elb[0].copy(k0).add(v.set(0.03, 0.06, 0));
+					elb[1].copy(k1).add(v.set(-0.03, 0.06, 0));
+					tgt[0].copy(k0).add(v.set(0.05, -0.18, 0.08));
+					tgt[1].copy(k1).add(v.set(-0.05, -0.18, 0.08));
+					break;
+				case 'G5': // pravý lakeť na kolene a ruka pod bradou, ľavé predlaktie na stehne
+					useElb = true;
+					elb[0].copy(k0).add(v.set(0.03, 0.06, 0));
+					tgt[0].copy(head).add(v.set(0, -0.03, 0.08));
+					elb[1].copy(mid(k1, 1, 0.45)).add(v.set(0, 0.07, 0));
+					tgt[1].copy(k1).add(v.set(-0.02, 0.05, 0.08));
+					break;
+				case 'G6': // mierny predklon, dlane na kolenách, lakte von
+					tgt[0].copy(k0).add(v.set(0.0, 0.07, 0.02));
+					tgt[1].copy(k1).add(v.set(0.0, 0.07, 0.02));
+					break;
 				case 'A': // dlane na stehnách v polovici, blízko tela
 					tgt[0].set(hx - 0.09, 0, 0).lerp(k0, 0.55).add(v.set(0.0, 0.075, 0));
 					tgt[0].y = (hy + k0.y) / 2 + 0.07;
@@ -553,8 +610,17 @@ export function realFan(fan, dir, name = 'model', extra = null) {
 				pol[0].set(-1, -0.6, -0.4);
 				pol[1].set(1, -0.6, -0.4);
 			}
-			reach(0, tgt[0], pol[0]);
-			reach(1, tgt[1], pol[1]);
+			if (useElb) {
+				aim2(0, elb[0], tgt[0]);
+				aim2(1, elb[1], tgt[1]);
+			} else {
+				if (pose === 'G6') {
+					pol[0].set(-1, 0.1, -0.2);
+					pol[1].set(1, 0.1, -0.2);
+				}
+				reach(0, tgt[0], pol[0]);
+				reach(1, tgt[1], pol[1]);
+			}
 			armBones.forEach((b, i) => idleQ[i].copy(b.quaternion));
 			// reakcie (tlieskanie, chytanie sa za hlavu, vstávanie): ruky podľa kĺbov diváka, plynulý prechod
 			actW += ((fan.act ? 1 : 0) - actW) * Math.min(1, dt * 6);
@@ -583,33 +649,9 @@ export function realFan(fan, dir, name = 'model', extra = null) {
 	};
 }
 
-/** Doplnky Ruda na hlavu: dlhé biele vlasy po plecia a čierne zrkadlové okuliare (holder: osi postavy, metre). */
+/** Doplnky Ruda na hlavu: čierne zrkadlové okuliare (holder: osi postavy, metre). */
 export function rudoExtras(holder) {
-	// dlhé vlasy: plášť okolo zadnej časti hlavy od temena po plecia (tvár voľná), s jemnými prameňmi v textúre
-	const c = document.createElement('canvas');
-	c.width = 256;
-	c.height = 256;
-	const g = c.getContext('2d');
-	g.fillStyle = '#e6e6e1';
-	g.fillRect(0, 0, 256, 256);
-	for (let i = 0; i < 420; i++) {
-		const x = Math.random() * 256;
-		const v = 190 + Math.floor(Math.random() * 65);
-		g.strokeStyle = `rgba(${v},${v},${v - 4},0.55)`;
-		g.lineWidth = 0.6 + Math.random() * 1.6;
-		g.beginPath();
-		g.moveTo(x, 0);
-		g.bezierCurveTo(x + (Math.random() - 0.5) * 12, 90, x + (Math.random() - 0.5) * 16, 170, x + (Math.random() - 0.5) * 20, 256);
-		g.stroke();
-	}
-	const ht = new THREE.CanvasTexture(c);
-	ht.colorSpace = THREE.SRGBColorSpace;
-	const hairS = new THREE.MeshStandardMaterial({ map: ht, roughness: 0.85, side: THREE.DoubleSide });
-	const shell = new THREE.Mesh(new THREE.SphereGeometry(0.108, 36, 24, Math.PI * 0.95, Math.PI * 1.1, 0, Math.PI * 0.9), hairS);
-	shell.position.set(0, 0.07, -0.012);
-	shell.scale.set(1.0, 1.38, 1.02);
-	shell.castShadow = true;
-	holder.add(shell);
+	// 0.38.10: krátke biele vlasy a biele fúzy sú v textúre hlavy (head.jpg)
 	const lens = new THREE.MeshStandardMaterial({ color: 0x15151a, metalness: 1, roughness: 0.06, envMapIntensity: 1.5 });
 	const frame = new THREE.MeshStandardMaterial({ color: 0x050505, roughness: 0.3 });
 	for (const ex of [-0.034, 0.034]) {

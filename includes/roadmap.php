@@ -180,6 +180,7 @@ function mysn_roadmap() {
 /** Denník zmien (najnovšie hore). */
 function mysn_changelog() {
 	return array(
+		array( '0.38.10', '19. 11. 2026', 'Rudo má krátke biele vlasy (bez umelých dlhých) a biele fúzy; pripravené návrhy predklonu divákov na výber.' ),
 		array( '0.38.9', '19. 11. 2026', 'Diváci majú ruky v jednej z troch vybraných póz: spojené v lone, predklon s dlaňami medzi kolenami alebo skrížené cez brucho.' ),
 		array( '0.38.8', '19. 11. 2026', 'Oprava osvetlenia štadióna: modely postáv mali v sebe skryté okolité svetlo (z 3ds Max) a každá postava presvetlila celú scénu – svetlá z modelov sa odstránia, osvetlenie je ako predtým. Diváci na jednej strane sedia dvaja vedľa seba a tretí o stoličku ďalej; prekrížené ruky ležia na ramenách.' ),
 		array( '0.38.7', '19. 11. 2026', 'Štadión: na tribúnach sú opäť len pôvodní diváci-kulisy (traja na jednej strane, dvaja na druhej) a komentátor Rudo; ich stoličky sú pre online divákov zasa voľné.' ),
