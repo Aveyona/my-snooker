@@ -5,6 +5,7 @@
  */
 import * as THREE from 'three';
 import { FBXLoader } from 'three/examples/jsm/loaders/FBXLoader.js';
+import { clone as cloneSkinned } from 'three/examples/jsm/utils/SkeletonUtils.js';
 
 /** Adresa priečinka assets (rovnaká doména ako stránka, ako mapa sveta v kancelárii) a verzia (?ver=…). */
 export function assetsBase() {
@@ -19,51 +20,71 @@ export function assetsBase() {
 const DOWN = new THREE.Vector3(0, -1, 0);
 const texLoader = new THREE.TextureLoader();
 
+let realOn = true;
+/** Realistické postavy zapnuté (Nastavenia); vypnuté = nové postavy ostanú jednoduché. */
+export function setRealPeople(on) {
+	realOn = !!on;
+}
+
+const cache = new Map(); // priečinok -> Promise({ fbx, url })
+
 /**
  * Načíta model z assets/models/<dir>: <name>.fbx, body.jpg, head.jpg (a hair.png pre priehľadné vlasy).
- * done(fbx, url) dostane model v metroch, s materiálmi a tieňmi.
+ * done(fbx, url) dostane vlastnú kópiu modelu v metroch (model sa sťahuje raz, každá postava má kópiu kostry).
  */
 function loadModel(dir, name, done) {
 	const base = assetsBase();
-	if (!base) {
+	if (!base || !realOn) {
 		return;
 	}
 	const pre = base.path + 'models/' + dir + '/';
 	const url = (n) => pre + n + base.q;
-	const tex = (n) => {
-		const t = texLoader.load(url(n));
-		t.colorSpace = THREE.SRGBColorSpace;
-		return t;
-	};
-	const mgr = new THREE.LoadingManager();
-	mgr.setURLModifier((u) => (/\.(tga|png|jpg)$/i.test(u) && !u.startsWith(pre) ? 'data:,' : u)); // textúry z FBX (cesty z 3ds Max) nie
-	new FBXLoader(mgr).load(
-		url(name + '.fbx'),
-		(fbx) => {
-			const T = {};
-			const get = (n) => (T[n] = T[n] || tex(n));
-			fbx.traverse((o) => {
-				if (!o.isMesh) {
-					return;
-				}
-				o.castShadow = true;
-				o.frustumCulled = false;
-				const ms = (Array.isArray(o.material) ? o.material : [o.material]).map((mt) => {
-					const n = (mt.name || '').toLowerCase();
-					if (n.includes('opacity')) {
-						// pramene vlasov, obočie, mihalnice (priehľadné)
-						return new THREE.MeshStandardMaterial({ map: get('hair.png'), transparent: true, alphaTest: 0.35, depthWrite: false, side: THREE.DoubleSide, roughness: 0.8 });
+	if (!cache.has(dir)) {
+		cache.set(
+			dir,
+			new Promise((resolve, reject) => {
+				const T = {};
+				const get = (n) => {
+					if (!T[n]) {
+						T[n] = texLoader.load(url(n));
+						T[n].colorSpace = THREE.SRGBColorSpace;
 					}
-					return new THREE.MeshStandardMaterial({ map: get(n.includes('head') ? 'head.jpg' : 'body.jpg'), roughness: n.includes('head') ? 0.62 : 0.8 });
-				});
-				o.material = ms.length === 1 ? ms[0] : ms;
-			});
-			fbx.scale.setScalar(0.01); // centimetre
-			done(fbx, url);
-		},
-		undefined,
-		() => {},
-	);
+					return T[n];
+				};
+				const mgr = new THREE.LoadingManager();
+				mgr.setURLModifier((u) => (/\.(tga|png|jpg)$/i.test(u) && !u.startsWith(pre) ? 'data:,' : u)); // textúry z FBX (cesty z 3ds Max) nie
+				new FBXLoader(mgr).load(
+					url(name + '.fbx'),
+					(fbx) => {
+						fbx.traverse((o) => {
+							if (!o.isMesh) {
+								return;
+							}
+							o.castShadow = true;
+							o.frustumCulled = false;
+							const ms = (Array.isArray(o.material) ? o.material : [o.material]).map((mt) => {
+								const n = (mt.name || '').toLowerCase();
+								if (n.includes('opacity')) {
+									// pramene vlasov, obočie, mihalnice (priehľadné)
+									return new THREE.MeshStandardMaterial({ map: get('hair.png'), transparent: true, alphaTest: 0.35, depthWrite: false, side: THREE.DoubleSide, roughness: 0.8 });
+								}
+								return new THREE.MeshStandardMaterial({ map: get(n.includes('head') ? 'head.jpg' : 'body.jpg'), roughness: n.includes('head') ? 0.62 : 0.8 });
+							});
+							o.material = ms.length === 1 ? ms[0] : ms;
+						});
+						fbx.scale.setScalar(0.01); // centimetre
+						resolve(fbx);
+					},
+					undefined,
+					reject,
+				);
+			}),
+		);
+	}
+	cache
+		.get(dir)
+		.then((fbx) => done(cloneSkinned(fbx), url))
+		.catch(() => {});
 }
 
 /** Pomôcky na natáčanie kostí v priestore postavy (root). */
@@ -270,11 +291,11 @@ export function realReferee(rig) {
 }
 
 /**
- * Sediaci divák z buildFan (fan.body, fan.head, fan.arms[{ sh, el }]): model sedí na sedadle, ruky a hlava podľa
+ * Divák z buildFan (sediaci aj stojaci) (fan.body, fan.head, fan.arms[{ sh, el }]): model sedí na sedadle, ruky a hlava podľa
  * kĺbov diváka (tlieskanie, chytanie sa za hlavu, otáčanie za bielou), pri vstávaní sa narovná.
  * dir/name = model v assets/models; extra(holder, t) pridá doplnky na hlavu (vlasy, okuliare).
  */
-export function realSeated(fan, dir, name, extra = null) {
+export function realFan(fan, dir, name = 'model', extra = null) {
 	let ready = null;
 	const root = fan.body;
 	loadModel(dir, name, (fbx) => {
@@ -283,9 +304,9 @@ export function realSeated(fan, dir, name, extra = null) {
 		const t0 = rigTools(root, fbx);
 		const pel = t0.bone('Pelvis');
 		if (pel) {
-			// panva na sedadle: kúsok nad sedákom, nad stredom sedadla
+			// panva na sedadle (kúsok nad sedákom), stojaci divák: panva vo výške bokov (telo je vyššie o baseBody)
 			const p = t0.relPos(pel);
-			fbx.position.set(-p.x, 0.12 - p.y, 0.02 - p.z);
+			fbx.position.set(-p.x, (fan.standing ? 0.11 : 0.12) - p.y, (fan.standing ? 0 : 0.02) - p.z);
 			root.updateMatrixWorld(true);
 		}
 		const t = rigTools(root, fbx);
@@ -300,11 +321,11 @@ export function realSeated(fan, dir, name, extra = null) {
 		const v = new THREE.Vector3();
 		const qp = new THREE.Quaternion();
 		const thighSit = new THREE.Vector3(0, -0.12, 1).normalize();
-		const thighUp = new THREE.Vector3(0, -1, 0.3).normalize();
-		const calfSit = new THREE.Vector3(0, -1, 0.1).normalize();
+		const thighUp = fan.standing ? DOWN : new THREE.Vector3(0, -1, 0.3).normalize();
+		const calfSit = fan.standing ? DOWN : new THREE.Vector3(0, -1, 0.1).normalize();
 		ready = () => {
 			// nohy: v sede stehná dopredu, lýtka dolu; pri vstávaní (telo vyššie o 0,25 m) sa narovnajú
-			const up = Math.max(0, Math.min(1, (root.position.y - fan.baseBody) / 0.25));
+			const up = fan.standing ? 1 : Math.max(0, Math.min(1, (root.position.y - fan.baseBody) / 0.25));
 			for (let i = 0; i < 2; i++) {
 				t.set(t.J.thigh[i], v.copy(thighSit).lerp(thighUp, up).normalize());
 				t.set(t.J.calf[i], calfSit);
@@ -377,3 +398,6 @@ export function rudoExtras(holder) {
 		holder.add(arm);
 	}
 }
+
+/** Modely divákov (assets/models/divak1 – divak6: traja muži, tri ženy). */
+export const SPECTATORS = ['divak1', 'divak2', 'divak3', 'divak4', 'divak5', 'divak6'];

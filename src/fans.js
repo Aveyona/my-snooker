@@ -4,6 +4,7 @@
  * Crowd = online diváci partie: kto si obsadil ktoré miesto (zoznam prichádza zo servera s pingom).
  */
 import * as THREE from 'three';
+import { realFan, SPECTATORS } from './realPerson.js';
 
 const SKINS = [0xe0b48e, 0xc78e66, 0x8d5b3e, 0xd9a07a, 0xa8714f, 0xf0c8a0];
 const SHIRTS = [0x2f6fd6, 0xc0392b, 0x2a9d8f, 0xe0a526, 0x6c4fb3, 0x2e8b57, 0xd35400, 0x7f8c8d, 0x16a085, 0xb03a6f];
@@ -147,6 +148,9 @@ export function updateFans(fans, dt, cueBall) {
 			a.sh.rotation.z += (a.sx * shZ - a.sh.rotation.z) * k;
 		}
 		fan.body.position.y = fan.baseBody + up * 0.25;
+		if (fan.real) {
+			fan.real.sync(); // realistický model podľa kĺbov (0.38.3)
+		}
 	}
 }
 
@@ -184,6 +188,7 @@ export class Crowd {
 				continue;
 			}
 			const fan = buildFan(fanColors(s.uid), p.standing, (s.uid % 7) * 0.9);
+			fan.real = realFan(fan, SPECTATORS[Math.abs(s.uid) % SPECTATORS.length]); // 0.38.3: realistický divák
 			fan.f.position.set(p.x, p.y, p.z);
 			fan.f.rotation.y = p.rot;
 			const tag = nameTag(s.name || 'Divák');
