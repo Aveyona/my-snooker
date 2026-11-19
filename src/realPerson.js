@@ -208,6 +208,7 @@ function rigTools(root, fbx) {
 		calf: [aim('R_Calf', 'R_Foot'), aim('L_Calf', 'L_Foot')],
 		upper: [aim('R_UpperArm', 'R_Forearm'), aim('L_UpperArm', 'L_Forearm')],
 		fore: [aim('R_Forearm', 'R_Hand'), aim('L_Forearm', 'L_Hand')],
+		hand: [aim('R_Hand', 'R_Finger2'), aim('L_Hand', 'L_Finger2')],
 	};
 	const headB = bone('Head');
 	const headW0 = headB ? rel(headB).clone() : null;
@@ -550,9 +551,9 @@ export function realFan(fan, dir, name = 'model', extra = null) {
 					tgt[0].set(hx - 0.2, hy - 0.07, hz + 0.06);
 					tgt[1].set(hx + 0.2, hy - 0.07, hz + 0.06);
 					break;
-				case 'B': // dlane na kolenách, lakte mierne do strán
-					tgt[0].copy(k0).add(v.set(0.0, 0.075, -0.03));
-					tgt[1].copy(k1).add(v.set(0.0, 0.075, -0.03));
+				case 'B': // dlane na kolenách, lakte mierne do strán (zápästie nad stehnom, prsty cez koleno)
+					tgt[0].copy(k0).add(v.set(0.0, 0.11, -0.1));
+					tgt[1].copy(k1).add(v.set(0.0, 0.11, -0.1));
 					break;
 				case 'C': // ruky spojené v lone
 					tgt[0].set(hx - 0.03, hy + 0.11, hz + 0.2);
@@ -630,6 +631,13 @@ export function realFan(fan, dir, name = 'model', extra = null) {
 				}
 				reach(0, tgt[0], pol[0]);
 				reach(1, tgt[1], pol[1]);
+			}
+			// 0.38.12: dlaň položená naplocho (prsty dopredu po stehne / sedadle), nie zapichnutá do nohy
+			const flat = { B: [0, -0.35, 1], S: [0, -0.6, 1], A: [0, -0.3, 1], G3: [0, -0.5, 1], G6: [0, -0.35, 1], knees: [0, -0.35, 1] }[pose];
+			if (flat) {
+				for (let i = 0; i < 2; i++) {
+					t.set(t.J.hand[i], v.set(flat[0] + (i ? -0.12 : 0.12), flat[1], flat[2]).normalize());
+				}
 			}
 			armBones.forEach((b, i) => idleQ[i].copy(b.quaternion));
 			// reakcie (tlieskanie, chytanie sa za hlavu, vstávanie): ruky podľa kĺbov diváka, plynulý prechod

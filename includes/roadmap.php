@@ -180,6 +180,7 @@ function mysn_roadmap() {
 /** Denník zmien (najnovšie hore). */
 function mysn_changelog() {
 	return array(
+		array( '0.38.12', '19. 11. 2026', 'Diváci: dlane na kolenách (aj na stehnách a sedadle) ležia naplocho s prstami cez koleno, už nezasahujú do nohavíc.' ),
 		array( '0.38.11', '19. 11. 2026', 'Štadión: dvaja diváci vedľa seba už nemajú ruky cez seba – žena má ruky voľne vedľa tela na sedadle, muž dlane na kolenách.' ),
 		array( '0.38.10', '19. 11. 2026', 'Rudo má krátke biele vlasy (bez umelých dlhých) a biele fúzy; pripravené návrhy predklonu divákov na výber.' ),
 		array( '0.38.9', '19. 11. 2026', 'Diváci majú ruky v jednej z troch vybraných póz: spojené v lone, predklon s dlaňami medzi kolenami alebo skrížené cez brucho.' ),
