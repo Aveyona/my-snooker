@@ -472,6 +472,20 @@ export function realFan(fan, dir, name = 'model', extra = null) {
 		};
 		const pol = pose === 'cross' ? [new THREE.Vector3(-0.3, -1, 0.45), new THREE.Vector3(0.3, -1, 0.45)] : pose === 'forward' ? [new THREE.Vector3(-0.6, -0.8, 0.2), new THREE.Vector3(0.6, -0.8, 0.2)] : [new THREE.Vector3(-1, -0.4, -0.5), new THREE.Vector3(1, -0.4, -0.5)];
 		const pelB = t.bone('Pelvis');
+		// 0.38.13: prsty mierne pokrčené (uvoľnená ruka), palec bokom
+		const fingers = [];
+		for (const sd of ['R', 'L']) {
+			for (const f of [1, 2, 3, 4]) {
+				for (const seg of ['', '1', '2']) {
+					const b = t.bone(sd + '_Finger' + f + seg);
+					if (b) {
+						fingers.push({ b, q0: b.quaternion.clone(), k: seg === '' ? 0.55 : 1 });
+					}
+				}
+			}
+		}
+		const FAX = new THREE.Vector3(0, 0, -1); // os ohybu článkov prstov (kosti Bip01_*_Finger)
+		const fq = new THREE.Quaternion();
 		ready = (dt = 1 / 60) => {
 			pose = fan.standing ? 'stand' : poseOverride || pose0;
 			// nohy: v sede stehná dopredu, lýtka dolu; pri vstávaní (telo vyššie o 0,25 m) sa narovnajú
@@ -638,6 +652,11 @@ export function realFan(fan, dir, name = 'model', extra = null) {
 				for (let i = 0; i < 2; i++) {
 					t.set(t.J.hand[i], v.set(flat[0] + (i ? -0.12 : 0.12), flat[1], flat[2]).normalize());
 				}
+			}
+			const curl = { B: 0.55, S: 0.45, A: 0.5, C: 0.5, D: 0.5, G3: 0.55, G6: 0.55, V1: 0.6, V2: 0.5, V4: 0.5, V5: 0.45, V6: 0.6 }[pose] || 0.3;
+			for (const f of fingers) {
+				fq.setFromAxisAngle(FAX, curl * f.k);
+				f.b.quaternion.copy(f.q0).multiply(fq);
 			}
 			armBones.forEach((b, i) => idleQ[i].copy(b.quaternion));
 			// reakcie (tlieskanie, chytanie sa za hlavu, vstávanie): ruky podľa kĺbov diváka, plynulý prechod
