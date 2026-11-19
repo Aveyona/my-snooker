@@ -12,6 +12,7 @@ import { stadiumFloorTexture } from './stadiumFloors.js';
 import { lemonInGlass } from './lemon.js';
 
 const FY = -0.815; // podlaha (rovnako ako v herni)
+const PODIUM_H = 0.24; // výška pódia hráča (kreslo, stolík, stojan)
 
 const canvasTex = (w, h, draw) => {
 	const c = document.createElement('canvas');
@@ -108,12 +109,18 @@ export function buildStadium(scene, quality, clock = 45) {
 	// číslo stoličky: strana (0 = +z, 1 = -z) × 175 + rad × 25 + (miesto + 12); rovnaké číslovanie má server
 	const seatMeshes = []; // [sedadlo, operadlo] podľa čísla stoličky (výber miesta divákom)
 	const ROWS = 7; // radov sedadiel na dlhej tribúne
+	// 0.37.0: v rohoch tribún pri pódiách hráčov sedadlá nie sú (šikmo: v prvom rade od 2 m od stredu, vzadu ďalej);
+	// rovnaké pravidlo má server (includes/watch.php, mysn_seat_gone)
+	const seatGone = (row, s) => Math.abs(s * 0.4) > 2.05 + 0.62 * row + 1e-6;
 	for (const side of [-1, 1]) {
 		for (let row = 0; row < ROWS; row++) {
 			const z = side * (BZ + 0.9 + row * 0.75);
 			const y = FY + 0.25 + row * 0.42;
 			add(new THREE.BoxGeometry(10, 0.42 + row * 0.42, 0.75), stepMat, 0, FY + (0.42 + row * 0.42) / 2, z);
 			for (let s = -12; s <= 12; s++) {
+				if (seatGone(row, s)) {
+					continue;
+				}
 				const seat = add(new THREE.BoxGeometry(0.34, 0.07, 0.32), seatMat, s * 0.4, y + 0.24, z);
 				const back = add(new THREE.BoxGeometry(0.34, 0.32, 0.05), seatMat, s * 0.4, y + 0.42, z + side * 0.16);
 				seat.castShadow = back.castShadow = false;
@@ -131,7 +138,7 @@ export function buildStadium(scene, quality, clock = 45) {
 		const side = i < 175 ? 1 : -1;
 		const r = i % 175;
 		const row = Math.floor(r / 25);
-		if (row >= ROWS) {
+		if (row >= ROWS || seatGone(row, (r % 25) - 12)) {
 			return null;
 		}
 		return { x: ((r % 25) - 12) * 0.4, y: FY + 0.25 + row * 0.42 + 0.24, z: side * (BZ + 0.9 + row * 0.75), rot: side > 0 ? Math.PI : 0, standing: false, row, side };
@@ -535,30 +542,50 @@ export function buildStadium(scene, quality, clock = 45) {
 	// každý má svoju stoličku (F7) a vedľa nej svoj stojan s tágami do zápasu (F2), tágo v ruke na stojane chýba
 	const chairMat = new THREE.MeshStandardMaterial({ color: 0x1a1a1f, roughness: 0.5 });
 	const PL = [
-		{ chair: [-2.6, BZ - 0.55], dz: 1, stand: [-3.8, 2.5], rot: Math.PI / 2 },
-		{ chair: [2.6, -(BZ - 0.55)], dz: -1, stand: [3.8, -2.5], rot: -Math.PI / 2 },
+		{ chair: [-2.6, BZ - 0.55], dz: 1, stand: [-3.8, 2.56], rot: Math.PI / 2 },
+		{ chair: [2.6, -(BZ - 0.55)], dz: -1, stand: [3.8, -2.56], rot: -Math.PI / 2 },
 	];
+	// 0.37.0: kreslo, stolík a stojan hráča stoja na čiernom vyvýšenom pódiu (PY nad podlahou) s modrou LED hranou
+	const PY = FY + PODIUM_H;
+	const podMat = new THREE.MeshStandardMaterial({ color: 0x08090c, roughness: 0.4, metalness: 0.25 });
+	const podLed = new THREE.MeshBasicMaterial({ color: 0x3d8bff });
+	for (const p of PL) {
+		const sg = Math.sign(p.chair[0]); // x: -1 hráč 1, +1 hráč 2 (zrkadlovo)
+		const sz = Math.sign(p.chair[1]); // z: +1 hráč 1, -1 hráč 2
+		const x0 = 1.6;
+		const x1 = 4.15;
+		const z0 = 2.03;
+		const z1 = 3.05;
+		const w = x1 - x0;
+		const d = z1 - z0;
+		const cx = sg * (x0 + w / 2);
+		const cz = sz * (z0 + d / 2);
+		add(new THREE.BoxGeometry(w, PODIUM_H, d), podMat, cx, FY + PODIUM_H / 2, cz);
+		// LED hrana po hornom okraji na stranách k stolu
+		add(new THREE.BoxGeometry(w, 0.012, 0.012), podLed, cx, PY - 0.006, sz * (z0 - 0.003)).castShadow = false;
+		add(new THREE.BoxGeometry(0.012, 0.012, d), podLed, sg * (x0 - 0.003), PY - 0.006, cz).castShadow = false;
+	}
 	// kreslo hráča: čalúnené (tmavá koža), sedák, vysoké operadlo a opierky rúk, operadlo ďalej od stola
 	const leather = new THREE.MeshStandardMaterial({ color: 0x3a1d14, roughness: 0.45, metalness: 0.05 });
 	for (const p of PL) {
 		const [cx, cz] = p.chair;
 		const dz = p.dz;
-		add(new THREE.BoxGeometry(0.66, 0.16, 0.6), chairMat, cx, FY + 0.08, cz); // podstava
-		add(new THREE.BoxGeometry(0.58, 0.16, 0.56), leather, cx, FY + 0.32, cz - dz * 0.01); // sedák
-		const back = add(new THREE.BoxGeometry(0.66, 0.78, 0.14), leather, cx, FY + 0.7, cz + dz * 0.26); // operadlo
+		add(new THREE.BoxGeometry(0.66, 0.16, 0.6), chairMat, cx, PY + 0.08, cz); // podstava
+		add(new THREE.BoxGeometry(0.58, 0.16, 0.56), leather, cx, PY + 0.32, cz - dz * 0.01); // sedák
+		const back = add(new THREE.BoxGeometry(0.66, 0.78, 0.14), leather, cx, PY + 0.7, cz + dz * 0.26); // operadlo
 		back.rotation.x = -dz * 0.12; // mierne sklonené dozadu
 		for (const sx of [-1, 1]) {
-			add(new THREE.BoxGeometry(0.1, 0.24, 0.6), leather, cx + sx * 0.33, FY + 0.44, cz); // opierky rúk
+			add(new THREE.BoxGeometry(0.1, 0.24, 0.6), leather, cx + sx * 0.33, PY + 0.44, cz); // opierky rúk
 		}
 	}
 	// stolík pri kresle každého hráča: pohár vody a menovka (stojaca kartička z oboch strán s menom hráča)
 	const plates = PL.map((p) => {
 		const [cx, cz] = p.chair;
 		const tx = cx - Math.sign(cx) * 0.62; // bližšie k stredu (k stolu)
-		const top = FY + 0.56;
+		const top = PY + 0.56;
 		add(new THREE.CylinderGeometry(0.24, 0.24, 0.03, 28), wood, tx, top - 0.015, cz);
-		add(new THREE.CylinderGeometry(0.03, 0.05, top - FY - 0.03, 12), wood, tx, FY + (top - FY - 0.03) / 2, cz);
-		add(new THREE.CylinderGeometry(0.16, 0.18, 0.02, 24), wood, tx, FY + 0.01, cz);
+		add(new THREE.CylinderGeometry(0.03, 0.05, top - PY - 0.03, 12), wood, tx, PY + (top - PY - 0.03) / 2, cz);
+		add(new THREE.CylinderGeometry(0.16, 0.18, 0.02, 24), wood, tx, PY + 0.01, cz);
 		add(new THREE.CylinderGeometry(0.035, 0.03, 0.12, 20, 1, true), glass, tx + 0.11, top + 0.06, cz - p.dz * 0.06).castShadow = false;
 		add(new THREE.CylinderGeometry(0.031, 0.029, 0.075, 20), water, tx + 0.11, top + 0.04, cz - p.dz * 0.06).castShadow = false;
 		const lem = lemonInGlass(0.031, top + 0.0775, top + 0.12);
@@ -622,7 +649,7 @@ export function buildStadium(scene, quality, clock = 45) {
 	// rozhodca: stojí na jednom z 12 stanovíšť okolo stola a hlavou sleduje bielu; keď by zavadzal tágu
 	// (alebo stál medzi kamerou za tágom a stolom), obíde stôl na najbližšie voľné stanovište
 	const RX0 = 2.85; // obdĺžnik, po ktorom chodí okolo stola (asi meter od rámu)
-	const RZ0 = 2.0;
+	const RZ0 = 1.9; // pred pódiami hráčov
 	const PER = 4 * (RX0 + RZ0); // obvod
 	/** Bod na obvode podľa vzdialenosti s (0 = roh -x,-z, ide po -z strane k +x, potom +x koniec...). */
 	const perPoint = (sv) => {
@@ -827,7 +854,7 @@ export function buildStadium(scene, quality, clock = 45) {
 	};
 	const stands = PL.map((p) => {
 		const stand = new THREE.Group();
-		stand.position.set(p.stand[0], FY, p.stand[1]);
+		stand.position.set(p.stand[0], PY, p.stand[1]);
 		stand.rotation.y = p.rot; // predná strana k stolu
 		root.add(stand);
 		add(new THREE.BoxGeometry(1.0, 0.06, 0.32), wood, 0, 0.03, 0, stand); // podstavec s miskami
@@ -933,8 +960,8 @@ export function buildStadium(scene, quality, clock = 45) {
 		// smer od kresla k stolu a kolmica (tágo trochu bokom, aby nezakrylo stôl)
 		const d = new THREE.Vector2(-cx * 0.7, -cz).normalize();
 		const side = new THREE.Vector2(-d.y, d.x);
-		const tip = new THREE.Vector3(cx + d.x * 0.5 + side.x * 0.34, FY + 1.12, cz + d.y * 0.5 + side.y * 0.34);
-		const butt = new THREE.Vector3(cx + d.x * 0.85 + side.x * 0.42, FY + 0.02, cz + d.y * 0.85 + side.y * 0.42);
+		const tip = new THREE.Vector3(cx + d.x * 0.5 + side.x * 0.34, PY + 1.12, cz + d.y * 0.5 + side.y * 0.34);
+		const butt = new THREE.Vector3(cx + d.x * 0.85 + side.x * 0.42, PY + 0.02, cz + d.y * 0.85 + side.y * 0.42);
 		const g = new THREE.Group();
 		g.position.copy(tip);
 		g.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), butt.clone().sub(tip).normalize());
@@ -991,8 +1018,8 @@ export function buildStadium(scene, quality, clock = 45) {
 		const [sx, sz] = p.stand;
 		const ax = Math.sign(-sx); // stojan je natočený k stolu (+x alebo -x)
 		return {
-			chair: { pos: new THREE.Vector3(cx, FY + 1.05, cz + p.dz * 0.05), look: new THREE.Vector3(cx * 0.3, FY + 0.7, 0) },
-			rack: { pos: new THREE.Vector3(sx + ax * 1.7, FY + 1.15, sz), look: new THREE.Vector3(sx, FY + 0.68, sz), zoom: 0.72 }, // celý stojan aj s hrotmi tág
+			chair: { pos: new THREE.Vector3(cx, PY + 1.05, cz + p.dz * 0.05), look: new THREE.Vector3(cx * 0.3, FY + 0.7, 0) },
+			rack: { pos: new THREE.Vector3(sx + ax * 1.7, PY + 1.15, sz), look: new THREE.Vector3(sx, PY + 0.68, sz), zoom: 0.72 }, // celý stojan aj s hrotmi tág
 		};
 	});
 

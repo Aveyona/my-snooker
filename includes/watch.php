@@ -109,6 +109,14 @@ function mysn_seats( $ctx ) {
 	return $out;
 }
 
+/** 0.37.0: stolička v rohu tribúny štadióna, ktorá nie je (šikmo pri pódiách hráčov; rovnako ako src/stadium.js). */
+function mysn_seat_gone( $seat ) {
+	$r   = $seat % 175;
+	$row = intdiv( $r, 25 );
+	$s   = ( $r % 25 ) - 12;
+	return abs( $s * 0.4 ) > 2.05 + 0.62 * $row + 1e-6;
+}
+
 /** Divák si sadne (seat = číslo miesta) alebo odíde (seat = -1). Jedno miesto má len jeden divák, kto bol prvý. */
 function mysn_rest_seat( $req ) {
 	global $wpdb;
@@ -125,7 +133,7 @@ function mysn_rest_seat( $req ) {
 	if ( ! $limit ) {
 		return mysn_err( 'Táto partia sa už nedá sledovať.', 404 );
 	}
-	if ( $seat >= $limit || ( 'm' === $ctx[0] && in_array( $seat, MYSN_SEATS_DECOR, true ) ) ) {
+	if ( $seat >= $limit || ( 'm' === $ctx[0] && ( in_array( $seat, MYSN_SEATS_DECOR, true ) || mysn_seat_gone( $seat ) ) ) ) {
 		return mysn_err( 'Toto miesto je obsadené, vyber si iné.', 409 );
 	}
 	$wpdb->query( $wpdb->prepare( "DELETE FROM $t WHERE ctx = %s AND seen < %d", $ctx, $now - MYSN_SEAT_TTL ) ); // phpcs:ignore

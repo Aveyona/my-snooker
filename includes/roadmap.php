@@ -180,6 +180,7 @@ function mysn_roadmap() {
 /** Denník zmien (najnovšie hore). */
 function mysn_changelog() {
 	return array(
+		array( '0.37.0', '19. 11. 2026', 'Štadión: kreslo, stolík a stojan s tágami každého hráča stoja na čiernom vyvýšenom pódiu s modrou LED hranou (aj pohľady z kresla a na stojan sú vyššie). V rohoch tribún pri pódiách sú zrušené stoličky (šikmo: vpredu od 2 m od stredu, vzadu ďalej), server ich nedovolí obsadiť.' ),
 		array( '0.36.3', '19. 11. 2026', 'Oprava: prehliadka admina na štadióne zobrazovala aj herňu (obe miestnosti stoja okolo toho istého stola); teraz sa ukáže len vybraná miestnosť.' ),
 		array( '0.36.2', '19. 11. 2026', 'Plán ochrany: výzva zo servera pri najmenšom podozrení (odtlačok kódu, surový záznam ťahu a prepočet sily, mierenie vs. myš, tep v hre o skóre) – docs/ANTICHEAT-PLAN.md, krok 3b.' ),
 		array( '0.36.1', '19. 11. 2026', 'Zadanie ochrany proti podvádzaniu doplnené o výsledky testu obídenia krokov 0.34 – 0.36 a návrhy opráv (docs/ANTICHEAT-PLAN.md).' ),
