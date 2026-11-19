@@ -73,7 +73,7 @@ function mysn_rest_rooms() {
  * 10 miest na státie. Divák obnovuje miesto pingom, bez pingu sa miesto po MYSN_SEAT_TTL sekundách uvoľní.
  */
 const MYSN_SEAT_TTL      = 30;
-const MYSN_SEATS_DECOR   = array( 8, 13, 17, 189, 190, 61, 62, 63, 7, 15, 31, 37, 67, 68, 87, 89, 116, 119, 138, 139, 155, 187, 192, 209, 215, 236, 238, 262, 269, 280, 289, 308, 317, 332 ); // 61 – 63: komentátor Rudo sám v treťom rade; od 7: ďalší diváci-kulisy (0.38.4, bližšie k stredu 0.38.5)
+const MYSN_SEATS_DECOR   = array( 8, 13, 17, 189, 190, 61, 62, 63 ); // 61 – 63: komentátor Rudo sám v treťom rade
 const MYSN_ROOM_SPOTS    = 10;
 const MYSN_STADIUM_SEATS = 350;
 
