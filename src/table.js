@@ -160,15 +160,18 @@ function pocketHoles(cc = 0.071, cm = 0.065, inset = 0.008, slots = null) {
 		const X = (x) => (x + L / 2 + RAIL) * sx;
 		const Z = (z) => (z + W / 2 + RAIL) * sx;
 		for (const q of slots) {
-			g.lineWidth = 2 * (q.hw - inset) * sx;
-			g.beginPath();
-			// súkno ide až po okraj rámu (ústie jamky medzi čeľusťami je v farbe súkna), otvor až v ráme
+			// otvor = obdĺžnik od okraja rámu po stred zadného polkruhu + zadný polkruh (nie celý kruh, ten by siahal dopredu do súkna)
 			const t0 = q.corner ? (RAIL - q.hw / Math.SQRT2) * Math.SQRT2 : RAIL;
-			g.moveTo(X(q.K.x + q.d.x * t0), Z(q.K.z + q.d.z * t0));
-			g.lineTo(X(q.c.x), Z(q.c.z));
-			g.stroke();
+			const w = q.hw - inset;
+			const P = (t, sv) => [X(q.K.x + q.d.x * t + q.n.x * sv), Z(q.K.z + q.d.z * t + q.n.z * sv)];
 			g.beginPath();
-			g.arc(X(q.c.x), Z(q.c.z), (q.hw - inset) * sx, 0, Math.PI * 2);
+			g.moveTo(...P(t0, -w));
+			for (let i = 0; i <= 24; i++) {
+				const a = Math.PI * (i / 24);
+				g.lineTo(...P(q.tc + Math.sin(a) * w, -Math.cos(a) * w));
+			}
+			g.lineTo(...P(t0, w));
+			g.closePath();
 			g.fill();
 		}
 		return new THREE.CanvasTexture(c);
@@ -569,7 +572,7 @@ export function buildTable(renderer) {
 			}
 			for (let i = 1; i < 20; i++) {
 				const a = (Math.PI * i) / 20;
-				pts.push({ x: q.c.x + q.n.x * Math.cos(a) * q.hw + q.d.x * Math.sin(a) * q.hw, z: q.c.z + q.n.z * Math.cos(a) * q.hw + q.d.z * Math.sin(a) * q.hw });
+				pts.push({ x: q.c.x + q.n.x * Math.cos(a) * q.hw + q.d.x * Math.sin(a) * q.hw, z: q.c.z + q.n.z * Math.cos(a) * q.hw + q.d.z * Math.sin(a) * q.hw, semi: true });
 			}
 			for (let i = 0; i < 4; i++) {
 				pts.push(at(q.tc + ((fB.t2 - q.tc) * i) / 4, -q.hw));
@@ -623,21 +626,37 @@ export function buildTable(renderer) {
 			// tmavá výstelka stien jamky (rovné steny aj polkruh, od súkna po vrch rámu)
 			const vs = [];
 			for (const pt of o.pts) {
-				vs.push(pt.x, -0.02, pt.z, pt.x, fy, pt.z);
+				// dnu od rámu o skosenie hrany (bevelSize 6,4 mm) + 1 mm, aby stenu neprekryla bočná plocha dreva
+				const rx = pt.x - q.K.x;
+				const rz = pt.z - q.K.z;
+				const t = Math.max(0, Math.min(q.tc, rx * q.d.x + rz * q.d.z));
+				const ax = q.K.x + q.d.x * t - pt.x;
+				const az = q.K.z + q.d.z * t - pt.z;
+				const al = Math.hypot(ax, az) || 1;
+				const px = pt.x + (ax / al) * 0.0075;
+				const pz = pt.z + (az / al) * 0.0075;
+				vs.push(px, -0.02, pz, px, fy - 0.005, pz);
 			}
-			const ix2 = [];
+			// 0.39.8: rovné steny ústia sú potiahnuté súknom ako mantinel (plynulý prechod do jamky), zadný polkruh tmavý
+			const ixR = [];
+			const ixD = [];
 			for (let i = 0; i < o.pts.length - 1; i++) {
 				const a0 = i * 2;
-				ix2.push(a0, a0 + 2, a0 + 1, a0 + 1, a0 + 2, a0 + 3);
+				const tri = [a0, a0 + 2, a0 + 1, a0 + 1, a0 + 2, a0 + 3];
+				(o.pts[i].semi && o.pts[i + 1].semi ? ixD : ixR).push(...tri);
 			}
-			const lg = new THREE.BufferGeometry();
-			lg.setAttribute('position', new THREE.Float32BufferAttribute(vs, 3));
-			lg.setIndex(ix2);
-			lg.computeVertexNormals();
-			const liner = new THREE.Mesh(lg, linerMat);
-			liner.material.side = THREE.DoubleSide;
-			sg.add(liner);
-			// prepad: súkno pri ústí sa pred dierou zaobľuje nadol, predná hrana diery je oblúk
+			for (const [ids, mat] of [
+				[ixD, linerMat],
+				[ixR, railMat],
+			]) {
+				const lg = new THREE.BufferGeometry();
+				lg.setAttribute('position', new THREE.Float32BufferAttribute(vs, 3));
+				lg.setIndex(ids);
+				lg.computeVertexNormals();
+				sg.add(new THREE.Mesh(lg, mat));
+			}
+			linerMat.side = THREE.DoubleSide;
+			// súkno pri ústí: predná hrana diery je oblúk (plochý kúsok v rovine súkna tam, kde súkno končí)
 			{
 				const t0 = q.corner ? (RAIL - q.hw / Math.SQRT2) * Math.SQRT2 : RAIL;
 				const sag = Math.min(q.hw * 0.6, Math.max(0.008, q.tc - t0));
@@ -652,7 +671,7 @@ export function buildTable(renderer) {
 					for (let j = 0; j <= NT; j++) {
 						const f = j / NT;
 						const t = t0 - 0.002 + (tEdge - t0 + 0.002) * f;
-						fv.push(q.K.x + q.d.x * t + q.n.x * sv, -0.016 * f * f, q.K.z + q.d.z * t + q.n.z * sv);
+						fv.push(q.K.x + q.d.x * t + q.n.x * sv, -0.0004, q.K.z + q.d.z * t + q.n.z * sv);
 					}
 				}
 				for (let i = 0; i < NS; i++) {
