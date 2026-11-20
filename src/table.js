@@ -16,7 +16,7 @@ const CUSHION_H = 0.037; // výška nosa mantinelu nad súknom
 export const BASKET = { y: -0.022, top: 0.068, depth: 0.2 };
 
 /** Ako ďaleko za roh mantinelu je stred zadného polkruhu jamky (0.39.5 skrátené). */
-const SLOT_BACK = { corner: 0.068, mid: 0.034 }; // stredná: stred = stred jamky vo fyzike (diera ako polkruh)
+const SLOT_BACK = { corner: 0.03, mid: 0.034 }; // 0.39.21 rohová: okrúhla diera so stredom 3 cm za rohom mantinelov // stredná: stred = stred jamky vo fyzike (diera ako polkruh)
 /** O koľko je výrez v dreve širší ako diera: mantinel pokračuje po stenách jamky (nos na diere, drevo za ním). */
 const LINE_W = 0.03;
 /** 0.39.20 rohová jamka: polomer oblúka, ktorým nos mantinelu zahne do steny jamky (väčší ako šírka mantinelu = bez prekladania). */
@@ -29,6 +29,9 @@ const BEVEL_IN = 0.0064;
 function lineK(q, t) {
 	if (!q.corner) {
 		return 0; // stredné jamky: krátke steny, mantinel končí čeľusťou (lem by sa tam lámal)
+	}
+	if (q.round) {
+		return 1; // 0.39.21: mantinel v plnej šírke, koniec zreže okrúhla diera
 	}
 	const t1 = q.tc - 0.028;
 	if (t <= t1) {
@@ -51,8 +54,9 @@ function cornerNoseTS(hw, tc, side) {
 	const ctr = { t: T2.t, s: T2.s + side * CORNER_R };
 	const out = [];
 	const NW = 14;
+	const tEnd = tc + hw * 0.6; // koniec vo vnútri diery: zreže ho kruh diery
 	for (let i = 0; i < NW; i++) {
-		out.push({ t: tc + ((T2.t - tc) * i) / NW, s: side * hw, wall: true, nt: 0, ns: side });
+		out.push({ t: tEnd + ((T2.t - tEnd) * i) / NW, s: side * hw, wall: true, nt: 0, ns: side });
 	}
 	const a2 = Math.atan2(T2.s - ctr.s, T2.t - ctr.t);
 	const a1 = Math.atan2(T1.s - ctr.s, T1.t - ctr.t);
@@ -73,8 +77,7 @@ export function basketAt(q) {
 	const sz = Math.sign(q.z);
 	if (q.corner) {
 		const hw = CG / Math.SQRT2;
-		const tf = (Math.abs(q.x) - L / 2) * Math.SQRT2; // stred jamky vo fyzike pozdĺž jamky
-		const t = (tf - hw + SLOT_BACK.corner + hw) / 2;
+		const t = SLOT_BACK.corner + hw * 0; // stred okrúhlej diery
 		return { x: sx * (L / 2 + t / Math.SQRT2), z: sz * (W / 2 + t / Math.SQRT2) };
 	}
 	return { x: 0, z: sz * (W / 2 + SLOT_BACK.mid) };
@@ -210,8 +213,8 @@ function pocketHoles(cc = 0.071, cm = 0.065, inset = 0.008, slots = null) {
 		const Z = (z) => (z + W / 2 + RAIL) * sx;
 		for (const q of slots) {
 			// otvor = obdĺžnik od okraja rámu po stred zadného polkruhu + zadný polkruh (nie celý kruh, ten by siahal dopredu do súkna)
-			if (!q.corner) {
-				// stredná jamka: diera v súkne je kruh okolo stredu jamky
+			if (q.round) {
+				// okrúhla diera v súkne okolo stredu jamky
 				g.beginPath();
 				g.arc(X(q.c.x), Z(q.c.z), (q.hw - inset) * sx, 0, Math.PI * 2);
 				g.fill();
@@ -442,7 +445,7 @@ export function buildTable(renderer) {
 			const n = { x: -d.z, z: d.x };
 			const hw = p.corner ? CG / Math.SQRT2 : MG;
 			const back = p.corner ? SLOT_BACK.corner : SLOT_BACK.mid;
-			return { p, K, d, n, hw, tc: back, c: { x: K.x + d.x * back, z: K.z + d.z * back }, corner: p.corner };
+			return { p, K, d, n, hw, tc: back, c: { x: K.x + d.x * back, z: K.z + d.z * back }, corner: p.corner, round: true };
 		});
 		const slotOf = (e) => {
 			let q = null;
@@ -473,6 +476,16 @@ export function buildTable(renderer) {
 		const slotPush = (x, z) => {
 			// bod vo vnútri jamky posunie na jej stenu (mantinel končí na stene jamky)
 			for (const q of SLOTS) {
+				if (q.corner) {
+					// 0.39.21: rohová jamka – okrúhla diera, mantinel zrezaný jej valcom
+					const ox = x - q.c.x;
+					const oz = z - q.c.z;
+					const dd = Math.hypot(ox, oz);
+					if (dd < q.hw && dd > 1e-6) {
+						return { x: q.c.x + (ox / dd) * q.hw, z: q.c.z + (oz / dd) * q.hw };
+					}
+					continue;
+				}
 				const rx = x - q.K.x;
 				const rz = z - q.K.z;
 				const t = rx * q.d.x + rz * q.d.z;
@@ -692,6 +705,38 @@ export function buildTable(renderer) {
 				}
 				return { q, pts, ang: norm(Math.atan2(q.c.z, q.c.x)) };
 			}
+			{
+				// 0.39.21: rohová jamka – výrez v dreve je oblúk kruhu okolo stredu diery (časť mimo pásu mantinelov)
+				const RB = q.hw + BEVEL_IN;
+				const P = (a) => ({ x: q.c.x + q.n.x * Math.cos(a) * RB + q.d.x * Math.sin(a) * RB, z: q.c.z + q.n.z * Math.cos(a) * RB + q.d.z * Math.sin(a) * RB });
+				const outside = (pt) => Math.abs(pt.x) > ix + 1e-9 || Math.abs(pt.z) > iz + 1e-9;
+				// a = π/2 je úplne vzadu; hľadá okraje oblúka mimo obdĺžnika
+				const edgeA = (dir) => {
+					let lo = Math.PI / 2;
+					let hi = Math.PI / 2 + dir * Math.PI;
+					for (let i = 0; i < 40; i++) {
+						const m = (lo + hi) / 2;
+						if (outside(P(m))) {
+							lo = m;
+						} else {
+							hi = m;
+						}
+					}
+					return lo;
+				};
+				const aR = edgeA(-1);
+				const aL = edgeA(1);
+				const N = 28;
+				for (let i = 0; i <= N; i++) {
+					pts.push({ ...P(aR + ((aL - aR) * i) / N), semi: true });
+				}
+				const A = pts[0];
+				const B = pts[pts.length - 1];
+				if (A.x * B.z - A.z * B.x < 0) {
+					pts.reverse();
+				}
+				return { q, pts, ang: norm(Math.atan2(q.c.z, q.c.x)) };
+			}
 			// 0.39.20: okraj dreva = línia nosa mantinelu posunutá o šírku mantinelu (pri stene sa zužuje), vzadu polkruh
 			const dwk = (k) => BEVEL_IN + (DW - BEVEL_IN) * k;
 			const edge = (side) =>
@@ -821,7 +866,15 @@ export function buildTable(renderer) {
 						dpath.push({ x: pt.x + pt.nx * 0.012 * kOf(pt), z: pt.z + pt.nz * 0.012 * kOf(pt), top: wallTop(pt) });
 					}
 				}
-				for (let i = q.corner ? 0 : 1; i <= (q.corner ? 24 : 23); i++) {
+				if (q.corner) {
+					for (const op of o.pts) {
+						const ax = op.x - q.c.x;
+						const az = op.z - q.c.z;
+						const al = Math.hypot(ax, az) || 1;
+						dpath.push({ x: q.c.x + (ax / al) * (q.hw - 0.0008), z: q.c.z + (az / al) * (q.hw - 0.0008), top: fy - 0.003 });
+					}
+				}
+				for (let i = 1; i <= (q.corner ? 0 : 23); i++) {
 					const a = (Math.PI * i) / 24;
 					const rx = q.n.x * Math.cos(a) + q.d.x * Math.sin(a);
 					const rz = q.n.z * Math.cos(a) + q.d.z * Math.sin(a);
@@ -846,7 +899,7 @@ export function buildTable(renderer) {
 				dg.computeVertexNormals();
 				sg.add(new THREE.Mesh(dg, linerMat));
 				// 0.39.19: pod nosom lemu pri rohovej jamke súkno (ako pod mantinelom), nie tmavá škára
-				if (q.corner) {
+				if (q.corner && !q.round) {
 					for (const side of [sideA, sideB]) {
 						const fv2 = [];
 						const fu2 = [];
@@ -916,7 +969,7 @@ export function buildTable(renderer) {
 			{
 				const r = q.hw - 0.0012;
 				const ring = [];
-				if (q.corner) {
+				if (q.corner && !q.round) {
 					const tf = (q.p.x - q.K.x) * q.d.x + (q.p.z - q.K.z) * q.d.z;
 					const at = (t, sv) => ({ x: q.K.x + q.d.x * t + q.n.x * sv, z: q.K.z + q.d.z * t + q.n.z * sv });
 					for (let i = 0; i <= 24; i++) {
