@@ -6,6 +6,9 @@
  */
 import { Rtc, setIce, rtcSelfTest } from './rtc.js';
 import { snapshot } from './physics.js';
+import { fpAnswer } from './fp.js';
+
+let zxAns = ''; // odpoveď na výzvu servera pre najbližšiu požiadavku
 
 const PING_MS = 5000;
 const AIM_MS = 50; // mierenie cez priame spojenie asi 20-krát za sekundu (len keď sa zmenilo)
@@ -20,6 +23,15 @@ export class Net {
 		this.down = false; // posledná požiadavka zlyhala (výpadok spojenia)
 	}
 
+	headers() {
+		const h = { 'Content-Type': 'application/json', 'X-WP-Nonce': this.nonce, 'X-Mysn-V': this.ver };
+		if (zxAns) {
+			h['X-Mysn-C'] = zxAns;
+			zxAns = '';
+		}
+		return h;
+	}
+
 	async call(path, body, method = 'POST') {
 		let r;
 		try {
@@ -27,7 +39,7 @@ export class Net {
 				method,
 				credentials: 'same-origin',
 				cache: 'no-store',
-				headers: { 'Content-Type': 'application/json', 'X-WP-Nonce': this.nonce, 'X-Mysn-V': this.ver },
+				headers: this.headers(),
 				body: body ? JSON.stringify(body) : undefined,
 			});
 		} catch (e) {
@@ -38,6 +50,11 @@ export class Net {
 		}
 		this.down = false;
 		const j = await r.json().catch(() => null);
+		if (j && j.zx && typeof j.zx === 'object') {
+			// výzva zo servera (0.40.1): odpoveď ide s ďalšou požiadavkou
+			zxAns = j.zx.n + ':' + fpAnswer(j.zx.n, j.zx.s);
+			delete j.zx;
+		}
 		if (!r.ok) {
 			const err = new Error((j && j.message) || 'Chyba servera ' + r.status);
 			err.status = r.status;

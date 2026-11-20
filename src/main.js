@@ -34,6 +34,27 @@ import { Replay } from './replay.js';
 import { CHALKS, chalkById } from './chalks.js';
 import { ChalkMarks } from './chalkMarks.js';
 import { CUES, cueById, ownCueSpec, TIP_COLORS, tipInaccuracy, extInaccuracy, cueGrip, REACH, CUE_EXTS } from './cues.js';
+import { fpRegister } from './fp.js';
+import { Physics, strike } from './physics.js';
+import { takeShotData } from './integrity.js';
+import { Net } from './online.js';
+
+// 0.40.1: odtlačky dôležitých funkcií pre výzvu zo servera (ešte pred spustením hry)
+fpRegister({
+	ps: Physics.prototype.step,
+	pa: Physics.prototype.advance,
+	st: strike,
+	sm: Controls.prototype.strokeMove,
+	ss: Controls.prototype.strokeSpeed,
+	rs: Controls.prototype.rawStroke,
+	rl: Controls.prototype.release,
+	it: Integrity.prototype.take,
+	ia: Integrity.prototype.arm,
+	ip: Integrity.prototype.tamper,
+	ts: takeShotData,
+	gs: Game.prototype.shoot,
+	nc: Net.prototype.call,
+});
 
 const STORE = 'mySnookerSettings';
 const AIM_AHEAD = 0.5; // posun pohľadu bez mierenej gule: kamera sa pozerá 50 cm pred bielu

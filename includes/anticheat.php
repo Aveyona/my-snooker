@@ -326,6 +326,36 @@ function mysn_ac_match_shot( $m, $uid, $shot ) {
 	}
 	$tms[] = $tm;
 	set_transient( $tk, array_slice( $tms, -60 ), DAY_IN_SECONDS );
+	// 0.40.1: výzva zo servera pri najmenšom podozrení alebo pri náhodnej kontrole (1 z 10 partií)
+	if ( function_exists( 'mysn_ch_issue' ) ) {
+		$sig = array();
+		if ( 'X' === $tm || ( is_array( $tm ) && ! in_array( $tm['k'] ?? '', array( 'm', 't', 'b' ), true ) ) ) {
+			$sig[] = 'úder bez ruky';
+		}
+		if ( is_array( $tm ) ) {
+			if ( ! empty( $tm['ov'] ) ) {
+				$sig[] = 'prekryv';
+			}
+			if ( ! empty( $tm['tp'] ) ) {
+				$sig[] = 'prepísaná funkcia';
+			}
+			if ( ! empty( $tm['sd'] ) ) {
+				$sig[] = 'sila nesedí so ťahom';
+			}
+			if ( isset( $tm['mv'] ) && 0 === (int) $tm['mv'] && (int) ( $tm['aj'] ?? 0 ) > 3 ) {
+				$sig[] = 'mierenie bez myši';
+			}
+		}
+		$pk = 'mysn_ch_plan_' . (int) $m['id'] . '_' . (int) $uid;
+		if ( 1 === count( $tms ) ) {
+			set_transient( $pk, wp_rand( 1, 10 ) === 1 ? wp_rand( 2, 8 ) : -1, DAY_IN_SECONDS );
+		}
+		if ( $sig ) {
+			mysn_ch_issue( $uid, $m['id'], implode( ', ', $sig ) );
+		} elseif ( (int) get_transient( $pk ) === count( $tms ) ) {
+			mysn_ch_issue( $uid, $m['id'], 'náhodná kontrola' );
+		}
+	}
 	$tv = mysn_ac_tm_eval( $tms, 'training' === ( $m['kind'] ?? '' ) );
 	if ( $tv['cheat'] && mysn_ac_match_cheat( $m, $uid, $tv['why'], $tv ) ) {
 		delete_transient( $tk );
