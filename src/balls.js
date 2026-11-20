@@ -3,7 +3,7 @@
  */
 import * as THREE from 'three';
 import { R, COLOURS, POCKETS } from './physics.js';
-import { BASKET } from './table.js';
+import { BASKET, basketAt } from './table.js';
 
 /** Textúra gule: farba a dve jemné bodky, aby bolo vidieť, ako sa guľa otáča (falše). */
 function ballTexture(hex, kind) {
@@ -38,6 +38,19 @@ function blobTexture() {
 	g.fillStyle = grad;
 	g.fillRect(0, 0, 64, 64);
 	return new THREE.CanvasTexture(c);
+}
+
+function nearPocket(pt) {
+	let best = Infinity;
+	let k = POCKETS[0];
+	for (const q of POCKETS) {
+		const d = Math.hypot(q.x - pt.x, q.z - pt.z);
+		if (d < best) {
+			best = d;
+			k = q;
+		}
+	}
+	return k;
 }
 
 export class BallViews {
@@ -130,7 +143,7 @@ export class BallViews {
 		});
 		const out = new Map();
 		per.forEach((list, k) => {
-			const q = POCKETS[k];
+			const q = basketAt(POCKETS[k]);
 			list.forEach((it, i) => {
 				const layer = Math.floor(i / 3);
 				const a = (i % 3) * ((Math.PI * 2) / 3) + layer * 0.9;
@@ -183,8 +196,9 @@ export class BallViews {
 					// padá do jamky: dokotúľa sa k stredu a klesne
 					it.drop = Math.min(1, it.drop + dt * 3);
 					const k = it.drop;
-					m.position.x += (b.potted.x - m.position.x) * Math.min(1, dt * 12);
-					m.position.z += (b.potted.z - m.position.z) * Math.min(1, dt * 12);
+					const hc = b.potted.off ? b.potted : basketAt(nearPocket(b.potted));
+					m.position.x += (hc.x - m.position.x) * Math.min(1, dt * 12);
+					m.position.z += (hc.z - m.position.z) * Math.min(1, dt * 12);
 					m.position.y = R - k * k * 0.12;
 				} else if (slot) {
 					// leží v košíku (doskočí na svoje miesto)

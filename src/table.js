@@ -15,6 +15,19 @@ const CUSHION_H = 0.037; // výška nosa mantinelu nad súknom
 /** Košík pod jamkou: horný okraj (pod rámom), polomer hore a hĺbka. Gule v ňom ukladá BallViews. */
 export const BASKET = { y: -0.022, top: 0.068, depth: 0.2 };
 
+/** Stred viditeľnej diery jamky v tvare U (tam je košík a ležia v ňom spadnuté gule). */
+export function basketAt(q) {
+	const sx = Math.sign(q.x) || 1;
+	const sz = Math.sign(q.z);
+	if (q.corner) {
+		const hw = CG / Math.SQRT2;
+		const t0 = (RAIL - hw / Math.SQRT2) * Math.SQRT2; // kde stena vyjde spod mantinelu
+		const t = (t0 + 0.085 + hw) / 2;
+		return { x: sx * (L / 2 + t / Math.SQRT2), z: sz * (W / 2 + t / Math.SQRT2) };
+	}
+	return { x: 0, z: sz * (W / 2 + (RAIL + 0.075 + MG) / 2) };
+}
+
 /** Sieťka košíka: kosoštvorcové oká z tmavej šnúry, medzi nimi priehľadne. */
 function netTexture() {
 	const n = 128;
@@ -558,10 +571,14 @@ export function buildTable(renderer) {
 		for (const o of outlines) {
 			const q = o.q;
 			// košík zo sieťky pod jamkou (medzi stredom diery a zadným polkruhom), spadnuté gule v ňom ostávajú vidieť
-			const bc = { x: (q.p.x + q.c.x) / 2, z: (q.p.z + q.c.z) / 2 };
+			const bc = basketAt(q.p);
 			const well = new THREE.Mesh(new THREE.CylinderGeometry(q.hw * 1.05, BASKET.top, 0.03, 40, 1, true), leatherMat);
 			well.position.set(bc.x, -0.012, bc.z);
 			sg.add(well);
+			// tmavá rúrka pod ústím jamky, aby spredu nebolo vidieť bok košíka
+			const mouth = new THREE.Mesh(new THREE.CylinderGeometry(q.hw * 1.02, q.hw * 1.02, 0.24, 32, 1, true), linerMat);
+			mouth.position.set(q.p.x, -0.13, q.p.z);
+			sg.add(mouth);
 			// tmavá výstelka stien jamky (rovné steny aj polkruh, od súkna po vrch rámu)
 			const vs = [];
 			for (const pt of o.pts) {
