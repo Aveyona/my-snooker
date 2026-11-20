@@ -325,6 +325,8 @@ export function buildTable(renderer) {
 	weave.repeat.set((L + 2 * RAIL) / 0.04, (W + 2 * RAIL) / 0.04);
 	// podrobné súkno: lesk látky (sheen) ako zamat, tkanina v normálovej mape
 	const clothDetail = new THREE.MeshPhysicalMaterial({ alphaMap: holes, alphaTest: 0.5, roughness: 0.95, metalness: 0, sheen: 0.3, sheenRoughness: 0.7, sheenColor: new THREE.Color(0x4fae6a), normalMap: weave, normalScale: new THREE.Vector2(0.35, 0.35) });
+	// 0.39.15: súkno v ústí rohovej jamky (mimo dosky) – rovnaká textúra ako plátno, bez masky otvorov
+	const fallMat = new THREE.MeshStandardMaterial({ map: clothSimple.map, roughness: 0.92, metalness: 0 });
 	const cloth = new THREE.Mesh(new THREE.PlaneGeometry(L + 2 * RAIL, W + 2 * RAIL), clothSimple);
 	cloth.rotation.x = -Math.PI / 2;
 	cloth.receiveShadow = true;
@@ -833,9 +835,15 @@ export function buildTable(renderer) {
 				}
 				const fg = new THREE.BufferGeometry();
 				fg.setAttribute('position', new THREE.Float32BufferAttribute(fv, 3));
+				// UV ako súkno (PlaneGeometry otočená o -90° okolo x): u podľa x, v podľa -z
+				const fu = [];
+				for (let v = 0; v < fv.length; v += 3) {
+					fu.push((fv[v] + L / 2 + RAIL) / (L + 2 * RAIL), (-fv[v + 2] + W / 2 + RAIL) / (W + 2 * RAIL));
+				}
+				fg.setAttribute('uv', new THREE.Float32BufferAttribute(fu, 2));
 				fg.setIndex(fi);
 				fg.computeVertexNormals();
-				sg.add(new THREE.Mesh(fg, railMat));
+				sg.add(new THREE.Mesh(fg, fallMat));
 			}
 			// 0.39.14: hrdlo jamky – krátka tmavá stena pod dierou v súkne, guľa zmizne v jamke, až potom je vidieť sieťku
 			{
@@ -1083,6 +1091,8 @@ export function buildTable(renderer) {
 			railSimple.color.setHex(f.rail);
 		}
 		cloth.material = detail ? clothDetail : clothSimple;
+		fallMat.map = detail ? f.fine : f.cloth;
+		fallMat.needsUpdate = true;
 		for (const m of railMeshes) {
 			m.material = detail ? railDetail : railSimple;
 		}

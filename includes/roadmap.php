@@ -180,6 +180,7 @@ function mysn_roadmap() {
 /** Denník zmien (najnovšie hore). */
 function mysn_changelog() {
 	return array(
+		array( '0.39.15', '20. 11. 2026', 'Rohové jamky: kúsky súkna v ústí jamky majú textúru plátna namiesto jednofarebnej plochy.' ),
 		array( '0.39.14', '20. 11. 2026', 'Jamky: pod dierou v súkne krátke tmavé hrdlo (5 cm), jamka zhora vyzerá hlbšia a prirodzenejšia, sieťka je až pod ním.' ),
 		array( '0.39.13', '20. 11. 2026', 'Stredné jamky: diera je kruh okolo stredu jamky (ako vo fyzike), začína hneď medzi čeľusťami, výrez v dreve je oblúk bez háčikov; košík pod stredom diery.' ),
 		array( '0.39.12', '20. 11. 2026', 'Stredné jamky bez zubov: mantinel končí čeľusťou, steny jamky rovné až po drevený polkruh (lem mantinelu ostáva len pri rohových jamkách).' ),
