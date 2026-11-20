@@ -526,16 +526,55 @@ export function buildTable(renderer) {
 			const at = (t, s0) => ({ x: q.K.x + q.d.x * t + q.n.x * s0, z: q.K.z + q.d.z * t + q.n.z * s0 });
 			const tA = wallT(q, q.hw);
 			const tB = wallT(q, -q.hw);
-			for (let i = 0; i <= 4; i++) {
-				pts.push(at(tA + ((q.tc - tA) * i) / 4, q.hw));
+			// 0.39.7: hrana rámu prechádza do steny jamky plynulým oblúkom (bez ostrého rohu)
+			const fillet = (tE, sg0) => {
+				const E = at(tE, sg0 * q.hw);
+				const side = { x: q.n.x * sg0, z: q.n.z * sg0 };
+				// smer hrany rámu od jamky preč: ktorou hranou vnútorného obdĺžnika stena vychádza
+				const bx = q.K.x + q.n.x * sg0 * q.hw;
+				const bz = q.K.z + q.n.z * sg0 * q.hw;
+				const txE = Math.abs(q.d.x) > 1e-9 ? (Math.sign(q.d.x) * ix - bx) / q.d.x : Infinity;
+				const tzE = Math.abs(q.d.z) > 1e-9 ? (Math.sign(q.d.z) * iz - bz) / q.d.z : Infinity;
+				let e = tzE <= txE ? { x: 1, z: 0 } : { x: 0, z: 1 };
+				if (e.x * side.x + e.z * side.z < 0) {
+					e = { x: -e.x, z: -e.z };
+				}
+				const rf = q.corner ? 0.02 : 0.009;
+				const th = Math.acos(Math.max(-1, Math.min(1, e.x * q.d.x + e.z * q.d.z)));
+				const dist = rf / Math.tan(th / 2);
+				let bi = { x: e.x + q.d.x, z: e.z + q.d.z };
+				const bl = Math.hypot(bi.x, bi.z);
+				bi = { x: bi.x / bl, z: bi.z / bl };
+				const cr = rf / Math.sin(th / 2);
+				const C = { x: E.x + bi.x * cr, z: E.z + bi.z * cr };
+				const T1 = { x: E.x + e.x * dist, z: E.z + e.z * dist };
+				const T2 = { x: E.x + q.d.x * dist, z: E.z + q.d.z * dist };
+				let a1 = Math.atan2(T1.z - C.z, T1.x - C.x);
+				let a2 = Math.atan2(T2.z - C.z, T2.x - C.x);
+				let da = a2 - a1;
+				while (da > Math.PI) da -= Math.PI * 2;
+				while (da < -Math.PI) da += Math.PI * 2;
+				const arc = [];
+				for (let i = 0; i <= 6; i++) {
+					const aa = a1 + (da * i) / 6;
+					arc.push({ x: C.x + Math.cos(aa) * rf, z: C.z + Math.sin(aa) * rf });
+				}
+				return { arc, t2: Math.min(tE + dist, q.tc - 0.0005) };
+			};
+			const fA = fillet(tA, 1);
+			const fB = fillet(tB, -1);
+			pts.push(...fA.arc);
+			for (let i = 1; i <= 4; i++) {
+				pts.push(at(fA.t2 + ((q.tc - fA.t2) * i) / 4, q.hw));
 			}
 			for (let i = 1; i < 20; i++) {
 				const a = (Math.PI * i) / 20;
 				pts.push({ x: q.c.x + q.n.x * Math.cos(a) * q.hw + q.d.x * Math.sin(a) * q.hw, z: q.c.z + q.n.z * Math.cos(a) * q.hw + q.d.z * Math.sin(a) * q.hw });
 			}
-			for (let i = 0; i <= 4; i++) {
-				pts.push(at(q.tc + ((tB - q.tc) * i) / 4, -q.hw));
+			for (let i = 0; i < 4; i++) {
+				pts.push(at(q.tc + ((fB.t2 - q.tc) * i) / 4, -q.hw));
 			}
+			pts.push(...fB.arc.slice().reverse());
 			// poradie proti smeru hodinových ručičiek okolo stola
 			const A = pts[0];
 			const B = pts[pts.length - 1];
@@ -581,9 +620,6 @@ export function buildTable(renderer) {
 			const q = o.q;
 			// košík zo sieťky pod jamkou (medzi stredom diery a zadným polkruhom), spadnuté gule v ňom ostávajú vidieť
 			const bc = basketAt(q.p);
-			const well = new THREE.Mesh(new THREE.CylinderGeometry(q.hw * 1.05, BASKET.top, 0.03, 40, 1, true), leatherMat);
-			well.position.set(bc.x, -0.012, bc.z);
-			sg.add(well);
 			// tmavá výstelka stien jamky (rovné steny aj polkruh, od súkna po vrch rámu)
 			const vs = [];
 			for (const pt of o.pts) {
@@ -601,6 +637,37 @@ export function buildTable(renderer) {
 			const liner = new THREE.Mesh(lg, linerMat);
 			liner.material.side = THREE.DoubleSide;
 			sg.add(liner);
+			// prepad: súkno pri ústí sa pred dierou zaobľuje nadol, predná hrana diery je oblúk
+			{
+				const t0 = q.corner ? (RAIL - q.hw / Math.SQRT2) * Math.SQRT2 : RAIL;
+				const sag = Math.min(q.hw * 0.6, Math.max(0.008, q.tc - t0));
+				const rho = (q.hw * q.hw + sag * sag) / (2 * sag);
+				const NS = 16;
+				const NT = 6;
+				const fv = [];
+				const fi = [];
+				for (let i = 0; i <= NS; i++) {
+					const sv = -q.hw + (2 * q.hw * i) / NS;
+					const tEdge = t0 + rho - Math.sqrt(Math.max(0, rho * rho - sv * sv));
+					for (let j = 0; j <= NT; j++) {
+						const f = j / NT;
+						const t = t0 - 0.002 + (tEdge - t0 + 0.002) * f;
+						fv.push(q.K.x + q.d.x * t + q.n.x * sv, -0.016 * f * f, q.K.z + q.d.z * t + q.n.z * sv);
+					}
+				}
+				for (let i = 0; i < NS; i++) {
+					for (let j = 0; j < NT; j++) {
+						const a0 = i * (NT + 1) + j;
+						const b0 = a0 + NT + 1;
+						fi.push(a0, b0, a0 + 1, a0 + 1, b0, b0 + 1);
+					}
+				}
+				const fg = new THREE.BufferGeometry();
+				fg.setAttribute('position', new THREE.Float32BufferAttribute(fv, 3));
+				fg.setIndex(fi);
+				fg.computeVertexNormals();
+				sg.add(new THREE.Mesh(fg, railMat));
+			}
 			const bag = new THREE.Mesh(basketGeo, netMat);
 			bag.position.set(bc.x, BASKET.y, bc.z);
 			sg.add(bag);

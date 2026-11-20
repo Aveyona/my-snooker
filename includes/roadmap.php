@@ -180,6 +180,7 @@ function mysn_roadmap() {
 /** Denník zmien (najnovšie hore). */
 function mysn_changelog() {
 	return array(
+		array( '0.39.7', '20. 11. 2026', 'Jamky: hrana rámu prechádza do steny jamky plynulým oblúkom, súkno sa pred dierou zaobľuje nadol a predná hrana diery je oblúk; bez tmavého prstenca pod dierou.' ),
 		array( '0.39.6', '20. 11. 2026', 'Ústie jamky medzi čeľusťami mantinelov je v farbe súkna (nie čierne), otvor začína až pri ráme.' ),
 		array( '0.39.5', '20. 11. 2026', 'Jamky v tvare U skrátené (košík vypĺňa dieru), otvor v súkne vpredu rovný – už nezasahuje do hracej plochy.' ),
 		array( '0.39.4', '20. 11. 2026', 'Odstránená tmavá rúrka pod jamkami, ktorá trčala pod stolom a zasahovala do košíka.' ),
