@@ -139,6 +139,7 @@ function mysn_render( $preview ) {
 <div id="mysn-app"><noscript><div class="mysn-nogl">Hra potrebuje zapnutý JavaScript.</div></noscript></div>
 <script>window.MYSN_CONFIG = <?php echo wp_json_encode( $cfg ); ?>;</script>
 <script src="<?php echo esc_url( MYSN_URL . 'assets/snooker.js?ver=' . mysn_asset_ver( 'snooker.js' ) ); ?>"></script>
+<?php do_action( 'my_stats_beacon', 'snooker' ); // My Stats 2.9.0: návštevnosť tejto časti webu ?>
 </body>
 </html>
 	<?php
