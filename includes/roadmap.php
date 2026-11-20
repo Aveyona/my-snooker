@@ -180,6 +180,7 @@ function mysn_roadmap() {
 /** Denník zmien (najnovšie hore). */
 function mysn_changelog() {
 	return array(
+		array( '0.39.5', '20. 11. 2026', 'Jamky v tvare U skrátené (košík vypĺňa dieru), otvor v súkne vpredu rovný – už nezasahuje do hracej plochy.' ),
 		array( '0.39.4', '20. 11. 2026', 'Odstránená tmavá rúrka pod jamkami, ktorá trčala pod stolom a zasahovala do košíka.' ),
 		array( '0.39.3', '20. 11. 2026', 'Košík jamky presne pod dierou v tvare U, spadnuté gule padajú a ležia v strede diery; tmavá rúrka pod ústím jamky.' ),
 		array( '0.39.2', '19. 11. 2026', 'Jamky v tvare U: rovné rovnobežné steny od konca mantinelov a vzadu polkruh, tmavý lem po obvode, sieťka posunutá dozadu; fyzika bez zmeny.' ),

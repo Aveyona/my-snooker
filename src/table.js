@@ -15,6 +15,9 @@ const CUSHION_H = 0.037; // výška nosa mantinelu nad súknom
 /** Košík pod jamkou: horný okraj (pod rámom), polomer hore a hĺbka. Gule v ňom ukladá BallViews. */
 export const BASKET = { y: -0.022, top: 0.068, depth: 0.2 };
 
+/** Ako ďaleko za roh mantinelu je stred zadného polkruhu jamky (0.39.5 skrátené). */
+const SLOT_BACK = { corner: 0.068, mid: 0.06 };
+
 /** Stred viditeľnej diery jamky v tvare U (tam je košík a ležia v ňom spadnuté gule). */
 export function basketAt(q) {
 	const sx = Math.sign(q.x) || 1;
@@ -22,10 +25,10 @@ export function basketAt(q) {
 	if (q.corner) {
 		const hw = CG / Math.SQRT2;
 		const t0 = (RAIL - hw / Math.SQRT2) * Math.SQRT2; // kde stena vyjde spod mantinelu
-		const t = (t0 + 0.085 + hw) / 2;
+		const t = (t0 + SLOT_BACK.corner + hw) / 2;
 		return { x: sx * (L / 2 + t / Math.SQRT2), z: sz * (W / 2 + t / Math.SQRT2) };
 	}
-	return { x: 0, z: sz * (W / 2 + (RAIL + 0.075 + MG) / 2) };
+	return { x: 0, z: sz * (W / 2 + (RAIL + SLOT_BACK.mid + MG) / 2) };
 }
 
 /** Sieťka košíka: kosoštvorcové oká z tmavej šnúry, medzi nimi priehľadne. */
@@ -152,7 +155,8 @@ function pocketHoles(cc = 0.071, cm = 0.065, inset = 0.008, slots = null) {
 	if (slots) {
 		// 0.39.2: jamka v tvare U – otvor od stredu diery po zadný polkruh
 		g.strokeStyle = '#000000';
-		g.lineCap = 'round';
+		g.fillStyle = '#000000';
+		g.lineCap = 'butt'; // vpredu rovno (nie polkruh do hracej plochy), vzadu polkruh
 		const X = (x) => (x + L / 2 + RAIL) * sx;
 		const Z = (z) => (z + W / 2 + RAIL) * sx;
 		for (const q of slots) {
@@ -161,6 +165,9 @@ function pocketHoles(cc = 0.071, cm = 0.065, inset = 0.008, slots = null) {
 			g.moveTo(X(q.p.x), Z(q.p.z));
 			g.lineTo(X(q.c.x), Z(q.c.z));
 			g.stroke();
+			g.beginPath();
+			g.arc(X(q.c.x), Z(q.c.z), (q.hw - inset) * sx, 0, Math.PI * 2);
+			g.fill();
 		}
 		return new THREE.CanvasTexture(c);
 	}
@@ -363,7 +370,7 @@ export function buildTable(renderer) {
 			const d = p.corner ? { x: sx / Math.SQRT2, z: sz / Math.SQRT2 } : { x: 0, z: sz };
 			const n = { x: -d.z, z: d.x };
 			const hw = p.corner ? CG / Math.SQRT2 : MG;
-			const back = p.corner ? 0.085 : 0.075;
+			const back = p.corner ? SLOT_BACK.corner : SLOT_BACK.mid;
 			return { p, K, d, n, hw, tc: back, c: { x: K.x + d.x * back, z: K.z + d.z * back }, corner: p.corner };
 		});
 		const slotPush = (x, z) => {
