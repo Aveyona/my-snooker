@@ -162,7 +162,9 @@ function pocketHoles(cc = 0.071, cm = 0.065, inset = 0.008, slots = null) {
 		for (const q of slots) {
 			g.lineWidth = 2 * (q.hw - inset) * sx;
 			g.beginPath();
-			g.moveTo(X(q.p.x), Z(q.p.z));
+			// súkno ide až po okraj rámu (ústie jamky medzi čeľusťami je v farbe súkna), otvor až v ráme
+			const t0 = q.corner ? (RAIL - q.hw / Math.SQRT2) * Math.SQRT2 : RAIL;
+			g.moveTo(X(q.K.x + q.d.x * t0), Z(q.K.z + q.d.z * t0));
 			g.lineTo(X(q.c.x), Z(q.c.z));
 			g.stroke();
 			g.beginPath();
