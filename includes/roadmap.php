@@ -180,6 +180,7 @@ function mysn_roadmap() {
 /** Denník zmien (najnovšie hore). */
 function mysn_changelog() {
 	return array(
+		array( '0.39.22', '20. 11. 2026', 'Podrobný plán dokončenia ochrany proti podvádzaniu (fázy A – F, docs/ANTICHEAT-PLAN.md).' ),
 		array( '0.39.21', '20. 11. 2026', 'Rohové jamky: diera je menší kruh (priemer 8 cm, stred 3 cm za rohom mantinelov) ako pri stredných jamkách; mantinel zahne oblúkom do čeľuste a zreže ho kruh diery (bez zužovania a špičky); výrez v dreve je oblúk okolo diery, košík pod jej stredom.' ),
 		array( '0.39.20', '20. 11. 2026', 'Rohové jamky postavené nanovo: mantinel je jeden kus – pri jamke zahne oblúkom (6 cm) do steny jamky a po nej sa zúži k drevenému polkruhu (bez spojov, švov a medzier); okraj dreva presne sleduje mantinel; diera v súkne v tvare štadióna (vpredu oblúk okolo stredu jamky, vzadu polkruh), hrdlo a košík podľa nej. Fyzika bez zmeny.' ),
 		array( '0.39.19', '20. 11. 2026', 'Rohové jamky: pod nosom mantinelu, ktorý pokračuje do jamky, je súkno (textúra plátna) namiesto tmavej škáry – bez tmavého pásu a schodíka pred dierou.' ),

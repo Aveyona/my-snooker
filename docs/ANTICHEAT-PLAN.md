@@ -226,3 +226,106 @@ Pri prípade: história výziev (kedy, prečo, ktoré kontroly, čo nesedelo), z
 Kto rozlúšti kód výzvy, môže počítať správne odpovede z pôvodného kódu a hrať upraveným (alebo robotom,
 ktorý funkcie neprepisuje). Výzva to výrazne predraží a každou verziou sa mení. Robota, ktorý hýbe skutočnou
 myšou zvonku (program v počítači), zachytí len štatistika a snímky obrazovky (kroky 2, 4 – 7).
+
+## Dokončenie – podrobný plán (20. 11. 2026)
+
+Stav: hotové kroky 1 (okrúhla sila, 0.34), presnosť v okne (0.35), kontrola klienta – ruka, prekryv, prepísané
+funkcie, mierenie (0.36), prípady a suspendácia v administrácii Podvádzanie. Test 19. 11. ukázal, že všetko
+v prehliadači sa dá obísť pár riadkami. Dokončenie preto presúva rozhodovanie na server v šiestich fázach.
+Každá fáza je samostatná verzia, po každej krátky test testovacím agentom (nie dlhé testy, hrá Aveyona).
+
+### Fáza A – spevnenie klienta a surový záznam ťahu (0.40.0)
+
+Cieľ: údaj „úder rukou“ sa nedá len zapísať, server si silu prepočíta sám.
+
+- `src/integrity.js`: údaje ťahu a mierenia v uzávere modulu (WeakMap podľa hry), nie na `game._tm`.
+  Hra si ich pri úderi vypýta funkciou, ktorá nie je na žiadnom globálnom objekte.
+- `src/controls.js`: pri ťahu tága (myš, prst) zapisovať **surové vzorky** `[čas ms, odtiahnutie]` za posledných
+  ~400 ms pred úderom (najviac 40 vzoriek) a len z udalostí `isTrusted`. Ukazovateľ sily (`k: 'b'`) posiela
+  priebeh nabíjania.
+- Počítadlo `pointermove`/`touchmove` (`isTrusted`) počas mierenia a počet zmien smeru – mierenie bez udalostí = program.
+- Server (`includes/anticheat.php`): **prepočet sily** – port funkcie `strokeSpeed()` do PHP (posledných 80 ms,
+  dopredný pohyb), × sila tága × druh špice (mäkká 0,97 / stredná 1 / tvrdá 1,03), × 0,35 pri šmyku, orez 0,03 – 1.
+  Tágo a špica sa berú zo servera (vlastníctvo tág v `cues.php`), nie od hráča. Rozdiel > 2 % = **podvod hneď**.
+- Pri partiách: kontrola pri každom úderi (`/match/shot`). Pri hre o skóre: v zázname frame-u (`vlog`) pri overení.
+- Admin = výskum (len zápis), tréning = len zápis.
+
+### Fáza B – výzva zo servera v partiách (0.40.1)
+
+- **Odtlačky kódu z buildu:** `tools/fingerprints.mjs` po `npm run build` načíta hotový `assets/snooker.js` v Node
+  (jsdom ako náhrada prehliadača), vypočíta FNV-1a z `toString()` kľúčových funkcií (úder, `Physics.step/advance`,
+  ovládanie ťahu, integrity, odosielanie úderu) a zapíše `includes/fingerprints.php` (pole verzia → odtlačky).
+  Kontrola aj natívnosti `Function.prototype.toString`.
+- **Výzva:** server pri spúšťači (fáza D) alebo náhodne uloží do transientu `{nonce 128 bit, výber kontrol, lehota}`
+  a pošle ju v **bežnej odpovedi** `/match/state` alebo `/match/shot` pod nenápadným kľúčom.
+- **Odpoveď:** hra spočíta `FNV(nonce + výsledky kontrol)` a priloží ju k ďalšej bežnej požiadavke (hlavička).
+  Lehota 2 požiadavky alebo 30 s.
+- **Následky** (tabuľka v kroku 3b): zlý odtlačok = podvod hneď; bez odpovede 1. raz nová výzva, 2. raz podvod;
+  stará verzia hry = vynútené obnovenie stránky pred rankovanou hrou.
+- História výziev pri hráčovi (user meta, posledných 50) – pre administráciu.
+
+### Fáza C – tep a výzva v hre o skóre (0.40.2)
+
+- Nový endpoint `/solo/beat`: každých ~10 úderov alebo 60 s pošle hra priebežný záznam úderov (hash + posledné údery).
+  Server vráti token tepu a prípadne výzvu (rovnaký mechanizmus ako fáza B).
+- Pri odoslaní výsledku (`/scores`) server overí reťaz tepov: frame bez tepov alebo s chýbajúcou odpoveďou na výzvu
+  sa do rebríčka neprijme (hráčovi sa ukáže 0 ako doteraz pri podvode, záznam ostane na kontrolu).
+- Prepočet sily zo surového ťahu aj tu (fáza A) pri overení frame-u na overovači.
+
+### Fáza D – skóre podozrenia a spúšťače (0.40.3)
+
+- Skóre 0 – 100 pri hráčovi (`mysn_susp_score` + čas), pokles −5 za čistú rankovanú partiu, −1 za deň.
+- Zdroje bodov (váhy v nastaveniach):
+
+  | Signál | Body |
+  |---|---|
+  | jedna okrúhla sila (nie plný úder ani šmyk) | +10 |
+  | úder bez ruky / prekryv / prepísaná funkcia (jednotlivo) | +15 |
+  | mierenie bez pohybov myši pri úderi | +10 |
+  | séria 6 ťažkých úderov (okno < 0,5°) bez netrafenia | +20 |
+  | miera netrafenia ťažkých úderov (okno < 1°) pod 10 % po 20 úderoch | +30 |
+  | rozdelenie polohy v okne odlišné od hráča (test K-S, p < 0,01) | +20 |
+  | úder do 1,5 s od začiatku mierenia pri ťažkej guli | +5 |
+  | nový účet – prvé 3 rankované hry | +10 |
+
+- **Spúšťač výzvy:** skóre > 0, ktorýkoľvek signál vyššie alebo **náhodná kontrola 1 z 10 hier** pre každého.
+- Prahy: 30 = „čiastočne podozrivý“ (fáza E – snímky), 70 = podozrivý (prípad + suspendácia ako doteraz).
+- Overovač (`server/snkverify`) už počíta okno úderu; doplní sa obtiažnosť a netrafenie.
+
+### Fáza E – snímky obrazovky pri podozrení (0.41.0)
+
+- Dialóg súhlasu pred rankovanou hrou pri skóre ≥ 30 (text z kroku 4, verzia textu + čas súhlasu do user meta).
+  Bez súhlasu len tréning. Mobil (bez `getDisplayMedia`) pri skóre ≥ 30 len tréning.
+- `getDisplayMedia` – len celá obrazovka (`displaySurface === 'monitor'`), zastavenie zdieľania = partia prerušená
+  (liga, výzva) alebo neplatný frame (hra o skóre).
+- Snímky v náhodných intervaloch 20 – 90 s a pred náhodnými údermi: JPEG 0,6, šírka max. 1920, + vnútorný obrázok hry
+  a metadáta. Upload do **neverejného** priečinka `uploads/mysn-snaps/` (`.htaccess deny`), mazanie po 30 dňoch (WP-Cron).
+- Predkontrola na serveri (PHP GD): výrez okna hry, zmenšenie, rozdiel s vnútorným obrázkom v oblasti stola →
+  „podozrivá snímka“ (tenké čiary, krúžky). Vlastný model (krok 7) sa zapojí neskôr, keď bude bežať.
+
+### Fáza F – administrácia a označenia (0.41.1)
+
+- My Snooker → Podvádzanie: nový zoznam **Podozriví hráči** (skóre, signály, posledná výzva), detail prípadu s históriou
+  výziev, záznamom ťahu vs. silou úderu a galériou snímok (časová os, číslo úderu, mapa rozdielu).
+- Tlačidlá: Potvrdiť / Zamietnuť (podvod) / Zrušiť podozrenie / Vynulovať skóre.
+- Označenie „kontrolovaný“ pri zápasoch v zoznamoch, prehrávačoch a rebríčku; filter bez podozrivých.
+
+### Priebežne – rotácia kontrol pri každej verzii
+
+- Build (`tools/fingerprints.mjs`) zamieša podľa verzie poradie kontrol, názvy kľúčov vo výzve a výber funkcií
+  pre odtlačok; server číta rovnaké nastavenie z `includes/fingerprints.php`. Obídenie jednej verzie neplatí v ďalšej.
+
+### Testy po fázach (testovací agent, krátko)
+
+- A: robot zapíše `_tm` a volá `shoot()` → sila nesedí so záznamom ťahu → podvod.
+- B: prepísaná funkcia, prepísaný `toString`, vyhodené kontroly → zlý odtlačok / bez odpovede → podvod.
+- C: frame bez tepov → neprijatý.
+- D: robot s „ľudským“ šumom → skóre stúpa po 20 – 30 úderoch → výzva → snímky.
+- Poctivá hra Aveyonu → skóre zostane 0 (bez falošných poplachov).
+
+### Rozhodnutia pre Aveyonu
+
+1. Náhodná kontrola: 1 z 10 hier (návrh).
+2. Snímky obrazovky uchovávať 30 dní (návrh).
+3. Mobil pri podozrení len tréning (návrh).
+4. Vlastný model na čiary (krok 7) – zatiaľ len predkontrola rozdielu a posúdenie správcom.
