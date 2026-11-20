@@ -180,6 +180,7 @@ function mysn_roadmap() {
 /** Denník zmien (najnovšie hore). */
 function mysn_changelog() {
 	return array(
+		array( '0.40.0', '20. 11. 2026', 'Ochrana proti podvádzaniu, fáza A: hra posiela k úderu surový záznam ťahu tága (len skutočné pohyby myši a prsta) a server z neho prepočíta silu úderu – nesedí o viac ako 10 % pri jednom úderi alebo o viac ako 2 % pri dvoch = podvod; údaje kontroly sú skryté v module (nedajú sa zapísať do hry z konzoly); počet skutočných pohybov počas mierenia sa zapisuje.' ),
 		array( '0.39.22', '20. 11. 2026', 'Podrobný plán dokončenia ochrany proti podvádzaniu (fázy A – F, docs/ANTICHEAT-PLAN.md).' ),
 		array( '0.39.21', '20. 11. 2026', 'Rohové jamky: diera je menší kruh (priemer 8 cm, stred 3 cm za rohom mantinelov) ako pri stredných jamkách; mantinel zahne oblúkom do čeľuste a zreže ho kruh diery (bez zužovania a špičky); výrez v dreve je oblúk okolo diery, košík pod jej stredom.' ),
 		array( '0.39.20', '20. 11. 2026', 'Rohové jamky postavené nanovo: mantinel je jeden kus – pri jamke zahne oblúkom (6 cm) do steny jamky a po nej sa zúži k drevenému polkruhu (bez spojov, švov a medzier); okraj dreva presne sleduje mantinel; diera v súkne v tvare štadióna (vpredu oblúk okolo stredu jamky, vzadu polkruh), hrdlo a košík podľa nej. Fyzika bez zmeny.' ),

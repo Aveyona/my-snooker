@@ -6,6 +6,17 @@ import { Physics } from './physics.js';
 const P_STEP = Physics.prototype.step;
 const P_ADV = Physics.prototype.advance;
 
+// 0.40.0: údaje k úderu sú len v tomto module (nie na objekte hry), z konzoly sa nedajú zapísať
+let pending = null;
+const strokes = new WeakMap();
+
+/** Hra si pri úderi vyzdvihne údaje kontroly (raz). Úder zavolaný priamo z kódu ich nemá. */
+export function takeShotData() {
+	const t = pending;
+	pending = null;
+	return t;
+}
+
 export class Integrity {
 	constructor(canvas, root) {
 		this.canvas = canvas;
@@ -13,7 +24,15 @@ export class Integrity {
 		this.ov = 0; // koľkokrát bolo počas mierenia cudzie plátno nad hrou
 		this.aim = []; // [čas, smer] posledné 3 s
 		this.aimStart = 0;
-		this.stroke = null; // posledný ťah tága z ovládania
+		this.mv = 0; // skutočné pohyby myši, prsta a klávesy počas mierenia (0.40.0)
+		const ev = (e) => {
+			if (e.isTrusted && this.aimStart) {
+				this.mv++;
+			}
+		};
+		for (const n of ['pointermove', 'touchmove', 'keydown', 'mousemove']) {
+			window.addEventListener(n, ev, { passive: true, capture: true });
+		}
 		this.game = null;
 		this._shoot = null;
 		this._t = setInterval(() => this.scan(), 1200);
@@ -74,8 +93,8 @@ export class Integrity {
 	}
 
 	/** Ovládanie: ťah tága (myš alebo prst) skončil úderom. k = 'm' myš, 't' prst, 'b' ukazovateľ sily; n = pohyby. */
-	setStroke(k, n) {
-		this.stroke = { k, n: n | 0, t: performance.now() };
+	setStroke(k, n, raw) {
+		strokes.set(this, { k, n: n | 0, raw: Array.isArray(raw) ? raw : null, t: performance.now() });
 	}
 
 	/** Prepísané funkcie hry alebo fyziky. */
@@ -94,7 +113,8 @@ export class Integrity {
 	/** Údaje k úderu (pripojí ich hra k úderu, server ich vyhodnotí). Po použití sa vynulujú. */
 	take() {
 		const now = performance.now();
-		const s = this.stroke && now - this.stroke.t < 1500 ? this.stroke : null;
+		const st = strokes.get(this);
+		const s = st && now - st.t < 1500 ? st : null;
 		let aj = 0;
 		const a = this.aim;
 		for (let i = 1; i < a.length; i++) {
@@ -102,11 +122,20 @@ export class Integrity {
 				aj++;
 			}
 		}
-		const tm = { k: s ? s.k : '', n: s ? s.n : 0, ov: this.ov, tp: this.tamper(), aj, at: this.aimStart ? Math.round(now - this.aimStart) : 0 };
-		this.stroke = null;
+		const tm = { k: s ? s.k : '', n: s ? s.n : 0, ov: this.ov, tp: this.tamper(), aj, at: this.aimStart ? Math.round(now - this.aimStart) : 0, mv: this.mv };
+		if (s && s.raw) {
+			tm.r = s.raw; // surový záznam ťahu – server z neho prepočíta silu
+		}
+		strokes.delete(this);
+		this.mv = 0;
 		this.ov = 0;
 		this.aim = [];
 		this.aimStart = 0;
 		return tm;
+	}
+
+	/** Pripraví údaje pre najbližší úder (vyzdvihne ich hra cez takeShotData). */
+	arm(extra) {
+		pending = Object.assign(this.take(), extra || {});
 	}
 }

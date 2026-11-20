@@ -61,9 +61,9 @@ function mysn_ac_eval_powers( $powers ) {
 }
 
 /** Hra v prehliadači je od verzie 0.36.0 (posiela údaje o ruke a prekryve pri každom úderi). */
-function mysn_ac_newclient() {
+function mysn_ac_newclient( $min = '0.36.0' ) {
 	$v = isset( $_SERVER['HTTP_X_MYSN_V'] ) ? sanitize_text_field( wp_unslash( $_SERVER['HTTP_X_MYSN_V'] ) ) : '';
-	return '' !== $v && version_compare( $v, '0.36.0', '>=' );
+	return '' !== $v && version_compare( $v, $min, '>=' );
 }
 
 /**
@@ -72,7 +72,7 @@ function mysn_ac_newclient() {
  * Podvod: aspoň 3 údery bez ruky, 2 údery s prekryvom alebo 1 s prepísanou hrou.
  */
 function mysn_ac_tm_eval( $tms, $training = false ) {
-	$c = array( 'n' => 0, 'nohand' => 0, 'ov' => 0, 'tp' => 0 );
+	$c = array( 'n' => 0, 'nohand' => 0, 'ov' => 0, 'tp' => 0, 'sd' => 0, 'sdbig' => 0, 'nomv' => 0 );
 	foreach ( (array) $tms as $t ) {
 		++$c['n'];
 		if ( ! is_array( $t ) ) {
@@ -85,6 +85,16 @@ function mysn_ac_tm_eval( $tms, $training = false ) {
 		if ( ! empty( $t['tp'] ) ) {
 			++$c['tp'];
 		}
+		// 0.40.0: sila nesedí so záznamom ťahu (sd = odchýlka v %, vypočíta ju volajúci)
+		if ( isset( $t['sd'] ) && $t['sd'] > 0 ) {
+			++$c['sd'];
+			if ( $t['sd'] > 10 ) {
+				++$c['sdbig'];
+			}
+		}
+		if ( isset( $t['mv'] ) && 0 === (int) $t['mv'] && (int) ( $t['aj'] ?? 0 ) > 3 ) {
+			++$c['nomv']; // mierenie bez myši, prsta aj klávesov (len zápis – skóre podozrenia vo fáze D)
+		}
 	}
 	$why = array();
 	if ( $c['nohand'] >= 3 ) {
@@ -96,9 +106,79 @@ function mysn_ac_tm_eval( $tms, $training = false ) {
 	if ( $c['tp'] >= 1 ) {
 		$why[] = 'prepísané funkcie hry';
 	}
+	if ( $c['sdbig'] >= 1 || $c['sd'] >= 2 ) {
+		$why[] = sprintf( 'sila úderu nesedí so záznamom ťahu tága pri %d úderoch', $c['sd'] );
+	}
 	$c['cheat'] = (bool) $why;
 	$c['why']   = $why ? 'Kontrola hry: ' . implode( ', ', $why ) . '.' : '';
 	return $c;
+}
+
+/**
+ * Prepočet sily úderu zo surového záznamu ťahu (0.40.0) – rovnaký vzorec ako Controls.strokeSpeed() v hre:
+ * posledných 80 ms, dopredný pohyb od miesta, kde bolo tágo najviac vzadu; rýchlosť × 0,28 m × 2 / 7.
+ * k: 'm' myš (najmenej 0,03), 't' prst, 'b' ukazovateľ sily (hodnota priamo). Vráti silu 0..1 alebo null.
+ */
+function mysn_ac_raw_power( $k, $raw ) {
+	if ( ! is_array( $raw ) || ! $raw ) {
+		return null;
+	}
+	$h = array();
+	foreach ( $raw as $v ) {
+		if ( is_array( $v ) && isset( $v[0], $v[1] ) && is_numeric( $v[0] ) && is_numeric( $v[1] ) ) {
+			$h[] = array( (float) $v[0], (float) $v[1] );
+		}
+	}
+	if ( ! $h ) {
+		return null;
+	}
+	if ( 'b' === $k ) {
+		return max( 0, min( 1, $h[ count( $h ) - 1 ][1] ) );
+	}
+	$last = $h[ count( $h ) - 1 ][0];
+	while ( count( $h ) > 2 && $last - $h[0][0] > 80 ) {
+		array_shift( $h );
+	}
+	if ( count( $h ) < 2 ) {
+		return null;
+	}
+	$i0 = 0;
+	foreach ( $h as $i => $v ) {
+		if ( $v[1] >= $h[ $i0 ][1] ) {
+			$i0 = $i;
+		}
+	}
+	$a  = $h[ $i0 ];
+	$b  = $h[ count( $h ) - 1 ];
+	$sp = 0;
+	if ( $i0 !== count( $h ) - 1 ) {
+		$dt = max( 0.008, ( $b[0] - $a[0] ) / 1000 );
+		$sp = max( 0, ( ( $a[1] - $b[1] ) / $dt ) * 0.28 * 2 / 7 );
+	}
+	$sp = min( 1, $sp );
+	return 'm' === $k ? max( 0.03, $sp ) : $sp;
+}
+
+/**
+ * Sedí sila úderu so záznamom ťahu? m = násobok sily z hry (tágo × špica), povolený rozsah 0,6 – 1,05; q = šmyk.
+ * Vráti null (nedá sa posúdiť: staršia hra), 0 (sedí) alebo odchýlku v percentách.
+ */
+function mysn_ac_stroke_dev( $tm, $power ) {
+	if ( ! is_array( $tm ) || ! array_key_exists( 'r', $tm ) || ! in_array( $tm['k'] ?? '', array( 'm', 't', 'b' ), true ) ) {
+		return null;
+	}
+	$raw = mysn_ac_raw_power( $tm['k'], $tm['r'] );
+	$m   = isset( $tm['m'] ) ? (float) $tm['m'] : 0;
+	if ( null === $raw || $m < 0.6 || $m > 1.05 ) {
+		return 100; // záznam chýba alebo nezmyselný násobok
+	}
+	$exp = min( 1, $raw * $m ) * ( empty( $tm['q'] ) ? 1 : 0.35 ); // q = šmyk tága (sila × 0,35)
+	$pw  = (float) $power;
+	if ( $exp < 0.001 && $pw < 0.001 ) {
+		return 0;
+	}
+	$dev = abs( $pw - $exp ) / max( 0.01, $exp ) * 100;
+	return $dev <= 2 ? 0 : round( $dev, 1 );
 }
 
 /** Do kedy je hráč suspendovaný (0 = nie je). */
@@ -160,6 +240,13 @@ function mysn_ac_solo( $uid, $log, $claim ) {
 			$t = is_array( $e ) && isset( $e['t'] ) && is_array( $e['t'] ) ? $e['t'] : null;
 			if ( $t ) {
 				$seen = true;
+				if ( mysn_ac_newclient( '0.40.0' ) ) {
+					$sd = mysn_ac_stroke_dev( $t, $e['s'][1] ?? 1 );
+					if ( null !== $sd ) {
+						$t['sd'] = $sd;
+					}
+				}
+				unset( $t['r'] );
 			}
 			$tms[] = $t;
 		}
@@ -230,7 +317,14 @@ function mysn_ac_match_shot( $m, $uid, $shot ) {
 	$tk  = 'mysn_ac_t' . (int) $m['id'] . '_' . (int) $uid;
 	$tms = get_transient( $tk );
 	$tms = is_array( $tms ) ? $tms : array();
-	$tms[] = isset( $shot['tm'] ) && is_array( $shot['tm'] ) ? array_intersect_key( $shot['tm'], array_flip( array( 'k', 'n', 'ov', 'tp', 'aj', 'at' ) ) ) : ( mysn_ac_newclient() ? 'X' : null );
+	$tm    = isset( $shot['tm'] ) && is_array( $shot['tm'] ) ? array_intersect_key( $shot['tm'], array_flip( array( 'k', 'n', 'ov', 'tp', 'aj', 'at', 'mv' ) ) ) : ( mysn_ac_newclient() ? 'X' : null );
+	if ( is_array( $tm ) && mysn_ac_newclient( '0.40.0' ) ) {
+		$sd = mysn_ac_stroke_dev( $shot['tm'], $shot['power'] ?? 1 );
+		if ( null !== $sd ) {
+			$tm['sd'] = $sd;
+		}
+	}
+	$tms[] = $tm;
 	set_transient( $tk, array_slice( $tms, -60 ), DAY_IN_SECONDS );
 	$tv = mysn_ac_tm_eval( $tms, 'training' === ( $m['kind'] ?? '' ) );
 	if ( $tv['cheat'] && mysn_ac_match_cheat( $m, $uid, $tv['why'], $tv ) ) {

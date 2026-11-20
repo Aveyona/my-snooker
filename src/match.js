@@ -6,6 +6,7 @@
  * Stavy navyše: 'watch' (je na rade súper), 'wait' (súperov úder dobehol, čaká sa na jeho výsledok),
  * 'over' (koniec partie).
  */
+import { takeShotData } from './integrity.js';
 import { Training } from './training.js';
 import { createRack, snapshot, restore, strike, R } from './physics.js';
 import { evaluate, onLabel, newFrame, VALUE, snookered, remaining } from './rules.js';
@@ -261,13 +262,13 @@ export class Game extends Training {
 		}
 		// hra o skóre: vstupy úderu a polohy gúľ pred ním (server frame prehrá a overí výsledok)
 		const rec = this.solo && !this.match && Array.isArray(this.solo.log) ? { s: elev > 0 ? [this.dir, power, side, top, c.p.x, c.p.z, elev] : [this.dir, power, side, top, c.p.x, c.p.z], b: this.balls.map((b) => [b.p.x, b.p.z, b.on ? 1 : 0]) } : null;
-		if (this._tm) {
-			// kontrola férovej hry (0.36.0): ruka, prekryv, mierenie; úder zavolaný priamo z kódu ich nemá
-			shot.tm = this._tm;
+		const tm = takeShotData();
+		if (tm) {
+			// kontrola férovej hry (0.36.0, 0.40.0): ruka, prekryv, mierenie, surový ťah; úder zavolaný priamo z kódu ich nemá
+			shot.tm = tm;
 			if (rec) {
-				rec.t = this._tm;
+				rec.t = tm;
 			}
-			this._tm = null;
 		}
 		if (!super.shoot(power, side, top, elev)) {
 			return false;

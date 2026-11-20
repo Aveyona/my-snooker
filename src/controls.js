@@ -388,6 +388,7 @@ export class Controls {
 				// plná sila pri švihnutí asi 2 000 px za sekundu
 				const ss = this.touchStrokeSens || 1; // šúpatko Ťahanie tága prstom (mobil)
 				const k = Math.max(1, (this.strokePx * ss) / Math.max(120, window.innerHeight * 0.22)) / ss;
+				this._evOk = e.isTrusted;
 				this.strokeMove((e.clientY - d.ly) * k);
 				d.ly = e.clientY;
 			}
@@ -427,7 +428,7 @@ export class Controls {
 					const sp = Math.max(0, Math.min(1, this.strokeSpeed()));
 					if (fwd && sp > 0.03 && this.strokePull < 0.6) {
 						this.endStroke();
-						this.lastStroke = { k: 't', n: this._nmv | 0 };
+						this.lastStroke = { k: 't', n: this._nmv | 0, raw: this.rawStroke() };
 						this.hooks.shoot(sp);
 					} else {
 						this.endStroke();
@@ -539,6 +540,7 @@ export class Controls {
 			return;
 		}
 		if (this.stroking) {
+			this._evOk = e.isTrusted;
 			this.strokeMove(e.movementY || 0);
 			return;
 		}
@@ -624,6 +626,7 @@ export class Controls {
 		this.strokePull = 0;
 		this._max = 0;
 		this._hist = [{ t: performance.now(), p: 0 }];
+		this._raw = [[this._hist[0].t, 0]]; // nový ťah: surový záznam od začiatku (ako _hist)
 		if (!this.touchStroke) {
 			this.capture();
 		}
@@ -653,6 +656,17 @@ export class Controls {
 		this.strokePull = Math.max(-0.02, Math.min(1, prev + (dy * ss) / this.strokePx));
 		this._max = Math.max(this._max, this.strokePull);
 		this._hist.push({ t: now, p: this.strokePull });
+		// surový záznam ťahu (0.40.0): server z neho prepočíta silu úderu; len skutočné udalosti myši alebo prsta
+		const raw = (this._raw = this._raw || []);
+		if (this._evOk !== false) {
+			raw.push([now, this.strokePull]);
+		} else {
+			raw.length = 0;
+			raw.bad = 1;
+		}
+		while (raw.length > 2 && now - raw[0][0] > 400) {
+			raw.shift();
+		}
 		while (this._hist.length > 2 && now - this._hist[0].t > 80) {
 			this._hist.shift();
 		}
@@ -660,10 +674,22 @@ export class Controls {
 		this.power = Math.max(0, Math.min(1, sp));
 		if (this.strokePull <= 0.004 && prev > 0.004 && this._max > 0.02 && dy < 0) {
 			const p = Math.max(0.03, Math.min(1, sp));
-			this.lastStroke = { k: this.touchStroke ? 't' : 'm', n: this._nmv | 0 };
+			this.lastStroke = { k: this.touchStroke ? 't' : 'm', n: this._nmv | 0, raw: this.rawStroke() };
 			this.endStroke();
 			this.hooks.shoot(p);
 		}
+	}
+
+	/** Surový záznam ťahu pre server: [ms od prvej vzorky, odtiahnutie] (null = boli aj neskutočné udalosti). */
+	rawStroke() {
+		const raw = this._raw || [];
+		const bad = raw.bad;
+		this._raw = [];
+		if (bad || raw.length < 2) {
+			return null;
+		}
+		const t0 = raw[0][0];
+		return raw.map(([t, p]) => [Math.round((t - t0) * 100) / 100, Math.round(p * 1e6) / 1e6]);
 	}
 
 	/** Rýchlosť tága dopredu (z posledných 80 ms) prepočítaná na silu úderu 0..1. */
@@ -778,7 +804,7 @@ export class Controls {
 		this.charging = false;
 		this.power = 0;
 		if (p > 0.02) {
-			this.lastStroke = { k: 'b', n: this._nbar | 0 };
+			this.lastStroke = { k: 'b', n: this._nbar | 0, raw: [[0, Math.round(p * 1e6) / 1e6]] };
 			this._nbar = 0;
 			this.hooks.shoot(p);
 		}

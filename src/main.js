@@ -2580,10 +2580,11 @@ export function start(root, config = {}) {
 		}
 		const achPre = achBefore(); // úspechy: stav pred úderom (skóre, guľa na rade, zasnookrovanie)
 		if (controls.lastStroke) {
-			integrity.setStroke(controls.lastStroke.k, controls.lastStroke.n);
+			integrity.setStroke(controls.lastStroke.k, controls.lastStroke.n, controls.lastStroke.raw);
 			controls.lastStroke = null;
 		}
-		game._tm = integrity.take(); // údaje k úderu pre server (ruka, prekryv, mierenie)
+		// údaje k úderu pre server (ruka, prekryv, mierenie, surový ťah); m = násobok sily (tágo × špica), q = šmyk
+		integrity.arm({ m: Math.round(cueSpec.power * TK.power * 1e6) / 1e6, q: miscue ? 1 : 0 });
 		const shot = game.shoot(power, side, top, elev);
 		if (!shot) {
 			game.dir = dir0;
