@@ -2,7 +2,7 @@
 /**
  * Plugin Name: My Snooker
  * Description: 3D snooker v prehliadači na adrese snooker.hedlajner.sk: tréning, hra o najlepšie skóre (rebríček), partie cez internet (Poslať výzvu), celoročná liga na štadióne a sledovanie partií (Pozerať hru); na PC aj na mobile. Plán vývoja je v administrácii (My Snooker, Plán vývoja). Ten istý WordPress ako hedlajner.sk.
- * Version: 0.40.4
+ * Version: 0.41.0
  * Requires Plugins: my-users, my-chat, my-rooms, my-ai-writer, my-player
  * Update URI: false
  * Author: Aveyona
@@ -14,7 +14,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-define( 'MYSN_VERSION', '0.40.4' );
+define( 'MYSN_VERSION', '0.41.0' );
 define( 'MYSN_DIR', plugin_dir_path( __FILE__ ) );
 define( 'MYSN_URL', plugin_dir_url( __FILE__ ) );
 
@@ -43,6 +43,7 @@ require_once MYSN_DIR . 'includes/worldsnooker.php';
 require_once MYSN_DIR . 'includes/anticheat.php';
 require_once MYSN_DIR . 'includes/challenge.php';
 require_once MYSN_DIR . 'includes/suspicion.php';
+require_once MYSN_DIR . 'includes/snaps.php';
 require_once MYSN_DIR . 'includes/mail.php';
 require_once MYSN_DIR . 'includes/page.php';
 require_once MYSN_DIR . 'includes/admin.php';

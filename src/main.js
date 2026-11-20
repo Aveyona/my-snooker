@@ -35,6 +35,7 @@ import { CHALKS, chalkById } from './chalks.js';
 import { ChalkMarks } from './chalkMarks.js';
 import { CUES, cueById, ownCueSpec, TIP_COLORS, tipInaccuracy, extInaccuracy, cueGrip, REACH, CUE_EXTS } from './cues.js';
 import { fpRegister } from './fp.js';
+import { Snaps } from './snaps.js';
 import { Physics, strike } from './physics.js';
 import { takeShotData } from './integrity.js';
 import { Net } from './online.js';
@@ -2606,6 +2607,9 @@ export function start(root, config = {}) {
 			controls.lastStroke = null;
 		}
 		// údaje k úderu pre server (ruka, prekryv, mierenie, surový ťah); m = násobok sily (tágo × špica), q = šmyk
+		if (snaps) {
+			snaps.onShot();
+		}
 		integrity.arm({ m: Math.round(cueSpec.power * TK.power * 1e6) / 1e6, q: miscue ? 1 : 0 });
 		const shot = game.shoot(power, side, top, elev);
 		if (!shot) {
@@ -4923,6 +4927,7 @@ export function start(root, config = {}) {
 
 	// hra cez internet (len prihlásení): živí hráči, pozvánky, partia
 	let online = null;
+	let snaps = null; // snímky obrazovky pri podozrení (0.41.0)
 	const menuKind = () => {
 		if (!user) {
 			return ['guest'];
@@ -4947,6 +4952,13 @@ export function start(root, config = {}) {
 		ui.showLeaderboard(null);
 		topView = false;
 		game.startSolo(fresh);
+		if (snaps && game.solo && game.solo.fid) {
+			snaps.ensure('f' + game.solo.fid).then((ok) => {
+				if (!ok) {
+					ui.toast('Bez snímok obrazovky sa výsledok tejto hry o skóre nezapíše (overenie férovej hry).');
+				}
+			});
+		}
 		if (game.state === 'place') {
 			game.dir = 0; // biela v ruke: pohľad spoza baulku smerom k červeným
 		}
@@ -5222,6 +5234,13 @@ export function start(root, config = {}) {
 				refreshMenu();
 				ui.showMenu(false);
 				ui.toast(`Partia s hráčom ${m.players[1 - m.me].name}. ${m.turn === m.me ? 'Si na rade.' : 'Na rade je súper.'}`);
+				if (snaps && !m.training) {
+					snaps.ensure('m' + m.id).then((ok) => {
+						if (!ok) {
+							ui.toast('Bez snímok obrazovky sa partia po 4. údere zruší (overenie férovej hry).');
+						}
+					});
+				}
 				if (m.league) {
 					setTimeout(() => rudo.start(), 500); // komentátor Rudo na štadióne
 				}
@@ -5234,6 +5253,9 @@ export function start(root, config = {}) {
 				updateScore();
 			},
 			ended: async (text) => {
+				if (snaps) {
+					snaps.stop(false);
+				}
 				const lr = online && online.lastResult;
 				if (lr && lr.won && lr.id !== achWonSeen) {
 					achWonSeen = lr.id;
@@ -5316,6 +5338,12 @@ export function start(root, config = {}) {
 				}
 			},
 		});
+		snaps = new Snaps(online.net, ui.root, (t) => ui.toast(t));
+		// snímka patrí aktuálnej partii alebo frame-u hry o skóre (nový frame po dohraní má nové id)
+		snaps.refFn = () => (online.matchId ? 'm' + online.matchId : game.solo && game.solo.fid && !game.match ? 'f' + game.solo.fid : '');
+		if (game.solo && game.solo.fid && !game.match) {
+			snaps.ensure('f' + game.solo.fid);
+		}
 		online.seatCtx = seatCtxNow;
 		online.away = !lampOn; // zhasnutá lampa v kancelárii: nie som online
 		// 0.28.6: nástenka Liga (F12), tabule v kancelárii a karta hráča sa načítajú hneď po štarte (chvíľu po
@@ -6801,6 +6829,9 @@ export function start(root, config = {}) {
 		lcdRender();
 		Cue.fadeFrom(rig.camera.position, cue.pivot.position); // tágo blízko kamery sa stratí (massé)
 		renderer.render(scene, rig.camera);
+		if (snaps) {
+			snaps.afterRender(renderer.domElement);
+		}
 		miniTable();
 		requestAnimationFrame(frame);
 	};

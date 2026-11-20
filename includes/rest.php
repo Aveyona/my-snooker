@@ -500,7 +500,11 @@ function mysn_rest_shot( $req ) {
 	}
 	$data        = json_decode( $shot, true );
 	// 0.34.0: úder, ktorý nevznikol rukou (program, AI): partia sa preruší a zruší, hráč sa suspenduje
-	if ( function_exists( 'mysn_ac_match_shot' ) && is_array( $data ) && mysn_ac_match_shot( $m, get_current_user_id(), $data ) ) {
+	$acr = function_exists( 'mysn_ac_match_shot' ) && is_array( $data ) ? mysn_ac_match_shot( $m, get_current_user_id(), $data ) : false;
+	if ( 'nosnap' === $acr ) {
+		return mysn_err( 'Partia bola zrušená: chýbajú snímky obrazovky (overenie férovej hry).', 403 );
+	}
+	if ( $acr ) {
 		return mysn_err( 'Partia bola zrušená: systém zistil, že údery nehrá človek.', 403 );
 	}
 	$data['seq'] = $seq;

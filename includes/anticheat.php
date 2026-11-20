@@ -287,6 +287,13 @@ function mysn_ac_solo( $uid, $log, $claim ) {
 			$beat = null;
 		}
 	}
+	// 0.41.0: snímky obrazovky pri skóre podozrenia od 30 (bez nich alebo po zastavení zdieľania sa frame neprijme)
+	if ( ! $beat && is_array( $log ) && function_exists( 'mysn_snap_needed' ) && ! mysn_is_admin_user( $uid ) && mysn_snap_needed( $uid ) ) {
+		$fref = 'f' . (string) ( $claim['fid'] ?? '' );
+		if ( ! mysn_snap_count( $uid, $fref ) || mysn_snap_stopped( $uid, $fref ) ) {
+			$beat = array( 'beat', 'chýbajú snímky obrazovky (overenie férovej hry)' );
+		}
+	}
 	if ( ! $ev['cheat'] && ! $tv['cheat'] && ! $susp && ! $beat ) {
 		return null;
 	}
@@ -382,6 +389,11 @@ function mysn_ac_match_shot( $m, $uid, $shot ) {
 		} elseif ( (int) get_transient( $pk ) === count( $tms ) ) {
 			mysn_ch_issue( $uid, $m['id'], 'náhodná kontrola' );
 		}
+	}
+	// 0.41.0: hráč so skóre podozrenia od 30 musí posielať snímky obrazovky – bez nich sa partia po 4. údere zruší
+	if ( 'training' !== ( $m['kind'] ?? '' ) && function_exists( 'mysn_snap_needed' ) && count( $tms ) >= 4 && ! mysn_is_admin_user( $uid ) && mysn_snap_needed( $uid ) && ! mysn_snap_count( $uid, 'm' . (int) $m['id'] ) ) {
+		mysn_update_match( $m['id'], array( 'status' => 'annulled', 'result' => 'nosnap', 'shot' => null, 'aim' => null ) );
+		return 'nosnap';
 	}
 	// 0.40.4: skóre podozrenia (nie v tréningu)
 	if ( function_exists( 'mysn_susp_tms' ) && 'training' !== ( $m['kind'] ?? '' ) ) {
