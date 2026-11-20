@@ -141,10 +141,8 @@ export function replay(log, claim, opts = {}) {
 		}
 		sim += g.physics.time - t0;
 		const ss = shotStat(g, pre);
-		if (ss && ss.pot) {
-			// presnosť zahrania (0.35.0): poloha smeru v okne, v ktorom guľa ešte spadne
-			wins.push(shotWindow(pre, { dir, power, side, top, e: elev, cx: pre[0].x, cz: pre[0].z }));
-		}
+		// presnosť zahrania (0.35.0): poloha smeru v okne, v ktorom guľa ešte spadne; null = nespadlo (0.40.4: poradie úderov)
+		wins.push(ss && ss.pot ? shotWindow(pre, { dir, power, side, top, e: elev, cx: pre[0].x, cz: pre[0].z }) : null);
 		if (ss && ss.d > 1.2) {
 			st.ln++;
 			st.lk += ss.pot ? 1 : 0;
@@ -163,7 +161,7 @@ export function replay(log, claim, opts = {}) {
 	if (!result) {
 		return { ok: false, error: 'Frame sa podľa servera neskončil (posledný úder ho nedohral).', mismatch: true };
 	}
-	const out = { ok: true, points: result.points, shots: result.shots, fouls: result.fouls, brk: result.brk, sim: Math.round(sim), ln: st.ln, lk: st.lk, pr: precisionSummary(wins) };
+	const out = { ok: true, points: result.points, shots: result.shots, fouls: result.fouls, brk: result.brk, sim: Math.round(sim), ln: st.ln, lk: st.lk, pr: precisionSummary(wins), wins };
 	// čas framu: nemôže byť kratší ako čas, keď sa gule hýbali, plus aspoň pol sekundy na každý úder
 	if (claim && num(claim.seconds) && claim.seconds + 2 < sim + 0.5 * out.shots) {
 		return { ...out, ok: false, error: `Čas framu ${claim.seconds} s je kratší, než je možné (gule sa hýbali ${Math.round(sim)} s).`, cheat: true };

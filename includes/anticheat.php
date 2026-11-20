@@ -263,6 +263,21 @@ function mysn_ac_solo( $uid, $log, $claim ) {
 		}
 		$tv = mysn_ac_tm_eval( $tms );
 	}
+	// 0.40.4: skóre podozrenia z frame-u
+	if ( is_array( $log ) && function_exists( 'mysn_susp_tms' ) ) {
+		$sref = 'f' . substr( (string) ( $claim['fid'] ?? '' ), 0, 16 );
+		mysn_susp_tms( $uid, $sref, isset( $tms ) ? $tms : array() );
+		mysn_susp_powers(
+			$uid,
+			$sref,
+			array_map(
+				function ( $e ) {
+					return is_array( $e ) && isset( $e['s'][1] ) ? $e['s'][1] : 1;
+				},
+				$log
+			)
+		);
+	}
 	// 0.40.3: tep frame-u a výzva servera (nová hra posiela id frame-u fid)
 	$beat = null;
 	if ( is_array( $log ) && mysn_ac_newclient( '0.40.3' ) && function_exists( 'mysn_beat_check' ) ) {
@@ -368,6 +383,17 @@ function mysn_ac_match_shot( $m, $uid, $shot ) {
 			mysn_ch_issue( $uid, $m['id'], 'náhodná kontrola' );
 		}
 	}
+	// 0.40.4: skóre podozrenia (nie v tréningu)
+	if ( function_exists( 'mysn_susp_tms' ) && 'training' !== ( $m['kind'] ?? '' ) ) {
+		$sref = 'm' . (int) $m['id'];
+		mysn_susp_tms( $uid, $sref, $tms );
+		if ( 1 === count( $tms ) ) {
+			mysn_susp_newacc( $uid, $sref );
+			if ( mysn_susp_score( $uid ) > 0 && function_exists( 'mysn_ch_issue' ) ) {
+				mysn_ch_issue( $uid, $m['id'], 'skóre podozrenia ' . mysn_susp_score( $uid ) );
+			}
+		}
+	}
 	$tv = mysn_ac_tm_eval( $tms, 'training' === ( $m['kind'] ?? '' ) );
 	if ( $tv['cheat'] && mysn_ac_match_cheat( $m, $uid, $tv['why'], $tv ) ) {
 		delete_transient( $tk );
@@ -378,6 +404,9 @@ function mysn_ac_match_shot( $m, $uid, $shot ) {
 	$pw  = is_array( $pw ) ? $pw : array();
 	$pw[] = isset( $shot['power'] ) ? (float) $shot['power'] : 1;
 	set_transient( $key, array_slice( $pw, -40 ), DAY_IN_SECONDS );
+	if ( function_exists( 'mysn_susp_powers' ) && 'training' !== ( $m['kind'] ?? '' ) ) {
+		mysn_susp_powers( $uid, 'm' . (int) $m['id'], $pw );
+	}
 	$ev = mysn_ac_eval_powers( $pw );
 	if ( ! $ev['cheat'] ) {
 		return false;

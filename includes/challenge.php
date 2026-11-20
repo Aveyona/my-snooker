@@ -120,6 +120,9 @@ add_filter(
 				if ( hash_equals( mysn_fnv( implode( '|', $parts ) ), $a ) ) {
 					delete_transient( 'mysn_ch_' . (int) $uid );
 					mysn_ch_hist( $uid, 'ok', $c );
+					if ( false !== strpos( (string) $c['why'], 'náhodná' ) && function_exists( 'mysn_susp_dec' ) ) {
+						mysn_susp_dec( $uid, 5 ); // 0.40.4: čistá kontrola znižuje skóre podozrenia
+					}
 					return $resp;
 				}
 				if ( mysn_ch_fail( $uid, $c, 'hra odpovedala zle – kód hry je zmenený' ) ) {

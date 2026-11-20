@@ -557,6 +557,9 @@ function mysn_rest_settle( $req ) {
 			if ( ! empty( $v['stat'] ) && (float) $v['stat']['d'] > 1.2 ) {
 				$lp = ! empty( $v['stat']['pot'] ) ? 2 : 1;
 			}
+			if ( function_exists( 'mysn_susp_match_win' ) ) {
+				mysn_susp_match_win( $m, get_current_user_id(), $v['pw'] ?? null ); // 0.40.4: séria ťažkých úderov, test K-S
+			}
 			// 0.35.0: presnosť zahrania (okno smeru); pri podozrení sa partia zruší
 			if ( ! empty( $v['pw'] ) && function_exists( 'mysn_ac_match_prec' ) && mysn_ac_match_prec( $m, get_current_user_id(), $v['pw'] ) ) {
 				return mysn_err( 'Partia bola zrušená: systém zistil, že údery nehrá človek.', 403 );

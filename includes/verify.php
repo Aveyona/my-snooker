@@ -99,6 +99,10 @@ function mysn_verify_score( $id ) {
 		}
 	}
 	$big = abs( (int) ( $claim['points'] ?? 0 ) - (int) $d['points'] ) >= 5;
+	// 0.40.4: skóre podozrenia z presnosti frame-u (séria ťažkých úderov, test K-S)
+	if ( ! empty( $d['wins'] ) && is_array( $d['wins'] ) && function_exists( 'mysn_susp_wins' ) ) {
+		mysn_susp_wins( (int) $row['user_id'], 's' . (int) $id, $d['wins'] );
+	}
 	// 0.35.0: presnosť zahrania ako program → zamietnuté (hráč uvidí 0)
 	if ( function_exists( 'mysn_ac_solo_prec' ) && mysn_ac_solo_prec( $id, $row, $d ) ) {
 		return 4;
