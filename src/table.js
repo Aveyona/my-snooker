@@ -575,10 +575,6 @@ export function buildTable(renderer) {
 			const well = new THREE.Mesh(new THREE.CylinderGeometry(q.hw * 1.05, BASKET.top, 0.03, 40, 1, true), leatherMat);
 			well.position.set(bc.x, -0.012, bc.z);
 			sg.add(well);
-			// tmavá rúrka pod ústím jamky, aby spredu nebolo vidieť bok košíka
-			const mouth = new THREE.Mesh(new THREE.CylinderGeometry(q.hw * 1.02, q.hw * 1.02, 0.24, 32, 1, true), linerMat);
-			mouth.position.set(q.p.x, -0.13, q.p.z);
-			sg.add(mouth);
 			// tmavá výstelka stien jamky (rovné steny aj polkruh, od súkna po vrch rámu)
 			const vs = [];
 			for (const pt of o.pts) {
