@@ -2,7 +2,7 @@
 /**
  * My Snooker: výzva zo servera (0.40.1, ochrana proti podvádzaniu – fáza B).
  *
- * Pri podozrení (signál z kontroly úderu) alebo pri náhodnej kontrole (1 z 10 partií) uloží server výzvu: náhodné
+ * Pri podozrení (signál z kontroly úderu) alebo pri náhodnej kontrole (v každej partii aspoň raz, 0.40.2) uloží server výzvu: náhodné
  * číslo a výber funkcií hry. Výzva odíde v bežnej odpovedi na požiadavku partie (kľúč zx), hra ju vypočíta
  * z odtlačkov svojich funkcií (src/fp.js) a odpoveď priloží k ďalšej požiadavke (hlavička X-Mysn-C).
  * Zlá odpoveď = podvod hneď (prepísaná hra). Bez odpovede: 1. raz nová výzva, 2. raz podvod.

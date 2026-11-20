@@ -326,7 +326,7 @@ function mysn_ac_match_shot( $m, $uid, $shot ) {
 	}
 	$tms[] = $tm;
 	set_transient( $tk, array_slice( $tms, -60 ), DAY_IN_SECONDS );
-	// 0.40.1: výzva zo servera pri najmenšom podozrení alebo pri náhodnej kontrole (1 z 10 partií)
+	// 0.40.1: výzva zo servera pri najmenšom podozrení; náhodná kontrola v každej partii (0.40.2)
 	if ( function_exists( 'mysn_ch_issue' ) ) {
 		$sig = array();
 		if ( 'X' === $tm || ( is_array( $tm ) && ! in_array( $tm['k'] ?? '', array( 'm', 't', 'b' ), true ) ) ) {
@@ -348,7 +348,7 @@ function mysn_ac_match_shot( $m, $uid, $shot ) {
 		}
 		$pk = 'mysn_ch_plan_' . (int) $m['id'] . '_' . (int) $uid;
 		if ( 1 === count( $tms ) ) {
-			set_transient( $pk, wp_rand( 1, 10 ) === 1 ? wp_rand( 2, 8 ) : -1, DAY_IN_SECONDS );
+			set_transient( $pk, wp_rand( 1, 4 ), DAY_IN_SECONDS ); // 0.40.2: náhodná kontrola v každej partii (1. až 4. úder hráča)
 		}
 		if ( $sig ) {
 			mysn_ch_issue( $uid, $m['id'], implode( ', ', $sig ) );

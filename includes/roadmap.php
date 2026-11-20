@@ -180,6 +180,7 @@ function mysn_roadmap() {
 /** Denník zmien (najnovšie hore). */
 function mysn_changelog() {
 	return array(
+		array( '0.40.2', '20. 11. 2026', 'Výzva zo servera: náhodná kontrola v každej partii aspoň raz pri každom hráčovi (pri 1. až 4. jeho úderi), nielen v 1 z 10 partií.' ),
 		array( '0.40.1', '20. 11. 2026', 'Ochrana proti podvádzaniu, fáza B: výzva zo servera v partiách – pri najmenšom podozrení (úder bez ruky, prekryv, prepísaná funkcia, sila nesedí so ťahom, mierenie bez myši) alebo pri náhodnej kontrole 1 z 10 partií pošle server v bežnej odpovedi výzvu, hra odpovie odtlačkom svojich dôležitých funkcií (odtlačky vypočíta build do includes/fingerprints.php). Zlá odpoveď = podvod, bez odpovede dvakrát = podvod; história výziev pri hráčovi.' ),
 		array( '0.40.0', '20. 11. 2026', 'Ochrana proti podvádzaniu, fáza A: hra posiela k úderu surový záznam ťahu tága (len skutočné pohyby myši a prsta) a server z neho prepočíta silu úderu – nesedí o viac ako 10 % pri jednom úderi alebo o viac ako 2 % pri dvoch = podvod; údaje kontroly sú skryté v module (nedajú sa zapísať do hry z konzoly); počet skutočných pohybov počas mierenia sa zapisuje.' ),
 		array( '0.39.22', '20. 11. 2026', 'Podrobný plán dokončenia ochrany proti podvádzaniu (fázy A – F, docs/ANTICHEAT-PLAN.md).' ),
