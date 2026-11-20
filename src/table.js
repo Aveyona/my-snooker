@@ -726,7 +726,7 @@ export function buildTable(renderer) {
 					const pts = [];
 					const N = 10;
 					for (let i = 0; i <= N; i++) {
-						const t = j.t + ((q.tc - j.t) * i) / N;
+						const t = j.t - 0.006 + ((q.tc - j.t + 0.006) * i) / N; // o 6 mm prekrýva koniec mantinelu (bez švu)
 						const k = Math.min(1, (t - j.t) / 0.015); // stredná čeľusť je mierne šikmá: plynulo na stenu
 						pts.push(wallPt(t, j.s + (sg0 * q.hw - j.s) * k, sg0));
 					}
