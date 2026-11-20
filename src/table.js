@@ -430,6 +430,19 @@ export function buildTable(renderer) {
 				q.jaw[sv >= 0 ? 1 : -1] = { t: rx * q.d.x + rz * q.d.z, s: sv };
 			}
 		}
+		const jawSlot = (e) => {
+			let q = null;
+			let bd = Infinity;
+			for (const qq of SLOTS) {
+				const dd = Math.hypot(e.x - qq.K.x, e.z - qq.K.z);
+				if (dd < bd) {
+					bd = dd;
+					q = qq;
+				}
+			}
+			const sv = (e.x - q.K.x) * q.n.x + (e.z - q.K.z) * q.n.z;
+			return { q, side: sv >= 0 ? 1 : -1 };
+		};
 		const slotPush = (x, z) => {
 			// bod vo vnútri jamky posunie na jej stenu (mantinel končí na stene jamky)
 			for (const q of SLOTS) {
@@ -482,7 +495,13 @@ export function buildTable(renderer) {
 					path.push({ x: u * u * p0.x + 2 * u * t * p1.x + t * t * p2.x, z: u * u * p0.z + 2 * u * t * p1.z + t * t * p2.z });
 				}
 			};
-			path.push({ ...c.ab }, { ...towards(c.ab, a1, Math.hypot(a1.x - c.ab.x, a1.z - c.ab.z) * 0.5) }, { ...a1 });
+			const jA = jawSlot(a1);
+			const jB = jawSlot(b2);
+			// 0.39.17: pri rohovej jamke mantinel končí za zaoblením (krúžok a1/b2), lem jamky začína presne tým istým krúžkom
+			if (!jA.q.corner) {
+				path.push({ ...c.ab }, { ...towards(c.ab, a1, Math.hypot(a1.x - c.ab.x, a1.z - c.ab.z) * 0.5) });
+			}
+			path.push({ ...a1 });
 			quad(a1, c.a, a2, 10);
 			const seg = 24;
 			for (let i = 1; i < seg; i++) {
@@ -490,7 +509,9 @@ export function buildTable(renderer) {
 			}
 			path.push({ ...b1 });
 			quad(b1, c.b, b2, 10);
-			path.push({ ...towards(b2, c.bb, Math.hypot(c.bb.x - b2.x, c.bb.z - b2.z) * 0.5) }, { ...c.bb });
+			if (!jB.q.corner) {
+				path.push({ ...towards(b2, c.bb, Math.hypot(c.bb.x - b2.x, c.bb.z - b2.z) * 0.5) }, { ...c.bb });
+			}
 			// strana „dozadu“ (od stola): podľa hlavnej časti mantinelu
 			const tx = c.b.x - c.a.x;
 			const tz = c.b.z - c.a.z;
@@ -564,6 +585,19 @@ export function buildTable(renderer) {
 			geo.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
 			geo.setIndex(idx);
 			geo.computeVertexNormals();
+			{
+				// koncové krúžky pri rohových jamkách si zapamätá lem jamky (rovnaké body aj normály = bez švu)
+				const nr = geo.getAttribute('normal').array;
+				const take = (i) => ({ pos: pos.slice(i * P * 3, (i + 1) * P * 3), nrm: Array.from(nr.slice(i * P * 3, (i + 1) * P * 3)), mnx, mnz });
+				if (jA.q.corner) {
+					jA.q.ring = jA.q.ring || {};
+					jA.q.ring[jA.side] = take(0);
+				}
+				if (jB.q.corner) {
+					jB.q.ring = jB.q.ring || {};
+					jB.q.ring[jB.side] = take(path.length - 1);
+				}
+			}
 			const m = new THREE.Mesh(geo, railMat);
 			m.castShadow = true;
 			m.receiveShadow = true;
@@ -726,7 +760,7 @@ export function buildTable(renderer) {
 					const pts = [];
 					const N = 10;
 					for (let i = 0; i <= N; i++) {
-						const t = j.t - 0.006 + ((q.tc - j.t + 0.006) * i) / N; // o 6 mm prekrýva koniec mantinelu (bez švu)
+						const t = j.t + ((q.tc - j.t) * i) / N;
 						const k = Math.min(1, (t - j.t) / 0.015); // stredná čeľusť je mierne šikmá: plynulo na stenu
 						pts.push(wallPt(t, j.s + (sg0 * q.hw - j.s) * k, sg0));
 					}
@@ -734,14 +768,25 @@ export function buildTable(renderer) {
 				};
 				const sideA = side(1, false);
 				const sideB = side(-1, true);
-				const strip = (path, scale, mat, dir) => {
+				const strip = (path, scale, mat, dir, ring, atEnd) => {
 					const lv = [];
 					const li = [];
 					const P = LP.length;
 					for (const pt of path) {
 						const k = scale(pt);
 						for (const [d, y] of LP) {
-							lv.push(pt.x + pt.nx * d * k, y, pt.z + pt.nz * d * k);
+							// ako mantinel: nos po normále steny, zadná časť po smere mantinelu, z ktorého lem pokračuje
+							let ox = pt.nx;
+							let oz = pt.nz;
+							if (ring) {
+								const w = Math.min(1, d / 0.012);
+								ox = pt.nx * (1 - w) + ring.mnx * w;
+								oz = pt.nz * (1 - w) + ring.mnz * w;
+								const ol = Math.hypot(ox, oz) || 1;
+								ox /= ol;
+								oz /= ol;
+							}
+							lv.push(pt.x + ox * d * k, y, pt.z + oz * d * k);
 						}
 					}
 					for (let i = 0; i < path.length - 1; i++) {
@@ -755,10 +800,31 @@ export function buildTable(renderer) {
 							}
 						}
 					}
+					const NR = path.length;
+					const ringAt = (k) => (atEnd ? NR - 1 - k : k);
+					if (ring) {
+						// prvé krúžky plynulo od tvaru konca mantinelu k vlastnému tvaru lemu
+						const BL = 4;
+						for (let k = 0; k < BL && k < NR; k++) {
+							const f = 1 - k / BL;
+							const base = ringAt(k) * P * 3;
+							for (let m = 0; m < P * 3; m++) {
+								lv[base + m] = lv[base + m] * (1 - f) + ring.pos[m] * f;
+							}
+						}
+					}
 					const lg = new THREE.BufferGeometry();
 					lg.setAttribute('position', new THREE.Float32BufferAttribute(lv, 3));
 					lg.setIndex(li);
 					lg.computeVertexNormals();
+					if (ring) {
+						const na = lg.getAttribute('normal');
+						const base = ringAt(0) * P * 3;
+						for (let m = 0; m < P * 3; m++) {
+							na.array[base + m] = ring.nrm[m];
+						}
+						na.needsUpdate = true;
+					}
 					const lm = new THREE.Mesh(lg, mat);
 					lm.castShadow = true;
 					lm.receiveShadow = true;
@@ -774,8 +840,8 @@ export function buildTable(renderer) {
 					return t >= RAIL - 0.001 ? fy - 0.003 : -0.002;
 				};
 				if (q.corner) {
-					strip(sideA, kOf, railMat, 1);
-					strip(sideB, kOf, railMat, 1);
+					strip(sideA, kOf, railMat, 1, q.ring && q.ring[1], false);
+					strip(sideB, kOf, railMat, 1, q.ring && q.ring[-1], true);
 				}
 				// tmavá výstelka: pod nosom lemu a zadný polkruh od dna po vrch dreva
 				const dv = [];

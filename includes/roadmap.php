@@ -180,6 +180,7 @@ function mysn_roadmap() {
 /** Denník zmien (najnovšie hore). */
 function mysn_changelog() {
 	return array(
+		array( '0.39.17', '20. 11. 2026', 'Rohové jamky: vrátené prekrytie z 0.39.16 (poškodzovalo spodok mantinela pred jamkou); spoj bez čiar inak – lem jamky začína presne koncovým prierezom mantinelu s rovnakými normálami a rovnakým smerom zadnej časti.' ),
 		array( '0.39.16', '20. 11. 2026', 'Rohové jamky: bez čiar na spoji mantinelu a jeho pokračovania do jamky (pokračovanie mierne prekrýva koniec mantinelu).' ),
 		array( '0.39.15', '20. 11. 2026', 'Rohové jamky: kúsky súkna v ústí jamky majú textúru plátna namiesto jednofarebnej plochy.' ),
 		array( '0.39.14', '20. 11. 2026', 'Jamky: pod dierou v súkne krátke tmavé hrdlo (5 cm), jamka zhora vyzerá hlbšia a prirodzenejšia, sieťka je až pod ním.' ),
