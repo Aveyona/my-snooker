@@ -16,7 +16,7 @@ const CUSHION_H = 0.037; // výška nosa mantinelu nad súknom
 export const BASKET = { y: -0.022, top: 0.068, depth: 0.2 };
 
 /** Ako ďaleko za roh mantinelu je stred zadného polkruhu jamky (0.39.5 skrátené). */
-const SLOT_BACK = { corner: 0.068, mid: 0.06 };
+const SLOT_BACK = { corner: 0.068, mid: 0.034 }; // stredná: stred = stred jamky vo fyzike (diera ako polkruh)
 /** O koľko je výrez v dreve širší ako diera: mantinel pokračuje po stenách jamky (nos na diere, drevo za ním). */
 const LINE_W = 0.03;
 /** Skosenie hrany dreveného rámu (bevelSize) – o toľko drevo prečnieva dnu do výrezu. */
@@ -44,7 +44,7 @@ export function basketAt(q) {
 		const t = (t0 + SLOT_BACK.corner + hw) / 2;
 		return { x: sx * (L / 2 + t / Math.SQRT2), z: sz * (W / 2 + t / Math.SQRT2) };
 	}
-	return { x: 0, z: sz * (W / 2 + (RAIL + SLOT_BACK.mid + MG) / 2) };
+	return { x: 0, z: sz * (W / 2 + SLOT_BACK.mid) };
 }
 
 /** Sieťka košíka: kosoštvorcové oká z tmavej šnúry, medzi nimi priehľadne. */
@@ -177,6 +177,13 @@ function pocketHoles(cc = 0.071, cm = 0.065, inset = 0.008, slots = null) {
 		const Z = (z) => (z + W / 2 + RAIL) * sx;
 		for (const q of slots) {
 			// otvor = obdĺžnik od okraja rámu po stred zadného polkruhu + zadný polkruh (nie celý kruh, ten by siahal dopredu do súkna)
+			if (!q.corner) {
+				// stredná jamka: diera v súkne je kruh okolo stredu jamky
+				g.beginPath();
+				g.arc(X(q.c.x), Z(q.c.z), (q.hw - inset) * sx, 0, Math.PI * 2);
+				g.fill();
+				continue;
+			}
 			const t0 = q.corner ? (RAIL - q.hw / Math.SQRT2) * Math.SQRT2 : RAIL;
 			const w = q.hw - inset;
 			const P = (t, sv) => [X(q.K.x + q.d.x * t + q.n.x * sv), Z(q.K.z + q.d.z * t + q.n.z * sv)];
@@ -625,6 +632,23 @@ export function buildTable(renderer) {
 				}
 				return { arc, t2: Math.min(tE + dist, q.tc - 0.0005) };
 			};
+			if (!q.corner) {
+				// 0.39.13: stredná jamka – výrez v dreve je oblúk kruhu okolo stredu jamky (od hrany mantinelu po hranu)
+				const RB = q.hw + BEVEL_IN;
+				const dt = RAIL - q.tc;
+				const a0 = Math.asin(Math.max(-1, Math.min(1, dt / RB)));
+				const N = 24;
+				for (let i = 0; i <= N; i++) {
+					const a = a0 + ((Math.PI - 2 * a0) * i) / N;
+					pts.push({ x: q.c.x + q.n.x * Math.cos(a) * RB + q.d.x * Math.sin(a) * RB, z: q.c.z + q.n.z * Math.cos(a) * RB + q.d.z * Math.sin(a) * RB, semi: true });
+				}
+				const A = pts[0];
+				const B = pts[pts.length - 1];
+				if (A.x * B.z - A.z * B.x < 0) {
+					pts.reverse();
+				}
+				return { q, pts, ang: norm(Math.atan2(q.c.z, q.c.x)) };
+			}
 			const fA = fillet(tA, 1);
 			const fB = fillet(tB, -1);
 			pts.push(...fA.arc);
@@ -762,7 +786,8 @@ export function buildTable(renderer) {
 					const a = (Math.PI * i) / 24;
 					const rx = q.n.x * Math.cos(a) + q.d.x * Math.sin(a);
 					const rz = q.n.z * Math.cos(a) + q.d.z * Math.sin(a);
-					dpath.push({ x: q.c.x + rx * (q.hw - 0.0008), z: q.c.z + rz * (q.hw - 0.0008), top: fy - 0.003 });
+					const sp = { x: q.c.x + rx * (q.hw - 0.0008), z: q.c.z + rz * (q.hw - 0.0008) };
+					dpath.push({ ...sp, top: q.corner ? fy - 0.003 : wallTop(sp) });
 				}
 				for (const pt of sideB) {
 					dpath.push({ x: pt.x + pt.nx * 0.012 * kOf(pt), z: pt.z + pt.nz * 0.012 * kOf(pt), top: wallTop(pt) });
@@ -782,7 +807,7 @@ export function buildTable(renderer) {
 			}
 			linerMat.side = THREE.DoubleSide;
 			// súkno pri ústí: predná hrana diery je oblúk (plochý kúsok v rovine súkna tam, kde súkno končí)
-			{
+			if (q.corner) {
 				const t0 = q.corner ? (RAIL - q.hw / Math.SQRT2) * Math.SQRT2 : RAIL;
 				const sag = Math.min(q.hw * 0.6, Math.max(0.008, q.tc - t0));
 				const rho = (q.hw * q.hw + sag * sag) / (2 * sag);

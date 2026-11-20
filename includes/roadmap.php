@@ -180,6 +180,7 @@ function mysn_roadmap() {
 /** Denník zmien (najnovšie hore). */
 function mysn_changelog() {
 	return array(
+		array( '0.39.13', '20. 11. 2026', 'Stredné jamky: diera je kruh okolo stredu jamky (ako vo fyzike), začína hneď medzi čeľusťami, výrez v dreve je oblúk bez háčikov; košík pod stredom diery.' ),
 		array( '0.39.12', '20. 11. 2026', 'Stredné jamky bez zubov: mantinel končí čeľusťou, steny jamky rovné až po drevený polkruh (lem mantinelu ostáva len pri rohových jamkách).' ),
 		array( '0.39.11', '20. 11. 2026', 'Jamky: mantinel pokračuje len po bočných stenách jamky a pred zadným polkruhom sa plynulo zúži, vzadu je opäť drevený polkruh s tmavou výstelkou.' ),
 		array( '0.39.10', '20. 11. 2026', 'Jamky: mantinel pokračuje plynulo za zaoblením nosa po stenách jamky a okolo zadného polkruhu (lem jamky s rovnakým prierezom), drevo začína až za ním; bez useknutého konca a skoku pri čeľusti.' ),
