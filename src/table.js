@@ -19,6 +19,10 @@ export const BASKET = { y: -0.022, top: 0.068, depth: 0.2 };
 const SLOT_BACK = { corner: 0.068, mid: 0.034 }; // stredná: stred = stred jamky vo fyzike (diera ako polkruh)
 /** O koľko je výrez v dreve širší ako diera: mantinel pokračuje po stenách jamky (nos na diere, drevo za ním). */
 const LINE_W = 0.03;
+/** 0.39.20 rohová jamka: polomer oblúka, ktorým nos mantinelu zahne do steny jamky (väčší ako šírka mantinelu = bez prekladania). */
+const CORNER_R = 0.06;
+/** Šírka mantinelu po drevo (ako pozdĺž stola: RAIL). */
+const DW = 0.05;
 /** Skosenie hrany dreveného rámu (bevelSize) – o toľko drevo prečnieva dnu do výrezu. */
 const BEVEL_IN = 0.0064;
 /** Plná šírka lemu pri čeľusti, pred zadným polkruhom sa plynulo zúži na 0 (stena jamky). */
@@ -34,14 +38,43 @@ function lineK(q, t) {
 	return 1 - u * u * (3 - 2 * u);
 }
 
+/**
+ * Línia nosa mantinelu pri rohovej jamke v súradniciach jamky (t pozdĺž jamky von, s nabok): od dotyku na mantineli
+ * oblúkom CORNER_R do steny jamky (s = side·hw) a po stene dozadu po tc. Vracia body od konca v jamke k mantinelu.
+ */
+function cornerNoseTS(hw, tc, side) {
+	const u1 = { t: Math.SQRT1_2, s: -side * Math.SQRT1_2 }; // smer mantinelu k jamke
+	const C0 = { t: -hw, s: side * hw }; // roh čeľuste (koniec mantinelu vo fyzike)
+	const Lt = CORNER_R * Math.tan(Math.PI / 8);
+	const T1 = { t: C0.t - u1.t * Lt, s: C0.s - u1.s * Lt };
+	const T2 = { t: C0.t + Lt, s: C0.s };
+	const ctr = { t: T2.t, s: T2.s + side * CORNER_R };
+	const out = [];
+	const NW = 14;
+	for (let i = 0; i < NW; i++) {
+		out.push({ t: tc + ((T2.t - tc) * i) / NW, s: side * hw, wall: true, nt: 0, ns: side });
+	}
+	const a2 = Math.atan2(T2.s - ctr.s, T2.t - ctr.t);
+	const a1 = Math.atan2(T1.s - ctr.s, T1.t - ctr.t);
+	let da = a1 - a2;
+	while (da > Math.PI) da -= Math.PI * 2;
+	while (da < -Math.PI) da += Math.PI * 2;
+	const NA = 10;
+	for (let i = 0; i <= NA; i++) {
+		const a = a2 + (da * i) / NA;
+		out.push({ t: ctr.t + Math.cos(a) * CORNER_R, s: ctr.s + Math.sin(a) * CORNER_R, arc: true, nt: -Math.cos(a), ns: -Math.sin(a) });
+	}
+	return out; // posledný bod = T1 na mantineli
+}
+
 /** Stred viditeľnej diery jamky v tvare U (tam je košík a ležia v ňom spadnuté gule). */
 export function basketAt(q) {
 	const sx = Math.sign(q.x) || 1;
 	const sz = Math.sign(q.z);
 	if (q.corner) {
 		const hw = CG / Math.SQRT2;
-		const t0 = (RAIL - hw / Math.SQRT2) * Math.SQRT2; // kde stena vyjde spod mantinelu
-		const t = (t0 + SLOT_BACK.corner + hw) / 2;
+		const tf = (Math.abs(q.x) - L / 2) * Math.SQRT2; // stred jamky vo fyzike pozdĺž jamky
+		const t = (tf - hw + SLOT_BACK.corner + hw) / 2;
 		return { x: sx * (L / 2 + t / Math.SQRT2), z: sz * (W / 2 + t / Math.SQRT2) };
 	}
 	return { x: 0, z: sz * (W / 2 + SLOT_BACK.mid) };
@@ -184,16 +217,24 @@ function pocketHoles(cc = 0.071, cm = 0.065, inset = 0.008, slots = null) {
 				g.fill();
 				continue;
 			}
-			const t0 = q.corner ? (RAIL - q.hw / Math.SQRT2) * Math.SQRT2 : RAIL;
+			// 0.39.20: diera v tvare štadióna – vpredu oblúk okolo stredu jamky vo fyzike, vzadu polkruh
+			const tf = (q.p.x - q.K.x) * q.d.x + (q.p.z - q.K.z) * q.d.z;
 			const w = q.hw - inset;
 			const P = (t, sv) => [X(q.K.x + q.d.x * t + q.n.x * sv), Z(q.K.z + q.d.z * t + q.n.z * sv)];
 			g.beginPath();
-			g.moveTo(...P(t0, -w));
 			for (let i = 0; i <= 24; i++) {
 				const a = Math.PI * (i / 24);
-				g.lineTo(...P(q.tc + Math.sin(a) * w, -Math.cos(a) * w));
+				const pt = P(q.tc + Math.sin(a) * w, -Math.cos(a) * w);
+				if (i) {
+					g.lineTo(...pt);
+				} else {
+					g.moveTo(...pt);
+				}
 			}
-			g.lineTo(...P(t0, w));
+			for (let i = 0; i <= 24; i++) {
+				const a = Math.PI * (i / 24);
+				g.lineTo(...P(tf - Math.sin(a) * w, Math.cos(a) * w));
+			}
 			g.closePath();
 			g.fill();
 		}
@@ -403,33 +444,32 @@ export function buildTable(renderer) {
 			const back = p.corner ? SLOT_BACK.corner : SLOT_BACK.mid;
 			return { p, K, d, n, hw, tc: back, c: { x: K.x + d.x * back, z: K.z + d.z * back }, corner: p.corner };
 		});
-		// konce čeľustí mantinelov pri každej jamke (t pozdĺž jamky, s = bok), odtiaľ pokračuje lem jamky
-		const toward = (p, q, d) => {
-			const l = Math.hypot(q.x - p.x, q.z - p.z) || 1;
-			return { x: p.x + ((q.x - p.x) / l) * d, z: p.z + ((q.z - p.z) / l) * d };
-		};
-		for (const c of cushions) {
-			// lem začína hneď za zaoblením nosa (čeľusť už robí lem s prierezom kolmo na stenu jamky)
-			for (const e of [toward(c.a, c.ab, ROUND), toward(c.b, c.bb, ROUND)]) {
-				let q = null;
-				let bd = Infinity;
-				for (const qq of SLOTS) {
-					const dd = Math.hypot(e.x - qq.K.x, e.z - qq.K.z);
-					if (dd < bd) {
-						bd = dd;
-						q = qq;
-					}
+		const slotOf = (e) => {
+			let q = null;
+			let bd = Infinity;
+			for (const qq of SLOTS) {
+				const dd = Math.hypot(e.x - qq.K.x, e.z - qq.K.z);
+				if (dd < bd) {
+					bd = dd;
+					q = qq;
 				}
-				if (!q.corner) {
-					continue;
-				}
-				const rx = e.x - q.K.x;
-				const rz = e.z - q.K.z;
-				const sv = rx * q.n.x + rz * q.n.z;
-				q.jaw = q.jaw || {};
-				q.jaw[sv >= 0 ? 1 : -1] = { t: rx * q.d.x + rz * q.d.z, s: sv };
 			}
-		}
+			return q;
+		};
+		// nos mantinelu pri rohovej jamke (svetové súradnice), od konca v jamke po dotyk na mantineli
+		const cornerNose = (e) => {
+			const q = slotOf(e);
+			if (!q.corner) {
+				return null;
+			}
+			const side = (e.x - q.K.x) * q.n.x + (e.z - q.K.z) * q.n.z >= 0 ? 1 : -1;
+			return cornerNoseTS(q.hw, q.tc, side).map((u) => ({
+				x: q.K.x + q.d.x * u.t + q.n.x * u.s,
+				z: q.K.z + q.d.z * u.t + q.n.z * u.s,
+				cp: true,
+				k: u.wall ? lineK(q, u.t) : 1,
+			}));
+		};
 		const slotPush = (x, z) => {
 			// bod vo vnútri jamky posunie na jej stenu (mantinel končí na stene jamky)
 			for (const q of SLOTS) {
@@ -482,15 +522,31 @@ export function buildTable(renderer) {
 					path.push({ x: u * u * p0.x + 2 * u * t * p1.x + t * t * p2.x, z: u * u * p0.z + 2 * u * t * p1.z + t * t * p2.z });
 				}
 			};
-			path.push({ ...c.ab }, { ...towards(c.ab, a1, Math.hypot(a1.x - c.ab.x, a1.z - c.ab.z) * 0.5) }, { ...a1 });
-			quad(a1, c.a, a2, 10);
-			const seg = 24;
-			for (let i = 1; i < seg; i++) {
-				path.push({ x: a2.x + ((b1.x - a2.x) * i) / seg, z: a2.z + ((b1.z - a2.z) * i) / seg });
+			// 0.39.20: pri rohovej jamke mantinel plynulo zahne oblúkom do steny jamky a pokračuje po nej (jeden kus)
+			const nA = cornerNose(c.a);
+			const nB = cornerNose(c.b);
+			let rs;
+			let re;
+			if (nA) {
+				path.push(...nA);
+				rs = nA[nA.length - 1];
+			} else {
+				path.push({ ...c.ab }, { ...towards(c.ab, a1, Math.hypot(a1.x - c.ab.x, a1.z - c.ab.z) * 0.5) }, { ...a1 });
+				quad(a1, c.a, a2, 10);
+				rs = a2;
 			}
-			path.push({ ...b1 });
-			quad(b1, c.b, b2, 10);
-			path.push({ ...towards(b2, c.bb, Math.hypot(c.bb.x - b2.x, c.bb.z - b2.z) * 0.5) }, { ...c.bb });
+			re = nB ? nB[nB.length - 1] : b1;
+			const seg = 30;
+			for (let i = 1; i < seg; i++) {
+				path.push({ x: rs.x + ((re.x - rs.x) * i) / seg, z: rs.z + ((re.z - rs.z) * i) / seg });
+			}
+			if (nB) {
+				path.push(...nB.slice().reverse());
+			} else {
+				path.push({ ...b1 });
+				quad(b1, c.b, b2, 10);
+				path.push({ ...towards(b2, c.bb, Math.hypot(c.bb.x - b2.x, c.bb.z - b2.z) * 0.5) }, { ...c.bb });
+			}
 			// strana „dozadu“ (od stola): podľa hlavnej časti mantinelu
 			const tx = c.b.x - c.a.x;
 			const tz = c.b.z - c.a.z;
@@ -513,30 +569,15 @@ export function buildTable(renderer) {
 				for (const [d, y] of PROFILE) {
 					// nos ide po miestnej normále (zaoblenie pri jamke), zadná časť postupne po smere hlavnej časti:
 					// pri malom polomere zaoblenia sa tak prierez neprekladá cez seba (inak tmavé „praskliny“)
-					const w = Math.min(1, d / 0.012);
+					const cp = path[i].cp;
+					const w = cp ? 0 : Math.min(1, d / 0.012);
 					let ox = nx * (1 - w) + mnx * w;
 					let oz = nz * (1 - w) + mnz * w;
 					const ol = Math.hypot(ox, oz) || 1;
 					ox /= ol;
 					oz /= ol;
-					pos.push(path[i].x + ox * d, y, path[i].z + oz * d);
-				}
-			}
-			// 0.39.10: mantinel končí rovným rezom na konci čeľuste, ďalej pokračuje lem jamky
-			for (let v = 0; v < pos.length; v += 3) {
-				for (const q of SLOTS) {
-					if (!q.jaw) {
-						continue;
-					}
-					const rx = pos[v] - q.K.x;
-					const rz = pos[v + 2] - q.K.z;
-					const t = rx * q.d.x + rz * q.d.z;
-					const sv = rx * q.n.x + rz * q.n.z;
-					const j = q.jaw[sv >= 0 ? 1 : -1];
-					if (j && Math.abs(sv) < q.hw + 0.07 && t > j.t && t < q.tc + 0.12) {
-						pos[v] -= q.d.x * (t - j.t);
-						pos[v + 2] -= q.d.z * (t - j.t);
-					}
+					const dd = cp ? Math.min(d, 0.055) * path[i].k : d;
+					pos.push(path[i].x + ox * dd, y, path[i].z + oz * dd);
 				}
 			}
 			// koniec mantinelu pri jamke: guma končí na stene jamky (tvar U)
@@ -651,25 +692,22 @@ export function buildTable(renderer) {
 				}
 				return { q, pts, ang: norm(Math.atan2(q.c.z, q.c.x)) };
 			}
-			const fA = fillet(tA, 1);
-			const fB = fillet(tB, -1);
-			pts.push(...fA.arc);
-			// 0.39.11: pri stenách drevo za mantinelom (lem), vzadu drevený polkruh na okraji diery (lem sa k nemu zúži)
-			const sw = (t) => q.hw + BEVEL_IN + (LINE_W - BEVEL_IN) * lineK(q, t);
-			for (let i = 1; i <= 10; i++) {
-				const t = fA.t2 + ((q.tc - fA.t2) * i) / 10;
-				pts.push(at(t, sw(t)));
-			}
+			// 0.39.20: okraj dreva = línia nosa mantinelu posunutá o šírku mantinelu (pri stene sa zužuje), vzadu polkruh
+			const dwk = (k) => BEVEL_IN + (DW - BEVEL_IN) * k;
+			const edge = (side) =>
+				cornerNoseTS(q.hw, q.tc, side).map((u) => {
+					const k = u.wall ? lineK(q, u.t) : 1;
+					return at(u.t + u.nt * dwk(k), u.s + u.ns * dwk(k));
+				});
+			const eA = edge(1).reverse(); // od mantinela k jamke
+			const eB = edge(-1); // od jamky k mantinelu
+			pts.push(...eA);
 			const RB = q.hw + BEVEL_IN;
 			for (let i = 1; i < 20; i++) {
 				const a = (Math.PI * i) / 20;
 				pts.push({ x: q.c.x + q.n.x * Math.cos(a) * RB + q.d.x * Math.sin(a) * RB, z: q.c.z + q.n.z * Math.cos(a) * RB + q.d.z * Math.sin(a) * RB, semi: true });
 			}
-			for (let i = 0; i < 10; i++) {
-				const t = q.tc + ((fB.t2 - q.tc) * i) / 10;
-				pts.push(at(t, -sw(t)));
-			}
-			pts.push(...fB.arc.slice().reverse());
+			pts.push(...eB);
 			// poradie proti smeru hodinových ručičiek okolo stola
 			const A = pts[0];
 			const B = pts[pts.length - 1];
@@ -773,26 +811,27 @@ export function buildTable(renderer) {
 					}
 					return t >= RAIL - 0.001 ? fy - 0.003 : -0.002;
 				};
-				if (q.corner) {
-					strip(sideA, kOf, railMat, 1);
-					strip(sideB, kOf, railMat, 1);
-				}
+
 				// tmavá výstelka: pod nosom lemu a zadný polkruh od dna po vrch dreva
 				const dv = [];
 				const di = [];
 				const dpath = [];
-				for (const pt of sideA) {
-					dpath.push({ x: pt.x + pt.nx * 0.012 * kOf(pt), z: pt.z + pt.nz * 0.012 * kOf(pt), top: wallTop(pt) });
+				if (!q.corner) {
+					for (const pt of sideA) {
+						dpath.push({ x: pt.x + pt.nx * 0.012 * kOf(pt), z: pt.z + pt.nz * 0.012 * kOf(pt), top: wallTop(pt) });
+					}
 				}
-				for (let i = 1; i < 24; i++) {
+				for (let i = q.corner ? 0 : 1; i <= (q.corner ? 24 : 23); i++) {
 					const a = (Math.PI * i) / 24;
 					const rx = q.n.x * Math.cos(a) + q.d.x * Math.sin(a);
 					const rz = q.n.z * Math.cos(a) + q.d.z * Math.sin(a);
 					const sp = { x: q.c.x + rx * (q.hw - 0.0008), z: q.c.z + rz * (q.hw - 0.0008) };
 					dpath.push({ ...sp, top: q.corner ? fy - 0.003 : wallTop(sp) });
 				}
-				for (const pt of sideB) {
-					dpath.push({ x: pt.x + pt.nx * 0.012 * kOf(pt), z: pt.z + pt.nz * 0.012 * kOf(pt), top: wallTop(pt) });
+				if (!q.corner) {
+					for (const pt of sideB) {
+						dpath.push({ x: pt.x + pt.nx * 0.012 * kOf(pt), z: pt.z + pt.nz * 0.012 * kOf(pt), top: wallTop(pt) });
+					}
 				}
 				for (const pt of dpath) {
 					dv.push(pt.x, -0.03, pt.z, pt.x, pt.top, pt.z);
@@ -836,8 +875,8 @@ export function buildTable(renderer) {
 				}
 			}
 			linerMat.side = THREE.DoubleSide;
-			// súkno pri ústí: predná hrana diery je oblúk (plochý kúsok v rovine súkna tam, kde súkno končí)
-			if (q.corner) {
+			// (0.39.20: kúsky súkna v ústí už netreba – diera začína oblúkom priamo v súkne)
+			if (false) {
 				const t0 = q.corner ? (RAIL - q.hw / Math.SQRT2) * Math.SQRT2 : RAIL;
 				const sag = Math.min(q.hw * 0.6, Math.max(0.008, q.tc - t0));
 				const rho = (q.hw * q.hw + sag * sag) / (2 * sag);
@@ -878,17 +917,15 @@ export function buildTable(renderer) {
 				const r = q.hw - 0.0012;
 				const ring = [];
 				if (q.corner) {
-					const t0 = (RAIL - q.hw / Math.SQRT2) * Math.SQRT2;
+					const tf = (q.p.x - q.K.x) * q.d.x + (q.p.z - q.K.z) * q.d.z;
 					const at = (t, sv) => ({ x: q.K.x + q.d.x * t + q.n.x * sv, z: q.K.z + q.d.z * t + q.n.z * sv });
-					for (let i = 0; i <= 6; i++) {
-						ring.push(at(t0 + ((q.tc - t0) * i) / 6, -r));
-					}
-					for (let i = 1; i < 24; i++) {
+					for (let i = 0; i <= 24; i++) {
 						const a = Math.PI * (i / 24);
 						ring.push(at(q.tc + Math.sin(a) * r, -Math.cos(a) * r));
 					}
-					for (let i = 0; i <= 6; i++) {
-						ring.push(at(q.tc + ((t0 - q.tc) * i) / 6, r));
+					for (let i = 0; i <= 24; i++) {
+						const a = Math.PI * (i / 24);
+						ring.push(at(tf - Math.sin(a) * r, Math.cos(a) * r));
 					}
 					ring.push(ring[0]);
 				} else {

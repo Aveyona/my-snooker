@@ -180,6 +180,7 @@ function mysn_roadmap() {
 /** Denník zmien (najnovšie hore). */
 function mysn_changelog() {
 	return array(
+		array( '0.39.20', '20. 11. 2026', 'Rohové jamky postavené nanovo: mantinel je jeden kus – pri jamke zahne oblúkom (6 cm) do steny jamky a po nej sa zúži k drevenému polkruhu (bez spojov, švov a medzier); okraj dreva presne sleduje mantinel; diera v súkne v tvare štadióna (vpredu oblúk okolo stredu jamky, vzadu polkruh), hrdlo a košík podľa nej. Fyzika bez zmeny.' ),
 		array( '0.39.19', '20. 11. 2026', 'Rohové jamky: pod nosom mantinelu, ktorý pokračuje do jamky, je súkno (textúra plátna) namiesto tmavej škáry – bez tmavého pásu a schodíka pred dierou.' ),
 		array( '0.39.18', '20. 11. 2026', 'Jamky vrátené do stavu 0.39.15 (pokusy o spoj mantinelu bez čiar v 0.39.16 a 0.39.17 robili medzery pri čeľusti).' ),
 		array( '0.39.17', '20. 11. 2026', 'Rohové jamky: vrátené prekrytie z 0.39.16 (poškodzovalo spodok mantinela pred jamkou); spoj bez čiar inak – lem jamky začína presne koncovým prierezom mantinelu s rovnakými normálami a rovnakým smerom zadnej časti.' ),
