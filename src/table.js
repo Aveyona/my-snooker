@@ -23,6 +23,9 @@ const LINE_W = 0.03;
 const BEVEL_IN = 0.0064;
 /** Plná šírka lemu pri čeľusti, pred zadným polkruhom sa plynulo zúži na 0 (stena jamky). */
 function lineK(q, t) {
+	if (!q.corner) {
+		return 0; // stredné jamky: krátke steny, mantinel končí čeľusťou (lem by sa tam lámal)
+	}
 	const t1 = q.tc - 0.028;
 	if (t <= t1) {
 		return 1;
@@ -408,6 +411,9 @@ export function buildTable(renderer) {
 						q = qq;
 					}
 				}
+				if (!q.corner) {
+					continue;
+				}
 				const rx = e.x - q.K.x;
 				const rz = e.z - q.K.z;
 				const sv = rx * q.n.x + rz * q.n.z;
@@ -733,14 +739,24 @@ export function buildTable(renderer) {
 					sg.add(lm);
 				};
 				const kOf = (pt) => lineK(q, (pt.x - q.K.x) * q.d.x + (pt.z - q.K.z) * q.d.z);
-				strip(sideA, kOf, railMat, 1);
-				strip(sideB, kOf, railMat, 1);
+				// stena jamky až po vrch dreva tam, kde už nie je mantinel (pri strednej jamke za pásom mantinelu)
+				const wallTop = (pt) => {
+					const t = (pt.x - q.K.x) * q.d.x + (pt.z - q.K.z) * q.d.z;
+					if (q.corner) {
+						return kOf(pt) < 0.02 ? fy - 0.003 : 0.001;
+					}
+					return t >= RAIL - 0.001 ? fy - 0.003 : -0.002;
+				};
+				if (q.corner) {
+					strip(sideA, kOf, railMat, 1);
+					strip(sideB, kOf, railMat, 1);
+				}
 				// tmavá výstelka: pod nosom lemu a zadný polkruh od dna po vrch dreva
 				const dv = [];
 				const di = [];
 				const dpath = [];
 				for (const pt of sideA) {
-					dpath.push({ x: pt.x + pt.nx * 0.012 * kOf(pt), z: pt.z + pt.nz * 0.012 * kOf(pt), top: 0.001 });
+					dpath.push({ x: pt.x + pt.nx * 0.012 * kOf(pt), z: pt.z + pt.nz * 0.012 * kOf(pt), top: wallTop(pt) });
 				}
 				for (let i = 1; i < 24; i++) {
 					const a = (Math.PI * i) / 24;
@@ -749,9 +765,8 @@ export function buildTable(renderer) {
 					dpath.push({ x: q.c.x + rx * (q.hw - 0.0008), z: q.c.z + rz * (q.hw - 0.0008), top: fy - 0.003 });
 				}
 				for (const pt of sideB) {
-					dpath.push({ x: pt.x + pt.nx * 0.012 * kOf(pt), z: pt.z + pt.nz * 0.012 * kOf(pt), top: kOf(pt) < 0.02 ? fy - 0.003 : 0.001 });
+					dpath.push({ x: pt.x + pt.nx * 0.012 * kOf(pt), z: pt.z + pt.nz * 0.012 * kOf(pt), top: wallTop(pt) });
 				}
-				dpath[sideA.length - 1].top = fy - 0.003;
 				for (const pt of dpath) {
 					dv.push(pt.x, -0.03, pt.z, pt.x, pt.top, pt.z);
 				}
