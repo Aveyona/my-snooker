@@ -806,6 +806,34 @@ export function buildTable(renderer) {
 				dg.setIndex(di);
 				dg.computeVertexNormals();
 				sg.add(new THREE.Mesh(dg, linerMat));
+				// 0.39.19: pod nosom lemu pri rohovej jamke súkno (ako pod mantinelom), nie tmavá škára
+				if (q.corner) {
+					for (const side of [sideA, sideB]) {
+						const fv2 = [];
+						const fu2 = [];
+						const fi2 = [];
+						for (const pt of side) {
+							for (const off of [0, 0.018]) {
+								const x = pt.x + pt.nx * off;
+								const z = pt.z + pt.nz * off;
+								fv2.push(x, -0.0004, z);
+								fu2.push((x + L / 2 + RAIL) / (L + 2 * RAIL), (-z + W / 2 + RAIL) / (W + 2 * RAIL));
+							}
+						}
+						for (let i = 0; i < side.length - 1; i++) {
+							const a0 = i * 2;
+							fi2.push(a0, a0 + 2, a0 + 1, a0 + 1, a0 + 2, a0 + 3);
+						}
+						const g2 = new THREE.BufferGeometry();
+						g2.setAttribute('position', new THREE.Float32BufferAttribute(fv2, 3));
+						g2.setAttribute('uv', new THREE.Float32BufferAttribute(fu2, 2));
+						g2.setIndex(fi2);
+						g2.computeVertexNormals();
+						const fm = new THREE.Mesh(g2, fallMat);
+						fm.material.side = THREE.DoubleSide;
+						sg.add(fm);
+					}
+				}
 			}
 			linerMat.side = THREE.DoubleSide;
 			// súkno pri ústí: predná hrana diery je oblúk (plochý kúsok v rovine súkna tam, kde súkno končí)

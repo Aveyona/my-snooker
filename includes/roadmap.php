@@ -180,6 +180,7 @@ function mysn_roadmap() {
 /** Denník zmien (najnovšie hore). */
 function mysn_changelog() {
 	return array(
+		array( '0.39.19', '20. 11. 2026', 'Rohové jamky: pod nosom mantinelu, ktorý pokračuje do jamky, je súkno (textúra plátna) namiesto tmavej škáry – bez tmavého pásu a schodíka pred dierou.' ),
 		array( '0.39.18', '20. 11. 2026', 'Jamky vrátené do stavu 0.39.15 (pokusy o spoj mantinelu bez čiar v 0.39.16 a 0.39.17 robili medzery pri čeľusti).' ),
 		array( '0.39.17', '20. 11. 2026', 'Rohové jamky: vrátené prekrytie z 0.39.16 (poškodzovalo spodok mantinela pred jamkou); spoj bez čiar inak – lem jamky začína presne koncovým prierezom mantinelu s rovnakými normálami a rovnakým smerom zadnej časti.' ),
 		array( '0.39.16', '20. 11. 2026', 'Rohové jamky: bez čiar na spoji mantinelu a jeho pokračovania do jamky (pokračovanie mierne prekrýva koniec mantinelu).' ),
