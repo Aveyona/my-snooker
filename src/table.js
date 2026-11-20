@@ -837,6 +837,45 @@ export function buildTable(renderer) {
 				fg.computeVertexNormals();
 				sg.add(new THREE.Mesh(fg, railMat));
 			}
+			// 0.39.14: hrdlo jamky – krátka tmavá stena pod dierou v súkne, guľa zmizne v jamke, až potom je vidieť sieťku
+			{
+				const r = q.hw - 0.0012;
+				const ring = [];
+				if (q.corner) {
+					const t0 = (RAIL - q.hw / Math.SQRT2) * Math.SQRT2;
+					const at = (t, sv) => ({ x: q.K.x + q.d.x * t + q.n.x * sv, z: q.K.z + q.d.z * t + q.n.z * sv });
+					for (let i = 0; i <= 6; i++) {
+						ring.push(at(t0 + ((q.tc - t0) * i) / 6, -r));
+					}
+					for (let i = 1; i < 24; i++) {
+						const a = Math.PI * (i / 24);
+						ring.push(at(q.tc + Math.sin(a) * r, -Math.cos(a) * r));
+					}
+					for (let i = 0; i <= 6; i++) {
+						ring.push(at(q.tc + ((t0 - q.tc) * i) / 6, r));
+					}
+					ring.push(ring[0]);
+				} else {
+					for (let i = 0; i <= 40; i++) {
+						const a = (Math.PI * 2 * i) / 40;
+						ring.push({ x: q.c.x + Math.cos(a) * r, z: q.c.z + Math.sin(a) * r });
+					}
+				}
+				const tv = [];
+				const ti = [];
+				for (const pt of ring) {
+					tv.push(pt.x, -0.0006, pt.z, pt.x, -0.05, pt.z);
+				}
+				for (let i = 0; i < ring.length - 1; i++) {
+					const a0 = i * 2;
+					ti.push(a0, a0 + 2, a0 + 1, a0 + 1, a0 + 2, a0 + 3);
+				}
+				const tg = new THREE.BufferGeometry();
+				tg.setAttribute('position', new THREE.Float32BufferAttribute(tv, 3));
+				tg.setIndex(ti);
+				tg.computeVertexNormals();
+				sg.add(new THREE.Mesh(tg, linerMat));
+			}
 			const bag = new THREE.Mesh(basketGeo, netMat);
 			bag.position.set(bc.x, BASKET.y, bc.z);
 			sg.add(bag);
