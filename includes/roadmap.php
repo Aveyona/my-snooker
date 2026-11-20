@@ -180,6 +180,7 @@ function mysn_roadmap() {
 /** Denník zmien (najnovšie hore). */
 function mysn_changelog() {
 	return array(
+		array( '0.39.11', '20. 11. 2026', 'Jamky: mantinel pokračuje len po bočných stenách jamky a pred zadným polkruhom sa plynulo zúži, vzadu je opäť drevený polkruh s tmavou výstelkou.' ),
 		array( '0.39.10', '20. 11. 2026', 'Jamky: mantinel pokračuje plynulo za zaoblením nosa po stenách jamky a okolo zadného polkruhu (lem jamky s rovnakým prierezom), drevo začína až za ním; bez useknutého konca a skoku pri čeľusti.' ),
 		array( '0.39.9', '20. 11. 2026', 'Jamky: červené súkno mantinelov pokračuje po stenách ústia do jamky (bez skokového prechodu), opravený pás súkna, ktorý bolo vidieť v strednej jamke, otvor v súkne už nesiaha dopredu.' ),
 		array( '0.39.8', '20. 11. 2026', 'Meranie návštevnosti stránky hry v My Stats (my_stats_beacon).' ),

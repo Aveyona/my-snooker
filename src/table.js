@@ -19,6 +19,17 @@ export const BASKET = { y: -0.022, top: 0.068, depth: 0.2 };
 const SLOT_BACK = { corner: 0.068, mid: 0.06 };
 /** O koľko je výrez v dreve širší ako diera: mantinel pokračuje po stenách jamky (nos na diere, drevo za ním). */
 const LINE_W = 0.03;
+/** Skosenie hrany dreveného rámu (bevelSize) – o toľko drevo prečnieva dnu do výrezu. */
+const BEVEL_IN = 0.0064;
+/** Plná šírka lemu pri čeľusti, pred zadným polkruhom sa plynulo zúži na 0 (stena jamky). */
+function lineK(q, t) {
+	const t1 = q.tc - 0.028;
+	if (t <= t1) {
+		return 1;
+	}
+	const u = Math.min(1, (t - t1) / (q.tc - t1));
+	return 1 - u * u * (3 - 2 * u);
+}
 
 /** Stred viditeľnej diery jamky v tvare U (tam je košík a ležia v ňom spadnuté gule). */
 export function basketAt(q) {
@@ -611,15 +622,20 @@ export function buildTable(renderer) {
 			const fA = fillet(tA, 1);
 			const fB = fillet(tB, -1);
 			pts.push(...fA.arc);
-			for (let i = 1; i <= 4; i++) {
-				pts.push(at(fA.t2 + ((q.tc - fA.t2) * i) / 4, WW));
+			// 0.39.11: pri stenách drevo za mantinelom (lem), vzadu drevený polkruh na okraji diery (lem sa k nemu zúži)
+			const sw = (t) => q.hw + BEVEL_IN + (LINE_W - BEVEL_IN) * lineK(q, t);
+			for (let i = 1; i <= 10; i++) {
+				const t = fA.t2 + ((q.tc - fA.t2) * i) / 10;
+				pts.push(at(t, sw(t)));
 			}
+			const RB = q.hw + BEVEL_IN;
 			for (let i = 1; i < 20; i++) {
 				const a = (Math.PI * i) / 20;
-				pts.push({ x: q.c.x + q.n.x * Math.cos(a) * WW + q.d.x * Math.sin(a) * WW, z: q.c.z + q.n.z * Math.cos(a) * WW + q.d.z * Math.sin(a) * WW, semi: true });
+				pts.push({ x: q.c.x + q.n.x * Math.cos(a) * RB + q.d.x * Math.sin(a) * RB, z: q.c.z + q.n.z * Math.cos(a) * RB + q.d.z * Math.sin(a) * RB, semi: true });
 			}
-			for (let i = 0; i < 4; i++) {
-				pts.push(at(q.tc + ((fB.t2 - q.tc) * i) / 4, -WW));
+			for (let i = 0; i < 10; i++) {
+				const t = q.tc + ((fB.t2 - q.tc) * i) / 10;
+				pts.push(at(t, -sw(t)));
 			}
 			pts.push(...fB.arc.slice().reverse());
 			// poradie proti smeru hodinových ručičiek okolo stola
@@ -684,46 +700,62 @@ export function buildTable(renderer) {
 					}
 					return rev ? pts.reverse() : pts;
 				};
-				lpath.push(...side(1, false));
+				const sideA = side(1, false);
+				const sideB = side(-1, true);
+				const strip = (path, scale, mat, dir) => {
+					const lv = [];
+					const li = [];
+					const P = LP.length;
+					for (const pt of path) {
+						const k = scale(pt);
+						for (const [d, y] of LP) {
+							lv.push(pt.x + pt.nx * d * k, y, pt.z + pt.nz * d * k);
+						}
+					}
+					for (let i = 0; i < path.length - 1; i++) {
+						for (let j = 0; j < P - 1; j++) {
+							const v0 = i * P + j;
+							const v1 = (i + 1) * P + j;
+							if (dir > 0) {
+								li.push(v0, v1, v0 + 1, v1, v1 + 1, v0 + 1);
+							} else {
+								li.push(v0, v0 + 1, v1, v1, v0 + 1, v1 + 1);
+							}
+						}
+					}
+					const lg = new THREE.BufferGeometry();
+					lg.setAttribute('position', new THREE.Float32BufferAttribute(lv, 3));
+					lg.setIndex(li);
+					lg.computeVertexNormals();
+					const lm = new THREE.Mesh(lg, mat);
+					lm.castShadow = true;
+					lm.receiveShadow = true;
+					sg.add(lm);
+				};
+				const kOf = (pt) => lineK(q, (pt.x - q.K.x) * q.d.x + (pt.z - q.K.z) * q.d.z);
+				strip(sideA, kOf, railMat, 1);
+				strip(sideB, kOf, railMat, 1);
+				// tmavá výstelka: pod nosom lemu a zadný polkruh od dna po vrch dreva
+				const dv = [];
+				const di = [];
+				const dpath = [];
+				for (const pt of sideA) {
+					dpath.push({ x: pt.x + pt.nx * 0.012 * kOf(pt), z: pt.z + pt.nz * 0.012 * kOf(pt), top: 0.001 });
+				}
 				for (let i = 1; i < 24; i++) {
 					const a = (Math.PI * i) / 24;
 					const rx = q.n.x * Math.cos(a) + q.d.x * Math.sin(a);
 					const rz = q.n.z * Math.cos(a) + q.d.z * Math.sin(a);
-					lpath.push({ x: q.c.x + rx * q.hw, z: q.c.z + rz * q.hw, nx: rx, nz: rz });
+					dpath.push({ x: q.c.x + rx * (q.hw - 0.0008), z: q.c.z + rz * (q.hw - 0.0008), top: fy - 0.003 });
 				}
-				lpath.push(...side(-1, true));
-				const lv = [];
-				const li = [];
-				const P = LP.length;
-				for (const pt of lpath) {
-					for (const [d, y] of LP) {
-						lv.push(pt.x + pt.nx * d, y, pt.z + pt.nz * d);
-					}
+				for (const pt of sideB) {
+					dpath.push({ x: pt.x + pt.nx * 0.012 * kOf(pt), z: pt.z + pt.nz * 0.012 * kOf(pt), top: kOf(pt) < 0.02 ? fy - 0.003 : 0.001 });
 				}
-				for (let i = 0; i < lpath.length - 1; i++) {
-					for (let j = 0; j < P - 1; j++) {
-						const v0 = i * P + j;
-						const v1 = (i + 1) * P + j;
-						li.push(v0, v1, v0 + 1, v1, v1 + 1, v0 + 1);
-					}
+				dpath[sideA.length - 1].top = fy - 0.003;
+				for (const pt of dpath) {
+					dv.push(pt.x, -0.03, pt.z, pt.x, pt.top, pt.z);
 				}
-				const lg = new THREE.BufferGeometry();
-				lg.setAttribute('position', new THREE.Float32BufferAttribute(lv, 3));
-				lg.setIndex(li);
-				lg.computeVertexNormals();
-				const lm = new THREE.Mesh(lg, railMat);
-				lm.castShadow = true;
-				lm.receiveShadow = true;
-				sg.add(lm);
-				// tmavá výstelka pod nosom (od súkna dole)
-				const dv = [];
-				const di = [];
-				for (const pt of lpath) {
-					const x = pt.x + pt.nx * 0.012;
-					const z = pt.z + pt.nz * 0.012;
-					dv.push(x, -0.03, z, x, 0.001, z);
-				}
-				for (let i = 0; i < lpath.length - 1; i++) {
+				for (let i = 0; i < dpath.length - 1; i++) {
 					const a0 = i * 2;
 					di.push(a0, a0 + 2, a0 + 1, a0 + 1, a0 + 2, a0 + 3);
 				}
