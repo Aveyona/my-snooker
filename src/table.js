@@ -17,6 +17,8 @@ export const BASKET = { y: -0.022, top: 0.068, depth: 0.2 };
 
 /** Ako ďaleko za roh mantinelu je stred zadného polkruhu jamky (0.39.5 skrátené). */
 const SLOT_BACK = { corner: 0.068, mid: 0.06 };
+/** O koľko je výrez v dreve širší ako diera: mantinel pokračuje po stenách jamky (nos na diere, drevo za ním). */
+const LINE_W = 0.03;
 
 /** Stred viditeľnej diery jamky v tvare U (tam je košík a ležia v ňom spadnuté gule). */
 export function basketAt(q) {
@@ -378,6 +380,30 @@ export function buildTable(renderer) {
 			const back = p.corner ? SLOT_BACK.corner : SLOT_BACK.mid;
 			return { p, K, d, n, hw, tc: back, c: { x: K.x + d.x * back, z: K.z + d.z * back }, corner: p.corner };
 		});
+		// konce čeľustí mantinelov pri každej jamke (t pozdĺž jamky, s = bok), odtiaľ pokračuje lem jamky
+		const toward = (p, q, d) => {
+			const l = Math.hypot(q.x - p.x, q.z - p.z) || 1;
+			return { x: p.x + ((q.x - p.x) / l) * d, z: p.z + ((q.z - p.z) / l) * d };
+		};
+		for (const c of cushions) {
+			// lem začína hneď za zaoblením nosa (čeľusť už robí lem s prierezom kolmo na stenu jamky)
+			for (const e of [toward(c.a, c.ab, ROUND), toward(c.b, c.bb, ROUND)]) {
+				let q = null;
+				let bd = Infinity;
+				for (const qq of SLOTS) {
+					const dd = Math.hypot(e.x - qq.K.x, e.z - qq.K.z);
+					if (dd < bd) {
+						bd = dd;
+						q = qq;
+					}
+				}
+				const rx = e.x - q.K.x;
+				const rz = e.z - q.K.z;
+				const sv = rx * q.n.x + rz * q.n.z;
+				q.jaw = q.jaw || {};
+				q.jaw[sv >= 0 ? 1 : -1] = { t: rx * q.d.x + rz * q.d.z, s: sv };
+			}
+		}
 		const slotPush = (x, z) => {
 			// bod vo vnútri jamky posunie na jej stenu (mantinel končí na stene jamky)
 			for (const q of SLOTS) {
@@ -470,6 +496,23 @@ export function buildTable(renderer) {
 					pos.push(path[i].x + ox * d, y, path[i].z + oz * d);
 				}
 			}
+			// 0.39.10: mantinel končí rovným rezom na konci čeľuste, ďalej pokračuje lem jamky
+			for (let v = 0; v < pos.length; v += 3) {
+				for (const q of SLOTS) {
+					if (!q.jaw) {
+						continue;
+					}
+					const rx = pos[v] - q.K.x;
+					const rz = pos[v + 2] - q.K.z;
+					const t = rx * q.d.x + rz * q.d.z;
+					const sv = rx * q.n.x + rz * q.n.z;
+					const j = q.jaw[sv >= 0 ? 1 : -1];
+					if (j && Math.abs(sv) < q.hw + 0.07 && t > j.t && t < q.tc + 0.12) {
+						pos[v] -= q.d.x * (t - j.t);
+						pos[v + 2] -= q.d.z * (t - j.t);
+					}
+				}
+			}
 			// koniec mantinelu pri jamke: guma končí na stene jamky (tvar U)
 			for (let v = 0; v < pos.length; v += 3) {
 				const q = slotPush(pos[v], pos[v + 2]);
@@ -526,23 +569,24 @@ export function buildTable(renderer) {
 		};
 		const slotOut = SLOTS.map((q) => {
 			const pts = [];
+			const WW = q.hw + LINE_W; // 0.39.10: drevo končí za mantinelom, ktorý lemuje jamku
 			const at = (t, s0) => ({ x: q.K.x + q.d.x * t + q.n.x * s0, z: q.K.z + q.d.z * t + q.n.z * s0 });
-			const tA = wallT(q, q.hw);
-			const tB = wallT(q, -q.hw);
+			const tA = wallT(q, WW);
+			const tB = wallT(q, -WW);
 			// 0.39.7: hrana rámu prechádza do steny jamky plynulým oblúkom (bez ostrého rohu)
 			const fillet = (tE, sg0) => {
-				const E = at(tE, sg0 * q.hw);
+				const E = at(tE, sg0 * WW);
 				const side = { x: q.n.x * sg0, z: q.n.z * sg0 };
 				// smer hrany rámu od jamky preč: ktorou hranou vnútorného obdĺžnika stena vychádza
-				const bx = q.K.x + q.n.x * sg0 * q.hw;
-				const bz = q.K.z + q.n.z * sg0 * q.hw;
+				const bx = q.K.x + q.n.x * sg0 * WW;
+				const bz = q.K.z + q.n.z * sg0 * WW;
 				const txE = Math.abs(q.d.x) > 1e-9 ? (Math.sign(q.d.x) * ix - bx) / q.d.x : Infinity;
 				const tzE = Math.abs(q.d.z) > 1e-9 ? (Math.sign(q.d.z) * iz - bz) / q.d.z : Infinity;
 				let e = tzE <= txE ? { x: 1, z: 0 } : { x: 0, z: 1 };
 				if (e.x * side.x + e.z * side.z < 0) {
 					e = { x: -e.x, z: -e.z };
 				}
-				const rf = q.corner ? 0.02 : 0.009;
+				const rf = q.corner ? 0.012 : 0.004;
 				const th = Math.acos(Math.max(-1, Math.min(1, e.x * q.d.x + e.z * q.d.z)));
 				const dist = rf / Math.tan(th / 2);
 				let bi = { x: e.x + q.d.x, z: e.z + q.d.z };
@@ -568,14 +612,14 @@ export function buildTable(renderer) {
 			const fB = fillet(tB, -1);
 			pts.push(...fA.arc);
 			for (let i = 1; i <= 4; i++) {
-				pts.push(at(fA.t2 + ((q.tc - fA.t2) * i) / 4, q.hw));
+				pts.push(at(fA.t2 + ((q.tc - fA.t2) * i) / 4, WW));
 			}
 			for (let i = 1; i < 20; i++) {
 				const a = (Math.PI * i) / 20;
-				pts.push({ x: q.c.x + q.n.x * Math.cos(a) * q.hw + q.d.x * Math.sin(a) * q.hw, z: q.c.z + q.n.z * Math.cos(a) * q.hw + q.d.z * Math.sin(a) * q.hw, semi: true });
+				pts.push({ x: q.c.x + q.n.x * Math.cos(a) * WW + q.d.x * Math.sin(a) * WW, z: q.c.z + q.n.z * Math.cos(a) * WW + q.d.z * Math.sin(a) * WW, semi: true });
 			}
 			for (let i = 0; i < 4; i++) {
-				pts.push(at(q.tc + ((fB.t2 - q.tc) * i) / 4, -q.hw));
+				pts.push(at(q.tc + ((fB.t2 - q.tc) * i) / 4, -WW));
 			}
 			pts.push(...fB.arc.slice().reverse());
 			// poradie proti smeru hodinových ručičiek okolo stola
@@ -623,37 +667,71 @@ export function buildTable(renderer) {
 			const q = o.q;
 			// košík zo sieťky pod jamkou (medzi stredom diery a zadným polkruhom), spadnuté gule v ňom ostávajú vidieť
 			const bc = basketAt(q.p);
-			// tmavá výstelka stien jamky (rovné steny aj polkruh, od súkna po vrch rámu)
-			const vs = [];
-			for (const pt of o.pts) {
-				// dnu od rámu o skosenie hrany (bevelSize 6,4 mm) + 1 mm, aby stenu neprekryla bočná plocha dreva
-				const rx = pt.x - q.K.x;
-				const rz = pt.z - q.K.z;
-				const t = Math.max(0, Math.min(q.tc, rx * q.d.x + rz * q.d.z));
-				const ax = q.K.x + q.d.x * t - pt.x;
-				const az = q.K.z + q.d.z * t - pt.z;
-				const al = Math.hypot(ax, az) || 1;
-				const px = pt.x + (ax / al) * 0.0075;
-				const pz = pt.z + (az / al) * 0.0075;
-				vs.push(px, -0.02, pz, px, fy - 0.005, pz);
-			}
-			// 0.39.8: rovné steny ústia sú potiahnuté súknom ako mantinel (plynulý prechod do jamky), zadný polkruh tmavý
-			const ixR = [];
-			const ixD = [];
-			for (let i = 0; i < o.pts.length - 1; i++) {
-				const a0 = i * 2;
-				const tri = [a0, a0 + 2, a0 + 1, a0 + 1, a0 + 2, a0 + 3];
-				(o.pts[i].semi && o.pts[i + 1].semi ? ixD : ixR).push(...tri);
-			}
-			for (const [ids, mat] of [
-				[ixD, linerMat],
-				[ixR, railMat],
-			]) {
+			// 0.39.10: lem jamky – mantinel (rovnaký prierez) pokračuje od konca čeľuste po stene, okolo zadného polkruhu
+			// a späť k druhej čeľusti; nos je na okraji diery, drevo začína za ním. Pod nosom tmavá výstelka.
+			{
+				const LP = PROFILE;
+				const lpath = []; // { x, z, nx, nz } – bod nosa a smer od diery do dreva
+				const wallPt = (t, sv, sg0) => ({ x: q.K.x + q.d.x * t + q.n.x * sv, z: q.K.z + q.d.z * t + q.n.z * sv, nx: q.n.x * sg0, nz: q.n.z * sg0 });
+				const side = (sg0, rev) => {
+					const j = (q.jaw && q.jaw[sg0]) || { t: 0, s: sg0 * q.hw };
+					const pts = [];
+					const N = 10;
+					for (let i = 0; i <= N; i++) {
+						const t = j.t + ((q.tc - j.t) * i) / N;
+						const k = Math.min(1, (t - j.t) / 0.015); // stredná čeľusť je mierne šikmá: plynulo na stenu
+						pts.push(wallPt(t, j.s + (sg0 * q.hw - j.s) * k, sg0));
+					}
+					return rev ? pts.reverse() : pts;
+				};
+				lpath.push(...side(1, false));
+				for (let i = 1; i < 24; i++) {
+					const a = (Math.PI * i) / 24;
+					const rx = q.n.x * Math.cos(a) + q.d.x * Math.sin(a);
+					const rz = q.n.z * Math.cos(a) + q.d.z * Math.sin(a);
+					lpath.push({ x: q.c.x + rx * q.hw, z: q.c.z + rz * q.hw, nx: rx, nz: rz });
+				}
+				lpath.push(...side(-1, true));
+				const lv = [];
+				const li = [];
+				const P = LP.length;
+				for (const pt of lpath) {
+					for (const [d, y] of LP) {
+						lv.push(pt.x + pt.nx * d, y, pt.z + pt.nz * d);
+					}
+				}
+				for (let i = 0; i < lpath.length - 1; i++) {
+					for (let j = 0; j < P - 1; j++) {
+						const v0 = i * P + j;
+						const v1 = (i + 1) * P + j;
+						li.push(v0, v1, v0 + 1, v1, v1 + 1, v0 + 1);
+					}
+				}
 				const lg = new THREE.BufferGeometry();
-				lg.setAttribute('position', new THREE.Float32BufferAttribute(vs, 3));
-				lg.setIndex(ids);
+				lg.setAttribute('position', new THREE.Float32BufferAttribute(lv, 3));
+				lg.setIndex(li);
 				lg.computeVertexNormals();
-				sg.add(new THREE.Mesh(lg, mat));
+				const lm = new THREE.Mesh(lg, railMat);
+				lm.castShadow = true;
+				lm.receiveShadow = true;
+				sg.add(lm);
+				// tmavá výstelka pod nosom (od súkna dole)
+				const dv = [];
+				const di = [];
+				for (const pt of lpath) {
+					const x = pt.x + pt.nx * 0.012;
+					const z = pt.z + pt.nz * 0.012;
+					dv.push(x, -0.03, z, x, 0.001, z);
+				}
+				for (let i = 0; i < lpath.length - 1; i++) {
+					const a0 = i * 2;
+					di.push(a0, a0 + 2, a0 + 1, a0 + 1, a0 + 2, a0 + 3);
+				}
+				const dg = new THREE.BufferGeometry();
+				dg.setAttribute('position', new THREE.Float32BufferAttribute(dv, 3));
+				dg.setIndex(di);
+				dg.computeVertexNormals();
+				sg.add(new THREE.Mesh(dg, linerMat));
 			}
 			linerMat.side = THREE.DoubleSide;
 			// súkno pri ústí: predná hrana diery je oblúk (plochý kúsok v rovine súkna tam, kde súkno končí)
