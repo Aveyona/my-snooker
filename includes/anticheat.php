@@ -263,12 +263,24 @@ function mysn_ac_solo( $uid, $log, $claim ) {
 		}
 		$tv = mysn_ac_tm_eval( $tms );
 	}
-	if ( ! $ev['cheat'] && ! $tv['cheat'] && ! $susp ) {
+	// 0.40.3: tep frame-u a výzva servera (nová hra posiela id frame-u fid)
+	$beat = null;
+	if ( is_array( $log ) && mysn_ac_newclient( '0.40.3' ) && function_exists( 'mysn_beat_check' ) ) {
+		$beat = mysn_beat_check( $uid, (string) ( $claim['fid'] ?? '' ), $log );
+		if ( $beat && 'bad' === $beat[0] ) {
+			$tv = array( 'cheat' => true, 'why' => ucfirst( $beat[1] ) . '.' );
+			$beat = null;
+		}
+	}
+	if ( ! $ev['cheat'] && ! $tv['cheat'] && ! $susp && ! $beat ) {
 		return null;
 	}
 	global $wpdb;
 	$t   = mysn_table( 'scores' );
-	$why = $ev['cheat'] ? sprintf( 'Okrúhla sila úderu: %d z %d úderov (%d %%).', $ev['round'], $ev['n'], round( 100 * $ev['share'] ) ) : ( $tv['cheat'] ? $tv['why'] : 'Hráč je suspendovaný.' );
+	$why = $ev['cheat'] ? sprintf( 'Okrúhla sila úderu: %d z %d úderov (%d %%).', $ev['round'], $ev['n'], round( 100 * $ev['share'] ) ) : ( $tv['cheat'] ? $tv['why'] : ( $susp ? 'Hráč je suspendovaný.' : 'Neprijatý frame: ' . $beat[1] . '.' ) );
+	if ( $beat && ! $ev['cheat'] && ! $tv['cheat'] && mysn_is_admin_user( $uid ) ) {
+		return null; // admin: frame bez tepu sa normálne overí (testovanie)
+	}
 	if ( $tv['cheat'] ) {
 		$ev = array_merge( $ev, array( 'tm' => $tv ) );
 		$ev['cheat'] = true;

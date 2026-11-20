@@ -1094,7 +1094,7 @@ function mysn_rest_score( $req ) {
 	}
 	// 0.11.0: zápis úderov na overenie serverom (frame rozohraný pred touto verziou ho nemá: uloží sa ako neoverený)
 	$log   = $req->get_param( 'log' );
-	$claim = array( 'points' => $points, 'seconds' => $seconds, 'shots' => $shots, 'fouls' => max( 0, (int) $req->get_param( 'fouls' ) ), 'brk' => $brk );
+	$claim = array( 'points' => $points, 'seconds' => $seconds, 'shots' => $shots, 'fouls' => max( 0, (int) $req->get_param( 'fouls' ) ), 'brk' => $brk, 'fid' => substr( preg_replace( '/[^a-z0-9]/i', '', (string) $req->get_param( 'fid' ) ), 0, 40 ) );
 	$has   = is_array( $log ) && $log;
 	if ( $has ) {
 		$bad = mysn_verify_sanity( $log, $claim );

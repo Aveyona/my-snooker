@@ -1220,6 +1220,35 @@ export class Online {
 		}
 	}
 
+	/**
+	 * Tep hry o skóre (0.40.3): vstupy úderov sa priebežne hlásia serveru (každých 8 úderov alebo po minúte),
+	 * pri zápise výsledku ich server porovná so zápisom frame-u. force = poslať hneď (pred zápisom výsledku).
+	 */
+	async soloBeat(so, force) {
+		if (!so || !Array.isArray(so.log) || !so.fid || this._beating) {
+			return;
+		}
+		const n = so.log.length;
+		const due = n > (so.bn || 0) && (force || !so.bn || n - so.bn >= 8 || Date.now() - (this._beatAt || 0) > 60000);
+		if (!due) {
+			return;
+		}
+		this._beating = true;
+		try {
+			const from = so.bn || 0;
+			const r = await this.net.call('solo/beat', { fid: so.fid, from, s: so.log.slice(from).map((e) => e.s) });
+			if (r && r.ok) {
+				so.bn = n;
+				this._beatAt = Date.now();
+			}
+		} catch (e) {
+			if (e.status === 409) {
+				so.bn = 0; // server nemá začiatok frame-u: pošle sa celý znova
+			}
+		}
+		this._beating = false;
+	}
+
 	/** Uloží dohraný frame; pri výpadku skúsi znova. */
 	async saveScore(r) {
 		for (let i = 0; i < 5; i++) {

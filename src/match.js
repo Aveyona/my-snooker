@@ -20,6 +20,15 @@ function prevRules(r) {
 	return o;
 }
 
+/** Id frame-u hry o skóre pre tep servera (0.40.3). */
+function newFid() {
+	let s = '';
+	for (let i = 0; i < 16; i++) {
+		s += 'abcdefghijklmnopqrstuvwxyz0123456789'[(Math.random() * 36) | 0];
+	}
+	return s;
+}
+
 export class Game extends Training {
 	constructor() {
 		super();
@@ -47,7 +56,7 @@ export class Game extends Training {
 		if (saved && saved.balls && saved.rules && !saved.done) {
 			restore(this.balls, saved.balls);
 			// log = zápis úderov pre overenie serverom (0.11.0); frame rozohraný pred touto verziou ho nemá (null)
-			this.solo = { rules: saved.rules, time: saved.time || 0, shots: saved.shots || 0, fouls: saved.fouls || 0, best: saved.best || 0, done: false, log: Array.isArray(saved.log) ? saved.log : null };
+			this.solo = { rules: saved.rules, time: saved.time || 0, shots: saved.shots || 0, fouls: saved.fouls || 0, best: saved.best || 0, done: false, log: Array.isArray(saved.log) ? saved.log : null, fid: saved.fid || newFid(), bn: saved.fid ? saved.bn || 0 : 0 };
 			this.message = 'Pokračuješ v rozohranom frame.';
 			if (saved.inHand) {
 				this.startPlace();
@@ -59,7 +68,7 @@ export class Game extends Training {
 			for (let i = 0; i < fresh2.length; i++) {
 				Object.assign(this.balls[i], fresh2[i]);
 			}
-			this.solo = { rules: newFrame(0), time: 0, shots: 0, fouls: 0, best: 0, done: false, log: [] };
+			this.solo = { rules: newFrame(0), time: 0, shots: 0, fouls: 0, best: 0, done: false, log: [], fid: newFid(), bn: 0 };
 			this.message = 'Nový frame: potop čo najviac bodov. Rozbíjaš z D.';
 			this.saveSolo(true);
 			this.startPlace();
@@ -85,7 +94,7 @@ export class Game extends Training {
 				return;
 			}
 			const s = this.solo;
-			window.localStorage.setItem(SOLO_KEY, JSON.stringify({ balls: snapshot(this.balls), rules: s.rules, time: Math.round(s.time), shots: s.shots, fouls: s.fouls, best: s.best, inHand: !!inHand, log: s.log }));
+			window.localStorage.setItem(SOLO_KEY, JSON.stringify({ balls: snapshot(this.balls), rules: s.rules, time: Math.round(s.time), shots: s.shots, fouls: s.fouls, best: s.best, inHand: !!inHand, log: s.log, fid: s.fid, bn: s.bn || 0 }));
 		} catch (e) {
 			/* úložisko nemusí byť dostupné */
 		}
@@ -148,7 +157,7 @@ export class Game extends Training {
 			this.emit('settle', { pots: this.lastPots, points: res.points });
 			this.emit('change');
 			if (this.onSolo) {
-				this.onSolo({ points: sc, seconds: Math.round(so.time), shots: so.shots, fouls: so.fouls, brk: so.best, log: so.log });
+				this.onSolo({ points: sc, seconds: Math.round(so.time), shots: so.shots, fouls: so.fouls, brk: so.best, log: so.log, fid: so.fid });
 			}
 			return;
 		}
@@ -275,6 +284,9 @@ export class Game extends Training {
 		}
 		if (rec) {
 			this.solo.log.push(rec);
+			if (this.onBeat) {
+				this.onBeat(); // tep hry o skóre (0.40.3)
+			}
 		}
 		if (this.match) {
 			this.match.turnAt = 0; // časomiera sa po údere zastaví (znova beží až pri ďalšom ťahu)

@@ -54,6 +54,7 @@ fpRegister({
 	ts: takeShotData,
 	gs: Game.prototype.shoot,
 	nc: Net.prototype.call,
+	sb: Online.prototype.soloBeat,
 });
 
 const STORE = 'mySnookerSettings';
@@ -4982,9 +4983,18 @@ export function start(root, config = {}) {
 		}
 	};
 	refreshTrophies();
+	game.onBeat = () => {
+		if (online) {
+			online.soloBeat(game.solo);
+		}
+	};
 	game.onSolo = async (r) => {
 		achAdd(0, { solo: 1, frames: 1 }); // dohraná hra o najlepšie skóre
 		// slávnostné ukončenie: skóre za čas, zápis do rebríčka, potom sa hneď začne nový frame
+		if (online) {
+			const so = game.solo && game.solo.fid === r.fid ? game.solo : { log: r.log, fid: r.fid, bn: 0 };
+			await online.soloBeat(so, true); // posledné údery frame-u serveru pred zápisom (0.40.3)
+		}
 		const res = online ? await online.saveScore(r) : { error: 'Skóre sa zapisuje len prihláseným.' };
 		const ok = res && !res.error;
 		// overenie serverom (0.11.0): platí výsledok servera
