@@ -1982,7 +1982,9 @@ export class UI {
 			const row = (r) => {
 				// ✓ overené serverom; staršie výsledky spred overovania majú štítok neoverené (0.11.0)
 				const vb = r.ver === 1 ? ' <span class="mysn-lb-ok" title="Overené serverom: frame prehral server a výsledok sedí">✓</span>' : r.ver === 0 ? ' <span class="mysn-lb-nv" title="Výsledok spred overovania serverom">neoverené</span>' : '';
-				const tr = h('tr', r.me ? 'mysn-lb-me' : '', `<td>${r.rank}.</td><td>${esc(r.user.name)}</td><td><b>${r.points}</b>${vb}</td><td>${t(r.seconds)}</td><td>${r.brk}</td>`);
+				// 0.41.1: hráč pod kontrolou férovej hry (skóre podozrenia od 30)
+				const ck = r.chk ? ' <span class="mysn-lb-nv" title="Hráč je pod kontrolou férovej hry (snímky obrazovky)">kontrola</span>' : '';
+				const tr = h('tr', r.me ? 'mysn-lb-me' : '', `<td>${r.rank}.</td><td>${esc(r.user.name)}${ck}</td><td><b>${r.points}</b>${vb}</td><td>${t(r.seconds)}</td><td>${r.brk}</td>`);
 				body.appendChild(tr);
 			};
 			d.top.forEach(row);

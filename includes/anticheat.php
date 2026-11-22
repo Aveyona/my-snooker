@@ -595,6 +595,28 @@ add_action(
 			delete_user_meta( $uid, 'mysn_susp' );
 		} elseif ( 'susp' === $do ) {
 			update_user_meta( $uid, 'mysn_susp', time() + MYSN_SUSP_DAYS * DAY_IN_SECONDS );
+		} elseif ( 'szero' === $do ) {
+			// vynulovať skóre podozrenia (fáza F)
+			delete_user_meta( $uid, 'mysn_susp_score' );
+		} elseif ( 'sconfirm' === $do ) {
+			// potvrdiť podvod z detailu podozrivého hráča: prípad (potvrdený) + suspendácia
+			mysn_cheat_case( $uid, 'susp', 0, 'Potvrdené správcom z detailu podozrivého hráča (skóre ' . ( function_exists( 'mysn_susp_score' ) ? mysn_susp_score( $uid ) : 0 ) . ').' );
+			$cases = get_option( 'mysn_cheat_cases', array() );
+			$last  = count( $cases ) - 1;
+			if ( $last >= 0 ) {
+				$cases[ $last ]['status'] = 'confirmed';
+				$cases[ $last ]['by']     = get_current_user_id();
+			}
+			update_user_meta( $uid, 'mysn_susp', time() + MYSN_SUSP_DAYS * DAY_IN_SECONDS );
+			update_option( 'mysn_cheat_cases', $cases, false );
+			wp_safe_redirect( admin_url( 'admin.php?page=my-snooker-cheat&u=' . $uid . '&ok=1' ) );
+			exit;
+		} elseif ( 'sclear' === $do ) {
+			// zamietnuť podozrenie: skóre na 0, suspendácia preč
+			delete_user_meta( $uid, 'mysn_susp_score' );
+			delete_user_meta( $uid, 'mysn_susp' );
+			wp_safe_redirect( admin_url( 'admin.php?page=my-snooker-cheat&u=' . $uid . '&ok=1' ) );
+			exit;
 		} elseif ( 'mark' === $do ) {
 			// ručne: hra o skóre ako podvod (z prehľadu nižšie)
 			$sid = (int) ( $_POST['sid'] ?? 0 );
@@ -609,6 +631,122 @@ add_action(
 		exit;
 	}
 );
+
+/** Obrázok snímky (len správca): u = hráč, f = názov, s = s (obrazovka) / g (hra). */
+add_action(
+	'admin_post_mysn_snap_img',
+	function () {
+		if ( ! current_user_can( 'manage_options' ) || ! function_exists( 'mysn_snap_dir' ) ) {
+			wp_die( 'Nemáš oprávnenie.' );
+		}
+		$u = (int) ( $_GET['u'] ?? 0 ); // phpcs:ignore WordPress.Security.NonceVerification
+		$f = (string) ( $_GET['f'] ?? '' ); // phpcs:ignore
+		$k = 'g' === ( $_GET['s'] ?? '' ) ? 'g' : 's'; // phpcs:ignore
+		if ( ! preg_match( '/^\d{8}-\d{6}-[A-Za-z0-9]{6}$/', $f ) ) {
+			wp_die( 'Zlý súbor.' );
+		}
+		$path = mysn_snap_dir() . '/' . $u . '/' . $f . '-' . $k . '.jpg';
+		if ( ! file_exists( $path ) ) {
+			status_header( 404 );
+			exit;
+		}
+		header( 'Content-Type: image/jpeg' );
+		header( 'Cache-Control: private, max-age=86400' );
+		readfile( $path ); // phpcs:ignore
+		exit;
+	}
+);
+
+/** Zoznam podozrivých hráčov (skóre podozrenia > 0) – fáza F. */
+function mysn_admin_suspects( $name ) {
+	global $wpdb;
+	if ( ! function_exists( 'mysn_susp_get' ) ) {
+		return;
+	}
+	$rows = $wpdb->get_col( "SELECT user_id FROM {$wpdb->usermeta} WHERE meta_key = 'mysn_susp_score'" ); // phpcs:ignore
+	$list = array();
+	foreach ( (array) $rows as $u ) {
+		$d = mysn_susp_get( (int) $u );
+		if ( $d['s'] > 0 || ! empty( $d['log'] ) ) {
+			$list[ (int) $u ] = $d;
+		}
+	}
+	uasort(
+		$list,
+		function ( $a, $b ) {
+			return $b['s'] <=> $a['s'];
+		}
+	);
+	echo '<h2>Podozriví hráči (skóre podozrenia)</h2><p>Body za signály (každý najviac raz za partiu alebo frame), −1 za deň, −5 za čistú náhodnú kontrolu. Od ' . (int) MYSN_SUSP_SNAP . ' snímky obrazovky, od ' . (int) MYSN_SUSP_CASE . ' prípad a suspendácia.</p><table class="widefat striped"><thead><tr><th>Hráč</th><th>Skóre</th><th>Posledné signály</th><th>Posledná výzva</th><th>Snímky (podozrivé)</th><th>Suspendovaný do</th><th></th></tr></thead><tbody>';
+	foreach ( $list as $u => $d ) {
+		$sig = array();
+		foreach ( array_reverse( (array) $d['log'] ) as $e ) {
+			if ( $e['p'] > 0 ) {
+				$sig[] = mysn_susp_label( $e['sig'] );
+			}
+			if ( count( $sig ) >= 4 ) {
+				break;
+			}
+		}
+		$ch    = get_user_meta( $u, 'mysn_ch_hist', true );
+		$lc    = is_array( $ch ) && $ch ? end( $ch ) : null;
+		$sn    = function_exists( 'mysn_snap_list' ) ? mysn_snap_list( $u ) : array();
+		$ns    = count( array_filter( $sn, function ( $x ) { return ! empty( $x['susp'] ); } ) );
+		$su    = mysn_susp_until( $u );
+		$score = (int) round( $d['s'] );
+		$bg    = $score >= MYSN_SUSP_CASE ? '#fde8e8' : ( $score >= MYSN_SUSP_SNAP ? '#fff4e0' : '' );
+		$res   = array( 'ok' => 'správna', 'bad' => 'ZLÁ', 'miss' => 'bez odpovede' );
+		echo '<tr' . ( $bg ? ' style="background:' . esc_attr( $bg ) . '"' : '' ) . '><td><a href="' . esc_url( admin_url( 'admin.php?page=my-snooker-cheat&u=' . $u ) ) . '"><b>' . esc_html( $name( $u ) ) . '</b></a></td><td><b>' . $score . '</b></td><td>' . esc_html( implode( ', ', array_unique( $sig ) ) ) . '</td><td>' . ( $lc ? esc_html( wp_date( 'j. n. H:i', (int) $lc['t'] ) . ' – ' . ( $res[ $lc['res'] ] ?? $lc['res'] ) ) : '—' ) . '</td><td>' . count( $sn ) . ( $ns ? ' (<b>' . (int) $ns . '</b>)' : '' ) . '</td><td>' . ( $su ? esc_html( wp_date( 'j. n. H:i', $su ) ) : '—' ) . '</td><td><a class="button" href="' . esc_url( admin_url( 'admin.php?page=my-snooker-cheat&u=' . $u ) ) . '">Detail</a> ' . mysn_cheat_btn( 'szero', 'Vynulovať skóre', $u ) . '</td></tr>'; // phpcs:ignore
+	}
+	if ( ! $list ) {
+		echo '<tr><td colspan="7">Nikto nemá skóre podozrenia.</td></tr>';
+	}
+	echo '</tbody></table>';
+}
+
+/** Detail podozrivého hráča: skóre a signály, výzvy servera, snímky obrazovky – fáza F. */
+function mysn_admin_suspect( $u, $name ) {
+	$d  = function_exists( 'mysn_susp_get' ) ? mysn_susp_get( $u ) : array( 's' => 0, 'log' => array() );
+	$su = mysn_susp_until( $u );
+	echo '<p><a href="' . esc_url( admin_url( 'admin.php?page=my-snooker-cheat' ) ) . '">← Späť na prehľad</a></p>';
+	echo '<h2>' . esc_html( $name( $u ) ) . ' – skóre podozrenia ' . (int) round( $d['s'] ) . '</h2>';
+	echo '<p>Suspendovaný do: ' . ( $su ? esc_html( wp_date( 'j. n. Y H:i', $su ) ) : '—' ) . ' · Súhlas so snímaním: ' . ( function_exists( 'mysn_snap_consent' ) && mysn_snap_consent( $u ) ? 'áno' : 'nie' ) . '</p><p>';
+	echo mysn_cheat_btn( 'sconfirm', 'Potvrdiť podvod (suspendovať)', $u, '', array(), true ); // phpcs:ignore
+	echo mysn_cheat_btn( 'sclear', 'Zamietnuť podozrenie (skóre 0, zrušiť suspendáciu)', $u ); // phpcs:ignore
+	echo mysn_cheat_btn( 'szero', 'Vynulovať skóre', $u ); // phpcs:ignore
+	echo '</p><h3>Signály a body</h3><table class="widefat striped" style="max-width:900px"><thead><tr><th>Kedy</th><th>Signál</th><th>Body</th><th>Partia / frame</th><th>Poznámka</th></tr></thead><tbody>';
+	foreach ( array_reverse( (array) $d['log'] ) as $e ) {
+		$ref = (string) ( $e['ref'] ?? '' );
+		$rl  = '' === $ref ? '' : ( 'm' === $ref[0] ? 'partia #' . substr( $ref, 1 ) : ( 's' === $ref[0] ? 'hra o skóre #' . substr( $ref, 1 ) : 'frame ' . substr( $ref, 1, 6 ) ) );
+		echo '<tr><td>' . esc_html( wp_date( 'j. n. H:i', (int) $e['t'] ) ) . '</td><td>' . esc_html( mysn_susp_label( $e['sig'] ) ) . '</td><td>' . ( $e['p'] > 0 ? '+' : '' ) . (int) $e['p'] . '</td><td>' . esc_html( $rl ) . '</td><td>' . esc_html( (string) ( $e['note'] ?? '' ) ) . '</td></tr>';
+	}
+	echo '</tbody></table>';
+	$ch  = get_user_meta( $u, 'mysn_ch_hist', true );
+	$res = array( 'ok' => 'správna odpoveď', 'bad' => 'ZLÁ odpoveď / podvod', 'miss' => 'bez odpovede (nová výzva)' );
+	echo '<h3>Výzvy servera</h3><table class="widefat striped" style="max-width:900px"><thead><tr><th>Kedy</th><th>Výsledok</th><th>Dôvod výzvy</th><th>Partia</th><th>Poznámka</th></tr></thead><tbody>';
+	foreach ( array_reverse( is_array( $ch ) ? $ch : array() ) as $c ) {
+		echo '<tr' . ( 'bad' === $c['res'] ? ' style="background:#fde8e8"' : '' ) . '><td>' . esc_html( wp_date( 'j. n. H:i', (int) $c['t'] ) ) . '</td><td>' . esc_html( $res[ $c['res'] ] ?? $c['res'] ) . '</td><td>' . esc_html( (string) $c['why'] ) . '</td><td>' . ( $c['mid'] ? '#' . (int) $c['mid'] : 'hra o skóre' ) . '</td><td>' . esc_html( (string) ( $c['note'] ?? '' ) ) . '</td></tr>';
+	}
+	if ( ! $ch ) {
+		echo '<tr><td colspan="5">Zatiaľ žiadne výzvy.</td></tr>';
+	}
+	echo '</tbody></table>';
+	$sn = function_exists( 'mysn_snap_list' ) ? array_reverse( mysn_snap_list( $u ) ) : array();
+	echo '<h3>Snímky obrazovky (' . count( $sn ) . ', mažú sa po ' . ( defined( 'MYSN_SNAP_DAYS' ) ? (int) MYSN_SNAP_DAYS : 30 ) . ' dňoch)</h3><p>Vľavo celá obrazovka, vpravo obrázok, ktorý hra vykreslila. Rozdiel = podiel bodov oblasti hry, ktoré sa na snímke výrazne líšia (čiary, krúžky navyše; pohyb kamery tiež zvýši rozdiel). Červené = na posúdenie.</p>';
+	foreach ( array_slice( $sn, 0, 60 ) as $x ) {
+		$url = function ( $k ) use ( $u, $x ) {
+			return admin_url( 'admin-post.php?action=mysn_snap_img&u=' . $u . '&f=' . rawurlencode( $x['f'] ) . '&s=' . $k );
+		};
+		echo '<div style="display:inline-block;vertical-align:top;margin:0 12px 14px 0;padding:6px;border:2px solid ' . ( ! empty( $x['susp'] ) ? '#d63638' : '#ccc' ) . ';background:#fff"><div>' . esc_html( wp_date( 'j. n. H:i:s', (int) $x['t'] ) . ' · ' . $x['ref'] . ' · úder ' . (int) $x['shot'] . ( isset( $x['diff'] ) && null !== $x['diff'] ? ' · rozdiel ' . number_format( 100 * (float) $x['diff'], 2, ',', '' ) . ' %' : '' ) ) . '</div>';
+		if ( ! empty( $x['screen'] ) ) {
+			echo '<a href="' . esc_url( $url( 's' ) ) . '" target="_blank"><img src="' . esc_url( $url( 's' ) ) . '" style="width:360px;margin-right:6px" loading="lazy"></a>';
+		}
+		if ( ! empty( $x['game'] ) ) {
+			echo '<a href="' . esc_url( $url( 'g' ) ) . '" target="_blank"><img src="' . esc_url( $url( 'g' ) ) . '" style="width:240px" loading="lazy"></a>';
+		}
+		echo '</div>';
+	}
+}
 
 /** Formulár s jedným tlačidlom (akcia správcu). */
 function mysn_cheat_btn( $do, $label, $uid, $cid = '', $extra = array(), $primary = false ) {
@@ -631,6 +769,13 @@ function mysn_admin_cheat() {
 	if ( isset( $_GET['ok'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification
 		echo '<div class="notice notice-success is-dismissible"><p>Uložené.</p></div>';
 	}
+	$du = isset( $_GET['u'] ) ? (int) $_GET['u'] : 0; // phpcs:ignore WordPress.Security.NonceVerification
+	if ( $du ) {
+		mysn_admin_suspect( $du, $name );
+		echo '</div>';
+		return;
+	}
+	mysn_admin_suspects( $name );
 	echo '<p>Hra zisťuje údery, ktoré nevznikli rukou hráča: okrúhla sila úderu, presnosť zahrania ako program (stred rozsahu, v ktorom guľa spadne) a kontrola hry v prehliadači (úder bez ťahu tága, cudzie plátno s čiarami nad hrou, prepísané funkcie hry). Hra o skóre: hráč vidí 0 bodov, skóre sa nezapíše. Partia: preruší sa a zruší. Hráč dostane dočasnú suspendáciu ' . (int) MYSN_SUSP_DAYS . ' dní (nemôže vyzývať ani hrať ligu) alebo kým nerozhodneš. Admin sa neblokuje (výskum), súper vidí upozornenie a zápas sa nepočíta do ligy.</p>';
 	// filter
 	$tabs = array( 'open' => 'Na rozhodnutie', 'all' => 'Všetky', 'confirmed' => 'Potvrdené', 'banned' => 'Zablokovaní', 'cleared' => 'Zrušené podozrenie', 'research' => 'Výskum (admin)' );

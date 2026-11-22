@@ -1177,6 +1177,7 @@ function mysn_scores_out( $uid ) {
 			'created' => (int) $r['created'],
 			'ver'     => (int) $r['ver'],
 			'me'      => $u === (int) $uid,
+			'chk'     => function_exists( 'mysn_susp_score' ) && mysn_susp_score( $u ) >= MYSN_SUSP_SNAP, // 0.41.1: hráč pod kontrolou
 		);
 		if ( $u === (int) $uid ) {
 			$rank = $i;
