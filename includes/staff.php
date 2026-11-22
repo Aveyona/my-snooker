@@ -262,9 +262,9 @@ function mysn_admin_players() {
 	}
 	echo '<p>Správca hry pomáha dohliadať na ligu: v hre má v menu tlačidlo Správa hry (prehľad, neviditeľné sledovanie, zmena prezývky; ďalšie práva podľa dokumentácie). Admin (správca webu) môže všetko.</p>';
 	echo '<p class="description">Kliknutím na názov stĺpca sa hráči zoradia (znova kliknutie otočí poradie).</p>';
-	echo '<table class="widefat striped mysn-sort" style="max-width:1400px"><thead><tr><th data-t="s">Hráč</th><th data-t="s">Prezývka v lige</th><th data-t="n">ELO</th><th data-t="n">Body v sezóne</th><th data-t="n">Výhry : prehry</th><th data-t="n">Výhry %</th><th data-t="n">Najvyšší break</th><th data-t="n">Odohrané partie</th><th data-t="n">Naposledy v hre</th><th>Zákaz ligy</th><th>Rola</th></tr></thead><tbody>';
+	echo '<table class="widefat striped mysn-sort" style="max-width:1400px"><thead><tr><th data-t="s">Hráč</th><th data-t="s">Prezývka v lige</th><th data-t="n">ELO</th><th data-t="n">Body v sezóne</th><th data-t="n">Výhry : prehry</th><th data-t="n">Výhry %</th><th data-t="n">Najvyšší break</th><th data-t="n">Odohrané partie</th><th data-t="n">Úroveň (XP)</th><th data-t="n">Úspechy</th><th data-t="n">Naposledy v hre</th><th>Zákaz ligy</th><th>Rola</th></tr></thead><tbody>';
 	if ( ! $ids ) {
-		echo '<tr><td colspan="11">Zatiaľ žiadni hráči.</td></tr>';
+		echo '<tr><td colspan="13">Zatiaľ žiadni hráči.</td></tr>';
 	}
 	foreach ( $ids as $uid ) {
 		$u = get_userdata( $uid );
@@ -291,6 +291,48 @@ function mysn_admin_players() {
 		echo '<td data-v="' . $pct . '">' . ( $games ? $pct . ' %<br><span class="description">' . $wins . ' z ' . $games . '</span>' : '' ) . '</td>';
 		echo '<td data-v="' . $brk . '">' . ( $brk ? $brk : '' ) . '</td>';
 		echo '<td data-v="' . $games . '">' . (int) $games . '</td>';
+		// 0.42.1: skúsenosti a úspechy hráča (etapa 9)
+		$xp    = (int) get_user_meta( $uid, 'mysn_xp', true );
+		$cnt   = get_user_meta( $uid, 'mysn_ach', true );
+		$cnt   = is_array( $cnt ) ? $cnt : array();
+		$tiers = get_user_meta( $uid, 'mysn_ach_tier', true );
+		$tiers = is_array( $tiers ) ? $tiers : array();
+		$tc    = array( 1 => 0, 2 => 0, 3 => 0, 4 => 0 );
+		$sum   = 0;
+		foreach ( $tiers as $t ) {
+			if ( isset( $tc[ (int) $t ] ) ) {
+				++$tc[ (int) $t ];
+				$sum += (int) $t;
+			}
+		}
+		echo '<td data-v="' . $xp . '">' . ( $xp ? '<b>' . mysn_xp_level( $xp ) . '</b><br><span class="description">' . number_format( $xp, 0, ',', ' ' ) . ' XP</span>' : '' ) . '</td>';
+		echo '<td data-v="' . ( $sum * 1000 + array_sum( $tc ) ) . '">';
+		if ( array_sum( $tc ) ) {
+			$tn = array( 1 => 'bronz', 2 => 'striebro', 3 => 'zlato', 4 => 'platina' );
+			$tcol = array( 1 => '#c9874a', 2 => '#8a96a3', 3 => '#d4a017', 4 => '#3cb5b0' );
+			echo '<details><summary style="cursor:pointer">' . array_sum( $tc ) . ' · ';
+			foreach ( array( 4, 3, 2, 1 ) as $t ) {
+				if ( $tc[ $t ] ) {
+					echo '<span style="color:' . esc_attr( $tcol[ $t ] ) . ';font-weight:700" title="' . esc_attr( $tn[ $t ] ) . '">●' . (int) $tc[ $t ] . '</span> ';
+				}
+			}
+			echo '</summary><ul style="margin:4px 0 0 0">';
+			$names = mysn_ach_names();
+			$defs  = mysn_ach_defs();
+			foreach ( $names as $k => $nm ) {
+				$n = (int) ( $cnt[ $k ] ?? 0 );
+				$t = (int) ( $tiers[ $k ] ?? 0 );
+				if ( ! $n && ! $t ) {
+					continue;
+				}
+				$next = $t < 4 ? ' / ' . $defs[ $k ][ $t ] : '';
+				echo '<li style="margin:0">' . ( $t ? '<span style="color:' . esc_attr( $tcol[ $t ] ) . '">●</span> ' : '○ ' ) . esc_html( $nm ) . ( $t ? ' – ' . esc_html( $tn[ $t ] ) : '' ) . ' <span class="description">(' . $n . $next . ')</span></li>';
+			}
+			echo '</ul></details>';
+		} else {
+			echo '<span class="description">—</span>';
+		}
+		echo '</td>';
 		echo '<td data-v="' . $seen . '">' . ( $seen ? esc_html( wp_date( 'j. n. Y H:i', $seen ) ) : '' ) . '</td>';
 		echo '<td>' . ( mysn_league_banned( $uid ) ? '<b style="color:#b32d2e">áno</b>' : 'nie' ) . '</td><td>';
 		if ( 'admin' === $role ) {

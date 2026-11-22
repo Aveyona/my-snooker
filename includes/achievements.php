@@ -44,6 +44,36 @@ function mysn_ach_defs() {
 	);
 }
 
+/** Názvy úspechov pre administráciu (rovnaké ako v hre, src/achievements.js). */
+function mysn_ach_names() {
+	return array(
+		'pots'    => 'Potápač',
+		'blacks'  => 'Čierna sedí',
+		'frames'  => 'Frejmy',
+		'wins'    => 'Víťaz',
+		'league'  => 'Ligový bojovník',
+		'solo'    => 'Lovec skóre',
+		'brk20'   => 'Séria 20',
+		'brk50'   => 'Pol stovky',
+		'century' => 'Stovka',
+		'max147'  => 'Maximum',
+		'days'    => 'Verný hráč',
+		'stop'    => 'Stop-ball',
+		'follow'  => 'Ťahák',
+		'screw'   => 'Späťák',
+		'side'    => 'Bočná falša',
+		'swerve'  => 'Swerve',
+		'masse'   => 'Massé',
+		'jump'    => 'Skok',
+		'plant'   => 'Plant',
+		'cannon'  => 'Cannon',
+		'double'  => 'Double',
+		'escape'  => 'Únik zo snookeru',
+		'safety'  => 'Safety',
+		'snooker' => 'Snooker',
+	);
+}
+
 /** Stupeň (0 = žiadny, 1 bronz … 4 platina) pre počet. */
 function mysn_ach_tier( $key, $n ) {
 	$d = mysn_ach_defs();
