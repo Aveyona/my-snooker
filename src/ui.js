@@ -23,6 +23,9 @@ import { cueById } from './cues.js';
 import { LoginBox } from './login.js';
 import { countryByCode } from './countries.js';
 import { _t, LANG, LANGS } from './i18n.js';
+
+/** Desatinné číslo podľa jazyka (sk čiarka, en bodka). */
+const dec = (v) => (LANG === 'en' ? String(v) : String(v).replace('.', ','));
 const cueNameOf = (id) => cueById(id).name;
 const cueStateId = (c) => c.id;
 
@@ -78,14 +81,14 @@ const MM_ICON = {
 
 /** Farby LED podsvietenia stojana s tágami: kľúč, názov, farba tlačidla (farba svetla je v main.js RACK_LED_HEX). */
 export const RACK_LEDS = [
-	['warm', 'Teplá biela', '#ffd6a0'],
-	['cool', 'Studená biela', '#e3efff'],
-	['green', 'Zelená', '#4fd18a'],
-	['blue', 'Modrá', '#4f9dff'],
-	['red', 'Červená', '#ff5a5a'],
-	['purple', 'Fialová', '#b070ff'],
-	['orange', 'Oranžová', '#ff9a40'],
-	['off', 'Vypnuté', '#3a3a3a'],
+	['warm', _t('Teplá biela'), '#ffd6a0'],
+	['cool', _t('Studená biela'), '#e3efff'],
+	['green', _t('Zelená'), '#4fd18a'],
+	['blue', _t('Modrá'), '#4f9dff'],
+	['red', _t('Červená'), '#ff5a5a'],
+	['purple', _t('Fialová'), '#b070ff'],
+	['orange', _t('Oranžová'), '#ff9a40'],
+	['off', _t('Vypnuté'), '#3a3a3a'],
 ];
 
 export class UI {
@@ -110,13 +113,13 @@ export class UI {
 		});
 		bar.appendChild(this.stats);
 		const right = h('div', 'mysn-barbtns');
-		this.btnHelp = this.button('?', 'help', 'Ovládanie');
-		this.btnSet = this.button('Nastavenia', 'settings');
+		this.btnHelp = this.button('?', 'help', _t('Ovládanie'));
+		this.btnSet = this.button(_t('Nastavenia'), 'settings');
 		// mobil: hlavné menu ☰ úplne vpravo (Nastavenia a ? sú v ňom; na desktope sa nezobrazuje)
 		this.btnMain = h('button', 'mysn-btn mysn-mmbtn', '☰');
 		this.btnMain.type = 'button';
-		this.btnMain.title = 'Hlavné menu';
-		this.btnMain.setAttribute('aria-label', 'Hlavné menu');
+		this.btnMain.title = _t('Hlavné menu');
+		this.btnMain.setAttribute('aria-label', _t('Hlavné menu'));
 		this.btnMain.addEventListener('click', (e) => {
 			e.stopPropagation();
 			if (this.mainMenuOpen()) {
@@ -1223,12 +1226,12 @@ export class UI {
 		}
 		const hex = (n) => '#' + n.toString(16).padStart(6, '0');
 		this.chalkEl.innerHTML = office
-			? '<h3>Krieda do zápasu</h3><p class="mysn-chalks-sub">Vyber jednu kriedu: ňou kriedueš tágo v lige (F3) a jej farbu vidia súper aj diváci, aj na stopách na súkne.</p>'
-			: '<h3>Kriedy</h3><p class="mysn-chalks-sub">Vyber kriedu, kamera sa na ňu priblíži na poličke. Vybratou kriedou kriedueš tágo (F3), ostávajú po nej jemné stopy na súkne.</p>';
+			? `<h3>${_t('Krieda do zápasu')}</h3><p class="mysn-chalks-sub">${_t('Vyber jednu kriedu: ňou kriedueš tágo v lige (F3) a jej farbu vidia súper aj diváci, aj na stopách na súkne.')}</p>`
+			: `<h3>${_t('Kriedy')}</h3><p class="mysn-chalks-sub">${_t('Vyber kriedu, kamera sa na ňu priblíži na poličke. Vybratou kriedou kriedueš tágo (F3), ostávajú po nej jemné stopy na súkne.')}</p>`;
 		if (this.touchUI) {
 			const x = h('button', 'mysn-chalks-x', '✕');
 			x.type = 'button';
-			x.setAttribute('aria-label', 'Zavrieť kriedy');
+			x.setAttribute('aria-label', _t('Zavrieť kriedy'));
 			x.addEventListener('click', (e) => {
 				e.stopPropagation();
 				this.chalkEl.classList.remove('mysn-chalks-on');
@@ -2939,34 +2942,34 @@ export class UI {
 			return;
 		}
 		const t = this._tipSrc(c);
-		const KIND = { soft: 'mäkká', medium: 'stredná', hard: 'tvrdá' };
+		const KIND = { soft: _t('mäkká'), medium: _t('stredná'), hard: _t('tvrdá') };
 		const pct = Math.round(t.wear * 100);
 		const col = t.wear >= 0.9 ? '#e5484d' : t.wear >= 0.7 ? '#FACC15' : '#3fb950';
-		const state = t.wear >= 1 ? 'opotrebovaná, tágo sa šmýka pri falšiach' : t.wear >= 0.9 ? 'takmer opotrebovaná, môže sa šmyknúť' : t.wear >= 0.7 ? 'falše slabnú' : 'v poriadku';
+		const state = t.wear >= 1 ? _t('opotrebovaná, tágo sa šmýka pri falšiach') : t.wear >= 0.9 ? _t('takmer opotrebovaná, môže sa šmyknúť') : t.wear >= 0.7 ? _t('falše slabnú') : _t('v poriadku');
 		el.innerHTML =
-			`<h4>Špica <span>č. ${t.no}</span></h4>` +
-			`<div class="mysn-tip-row"><span>Druh <b>${KIND[t.kind] || t.kind}</b></span><span>Údery <b>${t.strokes}</b></span></div>` +
+			`<h4>${_t('Špica')} <span>${_t('č. {n}', { n: t.no })}</span></h4>` +
+			`<div class="mysn-tip-row"><span>${_t('Druh')} <b>${KIND[t.kind] || t.kind}</b></span><span>${_t('Údery')} <b>${t.strokes}</b></span></div>` +
 			`<div class="mysn-tip-bar"><i style="width:${Math.min(100, pct)}%;background:${col}"></i></div>` +
-			`<div class="mysn-tip-state">Opotrebenie <b>${pct} %</b>, ${state}</div>` +
+			`<div class="mysn-tip-state">${_t('Opotrebenie')} <b>${pct} %</b>, ${state}</div>` +
 			(() => {
 				const d = tipInaccuracy(t.wear, t.kind, c);
 				const cl = d >= 0.6 ? '#e5484d' : d > 0 ? '#FACC15' : '#3fb950';
-				return `<div class="mysn-tip-state">Nepresnosť <b style="color:${cl}">±${d.toFixed(2).replace('.', ',')}°</b>${d >= 0.6 ? ', štrká krivo' : d > 0 ? ', prvé nepresnosti' : ''}</div>`;
+				return `<div class="mysn-tip-state">${_t('Nepresnosť')} <b style="color:${cl}">±${dec(d.toFixed(2))}°</b>${d >= 0.6 ? _t(', štrká krivo') : d > 0 ? _t(', prvé nepresnosti') : ''}</div>`;
 			})() +
-			(t.guest ? '<p class="mysn-cp-note">Špice sa ukladajú len prihláseným hráčom.</p>' : `<div class="mysn-tip-sum">Spolu úderov <b>${t.total}</b> · vymenených špíc <b>${t.replaced}</b></div><div class="mysn-tip-new"><span>Vymeniť za novú:</span></div>`);
+			(t.guest ? `<p class="mysn-cp-note">${_t('Špice sa ukladajú len prihláseným hráčom.')}</p>` : `<div class="mysn-tip-sum">${_t('Spolu úderov')} <b>${t.total}</b> · ${_t('vymenených špíc')} <b>${t.replaced}</b></div><div class="mysn-tip-new"><span>${_t('Vymeniť za novú:')}</span></div>`);
 		el.insertAdjacentHTML(
 			'beforeend',
 			'<ul class="mysn-tip-info">' +
-				'<li>Mäkká špica drží falše o desatinu lepšie, ale je o niečo slabšia. Tvrdá je o niečo silnejšia a falše drží o desatinu slabšie.</li>' +
-				'<li>Od 70 % opotrebenia slabnú falše, pri 100 % na polovicu.</li>' +
-				'<li>Nad 90 % sa tágo pri úderoch s falšou môže šmyknúť (asi 1 z 10 takých úderov, pri 100 % 3 z 10). Úder je potom slabý, mierne vybočí a nemá falšu.</li>' +
-				'<li>Od 80 % opotrebenia je úder nepresný: biela náhodne uhne od smeru mierenia, do 95 % najviac o 0,6° (na dĺžku stola asi 4 cm), potom prudko až o 2,5° pri 100 % (štrká celkom krivo). Silnejší úder je nepresnejší, mäkká špica o niečo presnejšia, tvrdá menej.</li>' +
-				'<li>Pri 90 % príde upozornenie, že treba vymeniť špicu. Špica vydrží približne 1000 úderov, mäkká sa pri silných úderoch ničí rýchlejšie.</li>' +
+				`<li>${_t('Mäkká špica drží falše o desatinu lepšie, ale je o niečo slabšia. Tvrdá je o niečo silnejšia a falše drží o desatinu slabšie.')}</li>` +
+				`<li>${_t('Od 70 % opotrebenia slabnú falše, pri 100 % na polovicu.')}</li>` +
+				`<li>${_t('Nad 90 % sa tágo pri úderoch s falšou môže šmyknúť (asi 1 z 10 takých úderov, pri 100 % 3 z 10). Úder je potom slabý, mierne vybočí a nemá falšu.')}</li>` +
+				`<li>${_t('Od 80 % opotrebenia je úder nepresný: biela náhodne uhne od smeru mierenia, do 95 % najviac o 0,6° (na dĺžku stola asi 4 cm), potom prudko až o 2,5° pri 100 % (štrká celkom krivo). Silnejší úder je nepresnejší, mäkká špica o niečo presnejšia, tvrdá menej.')}</li>` +
+				`<li>${_t('Pri 90 % príde upozornenie, že treba vymeniť špicu. Špica vydrží približne 1000 úderov, mäkká sa pri silných úderoch ničí rýchlejšie.')}</li>` +
 				'</ul>'
 		);
 		if (!t.guest) {
 			// farba špice: niekoľko základných farieb (predvolená modrá)
-			const row = h('div', 'mysn-tip-colors', '<span>Farba špice</span>');
+			const row = h('div', 'mysn-tip-colors', `<span>${_t('Farba špice')}</span>`);
 			for (const [k, col] of Object.entries(TIP_COLORS)) {
 				const b = h('button', 'mysn-tip-col' + ((t.color || 'blue') === k ? ' mysn-on' : ''));
 				b.type = 'button';
@@ -2984,7 +2987,7 @@ export class UI {
 		const nw = el.querySelector('.mysn-tip-new');
 		if (nw) {
 			for (const k of ['soft', 'medium', 'hard']) {
-				const b = this.button(KIND[k], 'tipReplace', k === 'soft' ? 'Mäkká: lepšie drží falše, pri silných úderoch sa ničí rýchlejšie' : k === 'hard' ? 'Tvrdá: o niečo silnejšie údery, falše slabšie, znáša silné údery' : 'Stredná: vyvážená', { cue: c.id, kind: k });
+				const b = this.button(KIND[k], 'tipReplace', k === 'soft' ? _t('Mäkká: lepšie drží falše, pri silných úderoch sa ničí rýchlejšie') : k === 'hard' ? _t('Tvrdá: o niečo silnejšie údery, falše slabšie, znáša silné údery') : _t('Stredná: vyvážená'), { cue: c.id, kind: k });
 				nw.appendChild(b);
 			}
 		}
@@ -2993,7 +2996,7 @@ export class UI {
 	cueStats(c) {
 		return (
 			`<span>${_t('Sila')} <b>${Math.round(c.power * 100)} %</b></span><span>${_t('Dĺžka')} <b>${Math.round(c.len * 100)} cm</b></span><span>${_t('Falše')} <b>${Math.round(c.grip * 100)} %</b></span><span>${_t('Špička')} <b>${esc(_t(c.tip))}</b></span><span>Shift <b>${c.fine > 0 ? _t('áno') : _t('nie')}</b></span>` +
-			(c.massG ? `<span>Hmotnosť <b>${c.massG} g</b></span><span>Priemer špice <b>${String(c.tipMm).replace('.', ',')} mm</b></span><span>Odklon <b>${Math.round((c.squirt / 0.012) * 100)} %</b></span>` : '')
+			(c.massG ? `<span>${_t('Hmotnosť')} <b>${c.massG} g</b></span><span>${_t('Priemer špice')} <b>${dec(c.tipMm)} mm</b></span><span>${_t('Odklon')} <b>${Math.round((c.squirt / 0.012) * 100)} %</b></span>` : '')
 		);
 	}
 
@@ -3016,14 +3019,14 @@ export class UI {
 			return;
 		}
 		const own = !!c.own;
-		P.appendChild(h('div', 'mysn-cp-kind', own ? `Vlastné tágo, šablóna: ${esc(cueNameOf(c.base))}` : `Šablóna: ${esc(c.category)}`));
+		P.appendChild(h('div', 'mysn-cp-kind', own ? _t('Vlastné tágo, šablóna: {n}', { n: esc(cueNameOf(c.base)) }) : _t('Šablóna: {n}', { n: esc(c.category) })));
 		P.appendChild(h('h3', '', esc(c.name)));
 		P.appendChild(h('div', 'mysn-cp-stats', this.cueStats(c)));
 		P.appendChild(h('p', 'mysn-cp-note', esc(c.note)));
 		if (c.fine > 0) {
 			// jemné mierenie vždy zapnuté (Shift potom prepne na rýchle)
 			const st = this.opts.settings || {};
-			const lab = h('label', 'mysn-cp-fine', `<input type="checkbox"><span><b>Presné mierenie vždy zapnuté</b> <em>(${fineDefault(c) ? 'pri Citlivom tágu predvolené; ' : ''}zaškrtnuté: Shift prepne na rýchle mierenie, bez zaškrtnutia Shift zapína presné)</em></span>`);
+			const lab = h('label', 'mysn-cp-fine', `<input type="checkbox"><span><b>${_t('Presné mierenie vždy zapnuté')}</b> <em>(${fineDefault(c) ? _t('pri Citlivom tágu predvolené; ') : ''}${_t('zaškrtnuté: Shift prepne na rýchle mierenie, bez zaškrtnutia Shift zapína presné')})</em></span>`);
 			const cb = lab.querySelector('input');
 			const fv = st.fineCues ? st.fineCues[c.id] : undefined;
 			cb.checked = fv === undefined ? fineDefault(c) : fv === 1; // predvolene len Citlivé tágo
@@ -3035,7 +3038,7 @@ export class UI {
 		this.renderTip();
 		if (info && info.league) {
 			// ligový zápas: len tágá vybraté do ligy (najviac 4), vyberajú sa v kancelárii, upravujú v herni
-			P.appendChild(h('p', 'mysn-cp-note', 'Na stojane sú len tágá, ktoré si si vybral do ligy (najviac 4). Vyberáš ich v kancelárii ligy, vlastné tágá upravuješ v herni.'));
+			P.appendChild(h('p', 'mysn-cp-note', _t('Na stojane sú len tágá, ktoré si si vybral do ligy (najviac 4). Vyberáš ich v kancelárii ligy, vlastné tágá upravuješ v herni.')));
 			return;
 		}
 		const row = (label, el) => {
@@ -3050,8 +3053,8 @@ export class UI {
 			nm.maxLength = 30;
 			nm.value = c.name;
 			nm.addEventListener('input', () => set('name', nm.value.trim()));
-			P.appendChild(row('Názov', nm));
-			for (const [k, lab] of [['shaft', 'Farba dreva'], ['butt', 'Farba rukoväte']]) {
+			P.appendChild(row(_t('Názov'), nm));
+			for (const [k, lab] of [['shaft', _t('Farba dreva')], ['butt', _t('Farba rukoväte')]]) {
 				const col = document.createElement('input');
 				col.type = 'color';
 				col.value = c.colors[k];
@@ -3062,21 +3065,21 @@ export class UI {
 			const adj = { ...c.adj };
 			const sliders = {};
 			const fmt = (k, v) =>
-				k === 'weight' ? `${Math.round(555 + v * 450)} g` : k === 'tipd' ? `${(9.75 - v * 7.5).toFixed(1).replace('.', ',')} mm` : `${v > 0 ? '+' : ''}${Math.round(v * 100)} %`;
+				k === 'weight' ? `${Math.round(555 + v * 450)} g` : k === 'tipd' ? `${dec((9.75 - v * 7.5).toFixed(1))} mm` : `${v > 0 ? '+' : ''}${Math.round(v * 100)} %`;
 			const left = h('div', 'mysn-cp-budget');
 			const showLeft = () => {
 				const sum = BUDGET_KEYS.reduce((s, k) => s + (adj[k] || 0), 0);
 				const rest = Math.round(-sum * 100);
-				left.innerHTML = `Rozpočet úprav: zostáva <b>${rest} %</b>${rest <= 0 ? ' (čo pridáš, inde sa ubere)' : ''}`;
+				left.innerHTML = `${_t('Rozpočet úprav: zostáva')} <b>${rest} %</b>${rest <= 0 ? _t(' (čo pridáš, inde sa ubere)') : ''}`;
 			};
 			const ADJ_ROWS = [
-				['power', 'Sila', 'Najväčšia rýchlosť bielej pri plnom ťahu. Plus: silnejšie údery (rozbitie, dlhé údery). Mínus: slabšie, ale pri rovnakom pohybe myšou jemnejšie dávkovanie sily. Na mierenie nemá vplyv.'],
-				['len', 'Dĺžka', 'Dlhšie tágo treba ťahať myšou ďalej na rovnakú silu, takže sila sa dávkuje jemnejšie a presnejšie. Kratšie tágo stačí potiahnuť menej, je rýchlejšie, ale sila sa ľahšie prestrelí. Mierenie nemení.'],
-				['grip', 'Falše', 'Ako silno sa prenesie miesto úderu na bielu (horná, spodná a bočná falša). Plus: výraznejšie falše a rotácia bielej. Mínus: falše slabšie, biela ide skôr rovno. Smer úderu nemení.'],
-				['weight', 'Hmotnosť', '510 až 600 g. Ťažšie tágo dá až o 5 % viac sily a stačí kratšie ťahanie, ale sila sa dávkuje hrubšie. Ľahšie tágo je slabšie, zato jemnejšie na dávkovanie. Mierenie nemení.'],
-				['tipd', 'Priemer špice', '9 až 10,5 mm. Menšia špica dá až o 10 % viac falše, ale opotrebovaná sa ľahšie šmykne a je nepresnejšia. Väčšia špica je odpustivejšia a stabilnejšia, falše má o niečo menej.'],
-				['stiff', 'Tuhosť drievka', 'Pri bočnej falši biela trochu uhne opačne ako falša (odklon, asi 0,7° pri plnej falši). Plus: tuhšie drievko, menší odklon, biela ide presnejšie tam, kam mieriš. Mínus: väčší odklon, pri bočnej falši treba mieriť s korekciou.'],
-				['bal', 'Vyváženie (mimo rozpočtu)', 'Ťažisko tága. Plus (vpredu): tágo reaguje na ťahanie myšou pomalšie, silu treba ťahať dlhšie, je pokojnejšie. Mínus (vzadu): reaguje rýchlejšie, kratší ťah. Nie je v rozpočte úprav.'],
+				['power', _t('Sila'), _t('Najväčšia rýchlosť bielej pri plnom ťahu. Plus: silnejšie údery (rozbitie, dlhé údery). Mínus: slabšie, ale pri rovnakom pohybe myšou jemnejšie dávkovanie sily. Na mierenie nemá vplyv.')],
+				['len', _t('Dĺžka'), _t('Dlhšie tágo treba ťahať myšou ďalej na rovnakú silu, takže sila sa dávkuje jemnejšie a presnejšie. Kratšie tágo stačí potiahnuť menej, je rýchlejšie, ale sila sa ľahšie prestrelí. Mierenie nemení.')],
+				['grip', _t('Falše'), _t('Ako silno sa prenesie miesto úderu na bielu (horná, spodná a bočná falša). Plus: výraznejšie falše a rotácia bielej. Mínus: falše slabšie, biela ide skôr rovno. Smer úderu nemení.')],
+				['weight', _t('Hmotnosť'), _t('510 až 600 g. Ťažšie tágo dá až o 5 % viac sily a stačí kratšie ťahanie, ale sila sa dávkuje hrubšie. Ľahšie tágo je slabšie, zato jemnejšie na dávkovanie. Mierenie nemení.')],
+				['tipd', _t('Priemer špice'), _t('9 až 10,5 mm. Menšia špica dá až o 10 % viac falše, ale opotrebovaná sa ľahšie šmykne a je nepresnejšia. Väčšia špica je odpustivejšia a stabilnejšia, falše má o niečo menej.')],
+				['stiff', _t('Tuhosť drievka'), _t('Pri bočnej falši biela trochu uhne opačne ako falša (odklon, asi 0,7° pri plnej falši). Plus: tuhšie drievko, menší odklon, biela ide presnejšie tam, kam mieriš. Mínus: väčší odklon, pri bočnej falši treba mieriť s korekciou.')],
+				['bal', _t('Vyváženie (mimo rozpočtu)'), _t('Ťažisko tága. Plus (vpredu): tágo reaguje na ťahanie myšou pomalšie, silu treba ťahať dlhšie, je pokojnejšie. Mínus (vzadu): reaguje rýchlejšie, kratší ťah. Nie je v rozpočte úprav.')],
 			];
 			for (const [k, lab, tip] of ADJ_ROWS) {
 				const r = document.createElement('input');
@@ -3116,45 +3119,45 @@ export class UI {
 			}
 			showLeft();
 			P.appendChild(left);
-			const del = this.button('Zmazať tágo', 'cueOwnDelete', 'Zmaže toto vlastné tágo', c.own);
+			const del = this.button(_t('Zmazať tágo'), 'cueOwnDelete', _t('Zmaže toto vlastné tágo'), c.own);
 			del.classList.add('mysn-cp-del');
 			P.appendChild(del);
 		} else {
-			P.appendChild(h('p', 'mysn-cp-note', 'Šablóna sa nemení. Vyrob si z nej vlastné tágo: názov a farby si nastavíš voľne a úpravy (sila, dĺžka, falše, hmotnosť, priemer špice, tuhosť, vyváženie) v rámci rozpočtu.'));
-			const b = this.button('Vytvoriť vlastné tágo', 'cueNew', 'Nové vlastné tágo z tejto šablóny', c.id);
+			P.appendChild(h('p', 'mysn-cp-note', _t('Šablóna sa nemení. Vyrob si z nej vlastné tágo: názov a farby si nastavíš voľne a úpravy (sila, dĺžka, falše, hmotnosť, priemer špice, tuhosť, vyváženie) v rámci rozpočtu.')));
+			const b = this.button(_t('Vytvoriť vlastné tágo'), 'cueNew', _t('Nové vlastné tágo z tejto šablóny'), c.id);
 			b.classList.add('mysn-primary');
 			if (!info.user) {
 				b.disabled = true;
-				P.appendChild(h('p', 'mysn-cp-note', 'Vlastné tágá majú len prihlásení hráči.'));
+				P.appendChild(h('p', 'mysn-cp-note', _t('Vlastné tágá majú len prihlásení hráči.')));
 			} else if (info.ownCount >= info.ownMax) {
 				b.disabled = true;
-				P.appendChild(h('p', 'mysn-cp-note', `Máš ${info.ownCount} z ${info.ownMax} vlastných tág. Na nové jedno zmaž.`));
+				P.appendChild(h('p', 'mysn-cp-note', _t('Máš {a} z {b} vlastných tág. Na nové jedno zmaž.', { a: info.ownCount, b: info.ownMax })));
 			}
 			P.appendChild(b);
 		}
 		// moje uložené tágá: výber a stojan (na stojane je vždy 10 tág, vlastné tágo nahradí svoju šablónu)
 		if (info.user) {
-			P.appendChild(h('div', 'mysn-cp-head', `Moje tágá <em>${info.ownCount || 0} z ${info.ownMax || 10}</em>`));
+			P.appendChild(h('div', 'mysn-cp-head', `${_t('Moje tágá')} <em>${_t('{a} z {b}', { a: info.ownCount || 0, b: info.ownMax || 10 })}</em>`));
 			const own = info.own || [];
 			if (!own.length) {
-				P.appendChild(h('p', 'mysn-cp-note', 'Zatiaľ nemáš vlastné tágo. Vyber šablónu na stojane a daj Vytvoriť vlastné tágo.'));
+				P.appendChild(h('p', 'mysn-cp-note', _t('Zatiaľ nemáš vlastné tágo. Vyber šablónu na stojane a daj Vytvoriť vlastné tágo.')));
 			}
 			for (const o of own) {
 				const onRack = !!o.rackOn;
-				const r = h('div', 'mysn-cp-own' + (o.id === c.id ? ' mysn-on' : ''), `<span class="mysn-cp-sw" style="background:linear-gradient(90deg, ${esc(o.colors.shaft)} 50%, ${esc(o.colors.butt)} 50%)"></span><span><b>${esc(o.name)}</b><em>${esc(cueNameOf(o.base))}${onRack ? ', na stojane' : ''}</em></span>`);
-				const pick = this.button(o.id === cueStateId(c) ? 'Vybraté' : 'Vybrať', 'cuePick', 'Hrať s týmto tágom', o.id);
+				const r = h('div', 'mysn-cp-own' + (o.id === c.id ? ' mysn-on' : ''), `<span class="mysn-cp-sw" style="background:linear-gradient(90deg, ${esc(o.colors.shaft)} 50%, ${esc(o.colors.butt)} 50%)"></span><span><b>${esc(o.name)}</b><em>${esc(cueNameOf(o.base))}${onRack ? _t(', na stojane') : ''}</em></span>`);
+				const pick = this.button(o.id === cueStateId(c) ? _t('Vybraté') : _t('Vybrať'), 'cuePick', _t('Hrať s týmto tágom'), o.id);
 				pick.disabled = o.id === c.id;
-				const rk = this.button(onRack ? 'Zo stojana' : 'Na stojan', 'cueOwnRack', onRack ? 'Na stojan vráti šablónu' : `Dať na stojan namiesto šablóny ${cueNameOf(o.base)}`, o.own);
+				const rk = this.button(onRack ? _t('Zo stojana') : _t('Na stojan'), 'cueOwnRack', onRack ? _t('Na stojan vráti šablónu') : _t('Dať na stojan namiesto šablóny {n}', { n: cueNameOf(o.base) }), o.own);
 				r.append(pick, rk);
 				P.appendChild(r);
 			}
 		}
 		// tágá 1 až 10: výhody a nedostatky (zvýraznená šablóna vybraného tága)
-		const cmp = this.touchUI ? h('details', 'mysn-cp-cmp', '<summary>Porovnanie tág 1 až 10</summary>') : P; // mobil: rozbalí sa až po ťuknutí
+		const cmp = this.touchUI ? h('details', 'mysn-cp-cmp', `<summary>${_t('Porovnanie tág 1 až 10')}</summary>`) : P; // mobil: rozbalí sa až po ťuknutí
 		if (cmp !== P) {
 			P.appendChild(cmp);
 		} else {
-			P.appendChild(h('div', 'mysn-cp-head', 'Tágá 1 až 10'));
+			P.appendChild(h('div', 'mysn-cp-head', _t('Tágá 1 až 10')));
 		}
 		const pros = h('ol', 'mysn-cp-pros');
 		for (const t of CUES) {
@@ -3181,7 +3184,7 @@ export class UI {
 			}
 			const x = h('button', 'mysn-cp-x', '✕');
 			x.type = 'button';
-			x.setAttribute('aria-label', 'Zavrieť');
+			x.setAttribute('aria-label', _t('Zavrieť'));
 			x.addEventListener('click', (e) => {
 				e.stopPropagation();
 				this._cpShow = '';
@@ -3316,7 +3319,7 @@ export class UI {
 			// jedno z vybratých je predvolené (s ním sa začína ligový zápas); nastavenia tág budú v herni
 			const n = o.myCues.selected.length;
 			const def = o.myCues.selected.includes(o.myCues.def) ? o.myCues.def : o.myCues.selected[0];
-			w.appendChild(h('h3', '', `Tágá do ligového zápasu: vybraté ${n} zo 4`));
+			w.appendChild(h('h3', '', _t('Tágá do ligového zápasu: vybraté {n} zo 4', { n })));
 			const list = h('div', 'mysn-cues');
 			o.cues.forEach((c, i) => {
 				const on = o.myCues.selected.includes(c.id);
@@ -3325,8 +3328,8 @@ export class UI {
 					'div',
 					'mysn-cue' + (on ? ' mysn-pick' : '') + (isDef ? ' mysn-def' : ''),
 					`<span class="mysn-cue-n">${i + 1}</span><b>${esc(c.name)}</b><span class="mysn-cue-cat">${esc(c.category)}</span>` +
-						`<span>Sila ${Math.round(c.power * 100)} %, dĺžka ${Math.round(c.len * 100)} cm</span>` +
-						`<em>${isDef ? '★ predvolené v zápase' : on ? 'v zápase (klik odoberie)' : 'klik: zobrať do zápasu'}</em>`
+						`<span>${_t('Sila {p} %, dĺžka {l} cm', { p: Math.round(c.power * 100), l: Math.round(c.len * 100) })}</span>` +
+						`<em>${isDef ? _t('★ predvolené v zápase') : on ? _t('v zápase (klik odoberie)') : _t('klik: zobrať do zápasu')}</em>`
 				);
 				card.setAttribute('role', 'button');
 				card.addEventListener('click', (e) => {
@@ -3334,7 +3337,7 @@ export class UI {
 					this.opts.onAction('cueSelect', c.id);
 				});
 				if (on && !isDef) {
-					const d = this.button('★ predvolené', 'cueDefault', 'S týmto tágom začneš ligový zápas', c.id);
+					const d = this.button(_t('★ predvolené'), 'cueDefault', _t('S týmto tágom začneš ligový zápas'), c.id);
 					d.classList.add('mysn-cue-defbtn');
 					card.appendChild(d);
 				}
@@ -3449,15 +3452,15 @@ export class UI {
 		}
 		box.innerHTML = '';
 		if (name === 'rack') {
-			box.appendChild(h('h3', '', 'Stojan s tágami'));
+			box.appendChild(h('h3', '', _t('Stojan s tágami')));
 			const list = h('div', 'mysn-cues');
 			cues.forEach((c, i) => {
 				const card = h(
 					'button',
 					'mysn-cue' + (c.id === selId ? ' mysn-on' : ''),
 					`<span class="mysn-cue-n">${i + 1}</span><b>${c.name}</b><span class="mysn-cue-cat">${c.category}</span>` +
-						`<span>Špička ${c.tip}, sila ${Math.round(c.power * 100)} %</span>` +
-						`<span>Dĺžka ${Math.round(c.len * 100)} cm, Shift ${c.fine > 0 ? 'áno' : 'nie'}</span>` +
+						`<span>${_t('Špička {t}, sila {p} %', { t: _t(c.tip), p: Math.round(c.power * 100) })}</span>` +
+						`<span>${_t('Dĺžka {l} cm, Shift {s}', { l: Math.round(c.len * 100), s: c.fine > 0 ? _t('áno') : _t('nie') })}</span>` +
 						`<em>${c.note}</em>`
 				);
 				card.type = 'button';
@@ -3472,12 +3475,12 @@ export class UI {
 			// 0.31.1: farba LED podsvietenia stojana
 			{
 				const cur = (this.opts.settings && this.opts.settings.rackLed) || 'warm';
-				const row = h('div', 'mysn-rackled', '<span>Podsvietenie</span>');
+				const row = h('div', 'mysn-rackled', `<span>${_t('Podsvietenie')}</span>`);
 				for (const [k, name, css] of RACK_LEDS) {
 					const b = h('button', 'mysn-rackled-b' + (k === cur ? ' mysn-on' : ''), k === 'off' ? '✕' : '');
 					b.type = 'button';
 					b.title = name;
-					b.setAttribute('aria-label', 'Podsvietenie: ' + name);
+					b.setAttribute('aria-label', _t('Podsvietenie') + ': ' + name);
 					b.style.background = css;
 					b.addEventListener('click', (e) => {
 						e.stopPropagation();
@@ -3526,8 +3529,8 @@ export class UI {
 					this._cpShow = this._cpShow === key ? '' : key;
 					this.cpShow();
 				};
-				ico('tip', 'Špica', () => sheet('tip'));
-				ico('chalk', 'Krieda', () => {
+				ico('tip', _t('Špica'), () => sheet('tip'));
+				ico('chalk', _t('Krieda'), () => {
 					this._cpShow = '';
 					this.cpShow();
 					if (this.chalkEl) {
@@ -3538,7 +3541,7 @@ export class UI {
 				// predĺženie tága: ťuknutie prepína 0 → 15 → 30 → 45 cm → dole (ako 6 a 7 v Príslušenstve)
 				const extLabel = () => {
 					const e = Math.round(((this.opts.settings && this.opts.settings.cueExt) || 0) * 100);
-					return e ? `Pred.<br>${e} cm` : 'Predĺž.';
+					return e ? `${_t('Pred.')}<br>${e} cm` : _t('Predĺž.');
 				};
 				ico('ext', extLabel(), (b) => {
 					const e = Math.round(((this.opts.settings && this.opts.settings.cueExt) || 0) * 100);
@@ -3546,7 +3549,7 @@ export class UI {
 					b.innerHTML = extLabel();
 					b.classList.toggle('mysn-on', !!(this.opts.settings && this.opts.settings.cueExt));
 				});
-				ico('own', 'Vlastné', () => sheet('own'));
+				ico('own', _t('Vlastné'), () => sheet('own'));
 				ico('info', 'i', () => sheet('info'));
 				box.append(top, icons);
 				this._rackChalkBtn = null;
@@ -3601,26 +3604,26 @@ export class UI {
 			box.appendChild(list);
 		}
 		const texts = {
-			chair: 'Pohľad z kresla: pohybom myši sa rozhliadaš, kolieskom približuješ (klikni, ak sa myš nezachytila). Vpravo správy: drž Ctrl a klikni na článok, C noviny Hedlajner a V správy z RSS na celú obrazovku. Pri hre o skóre čas stojí. F7 alebo Enter: späť do hry.',
-			news: 'Titulka webu Hedlajner. Klik na titulok otvorí článok. F8, Enter alebo Esc: späť do hry.',
-			magazine: 'Správy z RSS kanálov. Klik na titulok otvorí správu. F9, Enter alebo Esc: späť do hry.',
-			rack: 'Šípky vľavo a vpravo vyberajú tágo. Enter, F2 alebo Esc: späť do hry.',
-			board: 'F1, Enter alebo Esc: späť do hry.',
-			score: 'F4, Enter alebo Esc: späť do hry.',
-			office: 'Kancelária: myšou sa rozhliadaš, kolieskom približuješ. Drž Ctrl: predmety sa rozsvietia a klik ich otvorí (aj špendlíky na mape hráčov). Esc: menu.',
-			bar: 'Pohľad z baru: myšou sa rozhliadaš, kolieskom približuješ. Drž Ctrl a klikni na telefón (alebo M): zväčší sa Môj účet. Pri hre o skóre čas stojí. F10 alebo Enter: späť do hry.',
-			mixer: 'Mixpult: šípky vľavo a vpravo menia stanicu, hore a dole hlasitosť, P zapne alebo vypne rádio. Zvuk ide z reproduktorov v herni. F9, Enter alebo Esc: späť do hry.',
-			trophies: 'Rebríček o najlepšie skóre: poháre pre troch najlepších, vpravo 4. až 10. miesto (body a celkový čas). F8, Enter alebo Esc: späť do hry.',
-			chalk: 'Kriedujem špičku tága. Falše budú 3 údery 5x silnejšie.',
-			paintSun: 'Obraz: úplné zatmenie Slnka nad jazerom. Enter, Esc alebo pravé tlačidlo myši: späť do hry.',
-			achBoard: 'Tabuľa Úspechy: úroveň a skúsenosti (XP), vľavo všeobecné úspechy, vpravo špeciálne údery; čiarky ukazujú, koľkokrát si to spravil. Podrobne v telefóne (T), záložka Úspechy. Enter, Esc alebo pravé tlačidlo myši: späť do hry.',
-			paintMoon: 'Obraz: zatmenie Mesiaca (krvavý Mesiac) nad jazerom. Enter, Esc alebo pravé tlačidlo myši: späť do hry.',
+			chair: _t('Pohľad z kresla: pohybom myši sa rozhliadaš, kolieskom približuješ (klikni, ak sa myš nezachytila). Vpravo správy: drž Ctrl a klikni na článok, C noviny Hedlajner a V správy z RSS na celú obrazovku. Pri hre o skóre čas stojí. F7 alebo Enter: späť do hry.'),
+			news: _t('Titulka webu Hedlajner. Klik na titulok otvorí článok. F8, Enter alebo Esc: späť do hry.'),
+			magazine: _t('Správy z RSS kanálov. Klik na titulok otvorí správu. F9, Enter alebo Esc: späť do hry.'),
+			rack: _t('Šípky vľavo a vpravo vyberajú tágo. Enter, F2 alebo Esc: späť do hry.'),
+			board: _t('F1, Enter alebo Esc: späť do hry.'),
+			score: _t('F4, Enter alebo Esc: späť do hry.'),
+			office: _t('Kancelária: myšou sa rozhliadaš, kolieskom približuješ. Drž Ctrl: predmety sa rozsvietia a klik ich otvorí (aj špendlíky na mape hráčov). Esc: menu.'),
+			bar: _t('Pohľad z baru: myšou sa rozhliadaš, kolieskom približuješ. Drž Ctrl a klikni na telefón (alebo M): zväčší sa Môj účet. Pri hre o skóre čas stojí. F10 alebo Enter: späť do hry.'),
+			mixer: _t('Mixpult: šípky vľavo a vpravo menia stanicu, hore a dole hlasitosť, P zapne alebo vypne rádio. Zvuk ide z reproduktorov v herni. F9, Enter alebo Esc: späť do hry.'),
+			trophies: _t('Rebríček o najlepšie skóre: poháre pre troch najlepších, vpravo 4. až 10. miesto (body a celkový čas). F8, Enter alebo Esc: späť do hry.'),
+			chalk: _t('Kriedujem špičku tága. Falše budú 3 údery 5x silnejšie.'),
+			paintSun: _t('Obraz: úplné zatmenie Slnka nad jazerom. Enter, Esc alebo pravé tlačidlo myši: späť do hry.'),
+			achBoard: _t('Tabuľa Úspechy: úroveň a skúsenosti (XP), vľavo všeobecné úspechy, vpravo špeciálne údery; čiarky ukazujú, koľkokrát si to spravil. Podrobne v telefóne (T), záložka Úspechy. Enter, Esc alebo pravé tlačidlo myši: späť do hry.'),
+			paintMoon: _t('Obraz: zatmenie Mesiaca (krvavý Mesiac) nad jazerom. Enter, Esc alebo pravé tlačidlo myši: späť do hry.'),
 		};
 		if (!(name === 'rack' && this.touchUI)) {
 			foot.appendChild(h('span', '', texts[name] || '')); // mobil pri stojane: tágo vyberajú ‹ ›, text o šípkach netreba
 		}
 		if (name !== 'chalk' && name !== 'office') {
-			const back = this.button('Späť do hry', 'back');
+			const back = this.button(_t('Späť do hry'), 'back');
 			back.classList.add('mysn-primary');
 			foot.appendChild(back);
 		}
@@ -4031,7 +4034,7 @@ export class UI {
 			const turn = (i) => (r.turn === i && !r.over ? ' mysn-turn' : '');
 			this.stats.innerHTML = `<span class="mysn-sc${turn(mt.me)}">${nm(mt.me)} <b>${r.scores[mt.me]}</b></span><span class="mysn-sc${turn(1 - mt.me)}">${nm(1 - mt.me)} <b>${r.scores[1 - mt.me]}</b>${mt.players[1 - mt.me].online === false ? ' <i>mimo</i>' : ''}</span>${mt.frames ? `<span>Framy <b>${mt.frames.won[mt.me]} : ${mt.frames.won[1 - mt.me]}</b> (${mt.frames.n}. z ${mt.frames.of})</span>` : ''}<span>Na rade <b>${r.turn === mt.me ? 'ty' : nm(r.turn)}</b></span><span>Hrá sa na <b>${esc(game.onText())}</b></span><span>Séria <b>${r.brk}</b></span><span class="${this._chalk > 0 ? 'mysn-chalk-on' : 'mysn-chalk-off'}">Krieda <b>${this._chalk > 0 ? this._chalk : this.touchUI ? 'nie' : 'F3'}</b></span>`;
 		} else {
-		this.stats.innerHTML = `<span>Údery <b>${s.shots}</b></span><span>Spadnuté <b>${s.points >= 0 ? s.potted : 0}</b></span><span>Body <b>${s.points}</b></span><span>Séria <b>${s.run}</b></span><span>Najlepšia <b>${s.best}</b></span><span class="${this._chalk > 0 ? 'mysn-chalk-on' : 'mysn-chalk-off'}">Krieda <b>${this._chalk > 0 ? this._chalk : this.touchUI ? 'nie' : 'F3'}</b></span>`;
+		this.stats.innerHTML = `<span>${_t('Údery')} <b>${s.shots}</b></span><span>${_t('Spadnuté')} <b>${s.points >= 0 ? s.potted : 0}</b></span><span>${_t('Body')} <b>${s.points}</b></span><span>${_t('Séria')} <b>${s.run}</b></span><span>${_t('Najlepšia')} <b>${s.best}</b></span><span class="${this._chalk > 0 ? 'mysn-chalk-on' : 'mysn-chalk-off'}">${_t('Krieda')} <b>${this._chalk > 0 ? this._chalk : this.touchUI ? _t('nie') : 'F3'}</b></span>`;
 		}
 		const st0 = game.state;
 		const base =
