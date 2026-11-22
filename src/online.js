@@ -213,12 +213,17 @@ export class Online {
 			const inv = (d.invites || []).map((i) => i.id).join(',');
 			if (inv && inv !== prevInv && !this.inMatch) {
 				this.hooks.invite(d.invites[0]);
+				this.hooks.notice && this.hooks.notice('invite'); // 0.44.1: zvuk pozvánky
 			}
 			if (d.outgoing && d.outgoing.status === 'declined' && this._waitFor === d.outgoing.id) {
 				this._waitFor = 0;
 				this.hooks.toast(_t('{n}: pozvánka odmietnutá.', { n: d.outgoing.to.name }));
+				this.hooks.notice && this.hooks.notice('info');
 			}
 			if (d.match && !this.inMatch) {
+				if (this._waitFor && this.hooks.notice) {
+					this.hooks.notice('info'); // súper prijal moju výzvu
+				}
 				// partia začala (súper prijal pozvánku) alebo pokračovanie po obnovení stránky
 				this.join(d.match);
 			}

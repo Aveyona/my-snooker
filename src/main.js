@@ -75,7 +75,7 @@ function lowSideFor(v, user) {
 
 function loadSettings() {
 	const mobile = /Android|iPhone|iPad|Mobile/i.test(navigator.userAgent);
-	const def = { tableDetail: 'fine', lines: false, quality: mobile ? 'low' : 'high', volume: 0.8, volTable: 1, volRoom: 1, volCrowd: 1, volRudo: 1, rackLed: 'warm', chatMode: 'show', tvOn: true, sound3d: 'hrtf', refLang: 'en', respot: true, contact: true, contactPos: 'topright', camSide: 'hand', afterShot: 'follow', oppCam: 'follow', camera: 'cue', cue: 'club' };
+	const def = { tableDetail: 'fine', notifySnd: true, lines: false, quality: mobile ? 'low' : 'high', volume: 0.8, volTable: 1, volRoom: 1, volCrowd: 1, volRudo: 1, rackLed: 'warm', chatMode: 'show', tvOn: true, sound3d: 'hrtf', refLang: 'en', respot: true, contact: true, contactPos: 'topright', camSide: 'hand', afterShot: 'follow', oppCam: 'follow', camera: 'cue', cue: 'club' };
 	try {
 		const raw = window.localStorage.getItem(STORE);
 		if (raw) {
@@ -1252,6 +1252,20 @@ export function start(root, config = {}) {
 			o.start(t);
 			o.stop(t + 0.13);
 		});
+	};
+	/** Zvuk upozornenia (0.44.1): pozvánka, chat, iné; vypína sa v Nastaveniach (Zvuky upozornení). */
+	let chatSndAt = 0;
+	const notice = (k) => {
+		if (settings.notifySnd === false) {
+			return;
+		}
+		if (k === 'chat') {
+			if (Date.now() - chatSndAt < 4000) {
+				return; // pri rýchlej výmene správ nie pri každej
+			}
+			chatSndAt = Date.now();
+		}
+		sound.notice(k);
 	};
 	const foundBeep = () => {
 		const ctx = sound.ctx;
@@ -4873,6 +4887,7 @@ export function start(root, config = {}) {
 	});
 	// chat v hre (miestnosť Snooker z My Chat): Enter píše, správy vľavo
 	const chat = gameChat(overlay, config.chat ? Object.assign({ nonce: config.nonce }, config.chat) : null, {
+		onNew: () => notice('chat'), // 0.44.1: zvuk novej správy v chate
 		canWrite: () => !!user,
 		myName: () => user && user.name,
 		// chat zápasu: partia, ktorú hrám (aj mimo ligy), sledujem alebo moja otvorená herňa
@@ -5150,6 +5165,7 @@ export function start(root, config = {}) {
 			},
 			invite: (inv) => !ui.menuOpen() && ui.toast(_t('Boli ste vyzvaný! {n} ťa vyzýva {w}.', { n: inv.from.name, w: inv.training ? _t('na spoločný tréning') : inv.league ? _t('na ligovú partiu') : _t('na partiu') }) + (controls.captured ? _t(' Esc alebo Ctrl uvoľní myš.') : ''), inv),
 			toast: (t) => ui.toast(t),
+			notice: (k) => notice(k), // 0.44.1: zvuky upozornení
 			// 0.44.0: žreb pred zápasom; po skončení hlásenie, kto rozbíja
 			pre: (pre, m) => {
 				ui.prematch(pre, { me: m.me, names: m.players.map((p) => p.name), league: !!m.league });
@@ -5472,6 +5488,7 @@ export function start(root, config = {}) {
 						const r = await online.net.call('einvite/accept', { token: tok });
 						if (r.status === 'sent') {
 							ui.toast(_t('Výzva odoslaná hráčovi {n}. Keď ju prijme, partia sa začne.', { n: r.from }));
+							notice('info');
 						} else {
 							ui.toast(_t('{n} teraz nie je v hre. Poslali sme mu e-mail, že si prišiel – kým príde, môžeš trénovať. V zozname hráčov (výzvy) ho potom vyzveš.', { n: r.from }));
 						}

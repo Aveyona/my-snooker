@@ -494,6 +494,28 @@ export class Sound {
 		);
 	}
 
+	/**
+	 * Upozornenie (0.44.1): invite = prišla pozvánka na partiu, chat = nová správa v chate, info = iné (výzva prijatá
+	 * alebo odmietnutá, kamarát z pozvánky prišiel). Nahrávka slotu notify-invite, notify-chat, notify-info, inak
+	 * generovaný tón (pozvánka zvonček ding-dong, chat jemné pípnutie, info krátky signál).
+	 */
+	notice(kind = 'info') {
+		const slot = 'notify-' + kind;
+		if (!this._ok() || this.fx(slot)) {
+			return;
+		}
+		const { out, k } = this._synthOut(slot, null);
+		const seq = kind === 'invite' ? [[784, 0.35, 0.2], [659, 0.5, 0.18]] : kind === 'chat' ? [[1175, 0.12, 0.09], [1568, 0.16, 0.08]] : [[880, 0.18, 0.12]];
+		seq.forEach(([f, d, g], i) =>
+			setTimeout(() => {
+				if (this._ok()) {
+					this._tone(f * k, d, g, 'sine', 0.98, out);
+					this._tone(f * k * 2, d * 0.6, g * 0.25, 'sine', 0.98, out);
+				}
+			}, i * (kind === 'invite' ? 260 : 110))
+		);
+	}
+
 	/** Generovaný zvuk so zohľadnením doladenia slotu (hlasitosť, tón) a priestoru. */
 	_synthOut(slot, pos) {
 		const p = this.par(slot);

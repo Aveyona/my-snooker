@@ -1556,4 +1556,6 @@ export default {
 	'{n} Ruda vypol, v zápase bude mlčať.': '{n} turned Rudo off, he will stay silent in this match.',
 	'Zostáva {n} s, potom sa vyberie náhodne.': '{n} s left, then a random choice is made.',
 	'Zostáva {n} s, potom rozbíjaš ty.': '{n} s left, then you break.',
+	// zvuky upozornení (0.44.1)
+	'Zvuky upozornení (pozvánka, chat, výzva)': 'Notification sounds (invitation, chat, challenge)',
 };

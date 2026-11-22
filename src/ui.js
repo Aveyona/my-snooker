@@ -739,6 +739,7 @@ export class UI {
 					<option value="chair">${_t('Z kresla (F7)')}</option>
 				</select></label>
 			<label class="mysn-check"><input type="checkbox" data-k="respot"> ${_t('Vracať farebné gule na spoty')}</label>
+			<label class="mysn-check"><input type="checkbox" data-k="notifySnd"> ${_t('Zvuky upozornení (pozvánka, chat, výzva)')}</label>
 			<p class="mysn-note">${_t('Zmena kvality sa prejaví po obnovení stránky.')}</p>
 			<div class="mysn-nettest">
 				<button type="button" class="mysn-btn" data-nettest>${_t('Otestovať spojenie')}</button>

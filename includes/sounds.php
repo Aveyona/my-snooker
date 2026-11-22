@@ -70,6 +70,9 @@ function mysn_sound_slots() {
 		'score'          => array( 'Atmosféra', 'Body: +1 až +7', 'Pôvodný zvuk bodov podľa hodnoty gule. Pri potopenej guli teraz hrá skupina Séria (stupeň podľa poradia gule v sérii); tento zvuk ostáva ako záloha.', 'Príjemný krátky zvuk zisku (cink), do 0,5 s; jedna nahrávka stačí, výšku mení hra.' ),
 		'ach'            => array( 'Atmosféra', 'Úspech získaný (cinknutie)', 'Keď hráč získa nový stupeň úspechu (bronz, striebro, zlato, platina) alebo novú úroveň skúseností. Bez nahrávky generované cinknutie.', 'Jasné radostné cinknutie (zvonček, trojzvuk), do 1,5 s.' ),
 		'notify'         => array( 'Atmosféra', 'Upozornenie: zápas nájdený', 'Keď sa nájde ligový zápas. Bez nahrávky generovaný dvojtón.', 'Príjemný krátky signál, do 1 s.' ),
+		'notify-invite'  => array( 'Atmosféra', 'Upozornenie: pozvánka na partiu', 'Keď ťa niekto vyzve na partiu alebo tréning (0.44.1). Bez nahrávky generovaný zvonček ding-dong. Hráč ho môže vypnúť v Nastaveniach (Zvuky upozornení).', 'Zvonček alebo krátka melódia ding-dong, do 1,5 s.' ),
+		'notify-chat'    => array( 'Atmosféra', 'Upozornenie: nová správa v chate', 'Nová správa od iného hráča v chate hry (najviac raz za 4 s). Bez nahrávky generované jemné dvojité pípnutie.', 'Jemné krátke „pop“ alebo pípnutie, do 0,5 s.' ),
+		'notify-info'    => array( 'Atmosféra', 'Upozornenie: iné', 'Súper prijal alebo odmietol výzvu, kamarát z e-mailovej pozvánky prišiel do hry. Bez nahrávky generovaný krátky signál.', 'Krátky nenápadný signál, do 0,7 s.' ),
 		'player-drink'   => array( 'Hráč', 'Napitie sa vody', 'Hráč v partii klávesom N (aj v lige). Hrá z miesta hráča (3D), počujú ho súper aj diváci.', 'Dúšok vody a položenie pohára na stolík.' ),
 		'player-burp'    => array( 'Hráč', 'Grgnutie', 'Hráč v partii klávesom G. Hrá z jeho miesta (3D), počujú ho všetci. V lige je to nešportové: druhý raz v zápase napomenutie rozhodcu, od tretieho súper +4 body (spolu s prdnutím).', 'Grgnutie, krátke.' ),
 		'ball-floor-carpet' => array( 'Stôl', 'Guľa dopadla na koberec', 'Guľa vyletí zo stola v herni a dopadne na koberec (tlmený dopad, slabé odskoky).', 'Dopad snookerovej gule na koberec, 1 až 2 slabé odskoky, krátke dogúľanie.' ),
@@ -103,7 +106,7 @@ function mysn_sound_slots() {
 	$l2 = array();
 	foreach ( $l as $id => $x ) {
 		$l2[ $id ] = $x;
-		if ( 'notify' === $id ) {
+		if ( 'notify-info' === $id ) {
 			$l2 += $sx;
 		}
 	}
@@ -213,6 +216,9 @@ function mysn_sound_spec( $id ) {
 		'jingle-win'     => array( '3 až 8 s', 'priemer okolo −16 LUFS' ),
 		'clock-tick'     => array( 'do 0,2 s', 'špička okolo −12 dBFS' ),
 		'notify'         => array( '0,3 až 1 s', 'priemer okolo −18 LUFS' ),
+		'notify-invite'  => array( '0,5 až 1,5 s', 'priemer okolo −18 LUFS' ),
+		'notify-chat'    => array( '0,1 až 0,5 s', 'priemer okolo −22 LUFS' ),
+		'notify-info'    => array( '0,2 až 0,7 s', 'priemer okolo −20 LUFS' ),
 		'score'          => array( '0,2 až 0,5 s', 'špička okolo −10 dBFS' ),
 	);
 	if ( 0 === strpos( $id, 'streak-' ) ) {
@@ -360,6 +366,9 @@ function mysn_sound_filename( $id ) {
 		'streak-9' => 'streak-level-09',
 		'streak-10' => 'streak-level-10',
 		'notify' => 'notify-match-found',
+		'notify-invite' => 'notify-invite',
+		'notify-chat' => 'notify-chat',
+		'notify-info' => 'notify-info',
 		'player-drink' => 'player-drink-water',
 		'player-burp' => 'player-burp',
 		'player-fart' => 'player-fart',

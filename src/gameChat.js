@@ -88,6 +88,9 @@ export function gameChat(root, cfg, hooks = {}) {
 	});
 	/** Nová správa pri schovanom chate: počet na jazýčku, v režime Len nové správy na chvíľu sa na 8 s ukáže. */
 	const noteNew = (mine) => {
+		if (!mine && hooks.onNew) {
+			hooks.onNew(); // 0.44.1: zvuk novej správy
+		}
 		if (!collapsed || mine || isOpen) {
 			return;
 		}
