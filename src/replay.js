@@ -157,7 +157,22 @@ export class Replay {
 			g.fillStyle = nextSide === k ? '#FACC15' : '#e8eefc';
 			g.textAlign = k ? 'right' : 'left';
 			const nm = (nextSide === k ? '▶ ' : '') + (P[k] ? P[k].name : '');
-			g.fillText(k ? (P[k] ? P[k].name : '') + (nextSide === k ? ' ◀' : '') : nm, k ? w - 20 * u : 20 * u, head / 2);
+			const txt = k ? (P[k] ? P[k].name : '') + (nextSide === k ? ' ◀' : '') : nm;
+			g.fillText(txt, k ? w - 20 * u : 20 * u, head / 2);
+			if (P[k] && P[k].chk) {
+				// 0.42.3: hráč pod kontrolou férovej hry – štítok vedľa mena (ako v rebríčku a histórii)
+				const tw = g.measureText(txt).width;
+				g.save();
+				g.font = `bold ${16 * u}px Arial, sans-serif`;
+				const lw = g.measureText('kontrola').width + 14 * u;
+				const lx = k ? w - 20 * u - tw - 12 * u - lw : 20 * u + tw + 12 * u;
+				g.fillStyle = '#b45309';
+				g.fillRect(lx, head / 2 - 13 * u, lw, 26 * u);
+				g.fillStyle = '#fff';
+				g.textAlign = 'center';
+				g.fillText('kontrola', lx + lw / 2, head / 2 + 1 * u);
+				g.restore();
+			}
 		}
 		g.textAlign = 'center';
 		g.fillStyle = '#fff';

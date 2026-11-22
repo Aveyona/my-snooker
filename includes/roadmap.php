@@ -180,6 +180,7 @@ function mysn_roadmap() {
 /** Denník zmien (najnovšie hore). */
 function mysn_changelog() {
 	return array(
+		array( '0.42.3', '22. 11. 2026', 'Prehrávač partie (notebook v kancelárii a administrácia): pri hráčovi pod kontrolou férovej hry štítok „kontrola“ vedľa mena, ako v rebríčku a histórii zápasov.' ),
 		array( '0.42.2', '22. 11. 2026', 'Štadión: na začiatku ligového zápasu a pri každom ďalšom frame rozhodca príde k čiernemu koncu, zoberie trojuholník zo stola a zavesí ho pod stôl na háčik (aj divákom); kým trojuholník nevisí, rozbiť sa nedá.' ),
 		array( '0.42.1', '22. 11. 2026', 'Administrácia Hráči: nové stĺpce Úroveň (XP) a Úspechy – počet získaných úspechov s farebnými stupňami (platina, zlato, striebro, bronz), po rozkliknutí zoznam úspechov so stupňom, počtom a ďalším prahom; zoraďovanie podľa XP aj úspechov.' ),
 		array( '0.42.0', '22. 11. 2026', 'Pozvánky na partiu e-mailom: vo výzvach (zoznam hráčov) pole Pozvať kamaráta e-mailom (10 denne, platí 7 dní, e-mail v téme snookru). Pozvaný s účtom po kliknutí pošle pozývajúcemu výzvu na partiu; bez účtu zadá meno a hrá ako dočasný hosť (účet sa vytvorí sám, len priateľské partie, nie liga, zmaže sa po 30 dňoch bez hrania). Ak pozývajúci nie je v hre, dostane e-mail, že pozvaný prišiel.' ),
