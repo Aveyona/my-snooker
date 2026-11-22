@@ -869,7 +869,7 @@ export class UI {
 			b.classList.add('mysn-staff-btn');
 			return b;
 		};
-		const common = () => [this.button(_t('Mapa miestností'), 'roomMap', _t('M: herňa, kancelária, štadión')), ...(this.opts.role ? [staffBtn()] : []), this.button(_t('Účet'), 'account', _t('Môj účet v My Snooker: údaje, liga, partie a skóre')), this.button(_t('Nastavenia'), 'settings')];
+		const common = () => [...(user ? [this.button(_t('Mapa miestností'), 'roomMap', _t('M: herňa, kancelária, štadión, ulička'))] : []), ...(this.opts.role ? [staffBtn()] : []), this.button(_t('Účet'), 'account', _t('Môj účet v My Snooker: údaje, liga, partie a skóre')), this.button(_t('Nastavenia'), 'settings')];
 		if (kind === 'watch') {
 			// divák sleduje cudziu partiu
 			this.menuMode.textContent = _t('Sledujem: {name}', { name: label });

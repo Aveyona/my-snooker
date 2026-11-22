@@ -9,6 +9,7 @@ import { buildTable, buildRoom } from './table.js';
 import { buildRoomShell, ROOM } from './room.js';
 import { buildRadioCorner, RadioPlayer, RADIO } from './radio.js';
 import { buildStadium } from './stadium.js';
+import { buildAlley } from './alley.js';
 import { BOARD_COUNT, boardTitle } from './board.js';
 import { buildOffice } from './office.js';
 import { zoomCfg, camLowCfg } from './camZoom.js';
@@ -593,6 +594,7 @@ export function start(root, config = {}) {
 	homeObjs.push(...room.rackObjects()); // tágá stojana v herni na štadióne nevisia vo vzduchu
 	const stadium = buildStadium(scene, settings.quality, config.clock || 45);
 	const office = buildOffice(scene);
+	const alley = buildAlley(scene, settings.quality); // 0.45.0 Ulička
 	office.root.add(new THREE.AmbientLight(0xffe6c8, settings.quality === 'high' ? 0.22 : 0.4)); // herňa je v kancelárii skrytá (aj jej svetlo)
 	/*
 	 * Všetky miestnosti sú v jednej scéne vedľa seba (herňa, kancelária za ňou, štadión). Kreslí sa len tá,
@@ -602,12 +604,14 @@ export function start(root, config = {}) {
 	const sceneCull = () => {
 		const roam = view === 'free' && adminRoam;
 		const lg = venue === 'league';
+		const al = venue === 'alley';
 		const inOffice = view === 'office';
 		// prehliadka admina: herňa a štadión stoja okolo toho istého stola, ukáže sa len tá, kam som išiel (kancelária pri herni)
-		const showHome = !lg && (roam || !inOffice);
+		const showHome = !lg && !al && (roam || !inOffice);
 		const showStadium = lg;
-		const showOffice = inOffice || (roam && !lg);
-		const key = `${showHome}${showStadium}${showOffice}`;
+		const showAlley = al && !inOffice;
+		const showOffice = inOffice || (roam && !lg && !al);
+		const key = `${showHome}${showStadium}${showOffice}${showAlley}`;
 		if (key === sceneShown) {
 			return;
 		}
@@ -616,12 +620,13 @@ export function start(root, config = {}) {
 			o.visible = showHome;
 		}
 		stadium.root.visible = showStadium;
+		alley.root.visible = showAlley;
 		office.root.visible = showOffice;
 		for (const o of roomBase.lampParts) {
-			o.visible = !lg; // na štadióne svietia na stôl tie isté svetlá, ale tienidlá nahrádza svietidlo s obrazovkami
+			o.visible = !lg && !al; // v uličke visia nad stolom plechové tienidlá // na štadióne svietia na stôl tie isté svetlá, ale tienidlá nahrádza svietidlo s obrazovkami
 		}
 		table.group.visible = !inOffice || roam;
-		room.setRackHidden(!showHome || lg); // tágá stojana herne (vybraté tágo sa skryje správne)
+		room.setRackHidden(!showHome || lg || al); // tágá stojana herne (vybraté tágo sa skryje správne)
 	};
 	// online diváci: na štadióne sedia na stoličkách, v herni stoja pri stenách
 	const crowdLg = new Crowd(stadium.root);
@@ -752,11 +757,11 @@ export function start(root, config = {}) {
 	let feltNow = '';
 	const updateFelt = () => {
 		const sp = game.spectating;
-		const want = venue === 'league' ? 'blue' : sp ? (sp.kind === 'solo' ? 'green' : 'red') : (!game.match && !game.solo) || (game.match && game.match.training) ? 'red' : 'green';
+		const want = venue === 'league' ? 'blue' : venue === 'alley' ? 'street' : sp ? (sp.kind === 'solo' ? 'green' : 'red') : (!game.match && !game.solo) || (game.match && game.match.training) ? 'red' : 'green';
 		if (want !== feltNow) {
 			feltNow = want;
 			table.setFelt(want);
-			ui.feltColor = { green: '#1d6b34', red: '#a1303a', blue: '#2a64bc' }[want];
+			ui.feltColor = { green: '#1d6b34', red: '#a1303a', blue: '#2a64bc', street: '#1f6a34' }[want];
 		}
 	};
 	// stojan na štadióne: moje tágá do zápasu, tágo v ruke chýba
@@ -1302,7 +1307,7 @@ export function start(root, config = {}) {
 			const lg = v === 'league';
 			ui.setStadium(lg);
 			sceneShown = null; // viditeľnosť miestností nastaví sceneCull v najbližšom snímku
-			room.setRackHidden(lg);
+			room.setRackHidden(lg || v === 'alley');
 			if (lg) {
 				oppRack = null;
 				if (game.spectating) {
@@ -1316,7 +1321,7 @@ export function start(root, config = {}) {
 				stadium.setBeams(true);
 			}
 			updateFelt();
-			scene.background.setHex(lg ? 0x020306 : 0x0c0f14);
+			scene.background.setHex(lg ? 0x020306 : v === 'alley' ? 0x1a1430 : 0x0c0f14);
 			if (lg && view) {
 				exitView();
 			}
@@ -2700,7 +2705,8 @@ export function start(root, config = {}) {
 			{ id: 'home', name: _t('Herňa'), desc: _t('Tréning, Hrať o najlepšie skóre, partie s priateľmi. Stôl s červeným súknom pri tréningu, zeleným v partii.'), map: [4, 50, 46, 44], here: here === 'home', locked: false, play: _t('Vstúpiť a hrať') },
 			{ id: 'office', name: _t('Kancelária'), desc: _t('Liga: registrácia, tabuľky líg, mapa hráčov, moje tágá, vyhľadanie ligového zápasu.'), map: [4, 4, 46, 20], here: here === 'office', locked: !user, lockNote: _t('Kancelária je pre prihlásených hráčov.'), play: _t('Vstúpiť') },
 			{ id: 'living', name: _t('Obývačka'), desc: _t('Samostatná hra My Rooms: oddych pri krbe, televízor so zápasmi a YouTube, knižnica. Otvorí sa jej stránka, späť dverami obývačky.'), map: [4, 27, 46, 20], here: here === 'living', locked: !user, lockNote: _t('Obývačka je pre prihlásených hráčov.'), play: _t('Vstúpiť'), notour: true },
-			{ id: 'league', name: _t('Štadión'), desc: _t('Ligové zápasy pred divákmi, modré súkno, svetlá na stôl.'), map: [56, 4, 40, 90], here: here === 'league', locked: !admin, lockNote: _t('Štadión sa otvorí, keď nájdeš ligový zápas (Kancelária, Vyhľadať zápas). Hrá sa tu len liga.'), play: admin ? _t('Vstúpiť a trénovať (admin)') : _t('Vstúpiť'), extra: admin ? [{ label: _t('Rozhodca odkladá trojuholník (admin)'), act: 'rackDemo', title: _t('Ukážka: rozhodca zoberie trojuholník zo stola a zavesí ho pod stôl') }, { label: _t('Ukážka konca zápasu (admin)'), act: 'fiestaDemo', title: _t('Tabuľa s víťazom a konfety na kontrolu') }, { label: _t('Ukážka od diváka (admin)'), act: 'spectDemo', title: _t('Sedíš na tribúne ako divák: LCD, malý stôl, konfety') }] : [] },
+			{ id: 'league', name: _t('Štadión'), desc: _t('Ligové zápasy pred divákmi, modré súkno, svetlá na stôl.'), map: [56, 4, 40, 58], here: here === 'league', locked: !admin, lockNote: _t('Štadión sa otvorí, keď nájdeš ligový zápas (Kancelária, Vyhľadať zápas). Hrá sa tu len liga.'), play: admin ? _t('Vstúpiť a trénovať (admin)') : _t('Vstúpiť'), extra: admin ? [{ label: _t('Rozhodca odkladá trojuholník (admin)'), act: 'rackDemo', title: _t('Ukážka: rozhodca zoberie trojuholník zo stola a zavesí ho pod stôl') }, { label: _t('Ukážka konca zápasu (admin)'), act: 'fiestaDemo', title: _t('Tabuľa s víťazom a konfety na kontrolu') }, { label: _t('Ukážka od diváka (admin)'), act: 'spectDemo', title: _t('Sedíš na tribúne ako divák: LCD, malý stôl, konfety') }] : [] },
+			{ id: 'alley', name: _t('Ulička'), desc: _t('Stôl vonku v indickej uličke, večer pod lampami. Súkno popísané fixkou a grafitmi. Voľný tréning, neskôr partie s priateľmi a 21 kôl cez prekážky na čas.'), map: [56, 66, 40, 28], here: here === 'alley', locked: !user, lockNote: _t('Ulička je pre prihlásených hráčov.'), play: _t('Vstúpiť a trénovať'), notour: true },
 		].map((r) => ({ ...r, tour: admin && !r.notour }));
 	};
 
@@ -3537,6 +3543,9 @@ export function start(root, config = {}) {
 			controls.hooks.key('f1');
 		},
 		roomMap: () => {
+			if (!user) {
+				return; // 0.45.0: neprihlásený mapu miestností nevidí
+			}
 			if (ui.roomMapOpen()) {
 				ui.openRoomMap(false);
 				if (!freeMouse) {
@@ -3573,6 +3582,9 @@ export function start(root, config = {}) {
 				return;
 			}
 			if (id === 'office') {
+				if (venue === 'alley') {
+					setVenue('home'); // kancelária je za herňou
+				}
 				actions.league(); // kancelária ligy
 				return;
 			}
@@ -3581,7 +3593,7 @@ export function start(root, config = {}) {
 			}
 			if (venue !== id) {
 				setVenue(id);
-				ui.toast(id === 'league' ? _t('Štadión: tréning pri ligovom stole (admin).') : _t('Herňa.'));
+				ui.toast(id === 'league' ? _t('Štadión: tréning pri ligovom stole (admin).') : id === 'alley' ? _t('Ulička: voľný tréning.') : _t('Herňa.'));
 			}
 			ui.showMenu(false);
 			controls.capture();
@@ -5013,8 +5025,8 @@ export function start(root, config = {}) {
 		}
 		ui.trainingFirst = false;
 		exitView();
-		if (venue === 'league') {
-			setVenue('home'); // o najlepšie skóre sa hrá v herni
+		if (venue !== 'home') {
+			setVenue('home'); // o najlepšie skóre sa hrá v herni (aj z uličky)
 		}
 		ui.showLeaderboard(null);
 		topView = false;
@@ -6438,7 +6450,7 @@ export function start(root, config = {}) {
 		controls.update(dt);
 		integrity.frame(game.dir, game.state === 'aim' && !game.spectating);
 		sound.setListener(rig.camera); // poslucháč = kamera (3D zvuk)
-		sound.setRoom(view === 'office' ? 'office' : venue === 'league' ? 'stadium' : 'herna');
+		sound.setRoom(view === 'office' ? 'office' : venue === 'league' ? 'stadium' : venue === 'alley' ? 'alley' : 'herna');
 		// napätie: na štadióne pri rozhodujúcom údere (na stole už len čierna), kým sa mieri
 		const decider = venue === 'league' && game.match && game.match.rules && !game.match.rules.over && game.match.rules.on === 'black' && (game.state === 'aim' || game.state === 'watch');
 		if (decider !== tensionOn) {
@@ -6527,6 +6539,7 @@ export function start(root, config = {}) {
 			stadium.update(dt, game.cue, refDir, game.state === 'moving', refTr && refTr.ball ? refTr.ball : null, refPlace);
 			crowdLg.update(dt, game.cue);
 		} else {
+			alley.update(dt);
 			crowdHome.update(dt, game.cue);
 		}
 		const aiming = game.state === 'aim' && !view;

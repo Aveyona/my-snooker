@@ -110,8 +110,139 @@ function netTexture() {
 	return tex;
 }
 
+/**
+ * Ulička (0.45.0): súkno počmárané fixkou a sprejom – mená, srdiečka, piškvorky, šípky, čísla, čmáranice a
+ * vyblednuté grafity v rohoch. Kreslí sa priesvitne, čiary baulk a D ostávajú vidieť.
+ */
+function scribbles(g, w, h, sx) {
+	let s = 7919;
+	const r = () => {
+		s = (s * 16807) % 2147483647;
+		return (s - 1) / 2147483646;
+	};
+	const ink = ['rgba(10,10,10,0.55)', 'rgba(20,40,160,0.55)', 'rgba(170,20,30,0.5)', 'rgba(240,240,240,0.45)'];
+	const pk = (a) => a[Math.floor(r() * a.length)];
+	const fs = h * 0.045;
+	// vyblednuté sprejové grafity v rohoch
+	for (const [x, y, t, c] of [
+		[w * 0.08, h * 0.2, 'GALI', 'rgba(255,61,127,0.28)'],
+		[w * 0.9, h * 0.82, '147', 'rgba(255,212,0,0.3)'],
+		[w * 0.86, h * 0.17, 'BOMBAY', 'rgba(46,197,255,0.25)'],
+		[w * 0.14, h * 0.85, 'RAJU', 'rgba(57,211,83,0.28)'],
+	]) {
+		g.save();
+		g.translate(x, y);
+		g.rotate((r() - 0.5) * 0.5);
+		g.font = `900 ${h * 0.12}px "Arial Black", Impact, sans-serif`;
+		g.textAlign = 'center';
+		g.textBaseline = 'middle';
+		g.lineWidth = h * 0.012;
+		g.strokeStyle = 'rgba(0,0,0,0.22)';
+		g.strokeText(t, 0, 0);
+		g.fillStyle = c;
+		g.fillText(t, 0, 0);
+		g.restore();
+	}
+	// nápisy fixkou
+	const words = ['RAJ ♥ PRIYA', 'Vikram was here', 'भाई', '147!!', 'नमस्ते', 'Amit 2019', 'no money no game', 'चाय 10₹', 'King Kohli', 'FOUL!!', 'SNOOKER 4 LIFE', 'Sunny ☺', '98•••21'];
+	for (const t of words) {
+		g.save();
+		g.translate(w * (0.05 + r() * 0.9), h * (0.08 + r() * 0.84));
+		g.rotate((r() - 0.5) * 1.2);
+		g.font = `${r() < 0.5 ? 'italic ' : ''}${Math.round(fs * (0.7 + r() * 0.6))}px "Comic Sans MS", "Segoe Print", cursive, "Noto Sans Devanagari", sans-serif`;
+		g.fillStyle = pk(ink);
+		g.fillText(t, 0, 0);
+		g.restore();
+	}
+	g.lineCap = 'round';
+	g.lineJoin = 'round';
+	// srdiečka, hviezdy, šípky, smajlíky
+	for (let i = 0; i < 14; i++) {
+		const x = w * (0.04 + r() * 0.92);
+		const y = h * (0.06 + r() * 0.88);
+		const z = fs * (0.5 + r() * 0.7);
+		g.strokeStyle = pk(ink);
+		g.lineWidth = Math.max(2, sx * 0.004);
+		g.beginPath();
+		const k = i % 4;
+		if (k === 0) {
+			g.moveTo(x, y + z * 0.4);
+			g.bezierCurveTo(x - z, y - z * 0.3, x - z * 0.3, y - z, x, y - z * 0.35);
+			g.bezierCurveTo(x + z * 0.3, y - z, x + z, y - z * 0.3, x, y + z * 0.4);
+		} else if (k === 1) {
+			for (let a = 0; a <= 10; a++) {
+				const rr = a % 2 ? z * 0.4 : z;
+				const an = (a / 10) * Math.PI * 2 - Math.PI / 2;
+				g[a ? 'lineTo' : 'moveTo'](x + Math.cos(an) * rr, y + Math.sin(an) * rr);
+			}
+		} else if (k === 2) {
+			g.moveTo(x - z, y);
+			g.quadraticCurveTo(x, y - z * 0.6, x + z, y);
+			g.moveTo(x + z * 0.6, y - z * 0.3);
+			g.lineTo(x + z, y);
+			g.lineTo(x + z * 0.6, y + z * 0.25);
+		} else {
+			g.arc(x, y, z * 0.6, 0, Math.PI * 2);
+			g.moveTo(x - z * 0.3, y + z * 0.15);
+			g.quadraticCurveTo(x, y + z * 0.45, x + z * 0.3, y + z * 0.15);
+		}
+		g.stroke();
+	}
+	// piškvorky a čmáranice
+	for (let i = 0; i < 3; i++) {
+		const x = w * (0.1 + r() * 0.8);
+		const y = h * (0.15 + r() * 0.7);
+		const z = fs * 0.9;
+		g.strokeStyle = pk(ink);
+		g.lineWidth = Math.max(2, sx * 0.003);
+		g.beginPath();
+		for (const d of [1, 2]) {
+			g.moveTo(x + (d * z) / 1, y);
+			g.lineTo(x + (d * z) / 1, y + 3 * z);
+			g.moveTo(x, y + d * z);
+			g.lineTo(x + 3 * z, y + d * z);
+		}
+		g.stroke();
+		for (let c = 0; c < 4; c++) {
+			const cx = x + (Math.floor(r() * 3) + 0.5) * z;
+			const cy = y + (Math.floor(r() * 3) + 0.5) * z;
+			g.beginPath();
+			if (c % 2) {
+				g.arc(cx, cy, z * 0.3, 0, Math.PI * 2);
+			} else {
+				g.moveTo(cx - z * 0.3, cy - z * 0.3);
+				g.lineTo(cx + z * 0.3, cy + z * 0.3);
+				g.moveTo(cx + z * 0.3, cy - z * 0.3);
+				g.lineTo(cx - z * 0.3, cy + z * 0.3);
+			}
+			g.stroke();
+		}
+	}
+	for (let i = 0; i < 8; i++) {
+		g.strokeStyle = pk(ink);
+		g.lineWidth = Math.max(1.5, sx * 0.0025);
+		g.beginPath();
+		let x = w * r();
+		let y = h * r();
+		g.moveTo(x, y);
+		for (let k = 0; k < 12; k++) {
+			x += (r() - 0.5) * fs * 1.6;
+			y += (r() - 0.5) * fs * 1.6;
+			g.lineTo(x, y);
+		}
+		g.stroke();
+	}
+	// fľaky od čaju
+	for (let i = 0; i < 5; i++) {
+		g.fillStyle = 'rgba(90,60,20,0.18)';
+		g.beginPath();
+		g.ellipse(w * r(), h * r(), fs * (0.6 + r()), fs * (0.5 + r() * 0.8), r() * 3, 0, Math.PI * 2);
+		g.fill();
+	}
+}
+
 /** Textúra súkna: zelená s jemnou štruktúrou, čiara baulk, D a spoty. detail = smer vlasu a tenšie čiary. */
-function clothTexture(maxAniso, base = '#1d6b34', detail = false) {
+function clothTexture(maxAniso, base = '#1d6b34', detail = false, scribble = false) {
 	const w = 2048;
 	const h = Math.round((w * (W + 2 * RAIL)) / (L + 2 * RAIL));
 	const c = document.createElement('canvas');
@@ -172,6 +303,9 @@ function clothTexture(maxAniso, base = '#1d6b34', detail = false) {
 		g.arc(X(SPOTS[k].x), Z(SPOTS[k].z), sx * (detail ? 0.0035 : 0.005), 0, Math.PI * 2);
 		g.fill();
 	}
+	if (scribble) {
+		scribbles(g, w, h, sx);
+	}
 	const tex = new THREE.CanvasTexture(c);
 	tex.colorSpace = THREE.SRGBColorSpace;
 	tex.anisotropy = maxAniso;
@@ -190,7 +324,7 @@ export const POCKET_STYLES = {
 	// mantinely končia väčším oblúkom (čeľuste), tmavý tenký lem; sieťka a padanie gúľ ako doteraz
 	tour: { cutCorner: 0.054, cutMid: 0.052, rimR: 0.0045, rim: 0x151515, rimRough: 0.5, rimMetal: 0.1, liner: 0x141414, round: 0.03, holeIn: 0.003, slot: true },
 };
-const FELT_POCKETS = { blue: 'tour', green: 'tour', red: 'tour' };
+const FELT_POCKETS = { blue: 'tour', green: 'tour', red: 'tour', street: 'tour' };
 
 /** Maska súkna: biela = súkno, čierna = otvor jamky (cez otvor vidieť do košíka). */
 function pocketHoles(cc = 0.071, cm = 0.065, inset = 0.008, slots = null) {
@@ -1175,6 +1309,7 @@ export function buildTable(renderer) {
 		green: { cloth: null, fine: null, rail: 0x17602f, base: '#1d6b34', sheen: 0x4fae6a },
 		red: { cloth: null, fine: null, rail: 0x5a1016, base: '#6a121a', sheen: 0xb8424c },
 		blue: { cloth: null, fine: null, rail: 0x1b4a96, base: '#1f56b0', sheen: 0x5f93e6 },
+		street: { cloth: null, fine: null, rail: 0x17602f, base: '#1f6a34', sheen: 0x4fae6a, scribble: true }, // 0.45.0 ulička
 	};
 	felts.green.cloth = clothSimple.map;
 	const woodMeshes = [];
@@ -1193,7 +1328,7 @@ export function buildTable(renderer) {
 		const f = felts[felt] || felts.green;
 		if (detail) {
 			if (!f.fine) {
-				f.fine = clothTexture(aniso, f.base, true);
+				f.fine = clothTexture(aniso, f.base, true, !!f.scribble);
 			}
 			clothDetail.map = f.fine;
 			clothDetail.sheenColor.setHex(f.sheen);
@@ -1202,7 +1337,7 @@ export function buildTable(renderer) {
 			railDetail.sheenColor.setHex(f.sheen);
 		} else {
 			if (!f.cloth) {
-				f.cloth = clothTexture(aniso, f.base);
+				f.cloth = clothTexture(aniso, f.base, false, !!f.scribble);
 			}
 			clothSimple.map = f.cloth;
 			clothSimple.needsUpdate = true;

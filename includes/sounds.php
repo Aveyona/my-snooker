@@ -36,6 +36,7 @@ function mysn_sound_slots() {
 		'amb-herna'      => array( 'Miestnosti', 'Ambient: herňa (slučka)', 'Hrá stále v herni, pri presune do inej miestnosti sa prelína. Stereo, nie je v 3D.', 'Tiché pozadie miestnosti: vzdialené mesto, vetranie, 30 až 90 s, plynulo opakovateľné, stereo.' ),
 		'amb-office'     => array( 'Miestnosti', 'Ambient: kancelária (slučka)', 'Hrá v kancelárii ligy.', 'Tiché pozadie, tikanie hodín, 30 až 90 s, stereo.' ),
 		'amb-stadium'    => array( 'Miestnosti', 'Ambient: štadión (slučka)', 'Hrá na štadióne.', 'Šum veľkej haly s usadeným publikom, šepot, 60 až 90 s, stereo.' ),
+		'amb-alley'      => array( 'Miestnosti', 'Ambient: ulička (slučka)', 'Hrá v Uličke (India, večer).', 'Večerná indická ulička: vzdialené trúbenie rikší a skútrov, hlasy, zvonček predavača čaju, psy, 60 až 90 s, stereo.' ),
 		'door-creak'     => array( 'Miestnosti', 'Dvere: vŕzganie', 'Hrá pri otváraní dverí.', 'Vŕzganie pántov, 1 s.' ),
 		'door-shut'      => array( 'Miestnosti', 'Dvere: zatvorenie', 'Hrá pri zatvorení dverí.', 'Buchnutie dverí a cvaknutie zámku.' ),
 		'beep'           => array( 'Miestnosti', 'Pípnutie pred ťahom', 'Pípnutie v kresle, keď prídeš na rad (pripravujeme).', 'Krátky príjemný signál, do 0,3 s.' ),
@@ -142,7 +143,7 @@ function mysn_sound_bundled( $slot ) {
 	if ( 'roll' === $slot ) {
 		return array(); // gúľanie: generovaný šum súkna, kým nie je vlastná slučka (voľná nahrávka končila pádom do jamky)
 	}
-	if ( in_array( $slot, array( 'amb-herna', 'amb-office', 'amb-stadium' ), true ) ) {
+	if ( in_array( $slot, array( 'amb-herna', 'amb-office', 'amb-stadium', 'amb-alley' ), true ) ) {
 		return array(); // ambienty miestností (herňa, kancelária, štadión): voľné nahrávky hučali a šumeli, predvolene je ticho, kým admin nevyberie vlastnú slučku
 	}
 	$alias = array( 'applause-small' => 'applause-big', 'ovation' => 'applause-big' );
@@ -186,6 +187,7 @@ function mysn_sound_spec( $id ) {
 		'amb-herna'      => array( '60 až 90 s (slučka, koniec plynulo nadväzuje na začiatok)', 'priemer okolo −34 LUFS (len tiché pozadie)' ),
 		'amb-office'     => array( '60 až 90 s (slučka)', 'priemer okolo −36 LUFS' ),
 		'amb-stadium'    => array( '60 až 120 s (slučka)', 'priemer okolo −28 LUFS' ),
+		'amb-alley'      => array( '60 až 90 s (slučka)', 'priemer okolo −30 LUFS' ),
 		'door-creak'     => array( '0,8 až 1,5 s', 'priemer okolo −20 LUFS' ),
 		'door-shut'      => array( '0,5 až 1,2 s', 'špička okolo −6 dBFS' ),
 		'beep'           => array( '0,1 až 0,3 s', 'priemer okolo −20 LUFS' ),
