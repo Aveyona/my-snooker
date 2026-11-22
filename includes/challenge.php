@@ -4,7 +4,8 @@
  *
  * Pri podozrení (signál z kontroly úderu) alebo pri náhodnej kontrole (v každej partii aspoň raz, 0.40.2) uloží server výzvu: náhodné
  * číslo a výber funkcií hry. Výzva odíde v bežnej odpovedi na požiadavku partie (kľúč zx), hra ju vypočíta
- * z odtlačkov svojich funkcií (src/fp.js) a odpoveď priloží k ďalšej požiadavke (hlavička X-Mysn-C).
+ * z odtlačkov svojich funkcií (src/fp.js) a odpoveď priloží k ďalšej požiadavke (hlavička). Kľúč, hlavička a tvar
+ * odpovede sa menia s každou verziou (tools/rotate.mjs → src/rot.js, includes/rot.php).
  * Zlá odpoveď = podvod hneď (prepísaná hra). Bez odpovede: 1. raz nová výzva, 2. raz podvod.
  * Hra inej verzie (bez známych odtlačkov) sa nevyzýva.
  */
@@ -14,6 +15,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 require_once MYSN_DIR . 'includes/fingerprints.php';
+require_once MYSN_DIR . 'includes/rot.php';
 
 /** FNV-1a 32 bit (rovnaký ako fnv() v src/fp.js pre ASCII text). */
 function mysn_fnv( $s ) {
@@ -55,7 +57,7 @@ function mysn_ch_issue( $uid, $mid, $why, $miss = 0, $solo = '' ) {
 	shuffle( $keys );
 	$c = array(
 		'n'    => wp_generate_password( 20, false ),
-		's'    => array_slice( $keys, 0, 5 ),
+		's'    => array_slice( $keys, 0, (int) mysn_rot()['ns'] ),
 		'mid'  => (int) $mid,
 		'why'  => $why,
 		'd'    => 0, // kedy odišla hre
@@ -108,16 +110,22 @@ add_filter(
 			delete_transient( 'mysn_ch_' . (int) $uid ); // hra sa medzitým zmenila (iná verzia) – výzva neplatí
 			return $resp;
 		}
-		$h = isset( $_SERVER['HTTP_X_MYSN_C'] ) ? sanitize_text_field( wp_unslash( $_SERVER['HTTP_X_MYSN_C'] ) ) : '';
+		$rot = mysn_rot();
+		$hk  = 'HTTP_' . strtoupper( str_replace( '-', '_', $rot['h'] ) );
+		$h   = isset( $_SERVER[ $hk ] ) ? sanitize_text_field( wp_unslash( $_SERVER[ $hk ] ) ) : '';
 		if ( '' !== $h ) {
 			list( $n, $a ) = array_pad( explode( ':', $h, 2 ), 2, '' );
 			if ( $n === $c['n'] ) {
-				$parts = array( $c['n'] );
+				$fp = array();
 				foreach ( $c['s'] as $k ) {
-					$parts[] = $fps[ $k ] ?? '-';
+					$fp[] = $fps[ $k ] ?? '-';
 				}
+				if ( $rot['rv'] ) {
+					$fp = array_reverse( $fp );
+				}
+				$parts   = $rot['nf'] ? array_merge( $fp, array( $c['n'] ) ) : array_merge( array( $c['n'] ), $fp );
 				$parts[] = '1';
-				if ( hash_equals( mysn_fnv( implode( '|', $parts ) ), $a ) ) {
+				if ( hash_equals( mysn_fnv( implode( $rot['j'], $parts ) ), $a ) ) {
 					delete_transient( 'mysn_ch_' . (int) $uid );
 					mysn_ch_hist( $uid, 'ok', $c );
 					if ( false !== strpos( (string) $c['why'], 'náhodná' ) && function_exists( 'mysn_susp_dec' ) ) {
@@ -164,7 +172,7 @@ add_filter(
 		if ( ! $c || $c['d'] || ! is_array( $d ) || ( $d && array_keys( $d ) === range( 0, count( $d ) - 1 ) ) ) {
 			return $res;
 		}
-		$d['zx'] = array( 'n' => $c['n'], 's' => $c['s'] );
+		$d[ mysn_rot()['k'] ] = array( 'n' => $c['n'], 's' => $c['s'] ); // kľúč sa mení s verziou
 		$res->set_data( $d );
 		$c['d'] = time();
 		set_transient( 'mysn_ch_' . (int) $uid, $c, 15 * MINUTE_IN_SECONDS );

@@ -7,6 +7,7 @@
 import { Rtc, setIce, rtcSelfTest } from './rtc.js';
 import { snapshot } from './physics.js';
 import { fpAnswer } from './fp.js';
+import { ROT } from './rot.js';
 
 let zxAns = ''; // odpoveď na výzvu servera pre najbližšiu požiadavku
 
@@ -26,7 +27,7 @@ export class Net {
 	headers() {
 		const h = { 'Content-Type': 'application/json', 'X-WP-Nonce': this.nonce, 'X-Mysn-V': this.ver };
 		if (zxAns) {
-			h['X-Mysn-C'] = zxAns;
+			h[ROT.h] = zxAns; // hlavička aj kľúč výzvy sa menia s verziou (rotácia kontrol)
 			zxAns = '';
 		}
 		return h;
@@ -50,10 +51,11 @@ export class Net {
 		}
 		this.down = false;
 		const j = await r.json().catch(() => null);
-		if (j && j.zx && typeof j.zx === 'object') {
+		const zx = j && j[ROT.k];
+		if (zx && typeof zx === 'object' && zx.n) {
 			// výzva zo servera (0.40.1): odpoveď ide s ďalšou požiadavkou
-			zxAns = j.zx.n + ':' + fpAnswer(j.zx.n, j.zx.s);
-			delete j.zx;
+			zxAns = zx.n + ':' + fpAnswer(zx.n, zx.s);
+			delete j[ROT.k];
 		}
 		if (!r.ok) {
 			const err = new Error((j && j.message) || 'Chyba servera ' + r.status);

@@ -2792,7 +2792,7 @@ export class UI {
 						.map((m) => {
 							const [t, ok] = lab[m.result] || [m.result, 0];
 							const dt = m.date ? new Date(m.date * 1000).toLocaleDateString('sk-SK', { day: 'numeric', month: 'numeric', year: 'numeric' }) : '';
-							return `<div class="mysn-ph-card mysn-ph-game"><div class="mysn-ph-g1"><b>${esc((m.opp && m.opp.name) || 'Súper')}</b><span class="${ok ? 'mysn-ph-ok' : 'mysn-ph-err'}">${esc(t)}</span></div><div class="mysn-ph-g2"><span>${esc(dt)}</span><b>${m.my} : ${m.their}</b><span>${m.delta ? (m.delta > 0 ? '+' : '') + m.delta + ' b.' : ''}${m.edel ? ` · ELO ${m.edel > 0 ? '+' : ''}${m.edel}` : ''}</span></div></div>`;
+							return `<div class="mysn-ph-card mysn-ph-game"><div class="mysn-ph-g1"><b>${esc((m.opp && m.opp.name) || 'Súper')}${m.opp && m.opp.chk ? ' <span class="mysn-lb-nv" title="Hráč je pod kontrolou férovej hry">kontrola</span>' : ''}</b><span class="${ok ? 'mysn-ph-ok' : 'mysn-ph-err'}">${esc(t)}</span></div><div class="mysn-ph-g2"><span>${esc(dt)}</span><b>${m.my} : ${m.their}</b><span>${m.delta ? (m.delta > 0 ? '+' : '') + m.delta + ' b.' : ''}${m.edel ? ` · ELO ${m.edel > 0 ? '+' : ''}${m.edel}` : ''}</span></div></div>`;
 						})
 						.join('') + '<p class="mysn-ph-hint">Všetky zápasy a záznamy úderov: kancelária, F7 Moje zápasy.</p>'
 				: '<p class="mysn-ph-empty">Zatiaľ žiadny ligový zápas.</p>';

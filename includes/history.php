@@ -17,6 +17,7 @@ function mysn_hist_who( $uid ) {
 		'id'      => (int) $uid,
 		'name'    => $u['name'],
 		'country' => $p && ! empty( $p['country'] ) ? (string) $p['country'] : '',
+		'chk'     => function_exists( 'mysn_susp_score' ) && mysn_susp_score( $uid ) >= MYSN_SUSP_SNAP, // 0.41.2: pod kontrolou férovej hry
 	);
 }
 

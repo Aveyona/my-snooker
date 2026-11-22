@@ -5,6 +5,8 @@
  * funkcia alebo vyhodené kontroly dajú zlú odpoveď alebo žiadnu. Očakávané odtlačky vypočíta build
  * (tools/fingerprints.mjs) z hotového assets/snooker.js a zapíše ich do includes/fingerprints.php.
  */
+import { ROT } from './rot.js';
+
 const FTS = Function.prototype.toString;
 const NATIVE = (() => {
 	try {
@@ -54,10 +56,12 @@ export function fpAnswer(nonce, sel) {
 	} catch (e) {
 		native = 0;
 	}
-	const parts = [String(nonce)];
-	for (const k of Array.isArray(sel) ? sel : []) {
-		parts.push(funcs[k] ? fnv(FTS.call(funcs[k])) : '-');
+	// poradie a spájanie častí sa mení s verziou (src/rot.js z tools/rotate.mjs)
+	let fp = (Array.isArray(sel) ? sel : []).map((k) => (funcs[k] ? fnv(FTS.call(funcs[k])) : '-'));
+	if (ROT.rv) {
+		fp = fp.reverse();
 	}
+	const parts = ROT.nf ? [...fp, String(nonce)] : [String(nonce), ...fp];
 	parts.push(String(native));
-	return fnv(parts.join('|'));
+	return fnv(parts.join(ROT.j));
 }
