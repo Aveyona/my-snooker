@@ -153,6 +153,8 @@ export class Online {
 					this.rtc.pull();
 				} else if (d && d.t === 'inv') {
 					this.ping();
+				} else if (d && d.t === 'match' && this.matchId) {
+					this.poll(); // 0.44.0: súper niečo zmenil (žreb pred zápasom)
 				}
 			}
 		};
@@ -682,7 +684,7 @@ export class Online {
 		const r = m.rules || {};
 		const scr = { tier: m.tier || 0, clock: m.clock || 0, names: m.players.map((p) => p.name), elos: m.players.map((p) => Number(p.elo) || 0), scores: sc, turn: r.over ? -1 : r.turn, brk: r.brk || 0, on: g.onText ? g.onText() : '', left: m.league && m.turnAt ? Math.max(0, (m.clock || 45) - (Date.now() - m.turnAt) / 1000) : null };
 		// call = hlásenie rozhodcu a Ruda k poslednému úderu (divák ho prehrá raz, keď dostane nový stav)
-		return { k: 'w-state', seq: m.seq, ver: 0, balls: snapshot(g.balls), place: g.state === 'place' ? 1 : 0, info: `${m.players[0].name} ${sc[0]} : ${sc[1]} ${m.players[1].name}`, scr, call: m.call && m.call.seq === m.seq ? m.call : null };
+		return { k: 'w-state', seq: m.seq, ver: 0, balls: snapshot(g.balls), place: g.state === 'place' ? 1 : 0, info: `${m.players[0].name} ${sc[0]} : ${sc[1]} ${m.players[1].name}`, scr, call: m.call && m.call.seq === m.seq ? m.call : null, rudo: m.rudo !== false };
 	}
 
 	/** Vyhľadávanie ligového zápasu: beží aj mimo kancelárie (tréning, hra o skóre), kým ho hráč nezruší. */
@@ -824,6 +826,8 @@ export class Online {
 			this.hooks.started(m);
 			this.recover(m);
 			this.matchPeer();
+			this._preKey = undefined;
+			this.applyInfo(m); // 0.44.0: žreb pred zápasom a Rudo
 		} catch (e) {
 			this.hooks.toast(e.message);
 		} finally {
@@ -1069,6 +1073,23 @@ export class Online {
 		}
 	}
 
+	/** Žreb pred zápasom (0.44.0): d = { rps } alebo { pick } alebo { rudo }. */
+	async prematch(d) {
+		if (!this.matchId) {
+			return;
+		}
+		try {
+			const r = await this.net.call('prematch', { id: this.matchId, ...d });
+			if (r && r.match) {
+				this.applyInfo(r.match);
+			}
+		} catch (e) {
+			if (this.hooks.toast) {
+				this.hooks.toast(e.message);
+			}
+		}
+	}
+
 	/** Jedno načítanie uloženej partie zo servera (po obnovení spojenia alebo keď server partiu ukončil). */
 	async poll() {
 		this._polling = true;
@@ -1136,6 +1157,20 @@ export class Online {
 		}
 		g.match.players = m.players;
 		g.match.status = m.status;
+		// 0.44.0: žreb pred zápasom a Rudo pre celý zápas
+		const preKey = JSON.stringify(m.pre || null);
+		g.match.pre = m.pre || null;
+		g.match.rudo = m.rudo !== false;
+		if (preKey !== this._preKey) {
+			this._preKey = preKey;
+			if (this.hooks.pre) {
+				this.hooks.pre(m.pre || null, m);
+			}
+		}
+		clearTimeout(this._preT);
+		if (m.pre && !m.pre.done && m.status === 'active') {
+			this._preT = setTimeout(() => this.matchId === m.id && this.poll(), 1500); // kým beží žreb, stav sa obnovuje
+		}
 		this.syncTurn(m);
 		if (m.status === 'finished' && !(m.seq > g.match.seq)) {
 			const won = m.winner === m.players[m.me].id;

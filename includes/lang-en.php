@@ -93,4 +93,5 @@ return array(
 	'Príliš veľa úderov.' => 'Too many shots.',
 	'Počet úderov nesedí so zápisom.' => 'The number of shots does not match the record.',
 	'Body mimo hraníc.' => 'Points out of range.',
+	'Najprv sa dokončí žreb, kto rozbíja.' => 'Finish the draw for the break first.',
 );

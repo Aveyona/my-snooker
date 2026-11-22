@@ -237,6 +237,8 @@ function mysn_match_out( $m, $uid ) {
 		'scores'  => array( (int) $m['score1'], (int) $m['score2'] ),
 		'winner'  => (int) $m['winner'],
 		'result'  => $m['result'],
+		'pre'     => function_exists( 'mysn_pre_out' ) ? mysn_pre_out( $m, $me ) : null, // 0.44.0: žreb pred zápasom
+		'rudo'    => function_exists( 'mysn_pre_rudo' ) ? mysn_pre_rudo( $m ) : true, // Rudo v zápase (chcú ho obaja)
 		'research' => function_exists( 'mysn_ac_research' ) && mysn_ac_research( $m['id'] ) ? 1 : 0, // admin testuje pomocníka (AI): upozornenie pre súpera a divákov
 		'updated' => (int) $m['updated'],
 		'league'  => (int) ( $m['league'] ?? 0 ),
@@ -421,11 +423,15 @@ function mysn_match_begin( $m ) {
 			'winner' => null,
 		),
 		'inHand' => true,
-		'msg'    => ( 'training' === $m['kind'] ? 'Spoločný tréning začína, rozbíja ' : ( mysn_kind_frames( $m['kind'] ) > 1 ? 'Partia na ' . mysn_kind_frames( $m['kind'] ) . ( 3 === mysn_kind_frames( $m['kind'] ) ? ' framy' : ' framov' ) . ' začína, 1. frame rozbíja ' : 'Partia začína, rozbíja ' ) ) . mysn_user( $m['p1'] )['name'] . '.',
+		// 0.44.0: pri partii sa najprv žrebuje (kameň, papier, nožnice), správu o rozbíjaní zloží hra v jazyku hráča
+		'msg'    => 'training' !== $m['kind'] ? '' : ( 'training' === $m['kind'] ? 'Spoločný tréning začína, rozbíja ' : ( mysn_kind_frames( $m['kind'] ) > 1 ? 'Partia na ' . mysn_kind_frames( $m['kind'] ) . ( 3 === mysn_kind_frames( $m['kind'] ) ? ' framy' : ' framov' ) . ' začína, 1. frame rozbíja ' : 'Partia začína, rozbíja ' ) ) . mysn_user( $m['p1'] )['name'] . '.',
 	);
 	$frames = mysn_kind_frames( $m['kind'] );
 	if ( $frames > 1 ) {
 		$state['frames'] = array( 'of' => $frames, 'won' => array( 0, 0 ), 'n' => 1 ); // zápas na viac framov, ďalší frame rozbíja striedavo
+	}
+	if ( function_exists( 'mysn_pre_start' ) ) {
+		mysn_pre_start( $m );
 	}
 	mysn_update_match(
 		$m['id'],
@@ -470,6 +476,10 @@ function mysn_rest_match( $req ) {
 			$m['status'] = 'paused';
 		}
 	}
+	if ( function_exists( 'mysn_pre_tick' ) && 'active' === $m['status'] ) {
+		mysn_pre_tick( $m ); // časové limity žrebu
+		$m = mysn_get_match( $m['id'] );
+	}
 	return mysn_match_out( $m, get_current_user_id() );
 }
 
@@ -481,6 +491,9 @@ function mysn_rest_shot( $req ) {
 	list( $m, $me ) = $r;
 	if ( 'active' !== $m['status'] ) {
 		return mysn_err( 'Partia nie je rozohraná.' );
+	}
+	if ( function_exists( 'mysn_pre_active' ) && mysn_pre_active( $m ) ) {
+		return mysn_err( 'Najprv sa dokončí žreb, kto rozbíja.', 409 );
 	}
 	if ( (int) $m['turn'] !== $me ) {
 		return mysn_err( 'Nie si na rade.' );
@@ -940,7 +953,7 @@ function mysn_rest_timeout( $req ) {
 	if ( (int) $m['seq'] >= $seq ) {
 		return array( 'ok' => true, 'match' => mysn_match_out( $m, get_current_user_id() ) ); // už zapísané
 	}
-	if ( 'active' !== $m['status'] || empty( $m['league'] ) || (int) $m['seq'] + 1 !== $seq || $m['shot'] ) {
+	if ( 'active' !== $m['status'] || empty( $m['league'] ) || (int) $m['seq'] + 1 !== $seq || $m['shot'] || ( function_exists( 'mysn_pre_active' ) && mysn_pre_active( $m ) ) ) {
 		return mysn_err( 'Faul za čas sa nedá zapísať.', 409 );
 	}
 	$off  = (int) $m['turn']; // kto nestihol

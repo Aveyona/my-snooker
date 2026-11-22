@@ -187,7 +187,7 @@ export class Game extends Training {
 	}
 
 	canShoot() {
-		return !this.spectating && super.canShoot() && (!this.match || (this.myTurn && !this.remote && this.match.status === 'active'));
+		return !this.spectating && super.canShoot() && (!this.match || (this.myTurn && !this.remote && this.match.status === 'active' && !(this.match.pre && !this.match.pre.done))); // 0.44.0: počas žrebu sa nestrieľa
 	}
 
 	/** Spustí partiu zo stavu zo servera (nová partia aj pokračovanie po výpadku). */
@@ -238,7 +238,7 @@ export class Game extends Training {
 		m.turn = m.rules.turn;
 		m.inHand = !!st.inHand;
 		m.best = Array.isArray(st.best) ? [...st.best] : [0, 0];
-		m.frames = st.frames && st.frames.of > 1 ? { of: st.frames.of | 0, won: [st.frames.won[0] | 0, st.frames.won[1] | 0], n: st.frames.n | 0 || 1 } : null; // zápas na viac framov
+		m.frames = st.frames && st.frames.of > 1 ? { of: st.frames.of | 0, won: [st.frames.won[0] | 0, st.frames.won[1] | 0], n: st.frames.n | 0 || 1, first: st.frames.first | 0 } : null; // zápas na viac framov (first = kto rozbíjal 1. frame, 0.44.0 žreb)
 		m.last = st.last || null; // posledný úder (pre divákov na štadióne)
 		m.prev = st.prev || null; // stav pred faulom (na vrátenie gúľ, keď súper pošle faulujúceho hrať znova)
 		this.remote = false;
@@ -516,7 +516,8 @@ export class Game extends Training {
 			return null;
 		}
 		const n = f.n + 1;
-		const nr = newFrame(n % 2 === 1 ? 0 : 1);
+		const first = f.first | 0; // 0.44.0: kto rozbíjal 1. frame (po žrebe), ďalšie striedavo
+		const nr = newFrame(n % 2 === 1 ? first : 1 - first);
 		nr.scores = [0, 0];
 		return { rules: nr, frames: { ...f, won, n } };
 	}

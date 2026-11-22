@@ -2528,6 +2528,75 @@ export class UI {
 	}
 
 	/**
+	 * Žreb pred zápasom (0.44.0): kameň, papier, nožnice o rozbíjanie, víťaz vyberie, kto rozbíja; v lige aj Rudo.
+	 * pre = stav zo servera (mysn_pre_out), info = { me, names, league }; null alebo pre.done = skryť.
+	 */
+	prematch(pre, info) {
+		const on = !!(pre && !pre.done && info);
+		if (!this.preEl) {
+			this.preEl = h('div', 'mysn-choice mysn-pre mysn-hidden');
+			for (const t of ['mousedown', 'pointerdown', 'click', 'wheel']) {
+				this.preEl.addEventListener(t, (e) => e.stopPropagation());
+			}
+			this.preEl.addEventListener('click', (e) => {
+				const b = e.target.closest('button');
+				if (b && !b.disabled) {
+					this.opts.onAction('prematch', JSON.parse(b.dataset.v));
+				}
+			});
+			this.preEl.addEventListener('change', (e) => {
+				if (e.target.matches('input[data-rudo]')) {
+					this.opts.onAction('prematch', { rudo: e.target.checked ? 1 : 0 });
+				}
+			});
+			this.root.appendChild(this.preEl);
+		}
+		this.preEl.classList.toggle('mysn-hidden', !on);
+		clearInterval(this._preTick);
+		this._preOpen = on;
+		if (!on) {
+			return;
+		}
+		const me = info.me;
+		const opp = esc(info.names[1 - me] || _t('Súper'));
+		const ICON = { r: '✊', p: '✋', s: '✌️' };
+		const NAME = { r: _t('Kameň'), p: _t('Papier'), s: _t('Nožnice') };
+		const last = pre.last ? `<div class="mysn-pre-last">${_t('Ty')} ${ICON[pre.last[me]]} · ${opp} ${ICON[pre.last[1 - me]]}</div>` : '';
+		let body;
+		if (pre.win < 0) {
+			const title = pre.round > 1 ? _t('Remíza! Ešte raz (kolo {n})', { n: pre.round }) : _t('Žreb: kto rozbíja');
+			body = `<div class="mysn-choice-t"><b>${title}</b><br>${_t('Kameň, papier, nožnice. Víťaz si vyberie, kto rozbíja.')}</div>${last}`;
+			if (pre.mine) {
+				body += `<div class="mysn-pre-wait">${_t('Vybral si: {x}. Čakám na súpera…', { x: `${ICON[pre.mine]} ${NAME[pre.mine]}` })}</div>`;
+			} else {
+				body += `<div class="mysn-choice-b">${['r', 'p', 's'].map((k, i) => `<button type="button" data-v='${JSON.stringify({ rps: k })}'><span class="mysn-pre-ico">${ICON[k]}</span>${i + 1} · ${NAME[k]}</button>`).join('')}</div>`;
+			}
+		} else if (pre.win === me) {
+			body = `<div class="mysn-choice-t"><b>${_t('Vyhral si žreb!')}</b></div>${last}<div class="mysn-choice-b"><button type="button" data-v='${JSON.stringify({ pick: 'break' })}'>${_t('1 · Rozbíjam ja')}</button><button type="button" data-v='${JSON.stringify({ pick: 'pass' })}'>${_t('2 · Nech rozbíja súper')}</button></div>`;
+		} else {
+			body = `<div class="mysn-choice-t"><b>${_t('{n} vyhral žreb', { n: opp })}</b></div>${last}<div class="mysn-pre-wait">${_t('Vyberá, kto rozbíja…')}</div>`;
+		}
+		if (info.league) {
+			const r = pre.rudo || [1, 1];
+			body += `<label class="mysn-pre-rudo"><input type="checkbox" data-rudo ${r[me] ? 'checked' : ''}> ${_t('Komentátor Rudo')}</label><div class="mysn-choice-n">${r[1 - me] ? _t('Rudo hovorí, len keď ho chcú obaja hráči.') : _t('{n} Ruda vypol, v zápase bude mlčať.', { n: opp })}</div>`;
+		}
+		body += `<div class="mysn-choice-n mysn-pre-left"></div>`;
+		this.preEl.innerHTML = body;
+		const leftEl = this.preEl.querySelector('.mysn-pre-left');
+		const end = Date.now() + (pre.left || 0) * 1000;
+		const tick = () => {
+			const l = Math.max(0, Math.ceil((end - Date.now()) / 1000));
+			leftEl.textContent = pre.win < 0 ? _t('Zostáva {n} s, potom sa vyberie náhodne.', { n: l }) : pre.win === me ? _t('Zostáva {n} s, potom rozbíjaš ty.', { n: l }) : '';
+		};
+		tick();
+		this._preTick = setInterval(tick, 500);
+	}
+
+	preOpen() {
+		return !!this._preOpen;
+	}
+
+	/**
 	 * Ponuka vzdať sa, keď už ani všetky body na stole nestačia (potrebné snookery): info = { key, lead, rem, frame }
 	 * (frame = zápas na viac framov: Vzdať frame, inak Vzdať partiu), null = skryť.
 	 */

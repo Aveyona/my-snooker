@@ -1312,6 +1312,8 @@ export function start(root, config = {}) {
 		}, 350);
 	};
 	let watchScreen = null; // divák: skóre sledovaného ligového zápasu (prichádza od hráča)
+	let watchRudoOff = false; // divák: hráči vypli komentátora Ruda (0.44.0)
+	let preShown = false; // žreb pred zápasom bol na obrazovke (0.44.0)
 	let watchPeers = []; // divák: id hráčov sledovaného zápasu (pre menovky)
 	let watchFiesta = null; // divák: koniec zápasu prišiel od hráča (čaká na w-end)
 	let watchTurnAt = 0; // divák: začiatok ťahu v sledovanom ligovom zápase
@@ -1325,6 +1327,9 @@ export function start(root, config = {}) {
 			return null;
 		}
 		const m = game.match;
+		if (m && m.pre && !m.pre.done) {
+			return null; // 0.44.0: počas žrebu čas na ťah nebeží
+		}
 		if (m && m.league && m.rules && !m.rules.over && m.turnAt && !game.spectating) {
 			return { left: clockOf(m.clock) - (Date.now() - m.turnAt) / 1000, mine: m.turn === m.me };
 		}
@@ -3356,6 +3361,8 @@ export function start(root, config = {}) {
 		home: () => {
 			window.location.href = config.homeUrl || '/';
 		},
+		// 0.44.0: žreb pred zápasom (kameň, papier, nožnice, kto rozbíja, Rudo)
+		prematch: (d) => online && online.prematch(d),
 		// 0.43.0: jazyk hry – uloží sa v prehliadači aj k účtu a stránka sa znova načíta (rozohraná hra pokračuje)
 		lang: async (id) => {
 			rememberLang(id);
@@ -4512,6 +4519,18 @@ export function start(root, config = {}) {
 				actions.foulChoice(lk === '2'); // po súperovom faule: 1 hrám ja, 2 nech hrá súper
 				return true;
 			}
+			if (ui.preOpen() && game.match && game.match.pre) {
+				// 0.44.0: žreb pred zápasom – 1 až 3 kameň, papier, nožnice; víťaz 1 rozbíjam, 2 nech rozbíja súper
+				const pre = game.match.pre;
+				if (pre.win < 0 && !pre.mine && ['1', '2', '3'].includes(lk)) {
+					actions.prematch({ rps: 'rps'[+lk - 1] });
+					return true;
+				}
+				if (pre.win === game.match.me && (lk === '1' || lk === '2')) {
+					actions.prematch({ pick: lk === '1' ? 'break' : 'pass' });
+					return true;
+				}
+			}
 			if (ui.foundOpen()) {
 				// okno nájdeného ligového zápasu: Enter prijme, Esc zruší (aj vyhľadávanie)
 				if (lk === 'enter') {
@@ -5131,6 +5150,19 @@ export function start(root, config = {}) {
 			},
 			invite: (inv) => !ui.menuOpen() && ui.toast(_t('Boli ste vyzvaný! {n} ťa vyzýva {w}.', { n: inv.from.name, w: inv.training ? _t('na spoločný tréning') : inv.league ? _t('na ligovú partiu') : _t('na partiu') }) + (controls.captured ? _t(' Esc alebo Ctrl uvoľní myš.') : ''), inv),
 			toast: (t) => ui.toast(t),
+			// 0.44.0: žreb pred zápasom; po skončení hlásenie, kto rozbíja
+			pre: (pre, m) => {
+				ui.prematch(pre, { me: m.me, names: m.players.map((p) => p.name), league: !!m.league });
+				if (pre && !pre.done) {
+					preShown = true;
+					controls.uncapture();
+				} else if (pre && pre.done && preShown) {
+					preShown = false;
+					const n = m.players.map((p) => p.name);
+					const w = pre.win >= 0 ? n[pre.win] : '';
+					ui.toast((w ? _t('{w} vyhral žreb, rozbíja {b}.', { w, b: n[pre.brk] }) : _t('Rozbíja {b}.', { b: n[pre.brk] })) + (m.league && !m.rudo ? ' ' + _t('Komentátor Rudo je v tomto zápase vypnutý.') : ''));
+				}
+			},
 			// tágá súpera na jeho stojane na štadióne
 			chalk: (d) => {
 				if (game.match && d && d.spec) {
@@ -5192,6 +5224,7 @@ export function start(root, config = {}) {
 				const moving = game.state === 'moving';
 				if (m.k === 'w-state') {
 					sp.info = m.info || sp.info;
+					watchRudoOff = m.rudo === false; // 0.44.0: hráči vypli Ruda
 					if (m.scr && Array.isArray(m.scr.names)) {
 						if (typeof m.scr.left === 'number') {
 							watchTurnAt = Date.now() - (30 - m.scr.left) * 1000; // časomiera sledovaného ligového zápasu
@@ -5931,7 +5964,7 @@ export function start(root, config = {}) {
 		const GOOD = /^rudo-(live-)?(nice|50|break50|century|frame|match|start|pot|in|hang|won)/;
 		/** Násobok, ako často Rudo hovorí: menej 0,5, normálne 1, viac 1,7. */
 		const rf = () => ({ low: 0.5, high: 1.7 })[CROWD.rudoFreq] || 1;
-		const on = () => CROWD.rudo !== false && venue === 'league' && !!(game.match || game.spectating);
+		const on = () => CROWD.rudo !== false && venue === 'league' && !!(game.match || game.spectating) && !(game.match && game.match.rudo === false) && !(game.spectating && watchRudoOff); // 0.44.0: Rudo len keď ho chcú obaja hráči
 		/** Rudo prehovorí: hlas z jeho miesta a gesto (pri dobrom vstane a tlieska, pri chybe sa chytí za hlavu). */
 		/**
 		 * Rudo prehovorí, keď dohovorí rozhodca; kým hovorí, diváci (potlesk, zvuky divákov) sú stíšení, aby
