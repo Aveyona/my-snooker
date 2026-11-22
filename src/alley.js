@@ -1,7 +1,7 @@
 /*
  * My Snooker: Ulička (0.45.x) – miestnosť vonku v Indii, v noci pod lampami a hviezdami. Stôl stojí uprostred
  * úzkej blatistej uličky plnej smetí medzi farebnými domami s grafitmi, pri ňom obchodík s čajom (3D), nad
- * uličkou šnúry žiaroviek a spleť káblov. Na −x konci ulička zatáča doľava (domy oproti, ulica pokračuje).
+ * uličkou šnúry žiaroviek a spleť káblov. Na −x konci ulička zatáča doľava, na +x konci je križovatka do T (ulica pokračuje vľavo aj vpravo).
  * Ľudia, autorikša, skúter a krava pribudnú v ďalšej etape. Stôl je ten istý ako v herni (stred 0, 0),
  * súkno so čmáranicami nastaví main.js (felt street).
  */
@@ -1160,7 +1160,7 @@ export function buildAlley(scene, quality) {
 	ground.receiveShadow = true;
 	root.add(ground);
 	const g2t = gt.clone();
-	g2t.repeat.set(1, 1);
+	g2t.repeat.set(0.35, 3.8);
 	g2t.needsUpdate = true;
 	const ground2 = new THREE.Mesh(new THREE.PlaneGeometry(CW, CL), new THREE.MeshStandardMaterial({ map: g2t, roughness: 0.95 }));
 	ground2.rotation.x = -Math.PI / 2;
@@ -1286,6 +1286,9 @@ export function buildAlley(scene, quality) {
 				grp.add(sh);
 			}
 		}
+		if (sp && sp.deco) {
+			sp.deco(grp, wm);
+		}
 		if (sp && sp.cart) {
 			const sub = new THREE.Group();
 			sub.position.z = 0.75; // vozík stojí na ulici pred domom
@@ -1334,7 +1337,59 @@ export function buildAlley(scene, quality) {
 	]); // strana +z až po roh
 	row('z', -AZ - 1, AZ + CL, -AX - CW, 1); // koniec uličky: domy oproti, ulica za nimi zatáča
 	row('z', AZ, AZ + CL, -AX, -1); // za rohom vpravo
-	// za zákrutou ďaleko: ulica pokračuje, teplé svetlá z obchodov
+	// koniec uličky na +x: križovatka do T, ulica pokračuje vľavo aj vpravo; na dome oproti veľký grafit
+	const graffiti = (g, W) => {
+		const m = new THREE.Mesh(
+			new THREE.PlaneGeometry(W - 0.4, 2.6),
+			new THREE.MeshStandardMaterial({
+				transparent: true,
+				roughness: 0.9,
+				map: canvasTex(1024, 440, (c, w, h) => {
+					sprayTag(c, 'MY SNOOKER', w / 2, h * 0.36, 150, '#ffd400', '#1a1a1a', -0.05);
+					sprayTag(c, 'GALI 147', w / 2, h * 0.76, 120, '#ff3d7f', '#111', 0.04);
+					sprayTag(c, '★', w * 0.08, h * 0.35, 120, '#2ec5ff');
+				}),
+			})
+		);
+		m.position.set(0, 1.35, 0.02);
+		g.add(m);
+	};
+	row('z', -AZ - CL, AZ + CL, AX + CW, -1, [{ x0: -3, x1: 3, deco: graffiti }]); // domy oproti
+	row('z', AZ, AZ + CL, AX, 1); // roh vľavo
+	row('z', -AZ - CL, -AZ, AX, 1); // roh vpravo
+	const g3t = gt.clone();
+	g3t.repeat.set(0.35, 9); // rovnaká mierka ako v hlavnej uličke (textúra je 4 : 1)
+	g3t.needsUpdate = true;
+	const ground3 = new THREE.Mesh(new THREE.PlaneGeometry(CW, 2 * (AZ + CL)), new THREE.MeshStandardMaterial({ map: g3t, roughness: 0.75 }));
+	ground3.rotation.x = -Math.PI / 2;
+	ground3.position.set(AX + CW / 2, FY - 0.002, 0);
+	ground3.receiveShadow = true;
+	root.add(ground3);
+	// za zákrutami ďaleko: ulica pokračuje, teplé svetlá z obchodov
+	const farTex = canvasTex(256, 384, (c, w, h) => {
+		const s = c.createLinearGradient(0, 0, 0, h);
+		s.addColorStop(0, '#000000');
+		s.addColorStop(0.5, '#3a2410');
+		s.addColorStop(1, '#8a5420');
+		c.fillStyle = s;
+		c.fillRect(0, 0, w, h);
+		for (let i = 0; i < 26; i++) {
+			c.fillStyle = `rgba(255,${190 + rnd() * 60},${110 + rnd() * 90},${0.5 + rnd() * 0.5})`;
+			c.beginPath();
+			c.arc(rnd() * w, h * (0.5 + rnd() * 0.45), 1.5 + rnd() * 4, 0, Math.PI * 2);
+			c.fill();
+		}
+	});
+	for (const [x, z, ry] of [
+		[AX + CW / 2, AZ + CL, Math.PI],
+		[AX + CW / 2, -AZ - CL, 0],
+	]) {
+		const f = new THREE.Mesh(new THREE.PlaneGeometry(CW + 0.4, 10), new THREE.MeshBasicMaterial({ map: farTex }));
+		f.position.set(x, FY + 5, z);
+		f.rotation.y = ry;
+		root.add(f);
+	}
+	// za zákrutou na −x ďaleko
 	const far = new THREE.Mesh(
 		new THREE.PlaneGeometry(CW + 0.4, 10),
 		new THREE.MeshBasicMaterial({
@@ -1357,30 +1412,6 @@ export function buildAlley(scene, quality) {
 	far.position.set(-AX - CW / 2, FY + 5, AZ + CL);
 	far.rotation.y = Math.PI;
 	root.add(far);
-
-	// koniec uličky na +x: múr s veľkými grafitmi
-	const endWall = new THREE.Mesh(
-		new THREE.PlaneGeometry(2 * AZ + 1, 9),
-		new THREE.MeshStandardMaterial({
-			roughness: 0.95,
-			map: canvasTex(1024, 1280, (g, w, h) => {
-				g.fillStyle = '#7d6f60';
-				g.fillRect(0, 0, w, h);
-				for (let y = 0; y < h; y += 40) {
-					for (let x = (y / 40) % 2 ? -40 : 0; x < w; x += 80) {
-						g.fillStyle = `rgba(${90 + rnd() * 40},${70 + rnd() * 30},${55 + rnd() * 20},1)`;
-						g.fillRect(x + 2, y + 2, 76, 36);
-					}
-				}
-				sprayTag(g, 'MY SNOOKER', w / 2, h * 0.72, 150, '#ffd400', '#1a1a1a', -0.06);
-				sprayTag(g, 'GALI 147', w / 2, h * 0.86, 120, '#ff3d7f', '#111', 0.05);
-				sprayTag(g, '★', w * 0.12, h * 0.7, 130, '#2ec5ff');
-			}),
-		})
-	);
-	endWall.position.set(AX, FY + 4.5, 0);
-	endWall.rotation.y = -Math.PI / 2;
-	root.add(endWall);
 
 	// hviezdne nebo a smeti na zemi
 	buildStars(root);
@@ -1420,6 +1451,10 @@ export function buildAlley(scene, quality) {
 		const z0 = -AZ + 2 + k * 5 + rnd();
 		string(new THREE.Vector3(-AX - CW + 0.05, FY + 4.3 + rnd() * 0.5, z0), new THREE.Vector3(-AX - 0.05, FY + 4.3 + rnd() * 0.5, z0 + (rnd() - 0.5) * 3), 0.6 + rnd() * 0.3, k);
 	}
+	for (let k = 0; k < 7; k++) {
+		const z0 = -AZ - CL + 2 + k * 5.5 + rnd();
+		string(new THREE.Vector3(AX + 0.05, FY + 4.3 + rnd() * 0.5, z0), new THREE.Vector3(AX + CW - 0.05, FY + 4.3 + rnd() * 0.5, z0 + (rnd() - 0.5) * 3), 0.6 + rnd() * 0.3, k);
+	}
 	for (let k = 0; k < 14; k++) {
 		const x0 = -AX + rnd() * 2 * AX;
 		const a = new THREE.Vector3(x0, FY + 5 + rnd() * 3, -AZ + 0.05);
@@ -1451,6 +1486,9 @@ export function buildAlley(scene, quality) {
 	const warm2 = new THREE.PointLight(0xff9ad0, high ? 6 : 4, 8, 1.6);
 	warm2.position.set(-1, FY + 3.6, 1.5);
 	root.add(warm2);
+	const tGlow = new THREE.PointLight(0xffa64a, 7, 14, 1.4); // križovatka na +x
+	tGlow.position.set(AX + CW / 2, FY + 3, 0);
+	root.add(tGlow);
 	const cornerGlow = new THREE.PointLight(0xffa64a, 8, 14, 1.4);
 	cornerGlow.position.set(-AX - CW / 2, FY + 2.5, AZ + 4);
 	root.add(cornerGlow);

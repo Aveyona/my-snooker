@@ -10,20 +10,20 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 function mysn_fp_expected() {
 	return array(
-		'0.45.2' => array(
-			'ps' => '35041438',
+		'0.45.3' => array(
+			'ps' => '5107e0c6',
 			'pa' => '2a1c07f5',
-			'st' => '9ede6302',
+			'st' => '41611656',
 			'sm' => '9adac01e',
 			'ss' => '85bb3ec1',
 			'rs' => 'a3246367',
 			'rl' => '3e60c941',
 			'it' => '1aa59a31',
 			'ia' => 'b54440dc',
-			'ip' => '87548f94',
+			'ip' => '3c66a304',
 			'ts' => '662b0d1e',
 			'gs' => 'd41ded86',
-			'nc' => '94aabd5c',
+			'nc' => 'c87d4f34',
 			'sb' => 'd6e164e9',
 		),
 	);
