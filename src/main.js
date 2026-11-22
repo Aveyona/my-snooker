@@ -6565,7 +6565,7 @@ export function start(root, config = {}) {
 			stadium.update(dt, game.cue, refDir, game.state === 'moving', refTr && refTr.ball ? refTr.ball : null, refPlace);
 			crowdLg.update(dt, game.cue);
 		} else {
-			alley.update(dt);
+			alley.update(dt, game.cue);
 			crowdHome.update(dt, game.cue);
 		}
 		const aiming = game.state === 'aim' && !view;

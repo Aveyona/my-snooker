@@ -6,6 +6,8 @@
  * súkno so čmáranicami nastaví main.js (felt street).
  */
 import * as THREE from 'three';
+import { buildFan, updateFans } from './fans.js';
+import { realFan, SPECTATORS } from './realPerson.js';
 
 const FY = -0.815; // zem (rovnako ako podlaha v herni)
 const AZ = 3.3; // polovica šírky uličky (fasády domov)
@@ -160,8 +162,12 @@ function facadeTex(wm, hm, seed, hole = null) {
 			if (!ok.length) {
 				return null;
 			}
-			const [a, b] = pick(ok);
-			return a + iw / 2 + rnd() * (b - a - iw);
+			const seg = pick(ok);
+			const [a, b] = seg;
+			const cx = a + iw / 2 + rnd() * (b - a - iw);
+			// obsadené miesto sa z voľných úsekov vyberie (nápisy sa neprekrývajú)
+			free.splice(free.indexOf(seg), 1, ...[[a, cx - iw / 2 - 6], [cx + iw / 2 + 6, b]].filter(([p, q]) => q - p > 0.3 * S));
+			return cx;
 		};
 		// nápis obchodu nad prízemím (celý na fasáde, text sa zmestí)
 		if (hole !== 'open' && rnd() < 0.7) {
@@ -183,7 +189,7 @@ function facadeTex(wm, hm, seed, hole = null) {
 			g.fillText(sign, sx + sw / 2, h - 2.72 * S);
 		}
 		// plagáty (celé, mimo otvoru)
-		for (let i = 0; i < 3; i++) {
+		for (let i = 0; i < 2; i++) {
 			const pw = 0.6 * S;
 			const cx = spot(pw);
 			if (cx === null) {
@@ -1245,6 +1251,55 @@ function buildStars(root) {
 	root.add(new THREE.Points(g2, new THREE.PointsMaterial({ size: 3.2, sizeAttenuation: false, color: 0xffffff, fog: false })));
 }
 
+/*
+ * 0.45.5 Ľudia v uličke: predavači pri vozíkoch a v obchodoch, hostia na lavičke pri čajovni, zákazníci
+ * a okoloidúci. Postavy sú tie isté ako diváci v herni (realistické modely, ak sú zapnuté), hlavou sledujú
+ * bielu guľu. [x, z, otočenie, sedí, výška podlahy nad zemou]
+ */
+const IN_SKINS = [0x8d5b3e, 0xa8714f, 0xc78e66, 0x7a4a2e, 0xb07a52];
+const IN_CLOTH = [0xf2efe6, 0xd9c7a0, 0x8b2c2c, 0x2f5d8a, 0xc9a227, 0x6b8e4e, 0xa0522d, 0x5c4b8a, 0xd2691e, 0x4a4a4a];
+function buildPeople(root) {
+	const toTable = (x, z) => Math.atan2(-x, -z); // tvárou k stolu
+	const P = [
+		// pri čajovni: dvaja na lavičke, predavač za pultom
+		[4.05, -AZ + 0.4, 0, true, 0.475],
+		[4.6, -AZ + 0.4, 0, true, 0.475],
+		[2.9, -AZ - 0.75, 0, false, 0.04],
+		// paan shop: predavač na vyvýšenej podlahe
+		[3.5, AZ + 0.6, Math.PI, false, 0.5],
+		// cukráreň: kuchár pri kadhai
+		[-12.6, -AZ - 0.35, 0, false, 0.04],
+		// pani puri: predavač a dvaja zákazníci
+		[-7.05, -AZ + 0.75, -Math.PI / 2, false, 0],
+		[-8.1, -AZ + 1.65, Math.PI, false, 0],
+		[-8.75, -AZ + 1.55, Math.PI - 0.5, false, 0],
+		// ovocie a náramky
+		[-5.9, AZ - 0.7, -Math.PI / 2, false, 0],
+		[-10.4, AZ - 1.65, 0, false, 0],
+		[-11.1, AZ - 1.5, 0.4, false, 0],
+		// kvety
+		[8.6, -AZ + 0.2, 0, false, 0],
+		// okoloidúci a čumiliaci, čo sa pozerajú na hru
+		[-5.6, 1.6, toTable(-5.6, 1.6), false, 0],
+		[6.2, 2.3, toTable(6.2, 2.3), false, 0],
+		[6.6, -1.4, toTable(6.6, -1.4), false, 0],
+		[14.2, 1.0, -2.2, false, 0],
+		[14.8, 0.3, 1.0, false, 0],
+		[19, 8, Math.PI, false, 0],
+		[-19.5, 7, 0.3, false, 0],
+	];
+	const fans = [];
+	P.forEach(([x, z, rot, sit, y], i) => {
+		const fan = buildFan({ skin: IN_SKINS[i % IN_SKINS.length], shirt: IN_CLOTH[(i * 3) % IN_CLOTH.length], hair: 0x111111 }, !sit, i * 0.83);
+		fan.real = realFan(fan, SPECTATORS[(i * 7 + 3) % SPECTATORS.length]);
+		fan.f.position.set(x, FY + y, z);
+		fan.f.rotation.y = rot;
+		root.add(fan.f);
+		fans.push(fan);
+	});
+	return fans;
+}
+
 export function buildAlley(scene, quality) {
 	const root = new THREE.Group();
 	root.visible = false;
@@ -1558,12 +1613,167 @@ export function buildAlley(scene, quality) {
 		const z0 = -AZ - CL + 2 + k * 5.5 + rnd();
 		string(new THREE.Vector3(AX + 0.05, FY + 4.3 + rnd() * 0.5, z0), new THREE.Vector3(AX + CW - 0.05, FY + 4.3 + rnd() * 0.5, z0 + (rnd() - 0.5) * 3), 0.6 + rnd() * 0.3, k);
 	}
-	for (let k = 0; k < 14; k++) {
-		const x0 = -AX + rnd() * 2 * AX;
-		const a = new THREE.Vector3(x0, FY + 5 + rnd() * 3, -AZ + 0.05);
-		const b = new THREE.Vector3(x0 + (rnd() - 0.5) * 6, FY + 5 + rnd() * 3, AZ - 0.05);
-		root.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints(sag(a, b, 0.3 + rnd() * 1.2, 16)), wireMat));
+	/*
+	 * 0.45.5 Káble všade: stovky drôtov krížom cez uličky aj pozdĺž fasád v jednej geometrii (jedno kreslenie),
+	 * hrubšie zväzky pri stole ako rúrky, betónové stĺpy s transformátorom a klbkami káblov.
+	 */
+	const segs = [];
+	const pushLine = (pts) => {
+		for (let i = 0; i < pts.length - 1; i++) {
+			segs.push(pts[i].x, pts[i].y, pts[i].z, pts[i + 1].x, pts[i + 1].y, pts[i + 1].z);
+		}
+	};
+	const V = (x, y, z) => new THREE.Vector3(x, y, z);
+	// krížom cez hlavnú uličku
+	for (let k = 0; k < 90; k++) {
+		const x0 = -AX - CW + rnd() * (2 * AX + CW);
+		pushLine(sag(V(x0, FY + 3.4 + rnd() * 6, -AZ + 0.05), V(x0 + (rnd() - 0.5) * 7, FY + 3.4 + rnd() * 6, AZ - 0.05), 0.2 + rnd() * 1.4, 14));
 	}
+	// pozdĺž fasád (prevesené medzi úchytmi)
+	for (const side of [-1, 1]) {
+		for (let r = 0; r < 7; r++) {
+			const y = FY + 3 + rnd() * 4;
+			const z = side * (AZ - 0.08 - rnd() * 0.15);
+			let x = -AX - (side < 0 ? CW : 0);
+			while (x < AX) {
+				const nx = x + 2 + rnd() * 3;
+				pushLine(sag(V(x, y + (rnd() - 0.5) * 0.2, z), V(Math.min(nx, AX), y + (rnd() - 0.5) * 0.2, z), 0.15 + rnd() * 0.3, 8));
+				x = nx;
+			}
+		}
+	}
+	// krížom cez bočné ulice (zákruta a križovatka)
+	for (let k = 0; k < 35; k++) {
+		const z0 = AZ + rnd() * CL;
+		pushLine(sag(V(-AX - CW + 0.05, FY + 3.5 + rnd() * 5, z0), V(-AX - 0.05, FY + 3.5 + rnd() * 5, z0 + (rnd() - 0.5) * 4), 0.3 + rnd(), 12));
+	}
+	for (let k = 0; k < 50; k++) {
+		const z0 = -AZ - CL + rnd() * 2 * (AZ + CL);
+		pushLine(sag(V(AX + 0.05, FY + 3.5 + rnd() * 5, z0), V(AX + CW - 0.05, FY + 3.5 + rnd() * 5, z0 + (rnd() - 0.5) * 4), 0.3 + rnd(), 12));
+	}
+	// betónové stĺpy s transformátorom; z vrchu sa rozbieha spleť káblov na všetky domy
+	const poleMat = new THREE.MeshStandardMaterial({ color: 0x8d8a83, roughness: 0.95 });
+	const darkM = new THREE.MeshStandardMaterial({ color: 0x1a1a1a, roughness: 0.6 });
+	const coilGeo = new THREE.TorusGeometry(0.18, 0.012, 5, 20);
+	for (const [px, pz] of [
+		[-6.2, -AZ + 0.3],
+		[10.5, AZ - 0.3],
+		[AX + CW - 0.3, 7],
+		[-AX - CW + 0.3, AZ + 9],
+	]) {
+		const H = 8.5;
+		const pole = new THREE.Mesh(new THREE.CylinderGeometry(0.09, 0.14, H, 10), poleMat);
+		pole.position.set(px, FY + H / 2, pz);
+		pole.castShadow = true;
+		root.add(pole);
+		for (const dy of [7.6, 6.8]) {
+			const arm = new THREE.Mesh(new THREE.BoxGeometry(1.4, 0.08, 0.08), poleMat);
+			arm.position.set(px, FY + dy, pz);
+			arm.rotation.y = rnd() * Math.PI;
+			root.add(arm);
+		}
+		const tr = new THREE.Mesh(new THREE.BoxGeometry(0.55, 0.7, 0.4), new THREE.MeshStandardMaterial({ color: 0x6f7a74, metalness: 0.3, roughness: 0.7 }));
+		tr.position.set(px, FY + 5.8, pz + Math.sign(-pz || 1) * 0.3);
+		root.add(tr);
+		const meter = new THREE.Mesh(new THREE.BoxGeometry(0.3, 0.4, 0.15), new THREE.MeshStandardMaterial({ color: 0xbfb8a8, roughness: 0.8 }));
+		meter.position.set(px, FY + 2.2, pz + Math.sign(-pz || 1) * 0.15);
+		root.add(meter);
+		for (let i = 0; i < 6; i++) {
+			const c = new THREE.Mesh(coilGeo, darkM); // klbká káblov visiace na stĺpe
+			c.position.set(px + (rnd() - 0.5) * 0.3, FY + 3.5 + rnd() * 3.5, pz + (rnd() - 0.5) * 0.3);
+			c.rotation.set(rnd() * 3, rnd() * 3, rnd() * 3);
+			c.scale.setScalar(0.6 + rnd() * 0.8);
+			root.add(c);
+		}
+		for (let k = 0; k < 45; k++) {
+			const top = V(px + (rnd() - 0.5) * 1.2, FY + 6.6 + rnd() * 1.2, pz);
+			const side = rnd() < 0.5 ? -1 : 1;
+			const tz = Math.abs(pz) > AZ + 0.5 ? pz + (rnd() - 0.5) * 12 : side * (AZ - 0.05);
+			const tx = Math.abs(pz) > AZ + 0.5 ? px + (px > 0 ? -CW + 0.1 : CW - 0.1) * (rnd() < 0.5 ? 1 : 0.02) : px + (rnd() - 0.5) * 16;
+			pushLine(sag(top, V(tx, FY + 3 + rnd() * 5, tz), 0.2 + rnd() * 1.2, 12));
+		}
+		// zvislé káble po stĺpe dole k elektromeru
+		for (let i = 0; i < 4; i++) {
+			const o = (rnd() - 0.5) * 0.25;
+			pushLine([V(px + o, FY + 7, pz + 0.12), V(px + o * 0.8, FY + 4.5, pz + 0.13), V(px + o, FY + 2.4, pz + 0.12)]);
+		}
+	}
+	const wg = new THREE.BufferGeometry();
+	wg.setAttribute('position', new THREE.Float32BufferAttribute(segs, 3));
+	root.add(new THREE.LineSegments(wg, new THREE.LineBasicMaterial({ color: 0x0d0d0d })));
+	// hrubšie zväzky káblov nad stolom (rúrky, aby boli vidieť aj zblízka)
+	const tubeMat = new THREE.MeshStandardMaterial({ color: 0x151515, roughness: 0.5 });
+	for (let k = 0; k < 16; k++) {
+		const x0 = -6 + rnd() * 12;
+		const pts = sag(V(x0, FY + 3.6 + rnd() * 2.5, -AZ + 0.05), V(x0 + (rnd() - 0.5) * 4, FY + 3.6 + rnd() * 2.5, AZ - 0.05), 0.4 + rnd() * 0.9, 20);
+		const tube = new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(pts), 24, 0.006 + rnd() * 0.01, 5), tubeMat);
+		root.add(tube);
+	}
+
+	/*
+	 * Siete a plachty nad hlavou: priesvitné siete (textúra s okami) a vyblednuté plachty s dierami, prevesené
+	 * cez uličku vo výške 4,5 až 6,5 m.
+	 */
+	const netTex = canvasTex(256, 256, (c, w, h) => {
+		c.clearRect(0, 0, w, h);
+		c.strokeStyle = 'rgba(25,35,28,0.95)';
+		c.lineWidth = 2;
+		for (let i = 0; i <= w; i += 16) {
+			c.beginPath();
+			c.moveTo(i + (rnd() - 0.5) * 2, 0);
+			c.lineTo(i + (rnd() - 0.5) * 2, h);
+			c.stroke();
+			c.beginPath();
+			c.moveTo(0, i + (rnd() - 0.5) * 2);
+			c.lineTo(w, i + (rnd() - 0.5) * 2);
+			c.stroke();
+		}
+		// pár roztrhnutých miest
+		for (let i = 0; i < 3; i++) {
+			c.clearRect(rnd() * w, rnd() * h, 20 + rnd() * 30, 12 + rnd() * 20);
+		}
+	});
+	netTex.wrapS = netTex.wrapT = THREE.RepeatWrapping;
+	const tarpTex = (col) =>
+		canvasTex(128, 128, (c, w, h) => {
+			c.fillStyle = col;
+			c.fillRect(0, 0, w, h);
+			for (let i = 0; i < 30; i++) {
+				c.fillStyle = `rgba(0,0,0,${0.05 + rnd() * 0.15})`;
+				c.fillRect(rnd() * w, rnd() * h, 3 + rnd() * 20, 1 + rnd() * 4);
+			}
+			for (let i = 0; i < 4; i++) {
+				c.clearRect(rnd() * w, rnd() * h, 6 + rnd() * 14, 4 + rnd() * 10); // diery
+			}
+		});
+	const sheet = (x0, x1, y, map, repeat, opacity) => {
+		const L = x1 - x0;
+		const geo = new THREE.PlaneGeometry(L, 2 * AZ - 0.1, 16, 12);
+		const pos = geo.attributes.position;
+		for (let i = 0; i < pos.count; i++) {
+			const u = pos.getX(i) / L + 0.5;
+			const v = pos.getY(i) / (2 * AZ) + 0.5;
+			pos.setZ(i, -(0.5 * 4 * v * (1 - v) + 0.25 * 4 * u * (1 - u))); // prehnutie dole uprostred
+		}
+		geo.computeVertexNormals();
+		const t = map.clone();
+		t.repeat.set(repeat * L, repeat * 2 * AZ);
+		t.needsUpdate = true;
+		const m = new THREE.Mesh(geo, new THREE.MeshStandardMaterial({ map: t, transparent: true, alphaTest: 0.3, opacity, side: THREE.DoubleSide, roughness: 0.9, depthWrite: true }));
+		m.rotation.x = -Math.PI / 2;
+		m.position.set((x0 + x1) / 2, FY + y, 0);
+		root.add(m);
+	};
+	netTex.wrapS = netTex.wrapT = THREE.RepeatWrapping;
+	sheet(-14, -9, 5.6, netTex, 0.6, 1);
+	sheet(-3.2, 2.6, 6.4, netTex, 0.5, 1);
+	sheet(7.5, 13, 5.2, netTex, 0.6, 1);
+	const tb = tarpTex('#3f6f9a');
+	tb.wrapS = tb.wrapT = THREE.RepeatWrapping;
+	const to = tarpTex('#b8742e');
+	to.wrapS = to.wrapT = THREE.RepeatWrapping;
+	sheet(-8.5, -6, 4.7, tb, 0.25, 0.95);
+	sheet(4.5, 7, 4.9, to, 0.25, 0.95);
 
 	// lampa nad stolom: dve plechové tienidlá s holými žiarovkami na kábli
 	const shadeMat = new THREE.MeshStandardMaterial({ color: 0x3f5a4a, metalness: 0.5, roughness: 0.45, side: THREE.DoubleSide });
@@ -1580,6 +1790,8 @@ export function buildAlley(scene, quality) {
 
 	// obchodík s čajom pri stole: lavička a tyče striešky stoja na ulici, kamera ich obíde
 	const shop = { x0: 2.25, x1: 5.15, z0: -AZ - 2, z1: -AZ + 0.72, y: FY + 2.6 };
+
+	const people = buildPeople(root);
 
 	// svetlo: noc (tmavomodré nebo zhora), teplé svetlo žiaroviek, oranžová žiara spoza zákruty
 	root.add(new THREE.HemisphereLight(0x3a4670, 0x2a1e12, 0.45));
@@ -1598,10 +1810,11 @@ export function buildAlley(scene, quality) {
 
 	// jemné blikanie žiaroviek
 	let t0 = 0;
-	const update = (dt) => {
+	const update = (dt, cueBall) => {
 		if (!root.visible) {
 			return;
 		}
+		updateFans(people, dt, cueBall); // ľudia hlavou sledujú bielu guľu
 		t0 += dt;
 		const f = 1 + Math.sin(t0 * 7.3) * 0.03 + Math.sin(t0 * 13.1) * 0.02;
 		warm1.intensity = (high ? 9 : 6) * f;
