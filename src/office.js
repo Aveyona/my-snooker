@@ -7,6 +7,7 @@
  * Kancelária stojí mimo herne (posunutá o OX metrov), aby sa nemiešala so stolom a herňou.
  */
 import * as THREE from 'three';
+import { _t, LANG } from './i18n.js';
 import { buildCueMesh } from './cues.js';
 import { feature } from 'topojson-client';
 import { countryByCode, ISO_NUM } from './countries.js';
@@ -323,15 +324,15 @@ export function buildOffice(scene) {
 				g.fillText(t, x, y);
 			};
 			g.textAlign = 'left';
-			pen('Liga – kedy sa hrá', 100, 128, 64);
-			pen('Denne', 100, 236, 52, '#1c2b6b', 500);
+			pen(_t('Liga – kedy sa hrá'), 100, 128, 64);
+			pen(_t('Denne'), 100, 236, 52, '#1c2b6b', 500);
 			pen(`${lt.utc} UTC`, 100, 300, 60);
-			pen('U mňa (miestny čas):', 100, 428, 50, '#1c2b6b', 500);
+			pen(_t('U mňa (miestny čas):'), 100, 428, 50, '#1c2b6b', 500);
 			pen(lt.local, 100, 500, 76, '#b3121f');
 			if (lt.tz) {
 				pen(lt.tz, 100, 556, 36, '#5a6478', 500);
 			}
-			pen('Nezabudni! →', 300, 680, 50, '#1c2b6b', 500);
+			pen(_t('Nezabudni! →'), 300, 680, 50, '#1c2b6b', 500);
 			// podčiarknutie miestneho času
 			g.strokeStyle = '#b3121f';
 			g.lineWidth = 4;
@@ -344,7 +345,7 @@ export function buildOffice(scene) {
 		};
 		drawPaper();
 		if (document.fonts && document.fonts.load) {
-			document.fonts.load('700 60px Caveat', 'Liga – kedy sa hrá U mňa').then(drawPaper, () => null);
+			document.fonts.load('700 60px Caveat', _t('Liga – kedy sa hrá') + ' ' + _t('U mňa (miestny čas):')).then(drawPaper, () => null);
 		}
 		const sheet = add(new THREE.PlaneGeometry(0.15, 0.19), new THREE.MeshStandardMaterial({ map: pp.t, transparent: true, alphaTest: 0.5, roughness: 0.95, side: THREE.DoubleSide }), -0.55, DT + 0.0025, DZ + 0.09);
 		sheet.rotation.order = 'YXZ';
@@ -496,11 +497,11 @@ export function buildOffice(scene) {
 		g.fillStyle = '#f2d48a';
 		g.font = 'bold 64px Georgia, serif';
 		g.textAlign = 'left';
-		g.fillText('Hráči ligy vo svete', 56, MH - 96); // dole vľavo (južný oceán je prázdny)
+		g.fillText(_t('Hráči ligy vo svete'), 56, MH - 96); // dole vľavo (južný oceán je prázdny)
 		g.font = '30px Georgia, serif';
 		g.fillStyle = 'rgba(242,212,138,0.8)';
 		const n = mapArgs[0].length;
-		g.fillText(n ? `${n} ${n === 1 ? 'hráč' : n < 5 ? 'hráči' : 'hráčov'} · ${by.size} ${by.size === 1 ? 'krajina' : by.size < 5 ? 'krajiny' : 'krajín'}` : 'Zatiaľ žiadni hráči', 58, MH - 52);
+		g.fillText(n ? (LANG === 'en' ? `${n} ${n === 1 ? 'player' : 'players'} · ${by.size} ${by.size === 1 ? 'country' : 'countries'}` : `${n} ${n === 1 ? 'hráč' : n < 5 ? 'hráči' : 'hráčov'} · ${by.size} ${by.size === 1 ? 'krajina' : by.size < 5 ? 'krajiny' : 'krajín'}`) : _t('Zatiaľ žiadni hráči'), 58, MH - 52);
 		// špendlík za každú krajinu s počtom hráčov; moja krajina zlatá, ostatné strieborné
 		for (const [code, list] of by) {
 			const c = countryByCode(code);
@@ -700,7 +701,7 @@ export function buildOffice(scene) {
 		g.fillStyle = '#7cc4f2';
 		g.font = 'bold 34px Arial, sans-serif';
 		g.textAlign = 'center';
-		g.fillText('MY SNOOKER ARÉNA', 640, 990);
+		g.fillText(_t('MY SNOOKER ARÉNA'), 640, 990);
 		view.t.needsUpdate = true;
 	}
 	const outside = add(new THREE.PlaneGeometry(WW, WH), new THREE.MeshBasicMaterial({ map: view.t }), WX, WY, RZo - 0.06);
@@ -755,10 +756,10 @@ export function buildOffice(scene) {
 		g.textAlign = 'center';
 		if (on) {
 			g.font = 'bold 40px Arial, sans-serif';
-			g.fillText('VYHĽADÁVAM ZÁPAS', 256, 80);
+			g.fillText(_t('VYHĽADÁVAM ZÁPAS'), 256, 80);
 		} else {
 			g.font = 'bold 54px Georgia, serif';
-			g.fillText('ŠTADIÓN', 256, 84);
+			g.fillText(_t('ŠTADIÓN'), 256, 84);
 		}
 		doorSign.t.needsUpdate = true;
 		doorLamp.material.color.setHex(on ? 0xffc040 : 0x224422);
@@ -805,19 +806,19 @@ export function buildOffice(scene) {
 		g.fillStyle = '#f2d48a';
 		g.textAlign = 'center';
 		g.font = 'bold 50px Georgia, serif';
-		g.fillText('KANCELÁRIA', 512, 100);
+		g.fillText(_t('KANCELÁRIA'), 512, 100);
 		const rows = [
-			['F1', 'táto nástenka'],
-			['F2', 'tágá do ligového zápasu (4 kusy)'],
-			['F3', 'pohľad na kalendár sezóny'],
-			['F4', 'tabuľa výsledkov líg'],
-			['F6', 'otvoriť alebo zatvoriť okno'],
-			['F7', 'notebook Moja liga'],
-			['F8', 'vizitka: registrácia, moje údaje'],
-			['F9', 'vyhľadať zápas (aj dvere ŠTADIÓN)'],
-			['F10', 'mapa hráčov ligy'],
-			['Ctrl', 'drž: voľná myš na klikanie'],
-			['Esc', 'späť za stôl, potom do herne'],
+			['F1', _t('táto nástenka')],
+			['F2', _t('tágá do ligového zápasu (4 kusy)')],
+			['F3', _t('pohľad na kalendár sezóny')],
+			['F4', _t('tabuľa výsledkov líg')],
+			['F6', _t('otvoriť alebo zatvoriť okno')],
+			['F7', _t('notebook Moja liga')],
+			['F8', _t('vizitka: registrácia, moje údaje')],
+			['F9', _t('vyhľadať zápas (aj dvere ŠTADIÓN)')],
+			['F10', _t('mapa hráčov ligy')],
+			['Ctrl', _t('drž: voľná myš na klikanie')],
+			['Esc', _t('späť za stôl, potom do herne')],
 		];
 		g.textAlign = 'left';
 		rows.forEach(([k, t], i) => {
@@ -848,15 +849,15 @@ export function buildOffice(scene) {
 		g.fillStyle = '#FACC15';
 		g.font = 'bold 34px Arial, sans-serif';
 		g.textAlign = 'center';
-		g.fillText('MOJA LIGA', 256, 60);
+		g.fillText(_t('MOJA LIGA'), 256, 60);
 		g.fillStyle = '#fff';
 		g.font = 'bold 64px Arial, sans-serif';
-		g.fillText(d && d.me ? `${d.me.league}. liga` : 'bez registrácie', 256, 150);
+		g.fillText(d && d.me ? _t('{n}. liga', { n: d.me.league }) : _t('bez registrácie'), 256, 150);
 		g.font = '32px Arial, sans-serif';
 		g.fillText(d && d.me ? `${d.me.rank}. miesto · ${d.me.points} b.` : '', 256, 210);
 		g.fillStyle = '#9fb3d9';
 		g.font = '26px Arial, sans-serif';
-		g.fillText(d && d.me ? `V ${d.me.wins} · P ${d.me.losses} · séria ${d.me.best} · ELO ${d.me.elo}` : '', 256, 260);
+		g.fillText(d && d.me ? _t('V {w} · P {l} · séria {b} · ELO {e}', { w: d.me.wins, l: d.me.losses, b: d.me.best, e: d.me.elo }) : '', 256, 260);
 		g.restore();
 		nb.t.needsUpdate = true;
 	};
@@ -877,7 +878,7 @@ export function buildOffice(scene) {
 			g.fillStyle = '#fff';
 			g.font = 'bold 40px Arial, sans-serif';
 			g.textAlign = 'center';
-			g.fillText(`${n}. LIGA`, x + 239, 155);
+			g.fillText(_t('{n}. LIGA', { n }), x + 239, 155);
 			const rows = (d && d.leagues && d.leagues[n]) || [];
 			for (let i = 0; i < 10; i++) {
 				const r = rows[i];
@@ -902,7 +903,7 @@ export function buildOffice(scene) {
 		g.fillStyle = '#9fb3d9';
 		g.font = '30px Arial, sans-serif';
 		g.textAlign = 'center';
-		g.fillText(d && d.me ? `Ty: ${d.me.rank}. miesto v ${d.me.league}. lige · ${d.me.points} bodov · výhry ${d.me.wins}, prehry ${d.me.losses}` : 'Body: víťaz získa, koľko nahral; porazený ich stratí', 1024, 880);
+		g.fillText(d && d.me ? _t('Ty: {r}. miesto v {l}. lige · {p} bodov · výhry {w}, prehry {x}', { r: d.me.rank, l: d.me.league, p: d.me.points, w: d.me.wins, x: d.me.losses }) : _t('Body: víťaz získa, koľko nahral; porazený ich stratí'), 1024, 880);
 		res.t.needsUpdate = true;
 		// notebook
 		lastBoards = d;
@@ -924,7 +925,7 @@ export function buildOffice(scene) {
 		g.font = 'bold 120px Georgia, serif';
 		g.fillText(String(now.getDate()), 200, 190);
 		g.font = '24px Arial, sans-serif';
-		g.fillText(d && d.season ? `do konca sezóny ${d.season.daysLeft} dní` : 'sezóna ligy', 200, 260);
+		g.fillText(d && d.season ? _t('do konca sezóny {n} dní', { n: d.season.daysLeft }) : _t('sezóna ligy'), 200, 260);
 		cal.t.needsUpdate = true;
 		setChampions(champions);
 	};
@@ -949,17 +950,17 @@ export function buildOffice(scene) {
 		g.textAlign = 'center';
 		g.fillStyle = '#f4d98a';
 		g.font = 'bold 34px Georgia, serif';
-		g.fillText('MY SNOOKER · LIGA', W / 2, 82);
+		g.fillText(_t('MY SNOOKER · LIGA'), W / 2, 82);
 		const reg = d && d.registered;
 		const p = (d && d.player) || {};
 		g.fillStyle = '#fff4e6';
 		if (!reg) {
 			g.font = 'bold 58px Georgia, serif';
-			g.fillText('Registrácia', W / 2, 190);
-			g.fillText('do ligy', W / 2, 256);
+			g.fillText(_t('Registrácia'), W / 2, 190);
+			g.fillText(_t('do ligy'), W / 2, 256);
 			g.font = '28px Arial, sans-serif';
 			g.fillStyle = '#f4d98a';
-			g.fillText(d && d.season ? d.season.name + ' · klikni a vyplň' : 'klikni a vyplň', W / 2, 330);
+			g.fillText(d && d.season ? d.season.name + ' · ' + _t('klikni a vyplň') : _t('klikni a vyplň'), W / 2, 330);
 		} else {
 			const me = d.me || {};
 			g.font = 'bold 56px Georgia, serif';
@@ -1040,12 +1041,12 @@ export function buildOffice(scene) {
 		g.textAlign = 'left';
 		g.fillStyle = '#14215c';
 		g.font = 'italic bold 44px Georgia, serif';
-		g.fillText('Teraz v hre', 72, 86);
+		g.fillText(_t('Teraz v hre'), 72, 86);
 		const on = st ? st.online : null;
 		const wt = st ? st.waiting : null;
 		g.font = 'italic bold 40px Georgia, serif';
-		g.fillText('Online', 72, 184);
-		g.fillText('Čakajú na zápas', 72, 362);
+		g.fillText(_t('Online'), 72, 184);
+		g.fillText(_t('Čakajú na zápas'), 72, 362);
 		g.font = 'bold 110px Georgia, serif';
 		g.fillStyle = '#0a1238';
 		g.fillText(on === null ? '…' : String(on), 92, 296);

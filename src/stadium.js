@@ -5,6 +5,7 @@
  * Všetko je postavené z 3D tvarov, prepína sa s herňou (visible).
  */
 import * as THREE from 'three';
+import { _t } from './i18n.js';
 import { buildCueMesh } from './cues.js';
 import { buildFan, reactFans, updateFans, buildReferee } from './fans.js';
 import { realReferee, realFan, rudoExtras, SPECTATORS, setRealPeople } from './realPerson.js';
@@ -431,11 +432,11 @@ export function buildStadium(scene, quality, clock = 45) {
 			g.stroke();
 		}
 		// hlavička
-		const titles = ['Klávesy a ovládanie', 'Správanie hráča', 'Situácie v hre'];
+		const titles = [_t('Klávesy a ovládanie'), _t('Správanie hráča'), _t('Situácie v hre')];
 		g.textAlign = 'left';
 		g.fillStyle = '#b3121f';
 		g.font = 'bold 22px Arial, sans-serif';
-		g.fillText('MY SNOOKER · ŠTADIÓN', 120, 118);
+		g.fillText(_t('MY SNOOKER · ŠTADIÓN'), 120, 118);
 		g.fillStyle = '#1d3f8f';
 		g.font = 'bold 50px Georgia, serif';
 		g.fillText(titles[padPage], 120, 172);
@@ -471,68 +472,68 @@ export function buildStadium(scene, quality, clock = 45) {
 			g.textAlign = 'left';
 		};
 		if (padPage === 0) {
-			head('Klávesy');
-			row('F1', 'tento blok (← → listovať)');
-			row('F2', 'môj stojan s tágami');
-			row('F3', 'krieda a nádstavce');
-			row('F4', 'skóre na veľkej obrazovke');
-			row('F7', 'moje kreslo');
-			row('F12', 'bodové svetlá (na ťahu)');
-			row('Tab', 'pohľad zhora');
-			row('Medzerník', 'voľná kamera');
-			row('Ctrl', 'voľná myš, klik na predmety');
-			row('Esc', 'menu  ·  F5 obnoviť  ·  F11 celá obrazovka');
+			head(_t('Klávesy'));
+			row('F1', _t('tento blok (← → listovať)'));
+			row('F2', _t('môj stojan s tágami'));
+			row('F3', _t('krieda a nádstavce'));
+			row('F4', _t('skóre na veľkej obrazovke'));
+			row('F7', _t('moje kreslo'));
+			row('F12', _t('bodové svetlá (na ťahu)'));
+			row('Tab', _t('pohľad zhora'));
+			row(_t('Medzerník'), _t('voľná kamera'));
+			row(_t('Ctrl'), _t('voľná myš, klik na predmety'));
+			row('Esc', _t('menu  ·  F5 obnoviť  ·  F11 celá obrazovka'));
 			y += 10;
-			head('Myš');
-			row('Pohyb', 'mierenie (Shift jemnejšie)');
-			row('Ľavé drž', 'odtiahni tágo a pošli ho dopredu');
-			row('Koliesko drž', 'miesto úderu na bielej (falša)');
-			row('Shift+koliesko', 'uhol tága (swerve, massé)');
-			row('Pravé drž', 'posun pohľadu okolo gule');
-			row('Koliesko', 'priblíženie a oddialenie');
-			box(`Na úder máš ${clock} sekúnd, inak faul za čas.`);
+			head(_t('Myš'));
+			row(_t('Pohyb'), _t('mierenie (Shift jemnejšie)'));
+			row(_t('Ľavé drž'), _t('odtiahni tágo a pošli ho dopredu'));
+			row(_t('Koliesko drž'), _t('miesto úderu na bielej (falša)'));
+			row(_t('Shift+koliesko'), _t('uhol tága (swerve, massé)'));
+			row(_t('Pravé drž'), _t('posun pohľadu okolo gule'));
+			row(_t('Koliesko'), _t('priblíženie a oddialenie'));
+			box(_t('Na úder máš {n} sekúnd, inak faul za čas.', { n: clock }));
 		} else if (padPage === 1) {
-			head('Klávesy hráča (v partii)');
-			row('N', 'napiť sa vody: ďalší úder falša 15×', 230);
-			row('G', 'grgnúť: diváci aj Rudo sú pohoršení', 230);
-			row('H', 'prdnúť: súperovi sa 3 s vlní obraz', 230);
-			row('T', 'telefón: účet, úspechy a XP', 230);
-			row('Mobil', 'tlačidlo s pohárom vľavo', 230);
+			head(_t('Klávesy hráča (v partii)'));
+			row('N', _t('napiť sa vody: ďalší úder falša 15×'), 230);
+			row('G', _t('grgnúť: diváci aj Rudo sú pohoršení'), 230);
+			row('H', _t('prdnúť: súperovi sa 3 s vlní obraz'), 230);
+			row('T', _t('telefón: účet, úspechy a XP'), 230);
+			row(_t('Mobil'), _t('tlačidlo s pohárom vľavo'), 230);
 			y += 10;
-			head('Nešportové správanie v lige (G a H)');
-			row('1.', 'bez trestu', 230);
-			row('2.', 'napomenutie rozhodcom', 230);
-			row('3.', 'súper +4 body', 230);
-			row('4.', 'súper +4 a posledné upozornenie', 230);
-			row('5.', 'súper +4 body', 230);
-			row('6.', 'diskvalifikácia, súper vyhráva', 230);
-			box('Voda sa netrestá. Prehrešky počíta server.');
+			head(_t('Nešportové správanie v lige (G a H)'));
+			row('1.', _t('bez trestu'), 230);
+			row('2.', _t('napomenutie rozhodcom'), 230);
+			row('3.', _t('súper +4 body'), 230);
+			row('4.', _t('súper +4 a posledné upozornenie'), 230);
+			row('5.', _t('súper +4 body'), 230);
+			row('6.', _t('diskvalifikácia, súper vyhráva'), 230);
+			box(_t('Voda sa netrestá. Prehrešky počíta server.'));
 		} else {
-			head('Na farbu (po červenej)');
-			row('Farba', 'body za farbu, ktorá spadne,', 290);
-			row('', 'aj keď ju potopí iná farba', 290);
-			row('Dve farby', 'naraz spadnuté sú faul', 290);
+			head(_t('Na farbu (po červenej)'));
+			row(_t('Farba'), _t('body za farbu, ktorá spadne,'), 290);
+			row('', _t('aj keď ju potopí iná farba'), 290);
+			row(_t('Dve farby'), _t('naraz spadnuté sú faul'), 290);
 			y += 10;
-			head('Po súperovom faule');
-			row('Hrám ja', 'hráš, ako gule stoja', 290);
-			row('Súper hrá', 'gule sa vrátia pred faul', 290);
+			head(_t('Po súperovom faule'));
+			row(_t('Hrám ja'), _t('hráš, ako gule stoja'), 290);
+			row(_t('Súper hrá'), _t('gule sa vrátia pred faul'), 290);
 			y += 10;
-			head('Skokový úder');
-			row('Bod dole', 'sila 70 %+, s kriedou a vodou vyššie', 290);
+			head(_t('Skokový úder'));
+			row(_t('Bod dole'), _t('sila 70 %+, s kriedou a vodou vyššie'), 290);
 			y += 10;
-			head('Uhol tága a falša');
-			row('8 – 25°', 'swerve: mierny oblúk', 290);
-			row('45 – 80°', 'massé: veľký oblúk, bez kriedy šmyk', 290);
+			head(_t('Uhol tága a falša'));
+			row('8 – 25°', _t('swerve: mierny oblúk'), 290);
+			row('45 – 80°', _t('massé: veľký oblúk, bez kriedy šmyk'), 290);
 			y += 10;
-			head('Potrebuješ snookery');
-			row('Vzdať', 'súper vyhrá frame (alebo partiu)', 290);
-			row('Pokračovať', 'rozhodca a diváci zareagujú', 290);
+			head(_t('Potrebuješ snookery'));
+			row(_t('Vzdať'), _t('súper vyhrá frame (alebo partiu)'), 290);
+			row(_t('Pokračovať'), _t('rozhodca a diváci zareagujú'), 290);
 		}
 		g.fillStyle = '#5c6270';
 		g.font = 'italic 25px Georgia, serif';
 		g.textAlign = 'center';
-		g.fillText(`Strana ${padPage + 1} / ${PAD_PAGES}  ·  ← → listovať  ·  vľavo pravidlá, vpravo body ligy`, w / 2 + 40, h - 72);
-		g.fillText('F1 alebo Esc: späť do hry', w / 2 + 40, h - 32);
+		g.fillText(_t('Strana {a} / {b}  ·  ← → listovať  ·  vľavo pravidlá, vpravo body ligy', { a: padPage + 1, b: PAD_PAGES }), w / 2 + 40, h - 72);
+		g.fillText(_t('F1 alebo Esc: späť do hry'), w / 2 + 40, h - 32);
 		paper.t.needsUpdate = true;
 	};
 	drawPaper();
@@ -1174,13 +1175,13 @@ export function buildStadium(scene, quality, clock = 45) {
 			g.fillStyle = '#fff';
 			g.font = 'bold 40px Arial, sans-serif';
 			g.textAlign = 'center';
-			g.fillText((d && d.title) || 'MY SNOOKER LIGA', W2 / 2, 50);
+			g.fillText((d && d.title) || _t('MY SNOOKER LIGA'), W2 / 2, 50);
 			if (d && d.winner) {
 				// po zápase: víťaz, skóre, najvyššie série a výhry v sezóne
 				g.textAlign = 'center';
 				g.fillStyle = '#FACC15';
 				g.font = 'bold 46px Arial, sans-serif';
-				g.fillText('🏆 VÍŤAZ 🏆', W2 / 2, 135);
+				g.fillText(_t('🏆 VÍŤAZ 🏆'), W2 / 2, 135);
 				g.fillStyle = '#ffffff';
 				let fs = 92;
 				g.font = `bold ${fs}px Arial, sans-serif`;
@@ -1210,12 +1211,12 @@ export function buildStadium(scene, quality, clock = 45) {
 				});
 				g.fillStyle = '#9fb3d9';
 				g.font = '34px Arial, sans-serif';
-				g.fillText(`Séria ${d.brk}   ·   Hrá sa na ${d.on}`, 40, 420);
+				g.fillText(_t('Séria {b}   ·   Hrá sa na {on}', { b: d.brk, on: d.on }), 40, 420);
 			} else {
 				g.fillStyle = '#e8ecf3';
 				g.font = 'bold 48px Arial, sans-serif';
 				g.textAlign = 'center';
-				g.fillText((d && d.idle) || 'Vyzvi hráča z ligy', W2 / 2, 260);
+				g.fillText((d && d.idle) || _t('Vyzvi hráča z ligy'), W2 / 2, 260);
 			}
 			g.fillStyle = '#6f84b3';
 			g.font = '28px Arial, sans-serif';
