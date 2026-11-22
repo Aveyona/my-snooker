@@ -79,9 +79,10 @@ function mysn_rest_einvite( $req ) {
 	set_transient( 'mysn_einv_' . $token, array( 'from' => $uid, 'email' => $email, 'frames' => $frames, 't' => time(), 'by' => 0 ), MYSN_EINV_DAYS * DAY_IN_SECONDS );
 	$name = mysn_name( $uid );
 	$link = add_query_arg( 'pozvanka', $token, mysn_url() );
-	$what = $frames > 1 ? 'partiu snookeru na ' . $frames . ' framy' : 'partiu snookeru';
-	$text = sprintf( "%s ťa pozýva na %s v hre My Snooker – 3D snooker priamo v prehliadači, na počítači aj na mobile.\n\n%s\n\nÚčet nepotrebuješ: stačí zadať meno a hráš ako hosť. Pozvánka platí %d dní.\n\nAk %s nepoznáš, tento e-mail pokojne ignoruj.", $name, $what, $link, MYSN_EINV_DAYS, $name );
-	$ok   = wp_mail( $email, sprintf( '%s ťa pozýva na partiu snookeru', $name ), $text );
+	// 0.43.5: e-mail v jazyku pozývajúceho (jazyk pozvaného nepoznáme)
+	$what = $frames > 1 ? mysn_t( 'partiu snookeru na {n} framy', array( 'n' => $frames ) ) : mysn_t( 'partiu snookeru' );
+	$text = mysn_t( "{name} ťa pozýva na {what} v hre My Snooker – 3D snooker priamo v prehliadači, na počítači aj na mobile.\n\n{link}\n\nÚčet nepotrebuješ: stačí zadať meno a hráš ako hosť. Pozvánka platí {days} dní.\n\nAk {name} nepoznáš, tento e-mail pokojne ignoruj.", array( 'name' => $name, 'what' => $what, 'link' => $link, 'days' => MYSN_EINV_DAYS ) );
+	$ok   = wp_mail( $email, mysn_t( '{name} ťa pozýva na partiu snookeru', array( 'name' => $name ) ), $text );
 	if ( ! $ok ) {
 		return mysn_err( 'E-mail sa nepodarilo odoslať. Skús to neskôr.' );
 	}
@@ -163,7 +164,8 @@ function mysn_rest_einvite_accept( $req ) {
 			$u = get_userdata( $from );
 			if ( $u && is_email( $u->user_email ) ) {
 				$me = mysn_name( $uid );
-				wp_mail( $u->user_email, sprintf( '%s prijal tvoju pozvánku na snooker', $me ), sprintf( "%s prijal tvoju pozvánku na partiu a čaká v hre My Snooker.\n\n%s\n\nKeď prídeš do hry, v zozname hráčov ho vyzveš na partiu.", $me, mysn_url() ) );
+				$ul = function_exists( 'mysn_user_lang' ) && mysn_user_lang( $from ) ? mysn_user_lang( $from ) : 'sk'; // jazyk pozývajúceho
+				wp_mail( $u->user_email, mysn_t( '{n} prijal tvoju pozvánku na snooker', array( 'n' => $me ), $ul ), mysn_t( "{n} prijal tvoju pozvánku na partiu a čaká v hre My Snooker.\n\n{url}\n\nKeď prídeš do hry, v zozname hráčov ho vyzveš na partiu.", array( 'n' => $me, 'url' => mysn_url() ), $ul ) );
 			}
 		}
 		return array( 'status' => 'away', 'from' => $name );

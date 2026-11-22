@@ -134,7 +134,7 @@ add_filter(
 					return $resp;
 				}
 				if ( mysn_ch_fail( $uid, $c, 'hra odpovedala zle – kód hry je zmenený' ) ) {
-					return new WP_Error( 'mysn_cheat', 'Partia bola zrušená: systém zistil zmenenú hru.', array( 'status' => 403 ) );
+					return new WP_Error( 'mysn_cheat', mysn_t( 'Partia bola zrušená: systém zistil zmenenú hru.' ), array( 'status' => 403 ) );
 				}
 				return $resp;
 			}
@@ -144,7 +144,7 @@ add_filter(
 		if ( $c['r'] >= 2 || time() - $c['d'] > 30 ) {
 			if ( $c['miss'] >= 1 ) {
 				if ( mysn_ch_fail( $uid, $c, 'hra na výzvu neodpovedala ani druhýkrát' ) ) {
-					return new WP_Error( 'mysn_cheat', 'Partia bola zrušená: hra neodpovedá na kontrolu servera.', array( 'status' => 403 ) );
+					return new WP_Error( 'mysn_cheat', mysn_t( 'Partia bola zrušená: hra neodpovedá na kontrolu servera.' ), array( 'status' => 403 ) );
 				}
 				return $resp;
 			}

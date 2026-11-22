@@ -79,7 +79,7 @@ add_action(
 /* ---------- pomocné ---------- */
 
 function mysn_err( $msg, $code = 400 ) {
-	return new WP_Error( 'mysn', $msg, array( 'status' => $code ) );
+	return new WP_Error( 'mysn', function_exists( 'mysn_t' ) ? mysn_t( $msg ) : $msg, array( 'status' => $code ) ); // 0.43.5: v jazyku hráča
 }
 
 /** Meno hráča, ako ho vidia ostatní: prezývka z ligy (ak ju má nastavenú), inak meno účtu. */
@@ -1106,7 +1106,7 @@ function mysn_rest_score( $req ) {
 	if ( $has ) {
 		$bad = mysn_verify_sanity( $log, $claim );
 		if ( $bad ) {
-			return mysn_err( 'Skóre sa nedá uložiť: ' . $bad );
+			return mysn_err( mysn_t( 'Skóre sa nedá uložiť: {why}', array( 'why' => mysn_t( $bad ) ) ) );
 		}
 	}
 	// 0.34.0: podvádzanie (úder nevznikol rukou) alebo suspendovaný hráč: skóre 0, nezapíše sa do rebríčka

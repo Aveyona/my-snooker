@@ -1,6 +1,8 @@
 /*
  * My Snooker: krajiny pre registráciu do ligy a mapu sveta v kancelárii (kód, názov, približný stred).
  */
+import { LANG } from './i18n.js';
+
 export const COUNTRIES = [
 	['SK', 'Slovensko', 48.7, 19.7],
 	['CZ', 'Česko', 49.8, 15.5],
@@ -73,6 +75,22 @@ export const COUNTRIES = [
 	['NZ', 'Nový Zéland', -40.9, 174.9],
 	['RU', 'Rusko', 61.5, 105.3],
 ];
+
+// 0.43.5: v angličtine názvy krajín z prehliadača (Intl.DisplayNames), zoradené podľa abecedy
+if (LANG === 'en' && typeof Intl !== 'undefined' && Intl.DisplayNames) {
+	try {
+		const dn = new Intl.DisplayNames(['en'], { type: 'region' });
+		for (const c of COUNTRIES) {
+			const n = dn.of(c[0]);
+			if (n && n !== c[0]) {
+				c[1] = n;
+			}
+		}
+		COUNTRIES.sort((a, b) => a[1].localeCompare(b[1], 'en'));
+	} catch (e) {
+		/* bez prekladu ostanú slovenské názvy */
+	}
+}
 
 export function countryByCode(code) {
 	const c = COUNTRIES.find((x) => x[0] === code);

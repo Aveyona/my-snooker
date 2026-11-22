@@ -3,12 +3,14 @@
  * Graf: os x = postup priblíženia (0 pohľad za tágom, 1 pri guli), krivka = výška kamery v násobkoch výšky
  * na začiatku (1 = ako za tágom); pásma rýchlosti hovoria, ako rýchlo sa v danej časti priblíženia ide.
  */
+import { _t } from './i18n.js';
+
 export const ZOOM_SPEEDS = [
-	{ v: 3, name: 'Najrýchlejšie' },
-	{ v: 2, name: 'Rýchlo' },
-	{ v: 1, name: 'Normálne' },
+	{ v: 3, name: _t('Najrýchlejšie') },
+	{ v: 2, name: _t('Rýchlo') },
+	{ v: 1, name: _t('Normálne') },
 	{ v: 0.5, name: 'Pomaly' },
-	{ v: 0.25, name: 'Najpomalšie' },
+	{ v: 0.25, name: _t('Najpomalšie') },
 ];
 
 /** Doterajšie správanie: stúpanie do polovice, potom klesanie ku guli, všade rovnaká rýchlosť. */

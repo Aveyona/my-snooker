@@ -35,7 +35,7 @@ function mysn_rest_account() {
 		$league = array(
 			'nick'    => isset( $p['nick'] ) ? (string) $p['nick'] : '',
 			'country' => isset( $p['country'] ) ? (string) $p['country'] : '',
-			'season'  => (string) $s['name'],
+			'season'  => (string) mysn_season_out( $s['name'] ),
 			'league'  => $me ? (int) $me['league'] : 0,
 			'rank'    => $me ? (int) $me['rank'] : 0,
 			'points'  => $me ? (int) $me['points'] : 0,
@@ -102,7 +102,7 @@ function mysn_rest_account_name( $req ) {
 	}
 	$next = mysn_name_next( $uid );
 	if ( $next ) {
-		return mysn_err( 'Meno sa dá meniť len raz za 30 dní. Znova ho môžeš zmeniť ' . wp_date( 'j. n. Y', $next ) . '.', 429 );
+		return mysn_err( mysn_t( 'Meno sa dá meniť len raz za 30 dní. Znova ho môžeš zmeniť {d}.', array( 'd' => wp_date( 'j. n. Y', $next ) ) ), 429 );
 	}
 	$r = wp_update_user( array( 'ID' => $uid, 'display_name' => $name ) );
 	if ( is_wp_error( $r ) ) {

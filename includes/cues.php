@@ -99,7 +99,7 @@ function mysn_rest_cue_save( $req ) {
 	}
 	$n = (int) $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM $t WHERE user_id = %d", $uid ) ); // phpcs:ignore
 	if ( $n >= MYSN_CUES_MAX ) {
-		return mysn_err( 'Môžeš mať najviac ' . MYSN_CUES_MAX . ' vlastných tág. Najprv jedno zmaž.' );
+		return mysn_err( mysn_t( 'Môžeš mať najviac {n} vlastných tág. Najprv jedno zmaž.', array( 'n' => MYSN_CUES_MAX ) ) );
 	}
 	$wpdb->insert(
 		$t,

@@ -178,7 +178,7 @@ function mysn_rest_history_match( $req ) {
 		'scores'   => array( (int) $m['score1'], (int) $m['score2'] ),
 		'result'   => $res,
 		'delta'    => $won ? max( 0, (int) $m['delta'] ) : ( $lost ? -max( 0, (int) $m['delta'] ) : 0 ),
-		'season'   => (string) $season,
+		'season'   => (string) mysn_season_out( $season ),
 		'elo'      => array( (int) ( $m['elo1'] ?? 0 ), (int) ( $m['elo2'] ?? 0 ) ),
 		'edel'     => array( (int) ( $m['edel1'] ?? 0 ), (int) ( $m['edel2'] ?? 0 ) ),
 		'date'     => (int) $m['created'],

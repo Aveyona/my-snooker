@@ -48,6 +48,11 @@ function mysn_league_of_rank( $rank, $total = 0 ) {
 }
 
 /** Názov sezóny podľa rokov začiatku a konca (Sezóna 2026/27). */
+/** Názov sezóny pre hru v jazyku hráča (uložený je po slovensky: Sezóna 2026/27). */
+function mysn_season_out( $name ) {
+	return function_exists( 'mysn_lang' ) && 'en' === mysn_lang() ? preg_replace( '/^Sezóna /u', 'Season ', (string) $name ) : $name;
+}
+
 function mysn_season_name( $start, $end ) {
 	return 'Sezóna ' . wp_date( 'Y', $start ) . '/' . wp_date( 'y', $end );
 }
@@ -189,7 +194,7 @@ function mysn_league_me( $uid, $ranked = null ) {
 function mysn_league_can_play( $a, $b ) {
 	global $wpdb;
 	if ( function_exists( 'mysn_is_guest' ) && ( mysn_is_guest( $a ) || mysn_is_guest( $b ) ) ) {
-		return 'Hosť môže hrať len priateľské partie, nie ligu.'; // 0.42.0
+		return mysn_t( 'Hosť môže hrať len priateľské partie, nie ligu.' ); // 0.42.0
 	}
 	mysn_league_join( $a );
 	mysn_league_join( $b );
@@ -198,19 +203,19 @@ function mysn_league_can_play( $a, $b ) {
 	$ra     = mysn_league_me( $a, $ranked );
 	$rb     = mysn_league_me( $b, $ranked );
 	if ( ! $ra || ! $rb || ! mysn_player( $a ) || ! mysn_player( $b ) ) {
-		return 'Ligovo môžu hrať len hráči registrovaní v lige (registrácia je v kancelárii).';
+		return mysn_t( 'Ligovo môžu hrať len hráči registrovaní v lige (registrácia je v kancelárii).' );
 	}
 	if ( mysn_league_banned( $a ) || mysn_league_banned( $b ) ) {
-		return 'Hráč má zakázanú ligu (rozhodol admin).';
+		return mysn_t( 'Hráč má zakázanú ligu (rozhodol admin).' );
 	}
 	if ( ! MYSN_LEAGUE_OPEN && abs( (int) $ra['league'] - (int) $rb['league'] ) > 1 ) {
-		return 'Ligovo sa dá hrať len s hráčmi z tvojej alebo susednej ligy.';
+		return mysn_t( 'Ligovo sa dá hrať len s hráčmi z tvojej alebo susednej ligy.' );
 	}
 	$t     = mysn_table( 'matches' );
 	$today = strtotime( 'today', time() );
 	$n     = (int) $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM $t WHERE league = 1 AND status = 'finished' AND updated >= %d AND ((p1 = %d AND p2 = %d) OR (p1 = %d AND p2 = %d))", $today, $a, $b, $b, $a ) ); // phpcs:ignore
 	if ( MYSN_LEAGUE_DAILY > 0 && $n >= MYSN_LEAGUE_DAILY ) {
-		return 'S týmto hráčom ste dnes už odohrali 3 ligové partie. Zajtra znova.';
+		return mysn_t( 'S týmto hráčom ste dnes už odohrali 3 ligové partie. Zajtra znova.' );
 	}
 	return '';
 }
@@ -410,7 +415,7 @@ function mysn_rest_league( $req ) {
 		'player'     => mysn_player( $uid ),
 		'season'  => array(
 			'id'       => (int) $s['id'],
-			'name'     => $s['name'],
+			'name'     => mysn_season_out( $s['name'] ),
 			'started'  => (int) $s['started'],
 			'ends'     => (int) $s['ends'],
 			'daysLeft' => max( 0, (int) ceil( ( (int) $s['ends'] - time() ) / DAY_IN_SECONDS ) ),
@@ -438,7 +443,7 @@ function mysn_rest_league_archive( $req ) {
 			}
 		}
 		$out[] = array(
-			'name'     => $s['name'],
+			'name'     => mysn_season_out( $s['name'] ),
 			'started'  => (int) $s['started'],
 			'ends'     => (int) $s['ends'],
 			'champion' => $s['champion'] ? mysn_user( $s['champion'] ) : null,
@@ -454,7 +459,7 @@ function mysn_league_champions() {
 	$out = array();
 	foreach ( $wpdb->get_results( 'SELECT name, champion FROM ' . mysn_table( 'seasons' ) . " WHERE status = 'finished' AND champion > 0 ORDER BY id DESC LIMIT 5", ARRAY_A ) as $s ) { // phpcs:ignore
 		$out[] = array(
-			'season' => $s['name'],
+			'season' => mysn_season_out( $s['name'] ),
 			'user'   => mysn_user( $s['champion'] ),
 		);
 	}

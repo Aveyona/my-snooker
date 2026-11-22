@@ -4,6 +4,7 @@
  * keď sa načítajú (ak to prehliadač dovolí).
  */
 import * as THREE from 'three';
+import { _t } from './i18n.js';
 
 const W = 2048;
 const H = 1448;
@@ -103,7 +104,7 @@ export function buildNewspaper(news, site) {
 		g.fillText(site || 'HEDLAJNER', 172, 128);
 		g.font = `italic 34px ${serif}`;
 		g.fillStyle = '#5a5246';
-		g.fillText('Hlavné správy z domova a zo sveta', 176, 172);
+		g.fillText(_t('Hlavné správy z domova a zo sveta'), 176, 172);
 		const today = new Date();
 		g.textAlign = 'right';
 		g.font = `30px ${serif}`;
@@ -114,7 +115,7 @@ export function buildNewspaper(news, site) {
 		g.fillRect(60, 207, W - 120, 1.5);
 		if (!items.length) {
 			g.font = `48px ${serif}`;
-			g.fillText('Správy sa nepodarilo načítať.', 80, 320);
+			g.fillText(_t('Správy sa nepodarilo načítať.'), 80, 320);
 			tex.needsUpdate = true;
 			return;
 		}
@@ -154,7 +155,7 @@ export function buildNewspaper(news, site) {
 		// ďalšie správy v dvoch stĺpcoch
 		g.fillStyle = ink;
 		g.font = `bold 34px Arial, sans-serif`;
-		g.fillText('ĎALŠIE SPRÁVY', 1070, ry + 8);
+		g.fillText(_t('ĎALŠIE SPRÁVY'), 1070, ry + 8);
 		g.fillRect(1070, ry + 22, 915, 3);
 		const rest = items.slice(3);
 		rest.forEach((it, i) => {
@@ -232,13 +233,13 @@ export function buildMagazine(rss) {
 	// hlavička časopisu
 	g.fillStyle = '#ffffff';
 	g.font = `900 120px ${sans}`;
-	g.fillText('SPRÁVY', 50, 150);
+	g.fillText(_t('SPRÁVY'), 50, 150);
 	g.fillStyle = '#ffcf4a';
 	g.font = `bold 44px ${sans}`;
 	g.fillText('RSS', 560, 150);
 	g.fillStyle = '#d6e6f5';
 	g.font = `30px ${sans}`;
-	g.fillText('Hedlajner  |  správy z médií doma aj vo svete', 54, 200);
+	g.fillText(_t('Hedlajner  |  správy z médií doma aj vo svete'), 54, 200);
 	const today = new Date();
 	g.textAlign = 'right';
 	g.fillText(`${today.getDate()}. ${today.getMonth() + 1}. ${today.getFullYear()}`, MW - 50, 70);
@@ -248,7 +249,7 @@ export function buildMagazine(rss) {
 	if (!items.length) {
 		g.fillStyle = '#fff';
 		g.font = `44px ${sans}`;
-		g.fillText('Správy z RSS nie sú k dispozícii.', 60, 330);
+		g.fillText(_t('Správy z RSS nie sú k dispozícii.'), 60, 330);
 		tex.needsUpdate = true;
 		return { texture: tex, items };
 	}
@@ -274,7 +275,7 @@ export function buildMagazine(rss) {
 		}
 		g.fillStyle = '#ffcf4a';
 		g.font = `bold 22px ${sans}`;
-		g.fillText(`${it.s || ''}${it.n ? '  +' + it.n + ' médiá' : ''}`, 60, y);
+		g.fillText(`${it.s || ''}${it.n ? '  +' + it.n + _t(' médiá') : ''}`, 60, y);
 		g.fillStyle = '#ffffff';
 		g.font = `bold 32px ${sans}`;
 		y = wrap(g, it.t, 60, y + 38, MW - 130, 38, 2) + 18;

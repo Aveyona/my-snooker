@@ -4,6 +4,7 @@
  * Kreslí sa zhora do 2D plátna: na obrazovku notebooku v kancelárii aj do administrácie.
  */
 import { Physics, createRack, restore, strike, L, W, R, POCKETS, COLOURS, BAULK_X, D_R, SPOTS } from './physics.js';
+import { _t } from './i18n.js';
 
 const css = (hex) => '#' + hex.toString(16).padStart(6, '0');
 
@@ -253,19 +254,19 @@ export class Replay {
 		g.textAlign = 'left';
 		g.fillStyle = '#FACC15';
 		g.font = `bold ${24 * u}px Arial, sans-serif`;
-		g.fillText(`Úder ${done} / ${this.n}`, 20 * u, h - foot + 26 * u);
+		g.fillText(_t('Úder {a} / {b}', { a: done, b: this.n }), 20 * u, h - foot + 26 * u);
 		g.fillStyle = '#e8eefc';
 		g.font = `${21 * u}px Arial, sans-serif`;
-		const msg = this.anim ? 'Úder sa prehráva…' : last ? last.msg || (last.foul ? 'Faul.' : last.points ? `${last.points} b.` : 'Bez bodov.') : 'Začiatok partie.';
+		const msg = this.anim ? _t('Úder sa prehráva…') : last ? last.msg || (last.foul ? _t('Faul.') : last.points ? `${last.points} ${_t('b.')}` : _t('Bez bodov.')) : _t('Začiatok partie.');
 		g.fillText(fit(g, msg, w - (this.playing ? 400 : 210) * u), 190 * u, h - foot + 26 * u);
 		g.fillStyle = '#9fb3d9';
 		g.font = `${20 * u}px Arial, sans-serif`;
 		g.textAlign = 'center';
-		g.fillText(opts.hint || '← predchádzajúci úder · → ďalší úder · medzerník prehrávať', w / 2, h - 26 * u);
+		g.fillText(opts.hint || _t('← predchádzajúci úder · → ďalší úder · medzerník prehrávať'), w / 2, h - 26 * u);
 		if (this.playing) {
 			g.textAlign = 'right';
 			g.fillStyle = '#7ee08a';
-			g.fillText('▶ prehráva sa', w - 20 * u, h - foot + 26 * u);
+			g.fillText(_t('▶ prehráva sa'), w - 20 * u, h - foot + 26 * u);
 		}
 		g.restore();
 	}

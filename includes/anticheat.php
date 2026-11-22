@@ -531,7 +531,7 @@ add_filter(
 		$uid = get_current_user_id();
 		$t   = $uid ? mysn_susp_until( $uid ) : 0;
 		if ( $t && ! mysn_is_admin_user( $uid ) ) {
-			return new WP_Error( 'mysn', 'Tvoj účet je dočasne pozastavený (kontrola férovej hry) do ' . wp_date( 'j. n. Y H:i', $t ) . ' alebo do rozhodnutia správcu.', array( 'status' => 403 ) );
+			return new WP_Error( 'mysn', mysn_t( 'Tvoj účet je dočasne pozastavený (kontrola férovej hry) do {d} alebo do rozhodnutia správcu.', array( 'd' => wp_date( 'j. n. Y H:i', $t ) ) ), array( 'status' => 403 ) );
 		}
 		return $result;
 	},

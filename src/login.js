@@ -4,6 +4,8 @@
  * odpoveď sa prečíta na pozadí: chyba sa ukáže v okne, po prihlásení sa hra načíta znova už s účtom.
  * auth: { page, google, email, register, terms, privacy, news } z MYSN_CONFIG (page.php).
  */
+import { _t } from './i18n.js';
+
 const esc = (t) => String(t || '').replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
 
 const GOOGLE_SVG =
@@ -18,7 +20,7 @@ export class LoginBox {
 		this.el.className = 'mysn-auth mysn-hidden';
 		this.el.setAttribute('role', 'dialog');
 		this.el.setAttribute('aria-modal', 'true');
-		this.el.setAttribute('aria-label', 'Prihlásenie');
+		this.el.setAttribute('aria-label', _t('Prihlásenie'));
 		// písanie do polí nesmie ovládať hru; Esc zavrie okno
 		this.el.addEventListener('keydown', (e) => {
 			e.stopPropagation();
@@ -64,59 +66,59 @@ export class LoginBox {
 		const msg = this.msg ? `<div class="mysn-lg-alert${this.msg.ok ? ' mysn-lg-ok' : ''}" role="${this.msg.ok ? 'status' : 'alert'}">${esc(this.msg.text)}</div>` : '';
 		let body = '';
 		if (tab === 'sent') {
-			body = `<div class="mysn-lg-body mysn-lg-sent"><h3>Skontroluj si e-mail</h3><p>${esc(this.sentText)}</p>
-				<button type="button" class="mysn-lg-btn" data-tab="login">Späť na prihlásenie</button></div>`;
+			body = `<div class="mysn-lg-body mysn-lg-sent"><h3>${_t('Skontroluj si e-mail')}</h3><p>${esc(this.sentText)}</p>
+				<button type="button" class="mysn-lg-btn" data-tab="login">${_t('Späť na prihlásenie')}</button></div>`;
 		} else if (tab === 'lost') {
-			body = `<div class="mysn-lg-body"><h3>Zabudnuté heslo</h3>${msg}<p class="mysn-lg-sub">Pošleme ti odkaz na nastavenie nového hesla.</p>
+			body = `<div class="mysn-lg-body"><h3>${_t('Zabudnuté heslo')}</h3>${msg}<p class="mysn-lg-sub">${_t('Pošleme ti odkaz na nastavenie nového hesla.')}</p>
 				<form class="mysn-lg-form" data-action="lost" novalidate>
-					<label for="mysn-lg-lemail">E-mail</label>
+					<label for="mysn-lg-lemail">${_t('E-mail')}</label>
 					<input id="mysn-lg-lemail" type="email" name="mu_email" autocomplete="email" required value="${esc(values.email)}">
-					<button type="submit" class="mysn-lg-btn">Poslať odkaz</button>
+					<button type="submit" class="mysn-lg-btn">${_t('Poslať odkaz')}</button>
 				</form>
-				<p class="mysn-lg-switch"><a href="#" data-tab="login">Späť na prihlásenie</a></p></div>`;
+				<p class="mysn-lg-switch"><a href="#" data-tab="login">${_t('Späť na prihlásenie')}</a></p></div>`;
 		} else {
-			const terms = a.terms ? `<a href="${esc(a.terms)}" target="_blank" rel="noopener">podmienkami používania</a>` : 'podmienkami používania';
-			const privacy = a.privacy ? `<a href="${esc(a.privacy)}" target="_blank" rel="noopener">spracovaním osobných údajov</a>` : 'spracovaním osobných údajov';
+			const terms = a.terms ? `<a href="${esc(a.terms)}" target="_blank" rel="noopener">${_t('podmienkami používania')}</a>` : _t('podmienkami používania');
+			const privacy = a.privacy ? `<a href="${esc(a.privacy)}" target="_blank" rel="noopener">${_t('spracovaním osobných údajov')}</a>` : _t('spracovaním osobných údajov');
 			body = `<div class="mysn-lg-body">
-				<h3>${reg ? 'Vytvor si účet' : 'Vitaj späť'}</h3>
-				<p class="mysn-lg-sub">${reg ? 'Zaregistruješ sa cez Google alebo e-mailom.' : 'Prihlás sa cez Google alebo e-mailom a heslom.'}</p>
+				<h3>${reg ? _t('Vytvor si účet') : _t('Vitaj späť')}</h3>
+				<p class="mysn-lg-sub">${reg ? _t('Zaregistruješ sa cez Google alebo e-mailom.') : _t('Prihlás sa cez Google alebo e-mailom a heslom.')}</p>
 				${msg}
-				${a.google ? `<a class="mysn-lg-google" href="${esc(a.google)}">${GOOGLE_SVG}<span>Pokračovať cez Google</span></a>` : ''}
+				${a.google ? `<a class="mysn-lg-google" href="${esc(a.google)}">${GOOGLE_SVG}<span>${_t('Pokračovať cez Google')}</span></a>` : ''}
 				${a.google && a.email ? '<div class="mysn-lg-or"><span>alebo e-mailom</span></div>' : ''}
 				${
 					a.email
 						? `<form class="mysn-lg-form" data-action="${reg ? 'register' : 'login'}" novalidate>
-					${reg ? `<label for="mysn-lg-name">Meno a priezvisko</label><input id="mysn-lg-name" type="text" name="mu_name" autocomplete="name" value="${esc(values.name)}">` : ''}
-					<label for="mysn-lg-email">E-mail</label>
+					${reg ? `<label for="mysn-lg-name">${_t('Meno a priezvisko')}</label><input id="mysn-lg-name" type="text" name="mu_name" autocomplete="name" value="${esc(values.name)}">` : ''}
+					<label for="mysn-lg-email">${_t('E-mail')}</label>
 					<input id="mysn-lg-email" type="email" name="mu_email" autocomplete="email" required value="${esc(values.email)}">
-					<div class="mysn-lg-row"><label for="mysn-lg-pass">Heslo</label>${reg ? '' : '<a href="#" data-tab="lost">Zabudnuté heslo?</a>'}</div>
+					<div class="mysn-lg-row"><label for="mysn-lg-pass">${_t('Heslo')}</label>${reg ? '' : _t('<a href="#" data-tab="lost">Zabudnuté heslo?</a>')}</div>
 					<input id="mysn-lg-pass" type="password" name="mu_pass" required autocomplete="${reg ? 'new-password' : 'current-password'}">
 					${
 						reg
-							? `<p class="mysn-lg-hint">Aspoň 8 znakov.</p>
-					<label class="mysn-lg-check"><input type="checkbox" name="mu_terms" value="1"><span>Súhlasím s ${terms} a so ${privacy}. (povinné)</span></label>
-					${a.news ? '<label class="mysn-lg-check"><input type="checkbox" name="mu_news" value="1"><span>Chcem dostávať novinky e-mailom. (nepovinné)</span></label>' : ''}`
-							: '<label class="mysn-lg-check"><input type="checkbox" name="mu_remember" value="1" checked><span>Zapamätať si ma</span></label>'
+							? `<p class="mysn-lg-hint">${_t('Aspoň 8 znakov.')}</p>
+					<label class="mysn-lg-check"><input type="checkbox" name="mu_terms" value="1"><span>${_t('Súhlasím s {t} a so {p}. (povinné)', { t: terms, p: privacy })}</span></label>
+					${a.news ? _t('<label class="mysn-lg-check"><input type="checkbox" name="mu_news" value="1"><span>Chcem dostávať novinky e-mailom. (nepovinné)</span></label>') : ''}`
+							: _t('<label class="mysn-lg-check"><input type="checkbox" name="mu_remember" value="1" checked><span>Zapamätať si ma</span></label>')
 					}
-					<button type="submit" class="mysn-lg-btn">${reg ? 'Vytvoriť účet' : 'Prihlásiť sa'}</button>
+					<button type="submit" class="mysn-lg-btn">${reg ? _t('Vytvoriť účet') : _t('Prihlásiť sa')}</button>
 				</form>
-				${a.register ? `<p class="mysn-lg-switch">${reg ? 'Už máš účet? <a href="#" data-tab="login">Prihlás sa</a>' : 'Ešte nemáš účet? <a href="#" data-tab="register">Zaregistruj sa</a>'}</p>` : ''}`
+				${a.register ? `<p class="mysn-lg-switch">${reg ? _t('Už máš účet? <a href="#" data-tab="login">Prihlás sa</a>') : _t('Ešte nemáš účet? <a href="#" data-tab="register">Zaregistruj sa</a>')}</p>` : ''}`
 						: ''
 				}
-				${!a.google && !a.email ? '<p class="mysn-lg-sub">Prihlásenie je momentálne vypnuté.</p>' : ''}
+				${!a.google && !a.email ? _t('<p class="mysn-lg-sub">Prihlásenie je momentálne vypnuté.</p>') : ''}
 			</div>`;
 		}
 		const tabs =
 			(tab === 'login' || tab === 'register') && a.register
-				? `<div class="mysn-lg-tabs" role="tablist"><button type="button" role="tab" data-tab="login" aria-selected="${!reg}">Prihlásiť sa</button><button type="button" role="tab" data-tab="register" aria-selected="${reg}">Zaregistrovať sa</button></div>`
+				? `<div class="mysn-lg-tabs" role="tablist"><button type="button" role="tab" data-tab="login" aria-selected="${!reg}">${_t('Prihlásiť sa')}</button><button type="button" role="tab" data-tab="register" aria-selected="${reg}">${_t('Zaregistrovať sa')}</button></div>`
 				: '';
 		this.el.innerHTML = `<div class="mysn-lg-wrap">
 			<div class="mysn-lg-card">
-				<button type="button" class="mysn-lg-close" aria-label="Zavrieť" title="Zavrieť (Esc)">×</button>
-				<div class="mysn-lg-head"><h2>My Snooker</h2><p>Prihlásenie do hry</p></div>
+				<button type="button" class="mysn-lg-close" aria-label="${_t('Zavrieť')}" title="${_t('Zavrieť (Esc)')}">×</button>
+				<div class="mysn-lg-head"><h2>My Snooker</h2><p>${_t('Prihlásenie do hry')}</p></div>
 				${tabs}${body}
 			</div>
-			${a.google && tab !== 'lost' && tab !== 'sent' ? '<p class="mysn-lg-foot">Pri prvom prihlásení cez Google sa účet vytvorí automaticky a súhlasíš s podmienkami používania. Uložíme meno, e-mail a fotku z Google účtu.</p>' : ''}
+			${a.google && tab !== 'lost' && tab !== 'sent' ? `<p class="mysn-lg-foot">${_t('Pri prvom prihlásení cez Google sa účet vytvorí automaticky a súhlasíš s podmienkami používania. Uložíme meno, e-mail a fotku z Google účtu.')}</p>` : ''}
 		</div>`;
 		this.el.querySelector('.mysn-lg-close').addEventListener('click', () => this.close());
 		for (const t of this.el.querySelectorAll('[data-tab]')) {
@@ -156,7 +158,7 @@ export class LoginBox {
 		this.keep();
 		this.busy = true;
 		btn.disabled = true;
-		btn.textContent = 'Chvíľu…';
+		btn.textContent = _t('Chvíľu…');
 		try {
 			// čerstvý ochranný kód z prihlasovacej stránky (stránka hry môže byť v cache)
 			const page = await fetch(this.auth.page, { credentials: 'same-origin', cache: 'no-store' });
@@ -168,7 +170,7 @@ export class LoginBox {
 					location.reload();
 					return;
 				}
-				throw new Error('Prihlasovací formulár sa nenačítal. Skús to znova.');
+				throw new Error(_t('Prihlasovací formulár sa nenačítal. Skús to znova.'));
 			}
 			const fd = new FormData(f);
 			fd.set('mu_action', action);
@@ -196,15 +198,15 @@ export class LoginBox {
 				this.render();
 			} else if (!box || !box.querySelector('.mu-form')) {
 				// prihlásený (alebo účet hneď aktívny): hra sa načíta znova už s účtom
-				this.msg = { ok: true, text: 'Prihlásené, načítavam hru…' };
+				this.msg = { ok: true, text: _t('Prihlásené, načítavam hru…') };
 				this.render();
 				location.reload();
 				return;
 			} else {
-				throw new Error('Niečo sa nepodarilo. Skús to znova.');
+				throw new Error(_t('Niečo sa nepodarilo. Skús to znova.'));
 			}
 		} catch (e) {
-			this.msg = { ok: false, text: e.message || 'Spojenie zlyhalo. Skús to znova.' };
+			this.msg = { ok: false, text: e.message || _t('Spojenie zlyhalo. Skús to znova.') };
 			this.render();
 		}
 		this.busy = false;

@@ -4,9 +4,11 @@
  * (inak len tréning). Hra potom v náhodných chvíľach (20 – 90 s a pred niektorými údermi) pošle snímku obrazovky
  * a vnútorný obrázok hry na server (includes/snaps.php). Zastavenie zdieľania = partia zrušená, frame neplatný.
  */
+import { _t } from './i18n.js';
+
 
 const TEXT = (days) =>
-	`Pri tvojom účte je potrebné overenie férovej hry. Počas partie budeme v náhodných chvíľach robiť snímky celej obrazovky. Snímky slúžia len na kontrolu podvádzania, uchovávame ich ${days} dní a vidí ich iba správca. Bez súhlasu môžeš hrať tréning.`;
+	_t('Pri tvojom účte je potrebné overenie férovej hry. Počas partie budeme v náhodných chvíľach robiť snímky celej obrazovky. Snímky slúžia len na kontrolu podvádzania, uchovávame ich {n} dní a vidí ich iba správca. Bez súhlasu môžeš hrať tréning.', { n: days });
 
 export class Snaps {
 	constructor(net, root, toast) {
@@ -29,7 +31,7 @@ export class Snaps {
 			const el = document.createElement('div');
 			el.className = 'mysn-choice mysn-snapask';
 			el.style.zIndex = '60';
-			el.innerHTML = '<div class="mysn-choice-t"></div><div class="mysn-choice-b"><button type="button" data-a="1">Súhlasím</button><button type="button" data-a="0">Len tréning</button></div>';
+			el.innerHTML = _t('<div class="mysn-choice-t"></div><div class="mysn-choice-b"><button type="button" data-a="1">Súhlasím</button><button type="button" data-a="0">Len tréning</button></div>');
 			el.querySelector('.mysn-choice-t').textContent = TEXT(days);
 			el.addEventListener('click', (e) => {
 				const b = e.target.closest('button');
@@ -71,7 +73,7 @@ export class Snaps {
 			}
 		}
 		if (!navigator.mediaDevices || !navigator.mediaDevices.getDisplayMedia) {
-			this.toast('Overenie férovej hry potrebuje snímanie obrazovky, ktoré tento prehliadač nevie (mobil). Hrať môžeš tréning.');
+			this.toast(_t('Overenie férovej hry potrebuje snímanie obrazovky, ktoré tento prehliadač nevie (mobil). Hrať môžeš tréning.'));
 			return false;
 		}
 		try {
@@ -80,7 +82,7 @@ export class Snaps {
 			const set = tr && tr.getSettings ? tr.getSettings() : {};
 			if (set.displaySurface && set.displaySurface !== 'monitor') {
 				s.getTracks().forEach((t) => t.stop());
-				this.toast('Treba zdieľať celú obrazovku, nie okno ani kartu.');
+				this.toast(_t('Treba zdieľať celú obrazovku, nie okno ani kartu.'));
 				return false;
 			}
 			this.stream = s;
@@ -93,7 +95,7 @@ export class Snaps {
 			setTimeout(() => this.capture(), 3000); // prvá snímka hneď na začiatku
 			return true;
 		} catch (e) {
-			this.toast('Bez zdieľania celej obrazovky sa výsledok nezapíše. Hrať môžeš tréning.');
+			this.toast(_t('Bez zdieľania celej obrazovky sa výsledok nezapíše. Hrať môžeš tréning.'));
 			return false;
 		}
 	}
@@ -124,7 +126,7 @@ export class Snaps {
 		const ref = (this.refFn && this.refFn()) || this.ref;
 		if (byUser && ref) {
 			this.net.call('snap/stop', { ref }).catch(() => {});
-			this.toast('Zdieľanie obrazovky sa skončilo: výsledok tejto hry sa nezapíše.');
+			this.toast(_t('Zdieľanie obrazovky sa skončilo: výsledok tejto hry sa nezapíše.'));
 		}
 	}
 

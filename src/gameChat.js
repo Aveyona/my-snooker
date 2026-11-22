@@ -8,6 +8,8 @@
  * partia, správy zmiznú po jej konci) a Snooker (spoločná miestnosť); Tab v políčku prepína, kam píšem.
  * Správy zápasu prídu cez kanál snk:c<kód partie> na live serveri, poistkou je dopyt.
  */
+import { _t } from './i18n.js';
+
 
 const esc = (s) => String(s == null ? '' : s);
 
@@ -25,19 +27,19 @@ export function gameChat(root, cfg, hooks = {}) {
 	input.type = 'text';
 	input.maxLength = Math.max(200, (cfg.maxWords || 500) * 12);
 	input.autocomplete = 'off';
-	input.placeholder = hooks.canWrite && hooks.canWrite() ? 'Správa do miestnosti ' + esc(cfg.roomName || 'Snooker') + ' (Enter pošle, Esc zavrie)' : 'Písať môžu prihlásení';
+	input.placeholder = hooks.canWrite && hooks.canWrite() ? _t('Správa do miestnosti {r}', { r: esc(cfg.roomName || 'Snooker') }) + _t(' (Enter pošle, Esc zavrie)') : _t('Písať môžu prihlásení');
 	const note = document.createElement('div');
 	note.className = 'mysn-gchat-note';
 	const tabs = document.createElement('div');
 	tabs.className = 'mysn-gchat-tabs mysn-hidden';
 	const tabM = document.createElement('button');
 	tabM.type = 'button';
-	tabM.textContent = '🎱 Zápas';
+	tabM.textContent = _t('🎱 Zápas');
 	const tabS = document.createElement('button');
 	tabS.type = 'button';
 	tabS.textContent = esc(cfg.roomName || 'Snooker');
 	const tabHint = document.createElement('small');
-	tabHint.textContent = 'Tab prepína';
+	tabHint.textContent = _t('Tab prepína');
 	tabs.append(tabM, tabS, tabHint);
 	// riadok na písanie: políčko a ✕ (zavrie písanie, ako Esc)
 	const row0 = document.createElement('div');
@@ -46,8 +48,8 @@ export function gameChat(root, cfg, hooks = {}) {
 	xBtn.type = 'button';
 	xBtn.className = 'mysn-gchat-x';
 	xBtn.textContent = '✕';
-	xBtn.title = 'Zavrieť písanie';
-	xBtn.setAttribute('aria-label', 'Zavrieť písanie');
+	xBtn.title = _t('Zavrieť písanie');
+	xBtn.setAttribute('aria-label', _t('Zavrieť písanie'));
 	row0.append(input, xBtn);
 	form.append(tabs, row0, note);
 	// 0.31.7: šípka na schovanie správ (‹), schovaný chat ukáže jazýček › s počtom nových správ
@@ -67,7 +69,7 @@ export function gameChat(root, cfg, hooks = {}) {
 		tog.querySelector('i').textContent = collapsed ? '›' : '‹';
 		const b = tog.querySelector('em');
 		b.textContent = collapsed && unread ? String(Math.min(99, unread)) : '';
-		tog.title = collapsed ? (unread ? `Zobraziť chat (${unread} nových správ)` : 'Zobraziť chat') : 'Schovať chat';
+		tog.title = collapsed ? (unread ? _t('Zobraziť chat ({n} nových správ)', { n: unread }) : _t('Zobraziť chat')) : _t('Schovať chat');
 		tog.setAttribute('aria-label', tog.title);
 	};
 	const setCollapsed = (c) => {
@@ -124,9 +126,9 @@ export function gameChat(root, cfg, hooks = {}) {
 	};
 	const placeholder = () => {
 		if (!(hooks.canWrite && hooks.canWrite())) {
-			return 'Písať môžu prihlásení';
+			return _t('Písať môžu prihlásení');
 		}
-		return target === 'm' && mctx ? 'Správa hráčom a divákom tejto partie (Enter pošle, Tab Snooker, Esc zavrie)' : 'Správa do miestnosti ' + esc(cfg.roomName || 'Snooker') + (mctx ? ' (Enter pošle, Tab Zápas, Esc zavrie)' : ' (Enter pošle, Esc zavrie)');
+		return target === 'm' && mctx ? _t('Správa hráčom a divákom tejto partie (Enter pošle, Tab Snooker, Esc zavrie)') : _t('Správa do miestnosti {r}', { r: esc(cfg.roomName || 'Snooker') }) + (mctx ? _t(' (Enter pošle, Tab Zápas, Esc zavrie)') : _t(' (Enter pošle, Esc zavrie)'));
 	};
 	const drawTabs = () => {
 		tabs.classList.toggle('mysn-hidden', !mctx);
@@ -175,7 +177,7 @@ export function gameChat(root, cfg, hooks = {}) {
 		row.className = 'mysn-gchat-msg' + (m.mine ? ' mysn-gchat-mine' : '') + (m.mc ? ' mysn-gchat-mc' : '');
 		row.dataset.id = m.mc ? '' : m.id;
 		const who = document.createElement('b');
-		who.textContent = m.mc ? '🎱 ' + esc(m.name) + (m.role === 'd' ? ' (divák)' : '') + ': ' : esc(m.user && m.user.name) + (m.user && m.user.guest ? ' (hosť)' : '') + ': ';
+		who.textContent = m.mc ? '🎱 ' + esc(m.name) + (m.role === 'd' ? _t(' (divák)') : '') + ': ' : esc(m.user && m.user.name) + (m.user && m.user.guest ? _t(' (hosť)') : '') + ': ';
 		const txt = document.createElement('span');
 		txt.textContent = esc(m.text);
 		row.append(who, txt);
@@ -384,7 +386,7 @@ export function gameChat(root, cfg, hooks = {}) {
 		}
 		const words = text.split(/\s+/).length;
 		if (cfg.maxWords && words > cfg.maxWords) {
-			flash('Správa môže mať najviac ' + cfg.maxWords + ' slov (teraz ' + words + ').');
+			flash(_t('Správa môže mať najviac {n} slov (teraz {w}).', { n: cfg.maxWords, w: words }));
 			return;
 		}
 		// políčko sa zavrie hneď, správa sa ukáže ako odosielaná (bledšia) a server ju potvrdí v pozadí
@@ -415,7 +417,7 @@ export function gameChat(root, cfg, hooks = {}) {
 				const r = await fetch(hooks.mrest + 'mchat', { method: 'POST', credentials: 'same-origin', headers: mhead(), body: JSON.stringify({ ctx: c0, text }) });
 				const d = await r.json();
 				if (!r.ok) {
-					fail((d && d.message) || 'Správu sa nepodarilo odoslať.');
+					fail((d && d.message) || _t('Správu sa nepodarilo odoslať.'));
 					return;
 				}
 				const key = 'mc' + c0 + ':' + d.id;
@@ -430,7 +432,7 @@ export function gameChat(root, cfg, hooks = {}) {
 				}
 				fit();
 			} catch (e) {
-				fail('Správu sa nepodarilo odoslať, skús znova.');
+				fail(_t('Správu sa nepodarilo odoslať, skús znova.'));
 			}
 			return;
 		}
@@ -438,7 +440,7 @@ export function gameChat(root, cfg, hooks = {}) {
 			const r = await fetch(cfg.rest + 'messages', { method: 'POST', credentials: 'same-origin', headers: head(), body: JSON.stringify({ room: cfg.room, text }) });
 			const d = await r.json();
 			if (!r.ok) {
-				fail((d && d.message) || 'Správu sa nepodarilo odoslať.');
+				fail((d && d.message) || _t('Správu sa nepodarilo odoslať.'));
 				return;
 			}
 			if (d && d.id && !seen.has(d.id)) {
@@ -452,7 +454,7 @@ export function gameChat(root, cfg, hooks = {}) {
 			}
 			fit();
 		} catch (e) {
-			fail('Správu sa nepodarilo odoslať, skús znova.');
+			fail(_t('Správu sa nepodarilo odoslať, skús znova.'));
 		}
 	};
 	// klik alebo ťuk na správy otvorí písanie; ✕ ho zavrie (do hry sa klik nedostane)

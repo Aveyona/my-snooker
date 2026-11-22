@@ -4,6 +4,8 @@
  * cez REST: POST rtc, GET rtc a signály v pingu). Ponuka aj odpoveď idú naraz s kandidátmi, ktorí sa zozbierali
  * do pár sekúnd (zvyčajne stačia dve správy cez server); neskorší kandidáti sa dopošlú zvlášť.
  */
+import { _t } from './i18n.js';
+
 let ICE = [{ urls: ['stun:stun.l.google.com:19302', 'stun:stun1.l.google.com:19302'] }, { urls: 'stun:stun.cloudflare.com:3478' }];
 /** Servery ICE zo servera (verejné STUN a náš TURN na live.hedlajner.sk s časovo obmedzeným prihlásením). */
 export function setIce(list) {
@@ -61,7 +63,7 @@ const countCands = (into, list) => {
 	}
 };
 const sdpCands = (sdp) => (sdp || '').split(/\r?\n/).filter((l) => l.startsWith('a=candidate'));
-const fmtCands = (c) => `miestna ${c.host || 0}, verejná ${(c.srflx || 0) + (c.prflx || 0)}, TURN ${c.relay || 0}`;
+const fmtCands = (c) => _t('miestna {a}, verejná {b}, TURN {c}', { a: c.host || 0, b: (c.srflx || 0) + (c.prflx || 0), c: c.relay || 0 });
 
 /**
  * Test spojenia (0.30.3): zozbiera vlastných kandidátov (miestna sieť, verejná adresa cez STUN, TURN) a skúsi
@@ -71,7 +73,7 @@ export async function rtcSelfTest() {
 	const t0 = Date.now();
 	const out = { lc: {}, errs: [], relayOk: false, rtt: 0, ms: 0 };
 	if (typeof RTCPeerConnection !== 'function') {
-		out.text = 'Prehliadač nepodporuje WebRTC.';
+		out.text = _t('Prehliadač nepodporuje WebRTC.');
 		return out;
 	}
 	const errTxt = (e) => `${(e.url || '').replace(/\?.*/, '')} ${e.errorCode || ''} ${e.errorText || ''}`.trim();
@@ -132,13 +134,13 @@ export async function rtcSelfTest() {
 		a.close();
 		b.close();
 	} else {
-		out.errs.push('TURN nie je nastavený');
+		out.errs.push(_t('TURN nie je nastavený'));
 	}
 	out.ms = Date.now() - t0;
 	const pub = (out.lc.srflx || 0) + (out.lc.prflx || 0);
 	out.text = [
-		`Miestna sieť: ${out.lc.host ? '✓' : '✗'}`,
-		`Verejná adresa (STUN): ${pub ? '✓' : '✗'}`,
+		`${_t('Miestna sieť')}: ${out.lc.host ? '✓' : '✗'}`,
+		`${_t('Verejná adresa (STUN)')}: ${pub ? '✓' : '✗'}`,
 		`TURN adresa: ${out.lc.relay ? '✓' : '✗'}`,
 		`Spojenie cez TURN: ${out.relayOk ? `✓${out.rtt > 0 ? ` (odozva ${out.rtt} ms)` : ''}` : '✗'}`,
 	].join(' · ');
@@ -175,12 +177,12 @@ export class Rtc {
 	/** Diagnostika spojenia pre záznam: kandidáti oboch strán, chyby STUN/TURN, krok nadväzovania. */
 	diagInfo(p) {
 		return {
-			cand: `ja: ${fmtCands(p.lc || {})} | súper: ${fmtCands(p.rc || {})}`,
+			cand: `${_t('ja:')} ${fmtCands(p.lc || {})} | ${_t('súper:')} ${fmtCands(p.rc || {})}`,
 			lr: (p.lc && p.lc.relay) || 0,
 			rr: (p.rc && p.rc.relay) || 0,
 			rn: Object.values(p.rc || {}).reduce((a, b) => a + b, 0),
 			err: (p.errs || []).join('; '),
-			stage: p.state === 'open' ? 'otvorené' : p.stage || '',
+			stage: p.state === 'open' ? _t('otvorené') : p.stage || '',
 			secs: Math.round((Date.now() - (p.t0 || Date.now())) / 1000),
 		};
 	}
@@ -238,7 +240,7 @@ export class Rtc {
 			this.drop(old, false);
 		}
 		const pc = new RTCPeerConnection({ iceServers: ICE });
-		const p = { uid, tag, offerer, cid, pc, dc: null, state: 'connecting', failed: false, t0: Date.now(), sent: false, late: [], remote: [], lastRx: 0, hbSeen: false, restarting: 0, round: 0, lc: {}, rc: {}, errs: [], stage: 'začiatok' };
+		const p = { uid, tag, offerer, cid, pc, dc: null, state: 'connecting', failed: false, t0: Date.now(), sent: false, late: [], remote: [], lastRx: 0, hbSeen: false, restarting: 0, round: 0, lc: {}, rc: {}, errs: [], stage: _t('začiatok') };
 		// diagnostika (0.30.3): druhy vlastných a súperových kandidátov, chyby STUN/TURN, kam sa nadväzovanie dostalo
 		pc.addEventListener('icecandidate', (e) => e.candidate && countCands(p.lc, [e.candidate.candidate]));
 		pc.addEventListener('icecandidateerror', (e) => {
@@ -362,7 +364,7 @@ export class Rtc {
 			p.sent = true;
 			this.note('offer', tag, uid, (sdp.match(/a=candidate/g) || []).length + ' cand');
 			this.arm(p, OPEN_MS + 6000); // druhá strana číta signály aj len pri pingu (každých 5 s)
-			p.stage = 'ponuka odoslaná';
+			p.stage = _t('ponuka odoslaná');
 			await this.signal(uid, tag, { t: 'offer', cid: p.cid, sdp });
 			if (p.state === 'connecting') {
 				this.arm(p, OPEN_MS + 6000);
@@ -400,7 +402,7 @@ export class Rtc {
 				}
 				const np = this.newPeer(s.from, s.tag, false, d.cid);
 				countCands(np.rc, sdpCands(d.sdp));
-				np.stage = 'ponuka prijatá';
+				np.stage = _t('ponuka prijatá');
 				np.pc.addEventListener('datachannel', (e) => this.wire(np, e.channel));
 				try {
 					await np.pc.setRemoteDescription({ type: 'offer', sdp: d.sdp });
@@ -411,7 +413,7 @@ export class Rtc {
 						const sdp = np.pc.localDescription.sdp;
 						np.sent = true;
 						this.arm(np, OPEN_MS);
-						np.stage = 'odpoveď odoslaná';
+						np.stage = _t('odpoveď odoslaná');
 						await this.signal(s.from, s.tag, { t: 'answer', cid: d.cid, sdp });
 						if (np.state === 'connecting') {
 							this.arm(np, OPEN_MS);
@@ -427,7 +429,7 @@ export class Rtc {
 				} else {
 					try {
 						countCands(p.rc, sdpCands(d.sdp));
-						p.stage = 'odpoveď prijatá';
+						p.stage = _t('odpoveď prijatá');
 						await p.pc.setRemoteDescription({ type: 'answer', sdp: d.sdp });
 						this.note('answer set', s.tag, s.from);
 						this.arm(p, OPEN_MS); // odpoveď prišla, na otvorenie spojenia je opäť celý čas
