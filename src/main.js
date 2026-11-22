@@ -408,6 +408,13 @@ export function start(root, config = {}) {
 	};
 	const rackTick = (dt) => {
 		const fresh = rackFresh();
+		if (fresh && !rackWasFresh && venue === 'league' && (game.match || game.spectating) && view !== 'office') {
+			// 0.42.2: v ligovom zápase na štadióne trojuholník zoberie rozhodca a zavesí ho pod stôl
+			chalkMarks.clear();
+			rackWasFresh = true;
+			startRackShow();
+			return;
+		}
 		if (fresh && !rackWasFresh) {
 			chalkMarks.clear(); // nový frame alebo nové rozostavenie: čisté súkno
 			rackT = 0; // nové rozostavenie: spusti animáciu
@@ -444,8 +451,8 @@ export function start(root, config = {}) {
 		}
 	};
 	/**
-	 * Štadión: po rozostavení rozhodca zoberie trojuholník zo stola a zavesí ho pod stôl na háčik (ukážka pre admina
-	 * z mapy M, neskôr začiatok zápasu). Príde k čiernemu koncu, trojuholník zdvihne, prenesie cez mantinel,
+	 * Štadión: po rozostavení rozhodca zoberie trojuholník zo stola a zavesí ho pod stôl na háčik (začiatok
+	 * ligového zápasu a každého ďalšieho frame-u, 0.42.2; ukážka pre admina z mapy M). Príde k čiernemu koncu, trojuholník zdvihne, prenesie cez mantinel,
 	 * zvisle ho zavesí pod rám na jeho miesto a vráti sa na svoje stanovište.
 	 */
 	let rackShow = null;
@@ -2530,7 +2537,7 @@ export function start(root, config = {}) {
 			? `Nedosiahneš: ruka na mostíku by bola ${Math.round(r.d * 100)} cm od mantinelu (najviac ${Math.round(r.max * 100)} cm). Použi nádstavec (F3).`
 			: `Nedosiahneš: ruka na rukoväti by bola ${Math.round(r.d * 100)} cm od mantinelu (najviac ${Math.round(r.max * 100)} cm). Použi nádstavec alebo predĺženie (F3).`;
 	const doShoot = (rawPower) => {
-		if (rackShow) {
+		if (rackShow && rackShow.t < RS_IN + RS_GRIP + RS_LIFT + RS_HANG) {
 			ui.toast('Rozhodca ešte odkladá trojuholník.');
 			return;
 		}
