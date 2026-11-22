@@ -6,6 +6,7 @@
 import { ACH, TIERS } from './achievements.js';
 import { leagueTimes } from './leagueTime.js';
 import * as THREE from 'three';
+import { _t, LANG } from './i18n.js';
 import { boardTexture, BOARD_TEX, BOARD_BOXES } from './board.js';
 import { lemonInGlass } from './lemon.js';
 import { sansevieria, cactus } from './plants.js';
@@ -433,8 +434,8 @@ export function buildRoomShell(scene, quality, opts = {}) {
 				corr.add(glow);
 				signs[id] = { mesh: m, mat, glow };
 			};
-			sign('office', 'Kancelária', 1.86);
-			sign('living', 'Obývačka', 1.66);
+			sign('office', _t('Kancelária'), 1.86);
+			sign('living', _t('Obývačka'), 1.66);
 			const bulb = add(new THREE.SphereGeometry(0.05, 12, 8), new THREE.MeshBasicMaterial({ color: 0xb8a888 }), 0, 2.45, -0.4, corr);
 			bulb.castShadow = false;
 		}
@@ -669,7 +670,7 @@ export function buildRoomShell(scene, quality, opts = {}) {
 		g.font = 'bold 60px Georgia, serif';
 		g.textAlign = 'center';
 		g.textBaseline = 'middle';
-		g.fillText('NAJLEPŠÍ HRÁČI', 512, 68);
+		g.fillText(_t('NAJLEPŠÍ HRÁČI'), 512, 68);
 		const t = new THREE.CanvasTexture(c);
 		t.colorSpace = THREE.SRGBColorSpace;
 		return t;
@@ -761,10 +762,10 @@ export function buildRoomShell(scene, quality, opts = {}) {
 			g.textAlign = 'center';
 			g.fillStyle = medal[r];
 			g.font = 'bold 54px Georgia, serif';
-			g.fillText(p ? cut(g, `${r + 1}. ${p.user.name}`, 480) : `${r + 1}. miesto`, 256, 66);
+			g.fillText(p ? cut(g, `${r + 1}. ${p.user.name}`, 480) : _t('{n}. miesto', { n: r + 1 }), 256, 66);
 			g.fillStyle = '#f4ecd8';
 			g.font = 'bold 42px Arial, Helvetica, sans-serif';
-			g.fillText(p ? `${p.points} b.  za ${fmt(p.seconds)}` : 'voľné', 256, 128);
+			g.fillText(p ? _t('{p} b.  za {t}', { p: p.points, t: fmt(p.seconds) }) : _t('voľné'), 256, 128);
 			tex.needsUpdate = true;
 		}
 		const g = listCanvas.getContext('2d');
@@ -780,7 +781,7 @@ export function buildRoomShell(scene, quality, opts = {}) {
 		g.fillStyle = '#123524';
 		g.textAlign = 'center';
 		g.font = 'bold 46px Georgia, serif';
-		g.fillText('Rebríček 4. až 10.', W2 / 2, 120);
+		g.fillText(_t('Rebríček 4. až 10.'), W2 / 2, 120);
 		g.fillStyle = '#c9a24a';
 		g.fillRect(60, 142, W2 - 120, 4);
 		for (let i = 3; i < 10; i++) {
@@ -794,7 +795,7 @@ export function buildRoomShell(scene, quality, opts = {}) {
 			g.font = '34px Arial, Helvetica, sans-serif';
 			g.fillText(p ? cut(g, p.user.name, 330) : '...', 130, y);
 			g.textAlign = 'right';
-			g.fillText(p ? `${p.points} b.  ${fmt(p.seconds)}` : '', W2 - 64, y);
+			g.fillText(p ? _t('{p} b.  {t}', { p: p.points, t: fmt(p.seconds) }) : '', W2 - 64, y);
 			g.fillStyle = 'rgba(201,162,74,0.35)';
 			g.fillRect(64, y + 22, W2 - 128, 2);
 		}
@@ -839,10 +840,10 @@ export function buildRoomShell(scene, quality, opts = {}) {
 		g.fillStyle = '#f2d48a';
 		g.font = 'bold 56px Georgia, serif';
 		g.textAlign = 'center';
-		g.fillText('LIGA', 640, 82);
+		g.fillText(_t('LIGA'), 640, 82);
 		g.fillStyle = '#fbf7ec';
 		g.font = '26px Arial, sans-serif';
-		g.fillText(d && d.season ? `${d.season.name}  ·  do konca ${d.season.daysLeft} dní` : 'Liga: prihlás sa a hraj ligové partie', 640, 145);
+		g.fillText(d && d.season ? _t('{s}  ·  do konca {n} dní', { s: d.season.name, n: d.season.daysLeft }) : _t('Liga: prihlás sa a hraj ligové partie'), 640, 145);
 		const cols = [[30, 170], [345, 170], [660, 170], [975, 170]];
 		for (let n = 1; n <= 4; n++) {
 			const [x, y] = cols[n - 1];
@@ -862,7 +863,7 @@ export function buildRoomShell(scene, quality, opts = {}) {
 			g.fillStyle = '#123524';
 			g.font = 'bold 40px Georgia, serif';
 			g.textAlign = 'center';
-			g.fillText(`${n}. liga`, 0, -h / 2 + 78);
+			g.fillText(_t('{n}. liga', { n }), 0, -h / 2 + 78);
 			g.fillStyle = '#c9a24a';
 			g.fillRect(-w / 2 + 20, -h / 2 + 96, w - 40, 3);
 			const rows = (d && d.leagues && d.leagues[n]) || [];
@@ -879,7 +880,7 @@ export function buildRoomShell(scene, quality, opts = {}) {
 				g.fillText(nm, -w / 2 + 20, yy);
 				g.font = '22px Arial, sans-serif';
 				g.fillStyle = '#555';
-				g.fillText(r ? `${r.points} b.  V ${r.wins} / P ${r.losses}` : '', -w / 2 + 20, yy + 28);
+				g.fillText(r ? _t('{p} b.  V {w} / P {l}', { p: r.points, w: r.wins, l: r.losses }) : '', -w / 2 + 20, yy + 28);
 			}
 			g.restore();
 		}
@@ -888,7 +889,7 @@ export function buildRoomShell(scene, quality, opts = {}) {
 		g.fillStyle = '#FACC15';
 		g.font = 'bold 30px Arial, sans-serif';
 		g.textAlign = 'center';
-		g.fillText(d && d.me ? `Ty: ${d.me.rank}. miesto v ${d.me.league}. lige, ${d.me.points} bodov` : 'Liga: v menu (Esc) tlačidlo Liga', W2 / 2, 762);
+		g.fillText(d && d.me ? _t('Ty: {r}. miesto v {l}. lige, {p} bodov', { r: d.me.rank, l: d.me.league, p: d.me.points }) : _t('Liga: v menu (Esc) tlačidlo Liga'), W2 / 2, 762);
 		lbTex.needsUpdate = true;
 	};
 	setLeague(null);
@@ -915,7 +916,7 @@ export function buildRoomShell(scene, quality, opts = {}) {
 		g.textAlign = 'center';
 		// 0.32.4: bez nápisu MY SNOOKER, herný režim je nadpis
 		g.font = 'bold 70px Georgia, serif';
-		g.fillText((extra && extra.mode) || 'Tréning', W / 2, 118);
+		g.fillText((extra && extra.mode) || _t('Tréning'), W / 2, 118);
 		const mt = extra && extra.match;
 		const rows = extra && extra.rows
 			? extra.rows
@@ -923,16 +924,16 @@ export function buildRoomShell(scene, quality, opts = {}) {
 			? [
 					[mt.names[0] + (mt.turn === 0 ? '  ●' : ''), mt.scores[0]],
 					[mt.names[1] + (mt.turn === 1 ? '  ●' : ''), mt.scores[1]],
-					['Séria', mt.brk],
-					['Hrá sa na', mt.on],
-					['Zostáva na stole', mt.left],
+					[_t('Séria'), mt.brk],
+					[_t('Hrá sa na'), mt.on],
+					[_t('Zostáva na stole'), mt.left],
 				]
 			: [
-			['Údery', st.shots],
-			['Spadnuté gule', st.potted],
-			['Body', st.points],
-			['Séria', st.run],
-			['Najlepšia séria', st.best],
+			[_t('Údery'), st.shots],
+			[_t('Spadnuté gule'), st.potted],
+			[_t('Body'), st.points],
+			[_t('Séria'), st.run],
+			[_t('Najlepšia séria'), st.best],
 				];
 		g.font = '40px Arial, Helvetica, sans-serif';
 		rows.forEach(([k, v], i) => {
@@ -952,7 +953,7 @@ export function buildRoomShell(scene, quality, opts = {}) {
 			g.textAlign = 'center';
 			g.font = '30px Arial, Helvetica, sans-serif';
 			g.fillStyle = '#f2d48a';
-			g.fillText(`${extra.cue}   |   Krieda: ${extra.chalk > 0 ? extra.chalk + ' údery' : 'žiadna (F3)'}`, W / 2, Hh - 40);
+			g.fillText(`${extra.cue}   |   ${extra.chalk > 0 ? _t('Krieda: {n} údery', { n: extra.chalk }) : _t('Krieda: žiadna (F3)')}`, W / 2, Hh - 40);
 		}
 		scoreTex.needsUpdate = true;
 	};
@@ -1016,14 +1017,14 @@ export function buildRoomShell(scene, quality, opts = {}) {
 		g.textAlign = 'center';
 		g.textBaseline = 'alphabetic';
 		g.font = F(120, 700);
-		g.fillText('Úspechy', W / 2, 130);
+		g.fillText(_t('Úspechy'), W / 2, 130);
 		const d = achData;
 		if (!d) {
 			g.font = F(64);
-			g.fillText('Prihlás sa a zbieraj úspechy', W / 2, H / 2);
+			g.fillText(_t('Prihlás sa a zbieraj úspechy'), W / 2, H / 2);
 			g.font = F(48);
 			g.globalAlpha = 0.7;
-			g.fillText('každá potopená guľa = skúsenosti (XP)', W / 2, H / 2 + 80);
+			g.fillText(_t('každá potopená guľa = skúsenosti (XP)'), W / 2, H / 2 + 80);
 			g.globalAlpha = 1;
 			achTex.needsUpdate = true;
 			return;
@@ -1031,9 +1032,9 @@ export function buildRoomShell(scene, quality, opts = {}) {
 		// úroveň, XP a pásik
 		g.font = F(66, 700);
 		g.textAlign = 'left';
-		g.fillText(`Úroveň ${d.level}`, 90, 225);
+		g.fillText(_t('Úroveň {n}', { n: d.level }), 90, 225);
 		g.textAlign = 'right';
-		g.fillText(`${Number(d.xp).toLocaleString('sk-SK')} XP`, W - 90, 225);
+		g.fillText(`${Number(d.xp).toLocaleString(LANG === 'en' ? 'en-GB' : 'sk-SK')} XP`, W - 90, 225);
 		const pct = Math.max(0, Math.min(1, (d.xp - d.from) / Math.max(1, d.next - d.from)));
 		g.lineWidth = 4;
 		g.strokeRect(90, 248, W - 180, 26);
@@ -1121,14 +1122,14 @@ export function buildRoomShell(scene, quality, opts = {}) {
 			const a = ACH.find((x) => x.k === d.last.k);
 			chalk('#ffe27a');
 			g.font = F(56, 700);
-			g.fillText(`Nové: ${a ? a.name : d.last.k} – ${TIERS[d.last.t - 1].name.toLowerCase()}!`, 90, H - 60);
+			g.fillText(_t('Nové: {a} – {t}!', { a: a ? a.name : d.last.k, t: TIERS[d.last.t - 1].name.toLowerCase() }), 90, H - 60);
 		}
 		if (pages > 1) {
 			chalk();
 			g.textAlign = 'right';
 			g.font = F(44);
 			g.globalAlpha = 0.75;
-			g.fillText(`strana ${achPage + 1} / ${pages}`, W - 90, H - 60);
+			g.fillText(_t('strana {a} / {b}', { a: achPage + 1, b: pages }), W - 90, H - 60);
 			g.globalAlpha = 1;
 		}
 		g.shadowBlur = 0;
@@ -1180,11 +1181,11 @@ export function buildRoomShell(scene, quality, opts = {}) {
 		g.fillText(user && user.name ? user.name.trim().charAt(0).toUpperCase() : '?', W2 / 2, 193);
 		g.fillStyle = '#ffffff';
 		g.font = 'bold 40px Arial, sans-serif';
-		g.fillText('Môj účet', W2 / 2, 290);
+		g.fillText(_t('Môj účet'), W2 / 2, 290);
 		g.fillStyle = '#b9c2d3';
 		g.font = '28px Arial, sans-serif';
-		g.fillText(user ? String(user.name).slice(0, 20) : 'Neprihlásený', W2 / 2, 334);
-		const rows = ['Profil', 'Prihlásenie a heslo', 'Súhlasy', 'Nastavenia účtu'];
+		g.fillText(user ? String(user.name).slice(0, 20) : _t('Neprihlásený'), W2 / 2, 334);
+		const rows = [_t('Profil'), _t('Prihlásenie a heslo'), _t('Súhlasy'), _t('Nastavenia účtu')];
 		rows.forEach((r, i) => {
 			const y = 400 + i * 66;
 			g.fillStyle = '#ffffff14';
@@ -1200,7 +1201,7 @@ export function buildRoomShell(scene, quality, opts = {}) {
 		g.textAlign = 'center';
 		g.fillStyle = '#FACC15';
 		g.font = 'bold 26px Arial, sans-serif';
-		g.fillText('Ťukni a otvor', W2 / 2, 700);
+		g.fillText(_t('Ťukni a otvor'), W2 / 2, 700);
 		phoneTex.needsUpdate = true;
 	};
 	setPhone(opts.user || null);
@@ -1413,18 +1414,18 @@ export function buildRoomShell(scene, quality, opts = {}) {
 				bg(g, '#0b2a4d', '#05101f');
 				BALLS.forEach((col, i) => ball(g, 220 + i * 140, 520, 46, col));
 				txt(g, 'My Snooker', 640, 260, 150, '#ffd34d', 800);
-				txt(g, '3D snooker v prehliadači · PC aj mobil', 640, 345, 46, '#e8eefc', 500);
+				txt(g, _t('3D snooker v prehliadači · PC aj mobil'), 640, 345, 46, '#e8eefc', 500);
 				txt(g, 'snooker.hedlajner.sk', 640, 660, 44, '#7fb6ff', 600);
 			},
 			(g) => {
 				// liga: denne od 15:00 UTC 4 hodiny (src/leagueTime.js), prepočet na miestny čas hráča
 				bg(g, '#0d3a1f', '#04140a');
 				const lt = leagueTimes();
-				txt(g, 'LIGA', 640, 180, 150, '#7CFC8A', 900);
-				txt(g, `Hrá sa denne ${lt.utc} UTC`, 640, 290, 54, '#fff', 700);
-				txt(g, `U teba: ${lt.local}`, 640, 400, 84, '#ffd34d', 800);
-				txt(g, lt.tz ? `miestny čas (${lt.tz})` : 'miestny čas', 640, 455, 34, '#cfe8d6', 500);
-				txt(g, 'Štadión, diváci, rozhodca a Rudo · registrácia v kancelárii', 640, 590, 36, '#cfe8d6', 500);
+				txt(g, _t('LIGA'), 640, 180, 150, '#7CFC8A', 900);
+				txt(g, _t('Hrá sa denne {t} UTC', { t: lt.utc }), 640, 290, 54, '#fff', 700);
+				txt(g, _t('U teba: {t}', { t: lt.local }), 640, 400, 84, '#ffd34d', 800);
+				txt(g, lt.tz ? _t('miestny čas ({tz})', { tz: lt.tz }) : _t('miestny čas'), 640, 455, 34, '#cfe8d6', 500);
+				txt(g, _t('Štadión, diváci, rozhodca a Rudo · registrácia v kancelárii'), 640, 590, 36, '#cfe8d6', 500);
 			},
 			(g) => {
 				bg(g, '#2a1b05', '#0e0902');
@@ -1438,26 +1439,26 @@ export function buildRoomShell(scene, quality, opts = {}) {
 					g.arc(370 + i * 180, 470, 50, 0, Math.PI * 2);
 					g.fill();
 				}
-				txt(g, 'Zbieraj úspechy', 640, 200, 110, '#ffd34d', 800);
-				txt(g, 'Skúsenosti za každú guľu · swerve, massé, stovka, maximum…', 640, 290, 40, '#f4e6d0', 500);
-				txt(g, 'Telefón (T) → Úspechy', 640, 640, 40, '#e8eefc', 600);
+				txt(g, _t('Zbieraj úspechy'), 640, 200, 110, '#ffd34d', 800);
+				txt(g, _t('Skúsenosti za každú guľu · swerve, massé, stovka, maximum…'), 640, 290, 40, '#f4e6d0', 500);
+				txt(g, _t('Telefón (T) → Úspechy'), 640, 640, 40, '#e8eefc', 600);
 			},
 			(g) => {
 				bg(g, '#3a0a12', '#120206');
 				txt(g, 'HEDLAJNER', 640, 300, 150, '#fff', 900);
-				txt(g, 'Správy, videá a komunita', 640, 390, 52, '#ffb3be', 500);
+				txt(g, _t('Správy, videá a komunita'), 640, 390, 52, '#ffb3be', 500);
 				txt(g, 'hedlajner.sk', 640, 600, 56, '#ffd34d', 700);
 			},
 			(g) => {
 				// svetový snooker teraz (snooker.org): turnaj, živé zápasy, najbližšie zápasy v miestnom čase
 				const w = tvWorld;
 				bg(g, '#101826', '#04070c');
-				txt(g, 'Svetový snooker', 640, 110, 76, '#ffd34d', 800);
+				txt(g, _t('Svetový snooker'), 640, 110, 76, '#ffd34d', 800);
 				if (w.event) {
 					txt(g, w.event.name + (w.event.city ? ` · ${w.event.city}` : ''), 640, 165, 38, '#e8eefc', 600);
 				}
 				const rows = w.live.length ? w.live.slice(0, 4) : w.next.slice(0, 4);
-				txt(g, w.live.length ? '● NAŽIVO' : 'Najbližšie zápasy', 640, 245, 40, w.live.length ? '#ff5a5a' : '#7fb6ff', 800);
+				txt(g, w.live.length ? _t('● NAŽIVO') : _t('Najbližšie zápasy'), 640, 245, 40, w.live.length ? '#ff5a5a' : '#7fb6ff', 800);
 				rows.forEach((m, i) => {
 					const y = 330 + i * 86;
 					const cut = (t) => (t.length > 20 ? t.slice(0, 19) + '…' : t);
@@ -1467,10 +1468,10 @@ export function buildRoomShell(scene, quality, opts = {}) {
 						txt(g, `${m.s1} : ${m.s2}`, 640, y, 46, '#ffd34d', 800);
 					} else {
 						const d = m.t ? new Date(m.t * 1000) : null;
-						txt(g, d ? d.toLocaleTimeString('sk-SK', { hour: '2-digit', minute: '2-digit' }) : '–', 640, y, 40, '#ffd34d', 700);
+						txt(g, d ? d.toLocaleTimeString(LANG === 'en' ? 'en-GB' : 'sk-SK', { hour: '2-digit', minute: '2-digit' }) : '–', 640, y, 40, '#ffd34d', 700);
 					}
 				});
-				txt(g, 'Zdroj: snooker.org', 1240, 700, 26, '#8fa3bd', 500, 'right');
+				txt(g, _t('Zdroj: snooker.org'), 1240, 700, 26, '#8fa3bd', 500, 'right');
 			},
 			(g) => {
 				// chat Hedlajner
@@ -1488,10 +1489,10 @@ export function buildRoomShell(scene, quality, opts = {}) {
 				g.beginPath();
 				g.roundRect(780, 430, 330, 110, 40);
 				g.fill();
-				txt(g, 'Ahoj, ideme ligu?', 335, 460, 38, '#04202c', 700);
-				txt(g, 'Jasné, o 16:00!', 945, 498, 38, '#0b2a12', 700);
+				txt(g, _t('Ahoj, ideme ligu?'), 335, 460, 38, '#04202c', 700);
+				txt(g, _t('Jasné, o 16:00!'), 945, 498, 38, '#0b2a12', 700);
 				txt(g, 'Chat Hedlajner', 640, 190, 110, '#fff', 800);
-				txt(g, 'Píš si s hráčmi a komunitou, aj priamo z hry (Enter)', 640, 280, 40, '#bfe8f7', 500);
+				txt(g, _t('Píš si s hráčmi a komunitou, aj priamo z hry (Enter)'), 640, 280, 40, '#bfe8f7', 500);
 				txt(g, 'chat.hedlajner.sk', 640, 660, 48, '#ffd34d', 700);
 			},
 		];

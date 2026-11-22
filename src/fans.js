@@ -4,6 +4,7 @@
  * Crowd = online diváci partie: kto si obsadil ktoré miesto (zoznam prichádza zo servera s pingom).
  */
 import * as THREE from 'three';
+import { _t } from './i18n.js';
 import { realFan, SPECTATORS } from './realPerson.js';
 
 const SKINS = [0xe0b48e, 0xc78e66, 0x8d5b3e, 0xd9a07a, 0xa8714f, 0xf0c8a0];
@@ -191,7 +192,7 @@ export class Crowd {
 			fan.real = realFan(fan, SPECTATORS[Math.abs(s.uid) % SPECTATORS.length]); // 0.38.3: realistický divák
 			fan.f.position.set(p.x, p.y, p.z);
 			fan.f.rotation.y = p.rot;
-			const tag = nameTag(s.name || 'Divák');
+			const tag = nameTag(s.name || _t('Divák'));
 			tag.position.set(0, p.standing ? 2.0 : 1.18, 0);
 			fan.f.add(tag);
 			this.group.add(fan.f);

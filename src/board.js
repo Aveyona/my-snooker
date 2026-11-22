@@ -3,86 +3,87 @@
  * pripnuté na korkovej doske. Klávesa F1 pošle kameru pred nástenku.
  */
 import * as THREE from 'three';
+import { _t } from './i18n.js';
 
 // Nástenka 2 (0.28.0): 6 papierov v mriežke 3 x 2; F1 a potom 1 až 6 (alebo klik, šípky) priblíži papier.
 // Papier s myšou (alebo telefónom na mobile) je druhý.
 const PAPERS = [
 	{
-		title: 'Klávesy',
+		title: _t('Klávesy'),
 		lines: [
-			'F1  nástenka: 1 až 6 papier, ← → ďalší',
-			'F2  stojan s tágami a kriedami',
-			'F3  príslušenstvo: 1 krieda, 2 krížik,',
-			'      3 a 4 pavúk, 5 nové postavenie,',
-			'      6 a 7 predĺženie tága',
-			'F4  tabuľa so skóre   F6  dvere',
-			'F7  kreslo (C noviny, V RSS)',
-			'F8  rebríček   F9  rádio (← →, P)',
-			'F10 bar s telefónom   F12 Liga',
-			'Tab  stôl zhora   Medzerník  voľný pohľad',
-			'Esc  menu   F5 obnoviť   F11 celá obrazovka',
+			_t('F1  nástenka: 1 až 6 papier, ← → ďalší'),
+			_t('F2  stojan s tágami a kriedami'),
+			_t('F3  príslušenstvo: 1 krieda, 2 krížik,'),
+			_t('      3 a 4 pavúk, 5 nové postavenie,'),
+			_t('      6 a 7 predĺženie tága'),
+			_t('F4  tabuľa so skóre   F6  dvere'),
+			_t('F7  kreslo (C noviny, V RSS)'),
+			_t('F8  rebríček   F9  rádio (← →, P)'),
+			_t('F10 bar s telefónom   F12 Liga'),
+			_t('Tab  stôl zhora   Medzerník  voľný pohľad'),
+			_t('Esc  menu   F5 obnoviť   F11 celá obrazovka'),
 		],
 	},
 	null, // obrázok myši
 	{
-		title: 'Voľný pohľad',
+		title: _t('Voľný pohľad'),
 		lines: [
-			'Medzerník: do voľného pohľadu a späť.',
-			'Myš: rozhliadanie (bez tlačidla).',
-			'W A S D alebo šípky: chôdza,',
-			'   Shift drž: rýchlejšie.',
-			'E alebo pravé drž: hore,',
-			'   Q alebo ľavé drž: dole.',
-			'Klik na predmet: otvorí ho (stojan,',
-			'   rádio, kreslo, nástenky, dvere…).',
-			'Pravé tlačidlo v predmete: späť.',
-			'Tab: náhľad stola   M: mapa miestností',
-			'Esc: späť za tágo.',
+			_t('Medzerník: do voľného pohľadu a späť.'),
+			_t('Myš: rozhliadanie (bez tlačidla).'),
+			_t('W A S D alebo šípky: chôdza,'),
+			_t('   Shift drž: rýchlejšie.'),
+			_t('E alebo pravé drž: hore,'),
+			_t('   Q alebo ľavé drž: dole.'),
+			_t('Klik na predmet: otvorí ho (stojan,'),
+			_t('   rádio, kreslo, nástenky, dvere…).'),
+			_t('Pravé tlačidlo v predmete: späť.'),
+			_t('Tab: náhľad stola   M: mapa miestností'),
+			_t('Esc: späť za tágo.'),
 		],
 	},
 	{
-		title: 'Pri stole a Ctrl',
+		title: _t('Pri stole a Ctrl'),
 		lines: [
-			'Mierenie: pohyb myšou, Shift jemnejšie,',
-			'   šípky ← → najjemnejšie.',
-			'Úder: ľavé drž, myš k sebe = sila,',
-			'   potom dopredu = úder.',
-			'Biela v ruke: posúvaj myšou, Enter polož.',
-			'Z späť   B biela do ruky   R nové rozostavenie',
-			'S preskočiť (tréning)',
-			'Ctrl drž: voľná myš a šúpatká citlivosti,',
-			'   Ctrl a klik na predmet: otvorí ho.',
-			'N voda (silnejšia falša na 1 úder)',
-			'G grgnúť   H prdnúť (v lige sa trestá)',
-			'T telefón: účet, úspechy a skúsenosti (XP)',
+			_t('Mierenie: pohyb myšou, Shift jemnejšie,'),
+			_t('   šípky ← → najjemnejšie.'),
+			_t('Úder: ľavé drž, myš k sebe = sila,'),
+			_t('   potom dopredu = úder.'),
+			_t('Biela v ruke: posúvaj myšou, Enter polož.'),
+			_t('Z späť   B biela do ruky   R nové rozostavenie'),
+			_t('S preskočiť (tréning)'),
+			_t('Ctrl drž: voľná myš a šúpatká citlivosti,'),
+			_t('   Ctrl a klik na predmet: otvorí ho.'),
+			_t('N voda (silnejšia falša na 1 úder)'),
+			_t('G grgnúť   H prdnúť (v lige sa trestá)'),
+			_t('T telefón: účet, úspechy a skúsenosti (XP)'),
 		],
 	},
 	{
-		title: 'Princíp hry',
+		title: _t('Princíp hry'),
 		lines: [
-			'Bielou guľou potápaj ostatné gule.',
-			'Body: červená 1, žltá 2, zelená 3,',
-			'   hnedá 4, modrá 5, ružová 6, čierna 7.',
-			'Striedavo červená a farba (body za farbu,',
-			'   ktorá spadne), potom farby po poradí.',
-			'Faul: súper aspoň 4 body a vyberie, kto hrá.',
-			'Hrať: frame o najlepšie skóre za čas,',
-			'   fauly sa odčítajú, rebríček F8.',
-			'Kruh dole: dotyk gúľ, uhol a plnosť zásahu.',
+			_t('Bielou guľou potápaj ostatné gule.'),
+			_t('Body: červená 1, žltá 2, zelená 3,'),
+			_t('   hnedá 4, modrá 5, ružová 6, čierna 7.'),
+			_t('Striedavo červená a farba (body za farbu,'),
+			_t('   ktorá spadne), potom farby po poradí.'),
+			_t('Faul: súper aspoň 4 body a vyberie, kto hrá.'),
+			_t('Hrať: frame o najlepšie skóre za čas,'),
+			_t('   fauly sa odčítajú, rebríček F8.'),
+			_t('Kruh dole: dotyk gúľ, uhol a plnosť zásahu.'),
 		],
 	},
 	{
-		title: 'Tágá a príslušenstvo',
+		title: _t('Tágá a príslušenstvo'),
 		lines: [
-			'F2: desať tág, vlastné tágo zo šablóny.',
-			'Špica: mäkká lepšie falše, tvrdá silnejšia,',
-			'   opotrebuje sa, od 80 % nepresná (vymeň).',
-			'Krieda (F3): falše 5×, vydrží 3 údery.',
-			'Ruka dosiahne 95 cm od mantinelu,',
-			'   ďalej krížik, pavúk alebo predĺženie (F3).',
-			'Červený nápis pri mierení: nedosiahneš.',
-			'Shift + koliesko: uhol tága (do 80°),',
-			'   s bočnou falšou oblúk: swerve, od 45° massé.',
+			_t('F2: desať tág, vlastné tágo zo šablóny.'),
+			_t('Špica: mäkká lepšie falše, tvrdá silnejšia,'),
+			_t('   opotrebuje sa, od 80 % nepresná (vymeň).'),
+			_t('Krieda (F3): falše 5×, vydrží 3 údery.'),
+			_t('Ruka dosiahne 95 cm od mantinelu,'),
+			_t('   ďalej krížik, pavúk alebo predĺženie (F3).'),
+			_t('Červený nápis pri mierení: nedosiahneš.'),
+			_t('Shift + koliesko: uhol tága (do 80°),'),
+			_t('   s bočnou falšou oblúk: swerve, od 45° massé.'),
 		],
 	},
 ];
@@ -90,66 +91,66 @@ const PAPERS = [
 /** Mobil: rovnaká nástenka, ale ovládanie prstom a tlačidlami namiesto kláves, Ctrl a myši. */
 const PAPERS_TOUCH = [
 	{
-		title: 'Ovládanie prstom',
+		title: _t('Ovládanie prstom'),
 		lines: [
-			'Ťahaj doľava a doprava: mierenie.',
-			'Vpravo dole: prst dole odtiahne tágo,',
-			'   rýchlo hore = úder, sila podľa rýchlosti.',
-			'Dva prsty: priblíženie a oddialenie.',
-			'Kruh s okom: drž a ťahaj (hore priblíži,',
-			'   do strán krúži, dole k stolu).',
-			'Miesto úderu: posuň bod na bielej (falša).',
-			'Ikona tága vedľa: ťahaj = uhol tága (massé).',
-			'Po výstrele prst otáča kameru okolo bielej.',
+			_t('Ťahaj doľava a doprava: mierenie.'),
+			_t('Vpravo dole: prst dole odtiahne tágo,'),
+			_t('   rýchlo hore = úder, sila podľa rýchlosti.'),
+			_t('Dva prsty: priblíženie a oddialenie.'),
+			_t('Kruh s okom: drž a ťahaj (hore priblíži,'),
+			_t('   do strán krúži, dole k stolu).'),
+			_t('Miesto úderu: posuň bod na bielej (falša).'),
+			_t('Ikona tága vedľa: ťahaj = uhol tága (massé).'),
+			_t('Po výstrele prst otáča kameru okolo bielej.'),
 		],
 	},
 	null, // obrázok telefónu
 	{
-		title: 'Voľný pohľad',
+		title: _t('Voľný pohľad'),
 		lines: [
-			'Panák vľavo: do voľného pohľadu a späť.',
-			'Ťahaj prstom: rozhliadanie.',
-			'Ovládač vpravo dole: chôdza.',
-			'▲ ▼ vpravo: hore a dole.',
-			'Ťuk na predmet: otvorí ho.',
-			'Späť (dole v strede): za tágo.',
+			_t('Panák vľavo: do voľného pohľadu a späť.'),
+			_t('Ťahaj prstom: rozhliadanie.'),
+			_t('Ovládač vpravo dole: chôdza.'),
+			_t('▲ ▼ vpravo: hore a dole.'),
+			_t('Ťuk na predmet: otvorí ho.'),
+			_t('Späť (dole v strede): za tágo.'),
 		],
 	},
 	{
-		title: 'Tlačidlá na obrazovke',
+		title: _t('Tlačidlá na obrazovke'),
 		lines: [
-			'☰ hlavné menu: Hra, Herňa, Tréning.',
-			'Šípka dole v strede: spodný panel',
-			'   (citlivosť prsta, Späť, Biela do ruky).',
-			'Šípka na stôl: pohľad zhora.',
-			'Modrý štvorček: príslušenstvo.',
-			'Zameriavač: jemné mierenie.',
-			'Pohár: voda, grgnúť, prdnúť, telefón.',
+			_t('☰ hlavné menu: Hra, Herňa, Tréning.'),
+			_t('Šípka dole v strede: spodný panel'),
+			_t('   (citlivosť prsta, Späť, Biela do ruky).'),
+			_t('Šípka na stôl: pohľad zhora.'),
+			_t('Modrý štvorček: príslušenstvo.'),
+			_t('Zameriavač: jemné mierenie.'),
+			_t('Pohár: voda, grgnúť, prdnúť, telefón.'),
 		],
 	},
 	{
-		title: 'Princíp hry',
+		title: _t('Princíp hry'),
 		lines: [
-			'Bielou guľou potápaj ostatné gule.',
-			'Body: červená 1, žltá 2, zelená 3,',
-			'   hnedá 4, modrá 5, ružová 6, čierna 7.',
-			'Striedavo červená a farba (body za farbu,',
-			'   ktorá spadne), potom farby po poradí.',
-			'Faul: súper aspoň 4 body a vyberie, kto hrá.',
-			'Hrať: frame o najlepšie skóre za čas,',
-			'   fauly sa odčítajú, rebríček v ☰ Herňa.',
+			_t('Bielou guľou potápaj ostatné gule.'),
+			_t('Body: červená 1, žltá 2, zelená 3,'),
+			_t('   hnedá 4, modrá 5, ružová 6, čierna 7.'),
+			_t('Striedavo červená a farba (body za farbu,'),
+			_t('   ktorá spadne), potom farby po poradí.'),
+			_t('Faul: súper aspoň 4 body a vyberie, kto hrá.'),
+			_t('Hrať: frame o najlepšie skóre za čas,'),
+			_t('   fauly sa odčítajú, rebríček v ☰ Herňa.'),
 		],
 	},
 	{
-		title: 'Tágá a príslušenstvo',
+		title: _t('Tágá a príslušenstvo'),
 		lines: [
-			'☰ Herňa: stojan, desať tág (‹ › alebo ťuk),',
-			'   vlastné tágo zo šablóny.',
-			'Špica: mäkká lepšie falše, tvrdá silnejšia,',
-			'   opotrebuje sa, od 80 % nepresná.',
-			'Modrý štvorček: krieda (falše 5×, 3 údery),',
-			'   krížik, pavúk, predĺženie (pri stole).',
-			'Červený nápis pri mierení: nedosiahneš.',
+			_t('☰ Herňa: stojan, desať tág (‹ › alebo ťuk),'),
+			_t('   vlastné tágo zo šablóny.'),
+			_t('Špica: mäkká lepšie falše, tvrdá silnejšia,'),
+			_t('   opotrebuje sa, od 80 % nepresná.'),
+			_t('Modrý štvorček: krieda (falše 5×, 3 údery),'),
+			_t('   krížik, pavúk, predĺženie (pri stole).'),
+			_t('Červený nápis pri mierení: nedosiahneš.'),
 		],
 	},
 ];
@@ -168,7 +169,7 @@ export const BOARD_COUNT = 6;
 /** Názov papiera (pre lištu pri priblížení). */
 export function boardTitle(i, touch = !!(window.matchMedia && window.matchMedia('(hover: none), (pointer: coarse)').matches)) {
 	const p = (touch ? PAPERS_TOUCH : PAPERS)[i];
-	return p ? p.title : touch ? 'Časti obrazovky' : 'Ovládanie myšou';
+	return p ? p.title : touch ? _t('Časti obrazovky') : _t('Ovládanie myšou');
 }
 
 /** Mobil: obrázok telefónu so 4 časťami obrazovky (papier vpravo dole namiesto myši). */
@@ -196,11 +197,11 @@ function drawPhone(g, w) {
 	g.textAlign = 'left';
 	const tx = x0 + pw + 50;
 	const rows = [
-		['1', 'vľavo hore: ťuk = chat'],
-		['2, 3', 'ťahaj do strán: mierenie'],
-		['4', 'vpravo dole: úder'],
-		['', 'prst dole = odtiahni,'],
-		['', 'rýchlo hore = úder'],
+		['1', _t('vľavo hore: ťuk = chat')],
+		['2, 3', _t('ťahaj do strán: mierenie')],
+		['4', _t('vpravo dole: úder')],
+		['', _t('prst dole = odtiahni,')],
+		['', _t('rýchlo hore = úder')],
 	];
 	rows.forEach(([a, b], i) => {
 		const y = y0 + 40 + i * 70;
@@ -274,10 +275,10 @@ function drawMouse(g, w, h) {
 			g.fillText(t3, cx + 170, y + 44);
 		}
 	};
-	lab(cy - 120, '#2f6fd6', 'Ľavé drž: ťahanie tága', 'myš k sebe odtiahne, dopredu úder', -60, -150);
-	lab(cy - 30, '#c9a24a', 'Koliesko: priblíženie', 'drž: miesto úderu (falša), dvojklik: stred', 0, -125, 'Shift + koliesko: uhol tága (massé)', '#1d5fa8');
-	lab(cy + 78, '#d9822b', 'Pravé drž: pohľad na guľu', 'doľava, doprava krúži, hore priblíži, dole k stolu', 60, -110, 'Pravý klik: späť (z nástenky, stojana, kresla…)');
-	lab(cy + 180, '#555', 'Pohyb bez tlačidla: mierenie', 'pomaly = jemne, Shift = ešte jemnejšie', 0, 60);
+	lab(cy - 120, '#2f6fd6', _t('Ľavé drž: ťahanie tága'), _t('myš k sebe odtiahne, dopredu úder'), -60, -150);
+	lab(cy - 30, '#c9a24a', _t('Koliesko: priblíženie'), _t('drž: miesto úderu (falša), dvojklik: stred'), 0, -125, _t('Shift + koliesko: uhol tága (massé)'), '#1d5fa8');
+	lab(cy + 78, '#d9822b', _t('Pravé drž: pohľad na guľu'), _t('doľava, doprava krúži, hore priblíži, dole k stolu'), 60, -110, _t('Pravý klik: späť (z nástenky, stojana, kresla…)'));
+	lab(cy + 180, '#555', _t('Pohyb bez tlačidla: mierenie'), _t('pomaly = jemne, Shift = ešte jemnejšie'), 0, 60);
 }
 
 /** Klávesa (kresba): zaoblený štvorček s tieňom a popisom. */
@@ -348,7 +349,7 @@ const DOODLES = {
 		keycap(g, x + 140, y + 62, 60, 54, 'D');
 		keycap(g, x + 0, y, 60, 54, 'Q');
 		keycap(g, x + 140, y, 60, 54, 'E');
-		keycap(g, x + 10, y + 128, 180, 46, 'medzerník', 20);
+		keycap(g, x + 10, y + 128, 180, 46, _t('medzerník'), 20);
 	},
 	ctrl(g, x, y) {
 		keycap(g, x, y + 10, 96, 54, 'Ctrl', 22);
@@ -575,7 +576,7 @@ export function boardTexture(touch = !!(window.matchMedia && window.matchMedia('
 	g.font = 'bold 60px Georgia, serif';
 	g.textAlign = 'center';
 	g.textBaseline = 'middle';
-	g.fillText('Nápoveda', 0, -2);
+	g.fillText(_t('Nápoveda'), 0, -2);
 	g.restore();
 	pin(g, W / 2 - 270, 50, '#c0392b');
 	pin(g, W / 2 + 260, 48, '#2f6fd6');
@@ -583,7 +584,7 @@ export function boardTexture(touch = !!(window.matchMedia && window.matchMedia('
 	pin(g, 1035, 745, '#2a9d8f');
 	pin(g, 2040, 120, '#c9a24a');
 	pin(g, 30, 1320, '#7b3fb5');
-	const papers = (touch ? PAPERS_TOUCH : PAPERS).map((p, i) => (p ? { ...p, box: BOARD_BOXES[i] } : { title: touch ? 'Časti obrazovky' : 'Ovládanie myšou', mouse: true, box: BOARD_BOXES[i] }));
+	const papers = (touch ? PAPERS_TOUCH : PAPERS).map((p, i) => (p ? { ...p, box: BOARD_BOXES[i] } : { title: touch ? _t('Časti obrazovky') : _t('Ovládanie myšou'), mouse: true, box: BOARD_BOXES[i] }));
 	const doodles = DOODLE_OF[touch ? 'touch' : 'desk'];
 	const pinCol = ['#c0392b', '#2f6fd6', '#2a9d8f', '#c9a24a', '#7b3fb5', '#e8781e'];
 	papers.forEach((p, i) => {
@@ -678,8 +679,8 @@ export function boardTexture(touch = !!(window.matchMedia && window.matchMedia('
 					g.font = '21px Arial, sans-serif';
 					g.fillText(l2, tx + kw + 16, y + 44);
 				};
-				row(-h / 2 + 100, 'Ctrl', 78, 'drž: voľná myš', 'a nastavenia myši (šúpatká dole)');
-				row(-h / 2 + 156, 'medzerník', 128, 'voľný pohľad', 'pravé drž = hore, ľavé drž = dole');
+				row(-h / 2 + 100, 'Ctrl', 78, _t('drž: voľná myš'), _t('a nastavenia myši (šúpatká dole)'));
+				row(-h / 2 + 156, _t('medzerník'), 128, _t('voľný pohľad'), _t('pravé drž = hore, ľavé drž = dole'));
 			}
 		} else {
 			g.fillStyle = '#23262e';

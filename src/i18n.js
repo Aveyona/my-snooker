@@ -6,7 +6,7 @@
  * (sk a cs = slovenčina, inak angličtina). Zmena jazyka v hlavnom menu (Esc) uloží voľbu aj k účtu
  * a stránku znova načíta (rozohraná partia, frame o skóre aj tréning pokračujú).
  *
- * Použitie: t('Nová hra'), t('Partia s hráčom {name}', { name }). Chýbajúce preklady nájde npm run i18n.
+ * Použitie: _t('Nová hra'), _t('Partia s hráčom {name}', { name }). Chýbajúce preklady nájde npm run i18n.
  */
 import EN from './lang/en.js';
 
@@ -50,7 +50,7 @@ function fill(s, p) {
 }
 
 /** Preklad textu (kľúč = slovenský text). Parametre {meno} sa doplnia z p. */
-export function t(s, p) {
+export function _t(s, p) {
 	return fill((DICT && DICT[s]) || s, p);
 }
 

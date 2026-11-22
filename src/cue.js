@@ -2,6 +2,7 @@
  * My Snooker: tágo a pomocné čiary mierenia (smer, „duch“ gule, kam pôjde objektová a biela guľa).
  */
 import * as THREE from 'three';
+import { _t } from './i18n.js';
 import { R, L, W, aimTrace } from './physics.js';
 import { buildCueMesh } from './cues.js';
 
@@ -27,9 +28,9 @@ function toEdge(x, z, ux, uz, hx, hz) {
 export const SPIDER_TILT = THREE.MathUtils.degToRad(14); // tágo na pavúkovi: vždy rovnaký sklon nad bielou
 /** Nádstavce na teleskopickú tyč: krížik (nízko), pavúk, vysoký pavúk (U); každý drží tágo v inom sklone. */
 export const RESTS = {
-	cross: { name: 'Krížik', tilt: THREE.MathUtils.degToRad(7) },
-	spider: { name: 'Pavúk', tilt: SPIDER_TILT },
-	high: { name: 'Vysoký pavúk', tilt: THREE.MathUtils.degToRad(22) },
+	cross: { name: _t('Krížik'), tilt: THREE.MathUtils.degToRad(7) },
+	spider: { name: _t('Pavúk'), tilt: SPIDER_TILT },
+	high: { name: _t('Vysoký pavúk'), tilt: THREE.MathUtils.degToRad(22) },
 };
 const SPIDER_FOOT = 0.065; // polomer nôh pavúka (nesmie zavadiť o guľu)
 const GAP_REST = 0.012;

@@ -3,39 +3,41 @@
  * (includes/achievements.php). Stupne: 1 bronz, 2 striebro, 3 zlato, 4 platina.
  */
 
+import { _t } from './i18n.js';
+
 export const TIERS = [
-	{ name: 'Bronz', ring: '#c9874a', glow: '#f0b27a' },
-	{ name: 'Striebro', ring: '#b8c2cc', glow: '#eef3f8' },
-	{ name: 'Zlato', ring: '#e8b923', glow: '#ffe27a' },
-	{ name: 'Platina', ring: '#7fe3e0', glow: '#d8fffd' },
+	{ name: _t('Bronz'), ring: '#c9874a', glow: '#f0b27a' },
+	{ name: _t('Striebro'), ring: '#b8c2cc', glow: '#eef3f8' },
+	{ name: _t('Zlato'), ring: '#e8b923', glow: '#ffe27a' },
+	{ name: _t('Platina'), ring: '#7fe3e0', glow: '#d8fffd' },
 ];
 
 /** Úspechy: kľúč, kategória (gen = všeobecné, spec = špeciálne), názov, popis, ikonka (glyf). */
 export const ACH = [
-	{ k: 'pots', cat: 'gen', name: 'Potápač', desc: 'Potopené gule (bez faulu).', g: 'ball', c: '#b3121f' },
-	{ k: 'blacks', cat: 'gen', name: 'Čierna sedí', desc: 'Potopené čierne.', g: 'ball', c: '#111' },
-	{ k: 'frames', cat: 'gen', name: 'Frejmy', desc: 'Dohrané frejmy (partie, liga, hra o skóre).', g: 'rack' },
-	{ k: 'wins', cat: 'gen', name: 'Víťaz', desc: 'Vyhraté partie s hráčmi.', g: 'cup' },
-	{ k: 'league', cat: 'gen', name: 'Ligový bojovník', desc: 'Vyhraté ligové zápasy.', g: 'shield' },
-	{ k: 'solo', cat: 'gen', name: 'Lovec skóre', desc: 'Dohrané hry o najlepšie skóre.', g: 'clock' },
-	{ k: 'brk20', cat: 'gen', name: 'Séria 20', desc: 'Séria (brejk) aspoň 20 bodov.', g: 'num', t: '20' },
-	{ k: 'brk50', cat: 'gen', name: 'Pol stovky', desc: 'Séria aspoň 50 bodov.', g: 'num', t: '50' },
-	{ k: 'century', cat: 'gen', name: 'Stovka', desc: 'Séria aspoň 100 bodov (century).', g: 'num', t: '100' },
-	{ k: 'max147', cat: 'gen', name: 'Maximum', desc: 'Séria 147 bodov.', g: 'num', t: '147' },
-	{ k: 'days', cat: 'gen', name: 'Verný hráč', desc: 'Dni, keď si hral.', g: 'cal' },
-	{ k: 'stop', cat: 'spec', name: 'Stop-ball', desc: 'Úder stredom: biela po priamom zásahu zastane a guľa spadne.', g: 'stop' },
-	{ k: 'follow', cat: 'spec', name: 'Ťahák', desc: 'Horná falša: biela ide za guľou ďalej (aspoň 30 cm) a guľa spadne.', g: 'follow' },
-	{ k: 'screw', cat: 'spec', name: 'Späťák', desc: 'Spodná falša: biela sa vráti aspoň 30 cm a guľa spadne.', g: 'screw' },
-	{ k: 'side', cat: 'spec', name: 'Bočná falša', desc: 'Bočná falša, biela narazí do mantinelu a guľa spadne.', g: 'side' },
-	{ k: 'swerve', cat: 'spec', name: 'Swerve', desc: 'Oblúk pri mierne zdvihnutom tágu, biela trafí správnu guľu.', g: 'swerve' },
-	{ k: 'masse', cat: 'spec', name: 'Massé', desc: 'Strmé tágo (od 45°) a veľký oblúk, biela trafí správnu guľu.', g: 'masse' },
-	{ k: 'jump', cat: 'spec', name: 'Skok', desc: 'Skokový úder, biela trafí správnu guľu.', g: 'jump' },
-	{ k: 'plant', cat: 'spec', name: 'Plant', desc: 'Kombinácia: biela trafí guľu, tá ďalšiu a tá spadne.', g: 'plant' },
-	{ k: 'cannon', cat: 'spec', name: 'Cannon', desc: 'Karambol: biela po zásahu narazí do ďalšej gule a guľa spadne.', g: 'cannon' },
-	{ k: 'double', cat: 'spec', name: 'Double', desc: 'Guľa spadne po odraze od mantinelu.', g: 'double' },
-	{ k: 'escape', cat: 'spec', name: 'Únik zo snookeru', desc: 'Si zasnookrovaný a biela trafí správnu guľu.', g: 'escape' },
-	{ k: 'safety', cat: 'spec', name: 'Safety', desc: 'V partii úder bez potopenia a faulu, po ktorom súper nič nepotopí.', g: 'safety' },
-	{ k: 'snooker', cat: 'spec', name: 'Snooker', desc: 'Po tvojom údere súper nevidí priamo žiadnu guľu na rade.', g: 'snooker' },
+	{ k: 'pots', cat: 'gen', name: _t('Potápač'), desc: _t('Potopené gule (bez faulu).'), g: 'ball', c: '#b3121f' },
+	{ k: 'blacks', cat: 'gen', name: _t('Čierna sedí'), desc: _t('Potopené čierne.'), g: 'ball', c: '#111' },
+	{ k: 'frames', cat: 'gen', name: _t('Frejmy'), desc: _t('Dohrané frejmy (partie, liga, hra o skóre).'), g: 'rack' },
+	{ k: 'wins', cat: 'gen', name: _t('Víťaz'), desc: _t('Vyhraté partie s hráčmi.'), g: 'cup' },
+	{ k: 'league', cat: 'gen', name: _t('Ligový bojovník'), desc: _t('Vyhraté ligové zápasy.'), g: 'shield' },
+	{ k: 'solo', cat: 'gen', name: _t('Lovec skóre'), desc: _t('Dohrané hry o najlepšie skóre.'), g: 'clock' },
+	{ k: 'brk20', cat: 'gen', name: _t('Séria 20'), desc: _t('Séria (brejk) aspoň 20 bodov.'), g: 'num', t: '20' },
+	{ k: 'brk50', cat: 'gen', name: _t('Pol stovky'), desc: _t('Séria aspoň 50 bodov.'), g: 'num', t: '50' },
+	{ k: 'century', cat: 'gen', name: _t('Stovka'), desc: _t('Séria aspoň 100 bodov (century).'), g: 'num', t: '100' },
+	{ k: 'max147', cat: 'gen', name: _t('Maximum'), desc: _t('Séria 147 bodov.'), g: 'num', t: '147' },
+	{ k: 'days', cat: 'gen', name: _t('Verný hráč'), desc: _t('Dni, keď si hral.'), g: 'cal' },
+	{ k: 'stop', cat: 'spec', name: _t('Stop-ball'), desc: _t('Úder stredom: biela po priamom zásahu zastane a guľa spadne.'), g: 'stop' },
+	{ k: 'follow', cat: 'spec', name: _t('Ťahák'), desc: _t('Horná falša: biela ide za guľou ďalej (aspoň 30 cm) a guľa spadne.'), g: 'follow' },
+	{ k: 'screw', cat: 'spec', name: _t('Späťák'), desc: _t('Spodná falša: biela sa vráti aspoň 30 cm a guľa spadne.'), g: 'screw' },
+	{ k: 'side', cat: 'spec', name: _t('Bočná falša'), desc: _t('Bočná falša, biela narazí do mantinelu a guľa spadne.'), g: 'side' },
+	{ k: 'swerve', cat: 'spec', name: _t('Swerve'), desc: _t('Oblúk pri mierne zdvihnutom tágu, biela trafí správnu guľu.'), g: 'swerve' },
+	{ k: 'masse', cat: 'spec', name: _t('Massé'), desc: _t('Strmé tágo (od 45°) a veľký oblúk, biela trafí správnu guľu.'), g: 'masse' },
+	{ k: 'jump', cat: 'spec', name: _t('Skok'), desc: _t('Skokový úder, biela trafí správnu guľu.'), g: 'jump' },
+	{ k: 'plant', cat: 'spec', name: _t('Plant'), desc: _t('Kombinácia: biela trafí guľu, tá ďalšiu a tá spadne.'), g: 'plant' },
+	{ k: 'cannon', cat: 'spec', name: _t('Cannon'), desc: _t('Karambol: biela po zásahu narazí do ďalšej gule a guľa spadne.'), g: 'cannon' },
+	{ k: 'double', cat: 'spec', name: _t('Double'), desc: _t('Guľa spadne po odraze od mantinelu.'), g: 'double' },
+	{ k: 'escape', cat: 'spec', name: _t('Únik zo snookeru'), desc: _t('Si zasnookrovaný a biela trafí správnu guľu.'), g: 'escape' },
+	{ k: 'safety', cat: 'spec', name: _t('Safety'), desc: _t('V partii úder bez potopenia a faulu, po ktorom súper nič nepotopí.'), g: 'safety' },
+	{ k: 'snooker', cat: 'spec', name: _t('Snooker'), desc: _t('Po tvojom údere súper nevidí priamo žiadnu guľu na rade.'), g: 'snooker' },
 ];
 export const ACH_BY = Object.fromEntries(ACH.map((a) => [a.k, a]));
 

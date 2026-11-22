@@ -7,6 +7,7 @@
  * Keď server stanice nedovolí čítať zvuk z cudzieho webu (CORS), rádio hrá obyčajne, bez priestoru a ekvalizéra.
  */
 import * as THREE from 'three';
+import { _t } from './i18n.js';
 import { ROOM } from './room.js';
 
 const FY = ROOM.floor;
@@ -167,7 +168,7 @@ export function buildRadioCorner(scene) {
 		g.fillStyle = on ? '#6fff9f' : '#2f6b45';
 		g.font = 'bold 44px "Courier New", monospace';
 		g.textBaseline = 'middle';
-		g.fillText((on ? '' : 'VYP  ') + (name || 'RÁDIO').slice(0, 18), 16, 50);
+		g.fillText((on ? '' : _t('VYP') + '  ') + (name || _t('RÁDIO')).slice(0, 18), 16, 50);
 		disp.t.needsUpdate = true;
 		// stupnica rádia
 		g = dial.g;
@@ -184,7 +185,7 @@ export function buildRadioCorner(scene) {
 		g.fillStyle = '#3a2a12';
 		g.font = 'bold 26px Georgia, serif';
 		g.textAlign = 'center';
-		g.fillText((name || 'Rádio').slice(0, 16), 128, 86);
+		g.fillText((name || _t('Rádio')).slice(0, 16), 128, 86);
 		g.fillStyle = '#b3121f';
 		const nx = 16 + ((name || '').length * 37) % 220;
 		g.fillRect(nx, 12, 3, 40);
@@ -200,7 +201,7 @@ export function buildRadioCorner(scene) {
 		g.fillStyle = '#cfd3da';
 		g.font = 'bold 34px Arial, sans-serif';
 		g.textAlign = 'center';
-		['HLAS', 'BASY', 'VÝŠKY', 'BAL'].forEach((t, i) => {
+		[_t('HLAS'), _t('BASY'), _t('VÝŠKY'), _t('BAL')].forEach((t, i) => {
 			const x = (faderZ[i] + 0.46) * (1024 / 0.92);
 			g.fillText(t, x, 488); // pri prednej hrane (k hráčovi)
 			for (let j = 0; j <= 10; j++) {
@@ -343,7 +344,7 @@ export class RadioPlayer {
 	/** Zapne stanicu i (alebo prvú). */
 	play(i = this.index < 0 ? 0 : this.index) {
 		if (!this.stations.length) {
-			this.status = 'V My Player nie sú žiadne rádiá.';
+			this.status = _t('V My Player nie sú žiadne rádiá.');
 			this._emit();
 			return;
 		}
@@ -362,7 +363,7 @@ export class RadioPlayer {
 		}
 		this.stopAudio();
 		this.on = true;
-		this.status = 'Ladím stanicu…';
+		this.status = _t('Ladím stanicu…');
 		const ctx = this.ctxGet();
 		if (!ctx) {
 			this._playPlain(st);
@@ -380,7 +381,7 @@ export class RadioPlayer {
 		};
 		gr.el.onplaying = () => {
 			if (this._token === token) {
-				this.status = this.track ? `Hrá: ${this.track.title}` : 'Hrá priestorovo z reproduktorov.';
+				this.status = this.track ? _t('Hrá: {t}', { t: this.track.title }) : _t('Hrá priestorovo z reproduktorov.');
 				this._emit();
 			}
 		};
@@ -406,14 +407,14 @@ export class RadioPlayer {
 		const token = (this._token = Math.random());
 		el.onerror = () => {
 			if (this._token === token) {
-				this.status = 'Stanica teraz nehrá. Skús ďalšiu (šípka vpravo).';
+				this.status = _t('Stanica teraz nehrá. Skús ďalšiu (šípka vpravo).');
 				this.mode = '';
 				this._emit();
 			}
 		};
 		el.onplaying = () => {
 			if (this._token === token) {
-				this.status = this.track ? `Hrá: ${this.track.title}` : 'Hrá (táto stanica nedovolí priestorový zvuk a ekvalizér).';
+				this.status = this.track ? _t('Hrá: {t}', { t: this.track.title }) : _t('Hrá (táto stanica nedovolí priestorový zvuk a ekvalizér).');
 				this._emit();
 			}
 		};
@@ -433,7 +434,7 @@ export class RadioPlayer {
 	_tuneTimeout(token) {
 		setTimeout(() => {
 			if (this._token === token && this.on && /Ladím/.test(this.status)) {
-				this.status = 'Stanica neodpovedá. Skús ďalšiu (šípka vpravo).';
+				this.status = _t('Stanica neodpovedá. Skús ďalšiu (šípka vpravo).');
 				this._emit();
 			}
 		}, 12000);
@@ -457,7 +458,7 @@ export class RadioPlayer {
 	stop() {
 		this.stopAudio();
 		this.on = false;
-		this.status = 'Rádio je vypnuté.';
+		this.status = _t('Rádio je vypnuté.');
 		this._emit();
 	}
 

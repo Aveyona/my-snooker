@@ -7,23 +7,24 @@
  * so zapustenými hrotmi, biela objímka a špička.
  */
 import * as THREE from 'three';
+import { _t } from './i18n.js';
 
-const c = (id, name, category, tip, power, grip, len, fine, shaft, butt, note) => ({ id, name, category, tip, power, grip, len, fine, colors: { shaft, butt }, note });
+const c = (id, name, category, tip, power, grip, len, fine, shaft, butt, note) => ({ id, name, category, tip, power, grip, len, fine, colors: { shaft, butt }, note }); // tip zostáva po slovensky (main.js podľa neho určí druh), preklad pri zobrazení: _t(c.tip)
 
 /** Presné mierenie predvolene zapnuté len pri Citlivom tágu (aj vlastnom z jeho šablóny), ostatné tágá so Shift (Robo 8. 11. 2026). */
 export const fineDefault = (spec) => !!spec && (spec.base || spec.id) === 'touch';
 
 export const CUES = [
-	c('club', 'Klubové tágo', 'Základné', 'stredná', 0.8, 1, 1.45, 0, '#dcb57e', '#3a1c0c', 'Predvolené tágo na každý úder.'),
-	c('short', 'Krátke tágo', 'Základné', 'tvrdá', 0.9, 0.85, 1.37, 0, '#d2a56a', '#5a1d0e', 'Krátke ťahanie, silné údery, horšie drží falše.'),
-	c('compact', 'Kompaktné tágo', 'Základné', 'stredná', 0.75, 1, 1.3, 0, '#e0bd88', '#20304a', 'Najkratšie, rýchle ťahanie, slabšie údery.'),
-	c('break', 'Prerážacie tágo', 'Základné', 'veľmi tvrdá', 1, 0.7, 1.45, 0, '#cfa060', '#5b0f14', 'Plná sila na rozbitie, falše skoro nedrží.'),
-	c('soft', 'Mäkké tágo', 'Pokročilé', 'mäkká', 0.65, 1, 1.47, 0.00008, '#e8c992', '#1f3b2a', 'Jemné údery okolo čiernej, presné dávkovanie sily.'),
-	c('long', 'Dlhé tágo', 'Pokročilé', 'stredná', 0.85, 1, 1.58, 0.00006, '#dfbc88', '#14213d', 'Dlhé ťahanie myšou, veľmi jemné dávkovanie sily.'),
-	c('ebony', 'Ebenové tágo', 'Pokročilé', 'stredne tvrdá', 0.9, 0.95, 1.49, 0.00006, '#e6c896', '#0d0d0d', 'Vyvážené tágo na všetky údery.'),
-	c('master', 'Majstrovské tágo', 'Majstrovské', 'stredne tvrdá', 1, 1, 1.5, 0.00003, '#efd3a0', '#0b0b0b', 'Plná sila aj najjemnejšie mierenie so Shift.'),
-	c('tour', 'Turnajové tágo', 'Majstrovské', 'tvrdá', 1, 0.9, 1.47, 0.00003, '#f0d6a4', '#2a0f2e', 'Silné a presné údery, falše o niečo slabšie.'),
-	c('touch', 'Citlivé tágo', 'Majstrovské', 'mäkká', 0.72, 1, 1.6, 0.00002, '#f2dcae', '#123524', 'Najjemnejšie dávkovanie sily a mierenie.'),
+	c('club', _t('Klubové tágo'), _t('Základné'), 'stredná', 0.8, 1, 1.45, 0, '#dcb57e', '#3a1c0c', _t('Predvolené tágo na každý úder.')),
+	c('short', _t('Krátke tágo'), _t('Základné'), 'tvrdá', 0.9, 0.85, 1.37, 0, '#d2a56a', '#5a1d0e', _t('Krátke ťahanie, silné údery, horšie drží falše.')),
+	c('compact', _t('Kompaktné tágo'), _t('Základné'), 'stredná', 0.75, 1, 1.3, 0, '#e0bd88', '#20304a', _t('Najkratšie, rýchle ťahanie, slabšie údery.')),
+	c('break', _t('Prerážacie tágo'), _t('Základné'), 'veľmi tvrdá', 1, 0.7, 1.45, 0, '#cfa060', '#5b0f14', _t('Plná sila na rozbitie, falše skoro nedrží.')),
+	c('soft', _t('Mäkké tágo'), _t('Pokročilé'), 'mäkká', 0.65, 1, 1.47, 0.00008, '#e8c992', '#1f3b2a', _t('Jemné údery okolo čiernej, presné dávkovanie sily.')),
+	c('long', _t('Dlhé tágo'), _t('Pokročilé'), 'stredná', 0.85, 1, 1.58, 0.00006, '#dfbc88', '#14213d', _t('Dlhé ťahanie myšou, veľmi jemné dávkovanie sily.')),
+	c('ebony', _t('Ebenové tágo'), _t('Pokročilé'), 'stredne tvrdá', 0.9, 0.95, 1.49, 0.00006, '#e6c896', '#0d0d0d', _t('Vyvážené tágo na všetky údery.')),
+	c('master', _t('Majstrovské tágo'), _t('Majstrovské'), 'stredne tvrdá', 1, 1, 1.5, 0.00003, '#efd3a0', '#0b0b0b', _t('Plná sila aj najjemnejšie mierenie so Shift.')),
+	c('tour', _t('Turnajové tágo'), _t('Majstrovské'), 'tvrdá', 1, 0.9, 1.47, 0.00003, '#f0d6a4', '#2a0f2e', _t('Silné a presné údery, falše o niečo slabšie.')),
+	c('touch', _t('Citlivé tágo'), _t('Majstrovské'), 'mäkká', 0.72, 1, 1.6, 0.00002, '#f2dcae', '#123524', _t('Najjemnejšie dávkovanie sily a mierenie.')),
 ];
 
 /**
@@ -94,9 +95,9 @@ export function ownCueSpec(row) {
 		id: 'u' + row.id,
 		own: row.id,
 		base: base.id,
-		name: (row.name || base.name + ' (moje)').slice(0, 30),
-		category: 'Vlastné',
-		note: `Podľa šablóny ${base.name}.`,
+		name: (row.name || base.name + _t(' (moje)')).slice(0, 30),
+		category: _t('Vlastné'),
+		note: _t('Podľa šablóny {name}.', { name: base.name }),
 		power: Math.min(1, base.power * (1 + lim(a.power)) * (1 + 0.5 * a.weight)),
 		len: +(base.len * (1 + lim(a.len))).toFixed(3),
 		grip: base.grip * (1 + lim(a.grip)) * (1 + a.tipd),
@@ -108,12 +109,12 @@ export function ownCueSpec(row) {
 
 /** Farby špice (stojan F2): modrá predvolená a niekoľko základných. */
 export const TIP_COLORS = {
-	blue: { name: 'modrá', hex: '#2f6fd6' },
-	red: { name: 'červená', hex: '#c62828' },
-	green: { name: 'zelená', hex: '#2e9d55' },
-	black: { name: 'čierna', hex: '#1b1b1b' },
-	orange: { name: 'oranžová', hex: '#e8781e' },
-	violet: { name: 'fialová', hex: '#7b3fb5' },
+	blue: { name: _t('modrá'), hex: '#2f6fd6' },
+	red: { name: _t('červená'), hex: '#c62828' },
+	green: { name: _t('zelená'), hex: '#2e9d55' },
+	black: { name: _t('čierna'), hex: '#1b1b1b' },
+	orange: { name: _t('oranžová'), hex: '#e8781e' },
+	violet: { name: _t('fialová'), hex: '#7b3fb5' },
 };
 
 const DERIVED = new Map();
@@ -141,16 +142,16 @@ export function extInaccuracy(ext) {
 
 /** Výhody a nedostatky tág 1 až 10 (panel na stojane F2). */
 export const CUE_PROS = {
-	club: ['vyvážené, spoľahlivé falše, ľahko sa ovláda', 'slabšia sila, bez jemného mierenia so Shift'],
-	short: ['silné údery, krátke a rýchle ťahanie myšou', 'horšie drží falše, sila sa dávkuje hrubšie'],
-	compact: ['najrýchlejšie ťahanie, hodí sa na malú podložku', 'najslabšie údery, hrubé dávkovanie sily'],
-	break: ['plná sila, ideálne na rozbitie a dlhé údery', 'falše skoro nedrží, na jemnú hru nevhodné'],
-	soft: ['najlepšie falše, jemné údery okolo čiernej, Shift', 'slabá sila, mäkká špica sa pri silných úderoch rýchlo ničí'],
-	long: ['veľmi jemné dávkovanie sily, Shift', 'treba dlhé ťahanie myšou, pomalšie údery'],
-	ebony: ['vyvážené na všetko, silné aj presné, Shift', 'v ničom nie je najlepšie'],
-	master: ['plná sila, plné falše a najjemnejšie mierenie so Shift', 'plná sila neodpúšťa chyby v dávkovaní'],
-	tour: ['silné a presné údery, Shift', 'falše o niečo slabšie, tvrdá špica'],
-	touch: ['najjemnejšie dávkovanie sily a mierenie', 'slabé údery, najdlhšie ťahanie, mäkká špica sa ničí rýchlo'],
+	club: [_t('vyvážené, spoľahlivé falše, ľahko sa ovláda'), _t('slabšia sila, bez jemného mierenia so Shift')],
+	short: [_t('silné údery, krátke a rýchle ťahanie myšou'), _t('horšie drží falše, sila sa dávkuje hrubšie')],
+	compact: [_t('najrýchlejšie ťahanie, hodí sa na malú podložku'), _t('najslabšie údery, hrubé dávkovanie sily')],
+	break: [_t('plná sila, ideálne na rozbitie a dlhé údery'), _t('falše skoro nedrží, na jemnú hru nevhodné')],
+	soft: [_t('najlepšie falše, jemné údery okolo čiernej, Shift'), _t('slabá sila, mäkká špica sa pri silných úderoch rýchlo ničí')],
+	long: [_t('veľmi jemné dávkovanie sily, Shift'), _t('treba dlhé ťahanie myšou, pomalšie údery')],
+	ebony: [_t('vyvážené na všetko, silné aj presné, Shift'), _t('v ničom nie je najlepšie')],
+	master: [_t('plná sila, plné falše a najjemnejšie mierenie so Shift'), _t('plná sila neodpúšťa chyby v dávkovaní')],
+	tour: [_t('silné a presné údery, Shift'), _t('falše o niečo slabšie, tvrdá špica')],
+	touch: [_t('najjemnejšie dávkovanie sily a mierenie'), _t('slabé údery, najdlhšie ťahanie, mäkká špica sa ničí rýchlo')],
 };
 
 export function cueById(id) {

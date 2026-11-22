@@ -1,7 +1,7 @@
 // My Snooker: kontrola prekladu (npm run i18n, 0.43.0).
-// Nájde v src/*.js všetky texty v t('…') a vypíše tie, ktoré chýbajú v src/lang/en.js (a nepoužité preklady).
+// Nájde v src/*.js všetky texty v _t('…') a vypíše tie, ktoré chýbajú v src/lang/en.js (a nepoužité preklady).
 // Prepínače: --missing  vypíše chýbajúce ako riadky slovníka na doplnenie
-//            --left     zoznam slovenských textov mimo t() (ešte nepreložené miesta) podľa súborov
+//            --left     zoznam slovenských textov mimo _t() (ešte nepreložené miesta) podľa súborov
 import { readFileSync, readdirSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -24,7 +24,7 @@ const lit = (q, body) => {
 };
 for (const f of files) {
 	const code = readFileSync(join(src, f), 'utf8').replace(/\/\*[\s\S]*?\*\//g, '');
-	const re = /\bt\(\s*(['"])((?:\\.|(?!\1).)*)\1/g;
+	const re = /\b_t\(\s*(['"])((?:\\.|(?!\1).)*)\1/g;
 	let m;
 	while ((m = re.exec(code))) {
 		const k = lit(m[1], m[2]);
@@ -41,7 +41,7 @@ for (const f of files) {
 		}
 		const strs = l.match(/(['"`])(?:\\.|(?!\1).)*\1/g) || [];
 		for (const s of strs) {
-			if (SK.test(s) && !l.includes('t(' + s)) {
+			if (SK.test(s) && !l.includes('_t(' + s)) {
 				n++;
 			}
 		}
@@ -53,7 +53,7 @@ for (const f of files) {
 const missing = [...used.keys()].filter((k) => !(k in EN));
 const unused = Object.keys(EN).filter((k) => !used.has(k));
 const all = process.argv.slice(2);
-console.log(`preklad: ${used.size} textov v t(), preložených ${used.size - missing.length}, chýba ${missing.length}, nepoužité ${unused.length}`);
+console.log(`preklad: ${used.size} textov v _t(), preložených ${used.size - missing.length}, chýba ${missing.length}, nepoužité ${unused.length}`);
 if (all.includes('--missing')) {
 	for (const k of missing) {
 		console.log(`\t${JSON.stringify(k)}: '', // ${used.get(k)}`);
@@ -63,7 +63,7 @@ if (all.includes('--missing')) {
 }
 if (all.includes('--left')) {
 	const tot = Object.values(left).reduce((a, b) => a + b, 0);
-	console.log(`slovenské texty mimo t(): ${tot}`);
+	console.log(`slovenské texty mimo _t(): ${tot}`);
 	for (const [f, n] of Object.entries(left).sort((a, b) => b[1] - a[1])) {
 		console.log(`  ${n}\t${f}`);
 	}

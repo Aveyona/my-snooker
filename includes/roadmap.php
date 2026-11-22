@@ -180,6 +180,7 @@ function mysn_roadmap() {
 /** Denník zmien (najnovšie hore). */
 function mysn_changelog() {
 	return array(
+		array( '0.43.1', '22. 11. 2026', 'Angličtina: preložená nástenka F1 v herni (PC aj mobil, obrázok myši a telefónu) a ostatné texty v herni – tabuľa so skóre, rebríček a liga na stene, kriedová tabuľa Úspechy, telefón, televízor (Liga, Úspechy, Svetový snooker, Chat), rádio, tágá a špice na stojane F2, kriedy, príslušenstvo, názvy a popisy úspechov. Funkcia prekladu sa volá _t().' ),
 		array( '0.43.0', '22. 11. 2026', 'Angličtina, etapa 1 – základ prekladu: jazyk hry Slovenčina / English v hlavnom menu (Esc, na mobile v menu ☰), pri prvej návšteve podľa prehliadača (sk a cs = slovenčina, inak angličtina), voľba sa uloží v prehliadači aj k účtu a stránka sa znova načíta (rozohraná hra pokračuje). Modul prekladu src/i18n.js (kľúč = slovenský text), anglický slovník src/lang/en.js, kontrola chýbajúcich prekladov npm run i18n, jazyk aj pre server (cookie, mysn_t). Preložené hlavné menu; ostatné časti hry v ďalších etapách.' ),
 		array( '0.42.3', '22. 11. 2026', 'Prehrávač partie (notebook v kancelárii a administrácia): pri hráčovi pod kontrolou férovej hry štítok „kontrola“ vedľa mena, ako v rebríčku a histórii zápasov.' ),
 		array( '0.42.2', '22. 11. 2026', 'Štadión: na začiatku ligového zápasu a pri každom ďalšom frame rozhodca príde k čiernemu koncu, zoberie trojuholník zo stola a zavesí ho pod stôl na háčik (aj divákom); kým trojuholník nevisí, rozbiť sa nedá.' ),
