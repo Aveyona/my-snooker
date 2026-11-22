@@ -39,6 +39,7 @@ import { Snaps } from './snaps.js';
 import { Physics, strike } from './physics.js';
 import { takeShotData } from './integrity.js';
 import { Net } from './online.js';
+import { rememberLang } from './i18n.js';
 
 // 0.40.1: odtlačky dôležitých funkcií pre výzvu zo servera (ešte pred spustením hry)
 fpRegister({
@@ -3354,6 +3355,15 @@ export function start(root, config = {}) {
 		resign: () => online && online.leave('resign'),
 		home: () => {
 			window.location.href = config.homeUrl || '/';
+		},
+		// 0.43.0: jazyk hry – uloží sa v prehliadači aj k účtu a stránka sa znova načíta (rozohraná hra pokračuje)
+		lang: async (id) => {
+			rememberLang(id);
+			game.saveSoloTime && game.saveSoloTime();
+			if (config.user && online && online.net) {
+				await Promise.race([online.net.call('lang', { lang: id }).catch(() => null), new Promise((r) => setTimeout(r, 1500))]);
+			}
+			window.location.reload();
 		},
 		settings: () => {
 			if (ui.accountPanel) {

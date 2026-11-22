@@ -77,6 +77,7 @@ function mysn_render( $preview ) {
 		$pl           = function_exists( 'mysn_player' ) ? mysn_player( $u->ID ) : null;
 		$user['hand'] = $pl && ( $pl['hand'] ?? '' ) === 'left' ? 'left' : 'right'; // ruka z ligovej vizitky (strana kamery pri zostupe)
 		$user['guest'] = function_exists( 'mysn_is_guest' ) && mysn_is_guest( $u->ID ); // dočasný hosť z pozvánky e-mailom (0.42.0)
+		$user['lang']  = mysn_user_lang( $u->ID ); // 0.43.0: jazyk hry uložený pri účte
 	}
 	$cfg = array(
 		'homeUrl'  => $main,
@@ -117,7 +118,7 @@ function mysn_render( $preview ) {
 	);
 	?>
 <!doctype html>
-<html lang="sk">
+<html lang="<?php echo esc_attr( mysn_lang() ); ?>">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">

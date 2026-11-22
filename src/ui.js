@@ -22,6 +22,7 @@ const h = (tag, cls, html) => {
 import { cueById } from './cues.js';
 import { LoginBox } from './login.js';
 import { countryByCode } from './countries.js';
+import { t, LANG, LANGS } from './i18n.js';
 const cueNameOf = (id) => cueById(id).name;
 const cueStateId = (c) => c.id;
 
@@ -782,6 +783,7 @@ export class UI {
 			<div class="mysn-menu-note mysn-hidden"></div>
 			<div class="mysn-menu-inv"></div>
 			<div class="mysn-menu-btns"></div>
+			<div class="mysn-menu-lang"><span>Jazyk / Language</span></div>
 			<p class="mysn-note"></p>
 		</div>`;
 		this.menuMode = m.querySelector('.mysn-menu-mode');
@@ -789,6 +791,21 @@ export class UI {
 		this.menuInv = m.querySelector('.mysn-menu-inv');
 		this.menuBtns = m.querySelector('.mysn-menu-btns');
 		this.menuFoot = m.querySelector('.mysn-note');
+		// 0.43.0: jazyk hry (zmena uloží voľbu a znova načíta stránku)
+		const ml = m.querySelector('.mysn-menu-lang');
+		for (const l of LANGS) {
+			const b = h('button', 'mysn-lang-btn' + (l.id === LANG ? ' mysn-on' : ''), l.name);
+			b.type = 'button';
+			b.lang = l.id;
+			b.addEventListener('click', (e) => {
+				e.stopPropagation();
+				if (l.id !== LANG) {
+					this.opts.onAction('lang', l.id);
+				}
+			});
+			ml.appendChild(b);
+			(this.langBtns = this.langBtns || {})[l.id] = b;
+		}
 		this._menuKind = '';
 		return m;
 	}
@@ -804,71 +821,71 @@ export class UI {
 		box.innerHTML = '';
 		const user = this.opts.user;
 		if (kind === 'guest') {
-			this.menuMode.textContent = '3D snooker v prehliadači';
-			const tr = this.button('Tréning', 'guestTraining', 'Voľný tréning na stole bez prihlásenia');
+			this.menuMode.textContent = t('3D snooker v prehliadači');
+			const tr = this.button(t('Tréning'), 'guestTraining', t('Voľný tréning na stole bez prihlásenia'));
 			let a;
 			if (this.opts.auth) {
 				// prihlásenie priamo v hre (okno v štýle stránky Prihlásenie), nie cez wp-admin
-				a = h('button', 'mysn-btn mysn-login', 'Prihlásiť sa');
+				a = h('button', 'mysn-btn mysn-login', t('Prihlásiť sa'));
 				a.type = 'button';
 				a.addEventListener('click', (e) => {
 					e.stopPropagation();
 					this.openLogin();
 				});
 			} else {
-				a = h('a', 'mysn-btn mysn-login', 'Prihlásiť sa');
+				a = h('a', 'mysn-btn mysn-login', t('Prihlásiť sa'));
 				a.href = this.opts.loginUrl || '/wp-login.php';
 			}
 			box.append(tr, a);
-			this.menuFoot.textContent = 'Tréning si môžeš zahrať aj bez prihlásenia. Hru o skóre, ligu, partie s priateľmi a vlastné tágá majú prihlásení používatelia webu Hedlajner.';
+			this.menuFoot.textContent = t('Tréning si môžeš zahrať aj bez prihlásenia. Hru o skóre, ligu, partie s priateľmi a vlastné tágá majú prihlásení používatelia webu Hedlajner.');
 			this.mmRefresh();
 			return;
 		}
 		const fr = () => {
-			const b = this.button('Poslať výzvu', 'lobby', 'Vyzvi hráča, ktorý je práve v hre, na partiu alebo na spoločný tréning');
+			const b = this.button(t('Poslať výzvu'), 'lobby', t('Vyzvi hráča, ktorý je práve v hre, na partiu alebo na spoločný tréning'));
 			b.classList.add('mysn-friend');
 			return b;
 		};
 		// tágá, nápoveda a skóre sú na klávesoch F2, F1 a F4 (v menu nie sú)
 		const staffBtn = () => {
-			const b = this.button('Správa hry', 'staff', 'Admin a správca hry: hráči online, bežiace zápasy, neviditeľné sledovanie a zásahy podľa práv');
+			const b = this.button(t('Správa hry'), 'staff', t('Admin a správca hry: hráči online, bežiace zápasy, neviditeľné sledovanie a zásahy podľa práv'));
 			b.classList.add('mysn-staff-btn');
 			return b;
 		};
-		const common = () => [this.button('Mapa miestností', 'roomMap', 'M: herňa, kancelária, štadión'), ...(this.opts.role ? [staffBtn()] : []), this.button('Účet', 'account', 'Môj účet v My Snooker: údaje, liga, partie a skóre'), this.button('Nastavenia', 'settings')];
+		const common = () => [this.button(t('Mapa miestností'), 'roomMap', t('M: herňa, kancelária, štadión')), ...(this.opts.role ? [staffBtn()] : []), this.button(t('Účet'), 'account', t('Môj účet v My Snooker: údaje, liga, partie a skóre')), this.button(t('Nastavenia'), 'settings')];
 		if (kind === 'watch') {
 			// divák sleduje cudziu partiu
-			this.menuMode.textContent = `Sledujem: ${label}`;
-			const back = this.button('Pokračovať v sledovaní', 'resume');
+			this.menuMode.textContent = t('Sledujem: {name}', { name: label });
+			const back = this.button(t('Pokračovať v sledovaní'), 'resume');
 			back.classList.add('mysn-primary');
-			box.append(back, this.button('Zmeniť miesto', 'seatChange', 'F6: výber miesta zhora'), this.button('Prestať sledovať', 'watchStop'), this.button('Iná otvorená partia', 'rooms'), ...(this.opts.role ? [staffBtn()] : []), this.button('Nastavenia', 'settings'), this.button('Späť na web', 'home'));
-			this.menuFoot.textContent = 'Divák pozerá zo svojho miesta: myšou sa rozhliadaš, kolieskom približuješ. F4 skóre, F6 zmena miesta.';
+			box.append(back, this.button(t('Zmeniť miesto'), 'seatChange', t('F6: výber miesta zhora')), this.button(t('Prestať sledovať'), 'watchStop'), this.button(t('Iná otvorená partia'), 'rooms'), ...(this.opts.role ? [staffBtn()] : []), this.button(t('Nastavenia'), 'settings'), this.button(t('Späť na web'), 'home'));
+			this.menuFoot.textContent = t('Divák pozerá zo svojho miesta: myšou sa rozhliadaš, kolieskom približuješ. F4 skóre, F6 zmena miesta.');
 			this.mmRefresh();
 			return;
 		}
 		if (kind === 'match') {
 			const trn = !!(this._lastGame && this._lastGame.match && this._lastGame.match.training);
-			this.btnResume = this.button(trn ? 'Pokračovať v tréningu' : 'Pokračovať v partii', 'resume');
+			this.btnResume = this.button(trn ? t('Pokračovať v tréningu') : t('Pokračovať v partii'), 'resume');
 			this.btnResume.classList.add('mysn-primary');
-			this.menuMode.textContent = `${trn ? 'Tréning' : 'Partia'} s hráčom ${label}`;
-			box.append(this.btnResume, this.button(trn ? 'Ukončiť tréning' : 'Vzdať partiu', 'resign'), ...common()); // vzdať hneď pod pokračovať
+			this.menuMode.textContent = trn ? t('Tréning s hráčom {name}', { name: label }) : t('Partia s hráčom {name}', { name: label });
+			box.append(this.btnResume, this.button(trn ? t('Ukončiť tréning') : t('Vzdať partiu'), 'resign'), ...common()); // vzdať hneď pod pokračovať
 			const lgm = !!(this._lastGame && this._lastGame.match && this._lastGame.match.league);
 			if (!lgm) {
 				// ligový zápas sa neprerušuje (kto stratí spojenie, prehrá; obom naraz = zápas sa ruší)
-				box.append(this.button(trn ? 'Prerušiť tréning' : 'Prerušiť partiu', 'pauseMatch', 'Uloží sa, pokračovať sa dá neskôr'));
+				box.append(this.button(trn ? t('Prerušiť tréning') : t('Prerušiť partiu'), 'pauseMatch', t('Uloží sa, pokračovať sa dá neskôr')));
 			}
 		} else {
 			// Hrať = o najlepšie skóre: rozohraný frame sa pamätá, kým neskončí, potom sa začne nový
-			this.menuMode.textContent = kind === 'solo' ? 'Hrá sa o najlepšie skóre' : user ? `Prihlásený: ${user.name}` : 'Tréning';
-			const play = this.button('Hrať', kind === 'solo' ? 'resume' : 'solo', 'O najlepšie skóre: celý frame podľa pravidiel, rebríček podľa bodov, pri rovnosti rozhoduje kratší čas');
+			this.menuMode.textContent = kind === 'solo' ? t('Hrá sa o najlepšie skóre') : user ? t('Prihlásený: {name}', { name: user.name }) : t('Tréning');
+			const play = this.button(t('Hrať'), kind === 'solo' ? 'resume' : 'solo', t('O najlepšie skóre: celý frame podľa pravidiel, rebríček podľa bodov, pri rovnosti rozhoduje kratší čas'));
 			const trainFirst = kind === 'training' && this.trainingFirst; // po skončenom zápase je vybraný Tréning
-			const lg = this.button('Liga', 'league', 'Kancelária ligy: registrácia, 4 ligy, body a sezóna na rok');
+			const lg = this.button(t('Liga'), 'league', t('Kancelária ligy: registrácia, 4 ligy, body a sezóna na rok'));
 			lg.classList.add('mysn-league-btn');
-			const tr = this.button('Tréning', kind === 'solo' ? 'training' : 'resume', 'Voľný tréning na stole s červeným súknom');
-			const enter = this.button('Pozerať hru', 'rooms', 'Otvorené partie: tréningy a hry s otvorenými dverami a ligové zápasy, dá sa ich sledovať');
+			const tr = this.button(t('Tréning'), kind === 'solo' ? 'training' : 'resume', t('Voľný tréning na stole s červeným súknom'));
+			const enter = this.button(t('Pozerať hru'), 'rooms', t('Otvorené partie: tréningy a hry s otvorenými dverami a ligové zápasy, dá sa ich sledovať'));
 			if (!this.touchUI) {
 				// PC: prvá položka Pokračovať v hre (návrat k tomu, čo sa práve hrá: tréning alebo frame o skóre)
-				const cont = this.button('Pokračovať v hre', 'resume', kind === 'solo' ? 'Späť do rozohraného framu o najlepšie skóre' : 'Späť do tréningu');
+				const cont = this.button(t('Pokračovať v hre'), 'resume', kind === 'solo' ? t('Späť do rozohraného framu o najlepšie skóre') : t('Späť do tréningu'));
 				cont.classList.add('mysn-primary');
 				this.btnResume = cont;
 				box.append(cont);
@@ -878,13 +895,13 @@ export class UI {
 			}
 			box.append(tr, play, lg, fr(), enter); // rebríček je na F8
 			if (this.opts.venue && this.opts.venue() === 'league') {
-				box.appendChild(this.button('Späť do herne', 'leagueHome'));
+				box.appendChild(this.button(t('Späť do herne'), 'leagueHome'));
 			}
 			box.append(...common());
 		}
-		box.appendChild(this.button('Pomocník', 'helper', 'Nástenka s nápovedou v miestnosti, kde práve si (ako F1)'));
-		box.appendChild(this.button('Späť na web', 'home'));
-		this.menuFoot.textContent = 'V hre sa myš zachytí v okne. Esc ju uvoľní a otvorí toto menu. F1 nápoveda na nástenke, F2 stojan s tágami.';
+		box.appendChild(this.button(t('Pomocník'), 'helper', t('Nástenka s nápovedou v miestnosti, kde práve si (ako F1)')));
+		box.appendChild(this.button(t('Späť na web'), 'home'));
+		this.menuFoot.textContent = t('V hre sa myš zachytí v okne. Esc ju uvoľní a otvorí toto menu. F1 nápoveda na nástenke, F2 stojan s tágami.');
 		this.mmRefresh();
 	}
 
@@ -3667,7 +3684,7 @@ export class UI {
 		// účet, správa hry a návrat na web do skupiny Hra na konci
 		const mirror = [...this.menuInv.querySelectorAll('button'), ...this.menuBtns.querySelectorAll('.mysn-btn')]
 			.filter((b) => b.dataset.act !== 'settings' && b.dataset.act !== 'roomMap' && b.style.display !== 'none')
-			.map((b) => [MM_ICON[b.dataset.act] || (b.classList.contains('mysn-login') ? 'user' : 'menu'), b.textContent, { el: b }, /^(Tréning|Hrať|Liga)$/.test(b.textContent.trim()) ? '#7CFC8A' : '']);
+			.map((b) => [MM_ICON[b.dataset.act] || (b.classList.contains('mysn-login') ? 'user' : 'menu'), b.textContent, { el: b }, /^(guestTraining|training|solo|league)$/.test(b.dataset.act) || (b.dataset.act === 'resume' && /^(Tréning|Hrať|Practice|Play)$/.test(b.textContent.trim())) ? '#7CFC8A' : '']);
 		const OTHER = new Set(['account', 'staff', 'home']);
 		const groups = [
 			{
@@ -3682,6 +3699,8 @@ export class UI {
 					]),
 					...mirror.filter((it) => !OTHER.has(it[2].el.dataset.act)),
 					...mirror.filter((it) => OTHER.has(it[2].el.dataset.act)),
+					// 0.43.0: jazyk hry (ťuknutie stlačí tlačidlo jazyka v menu)
+					...LANGS.filter((l) => l.id !== LANG && this.langBtns && this.langBtns[l.id]).map((l) => ['web', l.id === 'en' ? 'Language: English' : 'Jazyk: Slovenčina', { el: this.langBtns[l.id] }, '']),
 				],
 			},
 			ctx.office
