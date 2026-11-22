@@ -20,6 +20,8 @@ export const ROOM = {
 	floor: -0.815, // podlaha (súkno je vo výške 0, stôl v turnajovej výške)
 	ceil: -0.815 + 3, // strop 3 m nad podlahou
 };
+/** Obmedzenia podľa miesta (nastavuje main.js pri zmene miesta): užšia šírka a pevné prekážky {x0,x1,z0,z1,y}. */
+export const ROOM_EXTRA = { z: 0, solids: [] };
 export const PANEL_H = 1.0; // výška dreveného obloženia
 
 /** Obloženie: tmavé drevo s rámovanými výplňami (jedna textúra = 1,2 m šírky steny). */
@@ -1846,8 +1848,25 @@ export function buildRoomShell(scene, quality, opts = {}) {
 
 /** Udrží kameru v miestnosti (nie cez steny, strop ani podlahu). */
 export function clampToRoom(v, margin = 0.15) {
+	const zl = ROOM_EXTRA.z || ROOM.z;
 	v.x = Math.max(-ROOM.x + margin, Math.min(ROOM.x - margin, v.x));
-	v.z = Math.max(-ROOM.z + margin, Math.min(ROOM.z - margin, v.z));
+	v.z = Math.max(-zl + margin, Math.min(zl - margin, v.z));
 	v.y = Math.max(ROOM.floor + 0.1, Math.min(ROOM.ceil - 0.25, v.y));
+	// pevné prekážky miesta (0.45.0 Ulička: obchod pri stole): kamera sa vytlačí k najbližšej strane
+	for (const b of ROOM_EXTRA.solids) {
+		if (v.y < b.y && v.x > b.x0 - margin && v.x < b.x1 + margin && v.z > b.z0 - margin && v.z < b.z1 + margin) {
+			const d = [v.x - (b.x0 - margin), b.x1 + margin - v.x, v.z - (b.z0 - margin), b.z1 + margin - v.z];
+			const k = d.indexOf(Math.min(...d));
+			if (k === 0) {
+				v.x = b.x0 - margin;
+			} else if (k === 1) {
+				v.x = b.x1 + margin;
+			} else if (k === 2) {
+				v.z = b.z0 - margin;
+			} else {
+				v.z = b.z1 + margin;
+			}
+		}
+	}
 	return v;
 }

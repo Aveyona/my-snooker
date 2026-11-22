@@ -6,7 +6,7 @@ import { gameChat } from './gameChat.js';
 import * as THREE from 'three';
 import { RoomEnvironment } from 'three/examples/jsm/environments/RoomEnvironment.js';
 import { buildTable, buildRoom } from './table.js';
-import { buildRoomShell, ROOM } from './room.js';
+import { buildRoomShell, ROOM, ROOM_EXTRA } from './room.js';
 import { buildRadioCorner, RadioPlayer, RADIO } from './radio.js';
 import { buildStadium } from './stadium.js';
 import { buildAlley } from './alley.js';
@@ -1321,7 +1321,9 @@ export function start(root, config = {}) {
 				stadium.setBeams(true);
 			}
 			updateFelt();
-			scene.background.setHex(lg ? 0x020306 : v === 'alley' ? 0x1a1430 : 0x0c0f14);
+			scene.background.setHex(lg ? 0x020306 : v === 'alley' ? 0x000000 : 0x0c0f14);
+			ROOM_EXTRA.z = v === 'alley' ? alley.limits.z : 0; // ulička je užšia a pri stole stojí obchodík
+			ROOM_EXTRA.solids = v === 'alley' ? alley.limits.solids : [];
 			if (lg && view) {
 				exitView();
 			}
