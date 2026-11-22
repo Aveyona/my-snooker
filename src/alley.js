@@ -58,10 +58,14 @@ export function sprayTag(g, text, x, y, size, fill, line = '#111', rot = 0) {
 }
 
 /** Fasáda domu: omietka, okná s okenicami (niektoré svietia), klimatizácie, nápisy, plagáty a grafity dole. */
-function facadeTex(wm, hm, seed) {
+/**
+ * hole = otvor na prízemí v metroch od ľavého okraja ({x0, x1}) alebo 'open' (celé prízemie je obchod): nápisy,
+ * plagáty a grafity sa kreslia celé, len na stenu (nie cez otvor ani cez okraj domu).
+ */
+function facadeTex(wm, hm, seed, hole = null) {
 	const S = 80; // px na meter
 	return canvasTex(Math.round(wm * S), Math.round(hm * S), (g, w, h) => {
-		const COL = ['#2fa6a0', '#e86f9a', '#f2a93b', '#9ccc4a', '#5a8fd8', '#d9583b', '#e8d27a', '#b06ad6'];
+		const COL = ['#c9b48a', '#b9a07a', '#a8a39a', '#d2c3a5', '#9a8268', '#8e8c86', '#bfae8c', '#7d7468', '#a39b8e', '#8b6f52']; // 0.45.4: hnedá, piesková, sivý betón (nie pestré farby)
 		const base = COL[seed % COL.length];
 		g.fillStyle = base;
 		g.fillRect(0, 0, w, h);
@@ -74,9 +78,20 @@ function facadeTex(wm, hm, seed) {
 		}
 		const stain = g.createLinearGradient(0, h * 0.75, 0, h);
 		stain.addColorStop(0, 'rgba(40,25,10,0)');
-		stain.addColorStop(1, 'rgba(40,25,10,0.45)');
+		stain.addColorStop(1, 'rgba(40,25,10,0.55)');
 		g.fillStyle = stain;
 		g.fillRect(0, 0, w, h);
+		// stekajúca voda a plesne zo strechy a parapetov
+		for (let i = 0; i < 10; i++) {
+			const x = rnd() * w;
+			const len = (1 + rnd() * 4) * S;
+			const y0 = rnd() < 0.5 ? 0 : rnd() * h * 0.6;
+			const gr = g.createLinearGradient(0, y0, 0, y0 + len);
+			gr.addColorStop(0, 'rgba(45,40,30,0.35)');
+			gr.addColorStop(1, 'rgba(45,40,30,0)');
+			g.fillStyle = gr;
+			g.fillRect(x, y0, 8 + rnd() * 30, len);
+		}
 		// okná po poschodiach (prvé poschodie od 3 m)
 		const floors = Math.floor((hm - 3) / 2.6);
 		const cols = Math.max(1, Math.floor(wm / 1.6));
@@ -126,33 +141,83 @@ function facadeTex(wm, hm, seed) {
 				}
 			}
 		}
-		// nápis obchodu
-		if (rnd() < 0.7) {
+		// voľné úseky prízemia (bez otvoru), v px; m = okraj od otvoru a od hrany domu
+		const M0 = 0.12 * S;
+		const free = [];
+		if (hole !== 'open') {
+			const hx0 = hole ? hole.x0 * S - M0 : w;
+			const hx1 = hole ? hole.x1 * S + M0 : w;
+			if (hx0 - M0 > M0) {
+				free.push([M0, hx0]);
+			}
+			if (hole && w - M0 > hx1) {
+				free.push([hx1, w - M0]);
+			}
+		}
+		/** Nájde voľné miesto šírky iw (px) a vráti stred, alebo null. */
+		const spot = (iw) => {
+			const ok = free.filter(([a, b]) => b - a >= iw);
+			if (!ok.length) {
+				return null;
+			}
+			const [a, b] = pick(ok);
+			return a + iw / 2 + rnd() * (b - a - iw);
+		};
+		// nápis obchodu nad prízemím (celý na fasáde, text sa zmestí)
+		if (hole !== 'open' && rnd() < 0.7) {
 			const sign = pick(['चाय', 'PAN SHOP', 'STD ISD PCO', 'राम स्टोर', 'MOBILE REPAIR', 'TAILOR', 'मिठाई', 'SNOOKER 147']);
-			const sx = 0.2 * S + rnd() * Math.max(1, w - 3 * S);
+			const sw = Math.min(2.6 * S, w - 2 * M0);
+			const sx = M0 + rnd() * (w - 2 * M0 - sw);
 			g.fillStyle = pick(['#c81e1e', '#1e4fc8', '#f5c400', '#167a3a']);
-			g.fillRect(sx, h - 3 * S, 2.6 * S, 0.55 * S);
+			g.fillRect(sx, h - 3 * S, sw, 0.55 * S);
 			g.fillStyle = '#fff';
-			g.font = `bold ${0.36 * S}px Arial, "Noto Sans Devanagari", sans-serif`;
+			let fsz = 0.36 * S;
+			g.font = `bold ${fsz}px Arial, "Noto Sans Devanagari", sans-serif`;
+			const tw = g.measureText(sign).width;
+			if (tw > sw * 0.88) {
+				fsz *= (sw * 0.88) / tw;
+				g.font = `bold ${fsz}px Arial, "Noto Sans Devanagari", sans-serif`;
+			}
 			g.textAlign = 'center';
 			g.textBaseline = 'middle';
-			g.fillText(sign, sx + 1.3 * S, h - 2.72 * S);
+			g.fillText(sign, sx + sw / 2, h - 2.72 * S);
 		}
-		// plagáty
+		// plagáty (celé, mimo otvoru)
 		for (let i = 0; i < 3; i++) {
-			const px = rnd() * (w - 0.8 * S);
+			const pw = 0.6 * S;
+			const cx = spot(pw);
+			if (cx === null) {
+				break;
+			}
+			const px = cx - pw / 2;
 			const py = h - (1.1 + rnd() * 1.2) * S;
 			g.fillStyle = pick(['#f4e7c7', '#ffd400', '#ff6f61', '#ffffff']);
-			g.fillRect(px, py, 0.6 * S, 0.8 * S);
+			g.fillRect(px, py, pw, 0.8 * S);
 			g.fillStyle = pick(['#c81e1e', '#111', '#1e4fc8']);
-			g.fillRect(px + 6, py + 8, 0.6 * S - 12, 0.18 * S);
-			g.fillRect(px + 6, py + 0.35 * S, 0.6 * S - 22, 4);
-			g.fillRect(px + 6, py + 0.42 * S, 0.6 * S - 30, 4);
+			g.fillRect(px + 6, py + 8, pw - 12, 0.18 * S);
+			g.fillRect(px + 6, py + 0.35 * S, pw - 22, 4);
+			g.fillRect(px + 6, py + 0.42 * S, pw - 30, 4);
 		}
-		// grafity v dosahu ruky
+		// grafity v dosahu ruky: písmo sa zmenší, aby sa celé zmestilo na voľnú stenu
 		const tags = ['RAJU', '147', 'BOMBAY', 'CUE KING', 'GALI', 'SNOOK!', 'MAX', 'DESI'];
 		for (let i = 0; i < 2; i++) {
-			sprayTag(g, pick(tags), rnd() * w, h - (0.8 + rnd() * 1.3) * S, (0.35 + rnd() * 0.3) * S, pick(['#ff3d7f', '#39d353', '#ffd400', '#2ec5ff', '#ff8a00', '#b26bff']), '#111', (rnd() - 0.5) * 0.3);
+			const t = pick(tags);
+			let size = (0.35 + rnd() * 0.3) * S;
+			g.font = `900 ${size}px "Arial Black", Impact, sans-serif`;
+			let tw = g.measureText(t).width + size * 0.3; // + obrys a natočenie
+			const widest = free.reduce((m, [a, b]) => Math.max(m, b - a), 0);
+			if (tw > widest) {
+				size *= widest / tw;
+				tw = widest;
+			}
+			if (size < 0.18 * S) {
+				continue; // na úzku stenu sa nezmestí
+			}
+			const cx = spot(tw);
+			if (cx === null) {
+				continue;
+			}
+			sprayTag(g, t, cx, h - (0.8 + rnd() * 1.1) * S, size, pick(['#ff3d7f', '#39d353', '#ffd400', '#2ec5ff', '#ff8a00', '#b26bff']), '#111', (rnd() - 0.5) * 0.15);
 		}
 	});
 }
@@ -714,7 +779,17 @@ function kit(g) {
 		m.rotation.y = rotY;
 		return add(m, x, y, z);
 	};
-	return { M, add, box, cyl, sph, inst, wheel, plate };
+	/** Tyč (os, rám) z bodu a do bodu b. */
+	const ironM = M({ color: 0x2a2a2a, metalness: 0.6, roughness: 0.5 });
+	const rod = (a, b, r = 0.018, mat = ironM) => {
+		const A = new THREE.Vector3(...a);
+		const B = new THREE.Vector3(...b);
+		const d = B.clone().sub(A);
+		const m = new THREE.Mesh(new THREE.CylinderGeometry(r, r, d.length(), 8), mat);
+		m.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), d.normalize());
+		return add(m, (A.x + B.x) / 2, (A.y + B.y) / 2, (A.z + B.z) / 2);
+	};
+	return { M, add, box, cyl, sph, inst, wheel, plate, rod };
 }
 const steelM = () => new THREE.MeshStandardMaterial({ color: 0xc4c8cc, metalness: 0.85, roughness: 0.28 });
 const brassM = () => new THREE.MeshStandardMaterial({ color: 0xc9a23a, metalness: 0.9, roughness: 0.3 });
@@ -904,15 +979,22 @@ function buildHalwai(g, W, high) {
 
 /** Vozík s pani puri (chaat): drevený vozík na kolesách, vitrína s puri, nerezové hrnce, dáždnik, tabuľka. */
 function chaatCart(g) {
-	const { M, box, cyl, sph, inst, wheel, plate } = kit(g);
+	const { M, box, cyl, sph, inst, wheel, plate, rod } = kit(g);
 	const blue = M({ color: 0x1e88e5 });
 	box(1.4, 0.08, 0.75, M({ color: 0x6d4c41 }), 0, 0.78, 0);
 	box(1.4, 0.4, 0.04, blue, 0, 0.56, 0.37);
 	box(1.4, 0.4, 0.04, blue, 0, 0.56, -0.37);
 	wheel(0.32, -0.45, 0.33, 0.42, 0);
 	wheel(0.32, -0.45, 0.33, -0.42, 0);
-	box(0.04, 0.04, 0.9, M({ color: 0x333333 }), -0.45, 0.33, 0);
-	box(0.05, 0.75, 0.05, M({ color: 0x333333 }), 0.65, 0.38, 0);
+	// os, rám pod vozíkom a vzpery k osi, vpredu noha
+	rod([-0.45, 0.33, -0.46], [-0.45, 0.33, 0.46], 0.02);
+	for (const z of [-0.3, 0.3]) {
+		rod([-0.68, 0.36, z], [0.68, 0.36, z], 0.016);
+		rod([-0.45, 0.33, z], [-0.62, 0.36, z], 0.014);
+		rod([-0.45, 0.33, z], [-0.2, 0.36, z], 0.014);
+	}
+	rod([0.65, 0.0, 0], [0.65, 0.76, 0], 0.022);
+	rod([0.65, 0.36, -0.3], [0.65, 0.36, 0.3], 0.016);
 	// vitrína s puri
 	box(0.7, 0.4, 0.5, new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.05, transparent: true, opacity: 0.25 }), -0.3, 1.02, -0.05);
 	const puri = [];
@@ -940,12 +1022,24 @@ function chaatCart(g) {
 
 /** Vozík s ovocím: šikmý stôl na štyroch kolesách, banány, pomaranče, jablká, mango, modrá plachta na tyčkách. */
 function fruitCart(g) {
-	const { M, box, cyl, inst, wheel, plate } = kit(g);
+	const { M, box, cyl, inst, wheel, plate, rod } = kit(g);
 	const top = box(1.8, 0.06, 0.95, M({ color: 0x8d6e63 }), 0, 0.85, 0);
 	top.rotation.x = 0.12;
 	for (const x of [-0.65, 0.65]) {
 		wheel(0.22, x, 0.22, 0.5, 0);
 		wheel(0.22, x, 0.22, -0.5, 0);
+	}
+	// osi, pozdĺžny rám medzi osami a stĺpiky k doske
+	for (const x of [-0.65, 0.65]) {
+		rod([x, 0.22, -0.54], [x, 0.22, 0.54], 0.02);
+	}
+	for (const z of [-0.36, 0.36]) {
+		rod([-0.75, 0.22, z], [0.75, 0.22, z], 0.02);
+		for (const x of [-0.65, 0, 0.65]) {
+			rod([x, 0.22, z], [x, 0.82 - z * 0.12, z], 0.016);
+		}
+		rod([-0.65, 0.22, z], [0, 0.8 - z * 0.12, z], 0.012);
+		rod([0.65, 0.22, z], [0, 0.8 - z * 0.12, z], 0.012);
 	}
 	box(1.6, 0.05, 0.05, M({ color: 0x3e2723 }), 0, 0.5, 0);
 	const kinds = [
@@ -1032,11 +1126,19 @@ function flowerStall(g) {
 
 /** Vozík s náramkami (bangles): stojany s tyčami plnými farebných krúžkov, malé zrkadlo, dáždnik. */
 function bangleCart(g) {
-	const { M, box, cyl, inst, wheel } = kit(g);
+	const { M, box, cyl, inst, wheel, rod } = kit(g);
 	box(1.3, 0.06, 0.7, M({ color: 0x6a1b9a }), 0, 0.8, 0);
 	wheel(0.3, -0.3, 0.31, 0.4, 0);
 	wheel(0.3, -0.3, 0.31, -0.4, 0);
-	box(0.05, 0.8, 0.05, M({ color: 0x333333 }), 0.55, 0.4, 0);
+	// os, rám a noha vpredu
+	rod([-0.3, 0.31, -0.44], [-0.3, 0.31, 0.44], 0.02);
+	for (const z of [-0.25, 0.25]) {
+		rod([-0.3, 0.31, z], [-0.55, 0.77, z], 0.016);
+		rod([-0.3, 0.31, z], [0.1, 0.77, z], 0.016);
+		rod([-0.6, 0.76, z], [0.6, 0.76, z], 0.016);
+	}
+	rod([-0.3, 0.31, 0], [0.55, 0.31, 0], 0.016);
+	rod([0.55, 0, 0], [0.55, 0.78, 0], 0.022);
 	const rods = [];
 	const cols = [];
 	const pal = [0xe91e63, 0xffd600, 0x00bcd4, 0x4caf50, 0xff5722, 0x9c27b0, 0xffffff, 0xc9a23a];
@@ -1214,7 +1316,11 @@ export function buildAlley(scene, quality) {
 	/** Jeden dom: c = stred po rade, wm šírka; sp = osobitné prízemie ({open} obchod v dome, {cart} vozík pred domom). */
 	const house = (along, c, at, face, wm, sp) => {
 		const hm = 8 + rnd() * 4;
-		const tex = facadeTex(wm, hm, seed++);
+		const door = !(sp || wm < 2.4); // obyčajný dom s otvorom na prízemí
+		const ow = 1.2 + rnd() * 0.5;
+		const oh = 2.2 + rnd() * 0.15;
+		const ox = (rnd() - 0.5) * (wm - ow - 0.8);
+		const tex = facadeTex(wm, hm, seed++, sp && sp.open ? 'open' : door ? { x0: ox - ow / 2 + wm / 2, x1: ox + ow / 2 + wm / 2 } : null);
 		const grp = new THREE.Group();
 		if (along === 'x') {
 			grp.rotation.y = face > 0 ? 0 : Math.PI;
@@ -1239,9 +1345,6 @@ export function buildAlley(scene, quality) {
 			part(grp, facePart(tex, wm, hm, 0, 0, wm, GF), wm, GF, D, 0, GF / 2, -D / 2);
 		} else {
 			// prízemie s otvorom: ľavá a pravá stena, preklad nad otvorom, miestnosť vo vnútri
-			const ow = 1.2 + rnd() * 0.5;
-			const oh = 2.2 + rnd() * 0.15;
-			const ox = (rnd() - 0.5) * (wm - ow - 0.8);
 			const l0 = -wm / 2;
 			const lw = ox - ow / 2 - l0;
 			const r0 = ox + ow / 2;
