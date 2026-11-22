@@ -39,7 +39,7 @@ import { Snaps } from './snaps.js';
 import { Physics, strike } from './physics.js';
 import { takeShotData } from './integrity.js';
 import { Net } from './online.js';
-import { rememberLang } from './i18n.js';
+import { rememberLang, _t, _pts, LANG } from './i18n.js';
 
 // 0.40.1: odtlačky dôležitých funkcií pre výzvu zo servera (ešte pred spustením hry)
 fpRegister({
@@ -117,7 +117,7 @@ function webglOk() {
 export function start(root, config = {}) {
 	const CROWD = config.crowd || {}; // publikum a Rudo: administrácia Publikum a Rudo (pre všetkých rovnako)
 	if (!webglOk()) {
-		root.innerHTML = '<div class="mysn-nogl">Tento prehliadač nepodporuje 3D grafiku (WebGL). Skús aktuálny Chrome, Firefox, Edge alebo Safari.</div>';
+		root.innerHTML = _t('<div class="mysn-nogl">Tento prehliadač nepodporuje 3D grafiku (WebGL). Skús aktuálny Chrome, Firefox, Edge alebo Safari.</div>');
 		return null;
 	}
 	const settings = loadSettings();
@@ -212,7 +212,7 @@ export function start(root, config = {}) {
 		} else {
 			game.state = 'aim';
 		}
-		game.message = 'Pokračuješ v tréningu tam, kde si skončil.';
+		game.message = _t('Pokračuješ v tréningu tam, kde si skončil.');
 		game.emit('change');
 		return true;
 	};
@@ -688,7 +688,7 @@ export function start(root, config = {}) {
 	let officeFocusNow = '';
 	const away = () => view === 'office'; // som mimo herne (kancelária)
 	let replay = null; // prehrávač partie na notebooku (F7, detail zápasu)
-	const OFFICE_KEYS = 'Kancelária: F1 nástenka s klávesmi za tebou, F8 vizitka (registrácia), F9 alebo dvere ŠTADIÓN: vyhľadať zápas, F12 lampa (zhasnutá = nie si online). Ctrl a klik na predmet ho otvorí, Esc menu.';
+	const OFFICE_KEYS = _t('Kancelária: F1 nástenka s klávesmi za tebou, F8 vizitka (registrácia), F9 alebo dvere ŠTADIÓN: vyhľadať zápas, F12 lampa (zhasnutá = nie si online). Ctrl a klik na predmet ho otvorí, Esc menu.');
 	let venue = 'home';
 	const fadeEl = document.createElement('div');
 	fadeEl.className = 'mysn-fade';
@@ -704,7 +704,7 @@ export function start(root, config = {}) {
 	let roomListT = 0; // posledné odoslanie popisu do zoznamu
 	let roomListed = '';
 	let watchInfo = null;
-	const roomInfo = () => (game.solo ? `${game.soloScore} b., séria ${game.solo.rules.brk}` : `body ${game.stats.points}, séria ${game.stats.run}`);
+	const roomInfo = () => (game.solo ? _t('{p} b., séria {b}', { p: game.soloScore, b: game.solo.rules.brk }) : _t('body {p}, séria {b}', { p: game.stats.points, b: game.stats.run }));
 	const roomOpen = () => homeDoorOpen && !game.match && !game.spectating;
 	// admin alebo správca hry sleduje moju partiu neviditeľne (aj so zatvorenými dverami)
 	const staffWatch = () => !!online && (config.staff || []).length > 0 && online.watchers().some((p) => online.isStaff(p.uid));
@@ -733,7 +733,7 @@ export function start(root, config = {}) {
 				roomListed = 'closed';
 			}
 			if (online.watchers().some((p) => !online.isStaff(p.uid))) {
-				online.closeWatchers('Hráč zatvoril dvere, partia už nie je otvorená.', true); // správcovia sledujú ďalej
+				online.closeWatchers(_t('Hráč zatvoril dvere, partia už nie je otvorená.'), true); // správcovia sledujú ďalej
 			}
 			if (!roomLive()) {
 				return;
@@ -833,7 +833,7 @@ export function start(root, config = {}) {
 		rig.jump(); // zhora hneď (bez preletu cez tribúny)
 		seatHover = -1;
 		markPick();
-		ui.seatHint(seatStadium() ? 'Vyber si stoličku: zelené sú voľné, sivé obsadené. Klikni na stoličku a sadneš si.' : 'Vyber si miesto pri stene: zelené sú voľné, sivé obsadené. Klikni na miesto a postavíš sa tam.', mySeat >= 0);
+		ui.seatHint(seatStadium() ? _t('Vyber si stoličku: zelené sú voľné, sivé obsadené. Klikni na stoličku a sadneš si.') : _t('Vyber si miesto pri stene: zelené sú voľné, sivé obsadené. Klikni na miesto a postavíš sa tam.'), mySeat >= 0);
 	};
 	const sit = (seat) => {
 		mySeat = seat;
@@ -857,7 +857,7 @@ export function start(root, config = {}) {
 	const seatClick = async (seat) => {
 		const taken = seatList.some((x) => x.seat === seat && (!user || x.uid !== user.id)) || (seatStadium() && stadium.reserved.has(seat));
 		if (taken) {
-			ui.toast('Toto miesto je obsadené, vyber si iné.');
+			ui.toast(_t('Toto miesto je obsadené, vyber si iné.'));
 			return;
 		}
 		if (specDemo) {
@@ -973,7 +973,7 @@ export function start(root, config = {}) {
 		rig.setView(pos, pos.clone().add(dir));
 		rig.jump();
 		ui.showView(null);
-		ui.toast(ui.touchUI ? 'Voľný pohľad: prstom sa rozhliadaš, ovládačom chodíš, ▲ a ▼ hore a dole. Ťukni na predmet (nástenka, stojan, poháre…) a otvorí sa; tlačidlo Voľný pohľad ťa z neho vráti sem.' : 'Voľná kamera: myš rozhliadanie, šípky alebo W A S D posun, koliesko priblíženie, držané pravé alebo ľavé tlačidlo myši (aj E a Q) hore a dole, Shift rýchlejšie, Ctrl zastaví kameru. Krátky klik na rozsvietený predmet v strede obrazovky ho otvorí, pravé tlačidlo ťa z neho vráti sem. F3 ruky. Medzerník: späť za tágo.');
+		ui.toast(ui.touchUI ? _t('Voľný pohľad: prstom sa rozhliadaš, ovládačom chodíš, ▲ a ▼ hore a dole. Ťukni na predmet (nástenka, stojan, poháre…) a otvorí sa; tlačidlo Voľný pohľad ťa z neho vráti sem.') : _t('Voľná kamera: myš rozhliadanie, šípky alebo W A S D posun, koliesko priblíženie, držané pravé alebo ľavé tlačidlo myši (aj E a Q) hore a dole, Shift rýchlejšie, Ctrl zastaví kameru. Krátky klik na rozsvietený predmet v strede obrazovky ho otvorí, pravé tlačidlo ťa z neho vráti sem. F3 ruky. Medzerník: späť za tágo.'));
 	};
 	/** Z pohľadu na predmet späť do voľného pohľadu na miesto, odkiaľ bol predmet otvorený. */
 	const backToFree = () => {
@@ -1462,7 +1462,7 @@ export function start(root, config = {}) {
 		boardIdx = i;
 		if (i < 0) {
 			rig.setView(room.board.pos, room.board.look.clone());
-			ui.padNav(true, -1, BOARD_COUNT, ui.touchUI ? 'Ťukni na papier' : '1 až 6 alebo klik: papier');
+			ui.padNav(true, -1, BOARD_COUNT, ui.touchUI ? _t('Ťukni na papier') : _t('1 až 6 alebo klik: papier'));
 			return;
 		}
 		const v = room.boardPaper(i);
@@ -1489,11 +1489,11 @@ export function start(root, config = {}) {
 			if (!net) {
 				// herňa a tréning (0.27.1): voda platí hneď; v hre o skóre (rebríček) by sa nedala overiť, falšu nezvýši
 				if (game.solo) {
-					ui.toast('V hre o skóre voda falšu nezvýši (výsledok overuje server).');
+					ui.toast(_t('V hre o skóre voda falšu nezvýši (výsledok overuje server).'));
 				} else {
 					waterNext = true;
 					ui.setWater(true);
-					ui.toast('Napil si sa vody: ďalší úder má silnejšiu falšu (Miesto úderu je modré).');
+					ui.toast(_t('Napil si sa vody: ďalší úder má silnejšiu falšu (Miesto úderu je modré).'));
 				}
 			} else if (online.net) {
 				online.net
@@ -1502,7 +1502,7 @@ export function start(root, config = {}) {
 						if (r && r.ok) {
 							waterNext = true;
 							ui.setWater(true);
-							ui.toast('Napil si sa vody: ďalší úder má silnejšiu falšu (Miesto úderu je modré).');
+							ui.toast(_t('Napil si sa vody: ďalší úder má silnejšiu falšu (Miesto úderu je modré).'));
 						}
 					})
 					.catch(() => {});
@@ -1567,7 +1567,7 @@ export function start(root, config = {}) {
 	const sendSnd = (slot, p) => {
 		const now = performance.now();
 		if (now - sndMine < 2500) {
-			ui.toast('Chvíľu počkaj, zvuky sa dajú púšťať najviac raz za 2,5 sekundy.');
+			ui.toast(_t('Chvíľu počkaj, zvuky sa dajú púšťať najviac raz za 2,5 sekundy.'));
 			return;
 		}
 		sndMine = now;
@@ -1629,7 +1629,7 @@ export function start(root, config = {}) {
 			if (venue !== 'league') {
 				return true;
 			}
-			const who = String(c.name || 'Hráč').slice(0, 40);
+			const who = String(c.name || _t('Hráč')).slice(0, 40);
 			refVoice.say('ref-playon', 200);
 			let hsh = 0;
 			for (const ch of String(c.id)) {
@@ -1641,22 +1641,22 @@ export function start(root, config = {}) {
 			const x = Number(c.x) || 0;
 			const r = x > 14 ? { s: 'laugh', g: x > 30 ? 1.2 : 1, v: hsh } : k < 5 ? { s: 'applause-small', g: 1.1, v: hsh } : k < 8 ? { s: 'applause-big', n: 'crowd-cheer', v: hsh } : { s: 'crowd-wow', n: 'applause-small', v: hsh };
 			setTimeout(() => crowdPlay(r), 1900); // po hlásení rozhodcu
-			ui.toast(`${who} pokračuje, potrebuje snookery.`);
+			ui.toast(_t('{n} pokračuje, potrebuje snookery.', { n: who }));
 			return true;
 		}
 		const pos = venue === 'league' ? stadium.refPos() : null;
-		const name = String(c.name || 'Hráč').slice(0, 40);
+		const name = String(c.name || _t('Hráč')).slice(0, 40);
 		const m = game.match;
 		if (c.level === 'warning') {
 			refVoice.say('ref-warning', 300);
-			ui.toast(`Rozhodca: ${name}, napomenutie za nešportové správanie. Ďalší prehrešok: súper +4 body.`);
+			ui.toast(_t('Rozhodca: {n}, napomenutie za nešportové správanie. Ďalší prehrešok: súper +4 body.', { n: name }));
 			return true;
 		}
 		if (c.level === 'disq') {
 			// šieste nešportové správanie: rozhodca hráča diskvalifikuje, koniec zápasu príde zo servera
 			refVoice.say('ref-disq', 300);
-			ui.banner(`${name} je diskvalifikovaný`, 'Opakované nešportové správanie');
-			ui.toast(`Rozhodca: ${name} je diskvalifikovaný za opakované nešportové správanie.`);
+			ui.banner(_t('{n} je diskvalifikovaný', { n: name }), _t('Opakované nešportové správanie'));
+			ui.toast(_t('Rozhodca: {n} je diskvalifikovaný za opakované nešportové správanie.', { n: name }));
 			return true;
 		}
 		const pts = Math.min(4, Math.max(0, Number(c.pts) || 4));
@@ -1665,13 +1665,13 @@ export function start(root, config = {}) {
 		}
 		refVoice.say(c.level === 'lastwarn' ? 'ref-lastwarn' : 'ref-penalty', 300);
 		if (c.level === 'lastwarn') {
-			ui.banner('Posledné upozornenie', `${name}: ďalšie nešportové správanie = diskvalifikácia`);
+			ui.banner(_t('Posledné upozornenie'), _t('{n}: ďalšie nešportové správanie = diskvalifikácia', { n: name }));
 		}
 		const sc = toScreen(0, R, 0);
 		if (sc) {
-			ui.scorePop(`Nešportové správanie · súper +${pts}`, sc.x, sc.y - 40, '#ff6b6b', true);
+			ui.scorePop(_t('Nešportové správanie · súper +{p}', { p: pts }), sc.x, sc.y - 40, '#ff6b6b', true);
 		}
-		ui.toast(`Rozhodca: ${name}, nešportové správanie, súper dostáva ${pts} body.${c.level === 'lastwarn' ? ' Posledné upozornenie: ďalšie nešportové správanie znamená diskvalifikáciu.' : ''}`);
+		ui.toast(_t('Rozhodca: {n}, nešportové správanie, súper dostáva {pts}.', { n: name, pts: _pts(pts) }) + (c.level === 'lastwarn' ? _t(' Posledné upozornenie: ďalšie nešportové správanie znamená diskvalifikáciu.') : ''));
 		return true;
 	};
 	const conductCheck = async () => {
@@ -1708,18 +1708,18 @@ export function start(root, config = {}) {
 	};
 	const updateStadiumScreen = () => {
 		if (fiesta) {
-			stadium.setScreen({ title: 'KONIEC ZÁPASU', winner: fiesta.winner, result: fiesta.result, lines: fiesta.lines, footer: 'My Snooker liga' });
+			stadium.setScreen({ title: _t('KONIEC ZÁPASU'), winner: fiesta.winner, result: fiesta.result, lines: fiesta.lines, footer: _t('My Snooker liga') });
 			return;
 		}
 		const m = game.match;
 		const ld = leagueData;
-		const footer = ld && ld.season ? `${ld.season.name} · do konca ${ld.season.daysLeft} dní` : 'My Snooker liga';
+		const footer = ld && ld.season ? _t('{s}  ·  do konca {n} dní', { s: ld.season.name, n: ld.season.daysLeft }) : _t('My Snooker liga');
 		const clk = shotClock();
 		const clkTxt = clk ? ` · ${Math.max(0, Math.ceil(clk.left))} s` : '';
 		if (game.spectating && watchScreen) {
 			const w = watchScreen;
 			stadium.setScreen({
-				title: 'LIGOVÁ PARTIA',
+				title: _t('LIGOVÁ PARTIA'),
 				names: w.names.slice(0, 2).map((n) => String(n).slice(0, 40)),
 				scores: [Number(w.scores[0]) || 0, Number(w.scores[1]) || 0],
 				turn: w.turn === 0 || w.turn === 1 ? w.turn : -1,
@@ -1729,7 +1729,7 @@ export function start(root, config = {}) {
 			});
 		} else if (m && m.rules) {
 			stadium.setScreen({
-				title: m.league ? 'LIGOVÁ PARTIA' : 'PARTIA',
+				title: m.league ? _t('LIGOVÁ PARTIA') : _t('PARTIA'),
 				names: m.players.map((p) => p.name),
 				scores: m.rules.scores,
 				turn: m.rules.over ? -1 : m.rules.turn,
@@ -1738,7 +1738,7 @@ export function start(root, config = {}) {
 				footer,
 			});
 		} else {
-			stadium.setScreen({ title: 'MY SNOOKER LIGA', idle: ld && ld.me ? `${ld.me.league}. liga · ${ld.me.rank}. miesto · ${ld.me.points} bodov` : 'Vyzvi hráča z ligy', footer });
+			stadium.setScreen({ title: _t('MY SNOOKER LIGA'), idle: ld && ld.me ? _t('{l}. liga · {r}. miesto · {p} bodov', { l: ld.me.league, r: ld.me.rank, p: ld.me.points }) : _t('Vyzvi hráča z ligy'), footer });
 		}
 	};
 	let leagueData = null;
@@ -1788,7 +1788,7 @@ export function start(root, config = {}) {
 	/** Nastaví uhol tága (stupne): pod najmenší možný sa nedá, nad 80° tiež nie. */
 	const setLift = (deg) => {
 		if (cue.tiltLocked) {
-			ui.toast('S nádstavcom je uhol tága pevný.');
+			ui.toast(_t('S nádstavcom je uhol tága pevný.'));
 			return;
 		}
 		const mn = minElev();
@@ -1933,7 +1933,7 @@ export function start(root, config = {}) {
 			const { names, scores, turn } = o.sc;
 			g.fillStyle = '#FACC15';
 			g.font = '700 40px Arial, sans-serif';
-			g.fillText('SKÓRE', W / 2, 70);
+			g.fillText(_t('SKÓRE'), W / 2, 70);
 			for (let i = 0; i < 2; i++) {
 				const x = i ? W * 0.75 : W * 0.25;
 				g.fillStyle = turn === i ? '#FACC15' : '#ffffff';
@@ -2011,7 +2011,7 @@ export function start(root, config = {}) {
 	let pcInit = false;
 	const pcFrame = document.createElement('div');
 	pcFrame.className = 'mysn-minitable mysn-playercam mysn-hidden';
-	pcFrame.innerHTML = '<span>Pohľad hráča (F8)</span>';
+	pcFrame.innerHTML = _t('<span>Pohľad hráča (F8)</span>');
 	renderer.domElement.parentNode.appendChild(pcFrame);
 	const miniTable = () => {
 		renderer.getSize(miniSize);
@@ -2138,14 +2138,14 @@ export function start(root, config = {}) {
 		const rows =
 			so && !m
 				? [
-						['Body', game.soloScore],
-						['Séria / najvyššia', `${so.rules.brk} / ${so.best}`],
-						['Čas', fmtTime(so.time)],
-						['Hrá sa na', game.onText()],
-						['Zostáva na stole', remaining(so.rules, reds)],
+						[_t('Body'), game.soloScore],
+						[_t('Séria / najvyššia'), `${so.rules.brk} / ${so.best}`],
+						[_t('Čas'), fmtTime(so.time)],
+						[_t('Hrá sa na'), game.onText()],
+						[_t('Zostáva na stole'), remaining(so.rules, reds)],
 					]
 				: null;
-		room.updateScore(game.stats, { cue: cueSpec.name, chalk, mode: match ? 'Partia cez internet' : so ? 'O najlepšie skóre' : 'Tréning', match, rows });
+		room.updateScore(game.stats, { cue: cueSpec.name, chalk, mode: match ? _t('Partia cez internet') : so ? _t('O najlepšie skóre') : _t('Tréning'), match, rows });
 	};
 	const enterView = (name) => {
 		rig.fitOff = false; // mobil na výšku: pevný pohľad sa rozšíri (stojan má vlastný bližší záber)
@@ -2177,7 +2177,7 @@ export function start(root, config = {}) {
 		// štadión F1 (blok na stolíku): vľavo pravidlá snookeru, vpravo body ligy
 		if (venue === 'league' && name === 'board') {
 			ui.openSnookerRules(true, config.clock || 45);
-			ui.openLeagueRules(true, 'F1 alebo Esc: späť do hry');
+			ui.openLeagueRules(true, _t('F1 alebo Esc: späť do hry'));
 			const p = stadium.padTurn(0);
 			ui.padNav(true, p.page, p.count);
 		} else if (ui.snRulesEl && !ui.snRulesEl.classList.contains('mysn-hidden')) {
@@ -2186,7 +2186,7 @@ export function start(root, config = {}) {
 		}
 		if (name === 'board' && venue !== 'league') {
 			boardIdx = -1; // herňa: najprv celá nástenka, papier sa priblíži číslom, klikom alebo šípkami
-			ui.padNav(true, -1, BOARD_COUNT, ui.touchUI ? 'Ťukni na papier' : '1 až 6 alebo klik: papier');
+			ui.padNav(true, -1, BOARD_COUNT, ui.touchUI ? _t('Ťukni na papier') : _t('1 až 6 alebo klik: papier'));
 		} else if (!(venue === 'league' && name === 'board')) {
 			ui.padNav(false);
 		}
@@ -2395,22 +2395,22 @@ export function start(root, config = {}) {
 	/** Krieda a pomôcky (nádstavce, predĺženie) len pri stole: prečo teraz nie ('' = dá sa). */
 	const tableNo = () => {
 		if (game.spectating) {
-			return 'Pri sledovaní partie sa príslušenstvo nepoužíva.';
+			return _t('Pri sledovaní partie sa príslušenstvo nepoužíva.');
 		}
 		if (view && view !== 'chalk') {
-			return 'Príslušenstvo (krieda, nádstavce, predĺženie) je len pri stole: vráť sa do hry za tágo.';
+			return _t('Príslušenstvo (krieda, nádstavce, predĺženie) je len pri stole: vráť sa do hry za tágo.');
 		}
 		if (game.match && game.match.turn !== game.match.me) {
-			return 'Príslušenstvo až keď si na rade.';
+			return _t('Príslušenstvo až keď si na rade.');
 		}
 		if (game.state === 'moving') {
-			return 'Počkaj, kým gule zastanú.';
+			return _t('Počkaj, kým gule zastanú.');
 		}
 		if (game.state === 'place') {
-			return 'Najprv polož bielu.';
+			return _t('Najprv polož bielu.');
 		}
 		if (game.state !== 'aim' || !game.cue.on || chalkT >= 0) {
-			return 'Príslušenstvo (krieda, nádstavce, predĺženie) je len pri stole, keď mieriš.';
+			return _t('Príslušenstvo (krieda, nádstavce, predĺženie) je len pri stole, keď mieriš.');
 		}
 		return '';
 	};
@@ -2492,7 +2492,7 @@ export function start(root, config = {}) {
 		tipData.tips[spec.id] = t;
 		tipData.total++;
 		if (before < 0.9 && t.wear >= 0.9) {
-			ui.toast('Špica na tágu je takmer opotrebovaná, vymeň ju na stojane (F2).');
+			ui.toast(_t('Špica na tágu je takmer opotrebovaná, vymeň ju na stojane (F2).'));
 		}
 		online.net.call('tips/stroke', { cue: spec.id, power: +p.toFixed(3), def: tipDef(spec), jump: jump ? 1 : 0 }).then(tipApply).catch(() => null);
 	};
@@ -2533,13 +2533,13 @@ export function start(root, config = {}) {
 	};
 	const reachMsg = (r) =>
 		r.stretch
-			? `Natiahnutý úder: s nádstavcom${r.ext ? ` a predĺžením ${Math.round(r.ext * 100)} cm` : ' bez predĺženia'} je ruka ${Math.round(r.d * 100)} cm od mantinelu (najviac ${Math.round(r.max * 100)} cm). Úder sa dá, ale biela náhodne uhne až o ${String(r.deg).replace('.', ',')}°${r.ext >= 0.44 ? '' : ' (dlhšie predĺženie F3 6 pomôže)'}.`
+			? _t('Natiahnutý úder: s nádstavcom{ext} je ruka {d} cm od mantinelu (najviac {m} cm). Úder sa dá, ale biela náhodne uhne až o {deg}°{tip}.', { ext: r.ext ? _t(' a predĺžením {n} cm', { n: Math.round(r.ext * 100) }) : _t(' bez predĺženia'), d: Math.round(r.d * 100), m: Math.round(r.max * 100), deg: LANG === 'en' ? String(r.deg) : String(r.deg).replace('.', ','), tip: r.ext >= 0.44 ? '' : _t(' (dlhšie predĺženie F3 6 pomôže)') })
 			: r.part === 'bridge'
-			? `Nedosiahneš: ruka na mostíku by bola ${Math.round(r.d * 100)} cm od mantinelu (najviac ${Math.round(r.max * 100)} cm). Použi nádstavec (F3).`
-			: `Nedosiahneš: ruka na rukoväti by bola ${Math.round(r.d * 100)} cm od mantinelu (najviac ${Math.round(r.max * 100)} cm). Použi nádstavec alebo predĺženie (F3).`;
+			? _t('Nedosiahneš: ruka na mostíku by bola {d} cm od mantinelu (najviac {m} cm). Použi nádstavec (F3).', { d: Math.round(r.d * 100), m: Math.round(r.max * 100) })
+			: _t('Nedosiahneš: ruka na rukoväti by bola {d} cm od mantinelu (najviac {m} cm). Použi nádstavec alebo predĺženie (F3).', { d: Math.round(r.d * 100), m: Math.round(r.max * 100) });
 	const doShoot = (rawPower) => {
 		if (rackShow && rackShow.t < RS_IN + RS_GRIP + RS_LIFT + RS_HANG) {
-			ui.toast('Rozhodca ešte odkladá trojuholník.');
+			ui.toast(_t('Rozhodca ešte odkladá trojuholník.'));
 			return;
 		}
 		if (!game.spectating && game.cue.on) {
@@ -2630,17 +2630,17 @@ export function start(root, config = {}) {
 			trickShot = !miscue && (jumped || (liftDeg > 0 && elev >= 8 && Math.abs(side) >= 0.15));
 			tipStroke(cueSpec, power, jumped || masse);
 			if (masse && !miscue) {
-				ui.toast('Massé! Špica −5 %.');
+				ui.toast(_t('Massé! Špica −5 %.'));
 			}
 			liftDeg = 0; // po údere sa tágo vráti na najmenší uhol
 			if (achPre) {
 				achCur = { ...achPre, dir: dir0, top: spin.top, side: spin.side, elev, trick: miscue ? '' : jumped ? 'jump' : masse && Math.abs(side) >= 0.1 ? 'masse' : trickShot ? 'swerve' : '', contact: null, hits: [], cannon: false };
 			}
 			if (jumped) {
-				ui.toast('Skokový úder! Špica −5 %.');
+				ui.toast(_t('Skokový úder! Špica −5 %.'));
 			}
 			if (miscue) {
-				ui.toast('Šmyk tága! Špica je opotrebovaná, vymeň ju na stojane (F2).');
+				ui.toast(_t('Šmyk tága! Špica je opotrebovaná, vymeň ju na stojane (F2).'));
 			}
 			spiderOn = false; // pavúk platí na jeden úder
 			if (waterNext) {
@@ -2678,10 +2678,10 @@ export function start(root, config = {}) {
 		const admin = config.role === 'admin';
 		const here = view === 'office' ? 'office' : venue;
 		return [
-			{ id: 'home', name: 'Herňa', desc: 'Tréning, Hrať o najlepšie skóre, partie s priateľmi. Stôl s červeným súknom pri tréningu, zeleným v partii.', map: [4, 50, 46, 44], here: here === 'home', locked: false, play: 'Vstúpiť a hrať' },
-			{ id: 'office', name: 'Kancelária', desc: 'Liga: registrácia, tabuľky líg, mapa hráčov, moje tágá, vyhľadanie ligového zápasu.', map: [4, 4, 46, 20], here: here === 'office', locked: !user, lockNote: 'Kancelária je pre prihlásených hráčov.', play: 'Vstúpiť' },
-			{ id: 'living', name: 'Obývačka', desc: 'Samostatná hra My Rooms: oddych pri krbe, televízor so zápasmi a YouTube, knižnica. Otvorí sa jej stránka, späť dverami obývačky.', map: [4, 27, 46, 20], here: here === 'living', locked: !user, lockNote: 'Obývačka je pre prihlásených hráčov.', play: 'Vstúpiť', notour: true },
-			{ id: 'league', name: 'Štadión', desc: 'Ligové zápasy pred divákmi, modré súkno, svetlá na stôl.', map: [56, 4, 40, 90], here: here === 'league', locked: !admin, lockNote: 'Štadión sa otvorí, keď nájdeš ligový zápas (Kancelária, Vyhľadať zápas). Hrá sa tu len liga.', play: admin ? 'Vstúpiť a trénovať (admin)' : 'Vstúpiť', extra: admin ? [{ label: 'Rozhodca odkladá trojuholník (admin)', act: 'rackDemo', title: 'Ukážka: rozhodca zoberie trojuholník zo stola a zavesí ho pod stôl' }, { label: 'Ukážka konca zápasu (admin)', act: 'fiestaDemo', title: 'Tabuľa s víťazom a konfety na kontrolu' }, { label: 'Ukážka od diváka (admin)', act: 'spectDemo', title: 'Sedíš na tribúne ako divák: LCD, malý stôl, konfety' }] : [] },
+			{ id: 'home', name: _t('Herňa'), desc: _t('Tréning, Hrať o najlepšie skóre, partie s priateľmi. Stôl s červeným súknom pri tréningu, zeleným v partii.'), map: [4, 50, 46, 44], here: here === 'home', locked: false, play: _t('Vstúpiť a hrať') },
+			{ id: 'office', name: _t('Kancelária'), desc: _t('Liga: registrácia, tabuľky líg, mapa hráčov, moje tágá, vyhľadanie ligového zápasu.'), map: [4, 4, 46, 20], here: here === 'office', locked: !user, lockNote: _t('Kancelária je pre prihlásených hráčov.'), play: _t('Vstúpiť') },
+			{ id: 'living', name: _t('Obývačka'), desc: _t('Samostatná hra My Rooms: oddych pri krbe, televízor so zápasmi a YouTube, knižnica. Otvorí sa jej stránka, späť dverami obývačky.'), map: [4, 27, 46, 20], here: here === 'living', locked: !user, lockNote: _t('Obývačka je pre prihlásených hráčov.'), play: _t('Vstúpiť'), notour: true },
+			{ id: 'league', name: _t('Štadión'), desc: _t('Ligové zápasy pred divákmi, modré súkno, svetlá na stôl.'), map: [56, 4, 40, 90], here: here === 'league', locked: !admin, lockNote: _t('Štadión sa otvorí, keď nájdeš ligový zápas (Kancelária, Vyhľadať zápas). Hrá sa tu len liga.'), play: admin ? _t('Vstúpiť a trénovať (admin)') : _t('Vstúpiť'), extra: admin ? [{ label: _t('Rozhodca odkladá trojuholník (admin)'), act: 'rackDemo', title: _t('Ukážka: rozhodca zoberie trojuholník zo stola a zavesí ho pod stôl') }, { label: _t('Ukážka konca zápasu (admin)'), act: 'fiestaDemo', title: _t('Tabuľa s víťazom a konfety na kontrolu') }, { label: _t('Ukážka od diváka (admin)'), act: 'spectDemo', title: _t('Sedíš na tribúne ako divák: LCD, malý stôl, konfety') }] : [] },
 		].map((r) => ({ ...r, tour: admin && !r.notour }));
 	};
 
@@ -2735,7 +2735,7 @@ export function start(root, config = {}) {
 		reset: () => {
 			rackWasFresh = false; // trojuholník sa ukáže aj pri opakovanom novom rozostavení
 			if (game.match) {
-				ui.toast('V partii sa gule nanovo nestavajú.');
+				ui.toast(_t('V partii sa gule nanovo nestavajú.'));
 				return;
 			}
 			if (game.solo) {
@@ -2813,7 +2813,7 @@ export function start(root, config = {}) {
 		// chodba: svietiace cedule (Ctrl a klik) a mapa M: kancelária a obývačka (len prihlásení)
 		goOffice: () => {
 			if (!user || !online) {
-				ui.toast('Kancelária je pre prihlásených hráčov.');
+				ui.toast(_t('Kancelária je pre prihlásených hráčov.'));
 				return;
 			}
 			hotSet(null);
@@ -2824,15 +2824,15 @@ export function start(root, config = {}) {
 		// obývačka je samostatná hra My Rooms (myrooms.hedlajner.sk): cedula v chodbe a mapa M vedú tam
 		goLiving: () => {
 			if (!user) {
-				ui.toast('Obývačka je pre prihlásených hráčov.');
+				ui.toast(_t('Obývačka je pre prihlásených hráčov.'));
 				return;
 			}
 			if (game.match || game.spectating) {
-				ui.toast('Počas partie alebo sledovania sa miestnosť meniť nedá.');
+				ui.toast(_t('Počas partie alebo sledovania sa miestnosť meniť nedá.'));
 				return;
 			}
 			if (!config.roomsUrl) {
-				ui.toast('Obývačka (My Rooms) teraz nie je dostupná.');
+				ui.toast(_t('Obývačka (My Rooms) teraz nie je dostupná.'));
 				return;
 			}
 			hotSet(null);
@@ -2855,12 +2855,12 @@ export function start(root, config = {}) {
 				if (user) {
 					user.name = String(form.nick || '').trim().slice(0, 24) || user.account || user.name; // prezývka hneď všade (inak meno účtu)
 				}
-				ui.toast(form.edit ? 'Údaje hráča sú uložené.' : 'Vitaj v lige! Začínaš so 147 bodmi.');
+				ui.toast(form.edit ? _t('Údaje hráča sú uložené.') : _t('Vitaj v lige! Začínaš so 147 bodmi.'));
 				officeMode = '';
 				actions.officeLook();
 				await refreshLeague(); // tabuľa, mapa, kalendár a nástenka F12 s novým hráčom
 			} else {
-				ui.toast((r && r.error) || 'Registrácia sa nepodarila.');
+				ui.toast((r && r.error) || _t('Registrácia sa nepodarila.'));
 			}
 		},
 		officeEdit: () => {
@@ -2937,7 +2937,7 @@ export function start(root, config = {}) {
 			online.ping(); // obsadené miesta
 			if (r.hidden) {
 				// admin alebo správca hry: neviditeľne, bez miesta v hľadisku; Medzerník voľná kamera
-				ui.toast('Sleduješ neviditeľne (Správa hry). Hráči ťa nevidia. Medzerník: voľná kamera.');
+				ui.toast(_t('Sleduješ neviditeľne (Správa hry). Hráči ťa nevidia. Medzerník: voľná kamera.'));
 				return;
 			}
 			setTimeout(seatPick, 420); // po prechode na štadión (alebo hneď v herni) výber miesta zhora
@@ -2978,7 +2978,7 @@ export function start(root, config = {}) {
 			const open = office.toggleWindow();
 			sound.unlock();
 			sound.doorCreak();
-			ui.toast(open ? 'Okno je otvorené.' : 'Okno je zatvorené.');
+			ui.toast(open ? _t('Okno je otvorené.') : _t('Okno je zatvorené.'));
 		},
 		// pohľad na predmet v kancelárii; druhé stlačenie (alebo Esc) vráti pohľad za stôl
 		officeFocus: (name) => {
@@ -3013,11 +3013,11 @@ export function start(root, config = {}) {
 				return;
 			}
 			if (!d || d.error || !d.moves) {
-				ui.toast((d && d.error) || 'Záznam partie sa nedá načítať.');
+				ui.toast((d && d.error) || _t('Záznam partie sa nedá načítať.'));
 				return;
 			}
 			if (!d.moves.length) {
-				ui.toast('V partii nie je zaznamenaný žiadny úder.');
+				ui.toast(_t('V partii nie je zaznamenaný žiadny úder.'));
 				return;
 			}
 			replay = new Replay(d);
@@ -3060,7 +3060,7 @@ export function start(root, config = {}) {
 				replay.toggle();
 			} else if (k === 'speed') {
 				replay.speed = replay.speed >= 2 ? 0.5 : replay.speed * 2;
-				ui.toast(`Rýchlosť prehrávania ${String(replay.speed).replace('.', ',')}×`);
+				ui.toast(_t('Rýchlosť prehrávania {s}×', { s: LANG === 'en' ? String(replay.speed) : String(replay.speed).replace('.', ',') }));
 			}
 			ui.replayBar(true, replay.playing, replay.speed);
 			return true;
@@ -3071,7 +3071,7 @@ export function start(root, config = {}) {
 				return;
 			}
 			if (!d || d.error) {
-				ui.toast((d && d.error) || 'História zápasov sa nedá načítať.');
+				ui.toast((d && d.error) || _t('História zápasov sa nedá načítať.'));
 				return;
 			}
 			ui.renderHistory(d, false);
@@ -3088,7 +3088,7 @@ export function start(root, config = {}) {
 				return;
 			}
 			if (!d || d.error) {
-				ui.toast((d && d.error) || 'Detail zápasu sa nedá načítať.');
+				ui.toast((d && d.error) || _t('Detail zápasu sa nedá načítať.'));
 				return;
 			}
 			ui.renderHistoryMatch(d);
@@ -3106,7 +3106,7 @@ export function start(root, config = {}) {
 					await online.seek(false);
 				}
 				office.setDoor('');
-				ui.toast('Vyhľadávanie ligového zápasu je zrušené.');
+				ui.toast(_t('Vyhľadávanie ligového zápasu je zrušené.'));
 			}
 		},
 		foundAccept: () => online && online.accept(true),
@@ -3154,14 +3154,14 @@ export function start(root, config = {}) {
 				await online.accept(false);
 			}
 			office.setDoor('');
-			ui.toast('Zápas je zrušený a vyhľadávanie vypnuté.');
+			ui.toast(_t('Zápas je zrušený a vyhľadávanie vypnuté.'));
 		},
 		foundTimeout: async () => {
 			if (online && online.found && !online.found.mine) {
 				ui.foundPopup(null);
 				await online.accept(false);
 				office.setDoor('');
-				ui.toast('Zápas si nepotvrdil do 60 sekúnd, vyhľadávanie je vypnuté.');
+				ui.toast(_t('Zápas si nepotvrdil do 60 sekúnd, vyhľadávanie je vypnuté.'));
 			}
 		},
 		// lampa na stole (F12 alebo klik): zhasnutá = nie som online (nevidia ma, nedá sa hľadať zápas)
@@ -3178,7 +3178,7 @@ export function start(root, config = {}) {
 				}
 				online.ping();
 			}
-			ui.toast(lampOn ? 'Lampa svieti: si online, ostatní ťa vidia a môžeš hľadať zápas.' : 'Lampa zhasnutá: nie si online, ostatní ťa nevidia a zápas sa hľadať nedá. F12 ju rozsvieti.');
+			ui.toast(lampOn ? _t('Lampa svieti: si online, ostatní ťa vidia a môžeš hľadať zápas.') : _t('Lampa zhasnutá: nie si online, ostatní ťa nevidia a zápas sa hľadať nedá. F12 ju rozsvieti.'));
 		},
 		// dvere ŠTADIÓN (alebo F9): vyhľadanie ligového zápasu, druhý klik ho zruší
 		officeDoor: async () => {
@@ -3186,30 +3186,30 @@ export function start(root, config = {}) {
 				return;
 			}
 			if (!leagueData || !leagueData.registered) {
-				ui.toast('Ligu hrajú len registrovaní hráči. Najprv vyplň červenú vizitku na stole (F8).');
+				ui.toast(_t('Ligu hrajú len registrovaní hráči. Najprv vyplň červenú vizitku na stole (F8).'));
 				actions.officeCard();
 				return;
 			}
 			if (online.queueing) {
 				await online.seek(false);
 				office.setDoor('');
-				ui.toast('Vyhľadávanie zápasu je zrušené.');
+				ui.toast(_t('Vyhľadávanie zápasu je zrušené.'));
 				return;
 			}
 			if (!lampOn) {
-				ui.toast('Lampa je zhasnutá, nie si online. Rozsvieť ju (F12 alebo klik na lampu) a potom vyhľadaj zápas.');
+				ui.toast(_t('Lampa je zhasnutá, nie si online. Rozsvieť ju (F12 alebo klik na lampu) a potom vyhľadaj zápas.'));
 				return;
 			}
 			if (!myCues.selected.length) {
 				// bez tága do zápasu sa nedá: otvorí sa výber tág (F2)
-				ui.toast('Najprv si vyber aspoň jedno tágo do ligového zápasu (F2, Moje tágá).');
+				ui.toast(_t('Najprv si vyber aspoň jedno tágo do ligového zápasu (F2, Moje tágá).'));
 				if (officeMode !== 'cues') {
 					actions.myCues();
 				}
 				return;
 			}
 			office.setDoor('wait');
-			ui.toast('Vyhľadávam zápas… Môžeš odísť z kancelárie a hrať tréning, hľadanie beží ďalej (pásik hore, ✕ ho zruší).');
+			ui.toast(_t('Vyhľadávam zápas… Môžeš odísť z kancelárie a hrať tréning, hľadanie beží ďalej (pásik hore, ✕ ho zruší).'));
 			await online.seek(true);
 			ui.setSeek(online.seekSince);
 		},
@@ -3226,7 +3226,7 @@ export function start(root, config = {}) {
 			} else if (sel.length < 4) {
 				sel.push(id);
 			} else {
-				ui.toast('Do zápasu si môžeš zobrať najviac 4 tágá. Najprv jedno odober.');
+				ui.toast(_t('Do zápasu si môžeš zobrať najviac 4 tágá. Najprv jedno odober.'));
 			}
 			saveMyCues();
 		},
@@ -3252,7 +3252,7 @@ export function start(root, config = {}) {
 		},
 		leagueInvite: async (id) => {
 			if (!myCues.selected.length) {
-				ui.toast('Najprv si vyber aspoň jedno tágo do ligového zápasu (F2, Moje tágá).');
+				ui.toast(_t('Najprv si vyber aspoň jedno tágo do ligového zápasu (F2, Moje tágá).'));
 				return;
 			}
 			await online.invite(id, true);
@@ -3321,18 +3321,18 @@ export function start(root, config = {}) {
 		},
 		einvite: async (email) => {
 			if (!online || !email) {
-				ui.toast('Zadaj e-mail kamaráta.');
+				ui.toast(_t('Zadaj e-mail kamaráta.'));
 				return;
 			}
 			try {
 				await online.net.call('einvite', { email, frames: ui.inviteFrames || 1 });
 				ui._einvMail = '';
-				ui.toast(`Pozvánka odoslaná na ${email}. Keď kamarát klikne na odkaz, príde ti výzva na partiu.`);
+				ui.toast(_t('Pozvánka odoslaná na {e}. Keď kamarát klikne na odkaz, príde ti výzva na partiu.', { e: email }));
 				if (online.lastLobby) {
 					ui.renderLobby(online.lastLobby);
 				}
 			} catch (e) {
-				ui.toast(e.message || 'Pozvánku sa nepodarilo odoslať.');
+				ui.toast(e.message || _t('Pozvánku sa nepodarilo odoslať.'));
 			}
 		},
 		invite: (id) => online && online.invite(id, false, false, ui.inviteFrames || 1),
@@ -3380,7 +3380,7 @@ export function start(root, config = {}) {
 			try {
 				ui.showAccount(await online.net.call('account', null, 'GET'));
 			} catch (e) {
-				ui.showAccount(null, e.message || 'Účet sa nepodarilo načítať.');
+				ui.showAccount(null, e.message || _t('Účet sa nepodarilo načítať.'));
 			}
 		},
 		// Správa hry (admin a správca hry): prehľad a zásahy; server práva overí znova
@@ -3393,22 +3393,22 @@ export function start(root, config = {}) {
 			try {
 				ui.openStaff(true, await online.net.call('staff/overview', null, 'GET'));
 			} catch (e) {
-				ui.openStaff(true, null, e.message || 'Prehľad sa nepodarilo načítať.');
+				ui.openStaff(true, null, e.message || _t('Prehľad sa nepodarilo načítať.'));
 			}
 		},
 		staffClose: () => ui.openStaff(false),
 		staffWatch: (r) => {
 			ui.openStaff(false);
 			if (game.match) {
-				ui.toast('Počas vlastnej partie sa sledovať nedá.');
+				ui.toast(_t('Počas vlastnej partie sa sledovať nedá.'));
 				return;
 			}
 			actions.watchStart(r);
 		},
-		staffNick: (d) => staffDo('staff/nick', d, 'Prezývka je zmenená.'),
-		staffMatch: (d) => staffDo('staff/match', d, d.do === 'annul' ? 'Zápas je zrušený.' : 'Zápas je ukončený.'),
-		staffBan: (d) => staffDo('staff/ban', d, d.on ? 'Hráč má zakázanú ligu.' : 'Hráč môže znova hrať ligu.'),
-		staffReset: (d) => staffDo('staff/reset', d, 'Body hráča sú vynulované.'),
+		staffNick: (d) => staffDo('staff/nick', d, _t('Prezývka je zmenená.')),
+		staffMatch: (d) => staffDo('staff/match', d, d.do === 'annul' ? _t('Zápas je zrušený.') : _t('Zápas je ukončený.')),
+		staffBan: (d) => staffDo('staff/ban', d, d.on ? _t('Hráč má zakázanú ligu.') : _t('Hráč môže znova hrať ligu.')),
+		staffReset: (d) => staffDo('staff/reset', d, _t('Body hráča sú vynulované.')),
 		// šúpatko Otáčanie myšou (Ctrl): rýchlosť otáčania kamery a mierenia myšou
 		mouseSens: (v) => {
 			settings.mouseSens = Math.min(3, Math.max(0.3, Number(v) || 1));
@@ -3432,7 +3432,7 @@ export function start(root, config = {}) {
 			saveSettings(settings);
 			controls.setCue(cueSpec);
 		rig.cueReach = (cueSpec.len || 1.45) + (settings.cueExt || 0); // kamera pravým tlačidlom najviac na dĺžku tága od bielej
-			ui.toast(v.on ? 'Jemné mierenie je pri tomto tágu vždy zapnuté. So Shift mieriš rýchlo.' : 'Jemné mierenie len so Shift.');
+			ui.toast(v.on ? _t('Jemné mierenie je pri tomto tágu vždy zapnuté. So Shift mieriš rýchlo.') : _t('Jemné mierenie len so Shift.'));
 		},
 		// mobil: hlavné menu ☰ – dlaždica urobí to isté ako kláves na desktope
 		menuKey: (k) => {
@@ -3485,7 +3485,7 @@ export function start(root, config = {}) {
 		// mobil: zameriavač – jemné mierenie prstom zap/vyp (ako Shift)
 		touchFine: () => {
 			controls.touchFine = !controls.touchFine;
-			ui.toast(controls.touchFineOn() ? 'Jemné mierenie zapnuté.' : 'Jemné mierenie vypnuté.');
+			ui.toast(controls.touchFineOn() ? _t('Jemné mierenie zapnuté.') : _t('Jemné mierenie vypnuté.'));
 		},
 		// mobil: šúpatká pre prst (ukladajú sa zvlášť od myšacích)
 		touchAimSens: (v) => {
@@ -3539,7 +3539,7 @@ export function start(root, config = {}) {
 				return;
 			}
 			if (game.match || game.spectating) {
-				ui.toast('Počas partie alebo sledovania sa miestnosť meniť nedá.');
+				ui.toast(_t('Počas partie alebo sledovania sa miestnosť meniť nedá.'));
 				return;
 			}
 			ui.openRoomMap(false);
@@ -3560,7 +3560,7 @@ export function start(root, config = {}) {
 			}
 			if (venue !== id) {
 				setVenue(id);
-				ui.toast(id === 'league' ? 'Štadión: tréning pri ligovom stole (admin).' : 'Herňa.');
+				ui.toast(id === 'league' ? _t('Štadión: tréning pri ligovom stole (admin).') : _t('Herňa.'));
 			}
 			ui.showMenu(false);
 			controls.capture();
@@ -3571,7 +3571,7 @@ export function start(root, config = {}) {
 				return;
 			}
 			if (game.match || game.spectating) {
-				ui.toast('Počas partie alebo sledovania sa prehliadka nedá.');
+				ui.toast(_t('Počas partie alebo sledovania sa prehliadka nedá.'));
 				return;
 			}
 			ui.closeSettings && ui.closeSettings();
@@ -3581,7 +3581,7 @@ export function start(root, config = {}) {
 				const at = where === 'office' ? office.seat : where === 'league' ? { pos: new THREE.Vector3(-6, ROOM.floor + 2.2, 4.5), look: new THREE.Vector3(0, ROOM.floor + 0.8, 0) } : { pos: new THREE.Vector3(-3.8, ROOM.floor + 1.7, 2.6), look: new THREE.Vector3(0, ROOM.floor + 0.8, 0) };
 				freeCam(at);
 				controls.capture();
-				ui.toast('Prehliadka (admin): voľná kamera bez hraníc. M: mapa miestností. Medzerník: späť za tágo.');
+				ui.toast(_t('Prehliadka (admin): voľná kamera bez hraníc. M: mapa miestností. Medzerník: späť za tágo.'));
 			};
 			const want = where === 'league' ? 'league' : 'home';
 			if (venue !== want) {
@@ -3626,10 +3626,10 @@ export function start(root, config = {}) {
 			ui.openTools(true, {
 				chalk: mine,
 				rests: Object.keys(RESTS).map((k) => ({ kind: k, name: RESTS[k].name, ok: can[k], on: spiderOn && restKind === k })),
-				restNote: !mine ? 'Nádstavec sa dá vziať, keď mieriš.' : Object.values(can).some(Boolean) ? '' : 'Za bielou nie je miesto na nádstavec (mantinel alebo guľa tesne za bielou).',
-				rack: !game.match ? (game.solo ? 'Nový frame' : 'Nové postavenie gúľ') : '',
+				restNote: !mine ? _t('Nádstavec sa dá vziať, keď mieriš.') : Object.values(can).some(Boolean) ? '' : _t('Za bielou nie je miesto na nádstavec (mantinel alebo guľa tesne za bielou).'),
+				rack: !game.match ? (game.solo ? _t('Nový frame') : _t('Nové postavenie gúľ')) : '',
 				ext: Math.round((settings.cueExt || 0) * 100),
-				reach: mine && game.cue.on ? (() => { const r = reachInfo(); return { ok: r.ok || !!r.stretch, text: r.ok ? 'Dosiahneš na bielu (mostík do 95 cm, rukoväť do 55 cm od mantinelu).' : reachMsg(r) }; })() : null,
+				reach: mine && game.cue.on ? (() => { const r = reachInfo(); return { ok: r.ok || !!r.stretch, text: r.ok ? _t('Dosiahneš na bielu (mostík do 95 cm, rukoväť do 55 cm od mantinelu).') : reachMsg(r) }; })() : null,
 			});
 		},
 		// predĺženie tága (F3, 6): 0, 15, 30, 45 cm dookola; ostáva nasadené, kým ho nezmeníš
@@ -3644,7 +3644,7 @@ export function start(root, config = {}) {
 			if (!freeMouse) {
 				controls.capture();
 			}
-			ui.toast(settings.cueExt ? `Predĺženie tága ${Math.round(settings.cueExt * 100)} cm je nasadené (dosah ďalej, ťahanie dlhšie).` : 'Predĺženie tága je dole.');
+			ui.toast(settings.cueExt ? _t('Predĺženie tága {n} cm je nasadené (dosah ďalej, ťahanie dlhšie).', { n: Math.round(settings.cueExt * 100) }) : _t('Predĺženie tága je dole.'));
 		},
 		cueExtOff: () => actions.cueExt(true),
 		// farba špice (F2 stojan): niekoľko základných farieb, ukladá sa do databázy
@@ -3654,7 +3654,7 @@ export function start(root, config = {}) {
 			}
 			const r = await online.net.call('tips/color', { cue: v.cue, color: v.color, def: tipDef(specFor(v.cue)) }).catch((e) => ({ error: e.message }));
 			if (!r || r.error) {
-				ui.toast((r && r.error) || 'Farba špice sa nedá zmeniť.');
+				ui.toast((r && r.error) || _t('Farba špice sa nedá zmeniť.'));
 				return;
 			}
 			tipApply(r);
@@ -3666,11 +3666,11 @@ export function start(root, config = {}) {
 			}
 			const r = await online.net.call('tips/replace', { cue: v.cue, kind: v.kind }).catch((e) => ({ error: e.message }));
 			if (!r || r.error) {
-				ui.toast((r && r.error) || 'Špica sa nedá vymeniť.');
+				ui.toast((r && r.error) || _t('Špica sa nedá vymeniť.'));
 				return;
 			}
 			tipApply(r);
-			ui.toast(`Nová špica (${{ soft: 'mäkká', medium: 'stredná', hard: 'tvrdá' }[v.kind]}) je nasadená.`);
+			ui.toast(_t('Nová špica ({k}) je nasadená.', { k: { soft: _t('mäkká'), medium: _t('stredná'), hard: _t('tvrdá') }[v.kind] }));
 		},
 		// F2 v herni: výber kriedy z poličky (kamera sa na ňu priblíži), druhý klik alebo Späť na stojan vráti pohľad
 		chalkPick: (i) => {
@@ -3681,7 +3681,7 @@ export function start(root, config = {}) {
 				saveSettings(settings);
 				chalkBlue.color.setHex(ch.color);
 				ui.openChalks(true, ch.id, false, true);
-				ui.toast(`Krieda do zápasu: ${ch.name}.`);
+				ui.toast(_t('Krieda do zápasu: {n}.', { n: ch.name }));
 				return;
 			}
 			if (!ch || view !== 'rack') {
@@ -3752,15 +3752,15 @@ export function start(root, config = {}) {
 			}
 			if (spiderOn) {
 				spiderOn = false; // druhé vybratie: pavúk späť pod stôl
-				ui.toast(RESTS[restKind].name + ' je odložený.');
+				ui.toast(RESTS[restKind].name + _t(' je odložený.'));
 				return;
 			}
 			if (game.state !== 'aim' || game.spectating || !game.cue.on) {
-				ui.toast('Pavúk sa dá vziať, keď mieriš.');
+				ui.toast(_t('Pavúk sa dá vziať, keď mieriš.'));
 				return;
 			}
 			if (!restSpot()) {
-				ui.toast(RESTS[restKind].name + ' sa sem nedá položiť: biela je pri mantineli alebo je tesne za ňou guľa.');
+				ui.toast(RESTS[restKind].name + _t(' sa sem nedá položiť: biela je pri mantineli alebo je tesne za ňou guľa.'));
 				return;
 			}
 			spiderOn = true;
@@ -3768,12 +3768,12 @@ export function start(root, config = {}) {
 			if (!freeMouse) {
 				controls.capture();
 			}
-			ui.toast(RESTS[restKind].name + ': tágo leží vždy v rovnakom sklone nad bielou. Po údere sa sám odloží.');
+			ui.toast(RESTS[restKind].name + _t(': tágo leží vždy v rovnakom sklone nad bielou. Po údere sa sám odloží.'));
 		},
 		rackNew: () => {
 			ui.openTools(false);
 			if (game.match) {
-				ui.toast('V partii sa gule nanovo nestavajú.');
+				ui.toast(_t('V partii sa gule nanovo nestavajú.'));
 				return;
 			}
 			actions.reset();
@@ -3784,15 +3784,15 @@ export function start(root, config = {}) {
 		// divák F7: dávka konfiet zo svojho miesta (najviac 3-krát za zápas, 15 sekúnd); vidia ju všetci
 		spectConfetti: () => {
 			if (!specView() || venue !== 'league') {
-				ui.toast('Konfety sa dajú púšťať na štadióne pri sledovaní ligového zápasu.');
+				ui.toast(_t('Konfety sa dajú púšťať na štadióne pri sledovaní ligového zápasu.'));
 				return;
 			}
 			if (mySeat < 0) {
-				ui.toast('Najprv si vyber miesto (F6).');
+				ui.toast(_t('Najprv si vyber miesto (F6).'));
 				return;
 			}
 			if (confLeft <= 0) {
-				ui.toast('Konfety si v tomto zápase už minul (3-krát).');
+				ui.toast(_t('Konfety si v tomto zápase už minul (3-krát).'));
 				return;
 			}
 			confLeft--;
@@ -3801,7 +3801,7 @@ export function start(root, config = {}) {
 			if (game.spectating) {
 				online.watchSend(m);
 			}
-			ui.toast(`Konfety! Zostáva ešte ${confLeft}×.`);
+			ui.toast(_t('Konfety! Zostáva ešte {n}×.', { n: confLeft }));
 			if (ui.spectPhoneOpen()) {
 				actions.spectPhone(true);
 			}
@@ -3809,20 +3809,20 @@ export function start(root, config = {}) {
 		// divák F9: obrazovky nad stolom zapne alebo vypne (pre všetkých)
 		spectLcd: () => {
 			if (!specView() || venue !== 'league') {
-				ui.toast('Obrazovky sú len na štadióne pri ligovom zápase.');
+				ui.toast(_t('Obrazovky sú len na štadióne pri ligovom zápase.'));
 				return;
 			}
 			flagToggle('w-lcd');
-			ui.toast(flagOn('w-lcd') ? 'Obrazovky nad stolom sú zapnuté, vidia to všetci.' : 'Obrazovky nad stolom sú vypnuté pre všetkých.');
+			ui.toast(flagOn('w-lcd') ? _t('Obrazovky nad stolom sú zapnuté, vidia to všetci.') : _t('Obrazovky nad stolom sú vypnuté pre všetkých.'));
 		},
 		// divák F12: otočný zelený reflektor zapne alebo vypne (pre všetkých)
 		spectSpot: () => {
 			if (!specView() || venue !== 'league') {
-				ui.toast('Reflektor je len na štadióne pri ligovom zápase.');
+				ui.toast(_t('Reflektor je len na štadióne pri ligovom zápase.'));
 				return;
 			}
 			flagToggle('w-spot');
-			ui.toast(flagOn('w-spot') ? 'Zelený reflektor svieti a krúži po hale, vidia ho všetci.' : 'Reflektor je zhasnutý pre všetkých.');
+			ui.toast(flagOn('w-spot') ? _t('Zelený reflektor svieti a krúži po hale, vidia ho všetci.') : _t('Reflektor je zhasnutý pre všetkých.'));
 		},
 		// divák F1: telefón s pomocníkom (klávesy) a tlačidlami
 		spectPhone: (refresh) => {
@@ -3866,7 +3866,7 @@ export function start(root, config = {}) {
 				chairLook.yaw = Math.atan2(d.z, d.x);
 				chairLook.pitch = Math.atan2(d.y, Math.hypot(d.x, d.z));
 				controls.capture();
-				ui.toast('Ukážka od diváka: sedíš na tribúne. F1 telefón, F7 konfety, F8 pohľad hráča, F9 obrazovky, F12 reflektor, Tab malý stôl. Esc ukážku ukončí.');
+				ui.toast(_t('Ukážka od diváka: sedíš na tribúne. F1 telefón, F7 konfety, F8 pohľad hráča, F9 obrazovky, F12 reflektor, Tab malý stôl. Esc ukážku ukončí.'));
 			};
 			if (venue !== 'league') {
 				setVenue('league');
@@ -3885,7 +3885,7 @@ export function start(root, config = {}) {
 			mySeat = -1;
 			ui.openSpectPhone(false);
 			exitView();
-			ui.toast('Ukážka od diváka skončila.');
+			ui.toast(_t('Ukážka od diváka skončila.'));
 		},
 		// admin z mapy (M): ukážka, ako rozhodca na štadióne zoberie trojuholník a zavesí ho pod stôl
 		rackDemo: () => {
@@ -3898,7 +3898,7 @@ export function start(root, config = {}) {
 				rackWasFresh = true;
 				setTimeout(() => {
 					if (startRackShow()) {
-						ui.toast('Ukážka: rozhodca odkladá trojuholník pod stôl.');
+						ui.toast(_t('Ukážka: rozhodca odkladá trojuholník pod stôl.'));
 					}
 				}, 100);
 			};
@@ -3916,8 +3916,8 @@ export function start(root, config = {}) {
 			}
 			ui.openRoomMap(false);
 			const go = () => {
-				startFiesta({ winner: user ? user.name : 'Admin', result: `${user ? user.name : 'Admin'} 76 : 40 Súper`, lines: ['Najvyššia séria: 54', 'Liga: víťaz +12 bodov (ukážka)'] });
-				ui.toast('Ukážka konca zápasu: tabuľa s víťazom a konfety. Späť do herne v menu ich vypne.');
+				startFiesta({ winner: user ? user.name : 'Admin', result: `${user ? user.name : 'Admin'} 76 : 40 ${_t('Súper')}`, lines: [_t('Najvyššia séria: 54'), _t('Liga: víťaz +12 bodov (ukážka)')] });
+				ui.toast(_t('Ukážka konca zápasu: tabuľa s víťazom a konfety. Späť do herne v menu ich vypne.'));
 			};
 			if (venue !== 'league') {
 				setVenue('league');
@@ -3953,7 +3953,7 @@ export function start(root, config = {}) {
 		/** Telefón Môj účet: údaje účtu (REST account), zmena mena a hesla. */
 		phoneLoad: async () => {
 			if (!online) {
-				ui.phoneData(null, user ? 'Účet sa nepodarilo načítať.' : 'Môj účet je len pre prihlásených.');
+				ui.phoneData(null, user ? _t('Účet sa nepodarilo načítať.') : _t('Môj účet je len pre prihlásených.'));
 				return;
 			}
 			try {
@@ -3965,7 +3965,7 @@ export function start(root, config = {}) {
 				d.hist = hi && Array.isArray(hi.list) ? hi.list.slice(0, 5) : [];
 				ui.phoneData(d);
 			} catch (e) {
-				ui.phoneData(null, e.message || 'Účet sa nepodarilo načítať.');
+				ui.phoneData(null, e.message || _t('Účet sa nepodarilo načítať.'));
 			}
 		},
 		/** Tlačidlo v telefóne: zavrie telefón a otvorí nastavenia, pomocníka, mapu alebo stojan. */
@@ -3992,9 +3992,9 @@ export function start(root, config = {}) {
 					user.name = r.name;
 				}
 				await actions.phoneLoad();
-				ui.phoneNote('Meno je zmenené.', true);
+				ui.phoneNote(_t('Meno je zmenené.'), true);
 			} catch (e) {
-				ui.phoneNote(e.message || 'Meno sa nepodarilo zmeniť.', false);
+				ui.phoneNote(e.message || _t('Meno sa nepodarilo zmeniť.'), false);
 			}
 		},
 		phonePass: async (d) => {
@@ -4004,9 +4004,9 @@ export function start(root, config = {}) {
 					online.net.nonce = r.nonce; // nové prihlásenie: ďalšie volania hry s novým kľúčom
 					config.nonce = r.nonce;
 				}
-				ui.phoneNote('Heslo je zmenené. Ostávaš prihlásený.', true);
+				ui.phoneNote(_t('Heslo je zmenené. Ostávaš prihlásený.'), true);
 			} catch (e) {
-				ui.phoneNote(e.message || 'Heslo sa nepodarilo zmeniť.', false);
+				ui.phoneNote(e.message || _t('Heslo sa nepodarilo zmeniť.'), false);
 			}
 		},
 		phoneClose: () => {
@@ -4036,7 +4036,7 @@ export function start(root, config = {}) {
 				// voľná kamera: Tab zapne alebo vypne malý náhľad stola zhora v rohu (gule vidno, aj keď sa pozeráš inam)
 				settings.freeMini = !settings.freeMini;
 				saveSettings(settings);
-				ui.toast(settings.freeMini ? 'Náhľad stola zapnutý (Tab ho vypne).' : 'Náhľad stola vypnutý.');
+				ui.toast(settings.freeMini ? _t('Náhľad stola zapnutý (Tab ho vypne).') : _t('Náhľad stola vypnutý.'));
 				return;
 			}
 			if (view) {
@@ -4064,7 +4064,7 @@ export function start(root, config = {}) {
 			settings.tvOn = settings.tvOn === false;
 			saveSettings(settings);
 			room.setTv(settings.tvOn);
-			ui.toast(settings.tvOn ? 'Obrazovka zapnutá.' : 'Obrazovka vypnutá.');
+			ui.toast(settings.tvOn ? _t('Obrazovka zapnutá.') : _t('Obrazovka vypnutá.'));
 		},
 		achBoard: () => {
 			hotSet(null);
@@ -4088,11 +4088,11 @@ export function start(root, config = {}) {
 		// vlastné tágo zo šablóny (stojan F2): nové, úprava, zmazanie
 		cueNew: async (baseId) => {
 			if (!online) {
-				ui.toast('Vlastné tágá majú len prihlásení hráči.');
+				ui.toast(_t('Vlastné tágá majú len prihlásení hráči.'));
 				return;
 			}
 			if (ownCues.length >= OWN_MAX) {
-				ui.toast(`Môžeš mať najviac ${OWN_MAX} vlastných tág. Najprv jedno zmaž.`);
+				ui.toast(_t('Môžeš mať najviac {n} vlastných tág. Najprv jedno zmaž.', { n: OWN_MAX }));
 				return;
 			}
 			const base = cueById(baseId);
@@ -4104,7 +4104,7 @@ export function start(root, config = {}) {
 			ownCues.push({ id: r.id, base: base.id, name: base.name + ' (moje)', data: { shaft: '', butt: '', power: 0, len: 0, grip: 0 } });
 			pickCue('u' + r.id);
 			rackRefresh();
-			ui.toast('Vlastné tágo je vytvorené. Vpravo mu nastav názov, farby a herné vlastnosti.');
+			ui.toast(_t('Vlastné tágo je vytvorené. Vpravo mu nastav názov, farby a herné vlastnosti.'));
 		},
 		cueOwnSet: ({ id, k, v }) => {
 			const row = ownCues.find((x) => x.id === id);
@@ -4147,7 +4147,7 @@ export function start(root, config = {}) {
 			row.data = { ...(row.data || {}), rack: on ? 1 : 0 };
 			saveOwn(row);
 			rackRefresh();
-			ui.toast(on ? `${row.name} je na stojane namiesto šablóny ${cueById(row.base).name}.` : `${row.name} je späť len v zozname Moje tágá, na stojane je znova ${cueById(row.base).name}.`);
+			ui.toast(on ? _t('{a} je na stojane namiesto šablóny {b}.', { a: row.name, b: cueById(row.base).name }) : _t('{a} je späť len v zozname Moje tágá, na stojane je znova {b}.', { a: row.name, b: cueById(row.base).name }));
 			ui.showView('rack', rackNow(), cueSpec.id, rackInfoNow());
 		},
 		cueOwnDelete: async (id) => {
@@ -4163,7 +4163,7 @@ export function start(root, config = {}) {
 				saveMyCues(true);
 			}
 			rackRefresh();
-			ui.toast(`Tágo ${row.name} je zmazané.`);
+			ui.toast(_t('Tágo {n} je zmazané.', { n: row.name }));
 			pickCue(cueSpec.id === 'u' + id ? row.base : cueSpec.id);
 		},
 		setting: ({ k, v }) => {
@@ -4274,7 +4274,7 @@ export function start(root, config = {}) {
 			} catch (e) {
 				return;
 			}
-			ui.toast('Obrazovka má 4 časti: vľavo hore ťukni = chat, vpravo hore a vľavo dole ťahaj = mierenie, vpravo dole prst dole = odtiahneš tágo, rýchlo hore = úder. Dvoma prstami priblížiš.');
+			ui.toast(_t('Obrazovka má 4 časti: vľavo hore ťukni = chat, vpravo hore a vľavo dole ťahaj = mierenie, vpravo dole prst dole = odtiahneš tágo, rýchlo hore = úder. Dvoma prstami priblížiš.'));
 		},
 		look: (dx, dy) => {
 			if (ui.touchUI && view && !LOOK.has(view)) {
@@ -4563,7 +4563,7 @@ export function start(root, config = {}) {
 						sit(mySeat);
 					} else if (ui.menuOpen()) {
 						ui.showMenu(false);
-						ui.toast('Klikni do hry, myš sa zachytí.');
+						ui.toast(_t('Klikni do hry, myš sa zachytí.'));
 					} else {
 						controls.uncapture();
 						ui.showMenu(true, true);
@@ -4646,7 +4646,7 @@ export function start(root, config = {}) {
 				// F3 vo voľnej kamere: ruky s tágom zapnúť a vypnúť (predvolene vypnuté, pamätá sa)
 				settings.freeHands = !settings.freeHands;
 				saveSettings(settings);
-				ui.toast(settings.freeHands ? 'Ruky s tágom zapnuté (F3).' : 'Ruky s tágom vypnuté (F3).');
+				ui.toast(settings.freeHands ? _t('Ruky s tágom zapnuté (F3).') : _t('Ruky s tágom vypnuté (F3).'));
 				return true;
 			}
 			if (view === 'free' && /^(w|a|s|d|q|e|arrowup|arrowdown|arrowleft|arrowright|shift)$/.test(lk)) {
@@ -4665,7 +4665,7 @@ export function start(root, config = {}) {
 				homeDoorOpen = room.toggleDoor();
 				roomBroadcast('door');
 				if (online && !game.match && !game.spectating) {
-					ui.toast(homeDoorOpen ? 'Dvere sú otvorené: tvoju partiu môžu sledovať iní hráči (Pozerať hru v menu).' : 'Dvere sú zatvorené: tvoja partia nie je v zozname otvorených partií.');
+					ui.toast(homeDoorOpen ? _t('Dvere sú otvorené: tvoju partiu môžu sledovať iní hráči (Pozerať hru v menu).') : _t('Dvere sú zatvorené: tvoja partia nie je v zozname otvorených partií.'));
 				}
 				sound.doorCreak();
 				return true;
@@ -4684,7 +4684,7 @@ export function start(root, config = {}) {
 					escClosedAt = performance.now();
 					ui.showMenu(false);
 					ui.openLobby(false);
-					ui.toast('Klikni do hry, myš sa zachytí.');
+					ui.toast(_t('Klikni do hry, myš sa zachytí.'));
 				}
 				return true;
 			}
@@ -4720,7 +4720,7 @@ export function start(root, config = {}) {
 					} else if (ui.menuOpen()) {
 						if (performance.now() - (ui._menuAt || 0) > 300) {
 							ui.showMenu(false); // druhé Esc menu zavrie, ostáva sa v kancelárii
-							ui.toast('Klikni do hry, myš sa zachytí.');
+							ui.toast(_t('Klikni do hry, myš sa zachytí.'));
 						}
 					} else {
 						controls.uncapture(); // Esc v kancelárii: menu (do herne sa ide dverami alebo z menu)
@@ -4735,7 +4735,7 @@ export function start(root, config = {}) {
 			if (lk === 'f12' && venue === 'league') {
 				// štadión: F12 zapne alebo vypne bodové svetlá, len keď som na ťahu
 				if (game.match && !(game.match.turn === game.match.me && (game.state === 'aim' || game.state === 'place'))) {
-					ui.toast('Svetlá reflektorov môžeš zapnúť alebo vypnúť, keď si na ťahu.');
+					ui.toast(_t('Svetlá reflektorov môžeš zapnúť alebo vypnúť, keď si na ťahu.'));
 					return true;
 				}
 				beamsOn = !beamsOn;
@@ -4804,7 +4804,7 @@ export function start(root, config = {}) {
 					// voľná kamera: Esc pohľad neprepína, len uvoľní myš a otvorí menu (späť za tágo je medzerník)
 					if (ui.menuOpen() && performance.now() - (ui._menuAt || 0) > 300) {
 						ui.showMenu(false);
-						ui.toast('Klikni do hry, myš sa zachytí.');
+						ui.toast(_t('Klikni do hry, myš sa zachytí.'));
 					} else if (!ui.menuOpen()) {
 						controls.uncapture();
 						ui.showMenu(true);
@@ -4988,7 +4988,7 @@ export function start(root, config = {}) {
 		if (snaps && game.solo && game.solo.fid) {
 			snaps.ensure('f' + game.solo.fid).then((ok) => {
 				if (!ok) {
-					ui.toast('Bez snímok obrazovky sa výsledok tejto hry o skóre nezapíše (overenie férovej hry).');
+					ui.toast(_t('Bez snímok obrazovky sa výsledok tejto hry o skóre nezapíše (overenie férovej hry).'));
 				}
 			});
 		}
@@ -5001,7 +5001,7 @@ export function start(root, config = {}) {
 		controls.capture();
 		ui.sync(game, rig.mode);
 		updateScore();
-		ui.banner('Hráš sám o najlepšie skóre za najkratší čas', 'Fauly sa odčítajú');
+		ui.banner(_t('Hráš sám o najlepšie skóre za najkratší čas'), _t('Fauly sa odčítajú'));
 	};
 	// rebríček aj na stene herne (poháre a tabuľka)
 	const loadTrophies = async (d) => {
@@ -5040,22 +5040,22 @@ export function start(root, config = {}) {
 			const so = game.solo && game.solo.fid === r.fid ? game.solo : { log: r.log, fid: r.fid, bn: 0 };
 			await online.soloBeat(so, true); // posledné údery frame-u serveru pred zápisom (0.40.3)
 		}
-		const res = online ? await online.saveScore(r) : { error: 'Skóre sa zapisuje len prihláseným.' };
+		const res = online ? await online.saveScore(r) : { error: _t('Skóre sa zapisuje len prihláseným.') };
 		const ok = res && !res.error;
 		// overenie serverom (0.11.0): platí výsledok servera
 		let vnote = '';
 		let vbad = false;
 		if (ok && res.ver === 1 && res.verified) {
 			const v = res.verified;
-			vnote = Number(v.points) !== r.points ? `✓ Overené serverom. Server napočítal ${v.points} b. (v hre ${r.points} b.), do rebríčka ide výsledok servera.` : '✓ Overené serverom';
+			vnote = Number(v.points) !== r.points ? _t('✓ Overené serverom. Server napočítal {a} b. (v hre {b} b.), do rebríčka ide výsledok servera.', { a: v.points, b: r.points }) : _t('✓ Overené serverom');
 			r = { ...r, points: Number(v.points), shots: Number(v.shots), fouls: Number(v.fouls), brk: Number(v.brk) };
 		} else if (ok && res.ver === 2) {
-			vnote = '⏳ Výsledok čaká na overenie serverom, do rebríčka pôjde po overení.';
+			vnote = _t('⏳ Výsledok čaká na overenie serverom, do rebríčka pôjde po overení.');
 		} else if (ok && res.ver === 3) {
-			vnote = 'Server výsledok nepotvrdil, do rebríčka nejde. ' + (res.rejected || '').replace(/^Zamietnuté: /, '');
+			vnote = _t('Server výsledok nepotvrdil, do rebríčka nejde. ') + (res.rejected || '').replace(/^Zamietnuté: /, '');
 			vbad = true;
 		} else if (ok && res.ver === 0) {
-			vnote = 'Frame sa začal pred overovaním serverom, výsledok je v rebríčku označený ako neoverený.';
+			vnote = _t('Frame sa začal pred overovaním serverom, výsledok je v rebríčku označený ako neoverený.');
 		}
 		if (ok) {
 			loadTrophies(res);
@@ -5088,8 +5088,8 @@ export function start(root, config = {}) {
 		const box = document.createElement('div');
 		box.className = 'mysn-choice mysn-einv-guest';
 		box.style.zIndex = '70';
-		box.innerHTML = '<div class="mysn-choice-t"></div><div class="mysn-choice-b" style="flex-wrap:wrap"><input type="text" maxlength="24" placeholder="Tvoje meno" style="min-width:180px;padding:8px 10px;border-radius:8px;border:1px solid #555;background:#111;color:#fff"><button type="button" data-a="g">Hrať ako hosť</button><button type="button" data-a="l">Mám účet – prihlásiť sa</button></div><div class="mysn-choice-n">Hosť hrá priateľské partie bez registrácie. Účet hosťa sa zmaže po 30 dňoch bez hrania.</div>';
-		box.querySelector('.mysn-choice-t').textContent = `${config.einv.from} ťa pozýva na partiu snookeru${config.einv.frames > 1 ? ` na ${config.einv.frames} framy` : ''}.`;
+		box.innerHTML = _t('<div class="mysn-choice-t"></div><div class="mysn-choice-b" style="flex-wrap:wrap"><input type="text" maxlength="24" placeholder="Tvoje meno" style="min-width:180px;padding:8px 10px;border-radius:8px;border:1px solid #555;background:#111;color:#fff"><button type="button" data-a="g">Hrať ako hosť</button><button type="button" data-a="l">Mám účet – prihlásiť sa</button></div><div class="mysn-choice-n">Hosť hrá priateľské partie bez registrácie. Účet hosťa sa zmaže po 30 dňoch bez hrania.</div>');
+		box.querySelector('.mysn-choice-t').textContent = _t('{n} ťa pozýva na partiu snookeru{f}.', { n: config.einv.from, f: config.einv.frames > 1 ? _t(' na {n} framy', { n: config.einv.frames }) : '' });
 		const inp = box.querySelector('input');
 		inp.addEventListener('keydown', (e) => e.stopPropagation());
 		box.addEventListener('click', async (e) => {
@@ -5109,7 +5109,7 @@ export function start(root, config = {}) {
 				const r = await fetch(config.restUrl + 'einvite/guest', { method: 'POST', credentials: 'same-origin', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ token: config.einv.token, name: inp.value }) });
 				const j = await r.json().catch(() => null);
 				if (!r.ok) {
-					throw new Error((j && j.message) || 'Hosťa sa nepodarilo vytvoriť.');
+					throw new Error((j && j.message) || _t('Hosťa sa nepodarilo vytvoriť.'));
 				}
 				location.reload(); // prihlásený hosť: hra sa otvorí a pošle výzvu
 			} catch (err) {
@@ -5129,7 +5129,7 @@ export function start(root, config = {}) {
 				}
 				ui.showInvites(game.match ? [] : d.invites);
 			},
-			invite: (inv) => !ui.menuOpen() && ui.toast(`Boli ste vyzvaný! ${inv.from.name} ťa vyzýva ${inv.training ? 'na spoločný tréning' : inv.league ? 'na ligovú partiu' : 'na partiu'}.${controls.captured ? ' Esc alebo Ctrl uvoľní myš.' : ''}`, inv),
+			invite: (inv) => !ui.menuOpen() && ui.toast(_t('Boli ste vyzvaný! {n} ťa vyzýva {w}.', { n: inv.from.name, w: inv.training ? _t('na spoločný tréning') : inv.league ? _t('na ligovú partiu') : _t('na partiu') }) + (controls.captured ? _t(' Esc alebo Ctrl uvoľní myš.') : ''), inv),
 			toast: (t) => ui.toast(t),
 			// tágá súpera na jeho stojane na štadióne
 			chalk: (d) => {
@@ -5181,12 +5181,12 @@ export function start(root, config = {}) {
 						actions.watchStop(true);
 						startFiesta(f);
 						ui.showMenu(true, true);
-						ui.menuNote(m.text || 'Zápas skončil.');
+						ui.menuNote(m.text || _t('Zápas skončil.'));
 						controls.uncapture();
 						return;
 					}
 					actions.watchStop();
-					ui.toast(m.text || 'Partia už nie je otvorená.');
+					ui.toast(m.text || _t('Partia už nie je otvorená.'));
 					return;
 				}
 				const moving = game.state === 'moving';
@@ -5281,19 +5281,19 @@ export function start(root, config = {}) {
 					ui.foundPopup(null);
 				} else if (st === 'gone') {
 					ui.foundPopup(null);
-					ui.toast(info ? 'Súper zápas nepotvrdil. Hľadám ďalej.' : 'Zápas nebol potvrdený, vyhľadávanie je vypnuté.');
+					ui.toast(info ? _t('Súper zápas nepotvrdil. Hľadám ďalej.') : _t('Zápas nebol potvrdený, vyhľadávanie je vypnuté.'));
 				} else if (st === 'off') {
 					ui.foundPopup(null);
 				} else if (st === 'error') {
 					ui.foundPopup(null);
-					ui.toast(info || 'Vyhľadávanie zápasu sa nepodarilo.');
+					ui.toast(info || _t('Vyhľadávanie zápasu sa nepodarilo.'));
 				}
 			},
 			started: (m) => {
 				flagsReset(); // reflektor zhasnutý, obrazovky zapnuté
 				stopFiesta();
 				if (!m.league && online.watchers().length) {
-					online.closeWatchers('Hráč začal partiu so súperom.'); // ligový zápas sa sledovať dá, ostatné nie
+					online.closeWatchers(_t('Hráč začal partiu so súperom.')); // ligový zápas sa sledovať dá, ostatné nie
 				}
 				exitView();
 				ui.openLeague(false);
@@ -5307,11 +5307,11 @@ export function start(root, config = {}) {
 				rig.setMode('cue'); // aj biela v ruke sa kladie z pohľadu za tágom
 				refreshMenu();
 				ui.showMenu(false);
-				ui.toast(`Partia s hráčom ${m.players[1 - m.me].name}. ${m.turn === m.me ? 'Si na rade.' : 'Na rade je súper.'}`);
+				ui.toast(_t('Partia s hráčom {name}', { name: m.players[1 - m.me].name }) + '. ' + (m.turn === m.me ? _t('Si na rade.') : _t('Na rade je súper.')));
 				if (snaps && !m.training) {
 					snaps.ensure('m' + m.id).then((ok) => {
 						if (!ok) {
-							ui.toast('Bez snímok obrazovky sa partia po 4. údere zruší (overenie férovej hry).');
+							ui.toast(_t('Bez snímok obrazovky sa partia po 4. údere zruší (overenie férovej hry).'));
 						}
 					});
 				}
@@ -5353,7 +5353,7 @@ export function start(root, config = {}) {
 					leagueData = (await online.league()) || leagueData;
 					room.setLeague(leagueData);
 					if (fiesta && user && fz && fz.winId === user.id && leagueData && leagueData.me) {
-						fiesta.lines = [fiesta.lines[0], `Výhry v sezóne: ${leagueData.me.wins} · ${leagueData.me.league}. liga, ${leagueData.me.rank}. miesto${leagueData.me.elo ? ` · ELO ${leagueData.me.elo}` : ''}`];
+						fiesta.lines = [fiesta.lines[0], _t('Výhry v sezóne: {w} · {l}. liga, {r}. miesto', { w: leagueData.me.wins, l: leagueData.me.league, r: leagueData.me.rank }) + (leagueData.me.elo ? ` · ELO ${leagueData.me.elo}` : '')];
 					}
 					updateStadiumScreen();
 				}
@@ -5428,7 +5428,7 @@ export function start(root, config = {}) {
 				/* bez úložiska */
 			}
 			if (config.einv && !config.einv.valid) {
-				ui.toast('Pozvánka na partiu už neplatí (platí 7 dní).');
+				ui.toast(_t('Pozvánka na partiu už neplatí (platí 7 dní).'));
 			}
 			if (/[?&]pozvanka=/.test(location.search)) {
 				history.replaceState(null, '', location.pathname);
@@ -5438,12 +5438,12 @@ export function start(root, config = {}) {
 					try {
 						const r = await online.net.call('einvite/accept', { token: tok });
 						if (r.status === 'sent') {
-							ui.toast(`Výzva odoslaná hráčovi ${r.from}. Keď ju prijme, partia sa začne.`);
+							ui.toast(_t('Výzva odoslaná hráčovi {n}. Keď ju prijme, partia sa začne.', { n: r.from }));
 						} else {
-							ui.toast(`${r.from} teraz nie je v hre. Poslali sme mu e-mail, že si prišiel – kým príde, môžeš trénovať. V zozname hráčov (výzvy) ho potom vyzveš.`);
+							ui.toast(_t('{n} teraz nie je v hre. Poslali sme mu e-mail, že si prišiel – kým príde, môžeš trénovať. V zozname hráčov (výzvy) ho potom vyzveš.', { n: r.from }));
 						}
 					} catch (e) {
-						ui.toast(e.message || 'Pozvánku sa nepodarilo prijať.');
+						ui.toast(e.message || _t('Pozvánku sa nepodarilo prijať.'));
 					}
 				}, 1500);
 			}
@@ -5461,16 +5461,16 @@ export function start(root, config = {}) {
 		chq.delete('challenge');
 		history.replaceState(null, '', location.pathname + (chq.toString() ? '?' + chq : '') + location.hash);
 		if (!online) {
-			ui.toast('Na výzvu na partiu sa najprv prihlás.');
+			ui.toast(_t('Na výzvu na partiu sa najprv prihlás.'));
 		} else {
 			setTimeout(async () => {
 				if (game.match) {
-					ui.toast('Práve hráš partiu, výzvu pošli po jej konci.');
+					ui.toast(_t('Práve hráš partiu, výzvu pošli po jej konci.'));
 					return;
 				}
 				await online.invite(chUid, false, false, 1);
 				if (online._waitFor) {
-					ui.toast('Výzva na partiu odoslaná, čakáš, kým ju súper prijme (platí minútu).');
+					ui.toast(_t('Výzva na partiu odoslaná, čakáš, kým ju súper prijme (platí minútu).'));
 				}
 			}, 2000);
 		}
@@ -5486,7 +5486,7 @@ export function start(root, config = {}) {
 				ui.showMenu(false);
 				actions.watchStart(r);
 			} else {
-				ui.toast('Táto partia sa už nehrá.');
+				ui.toast(_t('Táto partia sa už nehrá.'));
 			}
 		}, 1500);
 	}
@@ -5555,7 +5555,7 @@ export function start(root, config = {}) {
 				winAudio = null;
 			}
 		};
-		ui.toast(`Hrá: ${tr.title}`);
+		ui.toast(_t('Hrá: {t}', { t: tr.title }));
 	};
 	/** Bod v scéne → miesto v okne hry (px), null keď je za kamerou. */
 	const toScreen = (x, y, z) => {
@@ -5620,7 +5620,7 @@ export function start(root, config = {}) {
 		if (shotTrack.foul) {
 			const c = toScreen(0, R, 0);
 			if (c) {
-				ui.scorePop(`Faul · súper +${shotTrack.foul}`, c.x, c.y - 40, '#ff6b6b', true);
+				ui.scorePop(_t('Faul · súper +{p}', { p: shotTrack.foul }), c.x, c.y - 40, '#ff6b6b', true);
 			}
 			return;
 		}
@@ -6434,7 +6434,7 @@ export function start(root, config = {}) {
 						const t0 = performance.now();
 						sound.ensure(fs).then((ok) => ok && setTimeout(() => sound.fx(fs, { pos: fp }), Math.max(0, 380 - (performance.now() - t0))));
 					}
-					ui.toast(game.balls[e.a] && game.balls[e.a].kind === 'white' ? 'Biela vyletela zo stola!' : 'Guľa vyletela zo stola!');
+					ui.toast(game.balls[e.a] && game.balls[e.a].kind === 'white' ? _t('Biela vyletela zo stola!') : _t('Guľa vyletela zo stola!'));
 				} else if (e.type === 'pot') {
 					const pk = POCKETS[e.pocket];
 					sound.pot({ pos: pk ? { x: pk.x, y: R, z: pk.z } : null, corner: pk ? !!pk.corner : true, speed: e.speed });
@@ -6558,7 +6558,7 @@ export function start(root, config = {}) {
 		spiderNow = spiderOn && aiming && game.cue.on ? restSpot() : null;
 		if (spiderOn && aiming && !spiderNow && performance.now() - spiderWarnT > 4000) {
 			spiderWarnT = performance.now();
-			ui.toast(RESTS[restKind].name + ' sa v tomto smere nedá položiť (mantinel alebo guľa tesne za bielou).');
+			ui.toast(RESTS[restKind].name + _t(' sa v tomto smere nedá položiť (mantinel alebo guľa tesne za bielou).'));
 		}
 		spiderMesh.visible = !!spiderNow;
 		spiderHang.visible = !spiderOn;
@@ -6755,7 +6755,7 @@ export function start(root, config = {}) {
 			chalk = CHALK_SHOTS; // nakriedované v kresle: platí na ďalšie údery
 			ui.setChalk(chalk);
 			updateScore();
-			ui.toast('Tágo je nakriedované.');
+			ui.toast(_t('Tágo je nakriedované.'));
 		}
 		if (replay) {
 			replay.tick(dt);

@@ -3,6 +3,7 @@
  * spadnutá biela sa kladie do D, úder sa dá vrátiť. Neobsahuje nič z kreslenia, dá sa testovať v Node.
  */
 import { createRack, snapshot, restore, strike, Physics, COLOURS, SPOTS, BAULK_X, inD, freeSpot, R, D_R } from './physics.js';
+import { _t } from './i18n.js';
 
 export class Training {
 	constructor() {
@@ -41,7 +42,7 @@ export class Training {
 		this.history = [];
 		this.stats = { shots: 0, potted: 0, points: 0, best: this.stats.best, run: 0 };
 		this.dir = 0;
-		this.message = 'Nové rozostavenie: polož bielu do D.';
+		this.message = _t('Nové rozostavenie: polož bielu do D.');
 		this.startPlace(); // biela v ruke v D ako pri rozbíjaní (emituje change)
 	}
 
@@ -118,16 +119,16 @@ export class Training {
 			}
 		}
 		if (this.balls.every((b) => b.kind === 'white' || !b.on)) {
-			this.message = 'Stôl je čistý. Výborne! Stlač „Nové rozostavenie“.';
+			this.message = _t('Stôl je čistý. Výborne! Stlač „Nové rozostavenie“.');
 		} else if (cuePotted) {
-			this.message = 'Biela spadla. Polož ju do D.';
+			this.message = _t('Biela spadla. Polož ju do D.');
 		} else if (n) {
 			this.message = pots
 				.filter((b) => b.kind !== 'white')
-				.map((b) => COLOURS[b.kind].name)
-				.join(', ') + (n > 1 ? ' v jamkách.' : ' v jamke.');
+				.map((b) => _t(COLOURS[b.kind].name))
+				.join(', ') + (n > 1 ? _t(' v jamkách.') : _t(' v jamke.'));
 		} else if (!this.physics.firstContact) {
-			this.message = 'Biela netrafila žiadnu guľu.';
+			this.message = _t('Biela netrafila žiadnu guľu.');
 		}
 		if (cuePotted) {
 			this.startPlace();
@@ -240,7 +241,7 @@ export class Training {
 		this.stats = h.stats;
 		this.dir = h.dir;
 		this.state = 'aim';
-		this.message = 'Úder vrátený.';
+		this.message = _t('Úder vrátený.');
 		this.emit('change');
 		return true;
 	}

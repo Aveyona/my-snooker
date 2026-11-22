@@ -8,6 +8,7 @@ import { Rtc, setIce, rtcSelfTest } from './rtc.js';
 import { snapshot } from './physics.js';
 import { fpAnswer } from './fp.js';
 import { ROT } from './rot.js';
+import { _t } from './i18n.js';
 
 let zxAns = ''; // odpoveď na výzvu servera pre najbližšiu požiadavku
 
@@ -45,7 +46,7 @@ export class Net {
 			});
 		} catch (e) {
 			this.down = true;
-			const err = new Error('Spojenie so serverom sa prerušilo.');
+			const err = new Error(_t('Spojenie so serverom sa prerušilo.'));
 			err.net = true;
 			throw err;
 		}
@@ -213,7 +214,7 @@ export class Online {
 			}
 			if (d.outgoing && d.outgoing.status === 'declined' && this._waitFor === d.outgoing.id) {
 				this._waitFor = 0;
-				this.hooks.toast(`${d.outgoing.to.name}: pozvánka odmietnutá.`);
+				this.hooks.toast(_t('{n}: pozvánka odmietnutá.', { n: d.outgoing.to.name }));
 			}
 			if (d.match && !this.inMatch) {
 				// partia začala (súper prijal pozvánku) alebo pokračovanie po obnovení stránky
@@ -226,7 +227,7 @@ export class Online {
 	}
 
 	async invite(uid, league = false, training = false, frames = 1) {
-		this.seekStopFor('Vyhľadávanie ligového zápasu je zrušené, poslal si výzvu na partiu.');
+		this.seekStopFor(_t('Vyhľadávanie ligového zápasu je zrušené, poslal si výzvu na partiu.'));
 		try {
 			const r = await this.net.call('invite', { user: uid, league: league ? 1 : 0, training: training ? 1 : 0, frames: !league && !training ? frames : 1 });
 			this._waitFor = r.id;
@@ -247,7 +248,7 @@ export class Online {
 
 	async answer(id, accept) {
 		if (accept) {
-			this.seekStopFor('Vyhľadávanie ligového zápasu je zrušené, prijal si výzvu na partiu.');
+			this.seekStopFor(_t('Vyhľadávanie ligového zápasu je zrušené, prijal si výzvu na partiu.'));
 		}
 		try {
 			await this.net.call('answer', { id, accept: accept ? 1 : 0 });
@@ -284,7 +285,7 @@ export class Online {
 		}
 		const g = this.game;
 		const me = g.match && g.match.players ? g.match.players[g.match.me] : null;
-		this.stopMatch(mode === 'resign' ? 'Partia je vzdaná.' : 'Partia je prerušená. Pokračovať sa dá v ponuke Poslať výzvu.', mode === 'resign' ? `${me ? me.name : 'Hráč'} sa vzdáva partie.` : 'Zápas je prerušený.');
+		this.stopMatch(mode === 'resign' ? _t('Partia je vzdaná.') : _t('Partia je prerušená. Pokračovať sa dá v ponuke Poslať výzvu.'), mode === 'resign' ? _t('{n} sa vzdáva partie.', { n: me ? me.name : _t('Hráč') }) : _t('Zápas je prerušený.'));
 	}
 
 	/** Pripojí sa do partie a načíta jej stav. */
@@ -310,7 +311,7 @@ export class Online {
 		this.watchStop();
 		this.watching = { type, id, peers: [...(peers || [])], opened: 0, tries: {} };
 		if (!this.rtc.supported) {
-			setTimeout(() => this.hooks.watch && this.hooks.watch({ k: 'w-end', text: 'Prehliadač nepodporuje priame spojenie WebRTC, sledovanie nie je možné.' }), 0);
+			setTimeout(() => this.hooks.watch && this.hooks.watch({ k: 'w-end', text: _t('Prehliadač nepodporuje priame spojenie WebRTC, sledovanie nie je možné.') }), 0);
 			return;
 		}
 		for (const uid of this.watching.peers) {
@@ -401,7 +402,7 @@ export class Online {
 	closeWatchers(text, keepStaff) {
 		const who = (p) => !p.offerer && !(keepStaff && this.isStaff(p.uid));
 		for (const p of this.rtc.list('watch', who)) {
-			this.rtc.send(p, { k: 'w-end', text: text || 'Partia už nie je otvorená.' });
+			this.rtc.send(p, { k: 'w-end', text: text || _t('Partia už nie je otvorená.') });
 		}
 		setTimeout(() => this.rtc.closeTag('watch', who), 300);
 	}
@@ -517,7 +518,7 @@ export class Online {
 				net: [c.type, c.effectiveType, c.rtt ? c.rtt + ' ms' : ''].filter(Boolean).join(' '),
 				ua: br + (/Mobile|Android|iPhone/.test(ua) ? ' mobil' : ''),
 				hidden: 0,
-				log: `Kandidáti: ${r.cand}\nChyby: ${r.errs.join('; ') || 'žiadne'}\nTrvanie: ${r.ms} ms`,
+				log: `${_t('Kandidáti')}: ${r.cand}\n${_t('Chyby')}: ${r.errs.join('; ') || _t('žiadne')}\n${_t('Trvanie')}: ${r.ms} ms`,
 				cand: 'ja: ' + r.cand,
 				lr: r.lc.relay || 0,
 				rr: -1,
@@ -557,7 +558,7 @@ export class Online {
 			}
 			const left = w.peers.some((u) => u !== p.uid && this.rtc.get(u, 'watch'));
 			if (!left && this.hooks.watch) {
-				this.hooks.watch({ k: 'w-end', text: w.opened ? 'Spojenie s hráčom sa prerušilo.' : 'Priame spojenie (WebRTC) s hráčom sa nepodarilo nadviazať.' });
+				this.hooks.watch({ k: 'w-end', text: w.opened ? _t('Spojenie s hráčom sa prerušilo.') : _t('Priame spojenie (WebRTC) s hráčom sa nepodarilo nadviazať.') });
 			}
 		}
 	}
@@ -808,7 +809,7 @@ export class Online {
 		try {
 			const m = await this.net.call('match/' + id + '?t=' + Date.now(), null, 'GET');
 			if (m.status !== 'active') {
-				this.hooks.toast(m.status === 'paused' ? 'Partia je prerušená.' : 'Partia už skončila.');
+				this.hooks.toast(m.status === 'paused' ? _t('Partia je prerušená.') : _t('Partia už skončila.'));
 				return;
 			}
 			this.matchId = m.id;
@@ -847,7 +848,7 @@ export class Online {
 		const text = (text0 || '') + (this.stopMatchText || '');
 		this.stopMatchText = '';
 		if (this.watchers().length) {
-			this.closeWatchers(wtext || 'Zápas skončil.');
+			this.closeWatchers(wtext || _t('Zápas skončil.'));
 		}
 		clearTimeout(this._retryT);
 		const opp = this.opp;
@@ -911,7 +912,7 @@ export class Online {
 				this.applyInfo(r.match);
 			}
 		} catch (e) {
-			this.hooks.toast(e.message || 'Frame sa nepodarilo vzdať.');
+			this.hooks.toast(e.message || _t('Frame sa nepodarilo vzdať.'));
 		}
 		this._concBusy = false;
 	}
@@ -1076,7 +1077,7 @@ export class Online {
 			this.applyInfo(m);
 		} catch (e) {
 			if (e.status === 403 || e.status === 404) {
-				this.stopMatch('Partia sa nenašla.');
+				this.stopMatch(_t('Partia sa nenašla.'));
 			}
 			this.hooks.status();
 		} finally {
@@ -1097,7 +1098,7 @@ export class Online {
 		g.applyState(m.state, m.seq);
 		this.wsend(this.matchWState());
 		if (this.hooks.toast) {
-			this.hooks.toast('Rozhodca (server) prehral úder a výsledok opravil, stôl je podľa servera.');
+			this.hooks.toast(_t('Rozhodca (server) prehral úder a výsledok opravil, stôl je podľa servera.'));
 		}
 	}
 
@@ -1150,26 +1151,29 @@ export class Online {
 				this.lastFiesta = {
 					winner: m.players[wi].name,
 					result: `${m.players[0].name} ${m.scores[0]} : ${m.scores[1]} ${m.players[1].name}`,
-					lines: [m.result === 'disq' ? `${m.players[1 - wi].name} diskvalifikovaný za nešportové správanie` : m.result === 'resign' ? `${m.players[1 - wi].name} sa vzdal partie` : m.result === 'disconnect' ? `${m.players[1 - wi].name} stratil spojenie` : m.result === 'timeout' ? 'rozhodol čas' : `Najvyššia séria: ${Math.max(best[0] || 0, best[1] || 0)}`, `Liga: víťaz +${Math.max(0, m.delta || 0)} bodov${m.elo && m.elo[wi] ? ` · ELO ${m.elo[wi]} (+${Math.abs(m.edel[wi])})` : ''}`],
+					lines: [m.result === 'disq' ? _t('{n} diskvalifikovaný za nešportové správanie', { n: m.players[1 - wi].name }) : m.result === 'resign' ? _t('{n} sa vzdal partie', { n: m.players[1 - wi].name }) : m.result === 'disconnect' ? _t('{n} stratil spojenie', { n: m.players[1 - wi].name }) : m.result === 'timeout' ? _t('rozhodol čas') : _t('Najvyššia séria: {n}', { n: Math.max(best[0] || 0, best[1] || 0) }), _t('Liga: víťaz +{n} bodov', { n: Math.max(0, m.delta || 0) }) + (m.elo && m.elo[wi] ? ` · ELO ${m.elo[wi]} (+${Math.abs(m.edel[wi])})` : '')],
 					winId: m.winner,
 				};
 				this.wsend({ k: 'w-over', f: this.lastFiesta });
 			}
-			const wtext = wi < 0 ? 'Zápas skončil.' : m.result === 'disq' ? `${m.players[1 - wi].name} je diskvalifikovaný, víťaz ${m.players[wi].name}.` : m.result === 'disconnect' ? `${m.players[1 - wi].name} stratil spojenie, víťaz ${m.players[wi].name}.` : m.result === 'resign' ? `${m.players[1 - wi].name} sa vzdáva partie, víťaz ${m.players[wi].name}.` : `Zápas skončil, víťaz ${m.players[wi].name}, skóre ${m.scores[wi]} : ${m.scores[1 - wi]}.`;
-			this.stopMatch(m.result === 'disq' ? (won ? `${opp.name} je diskvalifikovaný za nešportové správanie. Víťazstvo je tvoje!` : 'Rozhodca ťa diskvalifikoval za opakované nešportové správanie. Zápas je prehratý.') : m.result === 'disconnect' ? (won ? `${opp.name} stratil spojenie a zápas prehral. Víťazstvo je tvoje!` : 'Stratil si spojenie so zápasom a zápas je prehratý.') : m.result === 'resign' ? (won ? `${opp.name} sa vzdáva partie. Víťazstvo je tvoje!` : 'Partia je vzdaná.') : won ? `Víťazstvo je tvoje! Skóre ${m.scores[m.me]} : ${m.scores[1 - m.me]}.` : `Víťaz partie: ${opp.name}, skóre ${m.scores[1 - m.me]} : ${m.scores[m.me]}.`, wtext);
+			const L = wi < 0 ? null : m.players[1 - wi].name;
+			const W = wi < 0 ? null : m.players[wi].name;
+			const wtext = wi < 0 ? _t('Zápas skončil.') : m.result === 'disq' ? _t('{l} je diskvalifikovaný, víťaz {w}.', { l: L, w: W }) : m.result === 'disconnect' ? _t('{l} stratil spojenie, víťaz {w}.', { l: L, w: W }) : m.result === 'resign' ? _t('{l} sa vzdáva partie, víťaz {w}.', { l: L, w: W }) : _t('Zápas skončil, víťaz {w}, skóre {a} : {b}.', { w: W, a: m.scores[wi], b: m.scores[1 - wi] });
+			const o = { n: opp.name, a: m.scores[m.me], b: m.scores[1 - m.me] };
+			this.stopMatch(m.result === 'disq' ? (won ? _t('{n} je diskvalifikovaný za nešportové správanie. Víťazstvo je tvoje!', o) : _t('Rozhodca ťa diskvalifikoval za opakované nešportové správanie. Zápas je prehratý.')) : m.result === 'disconnect' ? (won ? _t('{n} stratil spojenie a zápas prehral. Víťazstvo je tvoje!', o) : _t('Stratil si spojenie so zápasom a zápas je prehratý.')) : m.result === 'resign' ? (won ? _t('{n} sa vzdáva partie. Víťazstvo je tvoje!', o) : _t('Partia je vzdaná.')) : won ? _t('Víťazstvo je tvoje! Skóre {a} : {b}.', o) : _t('Víťaz partie: {n}, skóre {b} : {a}.', o), wtext);
 			return;
 		}
 		if (m.status === 'annulled') {
 			if (m.result === 'cheat' || m.result === 'admin') {
 				// 0.34.0: zrušené pre podozrenie z podvádzania (alebo správcom)
-				this.stopMatch(m.result === 'cheat' ? 'Zápas je zrušený: kontrola férovej hry zistila údery, ktoré nehrá človek. Body sa nepočítajú.' : 'Zápas zrušil správca. Body sa nepočítajú.', 'Zápas je zrušený.');
+				this.stopMatch(m.result === 'cheat' ? _t('Zápas je zrušený: kontrola férovej hry zistila údery, ktoré nehrá človek. Body sa nepočítajú.') : _t('Zápas zrušil správca. Body sa nepočítajú.'), _t('Zápas je zrušený.'));
 				return;
 			}
-			this.stopMatch('Ligový zápas je zrušený: obom hráčom vypadlo spojenie. Body sa nepočítajú.', 'Zápas je zrušený, obom hráčom vypadlo spojenie.');
+			this.stopMatch(_t('Ligový zápas je zrušený: obom hráčom vypadlo spojenie. Body sa nepočítajú.'), _t('Zápas je zrušený, obom hráčom vypadlo spojenie.'));
 			return;
 		}
 		if (m.status === 'paused') {
-			this.stopMatch(`Partia je prerušená (${this.oppOnline ? 'súper ju prerušil' : 'súper dlho neodpovedal'}). Dokončiť sa dá v ponuke Poslať výzvu, Rozohrané partie.`, 'Zápas je prerušený.');
+			this.stopMatch(_t('Partia je prerušená ({why}). Dokončiť sa dá v ponuke Poslať výzvu, Rozohrané partie.', { why: this.oppOnline ? _t('súper ju prerušil') : _t('súper dlho neodpovedal') }), _t('Zápas je prerušený.'));
 			return;
 		}
 		if (m.seq > g.match.seq) {
@@ -1263,19 +1267,19 @@ export class Online {
 				await new Promise((res) => setTimeout(res, 3000));
 			}
 		}
-		return { error: 'Skóre sa nepodarilo uložiť, spojenie so serverom nefunguje.' };
+		return { error: _t('Skóre sa nepodarilo uložiť, spojenie so serverom nefunguje.') };
 	}
 
 	/** Text o stave spojenia a súpera pre lištu (prázdny, keď je všetko v poriadku). */
 	statusText() {
 		if (this.inMatch && this.info && this.info.research) {
-			return '⚠ Admin v tomto zápase testuje pomocníka (AI) na výskumné účely. Zápas sa nepočíta do ligy ani ELO.';
+			return _t('⚠ Admin v tomto zápase testuje pomocníka (AI) na výskumné účely. Zápas sa nepočíta do ligy ani ELO.');
 		}
 		if (this.net.down) {
-			return 'Spojenie so serverom sa prerušilo, skúšam znova. Partia je uložená.';
+			return _t('Spojenie so serverom sa prerušilo, skúšam znova. Partia je uložená.');
 		}
 		if (this.inMatch && !this.rtc.supported) {
-			return 'Prehliadač nepodporuje priame spojenie WebRTC, partia so súperom nemôže pokračovať.';
+			return _t('Prehliadač nepodporuje priame spojenie WebRTC, partia so súperom nemôže pokračovať.');
 		}
 		if (this.inMatch && this.opp && (!this.oppOnline || !this.rtc.isOpen(this.opp, 'match'))) {
 			// 0.30.1: priame spojenie vypadlo, ale server súpera vidí: partia ide ďalej cez server (záložné spojenie)
@@ -1283,19 +1287,19 @@ export class Online {
 			const srvOpp = inf && inf.players && inf.players[1 - inf.me];
 			if (srvOpp && srvOpp.online && !this.rtc.isOpen(this.opp, 'match')) {
 				return this.rtcWasOpen !== this.matchId
-					? 'Nadväzujem priame spojenie so súperom. Partia zatiaľ beží cez server a dá sa hrať, len nevidíte navzájom mierenie.'
-					: 'Priame spojenie so súperom vypadlo. Partia pokračuje na záložnom spojení cez server a dá sa normálne dohrať, len nevidíte navzájom mierenie. Priame spojenie skúšam obnoviť.';
+					? _t('Nadväzujem priame spojenie so súperom. Partia zatiaľ beží cez server a dá sa hrať, len nevidíte navzájom mierenie.')
+					: _t('Priame spojenie so súperom vypadlo. Partia pokračuje na záložnom spojení cez server a dá sa normálne dohrať, len nevidíte navzájom mierenie. Priame spojenie skúšam obnoviť.');
 			}
 			if (this.oppOnline) {
 				return ''; // server ešte nepotvrdil súpera, priame spojenie sa práve nadväzuje
 			}
 			if (!srvOpp) {
-				return 'Nadväzujem spojenie so súperom.';
+				return _t('Nadväzujem spojenie so súperom.');
 			}
 			const lg = this.game.match && this.game.match.league;
 			return lg
-				? 'Súper stratil spojenie so serverom. Partia na neho čaká; ak sa do 2 minút nevráti, zápas prehrá.'
-				: 'Súper stratil spojenie so serverom. Ak sa nevráti, po 10 minútach sa partia preruší a dá sa v nej pokračovať neskôr.';
+				? _t('Súper stratil spojenie so serverom. Partia na neho čaká; ak sa do 2 minút nevráti, zápas prehrá.')
+				: _t('Súper stratil spojenie so serverom. Ak sa nevráti, po 10 minútach sa partia preruší a dá sa v nej pokračovať neskôr.');
 		}
 		return '';
 	}

@@ -54,6 +54,16 @@ export function _t(s, p) {
 	return fill((DICT && DICT[s]) || s, p);
 }
 
+/** Počet bodov s tvarom slova: 1 bod, 2 body, 5 bodov / 1 point, 2 points. */
+export function _pts(n) {
+	n = Number(n) || 0;
+	if (LANG === 'en') {
+		return `${n} ${Math.abs(n) === 1 ? 'point' : 'points'}`;
+	}
+	const a = Math.abs(n);
+	return `${n} ${a === 1 ? 'bod' : a > 1 && a < 5 ? 'body' : 'bodov'}`;
+}
+
 /** Zapamätá jazyk (prehliadač + cookie pre server); uloženie k účtu robí main.js cez REST. */
 export function rememberLang(id) {
 	try {

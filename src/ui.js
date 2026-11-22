@@ -22,7 +22,7 @@ const h = (tag, cls, html) => {
 import { cueById } from './cues.js';
 import { LoginBox } from './login.js';
 import { countryByCode } from './countries.js';
-import { _t, LANG, LANGS } from './i18n.js';
+import { _t, _pts, LANG, LANGS } from './i18n.js';
 
 /** Desatinné číslo podľa jazyka (sk čiarka, en bodka). */
 const dec = (v) => (LANG === 'en' ? String(v) : String(v).replace('.', ','));
@@ -31,8 +31,8 @@ const cueStateId = (c) => c.id;
 
 // mobil: texty bez klávesových skratiek a bez myši – myš sa nahradí prstom, zátvorky a vety s klávesmi alebo
 // s tým, čo ide len myšou (zachytenie, kurzor, koliesko, tlačidlá myši), zmiznú
-const KEY_RE = /\bF(?:1[0-2]|[1-9])\b|\bEsc\b|\bEnter\b|\bCtrl\b|\bShift\b|\bTab\b|[Mm]edzerník|[Kk]láves|(?:^|[^\p{L}])[Šš]ípk|W A S D/u;
-const MOUSE_RE = /[Mm]yš|kurzor|koliesk|ľavé tlačidl|pravé tlačidl|ľavým tlačidl|pravým tlačidl|zachyt/;
+const KEY_RE = /\bF(?:1[0-2]|[1-9])\b|\bEsc\b|\bEnter\b|\bCtrl\b|\bShift\b|\bTab\b|[Mm]edzerník|[Kk]láves|(?:^|[^\p{L}])[Šš]ípk|W A S D|\b[Ss]pace\b|\b[Kk]eys?\b|\b[Aa]rrow keys\b/u;
+const MOUSE_RE = /[Mm]yš|kurzor|koliesk|ľavé tlačidl|pravé tlačidl|ľavým tlačidl|pravým tlačidl|zachyt|\b[Mm]ouse\b|\bcursor\b|\bwheel\b|\b(?:left|right) (?:mouse )?button\b|\bcaptur/;
 const TOUCH_WORDS = [
 	[/keď myš nejde do strany \(pravé tlačidlo, myš dole\)/g, 'keď prst nejde do strany (oko, prst dole)'],
 	[/a polož ju ľavým tlačidlom myši/g, 'a polož ju tlačidlom Hotovo'],
@@ -51,12 +51,25 @@ const TOUCH_WORDS = [
 	[/\bklik\b/g, 'ťuknutie'],
 	[/\bKlik\b/g, 'Ťuknutie'],
 ];
+// 0.43.3: to isté po anglicky
+const TOUCH_WORDS_EN = [
+	[/with the mouse/g, 'with your finger'],
+	[/move the mouse to look around/g, 'drag your finger to look around'],
+	[/look around with the mouse/g, 'look around with your finger'],
+	[/zoom with the wheel/g, 'zoom with two fingers'],
+	[/Turn the wheel to zoom in or out/g, 'Zoom in or out with two fingers'],
+	[/turn the wheel to zoom in or out/g, 'zoom in or out with two fingers'],
+	[/\bclicking\b/g, 'tapping'],
+	[/\bClicking\b/g, 'Tapping'],
+	[/\bclick\b/g, 'tap'],
+	[/\bClick\b/g, 'Tap'],
+];
 function noKeys(t) {
-	if (!t || (!KEY_RE.test(t) && !MOUSE_RE.test(t) && !/\([A-Z\d]\)|klik|Klik/.test(t))) {
+	if (!t || (!KEY_RE.test(t) && !MOUSE_RE.test(t) && !/\([A-Z\d]\)|klik|Klik|click|Click/.test(t))) {
 		return t;
 	}
 	let s = t;
-	for (const [re, to] of TOUCH_WORDS) {
+	for (const [re, to] of LANG === 'en' ? TOUCH_WORDS_EN : TOUCH_WORDS) {
 		s = s.replace(re, to);
 	}
 	const bad = (x) => KEY_RE.test(x) || MOUSE_RE.test(x);
@@ -101,7 +114,7 @@ export class UI {
 
 		// Horná lišta
 		const bar = h('div', 'mysn-bar');
-		bar.appendChild(h('div', 'mysn-brand', `<a href="${opts.homeUrl || '/'}" class="mysn-home" title="Späť na web">My Snooker</a><span>Tréning</span>`));
+		bar.appendChild(h('div', 'mysn-brand', `<a href="${opts.homeUrl || '/'}" class="mysn-home" title="${_t('Späť na web')}">My Snooker</a><span>${_t('Tréning')}</span>`));
 		this.modeLabel = bar.querySelector('.mysn-brand span');
 		this.stats = h('div', 'mysn-stats');
 		this.stats.addEventListener('click', (e) => {
@@ -158,7 +171,7 @@ export class UI {
 		this.bindPower();
 
 		// Falše
-		this.spinBox = h('div', 'mysn-spin', '<div class="mysn-spin-wrap"><div class="mysn-spin-ball"><div class="mysn-spin-dot"></div></div><svg class="mysn-spin-cue" viewBox="0 0 40 120"><defs><linearGradient id="mysnCueG"><stop offset="0" stop-color="#0005"/><stop offset=".45" stop-color="#fff2"/><stop offset="1" stop-color="#0006"/></linearGradient></defs><text class="mysn-sc-pct" x="20" y="11" text-anchor="middle"></text><g class="mysn-sc-body"><rect x="10" y="62" width="20" height="58" fill="#c9a26b"/><rect x="10" y="46" width="20" height="16" fill="#f3ead2"/><path class="mysn-sc-tip"/><path class="mysn-sc-chalk"/><g class="mysn-sc-ext"><rect x="10" y="104" width="20" height="16" fill="#3b3f46"/><rect x="9" y="102" width="22" height="3" fill="#c9ccd2"/></g><rect x="10" y="46" width="20" height="74" fill="url(#mysnCueG)" opacity=".7"/></g><g class="mysn-sc-warn"><path d="M44 22 L57 46 H31 Z" fill="#dc2626" stroke="#fff" stroke-width="2" stroke-linejoin="round"/><text x="44" y="43" text-anchor="middle">!</text></g><text class="mysn-sc-elev" x="36" y="30"></text></svg></div><div class="mysn-spin-label">Miesto úderu</div><div class="mysn-spin-stat"><span class="mysn-st-tip"></span><span class="mysn-st-chalk"></span><span class="mysn-st-ext"></span></div>');
+		this.spinBox = h('div', 'mysn-spin', _t('<div class="mysn-spin-wrap"><div class="mysn-spin-ball"><div class="mysn-spin-dot"></div></div><svg class="mysn-spin-cue" viewBox="0 0 40 120"><defs><linearGradient id="mysnCueG"><stop offset="0" stop-color="#0005"/><stop offset=".45" stop-color="#fff2"/><stop offset="1" stop-color="#0006"/></linearGradient></defs><text class="mysn-sc-pct" x="20" y="11" text-anchor="middle"></text><g class="mysn-sc-body"><rect x="10" y="62" width="20" height="58" fill="#c9a26b"/><rect x="10" y="46" width="20" height="16" fill="#f3ead2"/><path class="mysn-sc-tip"/><path class="mysn-sc-chalk"/><g class="mysn-sc-ext"><rect x="10" y="104" width="20" height="16" fill="#3b3f46"/><rect x="9" y="102" width="22" height="3" fill="#c9ccd2"/></g><rect x="10" y="46" width="20" height="74" fill="url(#mysnCueG)" opacity=".7"/></g><g class="mysn-sc-warn"><path d="M44 22 L57 46 H31 Z" fill="#dc2626" stroke="#fff" stroke-width="2" stroke-linejoin="round"/><text x="44" y="43" text-anchor="middle">!</text></g><text class="mysn-sc-elev" x="36" y="30"></text></svg></div><div class="mysn-spin-label">Miesto úderu</div><div class="mysn-spin-stat"><span class="mysn-st-tip"></span><span class="mysn-st-chalk"></span><span class="mysn-st-ext"></span></div>'));
 		root.appendChild(this.spinBox);
 		this.spinBall = this.spinBox.querySelector('.mysn-spin-ball');
 		this.spinDot = this.spinBox.querySelector('.mysn-spin-dot');
@@ -177,14 +190,14 @@ export class UI {
 		// mobil: biely priehľadný kruh s okom, keď je zameraná guľa – drž a ťahaj = pohľad ako pravým tlačidlom myši
 		this.eyeBtn = h('button', 'mysn-eye', '<svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 12s3.6-6.5 10-6.5S22 12 22 12s-3.6 6.5-10 6.5S2 12 2 12z"/><circle cx="12" cy="12" r="3.2"/></svg>');
 		this.eyeBtn.type = 'button';
-		this.eyeBtn.title = 'Pohľad na zameranú guľu: drž a ťahaj prstom (hore priblíži, do strán krúži, dole k stolu)';
-		this.eyeBtn.setAttribute('aria-label', 'Pohľad na zameranú guľu');
+		this.eyeBtn.title = _t('Pohľad na zameranú guľu: drž a ťahaj prstom (hore priblíži, do strán krúži, dole k stolu)');
+		this.eyeBtn.setAttribute('aria-label', _t('Pohľad na zameranú guľu'));
 		root.appendChild(this.eyeBtn);
 		// mobil: modrý štvorček (krieda) nad Miestom úderu – ťuknutie otvorí ponuku Krieda a pomôcky (ako F3)
 		this.chalkBtn = h('button', 'mysn-chalkbtn', '<i></i>');
 		this.chalkBtn.type = 'button';
-		this.chalkBtn.title = 'Príslušenstvo (F3)';
-		this.chalkBtn.setAttribute('aria-label', 'Príslušenstvo');
+		this.chalkBtn.title = _t('Príslušenstvo (F3)');
+		this.chalkBtn.setAttribute('aria-label', _t('Príslušenstvo'));
 		for (const t of ['pointerdown', 'pointerup', 'mousedown', 'touchstart', 'touchend', 'wheel']) {
 			this.chalkBtn.addEventListener(t, (e) => e.stopPropagation());
 		}
@@ -196,8 +209,8 @@ export class UI {
 		// mobil: zameriavač = jemné mierenie (ako Shift), len pri tágu, ktoré ho má; zapnuté zožltne
 		this.fineBtn = h('button', 'mysn-finebtn', '<svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="7"/><path d="M12 2v4M12 18v4M2 12h4M18 12h4"/><circle cx="12" cy="12" r="1.3" fill="currentColor"/></svg>');
 		this.fineBtn.type = 'button';
-		this.fineBtn.title = 'Jemné mierenie (ako Shift)';
-		this.fineBtn.setAttribute('aria-label', 'Jemné mierenie');
+		this.fineBtn.title = _t('Jemné mierenie (ako Shift)');
+		this.fineBtn.setAttribute('aria-label', _t('Jemné mierenie'));
 		for (const t of ['pointerdown', 'pointerup', 'mousedown', 'touchstart', 'touchend', 'wheel']) {
 			this.fineBtn.addEventListener(t, (e) => e.stopPropagation());
 		}
@@ -209,8 +222,8 @@ export class UI {
 		// mobil: panák = voľný pohľad (ako medzerník na desktope), nad kriedou
 		this.freeBtn = h('button', 'mysn-freebtn', '<svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="4.5" r="2"/><path d="M12 7.5v6M12 13.5l-3 7M12 13.5l3 7M7 10.5h10"/></svg>');
 		this.freeBtn.type = 'button';
-		this.freeBtn.title = 'Voľný pohľad (ako medzerník)';
-		this.freeBtn.setAttribute('aria-label', 'Voľný pohľad');
+		this.freeBtn.title = _t('Voľný pohľad (ako medzerník)');
+		this.freeBtn.setAttribute('aria-label', _t('Voľný pohľad'));
 		for (const t of ['pointerdown', 'pointerup', 'mousedown', 'touchstart', 'touchend', 'wheel']) {
 			this.freeBtn.addEventListener(t, (e) => e.stopPropagation());
 		}
@@ -222,9 +235,9 @@ export class UI {
 		// mobil: hráčske zvuky (0.27.0): jedno tlačidlo, ťuknutie otvorí vedľa neho napitie, grgnutie a prdnutie
 		this.sndBtn = h('button', 'mysn-freebtn mysn-sndbtn', '<svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 3h10l-1.4 16.2a2 2 0 0 1-2 1.8h-3.2a2 2 0 0 1-2-1.8z"/><path d="M7.6 9.5h8.8"/></svg>');
 		this.sndBtn.type = 'button';
-		this.sndBtn.title = 'Napiť sa, grgnúť, prdnúť';
-		this.sndBtn.setAttribute('aria-label', 'Hráčske zvuky');
-		this.sndPop = h('div', 'mysn-sndpop mysn-hidden', '<button type="button" data-k="n" title="Napiť sa vody (N): ďalší úder silnejšia falša"><span>💧</span><small>Voda</small></button><button type="button" data-k="g" title="Grgnúť (G)"><span>🫧</span><small>Grgnúť</small></button><button type="button" data-k="h" title="Prdnúť (H)"><span>💨</span><small>Prdnúť</small></button><button type="button" data-k="t" title="Telefón: Môj účet (T)"><span>📱</span><small>Telefón</small></button>');
+		this.sndBtn.title = _t('Napiť sa, grgnúť, prdnúť');
+		this.sndBtn.setAttribute('aria-label', _t('Hráčske zvuky'));
+		this.sndPop = h('div', 'mysn-sndpop mysn-hidden', _t('<button type="button" data-k="n" title="Napiť sa vody (N): ďalší úder silnejšia falša"><span>💧</span><small>Voda</small></button><button type="button" data-k="g" title="Grgnúť (G)"><span>🫧</span><small>Grgnúť</small></button><button type="button" data-k="h" title="Prdnúť (H)"><span>💨</span><small>Prdnúť</small></button><button type="button" data-k="t" title="Telefón: Môj účet (T)"><span>📱</span><small>Telefón</small></button>'));
 		for (const el of [this.sndBtn, this.sndPop]) {
 			for (const t of ['pointerdown', 'pointerup', 'mousedown', 'touchstart', 'touchend', 'wheel']) {
 				el.addEventListener(t, (e) => e.stopPropagation());
@@ -246,8 +259,8 @@ export class UI {
 		// mobil: pohľad zhora na stôl (ako Tab na PC), nad panákom
 		this.topBtn = h('button', 'mysn-freebtn mysn-topbtn', '<svg viewBox="0 0 56 56" width="30" height="30" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 35l16-8 16 8-16 8z"/><path d="M28 10v12M23 17l5 5 5-5"/></svg>');
 		this.topBtn.type = 'button';
-		this.topBtn.title = 'Pohľad zhora (ako Tab)';
-		this.topBtn.setAttribute('aria-label', 'Pohľad zhora');
+		this.topBtn.title = _t('Pohľad zhora (ako Tab)');
+		this.topBtn.setAttribute('aria-label', _t('Pohľad zhora'));
 		for (const t of ['pointerdown', 'pointerup', 'mousedown', 'touchstart', 'touchend', 'wheel']) {
 			this.topBtn.addEventListener(t, (e) => e.stopPropagation());
 		}
@@ -289,11 +302,11 @@ export class UI {
 		// prepínanie kamier je zrušené: hrá sa vždy za tágom (pri kladení bielej sa kamera sama dočasne prepne zhora)
 		this.camBtns = {};
 		const acts = h('div', 'mysn-group');
-		this.btnUndo = this.button('Späť', 'undo', 'Vrátiť posledný úder (Z)');
-		this.btnHand = this.button('Biela do ruky', 'hand', 'Položiť bielu kamkoľvek v D (B)');
-		this.btnSkip = this.button('Preskočiť', 'skip', 'Dokončiť úder hneď');
-		this.btnReset = this.button('Nové rozostavenie', 'reset', 'Nové rozostavenie (R)');
-		this.btnPlace = this.button('Hotovo', 'place', 'Potvrdiť polohu bielej (Enter)');
+		this.btnUndo = this.button(_t('Späť'), 'undo', _t('Vrátiť posledný úder (Z)'));
+		this.btnHand = this.button(_t('Biela do ruky'), 'hand', _t('Položiť bielu kamkoľvek v D (B)'));
+		this.btnSkip = this.button(_t('Preskočiť'), 'skip', _t('Dokončiť úder hneď'));
+		this.btnReset = this.button(_t('Nové rozostavenie'), 'reset', _t('Nové rozostavenie (R)'));
+		this.btnPlace = this.button(_t('Hotovo'), 'place', _t('Potvrdiť polohu bielej (Enter)'));
 		this.btnPlace.classList.add('mysn-primary');
 		acts.append(this.btnPlace, this.btnUndo, this.btnHand, this.btnSkip, this.btnReset);
 		tools.appendChild(acts);
@@ -322,21 +335,21 @@ export class UI {
 			return box;
 		};
 		if (touchUI) {
-			slider('Otáčanie prstom', 'touchAimSens', 'touchAimSens'); // mierenie ťahaním v častiach 2 a 3
-			slider('Ťahanie tága', 'touchStrokeSens', 'touchStrokeSens'); // úder v časti 4
+			slider(_t('Otáčanie prstom'), 'touchAimSens', 'touchAimSens'); // mierenie ťahaním v častiach 2 a 3
+			slider(_t('Ťahanie tága'), 'touchStrokeSens', 'touchStrokeSens'); // úder v časti 4
 			slider('Oko', 'touchPanSens', 'touchPanSens'); // pohľad na zameranú guľu
 		} else {
-			slider('Otáčanie myšou', 'mouseSens', 'mouseSens'); // otáčanie kamery a mierenie myšou
-			slider('Ťahanie tága', 'strokeSens', 'strokeSens'); // ťahanie tága myšou hore a dole
-			slider('Pravé tlačidlo', 'panSens', 'panSens'); // pohľad pravým tlačidlom vo všetkých smeroch
+			slider(_t('Otáčanie myšou'), 'mouseSens', 'mouseSens'); // otáčanie kamery a mierenie myšou
+			slider(_t('Ťahanie tága'), 'strokeSens', 'strokeSens'); // ťahanie tága myšou hore a dole
+			slider(_t('Pravé tlačidlo'), 'panSens', 'panSens'); // pohľad pravým tlačidlom vo všetkých smeroch
 		}
 		root.appendChild(tools);
 		// na mobile: šípka dole v strede zobrazí alebo schová spodný panel (predvolene schovaný; Hotovo pri kladení
 		// bielej ostáva vždy viditeľné); na desktope sa panel ukazuje pri držanom Ctrl a šípka tam nie je
 		this.toolsToggle = h('button', 'mysn-tools-toggle', '▲');
 		this.toolsToggle.type = 'button';
-		this.toolsToggle.title = 'Zobraziť spodný panel';
-		this.toolsToggle.setAttribute('aria-label', 'Zobraziť spodný panel');
+		this.toolsToggle.title = _t('Zobraziť spodný panel');
+		this.toolsToggle.setAttribute('aria-label', _t('Zobraziť spodný panel'));
 		for (const t of ['pointerdown', 'pointerup', 'mousedown', 'touchstart', 'touchend', 'wheel', 'keydown']) {
 			this.toolsToggle.addEventListener(t, (e) => e.stopPropagation());
 		}
@@ -344,7 +357,7 @@ export class UI {
 			e.stopPropagation();
 			const open = root.classList.toggle('mysn-tools-open');
 			this.toolsToggle.textContent = open ? '▼' : '▲';
-			this.toolsToggle.title = open ? 'Schovať spodný panel' : 'Zobraziť spodný panel';
+			this.toolsToggle.title = open ? _t('Schovať spodný panel') : _t('Zobraziť spodný panel');
 			this.toolsToggle.setAttribute('aria-label', this.toolsToggle.title);
 		});
 		root.appendChild(this.toolsToggle);
@@ -354,7 +367,7 @@ export class UI {
 			this.mmenu.addEventListener(t, (e) => e.stopPropagation());
 		}
 		root.appendChild(this.mmenu);
-		this.backBtn = h('button', 'mysn-backbtn', '← Späť k stolu');
+		this.backBtn = h('button', 'mysn-backbtn', _t('← Späť k stolu'));
 		this.backBtn.type = 'button';
 		for (const t of ['pointerdown', 'pointerup', 'mousedown', 'touchstart', 'touchend']) {
 			this.backBtn.addEventListener(t, (e) => e.stopPropagation());
@@ -562,12 +575,12 @@ export class UI {
 		const t = q('.mysn-sc-elev');
 		t.textContent = d + '°' + (forced || locked ? ' 🔒' : '');
 		t.setAttribute('fill', locked ? '#9ca3af' : d >= 45 ? '#ff8a8a' : d >= 8 ? '#ffd34d' : '#e8eefc');
-		const kind = d >= 45 ? 'massé' : d >= 8 ? 'swerve (s bočnou falšou)' : 'bežný úder';
+		const kind = d >= 45 ? _t('massé') : d >= 8 ? _t('swerve (s bočnou falšou)') : _t('bežný úder');
 		q('.mysn-spin-cue').classList.toggle('mysn-sc-locked', !!locked);
 		const tt = document.createElementNS('http://www.w3.org/2000/svg', 'title');
 		tt.textContent = locked
-			? `Uhol tága ${d}°: s nádstavcom je pevný.`
-			: `Uhol tága ${d}° – ${kind}.${forced ? ` Pri mantineli alebo guli za bielou najmenej ${Math.round(min)}°.` : ''} Shift + koliesko mení uhol (s Ctrl po 5°), najviac 80°.`;
+			? _t('Uhol tága {d}°: s nádstavcom je pevný.', { d })
+			: _t('Uhol tága {d}° – {k}.', { d, k: kind }) + (forced ? _t(' Pri mantineli alebo guli za bielou najmenej {m}°.', { m: Math.round(min) }) : '') + ' ' + _t('Shift + koliesko mení uhol (s Ctrl po 5°), najviac 80°.');
 		t.appendChild(tt);
 	}
 
@@ -608,14 +621,14 @@ export class UI {
 		}
 		const t3 = q('.mysn-st-ext');
 		t3.style.display = st.ext ? '' : 'none';
-		t3.textContent = st.ext ? `Predĺženie ${st.ext} cm ±${String(st.extDeg).replace('.', ',')}°` : '';
+		t3.textContent = st.ext ? `${_t('Predĺženie')} ${st.ext} cm ±${dec(st.extDeg)}°` : '';
 		const t1 = q('.mysn-st-tip');
-		t1.textContent = `Špica ${Math.round(life * 100)} %`;
+		t1.textContent = `${_t('Špica')} ${Math.round(life * 100)} %`;
 		t1.style.color = lc;
 		const t2 = q('.mysn-st-chalk');
-		t2.textContent = st.shots ? `Krieda ${st.shots}/${st.max}` : 'Bez kriedy';
+		t2.textContent = st.shots ? `${_t('Krieda')} ${st.shots}/${st.max}` : 'Bez kriedy';
 		t2.style.color = st.shots ? '#e8eefc' : '#f87171';
-		this.spinBox.title = `Špica: ${Math.round(life * 100)} % (${st.strokes || 0} úderov). Krieda: ${st.shots ? st.shots + ' z ' + st.max + ' úderov' : 'treba nakriedovať (F3)'}.${st.ext ? ` Predĺženie ${st.ext} cm: biela náhodne uhne až o ${String(st.extDeg).replace('.', ',')}° (silnejší úder viac).` : ''}`;
+		this.spinBox.title = _t('Špica: {p} % ({n} úderov). Krieda: {c}.', { p: Math.round(life * 100), n: st.strokes || 0, c: st.shots ? _t('{a} z {b} úderov', { a: st.shots, b: st.max }) : _t('treba nakriedovať (F3)') }) + (st.ext ? ' ' + _t('Predĺženie {n} cm: biela náhodne uhne až o {d}° (silnejší úder viac).', { n: st.ext, d: dec(st.extDeg) }) : '');
 	}
 
 	/** Natiahnutý úder (deg > 0): Miesto úderu sa vráti do stredu a zamkne (bez falše), pod guľou nepresnosť. */
@@ -635,7 +648,7 @@ export class UI {
 			this.spinBox.querySelector('.mysn-spin-stat').appendChild(el);
 		}
 		el.style.display = on ? '' : 'none';
-		el.textContent = on ? `Natiahnutý úder ±${String(deg).replace('.', ',')}°, bez falše` : '';
+		el.textContent = on ? _t('Natiahnutý úder ±{d}°, bez falše', { d: dec(deg) }) : '';
 	}
 
 	setSpin(side, top) {
@@ -659,8 +672,8 @@ export class UI {
 			this._jumpOn = jump;
 			this.spinBox.classList.toggle('mysn-spin-jump', jump);
 			const lb = this.spinBox.querySelector('.mysn-spin-label');
-			lb.textContent = jump ? 'Skokový úder' : 'Miesto úderu';
-			lb.title = jump ? `Biela vyskočí pri sile od ${Math.round(JUMP_POWER * 100)} %, ponad guľu asi od 92 %. S kriedou skočí vyššie, po napitej vode ešte vyššie. Skok veľmi opotrebuje špicu (5 %).` : '';
+			lb.textContent = jump ? _t('Skokový úder') : _t('Miesto úderu');
+			lb.title = jump ? _t('Biela vyskočí pri sile od {p} %, ponad guľu asi od 92 %. S kriedou skočí vyššie, po napitej vode ešte vyššie. Skok veľmi opotrebuje špicu (5 %).', { p: Math.round(JUMP_POWER * 100) }) : '';
 		}
 		this.opts.onSpin(this.side, this.top);
 	}
@@ -668,71 +681,71 @@ export class UI {
 	buildSettings(s) {
 		const p = h('div', 'mysn-panel mysn-hidden');
 		p.innerHTML = `
-			<h3>Nastavenia</h3>
-			<label>Kvalita obrazu
+			<h3>${_t('Nastavenia')}</h3>
+			<label>${_t('Kvalita obrazu')}
 				<select data-k="quality">
-					<option value="high">Vysoká (tiene)</option>
-					<option value="low">Nízka (pre slabšie zariadenia)</option>
+					<option value="high">${_t('Vysoká (tiene)')}</option>
+					<option value="low">${_t('Nízka (pre slabšie zariadenia)')}</option>
 				</select></label>
-			<label>Vzhľad stola
+			<label>${_t('Vzhľad stola')}
 				<select data-k="tableDetail">
-					<option value="fine">Podrobný (lesk súkna, lakované drevo)</option>
-					<option value="simple">Jednoduchý (pre slabšie zariadenia)</option>
+					<option value="fine">${_t('Podrobný (lesk súkna, lakované drevo)')}</option>
+					<option value="simple">${_t('Jednoduchý (pre slabšie zariadenia)')}</option>
 				</select></label>
-			<label>Hlasitosť <input type="range" min="0" max="1" step="0.05" data-k="volume"></label>
-			<label>Zvuky stola <input type="range" min="0" max="1.5" step="0.05" data-k="volTable"></label>
-			<label>Miestnosť (ambient, dvere) <input type="range" min="0" max="1.5" step="0.05" data-k="volRoom"></label>
-			<label>Diváci <input type="range" min="0" max="1.5" step="0.05" data-k="volCrowd"></label>
-			<label>Komentátor Rudo <input type="range" min="0" max="2" step="0.05" data-k="volRudo"></label>
-			<label>Priestorový zvuk
+			<label>${_t('Hlasitosť')} <input type="range" min="0" max="1" step="0.05" data-k="volume"></label>
+			<label>${_t('Zvuky stola')} <input type="range" min="0" max="1.5" step="0.05" data-k="volTable"></label>
+			<label>${_t('Miestnosť (ambient, dvere)')} <input type="range" min="0" max="1.5" step="0.05" data-k="volRoom"></label>
+			<label>${_t('Diváci')} <input type="range" min="0" max="1.5" step="0.05" data-k="volCrowd"></label>
+			<label>${_t('Komentátor Rudo')} <input type="range" min="0" max="2" step="0.05" data-k="volRudo"></label>
+			<label>${_t('Priestorový zvuk')}
 				<select data-k="sound3d">
-					<option value="hrtf">Slúchadlá (3D zvuk)</option>
-					<option value="stereo">Reproduktory (výrazné stereo)</option>
+					<option value="hrtf">${_t('Slúchadlá (3D zvuk)')}</option>
+					<option value="stereo">${_t('Reproduktory (výrazné stereo)')}</option>
 				</select></label>
-			<label>Hlas rozhodcu
+			<label>${_t('Hlas rozhodcu')}
 				<select data-k="refLang">
-					<option value="en">Zapnutý (po anglicky)</option>
-					<option value="off">Vypnutý</option>
+					<option value="en">${_t('Zapnutý (po anglicky)')}</option>
+					<option value="off">${_t('Vypnutý')}</option>
 				</select></label>
-			<label>Detail dotyku pri mierení
+			<label>${_t('Detail dotyku pri mierení')}
 				<select data-k="contactPos">
-					<option value="topright">Vpravo hore</option>
-					<option value="center">V strede dole</option>
-					<option value="left">Vľavo dole</option>
-					<option value="right">Vpravo dole</option>
-					<option value="off">Nezobrazovať</option>
+					<option value="topright">${_t('Vpravo hore')}</option>
+					<option value="center">${_t('V strede dole')}</option>
+					<option value="left">${_t('Vľavo dole')}</option>
+					<option value="right">${_t('Vpravo dole')}</option>
+					<option value="off">${_t('Nezobrazovať')}</option>
 				</select></label>
-			<label>Zostup kamery popri tágu, keď myš nejde do strany (pravé tlačidlo, myš dole)
+			<label>${_t('Zostup kamery popri tágu, keď myš nejde do strany (pravé tlačidlo, myš dole)')}
 				<select data-k="camSide">
-					<option value="hand">Podľa ruky z ligovej vizitky (pravák vľavo, ľavák vpravo)</option>
-					<option value="left">Vľavo od tága</option>
-					<option value="right">Vpravo od tága</option>
+					<option value="hand">${_t('Podľa ruky z ligovej vizitky (pravák vľavo, ľavák vpravo)')}</option>
+					<option value="left">${_t('Vľavo od tága')}</option>
+					<option value="right">${_t('Vpravo od tága')}</option>
 				</select></label>
-			<label>Kamera po údere
+			<label>${_t('Kamera po údere')}
 				<select data-k="afterShot">
-					<option value="follow">Sledovať bielu</option>
-					<option value="top">Pohľad zhora na stôl</option>
+					<option value="follow">${_t('Sledovať bielu')}</option>
+					<option value="top">${_t('Pohľad zhora na stôl')}</option>
 				</select></label>
-			<label>Chat v hre
+			<label>${_t('Chat v hre')}
 				<select data-k="chatMode">
-					<option value="show">Zobraziť správy</option>
-					<option value="peek">Len nové správy na chvíľu (8 s)</option>
-					<option value="hide">Skryť (šípka › ich ukáže)</option>
+					<option value="show">${_t('Zobraziť správy')}</option>
+					<option value="peek">${_t('Len nové správy na chvíľu (8 s)')}</option>
+					<option value="hide">${_t('Skryť (šípka › ich ukáže)')}</option>
 				</select></label>
-			<label>Kamera, keď hrá súper (liga)
+			<label>${_t('Kamera, keď hrá súper (liga)')}
 				<select data-k="oppCam">
-					<option value="follow">Sledovať súpera</option>
-					<option value="top">Pohľad zhora</option>
-					<option value="chair">Z kresla (F7)</option>
+					<option value="follow">${_t('Sledovať súpera')}</option>
+					<option value="top">${_t('Pohľad zhora')}</option>
+					<option value="chair">${_t('Z kresla (F7)')}</option>
 				</select></label>
-			<label class="mysn-check"><input type="checkbox" data-k="respot"> Vracať farebné gule na spoty</label>
-			<p class="mysn-note">Zmena kvality sa prejaví po obnovení stránky.</p>
+			<label class="mysn-check"><input type="checkbox" data-k="respot"> ${_t('Vracať farebné gule na spoty')}</label>
+			<p class="mysn-note">${_t('Zmena kvality sa prejaví po obnovení stránky.')}</p>
 			<div class="mysn-nettest">
-				<button type="button" class="mysn-btn" data-nettest>Otestovať spojenie</button>
-				<p class="mysn-note" data-nettest-out>Overí priame spojenie s inými hráčmi: miestnu sieť, verejnú adresu a náš server TURN (10 až 20 s).</p>
+				<button type="button" class="mysn-btn" data-nettest>${_t('Otestovať spojenie')}</button>
+				<p class="mysn-note" data-nettest-out>${_t('Overí priame spojenie s inými hráčmi: miestnu sieť, verejnú adresu a náš server TURN (10 až 20 s).')}</p>
 			</div>
 
-			<button type="button" class="mysn-btn mysn-primary" data-close>Zavrieť</button>`;
+			<button type="button" class="mysn-btn mysn-primary" data-close>${_t('Zavrieť')}</button>`;
 		for (const el of p.querySelectorAll('[data-k]')) {
 			const k = el.dataset.k;
 			if (el.type === 'checkbox') {
@@ -754,18 +767,18 @@ export class UI {
 				return;
 			}
 			tb.disabled = true;
-			to.textContent = 'Testujem spojenie…';
+			to.textContent = _t('Testujem spojenie…');
 			try {
 				const r = await this.opts.netTest();
 				const pub = (r.lc.srflx || 0) + (r.lc.prflx || 0);
 				const verdict = r.relayOk
 					? pub
-						? 'Spojenie je v poriadku: priame spojenie so súperom by malo fungovať.'
-						: 'Verejná adresa sa nenašla, ale cez náš server TURN spojenie funguje.'
+						? _t('Spojenie je v poriadku: priame spojenie so súperom by malo fungovať.')
+						: _t('Verejná adresa sa nenašla, ale cez náš server TURN spojenie funguje.')
 					: pub
-					? 'Server TURN nefunguje z tvojej siete (blokovaný port 3478 alebo firewall). Priame spojenie pôjde len so súperom, ktorý má otvorenú sieť.'
-					: 'Priame spojenie z tvojej siete nefunguje (ani verejná adresa, ani TURN). Partia pôjde len cez server, bez vzájomného mierenia.';
-				to.innerHTML = `<b>${r.text}</b><br>${verdict}${r.errs.length ? `<br><small>Chyby: ${r.errs.slice(0, 4).join('; ').replace(/[<>&]/g, '')}</small>` : ''}`;
+					? _t('Server TURN nefunguje z tvojej siete (blokovaný port 3478 alebo firewall). Priame spojenie pôjde len so súperom, ktorý má otvorenú sieť.')
+					: _t('Priame spojenie z tvojej siete nefunguje (ani verejná adresa, ani TURN). Partia pôjde len cez server, bez vzájomného mierenia.');
+				to.innerHTML = `<b>${r.text}</b><br>${verdict}${r.errs.length ? `<br><small>${_t('Chyby:')} ${r.errs.slice(0, 4).join('; ').replace(/[<>&]/g, '')}</small>` : ''}`;
 			} catch (e) {
 				to.textContent = 'Test sa nepodaril: ' + (e.message || e);
 			}
@@ -786,7 +799,7 @@ export class UI {
 			<div class="mysn-menu-note mysn-hidden"></div>
 			<div class="mysn-menu-inv"></div>
 			<div class="mysn-menu-btns"></div>
-			<div class="mysn-menu-lang"><span>Jazyk / Language</span></div>
+			<div class="mysn-menu-lang"><span>${_t('Jazyk / Language')}</span></div>
 			<p class="mysn-note"></p>
 		</div>`;
 		this.menuMode = m.querySelector('.mysn-menu-mode');
@@ -934,41 +947,41 @@ export class UI {
 		if (err) {
 			body = `<p class="mysn-note">${esc(err)}</p>`;
 		} else if (!d) {
-			body = '<p class="mysn-note">Načítavam účet…</p>';
+			body = _t('<p class="mysn-note">Načítavam účet…</p>');
 		} else {
 			const lg = d.league;
 			body =
-				`<div class="mysn-acc-head">${d.avatar ? `<img src="${esc(d.avatar)}" alt="" width="56" height="56">` : ''}<div><b>${esc(d.name)}</b><span>${esc(d.email)}</span>${d.levelName ? `<em>Úroveň ${esc(String(d.level))}: ${esc(d.levelName)}</em>` : ''}</div></div>` +
-				`<h4>Účet</h4>` +
-				row('Meno', esc(d.name)) +
-				row('E-mail', esc(d.email)) +
-				row('Člen od', esc(d.registered)) +
-				`<h4>Liga</h4>` +
+				`<div class="mysn-acc-head">${d.avatar ? `<img src="${esc(d.avatar)}" alt="" width="56" height="56">` : ''}<div><b>${esc(d.name)}</b><span>${esc(d.email)}</span>${d.levelName ? `<em>${_t('Úroveň')} ${esc(String(d.level))}: ${esc(d.levelName)}</em>` : ''}</div></div>` +
+				`<h4>${_t('Účet')}</h4>` +
+				row(_t('Meno'), esc(d.name)) +
+				row(_t('E-mail'), esc(d.email)) +
+				row(_t('Člen od'), esc(d.registered)) +
+				`<h4>${_t('Liga')}</h4>` +
 				(lg
-					? row('Prezývka', esc(lg.nick || d.name)) +
-						row('Sezóna', esc(lg.season)) +
-						(lg.league ? row('Liga a miesto', `${lg.league}. liga, ${lg.rank}. miesto`) + row('Body', String(lg.points)) + row('Výhry a prehry', `${lg.wins} : ${lg.losses}`) : row('Stav', 'zatiaľ bez zápasu')) +
-						(d.elo ? row('ELO sila', d.elo.games ? `<b>${d.elo.elo}</b> (${d.elo.games} ${d.elo.games === 1 ? 'ligový zápas' : d.elo.games < 5 ? 'ligové zápasy' : 'ligových zápasov'})` : `${d.elo.elo} (začiatočná, zatiaľ bez ligového zápasu)`) : '')
-					: '<p class="mysn-note">V lige nie si zaregistrovaný. Registrácia je v kancelárii (Liga v menu).</p>') +
-				`<h4>Partie a skóre</h4>` +
-				row('Dohraté partie cez internet', `${d.matches.played} (výhry ${d.matches.won}, ligové ${d.matches.league})`) +
-				row('Hrať: odohrané framy', String(d.solo.frames)) +
-				row('Najlepšie skóre', d.solo.frames ? `${d.solo.best} bodov za ${time(d.solo.time)}` : 'zatiaľ žiadne') +
-				row('Najvyšší brejk', String(d.solo.brk)) +
-				row('Vlastné tágá', `${d.cues} z 10`) +
+					? row(_t('Prezývka'), esc(lg.nick || d.name)) +
+						row(_t('Sezóna'), esc(lg.season)) +
+						(lg.league ? row(_t('Liga a miesto'), _t('{l}. liga, {r}. miesto', { l: lg.league, r: lg.rank })) + row(_t('Body'), String(lg.points)) + row(_t('Výhry a prehry'), `${lg.wins} : ${lg.losses}`) : row(_t('Stav'), _t('zatiaľ bez zápasu'))) +
+						(d.elo ? row(_t('ELO sila'), d.elo.games ? `<b>${d.elo.elo}</b> (${d.elo.games} ${d.elo.games === 1 ? _t('ligový zápas') : d.elo.games < 5 ? _t('ligové zápasy') : _t('ligových zápasov')})` : `${d.elo.elo} ${_t('(začiatočná, zatiaľ bez ligového zápasu)')}`) : '')
+					: _t('<p class="mysn-note">V lige nie si zaregistrovaný. Registrácia je v kancelárii (Liga v menu).</p>')) +
+				`<h4>${_t('Partie a skóre')}</h4>` +
+				row(_t('Dohraté partie cez internet'), _t('{n} (výhry {w}, ligové {l})', { n: d.matches.played, w: d.matches.won, l: d.matches.league })) +
+				row(_t('Hrať: odohrané framy'), String(d.solo.frames)) +
+				row(_t('Najlepšie skóre'), d.solo.frames ? _t('{p} bodov za {t}', { p: d.solo.best, t: time(d.solo.time) }) : _t('zatiaľ žiadne')) +
+				row(_t('Najvyšší brejk'), String(d.solo.brk)) +
+				row(_t('Vlastné tágá'), `${d.cues} z 10`) +
 				`<div class="mysn-acc-links">` +
-				(d.links.account ? `<a class="mysn-btn" href="${esc(d.links.account)}" target="_blank" rel="noopener">Môj účet na webe</a>` : '') +
-				(d.links.shop ? `<a class="mysn-btn" href="${esc(d.links.shop)}" target="_blank" rel="noopener">Môj e-shop</a>` : '') +
-				`<a class="mysn-btn" href="${esc(d.links.logout)}" data-logout>Odhlásiť sa</a>` +
+				(d.links.account ? `<a class="mysn-btn" href="${esc(d.links.account)}" target="_blank" rel="noopener">${_t('Môj účet na webe')}</a>` : '') +
+				(d.links.shop ? `<a class="mysn-btn" href="${esc(d.links.shop)}" target="_blank" rel="noopener">${_t('Môj e-shop')}</a>` : '') +
+				`<a class="mysn-btn" href="${esc(d.links.logout)}" data-logout>${_t('Odhlásiť sa')}</a>` +
 				`</div>`;
 		}
-		p.innerHTML = `<h3>Môj účet</h3>${body}<button type="button" class="mysn-btn mysn-primary" data-close>Zavrieť</button>`;
+		p.innerHTML = `<h3>${_t('Môj účet')}</h3>${body}<button type="button" class="mysn-btn mysn-primary" data-close>${_t('Zavrieť')}</button>`;
 		p.querySelector('[data-close]').addEventListener('click', () => p.classList.add('mysn-hidden'));
 		const out = p.querySelector('[data-logout]');
 		if (out) {
 			// odhlásenie: WordPress zmaže prihlásenie a hneď vráti späť do hry (redirect_to), stránka wp-login.php sa neukáže
 			out.addEventListener('click', () => {
-				out.textContent = 'Odhlasujem…';
+				out.textContent = _t('Odhlasujem…');
 			});
 		}
 		p.classList.remove('mysn-hidden');
@@ -1043,10 +1056,10 @@ export class UI {
 		const inv = list || [];
 		this.menuInv.innerHTML = '';
 		for (const i of inv) {
-			const row = h('div', 'mysn-inv', `${i.from.avatar ? `<img src="${esc(i.from.avatar)}" alt="">` : ''}<span><b>${esc(i.from.name)}</b> ťa pozýva na ${i.league ? 'ligovú ' : ''}partiu</span>`);
-			const yes = this.button('Prijať', 'accept', '', i.id);
+			const row = h('div', 'mysn-inv', `${i.from.avatar ? `<img src="${esc(i.from.avatar)}" alt="">` : ''}<span><b>${esc(i.from.name)}</b> ${i.league ? _t('ťa pozýva na ligovú partiu') : _t('ťa pozýva na partiu')}</span>`);
+			const yes = this.button(_t('Prijať'), 'accept', '', i.id);
 			yes.classList.add('mysn-primary');
-			row.append(yes, this.button('Odmietnuť', 'decline', '', i.id));
+			row.append(yes, this.button(_t('Odmietnuť'), 'decline', '', i.id));
 			this.menuInv.appendChild(row);
 		}
 		if (this._mmInvN !== inv.length) {
@@ -1080,11 +1093,11 @@ export class UI {
 		el.classList.remove('mysn-hidden');
 		el.classList.toggle('mysn-clock-warn', sec <= 10);
 		el.classList.toggle('mysn-clock-mine', !!mine);
-		el.innerHTML = `<span>${mine ? 'Tvoj čas' : 'Čas na úder'}</span><b>0:${String(sec).padStart(2, '0')}</b>`;
+		el.innerHTML = `<span>${mine ? _t('Tvoj čas') : _t('Čas na úder')}</span><b>0:${String(sec).padStart(2, '0')}</b>`;
 		// posledných 5 sekúnd: veľký odpočet uprostred, pri nule Čas!
 		big.classList.toggle('mysn-hidden', sec > 5);
 		if (sec <= 5) {
-			big.textContent = sec > 0 ? String(sec) : 'Čas!';
+			big.textContent = sec > 0 ? String(sec) : _t('Čas!');
 			big.classList.toggle('mysn-clock-end', sec === 0);
 			big.classList.remove('mysn-clock-pop');
 			void big.offsetWidth; // znova spustí animáciu
@@ -1107,7 +1120,7 @@ export class UI {
 			this.seekTxt = h('span', '', '');
 			const x = h('button', 'mysn-seek-x', '✕');
 			x.type = 'button';
-			x.title = 'Zrušiť vyhľadávanie zápasu';
+			x.title = _t('Zrušiť vyhľadávanie zápasu');
 			x.addEventListener('click', (e) => {
 				e.stopPropagation();
 				this.opts.onAction('seekCancel');
@@ -1120,7 +1133,7 @@ export class UI {
 		if (since) {
 			const draw = () => {
 				const sec = Math.max(0, Math.floor((Date.now() - since) / 1000));
-				this.seekTxt.textContent = `Vyhľadáva sa ligový zápas · ${Math.floor(sec / 60)}:${String(sec % 60).padStart(2, '0')}`;
+				this.seekTxt.textContent = `${_t('Vyhľadáva sa ligový zápas')} · ${Math.floor(sec / 60)}:${String(sec % 60).padStart(2, '0')}`;
 			};
 			draw();
 			this._seekT = setInterval(draw, 1000);
@@ -1146,18 +1159,18 @@ export class UI {
 		const el = this.foundEl;
 		el.innerHTML = '';
 		const box = h('div', 'mysn-found-box');
-		box.appendChild(h('div', 'mysn-found-title', 'Našiel sa zápas do ligy!'));
+		box.appendChild(h('div', 'mysn-found-title', _t('Našiel sa zápas do ligy!')));
 		const R = 44;
 		const L = 2 * Math.PI * R;
 		const ring = h('div', 'mysn-found-ring', `<svg viewBox="0 0 110 110"><circle cx="55" cy="55" r="${R}" class="bg"/><circle cx="55" cy="55" r="${R}" class="fg" stroke-dasharray="${L.toFixed(1)}" stroke-dashoffset="0"/></svg><b>60</b>`);
 		box.appendChild(ring);
-		const note = h('div', 'mysn-found-note', f.mine ? 'Prijal si. Čaká sa na potvrdenie súpera…' : 'Potvrď zápas do 60 sekúnd. Zrušiť vypne aj vyhľadávanie.');
+		const note = h('div', 'mysn-found-note', f.mine ? _t('Prijal si. Čaká sa na potvrdenie súpera…') : _t('Potvrď zápas do 60 sekúnd. Zrušiť vypne aj vyhľadávanie.'));
 		box.appendChild(note);
 		const row = h('div', 'mysn-found-btns');
-		const ok = this.button('Prijať (Enter)', 'foundAccept');
+		const ok = this.button(_t('Prijať (Enter)'), 'foundAccept');
 		ok.classList.add('mysn-primary');
 		ok.disabled = !!f.mine;
-		const no = this.button('Zrušiť (Esc)', 'foundCancel');
+		const no = this.button(_t('Zrušiť (Esc)'), 'foundCancel');
 		row.append(ok, no);
 		box.appendChild(row);
 		el.appendChild(box);
@@ -1183,23 +1196,23 @@ export class UI {
 	}
 
 	/** Kancelária F4: panel vpravo s pravidlami bodovania ligy (k tabuli výsledkov sezóny). */
-	openLeagueRules(on, foot = 'F4 alebo Esc: späť za stôl') {
+	openLeagueRules(on, foot = _t('F4 alebo Esc: späť za stôl')) {
 		if (!this.rulesEl) {
 			const li = (b, t) => `<li><b>${b}</b><span>${t}</span></li>`;
 			this.rulesEl = h(
 				'div',
 				'mysn-rules mysn-hidden',
-				'<h3>Ako sa počítajú body</h3><ul>' +
-					li('Štart', 'Každý hráč začína sezónu so 147 bodmi.') +
-					li('Výhra', 'Víťaz dostane toľko bodov, koľko nahral vo frame. Porazený presne toľko stratí.') +
-					li('Vzdanie', 'Keď súper vzdá alebo stratí spojenie, víťaz dostane najmenej 30 bodov.') +
-					li('Vzdaný frame', 'Keď súper vzdá rozhodujúci frame, víťaz dostane body nahraté v tom frame, ako pri bežnej výhre.') +
-					li('Diskvalifikácia', 'Pri šiestom nešportovom správaní (grgnutie, prdnutie) súper vyhrá. Body dostane ako pri bežnej výhre, aj s trestnými +4.') +
-					li('Silnejší súper', 'Výhra hráča z nižšej ligy nad hráčom z vyššej ligy sa ráta 1,5-krát.') +
-					li('Spodok', 'Porazený s kladnými bodmi klesne najviac na 0.') +
-					li('Symbolická výhra', 'Keď má porazený 0 alebo menej, víťaz dostane +1 a porazený stratí 1 (môže ísť do mínusu).') +
-					li('Ligy', 'Podľa poradia: 1. liga horných 10 % hráčov, 2. liga ďalších 20 %, 3. liga ďalších 30 %, 4. liga zvyšok (v každej aspoň jeden). Nad 70 hráčov: top 10, 11. až 30., 31. až 70., ostatní.') +
-					li('Sezóna', 'Trvá rok, potom sa uložia konečné výsledky a začína sa znova.') +
+				_t('<h3>Ako sa počítajú body</h3><ul>') +
+					li(_t('Štart'), _t('Každý hráč začína sezónu so 147 bodmi.')) +
+					li(_t('Výhra'), _t('Víťaz dostane toľko bodov, koľko nahral vo frame. Porazený presne toľko stratí.')) +
+					li(_t('Vzdanie'), _t('Keď súper vzdá alebo stratí spojenie, víťaz dostane najmenej 30 bodov.')) +
+					li(_t('Vzdaný frame'), _t('Keď súper vzdá rozhodujúci frame, víťaz dostane body nahraté v tom frame, ako pri bežnej výhre.')) +
+					li(_t('Diskvalifikácia'), _t('Pri šiestom nešportovom správaní (grgnutie, prdnutie) súper vyhrá. Body dostane ako pri bežnej výhre, aj s trestnými +4.')) +
+					li(_t('Silnejší súper'), _t('Výhra hráča z nižšej ligy nad hráčom z vyššej ligy sa ráta 1,5-krát.')) +
+					li(_t('Spodok'), _t('Porazený s kladnými bodmi klesne najviac na 0.')) +
+					li(_t('Symbolická výhra'), _t('Keď má porazený 0 alebo menej, víťaz dostane +1 a porazený stratí 1 (môže ísť do mínusu).')) +
+					li(_t('Ligy'), _t('Podľa poradia: 1. liga horných 10 % hráčov, 2. liga ďalších 20 %, 3. liga ďalších 30 %, 4. liga zvyšok (v každej aspoň jeden). Nad 70 hráčov: top 10, 11. až 30., 31. až 70., ostatní.')) +
+					li(_t('Sezóna'), _t('Trvá rok, potom sa uložia konečné výsledky a začína sa znova.')) +
 					'</ul><p class="mysn-rules-foot"></p>',
 			);
 			for (const ev of ['mousedown', 'keydown', 'wheel']) {
@@ -1257,7 +1270,7 @@ export class UI {
 		});
 		this.chalkEl.appendChild(list);
 		if (zoom) {
-			const back = this.button('← Späť na stojan', 'chalkBack');
+			const back = this.button(_t('← Späť na stojan'), 'chalkBack');
 			back.classList.add('mysn-chalk-back');
 			this.chalkEl.appendChild(back);
 		}
@@ -1276,24 +1289,24 @@ export class UI {
 			const li = (b, t) => `<li><b>${b}</b><span>${t}</span></li>`;
 			const ball = (c, n) => `<i class="mysn-ball" style="background:${c}"></i>${n}`;
 			this.snRulesEl.innerHTML =
-				'<h3>Pravidlá snookeru</h3><ul>' +
-				li('Cieľ', 'Nahrať vo frame viac bodov ako súper.') +
-				li('Hodnoty gúľ', `<span class="mysn-balls">${ball('#b3121f', 1)} ${ball('#f2c418', 2)} ${ball('#0f7a3a', 3)} ${ball('#6b3a1e', 4)} ${ball('#1747b5', 5)} ${ball('#f08aa8', 6)} ${ball('#111', 7)}</span>`) +
-				li('Poradie', 'Striedavo červená a ľubovoľná farba. Na farbu stačí najprv trafiť ktorúkoľvek farbu, body sú za farbu, ktorá spadne (aj keď ju potopí iná farba), dve farby naraz sú faul. Farba sa vracia na svoj spot, kým sú na stole červené. Potom farby po poradí od žltej po čiernu.') +
-				li('Prvý dotyk', 'Biela musí ako prvú trafiť guľu, ktorá je na rade.') +
-				li('Faul', 'Zlá guľa, žiadny dotyk, spadnutá biela alebo guľa, ktorá nie je na rade. Súper dostane 4 body alebo hodnotu gule, ak je vyššia (najviac 7), a je na rade.') +
-				li('Biela v ruke', 'Po spadnutí bielej ju súper položí kdekoľvek do D.') +
-				li('Voľná guľa', 'Keď je hráč po faule zasnookrovaný, môže hrať ľubovoľnú farbu ako guľu na rade.') +
-				li('Po faule', 'Súper si vyberie: hrá sám, alebo nechá hrať teba. Vtedy sa gule vrátia, ako stáli pred faulom.') +
-				li('Skokový úder', 'Bod úderu úplne dole a sila aspoň 70 %: biela vyskočí (s kriedou vyššie, po napitej vode ešte vyššie). Faul nie je, keď trafí guľu na rade. Vyletená zo stola je faul.') +
-				li('Uhol tága', 'Shift + koliesko (na mobile ťahanie ikony tága) zdvihne tágo až na 80°. S bočnou falšou sa biela stočí na stranu falše: 8 – 25° swerve (mierny oblúk), od 45° massé (veľký oblúk, väčší rozptyl, bez kriedy časté šmyknutie, špica −5 %). Pri mantineli je najmenší uhol daný. Keď taký úder trafí správnu guľu, diváci na štadióne jasajú.') +
-				li('Skúsenosti a úspechy', 'Každá potopená guľa dá toľko skúseností (XP), koľko je za ňu bodov, vo všetkých miestnostiach; z XP je úroveň hráča. Úspechy (bronz, striebro, zlato, platina) za potopené gule, série, výhry a špeciálne údery: stop-ball, ťahák, späťák, bočná falša, swerve, massé, skok, plant, cannon, double, únik zo snookeru, safety a snooker. Prehľad v telefóne (T), záložka Úspechy.') +
-				li('Vzdať frame', 'Keď už potrebuješ snookery, hra ponúkne vzdať frame (súper ho vyhrá) alebo pokračovať.') +
-				li('Správanie', 'Grgnutie a prdnutie sa v lige trestá: 2. napomenutie, 3. až 5. súper +4, 6. diskvalifikácia. Podrobne v bloku na strane 2.') +
-				li('Séria (brejk)', 'Kým hráč potápa, pokračuje. Keď nič nespadne, je na rade súper.') +
-				li('Čas na úder', `V lige ${clock} sekúnd, inak faul za čas.`) +
-				li('Koniec frame', 'Keď spadne posledná čierna. Vyhráva hráč s viac bodmi.') +
-				'</ul><p class="mysn-rules-foot">F1 alebo Esc: späť do hry</p>';
+				_t('<h3>Pravidlá snookeru</h3><ul>') +
+				li(_t('Cieľ'), _t('Nahrať vo frame viac bodov ako súper.')) +
+				li(_t('Hodnoty gúľ'), `<span class="mysn-balls">${ball('#b3121f', 1)} ${ball('#f2c418', 2)} ${ball('#0f7a3a', 3)} ${ball('#6b3a1e', 4)} ${ball('#1747b5', 5)} ${ball('#f08aa8', 6)} ${ball('#111', 7)}</span>`) +
+				li(_t('Poradie'), _t('Striedavo červená a ľubovoľná farba. Na farbu stačí najprv trafiť ktorúkoľvek farbu, body sú za farbu, ktorá spadne (aj keď ju potopí iná farba), dve farby naraz sú faul. Farba sa vracia na svoj spot, kým sú na stole červené. Potom farby po poradí od žltej po čiernu.')) +
+				li(_t('Prvý dotyk'), _t('Biela musí ako prvú trafiť guľu, ktorá je na rade.')) +
+				li(_t('Faul'), _t('Zlá guľa, žiadny dotyk, spadnutá biela alebo guľa, ktorá nie je na rade. Súper dostane 4 body alebo hodnotu gule, ak je vyššia (najviac 7), a je na rade.')) +
+				li(_t('Biela v ruke'), _t('Po spadnutí bielej ju súper položí kdekoľvek do D.')) +
+				li(_t('Voľná guľa'), _t('Keď je hráč po faule zasnookrovaný, môže hrať ľubovoľnú farbu ako guľu na rade.')) +
+				li(_t('Po faule'), _t('Súper si vyberie: hrá sám, alebo nechá hrať teba. Vtedy sa gule vrátia, ako stáli pred faulom.')) +
+				li(_t('Skokový úder'), _t('Bod úderu úplne dole a sila aspoň 70 %: biela vyskočí (s kriedou vyššie, po napitej vode ešte vyššie). Faul nie je, keď trafí guľu na rade. Vyletená zo stola je faul.')) +
+				li(_t('Uhol tága'), _t('Shift + koliesko (na mobile ťahanie ikony tága) zdvihne tágo až na 80°. S bočnou falšou sa biela stočí na stranu falše: 8 – 25° swerve (mierny oblúk), od 45° massé (veľký oblúk, väčší rozptyl, bez kriedy časté šmyknutie, špica −5 %). Pri mantineli je najmenší uhol daný. Keď taký úder trafí správnu guľu, diváci na štadióne jasajú.')) +
+				li(_t('Skúsenosti a úspechy'), _t('Každá potopená guľa dá toľko skúseností (XP), koľko je za ňu bodov, vo všetkých miestnostiach; z XP je úroveň hráča. Úspechy (bronz, striebro, zlato, platina) za potopené gule, série, výhry a špeciálne údery: stop-ball, ťahák, späťák, bočná falša, swerve, massé, skok, plant, cannon, double, únik zo snookeru, safety a snooker. Prehľad v telefóne (T), záložka Úspechy.')) +
+				li(_t('Vzdať frame'), _t('Keď už potrebuješ snookery, hra ponúkne vzdať frame (súper ho vyhrá) alebo pokračovať.')) +
+				li(_t('Správanie'), _t('Grgnutie a prdnutie sa v lige trestá: 2. napomenutie, 3. až 5. súper +4, 6. diskvalifikácia. Podrobne v bloku na strane 2.')) +
+				li(_t('Séria (brejk)'), _t('Kým hráč potápa, pokračuje. Keď nič nespadne, je na rade súper.')) +
+				li(_t('Čas na úder'), _t('V lige {n} sekúnd, inak faul za čas.', { n: clock })) +
+				li(_t('Koniec frame'), _t('Keď spadne posledná čierna. Vyhráva hráč s viac bodmi.')) +
+				_t('</ul><p class="mysn-rules-foot">F1 alebo Esc: späť do hry</p>');
 		}
 		this.snRulesEl.classList.toggle('mysn-hidden', !on);
 	}
@@ -1315,7 +1328,7 @@ export class UI {
 		}
 		this.histEl.classList.toggle('mysn-hidden', !on);
 		if (on) {
-			this.histEl.innerHTML = '<div class="mysn-hist-load">Načítavam zápasy…</div>';
+			this.histEl.innerHTML = _t('<div class="mysn-hist-load">Načítavam zápasy…</div>');
 		}
 	}
 
@@ -1345,13 +1358,13 @@ export class UI {
 			this.rbEl.appendChild(x);
 			return x;
 		};
-		b('⏮', 'first', 'Začiatok partie (Home)');
-		b('◀', 'prev', 'Predchádzajúci úder (šípka vľavo)');
-		b(playing ? '❚❚' : '▶ Prehrať', 'toggle', 'Prehrávať a zastaviť (medzerník)').classList.add('mysn-replay-play');
-		b('▶', 'next', 'Ďalší úder (šípka vpravo)');
+		b('⏮', 'first', _t('Začiatok partie (Home)'));
+		b('◀', 'prev', _t('Predchádzajúci úder (šípka vľavo)'));
+		b(playing ? '❚❚' : _t('▶ Prehrať'), 'toggle', _t('Prehrávať a zastaviť (medzerník)')).classList.add('mysn-replay-play');
+		b('▶', 'next', _t('Ďalší úder (šípka vpravo)'));
 		b('⏭', 'last', 'Koniec partie (End)');
-		b(`${String(speed).replace('.', ',')}×`, 'speed', 'Rýchlosť prehrávania (R)');
-		const x = this.button('✕', 'replayStop', 'Zavrieť prehrávač');
+		b(`${String(speed).replace('.', ',')}×`, 'speed', _t('Rýchlosť prehrávania (R)'));
+		const x = this.button('✕', 'replayStop', _t('Zavrieť prehrávač'));
 		x.classList.add('mysn-replay-close');
 		this.rbEl.appendChild(x);
 	}
@@ -1363,15 +1376,15 @@ export class UI {
 	static histRes(r) {
 		return (
 			{
-				win: ['Výhra', 'win'],
+				win: [_t('Výhra'), 'win'],
 				loss: ['Prehra', 'loss'],
 				resign: ['Vzdal som', 'loss'],
-				resigned: ['Výhra, súper vzdal', 'win'],
-				disconnect: ['Prehra, výpadok spojenia', 'loss'],
-				'win-disconnect': ['Výhra, súperovi vypadlo spojenie', 'win'],
-				disq: ['Prehra, diskvalifikácia', 'loss'],
-				'win-disq': ['Výhra, súper diskvalifikovaný', 'win'],
-				annulled: ['Zrušený, obom vypadlo spojenie', 'void'],
+				resigned: [_t('Výhra, súper vzdal'), 'win'],
+				disconnect: [_t('Prehra, výpadok spojenia'), 'loss'],
+				'win-disconnect': [_t('Výhra, súperovi vypadlo spojenie'), 'win'],
+				disq: [_t('Prehra, diskvalifikácia'), 'loss'],
+				'win-disq': [_t('Výhra, súper diskvalifikovaný'), 'win'],
+				annulled: [_t('Zrušený, obom vypadlo spojenie'), 'void'],
 				live: ['Prebieha', 'void'],
 			}[r] || [r, 'void']
 		);
@@ -1401,14 +1414,14 @@ export class UI {
 		}
 		if (!append) {
 			el.innerHTML = '';
-			el.appendChild(h('h3', '', 'Moje zápasy v lige'));
+			el.appendChild(h('h3', '', _t('Moje zápasy v lige')));
 			if (d.sum) {
 				const pct = d.sum.wins + d.sum.losses ? Math.round((d.sum.wins / (d.sum.wins + d.sum.losses)) * 100) : 0;
-				el.appendChild(h('div', 'mysn-hist-sum', `<span><b>${d.sum.played}</b> zápasov</span><span><b>${d.sum.wins}</b> výhier</span><span><b>${d.sum.losses}</b> prehier</span><span><b>${pct} %</b> výhier</span><span>najvyšší brejk <b>${d.sum.best}</b></span>${d.sum.elo ? `<span>ELO <b>${d.sum.elo}</b></span>` : ''}`));
+				el.appendChild(h('div', 'mysn-hist-sum', `<span><b>${d.sum.played}</b> ${_t('zápasov')}</span><span><b>${d.sum.wins}</b> ${_t('výhier')}</span><span><b>${d.sum.losses}</b> ${_t('prehier')}</span><span><b>${pct} %</b> ${_t('výhier')}</span><span>${_t('najvyšší brejk')} <b>${d.sum.best}</b></span>${d.sum.elo ? `<span>ELO <b>${d.sum.elo}</b></span>` : ''}`));
 			}
 			this.histList = h('div', 'mysn-hist-list');
 			el.appendChild(this.histList);
-			el.appendChild(h('div', 'mysn-hist-foot', 'F7 alebo Esc: späť za stôl'));
+			el.appendChild(h('div', 'mysn-hist-foot', _t('F7 alebo Esc: späť za stôl')));
 		}
 		const list = this.histList;
 		const old = list.querySelector('.mysn-hist-more');
@@ -1416,7 +1429,7 @@ export class UI {
 			old.remove();
 		}
 		if (!append && !d.list.length) {
-			list.appendChild(h('p', 'mysn-hist-empty', 'Zatiaľ nemáš žiadny ligový zápas. Vyhľadaj zápas dverami ŠTADIÓN (F9).'));
+			list.appendChild(h('p', 'mysn-hist-empty', _t('Zatiaľ nemáš žiadny ligový zápas. Vyhľadaj zápas dverami ŠTADIÓN (F9).')));
 		}
 		for (const m of d.list) {
 			const [txt, cls] = UI.histRes(m.result);
@@ -1425,7 +1438,7 @@ export class UI {
 				'mysn-hist-row mysn-hist-' + cls,
 				`<span class="mysn-hist-date">${UI.histDate(m.date)}</span><span class="mysn-hist-opp">${UI.histWho(m.opp)}</span>` +
 					`<span class="mysn-hist-score">${m.my} : ${m.their}</span><span class="mysn-hist-res">${txt}</span>` +
-					`<span class="mysn-hist-delta">${m.delta > 0 ? '+' + m.delta : m.delta < 0 ? '−' + Math.abs(m.delta) : ''}${m.elo ? `<small title="ELO po zápase">ELO ${m.elo} (${m.edel > 0 ? '+' + m.edel : '−' + Math.abs(m.edel)})</small>` : ''}</span>`
+					`<span class="mysn-hist-delta">${m.delta > 0 ? '+' + m.delta : m.delta < 0 ? '−' + Math.abs(m.delta) : ''}${m.elo ? `<small title="${_t('ELO po zápase')}">ELO ${m.elo} (${m.edel > 0 ? '+' + m.edel : '−' + Math.abs(m.edel)})</small>` : ''}</span>`
 			);
 			row.type = 'button';
 			row.addEventListener('click', () => this.opts.onAction('historyMatch', m.id));
@@ -1433,7 +1446,7 @@ export class UI {
 			this.histLast = m.id;
 		}
 		if (d.more) {
-			const more = this.button('Staršie zápasy', 'historyMore');
+			const more = this.button(_t('Staršie zápasy'), 'historyMore');
 			more.classList.add('mysn-hist-more');
 			list.appendChild(more);
 		}
@@ -1446,10 +1459,10 @@ export class UI {
 			return;
 		}
 		el.innerHTML = '';
-		const back = this.button('← Späť na zoznam', 'historyBack');
+		const back = this.button(_t('← Späť na zoznam'), 'historyBack');
 		back.classList.add('mysn-hist-back');
 		el.appendChild(back);
-		const play = this.button('▶ Prehrať partiu na notebooku', 'replayStart', 'Údery sa prehrajú na obrazovke notebooku; šípky ← → na klávesnici prepínajú údery', d.id);
+		const play = this.button(_t('▶ Prehrať partiu na notebooku'), 'replayStart', _t('Údery sa prehrajú na obrazovke notebooku; šípky ← → na klávesnici prepínajú údery'), d.id);
 		play.classList.add('mysn-hist-play');
 		el.appendChild(play);
 		const [txt, cls] = UI.histRes(d.result);
@@ -1460,19 +1473,19 @@ export class UI {
 				'div',
 				'mysn-hist-head mysn-hist-' + cls,
 				`<div class="mysn-hist-vs"><span>${UI.histWho(P[0])}</span><b>${d.scores[0]} : ${d.scores[1]}</b><span>${UI.histWho(P[1])}</span></div>` +
-					`<div class="mysn-hist-meta">${txt}${d.delta ? ` · body ligy ${d.delta > 0 ? '+' + d.delta : '−' + Math.abs(d.delta)}` : ''}${d.elo && d.elo[0] ? `<br>ELO: ${esc(P[0].name || '')} ${d.elo[0]} (${UI.sgn(d.edel[0])}), ${esc(P[1].name || '')} ${d.elo[1]} (${UI.sgn(d.edel[1])})` : ''}<br>${d.season ? esc(d.season) + ' · ' : ''}${UI.histDate(d.date)} · ${d.duration ? mins + ' min' : ''}</div>`
+					`<div class="mysn-hist-meta">${txt}${d.delta ? ` · ${_t('body ligy')} ${d.delta > 0 ? '+' + d.delta : '−' + Math.abs(d.delta)}` : ''}${d.elo && d.elo[0] ? `<br>ELO: ${esc(P[0].name || '')} ${d.elo[0]} (${UI.sgn(d.edel[0])}), ${esc(P[1].name || '')} ${d.elo[1]} (${UI.sgn(d.edel[1])})` : ''}<br>${d.season ? esc(d.season) + ' · ' : ''}${UI.histDate(d.date)} · ${d.duration ? mins + ' min' : ''}</div>`
 			)
 		);
 		// porovnanie hráčov
 		const S = d.stats;
 		const rows = [
-			['Body', d.scores[0], d.scores[1]],
-			['Najvyšší brejk', S[0].best, S[1].best],
+			[_t('Body'), d.scores[0], d.scores[1]],
+			[_t('Najvyšší brejk'), S[0].best, S[1].best],
 			['Brejky 10+', S[0].breaks, S[1].breaks],
-			['Údery', S[0].shots, S[1].shots],
-			['Údery s bodmi', S[0].pots, S[1].pots],
-			['Fauly', S[0].fouls, S[1].fouls],
-			['Trestné body pre súpera', S[0].given, S[1].given],
+			[_t('Údery'), S[0].shots, S[1].shots],
+			[_t('Údery s bodmi'), S[0].pots, S[1].pots],
+			[_t('Fauly'), S[0].fouls, S[1].fouls],
+			[_t('Trestné body pre súpera'), S[0].given, S[1].given],
 		];
 		el.appendChild(
 			h(
@@ -1491,15 +1504,15 @@ export class UI {
 			const max = Math.max(10, ...C.map((c) => Math.max(c[0], c[1])));
 			const pt = (i, v) => `${((i / (C.length - 1)) * (W - 30) + 26).toFixed(1)},${(H - 18 - (v / max) * (H - 30)).toFixed(1)}`;
 			const line = (k) => C.map((c, i) => pt(i, c[k])).join(' ');
-			el.appendChild(h('h4', '', 'Priebeh skóre'));
+			el.appendChild(h('h4', '', _t('Priebeh skóre')));
 			el.appendChild(
 				h(
 					'div',
 					'mysn-hist-chart',
-					`<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Priebeh skóre">` +
+					`<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="${_t('Priebeh skóre')}">` +
 						`<line x1="26" y1="${H - 18}" x2="${W - 4}" y2="${H - 18}" class="ax"/><line x1="26" y1="10" x2="26" y2="${H - 18}" class="ax"/>` +
 						`<text x="22" y="16" class="lb" text-anchor="end">${max}</text><text x="22" y="${H - 18}" class="lb" text-anchor="end">0</text>` +
-						`<text x="${W - 4}" y="${H - 4}" class="lb" text-anchor="end">úder ${C.length - 1}</text>` +
+						`<text x="${W - 4}" y="${H - 4}" class="lb" text-anchor="end">${_t('úder')} ${C.length - 1}</text>` +
 						`<polyline points="${line(0)}" class="p0"/><polyline points="${line(1)}" class="p1"/></svg>` +
 						`<div class="mysn-hist-legend"><span class="p0">${esc(P[0].name)}</span><span class="p1">${esc(P[1].name)}</span></div>`
 				)
@@ -1507,17 +1520,17 @@ export class UI {
 		}
 		// priebeh partie
 		const T = d.timeline || [];
-		el.appendChild(h('h4', '', 'Priebeh partie'));
+		el.appendChild(h('h4', '', _t('Priebeh partie')));
 		if (!T.length) {
-			el.appendChild(h('p', 'mysn-hist-empty', 'V zápase nebol zaznamenaný žiadny brejk ani faul.'));
+			el.appendChild(h('p', 'mysn-hist-empty', _t('V zápase nebol zaznamenaný žiadny brejk ani faul.')));
 		} else {
 			const ul = h('ol', 'mysn-hist-tl');
 			for (const t of T) {
-				ul.appendChild(h('li', t.k === 'foul' ? 'mysn-hist-foul' : 'mysn-hist-brk mysn-side' + t.side, t.k === 'foul' ? `${esc(P[t.side].name)}: faul, ${t.pts} b. pre súpera` : `${esc(P[t.side].name)}: brejk <b>${t.pts}</b>`));
+				ul.appendChild(h('li', t.k === 'foul' ? 'mysn-hist-foul' : 'mysn-hist-brk mysn-side' + t.side, t.k === 'foul' ? `${esc(P[t.side].name)}: ${_t('faul, {p} b. pre súpera', { p: t.pts })}` : `${esc(P[t.side].name)}: ${_t('brejk')} <b>${t.pts}</b>`));
 			}
 			el.appendChild(ul);
 		}
-		el.appendChild(h('div', 'mysn-hist-foot', 'F7 alebo Esc: späť za stôl'));
+		el.appendChild(h('div', 'mysn-hist-foot', _t('F7 alebo Esc: späť za stôl')));
 		el.scrollTop = 0;
 	}
 
@@ -1532,9 +1545,9 @@ export class UI {
 		el.classList.toggle('mysn-hidden', !text);
 		el.innerHTML = '';
 		if (text) {
-			el.appendChild(h('b', '', 'Kde chceš sedieť?'));
-			el.appendChild(h('span', '', esc(text) + (back ? ' Esc: späť na moje miesto.' : '')));
-			const stop = this.button('Prestať sledovať', 'watchStop');
+			el.appendChild(h('b', '', _t('Kde chceš sedieť?')));
+			el.appendChild(h('span', '', esc(text) + (back ? _t(' Esc: späť na moje miesto.') : '')));
+			const stop = this.button(_t('Prestať sledovať'), 'watchStop');
 			el.appendChild(stop);
 		}
 	}
@@ -1548,9 +1561,9 @@ export class UI {
 		t.innerHTML = '';
 		t.appendChild(h('span', '', esc(text)));
 		if (invite) {
-			const yes = this.button('Prijať', 'accept', '', invite.id);
+			const yes = this.button(_t('Prijať'), 'accept', '', invite.id);
 			yes.classList.add('mysn-primary');
-			t.append(yes, this.button('Odmietnuť', 'decline', '', invite.id));
+			t.append(yes, this.button(_t('Odmietnuť'), 'decline', '', invite.id));
 		}
 		t.classList.remove('mysn-hidden');
 		clearTimeout(this._toastT);
@@ -1594,26 +1607,26 @@ export class UI {
 		if (!on) {
 			return;
 		}
-		L.innerHTML = '<h3>Otvorené partie</h3>';
-		L.appendChild(h('p', 'mysn-lobby-sub', 'Prebiehajúce partie s otvorenými dverami a ligové zápasy'));
+		L.innerHTML = _t('<h3>Otvorené partie</h3>');
+		L.appendChild(h('p', 'mysn-lobby-sub', _t('Prebiehajúce partie s otvorenými dverami a ligové zápasy')));
 		if (!list) {
-			L.appendChild(h('p', 'mysn-note', 'Načítavam…'));
+			L.appendChild(h('p', 'mysn-note', _t('Načítavam…')));
 		} else if (!list.length) {
-			L.appendChild(h('p', 'mysn-note', 'Teraz nie je otvorená žiadna partia. Hráč otvorí svoju herňu pre divákov dverami (F6), ligové zápasy sa dajú sledovať vždy.'));
+			L.appendChild(h('p', 'mysn-note', _t('Teraz nie je otvorená žiadna partia. Hráč otvorí svoju herňu pre divákov dverami (F6), ligové zápasy sa dajú sledovať vždy.')));
 		}
-		const kinds = { training: 'Tréning', solo: 'O najlepšie skóre', league: 'Ligový zápas' };
+		const kinds = { training: _t('Tréning'), solo: _t('O najlepšie skóre'), league: _t('Ligový zápas') };
 		const box = h('div', 'mysn-live');
 		for (const r of list || []) {
 			const row = h('div', 'mysn-live-row', `<i></i><span><b>${esc(r.title)}</b><em>${esc(kinds[r.kind] || '')}${r.info ? ', ' + esc(r.info) : ''}</em></span>`);
-			const b = this.button('Sledovať', 'watchStart', 'Pozerať sa na partiu', r);
+			const b = this.button(_t('Sledovať'), 'watchStart', _t('Pozerať sa na partiu'), r);
 			b.classList.add('mysn-primary');
 			row.appendChild(b);
 			box.appendChild(row);
 		}
 		L.appendChild(box);
 		const foot = h('div', 'mysn-lobby-foot');
-		foot.appendChild(this.button('Obnoviť', 'rooms'));
-		foot.appendChild(this.button('Zavrieť', 'roomsClose'));
+		foot.appendChild(this.button(_t('Obnoviť'), 'rooms'));
+		foot.appendChild(this.button(_t('Zavrieť'), 'roomsClose'));
 		L.appendChild(foot);
 	}
 
@@ -1635,12 +1648,12 @@ export class UI {
 			return;
 		}
 		const admin = this.opts.role === 'admin';
-		L.innerHTML = `<h3>Správa hry</h3>`;
-		L.appendChild(h('p', 'mysn-lobby-sub', admin ? 'Admin: všetky práva' : 'Správca hry: prehľad, neviditeľné sledovanie, zmena prezývky'));
+		L.innerHTML = `<h3>${_t('Správa hry')}</h3>`;
+		L.appendChild(h('p', 'mysn-lobby-sub', admin ? _t('Admin: všetky práva') : _t('Správca hry: prehľad, neviditeľné sledovanie, zmena prezývky')));
 		if (err) {
 			L.appendChild(h('p', 'mysn-note', esc(err)));
 		} else if (!d) {
-			L.appendChild(h('p', 'mysn-note', 'Načítavam…'));
+			L.appendChild(h('p', 'mysn-note', _t('Načítavam…')));
 		}
 		const sure = (label, act, val, tip) => {
 			// dvojité potvrdenie: prvé kliknutie zmení text na Naozaj?, druhé do 4 s vykoná
@@ -1654,7 +1667,7 @@ export class UI {
 					return;
 				}
 				b.dataset.armed = '1';
-				b.textContent = 'Naozaj?';
+				b.textContent = _t('Naozaj?');
 				b.classList.add('mysn-danger');
 				setTimeout(() => {
 					delete b.dataset.armed;
@@ -1670,53 +1683,53 @@ export class UI {
 			return b;
 		};
 		if (d) {
-			const kinds = { league: 'Ligový zápas', friendly: 'Priateľská partia', training: 'Spoločný tréning', solo: 'O najlepšie skóre' };
-			L.appendChild(h('h4', '', `Bežiace zápasy (${d.matches.length})`));
+			const kinds = { league: _t('Ligový zápas'), friendly: _t('Priateľská partia'), training: _t('Spoločný tréning'), solo: _t('O najlepšie skóre') };
+			L.appendChild(h('h4', '', `${_t('Bežiace zápasy')} (${d.matches.length})`));
 			const mb = h('div', 'mysn-live');
 			if (!d.matches.length) {
-				mb.appendChild(h('p', 'mysn-note', 'Teraz nebeží žiadny zápas.'));
+				mb.appendChild(h('p', 'mysn-note', _t('Teraz nebeží žiadny zápas.')));
 			}
 			for (const m of d.matches) {
 				const row = h('div', 'mysn-live-row', `<i></i><span><b>${esc(m.title)}</b><em>${esc(kinds[m.kind] || '')}, ${esc(m.score)}, ${m.minutes} min</em></span>`);
 				const acts = h('div', 'mysn-staff-acts');
-				const w = small('Sledovať', 'staffWatch', { type: 'match', id: m.id, kind: m.kind, title: m.title, info: m.score, peers: [m.p1, m.p2], hidden: 1 }, 'Neviditeľne, hráči ťa nevidia');
+				const w = small(_t('Sledovať'), 'staffWatch', { type: 'match', id: m.id, kind: m.kind, title: m.title, info: m.score, peers: [m.p1, m.p2], hidden: 1 }, _t('Neviditeľne, hráči ťa nevidia'));
 				w.classList.add('mysn-primary');
 				acts.appendChild(w);
 				if (admin) {
 					const [n1, n2] = m.title.split(' : ');
-					acts.append(sure('Vyhral ' + n1, 'staffMatch', { id: m.id, do: 'end', winner: m.p1 }, 'Ukončiť zápas, víťaz ' + n1), sure('Vyhral ' + n2, 'staffMatch', { id: m.id, do: 'end', winner: m.p2 }, 'Ukončiť zápas, víťaz ' + n2), sure('Zrušiť', 'staffMatch', { id: m.id, do: 'annul' }, 'Zrušiť zápas bez bodov'));
+					acts.append(sure(_t('Vyhral {n}', { n: n1 }), 'staffMatch', { id: m.id, do: 'end', winner: m.p1 }, _t('Ukončiť zápas, víťaz {n}', { n: n1 })), sure(_t('Vyhral {n}', { n: n2 }), 'staffMatch', { id: m.id, do: 'end', winner: m.p2 }, _t('Ukončiť zápas, víťaz {n}', { n: n2 })), sure(_t('Zrušiť'), 'staffMatch', { id: m.id, do: 'annul' }, _t('Zrušiť zápas bez bodov')));
 				}
 				row.appendChild(acts);
 				mb.appendChild(row);
 			}
 			L.appendChild(mb);
-			L.appendChild(h('h4', '', `Herne (${d.rooms.length})`));
+			L.appendChild(h('h4', '', `${_t('Herne')} (${d.rooms.length})`));
 			const rb = h('div', 'mysn-live');
 			if (!d.rooms.length) {
-				rb.appendChild(h('p', 'mysn-note', 'Nikto teraz netrénuje.'));
+				rb.appendChild(h('p', 'mysn-note', _t('Nikto teraz netrénuje.')));
 			}
 			for (const r of d.rooms) {
-				const row = h('div', 'mysn-live-row', `<i></i><span><b>${esc(r.title)}</b><em>${esc(kinds[r.kind] || 'Tréning')}${r.door ? ', dvere otvorené' : ', dvere zatvorené'}</em></span>`);
-				const w = small('Sledovať', 'staffWatch', { type: 'room', id: r.id, kind: r.kind, title: r.title, peers: [r.id], hidden: 1 }, 'Neviditeľne, hráč ťa nevidí');
+				const row = h('div', 'mysn-live-row', `<i></i><span><b>${esc(r.title)}</b><em>${esc(kinds[r.kind] || _t('Tréning'))}${r.door ? _t(', dvere otvorené') : _t(', dvere zatvorené')}</em></span>`);
+				const w = small(_t('Sledovať'), 'staffWatch', { type: 'room', id: r.id, kind: r.kind, title: r.title, peers: [r.id], hidden: 1 }, _t('Neviditeľne, hráč ťa nevidí'));
 				w.classList.add('mysn-primary');
 				row.appendChild(w);
 				rb.appendChild(row);
 			}
 			L.appendChild(rb);
-			L.appendChild(h('h4', '', `Hráči online (${d.players.length})`));
+			L.appendChild(h('h4', '', `${_t('Hráči online')} (${d.players.length})`));
 			const pb = h('div', 'mysn-live');
-			const states = { match: 'v zápase', queue: 'hľadá zápas', watch: 'sleduje', lobby: 'vyzýva', training: 'trénuje', solo: 'hrá o skóre' };
+			const states = { match: _t('v zápase'), queue: _t('hľadá zápas'), watch: 'sleduje', lobby: _t('vyzýva'), training: _t('trénuje'), solo: _t('hrá o skóre') };
 			for (const p of d.players) {
 				const lg = p.points === null ? 'nie je v lige' : `${p.points} b, ${p.wins} : ${p.losses}`;
-				const role = p.role === 'admin' ? ', admin' : p.role === 'mod' ? ', správca hry' : '';
-				const row = h('div', 'mysn-live-row', `<i></i><span><b>${esc(p.name)}${p.nick ? ' (' + esc(p.nick) + ')' : ''}</b><em>${esc(states[p.state] || p.state)}, ${esc(lg)}${p.ban ? ', <b>zákaz ligy</b>' : ''}${role}</em></span>`);
+				const role = p.role === 'admin' ? ', admin' : p.role === 'mod' ? _t(', správca hry') : '';
+				const row = h('div', 'mysn-live-row', `<i></i><span><b>${esc(p.name)}${p.nick ? ' (' + esc(p.nick) + ')' : ''}</b><em>${esc(states[p.state] || p.state)}, ${esc(lg)}${p.ban ? _t(', <b>zákaz ligy</b>') : ''}${role}</em></span>`);
 				const acts = h('div', 'mysn-staff-acts');
 				if (p.nick) {
 					const inp = h('input', 'mysn-staff-nick');
 					inp.value = p.nick;
 					inp.maxLength = 20;
-					inp.title = 'Nová prezývka v lige';
-					const save = this.button('Zmeniť prezývku', 'staffNick', 'Zmení nevhodnú prezývku v lige');
+					inp.title = _t('Nová prezývka v lige');
+					const save = this.button(_t('Zmeniť prezývku'), 'staffNick', _t('Zmení nevhodnú prezývku v lige'));
 					save.classList.add('mysn-btn-s');
 					save.onclick = (e) => {
 						e.stopPropagation();
@@ -1725,9 +1738,9 @@ export class UI {
 					acts.append(inp, save);
 				}
 				if (admin && p.role !== 'admin') {
-					acts.append(sure(p.ban ? 'Povoliť ligu' : 'Zakázať ligu', 'staffBan', { user: p.id, on: p.ban ? 0 : 1 }));
+					acts.append(sure(p.ban ? _t('Povoliť ligu') : _t('Zakázať ligu'), 'staffBan', { user: p.id, on: p.ban ? 0 : 1 }));
 					if (p.points !== null) {
-						acts.append(sure('Vynulovať body', 'staffReset', { user: p.id }, 'Body v tejto sezóne späť na začiatok, bez výhier a prehier'));
+						acts.append(sure(_t('Vynulovať body'), 'staffReset', { user: p.id }, _t('Body v tejto sezóne späť na začiatok, bez výhier a prehier')));
 					}
 				}
 				row.appendChild(acts);
@@ -1736,8 +1749,8 @@ export class UI {
 			L.appendChild(pb);
 		}
 		const foot = h('div', 'mysn-lobby-foot');
-		foot.appendChild(this.button('Obnoviť', 'staff'));
-		foot.appendChild(this.button('Zavrieť', 'staffClose'));
+		foot.appendChild(this.button(_t('Obnoviť'), 'staff'));
+		foot.appendChild(this.button(_t('Zavrieť'), 'staffClose'));
 		L.appendChild(foot);
 	}
 
@@ -1766,24 +1779,24 @@ export class UI {
 			return;
 		}
 		const L = this.lobby;
-		L.innerHTML = '<h3>Poslať výzvu</h3>';
+		L.innerHTML = _t('<h3>Poslať výzvu</h3>');
 		const av = (u) => (u.avatar ? `<img src="${esc(u.avatar)}" alt="">` : '<i></i>');
 		for (const i of d.invites || []) {
-			const row = h('div', 'mysn-inv', `${av(i.from)}<span><b>Boli ste vyzvaný!</b> ${esc(i.from.name)} ťa vyzýva ${i.training ? 'na spoločný tréning' : i.league ? 'na ligovú partiu' : i.frames > 1 ? `na partiu na ${i.frames} ${i.frames === 3 ? "framy" : "framov"}` : 'na partiu'}</span>`);
-			const yes = this.button('Prijať', 'accept', '', i.id);
+			const row = h('div', 'mysn-inv', `${av(i.from)}<span><b>${_t('Boli ste vyzvaný!')}</b> ${esc(i.from.name)} ${_t('ťa vyzýva')} ${i.training ? _t('na spoločný tréning') : i.league ? _t('na ligovú partiu') : i.frames > 1 ? _t('na partiu na {n} framov', { n: i.frames }) : _t('na partiu')}</span>`);
+			const yes = this.button(_t('Prijať'), 'accept', '', i.id);
 			yes.classList.add('mysn-primary');
-			row.append(yes, this.button('Odmietnuť', 'decline', '', i.id));
+			row.append(yes, this.button(_t('Odmietnuť'), 'decline', '', i.id));
 			L.appendChild(row);
 		}
 		const o = d.outgoing;
 		if (o && o.status === 'invited') {
-			const row = h('div', 'mysn-inv mysn-wait', `${av(o.to)}<span>Výzva odoslaná. Čakám, kým <b>${esc(o.to.name)}</b> prijme…</span>`);
-			row.appendChild(this.button('Zrušiť', 'cancelInvite'));
+			const row = h('div', 'mysn-inv mysn-wait', `${av(o.to)}<span>${_t('Výzva odoslaná. Čakám, kým {n} prijme…', { n: `<b>${esc(o.to.name)}</b>` })}</span>`);
+			row.appendChild(this.button(_t('Zrušiť'), 'cancelInvite'));
 			L.appendChild(row);
 		}
 		// 0.42.0: pozvánka e-mailom – kamarát nemusí mať účet (hrá ako hosť)
 		if (this.opts.user && !this.opts.user.guest) {
-			const ei = h('div', 'mysn-einv', '<p class="mysn-lobby-sub">Pozvať kamaráta e-mailom (nemusí mať účet)</p><div style="display:flex;gap:6px"><input type="email" placeholder="e-mail kamaráta" style="flex:1;min-width:0"><button type="button" class="mysn-btn mysn-primary">Pozvať e-mailom</button></div>');
+			const ei = h('div', 'mysn-einv', _t('<p class="mysn-lobby-sub">Pozvať kamaráta e-mailom (nemusí mať účet)</p><div style="display:flex;gap:6px"><input type="email" placeholder="e-mail kamaráta" style="flex:1;min-width:0"><button type="button" class="mysn-btn mysn-primary">Pozvať e-mailom</button></div>'));
 			const inp = ei.querySelector('input');
 			inp.value = this._einvMail || '';
 			inp.addEventListener('input', () => (this._einvMail = inp.value));
@@ -1794,39 +1807,39 @@ export class UI {
 			});
 			L.appendChild(ei);
 		}
-		L.appendChild(h('p', 'mysn-lobby-sub', 'Hráči práve v hre My Snooker'));
+		L.appendChild(h('p', 'mysn-lobby-sub', _t('Hráči práve v hre My Snooker')));
 		// výzva na partiu: počet framov (1, 3 alebo 5; vyhráva, kto prvý vyhrá väčšinu)
-		const fsel = h('label', 'mysn-frames', 'Partia na <select><option value="1">1 frame</option><option value="3">3 framy (2 víťazné)</option><option value="5">5 framov (3 víťazné)</option></select>');
+		const fsel = h('label', 'mysn-frames', _t('Partia na <select><option value="1">1 frame</option><option value="3">3 framy (2 víťazné)</option><option value="5">5 framov (3 víťazné)</option></select>'));
 		const sel = fsel.querySelector('select');
 		sel.value = String(this.inviteFrames || 1);
 		sel.addEventListener('change', () => (this.inviteFrames = +sel.value || 1));
 		L.appendChild(fsel);
 		const live = d.live || [];
 		if (!live.length) {
-			L.appendChild(h('p', 'mysn-note', 'Teraz nie je v hre nikto iný. Zoznam sa obnovuje sám, keď niekto príde, objaví sa tu.'));
+			L.appendChild(h('p', 'mysn-note', _t('Teraz nie je v hre nikto iný. Zoznam sa obnovuje sám, keď niekto príde, objaví sa tu.')));
 		}
 		const list = h('div', 'mysn-live');
 		for (const u of live) {
-			const row = h('div', 'mysn-live-row', `${av(u)}<span><b>${esc(u.name)}</b>${u.busy ? '<em>hrá partiu</em>' : '<em class="mysn-live-on">v hre</em>'}</span>`);
-			const b = this.button('Vyzvať na partiu', 'invite', 'Partia podľa pravidiel snookeru na zvolený počet framov', u.id);
-			const bt = this.button('Pozvať na tréning', 'inviteTraining', 'Spoločný tréning: striedate sa pri stole, bez faulov, farby sa vracajú na spoty', u.id);
+			const row = h('div', 'mysn-live-row', `${av(u)}<span><b>${esc(u.name)}</b>${u.busy ? _t('<em>hrá partiu</em>') : '<em class="mysn-live-on">v hre</em>'}</span>`);
+			const b = this.button(_t('Vyzvať na partiu'), 'invite', _t('Partia podľa pravidiel snookeru na zvolený počet framov'), u.id);
+			const bt = this.button(_t('Pozvať na tréning'), 'inviteTraining', _t('Spoločný tréning: striedate sa pri stole, bez faulov, farby sa vracajú na spoty'), u.id);
 			b.disabled = bt.disabled = !!u.busy || !!(o && o.status === 'invited');
 			row.append(b, bt);
 			list.appendChild(row);
 		}
 		L.appendChild(list);
 		if ((d.paused || []).length) {
-			L.appendChild(h('p', 'mysn-lobby-sub', 'Rozohrané partie'));
+			L.appendChild(h('p', 'mysn-lobby-sub', _t('Rozohrané partie')));
 			for (const p of d.paused) {
 				const when = new Date(p.updated * 1000).toLocaleString('sk-SK', { day: 'numeric', month: 'numeric', hour: '2-digit', minute: '2-digit' });
 				const row = h('div', 'mysn-live-row', `${av(p.opp)}<span><b>${esc(p.opp.name)}</b><em>${p.scores[0]} : ${p.scores[1]}, ${esc(when)}</em></span>`);
-				row.appendChild(this.button('Pokračovať', 'resumeMatch', 'Pokračovať v partii (súper sa pripojí, keď príde do hry)', p.id));
+				row.appendChild(this.button(_t('Pokračovať'), 'resumeMatch', _t('Pokračovať v partii (súper sa pripojí, keď príde do hry)'), p.id));
 				L.appendChild(row);
 			}
 		}
 		const foot = h('div', 'mysn-lobby-foot');
-		foot.appendChild(h('span', 'mysn-note', 'Partia sa ukladá po každom údere. Pri výpadku internetu sa po návrate pokračuje tam, kde sa skončila.'));
-		foot.appendChild(this.button('Zavrieť', 'lobbyClose'));
+		foot.appendChild(h('span', 'mysn-note', _t('Partia sa ukladá po každom údere. Pri výpadku internetu sa po návrate pokračuje tam, kde sa skončila.')));
+		foot.appendChild(this.button(_t('Zavrieť'), 'lobbyClose'));
 		L.appendChild(foot);
 	}
 
@@ -1850,20 +1863,20 @@ export class UI {
 		for (let i = 0; i < 70; i++) {
 			conf += `<i style="left:${(Math.random() * 100).toFixed(1)}%;background:${colors[i % colors.length]};animation-delay:${(Math.random() * 2.5).toFixed(2)}s;animation-duration:${(2.8 + Math.random() * 2.4).toFixed(2)}s;width:${6 + Math.round(Math.random() * 8)}px;height:${6 + Math.round(Math.random() * 8)}px;border-radius:${i % 3 ? '50%' : '2px'}"></i>`;
 		}
-		const rank = r.rank ? `<p class="mysn-party-rank">${r.rank}. miesto v rebríčku z ${r.players}${r.best ? ', tvoj najlepší frame!' : ''}</p>` : '';
+		const rank = r.rank ? `<p class="mysn-party-rank">${_t('{r}. miesto v rebríčku z {n}', { r: r.rank, n: r.players })}${r.best ? _t(', tvoj najlepší frame!') : ''}</p>` : '';
 		P.innerHTML = `<div class="mysn-party-conf">${conf}</div><div class="mysn-party-box">
-			<p class="mysn-party-kick">Frame dohraný</p>
-			<h2>Gratulujem!</h2>
+			<p class="mysn-party-kick">${_t('Frame dohraný')}</p>
+			<h2>${_t('Gratulujem!')}</h2>
 			<div class="mysn-party-score"><b>${r.points}</b><span>${word}</span></div>
 			<p class="mysn-party-time">za <b>${time}</b></p>
-			<p class="mysn-party-meta">Najvyššia séria ${r.brk}, údery ${r.shots}, fauly ${r.fouls}</p>
+			<p class="mysn-party-meta">${_t('Najvyššia séria {b}, údery {s}, fauly {f}', { b: r.brk, s: r.shots, f: r.fouls })}</p>
 			${rank}${r.vnote ? `<p class="mysn-party-ver${r.vbad ? ' bad' : ''}">${esc(r.vnote)}</p>` : ''}${r.error ? `<p class="mysn-party-err">${esc(r.error)}</p>` : ''}
 			<div class="mysn-party-btns"></div>
 		</div>`;
 		const btns = P.querySelector('.mysn-party-btns');
-		const next = this.button('Hrať ďalší frame', 'partyNext');
+		const next = this.button(_t('Hrať ďalší frame'), 'partyNext');
 		next.classList.add('mysn-primary');
-		btns.append(next, this.button('Rebríček', 'partyBoard'));
+		btns.append(next, this.button(_t('Rebríček'), 'partyBoard'));
 		P.classList.remove('mysn-hidden');
 	}
 
@@ -1898,87 +1911,87 @@ export class UI {
 		B.innerHTML = '';
 		const tm = (sec) => new Date(sec * 1000).toLocaleDateString('sk-SK');
 		if (archive) {
-			B.appendChild(h('h3', '', 'Minulé sezóny'));
+			B.appendChild(h('h3', '', _t('Minulé sezóny')));
 			if (!archive.seasons || !archive.seasons.length) {
-				B.appendChild(h('p', 'mysn-note', 'Zatiaľ sa neskončila žiadna sezóna. Prvá sa skončí po roku hrania.'));
+				B.appendChild(h('p', 'mysn-note', _t('Zatiaľ sa neskončila žiadna sezóna. Prvá sa skončí po roku hrania.')));
 			}
 			for (const s of archive.seasons || []) {
-				B.appendChild(h('p', 'mysn-lobby-sub', `${esc(s.name)} (${tm(s.started)} až ${tm(s.ends)})`));
+				B.appendChild(h('p', 'mysn-lobby-sub', `${esc(s.name)} (${tm(s.started)} – ${tm(s.ends)})`));
 				if (s.champion) {
-					B.appendChild(h('div', 'mysn-menu-note', `Majster sezóny: <b>${esc(s.champion.name)}</b>`));
+					B.appendChild(h('div', 'mysn-menu-note', `${_t('Majster sezóny:')} <b>${esc(s.champion.name)}</b>`));
 				}
 				for (const n of [1, 2, 3, 4]) {
 					const rows = (s.leagues && s.leagues[n]) || [];
 					if (rows.length) {
-						B.appendChild(h('p', 'mysn-note', `<b>${n}. liga:</b> ` + rows.map((r) => `${r.rank}. ${esc(r.user.name)} (${r.points})`).join(', ')));
+						B.appendChild(h('p', 'mysn-note', `<b>${_t('{n}. liga', { n })}:</b> ` + rows.map((r) => `${r.rank}. ${esc(r.user.name)} (${r.points})`).join(', ')));
 					}
 				}
 			}
 			const f = h('div', 'mysn-lobby-foot');
-			f.append(this.button('Späť na ligu', 'league'), this.button('Zavrieť', 'leagueClose'));
+			f.append(this.button(_t('Späť na ligu'), 'league'), this.button(_t('Zavrieť'), 'leagueClose'));
 			B.appendChild(f);
 			return;
 		}
 		if (!d) {
-			B.appendChild(h('h3', '', 'Liga'));
-			B.appendChild(h('p', 'mysn-note', 'Ligu sa nepodarilo načítať.'));
+			B.appendChild(h('h3', '', _t('Liga')));
+			B.appendChild(h('p', 'mysn-note', _t('Ligu sa nepodarilo načítať.')));
 			const f = h('div', 'mysn-lobby-foot');
-			f.appendChild(this.button('Zavrieť', 'leagueClose'));
+			f.appendChild(this.button(_t('Zavrieť'), 'leagueClose'));
 			B.appendChild(f);
 			return;
 		}
-		B.appendChild(h('h3', '', `Liga: ${esc(d.season.name)}`));
-		B.appendChild(h('p', 'mysn-note', `Do konca sezóny ostáva ${d.season.daysLeft} dní (${tm(d.season.ends)}). Hráčov v lige: ${d.players}.`));
+		B.appendChild(h('h3', '', `${_t('Liga:')} ${esc(d.season.name)}`));
+		B.appendChild(h('p', 'mysn-note', _t('Do konca sezóny ostáva {n} dní ({e}). Hráčov v lige: {p}.', { n: d.season.daysLeft, e: tm(d.season.ends), p: d.players })));
 		if (d.me) {
-			B.appendChild(h('div', 'mysn-menu-note', `Si <b>${d.me.rank}.</b> v <b>${d.me.league}. lige</b>, máš <b>${d.me.points}</b> bodov (výhry ${d.me.wins}, prehry ${d.me.losses}), ELO <b>${d.me.elo}</b>.`));
+			B.appendChild(h('div', 'mysn-menu-note', _t('Si {r}. v {l}. lige, máš {p} bodov (výhry {w}, prehry {x}), ELO {e}.', { r: `<b>${d.me.rank}</b>`, l: `<b>${d.me.league}</b>`, p: `<b>${d.me.points}</b>`, w: d.me.wins, x: d.me.losses, e: `<b>${d.me.elo}</b>` })));
 			if (this._leagueTab === 0) {
 				this._leagueTab = d.me.league;
 			}
 		}
 		// živí hráči z mojej a susedných líg
-		B.appendChild(h('p', 'mysn-lobby-sub', 'Vyzvi hráča (tvoja a susedné ligy, práve v hre)'));
+		B.appendChild(h('p', 'mysn-lobby-sub', _t('Vyzvi hráča (tvoja a susedné ligy, práve v hre)')));
 		const live = d.live || [];
 		if (!live.length) {
-			B.appendChild(h('p', 'mysn-note', 'Teraz nie je v hre nikto z tvojej ani susedných líg. Zoznam sa obnovuje sám.'));
+			B.appendChild(h('p', 'mysn-note', _t('Teraz nie je v hre nikto z tvojej ani susedných líg. Zoznam sa obnovuje sám.')));
 		}
 		const o = this._lobbyData && this._lobbyData.outgoing;
 		const lst = h('div', 'mysn-live');
 		for (const u of live) {
-			const row = h('div', 'mysn-live-row', `${u.user.avatar ? `<img src="${esc(u.user.avatar)}" alt="">` : '<i></i>'}<span><b>${esc(u.user.name)}</b><em>${u.league}. liga, ${u.points} bodov${u.busy ? ', hrá partiu' : ''}</em></span>`);
-			const b = this.button('Vyzvať', 'leagueInvite', 'Ligová partia: víťaz získa body, ktoré nahral, porazený ich stratí', u.user.id);
+			const row = h('div', 'mysn-live-row', `${u.user.avatar ? `<img src="${esc(u.user.avatar)}" alt="">` : '<i></i>'}<span><b>${esc(u.user.name)}</b><em>${_t('{l}. liga, {p} bodov', { l: u.league, p: u.points })}${u.busy ? _t(', hrá partiu') : ''}</em></span>`);
+			const b = this.button(_t('Vyzvať'), 'leagueInvite', _t('Ligová partia: víťaz získa body, ktoré nahral, porazený ich stratí'), u.user.id);
 			b.disabled = !!u.busy || !!(o && o.status === 'invited');
 			row.appendChild(b);
 			lst.appendChild(row);
 		}
 		B.appendChild(lst);
 		if (o && o.status === 'invited') {
-			const row = h('div', 'mysn-inv mysn-wait', `<span>Čakám, kým <b>${esc(o.to.name)}</b> prijme výzvu…</span>`);
-			row.appendChild(this.button('Zrušiť', 'cancelInvite'));
+			const row = h('div', 'mysn-inv mysn-wait', `<span>${_t('Čakám, kým {n} prijme výzvu…', { n: `<b>${esc(o.to.name)}</b>` })}</span>`);
+			row.appendChild(this.button(_t('Zrušiť'), 'cancelInvite'));
 			B.appendChild(row);
 		}
 		// tabuľky líg na záložkách
 		const tabs = h('div', 'mysn-league-tabs');
 		for (const n of [1, 2, 3, 4]) {
-			const t = this.button(`${n}. liga`, 'leagueTab', '', n);
+			const t = this.button(_t('{n}. liga', { n }), 'leagueTab', '', n);
 			t.classList.toggle('mysn-on', this._leagueTab === n);
 			tabs.appendChild(t);
 		}
 		B.appendChild(tabs);
 		const rows = (d.leagues && d.leagues[this._leagueTab || 1]) || [];
 		const tb = h('table', 'mysn-lb');
-		tb.innerHTML = '<thead><tr><th>#</th><th>Hráč</th><th>Body</th><th>V / P</th><th>Séria</th><th>ELO</th></tr></thead>';
+		tb.innerHTML = _t('<thead><tr><th>#</th><th>Hráč</th><th>Body</th><th>V / P</th><th>Séria</th><th>ELO</th></tr></thead>');
 		const body = h('tbody');
 		if (!rows.length) {
-			body.appendChild(h('tr', 'mysn-lb-gap', '<td colspan="6">V tejto lige zatiaľ nikto nie je.</td>'));
+			body.appendChild(h('tr', 'mysn-lb-gap', _t('<td colspan="6">V tejto lige zatiaľ nikto nie je.</td>')));
 		}
 		for (const r of rows) {
 			body.appendChild(h('tr', r.me ? 'mysn-lb-me' : '', `<td>${r.rank}.</td><td>${esc(r.user.name)}</td><td><b>${r.points}</b></td><td>${r.wins} / ${r.losses}</td><td>${r.best}</td><td>${r.elo || ''}</td>`));
 		}
 		tb.appendChild(body);
 		B.appendChild(tb);
-		B.appendChild(h('p', 'mysn-note', 'Každý začína so 147 bodmi. Víťaz získa toľko bodov, koľko nahral, porazený ich stratí (najviac všetky svoje). Výhra nad hráčom z vyššej ligy sa ráta 1,5-krát. Ligy podľa poradia: horných 10 % hráčov 1. liga, ďalších 20 % 2. liga, ďalších 30 % 3. liga, zvyšok 4. liga (nad 70 hráčov top 10, 11. až 30., 31. až 70., ostatní). Sezóna trvá rok.'));
+		B.appendChild(h('p', 'mysn-note', _t('Každý začína so 147 bodmi. Víťaz získa toľko bodov, koľko nahral, porazený ich stratí (najviac všetky svoje). Výhra nad hráčom z vyššej ligy sa ráta 1,5-krát. Ligy podľa poradia: horných 10 % hráčov 1. liga, ďalších 20 % 2. liga, ďalších 30 % 3. liga, zvyšok 4. liga (nad 70 hráčov top 10, 11. až 30., 31. až 70., ostatní). Sezóna trvá rok.')));
 		const f = h('div', 'mysn-lobby-foot');
-		f.append(this.button('Minulé sezóny', 'leagueArchive'), this.button('Späť do herne', 'leagueHome'), this.button('Zavrieť', 'leagueClose'));
+		f.append(this.button(_t('Minulé sezóny'), 'leagueArchive'), this.button(_t('Späť do herne'), 'leagueHome'), this.button(_t('Zavrieť'), 'leagueClose'));
 		B.appendChild(f);
 	}
 
@@ -1997,26 +2010,26 @@ export class UI {
 			const x = Math.max(0, Math.round(sec));
 			return `${Math.floor(x / 60)}:${String(x % 60).padStart(2, '0')}`;
 		};
-		B.innerHTML = '<h3>Rebríček: o najlepšie skóre (F8)</h3>';
+		B.innerHTML = _t('<h3>Rebríček: o najlepšie skóre (F8)</h3>');
 		if (result) {
 			B.appendChild(h('div', 'mysn-menu-note', esc(result)));
 		}
-		B.appendChild(h('p', 'mysn-note', 'Jeden hráč hrá celý frame podľa pravidiel. Rozhodujú body (fauly sa odpočítajú), pri rovnosti kratší čas. V rebríčku je najlepší frame každého hráča.'));
+		B.appendChild(h('p', 'mysn-note', _t('Jeden hráč hrá celý frame podľa pravidiel. Rozhodujú body (fauly sa odpočítajú), pri rovnosti kratší čas. V rebríčku je najlepší frame každého hráča.')));
 		if (d === undefined) {
-			B.appendChild(h('p', 'mysn-note', 'Načítavam rebríček…'));
+			B.appendChild(h('p', 'mysn-note', _t('Načítavam rebríček…')));
 		} else if (!d) {
-			B.appendChild(h('p', 'mysn-note', 'Rebríček sa nepodarilo načítať.'));
+			B.appendChild(h('p', 'mysn-note', _t('Rebríček sa nepodarilo načítať.')));
 		} else if (!d.top.length) {
-			B.appendChild(h('p', 'mysn-note', 'Zatiaľ nikto nedohral frame. Buď prvý.'));
+			B.appendChild(h('p', 'mysn-note', _t('Zatiaľ nikto nedohral frame. Buď prvý.')));
 		} else {
 			const tb = h('table', 'mysn-lb');
-			tb.innerHTML = '<thead><tr><th>#</th><th>Hráč</th><th>Body</th><th>Celkový čas</th><th>Séria</th></tr></thead>';
+			tb.innerHTML = _t('<thead><tr><th>#</th><th>Hráč</th><th>Body</th><th>Celkový čas</th><th>Séria</th></tr></thead>');
 			const body = h('tbody');
 			const row = (r) => {
 				// ✓ overené serverom; staršie výsledky spred overovania majú štítok neoverené (0.11.0)
-				const vb = r.ver === 1 ? ' <span class="mysn-lb-ok" title="Overené serverom: frame prehral server a výsledok sedí">✓</span>' : r.ver === 0 ? ' <span class="mysn-lb-nv" title="Výsledok spred overovania serverom">neoverené</span>' : '';
+				const vb = r.ver === 1 ? ` <span class="mysn-lb-ok" title="${_t('Overené serverom: frame prehral server a výsledok sedí')}">✓</span>` : r.ver === 0 ? ` <span class="mysn-lb-nv" title="${_t('Výsledok spred overovania serverom')}">${_t('neoverené')}</span>` : '';
 				// 0.41.1: hráč pod kontrolou férovej hry (skóre podozrenia od 30)
-				const ck = r.chk ? ' <span class="mysn-lb-nv" title="Hráč je pod kontrolou férovej hry (snímky obrazovky)">kontrola</span>' : '';
+				const ck = r.chk ? _t(' <span class="mysn-lb-nv" title="Hráč je pod kontrolou férovej hry (snímky obrazovky)">kontrola</span>') : '';
 				const tr = h('tr', r.me ? 'mysn-lb-me' : '', `<td>${r.rank}.</td><td>${esc(r.user.name)}${ck}</td><td><b>${r.points}</b>${vb}</td><td>${t(r.seconds)}</td><td>${r.brk}</td>`);
 				body.appendChild(tr);
 			};
@@ -2027,12 +2040,12 @@ export class UI {
 			}
 			tb.appendChild(body);
 			B.appendChild(tb);
-			B.appendChild(h('p', 'mysn-note', d.mine ? `Tvoje miesto: ${d.rank}. z ${d.players}, dohraných framov: ${d.frames}.` : `Hráčov v rebríčku: ${d.players}. Zatiaľ nemáš dohraný žiadny frame.`));
+			B.appendChild(h('p', 'mysn-note', d.mine ? _t('Tvoje miesto: {r}. z {n}, dohraných framov: {f}.', { r: d.rank, n: d.players, f: d.frames }) : _t('Hráčov v rebríčku: {n}. Zatiaľ nemáš dohraný žiadny frame.', { n: d.players })));
 		}
 		const foot = h('div', 'mysn-lobby-foot');
-		const play = this.button('Hrať', 'solo');
+		const play = this.button(_t('Hrať'), 'solo');
 		play.classList.add('mysn-primary');
-		foot.append(play, this.button('Zavrieť', 'leaderboardClose'));
+		foot.append(play, this.button(_t('Zavrieť'), 'leaderboardClose'));
 		B.appendChild(foot);
 		B.classList.remove('mysn-hidden');
 	}
@@ -2048,26 +2061,26 @@ export class UI {
 	buildHelp() {
 		const p = h('div', 'mysn-panel mysn-help mysn-hidden');
 		p.innerHTML = `
-			<h3>Ovládanie</h3>
+			<h3>${_t('Ovládanie')}</h3>
 			<ul>
-				<li><b>Mierenie myšou:</b> kliknutím do hry sa myš zachytí v okne (kurzor sa skryje). Potom stačí hýbať myšou, tlačidlo netreba. Pomalý pohyb mieri veľmi jemne, so Shift ešte jemnejšie. Esc myš uvoľní a otvorí menu.</li>
-				<li><b>Posun pohľadu:</b> drž pravé tlačidlo myši a pohybom posúvaj pohľad hore, dole, doľava a doprava. Kamera sa pritom pozerá na guľu, na ktorú mieriš, a keď nemieriš na žiadnu, na miesto pol metra pred bielou v smere mierenia. Myš hore kameru približuje ku guli, myš dole (k sebe) ju oddiali; keď je prvý pohyb po stlačení tlačidla dole, kamera namiesto toho klesá popri tágu až na úroveň stola. Kým je kamera nad tágom, ostáva v strede; keď klesne k tágu, uhne do strany, aby doň nevošla. Stranu vyberieš myšou doľava alebo doprava ešte nad tágom, pod tágom je zamknutá a myš kameru už len jemne odsúva bokom. Keď ideš rovno dole, uhne podľa ruky (pravák vľavo, ľavák vpravo, dá sa zmeniť v Nastaveniach). Keď tlačidlo pustíš, pohľad sa vráti na pôvodné miesto. Otáčaním kolieska priblížiš alebo vzdiališ.</li>
-				<li><b>Po údere:</b> kamera sleduje bielu guľu. Pohybom myši bez tlačidla otáčaš pohľad okolo nej (doľava a doprava, hore a dole).</li>
-				<li><b>Biela do ruky myšou:</b> bielu posúvaš pohybom myši, ľavým klikom ju položíš.</li>
-				<li><b>Úder myšou:</b> drž ľavé tlačidlo, ruka chytí tágo. Myš k sebe tágo odtiahne, pohyb dopredu ho posunie a pri dotyku bielej vystrelí. Sila je podľa toho, ako rýchlo pohneš dopredu. Pustením ľavého tlačidla úder zrušíš.</li>
-				<li><b>Miesto úderu myšou:</b> stlač a drž koliesko a pohybom myši posúvaj bod na bielej guli vľavo dole (hore guľa dopredu, dole guľa späť, do strán bočná falša). Dvojklik kolieskom vráti bod do stredu.</li>
-				<li><b>Uhol tága myšou:</b> drž Shift a otáčaj kolieskom: nahor tágo zdvíhaš, nadol spúšťaš (s Ctrl po 5°), až na 80°. Uhol sa ukazuje pri ikone tága vedľa Miesta úderu. S bočnou falšou sa biela stočí: 8 – 25° swerve, od 45° massé. Pri mantineli je najmenší uhol daný.</li>
-				<li><b>Mobil – 4 časti obrazovky:</b> vľavo hore ťukni = chat; vpravo hore a vľavo dole ťahaj doľava a doprava = mierenie (otáčanie pohľadu); vpravo dole = úder: prst ťahaj dole (odtiahneš tágo) a potom rýchlo hore, sila podľa rýchlosti. Dvoma prstami kdekoľvek priblížiš. Po výstrele, kým sa gule kotúľajú, prst kdekoľvek na obrazovke otáča kameru okolo bielej (doľava a doprava krúži, hore a dole nakláňa); keď gule zastanú, mieriš zo smeru, kam sa kamera pozerá. Citlivosť nastavíš v spodnom paneli (šípka dole v strede): Otáčanie prstom, Ťahanie tága a Oko; ukladajú sa zvlášť od nastavení myši. Úplne hore vľavo je panák: voľný pohľad (ako medzerník) – prstom sa rozhliadaš, ovládačom vpravo dole chodíš, ▲ a ▼ vedľa neho hore a dole, dvoma prstami priblížiš, panák ťa vráti za tágo. Nad Miestom úderu je modrý štvorček: ťuknutím otvoríš príslušenstvo – kriedu, nádstavce a predĺženie (ako F3). Pod ním je zameriavač (len pri tágu s jemným mierením): ťuknutím zapneš alebo vypneš jemné mierenie, zapnutý je žltý; po výstrele sa sám vypne. Keď mieriš na guľu, vedľa Miesta úderu je kruh s okom: drž ho a ťahaj prstom – hore priblížiš pohľad ku guli, do strán krúžiš okolo nej, dole spustíš kameru popri tágu (ako pravé tlačidlo myši).</li>
-				<li><b>Mierenie prstom:</b> za tágom ťahaj doľava a doprava (vpravo hore alebo vľavo dole), šípky na klávesnici. Pohľad zhora (Tab) je len na pozeranie, mieri sa za tágom.</li>
-				<li><b>Detail dotyku:</b> kruh vpravo hore ukazuje zhora okamih, keď sa biela dotkne gule. Úder ide vždy nahor, červený bod je miesto dotyku. Pomocné čiary a šípky (kam pôjdu gule) v hre nie sú, mieri sa ako pri skutočnom stole.</li>
-				<li><b>Sila a úder:</b> ťahaj ukazovateľ sily vpravo nadol a pusť.</li>
-				<li><b>Voľná kamera:</b> medzerník. Myšou sa rozhliadaš, šípky alebo W A S D posúvajú, Q a E dole a hore, Shift rýchlejšie, koliesko približuje. Medzerník alebo Esc: späť.</li>
-				<li><b>Miesto úderu:</b> klikni na bielu guľu vľavo dole. Hore znamená guľu dopredu, dole guľu späť, do strán bočnú falšu. Dvojklik vráti stred.</li>
-				<li><b>Kamera:</b> vždy za tágom, otáčaním kolieska priblížiš alebo vzdiališ. Pri kladení bielej do D sa kamera sama prepne zhora.</li>
-				<li><b>Biela do ruky:</b> posuň bielu v D a potvrď tlačidlom Hotovo alebo klávesom Enter.</li>
-				<li><b>Klávesy:</b> Z späť, B biela do ruky, R nové rozostavenie, S preskočiť, F1 pomoc. N voda, G grgnúť, H prdnúť.</li>
+				<li><b>${_t('Mierenie myšou:')}</b> ${_t('kliknutím do hry sa myš zachytí v okne (kurzor sa skryje). Potom stačí hýbať myšou, tlačidlo netreba. Pomalý pohyb mieri veľmi jemne, so Shift ešte jemnejšie. Esc myš uvoľní a otvorí menu.')}</li>
+				<li><b>${_t('Posun pohľadu:')}</b> ${_t('drž pravé tlačidlo myši a pohybom posúvaj pohľad hore, dole, doľava a doprava. Kamera sa pritom pozerá na guľu, na ktorú mieriš, a keď nemieriš na žiadnu, na miesto pol metra pred bielou v smere mierenia. Myš hore kameru približuje ku guli, myš dole (k sebe) ju oddiali; keď je prvý pohyb po stlačení tlačidla dole, kamera namiesto toho klesá popri tágu až na úroveň stola. Kým je kamera nad tágom, ostáva v strede; keď klesne k tágu, uhne do strany, aby doň nevošla. Stranu vyberieš myšou doľava alebo doprava ešte nad tágom, pod tágom je zamknutá a myš kameru už len jemne odsúva bokom. Keď ideš rovno dole, uhne podľa ruky (pravák vľavo, ľavák vpravo, dá sa zmeniť v Nastaveniach). Keď tlačidlo pustíš, pohľad sa vráti na pôvodné miesto. Otáčaním kolieska priblížiš alebo vzdiališ.')}</li>
+				<li><b>${_t('Po údere:')}</b> ${_t('kamera sleduje bielu guľu. Pohybom myši bez tlačidla otáčaš pohľad okolo nej (doľava a doprava, hore a dole).')}</li>
+				<li><b>${_t('Biela do ruky myšou:')}</b> ${_t('bielu posúvaš pohybom myši, ľavým klikom ju položíš.')}</li>
+				<li><b>${_t('Úder myšou:')}</b> ${_t('drž ľavé tlačidlo, ruka chytí tágo. Myš k sebe tágo odtiahne, pohyb dopredu ho posunie a pri dotyku bielej vystrelí. Sila je podľa toho, ako rýchlo pohneš dopredu. Pustením ľavého tlačidla úder zrušíš.')}</li>
+				<li><b>${_t('Miesto úderu myšou:')}</b> ${_t('stlač a drž koliesko a pohybom myši posúvaj bod na bielej guli vľavo dole (hore guľa dopredu, dole guľa späť, do strán bočná falša). Dvojklik kolieskom vráti bod do stredu.')}</li>
+				<li><b>${_t('Uhol tága myšou:')}</b> ${_t('drž Shift a otáčaj kolieskom: nahor tágo zdvíhaš, nadol spúšťaš (s Ctrl po 5°), až na 80°. Uhol sa ukazuje pri ikone tága vedľa Miesta úderu. S bočnou falšou sa biela stočí: 8 – 25° swerve, od 45° massé. Pri mantineli je najmenší uhol daný.')}</li>
+				<li><b>${_t('Mobil – 4 časti obrazovky:')}</b> ${_t('vľavo hore ťukni = chat; vpravo hore a vľavo dole ťahaj doľava a doprava = mierenie (otáčanie pohľadu); vpravo dole = úder: prst ťahaj dole (odtiahneš tágo) a potom rýchlo hore, sila podľa rýchlosti. Dvoma prstami kdekoľvek priblížiš. Po výstrele, kým sa gule kotúľajú, prst kdekoľvek na obrazovke otáča kameru okolo bielej (doľava a doprava krúži, hore a dole nakláňa); keď gule zastanú, mieriš zo smeru, kam sa kamera pozerá. Citlivosť nastavíš v spodnom paneli (šípka dole v strede): Otáčanie prstom, Ťahanie tága a Oko; ukladajú sa zvlášť od nastavení myši. Úplne hore vľavo je panák: voľný pohľad (ako medzerník) – prstom sa rozhliadaš, ovládačom vpravo dole chodíš, ▲ a ▼ vedľa neho hore a dole, dvoma prstami priblížiš, panák ťa vráti za tágo. Nad Miestom úderu je modrý štvorček: ťuknutím otvoríš príslušenstvo – kriedu, nádstavce a predĺženie (ako F3). Pod ním je zameriavač (len pri tágu s jemným mierením): ťuknutím zapneš alebo vypneš jemné mierenie, zapnutý je žltý; po výstrele sa sám vypne. Keď mieriš na guľu, vedľa Miesta úderu je kruh s okom: drž ho a ťahaj prstom – hore priblížiš pohľad ku guli, do strán krúžiš okolo nej, dole spustíš kameru popri tágu (ako pravé tlačidlo myši).')}</li>
+				<li><b>${_t('Mierenie prstom:')}</b> ${_t('za tágom ťahaj doľava a doprava (vpravo hore alebo vľavo dole), šípky na klávesnici. Pohľad zhora (Tab) je len na pozeranie, mieri sa za tágom.')}</li>
+				<li><b>${_t('Detail dotyku:')}</b> ${_t('kruh vpravo hore ukazuje zhora okamih, keď sa biela dotkne gule. Úder ide vždy nahor, červený bod je miesto dotyku. Pomocné čiary a šípky (kam pôjdu gule) v hre nie sú, mieri sa ako pri skutočnom stole.')}</li>
+				<li><b>${_t('Sila a úder:')}</b> ${_t('ťahaj ukazovateľ sily vpravo nadol a pusť.')}</li>
+				<li><b>${_t('Voľná kamera:')}</b> ${_t('medzerník. Myšou sa rozhliadaš, šípky alebo W A S D posúvajú, Q a E dole a hore, Shift rýchlejšie, koliesko približuje. Medzerník alebo Esc: späť.')}</li>
+				<li><b>${_t('Miesto úderu:')}</b> ${_t('klikni na bielu guľu vľavo dole. Hore znamená guľu dopredu, dole guľu späť, do strán bočnú falšu. Dvojklik vráti stred.')}</li>
+				<li><b>${_t('Kamera:')}</b> ${_t('vždy za tágom, otáčaním kolieska priblížiš alebo vzdiališ. Pri kladení bielej do D sa kamera sama prepne zhora.')}</li>
+				<li><b>${_t('Biela do ruky:')}</b> ${_t('posuň bielu v D a potvrď tlačidlom Hotovo alebo klávesom Enter.')}</li>
+				<li><b>${_t('Klávesy:')}</b> ${_t('Z späť, B biela do ruky, R nové rozostavenie, S preskočiť, F1 pomoc. N voda, G grgnúť, H prdnúť.')}</li>
 			</ul>
-			<button type="button" class="mysn-btn mysn-primary" data-close>Rozumiem</button>`;
+			<button type="button" class="mysn-btn mysn-primary" data-close>${_t('Rozumiem')}</button>`;
 		p.querySelector('[data-close]').addEventListener('click', () => p.classList.add('mysn-hidden'));
 		return p;
 	}
@@ -2243,9 +2256,9 @@ export class UI {
 		}
 		const side = dx * uz - dz * ux; // ktorou stranou bielej sa trafí
 		const deg = (cut * 180) / Math.PI;
-		const where = deg < 0.5 ? 'plný zásah' : (side > 0 ? 'guľa ide doprava' : 'guľa ide doľava');
+		const where = deg < 0.5 ? _t('plný zásah') : (side > 0 ? _t('guľa ide doprava') : _t('guľa ide doľava'));
 		this.contactInfo.innerHTML =
-			`<span>Uhol <b>${deg.toFixed(1)}°</b></span><span>Plnosť <b>${Math.round(fullness * 100)} %</b></span>` +
+			`<span>${_t('Uhol')} <b>${dec(deg.toFixed(1))}°</b></span><span>${_t('Plnosť')} <b>${Math.round(fullness * 100)} %</b></span>` +
 			(lines
 				? `<span class="mysn-contact-where">${where}</span>` +
 				  (pocket ? '<span class="mysn-contact-pot">Smer do jamky</span>' : '<span class="mysn-contact-miss">Mimo jamky</span>')
@@ -2272,12 +2285,12 @@ export class UI {
 
 	_hintText() {
 		const t = this._free
-			? 'Myš je voľná, kým držíš Ctrl. Po pustení sa vráti na tágo.'
+			? _t('Myš je voľná, kým držíš Ctrl. Po pustení sa vráti na tágo.')
 			: this._stroke
-			? 'Ruka drží tágo: myš k sebe odtiahne, dopredu vystrelí. Pustením ľavého tlačidla zrušíš.'
+			? _t('Ruka drží tágo: myš k sebe odtiahne, dopredu vystrelí. Pustením ľavého tlačidla zrušíš.')
 			: this._lock
-				? `${this._cueName}: mier pohybom myši${this._cueFine ? ' (Shift jemne)' : ''}, ľavé tlačidlo drž a striel. F1 nápoveda, F2 tágá, F3 krieda, F4 skóre${this._stadium ? '' : ', F6 dvere'}, Tab zhora, Esc menu.`
-				: `Klikni do hry, myš sa zachytí v okne. F1 nápoveda, F2 tágá, F3 krieda, F4 skóre${this._stadium ? '' : ', F6 dvere'}, Tab zhora.`;
+				? `${this._cueName}: ` + _t('mier pohybom myši') + (this._cueFine ? _t(' (Shift jemne)') : '') + _t(', ľavé tlačidlo drž a striel. F1 nápoveda, F2 tágá, F3 krieda, F4 skóre') + (this._stadium ? '' : _t(', F6 dvere')) + _t(', Tab zhora, Esc menu.')
+				: `${_t('Klikni do hry, myš sa zachytí v okne. F1 nápoveda, F2 tágá, F3 krieda, F4 skóre')}${this._stadium ? '' : _t(', F6 dvere')}${_t(', Tab zhora.')}`;
 		this.hint.textContent = t;
 		this.hint.classList.toggle('mysn-hint-on', !!(this._stroke || this._free));
 	}
@@ -2297,17 +2310,17 @@ export class UI {
 			r.classList.add('mysn-hidden');
 			return;
 		}
-		const title = kind === 'rss' ? 'Správy z RSS' : 'HEDLAJNER';
-		const sub = kind === 'rss' ? 'Najnovšie správy z médií doma aj vo svete' : 'Hlavné správy z domova a zo sveta';
+		const title = kind === 'rss' ? _t('Správy z RSS') : 'HEDLAJNER';
+		const sub = kind === 'rss' ? _t('Najnovšie správy z médií doma aj vo svete') : _t('Hlavné správy z domova a zo sveta');
 		const cards = (items || [])
 			.map((n, i) => {
 				const img = n.i ? `<img src="${esc(n.i)}" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.remove()">` : '';
 				const meta = [n.s, n.c, n.d].filter(Boolean).map(esc).join('  |  ');
-				return `<a class="mysn-rd-card${i === 0 && n.i ? ' mysn-rd-lead' : ''}" href="${esc(n.u)}" target="_blank" rel="noopener">${img}<span class="mysn-rd-meta">${meta}${n.n ? '  |  +' + n.n + ' médiá' : ''}</span><b>${esc(n.t)}</b><p>${esc(n.e)}</p></a>`;
+				return `<a class="mysn-rd-card${i === 0 && n.i ? ' mysn-rd-lead' : ''}" href="${esc(n.u)}" target="_blank" rel="noopener">${img}<span class="mysn-rd-meta">${meta}${n.n ? '  |  +' + n.n + _t(' médiá') : ''}</span><b>${esc(n.t)}</b><p>${esc(n.e)}</p></a>`;
 			})
 			.join('');
-		r.innerHTML = `<div class="mysn-rd-head"><div><h2>${title}</h2><span>${sub}</span></div></div><div class="mysn-rd-grid">${cards || '<p>Žiadne správy.</p>'}</div>`;
-		const close = this.button('Zavrieť (C alebo Esc)', 'reader');
+		r.innerHTML = `<div class="mysn-rd-head"><div><h2>${title}</h2><span>${sub}</span></div></div><div class="mysn-rd-grid">${cards || _t('<p>Žiadne správy.</p>')}</div>`;
+		const close = this.button(_t('Zavrieť (C alebo Esc)'), 'reader');
 		close.classList.add('mysn-primary');
 		r.querySelector('.mysn-rd-head').appendChild(close);
 		r.classList.remove('mysn-hidden');
@@ -2340,17 +2353,17 @@ export class UI {
 			return;
 		}
 		this._tools = { toolChalk: !!o.chalk, rackNew: !!o.rack, cueExt: true, cueExtOff: !!o.ext };
-		B.innerHTML = '<h3>Príslušenstvo (F3)</h3><p class="mysn-note">Krieda, nádstavce a predĺženie tága</p>';
+		B.innerHTML = _t('<h3>Príslušenstvo (F3)</h3><p class="mysn-note">Krieda, nádstavce a predĺženie tága</p>');
 		const row = (n, label, act, ok, value) => {
 			const b = this.button(`<b>${n}</b> ${label}`, act, '', value);
 			b.disabled = !ok;
 			B.appendChild(b);
 		};
-		row(1, 'Nakriedovať tágo', 'toolChalk', !!o.chalk);
-		B.appendChild(h('p', 'mysn-note', 'Nádstavec na teleskopickej tyči, na jeden úder:'));
+		row(1, _t('Nakriedovať tágo'), 'toolChalk', !!o.chalk);
+		B.appendChild(h('p', 'mysn-note', _t('Nádstavec na teleskopickej tyči, na jeden úder:')));
 		(o.rests || []).forEach((r, i) => {
 			this._tools[r.kind] = r.ok || r.on;
-			row(i + 2, r.on ? `Odložiť: ${esc(r.name)}` : esc(r.name), 'spiderPick', r.ok || r.on, r.kind);
+			row(i + 2, r.on ? `${_t('Odložiť:')} ${esc(r.name)}` : esc(r.name), 'spiderPick', r.ok || r.on, r.kind);
 		});
 		if (o.restNote) {
 			B.appendChild(h('p', 'mysn-note', esc(o.restNote)));
@@ -2359,12 +2372,12 @@ export class UI {
 			row(5, o.rack, 'rackNew', true);
 		}
 		const next = { 0: 15, 15: 30, 30: 45, 45: 15 }[o.ext || 0];
-		row(6, o.ext ? `Predĺženie tága: ${o.ext} cm → ${next} cm` : 'Nasadiť predĺženie tága 15 cm', 'cueExt', true);
-		row(7, o.ext ? `Dať predĺženie dole (${o.ext} cm)` : 'Dať predĺženie dole', 'cueExtOff', !!o.ext);
+		row(6, o.ext ? `${_t('Predĺženie tága:')} ${o.ext} cm → ${next} cm` : _t('Nasadiť predĺženie tága 15 cm'), 'cueExt', true);
+		row(7, o.ext ? `${_t('Dať predĺženie dole')} (${o.ext} cm)` : _t('Dať predĺženie dole'), 'cueExtOff', !!o.ext);
 		if (o.reach) {
 			B.appendChild(h('p', 'mysn-note' + (o.reach.ok ? '' : ' mysn-warn'), esc(o.reach.text)));
 		}
-		B.appendChild(h('p', 'mysn-note', 'Klávesy 1 až 7, Esc alebo F3 zavrie. Predĺženie ostáva nasadené, kým ho nedáš dole (7), a zhoršuje presnosť: biela náhodne uhne až o 0,03° (15 cm), 0,06° (30 cm) alebo 0,1° (45 cm), väčšinou menej, pri silnom údere viac. Krížik sa dá použiť aj pri mantineli (položí sa na rám), pavúky nie. Pavúk a trojuholník visia pod stolom (Ctrl a klik).'));
+		B.appendChild(h('p', 'mysn-note', _t('Klávesy 1 až 7, Esc alebo F3 zavrie. Predĺženie ostáva nasadené, kým ho nedáš dole (7), a zhoršuje presnosť: biela náhodne uhne až o 0,03° (15 cm), 0,06° (30 cm) alebo 0,1° (45 cm), väčšinou menej, pri silnom údere viac. Krížik sa dá použiť aj pri mantineli (položí sa na rám), pavúky nie. Pavúk a trojuholník visia pod stolom (Ctrl a klik).')));
 	}
 
 	/** Mapa miestností: pôdorys zhora, klik na miestnosť ukáže kartu s tlačidlami. */
@@ -2388,27 +2401,27 @@ export class UI {
 				.map((r) => {
 					const [x, y, w, hh] = r.map;
 					const cls = ['mysn-mr', r.id === sel ? 'sel' : '', r.here ? 'here' : '', r.locked ? 'locked' : ''].join(' ');
-					return `<g class="${cls}" data-room="${r.id}"><rect x="${x}" y="${y}" width="${w}" height="${hh}" rx="2"></rect><text x="${x + w / 2}" y="${y + hh / 2}">${esc(r.name)}</text>${r.locked ? `<text class="lock" x="${x + w / 2}" y="${y + hh / 2 + 7}">zamknuté</text>` : ''}${r.here ? `<text class="lock" x="${x + w / 2}" y="${y + hh / 2 + 7}">si tu</text>` : ''}</g>`;
+					return `<g class="${cls}" data-room="${r.id}"><rect x="${x}" y="${y}" width="${w}" height="${hh}" rx="2"></rect><text x="${x + w / 2}" y="${y + hh / 2}">${esc(r.name)}</text>${r.locked ? `<text class="lock" x="${x + w / 2}" y="${y + hh / 2 + 7}">${_t('zamknuté')}</text>` : ''}${r.here ? `<text class="lock" x="${x + w / 2}" y="${y + hh / 2 + 7}">si tu</text>` : ''}</g>`;
 				})
 				.join('');
 			const r = rooms.find((x) => x.id === sel) || rooms[0];
-			B.innerHTML = `<h3>Mapa miestností</h3><div class="mysn-map-wrap"><svg viewBox="0 0 100 100" class="mysn-map"><rect class="mysn-corr" x="50" y="10" width="6" height="80"></rect>${svg}</svg><div class="mysn-map-card"></div></div>`;
+			B.innerHTML = `<h3>${_t('Mapa miestností')}</h3><div class="mysn-map-wrap"><svg viewBox="0 0 100 100" class="mysn-map"><rect class="mysn-corr" x="50" y="10" width="6" height="80"></rect>${svg}</svg><div class="mysn-map-card"></div></div>`;
 			const card = B.querySelector('.mysn-map-card');
 			if (r) {
-				card.innerHTML = `<b>${esc(r.name)}</b><p>${esc(r.desc)}</p>${r.locked ? `<p class="mysn-note">🔒 ${esc(r.lockNote || 'Zamknuté.')}</p>` : ''}`;
+				card.innerHTML = `<b>${esc(r.name)}</b><p>${esc(r.desc)}</p>${r.locked ? `<p class="mysn-note">🔒 ${esc(r.lockNote || _t('Zamknuté.'))}</p>` : ''}`;
 				const go = this.button(r.here ? 'Si tu' : r.play, 'roomGo', '', { id: r.id, mode: 'play' });
 				go.classList.add('mysn-primary');
 				go.disabled = r.locked || r.here;
 				card.appendChild(go);
 				if (r.tour) {
-					card.appendChild(this.button('Prehliadka (voľná kamera, admin)', 'roomGo', 'Voľná kamera bez hraníc miestností', { id: r.id, mode: 'tour' }));
+					card.appendChild(this.button(_t('Prehliadka (voľná kamera, admin)'), 'roomGo', _t('Voľná kamera bez hraníc miestností'), { id: r.id, mode: 'tour' }));
 				}
 				for (const x of r.extra || []) {
 					card.appendChild(this.button(x.label, x.act, x.title || ''));
 				}
 			}
 			const foot = h('div', 'mysn-lobby-foot');
-			foot.appendChild(this.button('Zavrieť (M)', 'roomMapClose'));
+			foot.appendChild(this.button(_t('Zavrieť (M)'), 'roomMapClose'));
 			B.appendChild(foot);
 			for (const g of B.querySelectorAll('[data-room]')) {
 				g.addEventListener('click', () => {
@@ -2436,24 +2449,24 @@ export class UI {
 			return;
 		}
 		const rows = [
-			['F1', 'telefón (pomocník)'],
-			['F4', 'pohľad na skóre'],
+			['F1', _t('telefón (pomocník)')],
+			['F4', _t('pohľad na skóre')],
 			['F6', 'zmena miesta'],
-			['F7', `konfety (zostáva ${o.confLeft}×, 15 s)`],
-			['F8', 'pohľad hráča vpravo hore'],
-			['F9', 'obrazovky nad stolom zap. a vyp. (pre všetkých)'],
-			['F12', 'zelený reflektor zap. a vyp. (pre všetkých)'],
-			['Tab', 'malý stôl zhora vpravo hore'],
-			['F2', 'potlesk (počujú všetci)'],
+			['F7', _t('konfety (zostáva {n}×, 15 s)', { n: o.confLeft })],
+			['F8', _t('pohľad hráča vpravo hore')],
+			['F9', _t('obrazovky nad stolom zap. a vyp. (pre všetkých)')],
+			['F12', _t('zelený reflektor zap. a vyp. (pre všetkých)')],
+			['Tab', _t('malý stôl zhora vpravo hore')],
+			['F2', _t('potlesk (počujú všetci)')],
 			['F3', 'jooooj'],
-			['1 až 7', 'jasot, óóó, smiech, pískanie, well done, pšššt, kašeľ'],
-			['Myš', 'rozhliadanie, koliesko priblíženie'],
-			['Esc', 'menu (Prestať sledovať)'],
+			[_t('1 až 7'), _t('jasot, óóó, smiech, pískanie, well done, pšššt, kašeľ')],
+			[_t('Myš'), _t('rozhliadanie, koliesko priblíženie')],
+			['Esc', _t('menu (Prestať sledovať)')],
 		];
-		B.innerHTML = `<div class="mysn-spphone-top">📱 Divák</div><h3>Pomocník</h3><div class="mysn-sp-keys">${rows.map(([k, t]) => `<div><b>${k}</b><span>${esc(t)}</span></div>`).join('')}</div>`;
-		const conf = this.button(`🎉 Konfety (${o.confLeft}×)`, 'spectConfetti', 'F7');
+		B.innerHTML = `<div class="mysn-spphone-top">${_t('📱 Divák')}</div><h3>${_t('Pomocník')}</h3><div class="mysn-sp-keys">${rows.map(([k, t]) => `<div><b>${k}</b><span>${esc(t)}</span></div>`).join('')}</div>`;
+		const conf = this.button(`🎉 ${_t('Konfety')} (${o.confLeft}×)`, 'spectConfetti', 'F7');
 		conf.disabled = !o.stadium || o.confLeft <= 0;
-		B.append(conf, this.button(`📺 Obrazovky ${o.lcd ? 'vypnúť' : 'zapnúť'} (F9)`, 'spectLcd'), this.button(`💡 Reflektor ${o.spot ? 'zhasnúť' : 'zapnúť'} (F12)`, 'spectSpot'), ...(o.demo ? [this.button('Ukončiť ukážku (Esc)', 'spectDemoEnd')] : [this.button('Zmeniť miesto (F6)', 'seatChange'), this.button('Prestať sledovať', 'watchStop')]), this.button('Zavrieť (F1)', 'spectPhoneClose'));
+		B.append(conf, this.button(`📺 ${o.lcd ? _t('Obrazovky vypnúť') : _t('Obrazovky zapnúť')} (F9)`, 'spectLcd'), this.button(`💡 ${o.spot ? _t('Reflektor zhasnúť') : _t('Reflektor zapnúť')} (F12)`, 'spectSpot'), ...(o.demo ? [this.button(_t('Ukončiť ukážku (Esc)'), 'spectDemoEnd')] : [this.button(_t('Zmeniť miesto (F6)'), 'seatChange'), this.button(_t('Prestať sledovať'), 'watchStop')]), this.button(_t('Zavrieť (F1)'), 'spectPhoneClose'));
 	}
 
 	spectPhoneOpen() {
@@ -2490,7 +2503,7 @@ export class UI {
 	/** Okno po súperovom faule: Hrám ja (1) alebo Nech hrá súper (2). opp = meno súpera, null = skryť. */
 	foulChoice(opp) {
 		if (!this.choiceEl) {
-			this.choiceEl = h('div', 'mysn-choice', '<div class="mysn-choice-t"></div><div class="mysn-choice-b"><button type="button" data-a="0">1 · Hrám ja</button><button type="button" data-a="1">2 · Nech hrá súper znova</button></div><div class="mysn-choice-n">Klikni s Ctrl alebo stlač 1 či 2. Úderom hráš sám.</div>');
+			this.choiceEl = h('div', 'mysn-choice', _t('<div class="mysn-choice-t"></div><div class="mysn-choice-b"><button type="button" data-a="0">1 · Hrám ja</button><button type="button" data-a="1">2 · Nech hrá súper znova</button></div><div class="mysn-choice-n">Klikni s Ctrl alebo stlač 1 či 2. Úderom hráš sám.</div>'));
 			this.choiceEl.addEventListener('click', (e) => {
 				const b = e.target.closest('button');
 				if (b) {
@@ -2506,7 +2519,7 @@ export class UI {
 		this._choice = key;
 		this.choiceEl.style.display = opp ? '' : 'none';
 		if (opp) {
-			this.choiceEl.querySelector('.mysn-choice-t').textContent = `${opp} spravil faul. Hráš sám (gule ostanú, ako ležia), alebo ho pošleš hrať znova (gule sa vrátia, ako boli pred faulom)?`;
+			this.choiceEl.querySelector('.mysn-choice-t').textContent = _t('{n} spravil faul. Hráš sám (gule ostanú, ako ležia), alebo ho pošleš hrať znova (gule sa vrátia, ako boli pred faulom)?', { n: opp });
 		}
 	}
 
@@ -2520,7 +2533,7 @@ export class UI {
 	 */
 	concede(info) {
 		if (!this.concEl) {
-			this.concEl = h('div', 'mysn-choice mysn-conc', '<div class="mysn-choice-t"></div><div class="mysn-choice-b"><button type="button" data-a="0">Pokračovať</button><button type="button" data-a="1" class="mysn-conc-go"></button></div><div class="mysn-choice-n"></div>');
+			this.concEl = h('div', 'mysn-choice mysn-conc', _t('<div class="mysn-choice-t"></div><div class="mysn-choice-b"><button type="button" data-a="0">Pokračovať</button><button type="button" data-a="1" class="mysn-conc-go"></button></div><div class="mysn-choice-n"></div>'));
 			this.concEl.addEventListener('click', (e) => {
 				const b = e.target.closest('button');
 				if (b) {
@@ -2536,9 +2549,9 @@ export class UI {
 		this._conc = key;
 		this.concEl.style.display = info ? '' : 'none';
 		if (info) {
-			this.concEl.querySelector('.mysn-choice-t').innerHTML = `<b>Na výhru potrebuješ snookery</b><br>Súper vedie o ${info.lead} ${info.lead === 1 ? 'bod' : info.lead < 5 ? 'body' : 'bodov'}, na stole zostáva ${info.rem}.`;
-			this.concEl.querySelector('.mysn-conc-go').textContent = info.frame ? 'Vzdať frame' : 'Vzdať partiu';
-			this.concEl.querySelector('.mysn-choice-n').textContent = this.touchUI ? 'Úderom hráš ďalej.' : 'Klikni s Ctrl. Úderom hráš ďalej.';
+			this.concEl.querySelector('.mysn-choice-t').innerHTML = `<b>${_t('Na výhru potrebuješ snookery')}</b><br>${_t('Súper vedie o {pts}, na stole zostáva {r}.', { pts: _pts(info.lead), r: info.rem })}`;
+			this.concEl.querySelector('.mysn-conc-go').textContent = info.frame ? _t('Vzdať frame') : _t('Vzdať partiu');
+			this.concEl.querySelector('.mysn-choice-n').textContent = this.touchUI ? _t('Úderom hráš ďalej.') : _t('Klikni s Ctrl. Úderom hráš ďalej.');
 		}
 	}
 
@@ -2685,7 +2698,7 @@ export class UI {
 			const ladder = th
 				.map((need, i) => `<li class="${i < t ? 'mysn-done' : i === t ? 'mysn-next' : ''}"><i style="background:${TIERS[i].ring}"></i>${esc(TIERS[i].name)}<b>${need}×</b>${i < t ? '<em>✓</em>' : i === t ? `<em>${n} / ${need}</em>` : ''}</li>`)
 				.join('');
-			el.innerHTML = `<div class="mysn-achtip-h">${achIcon(k, t, 58)}<div><b>${esc(a ? a.name : k)}</b><span>${t ? esc(TIERS[t - 1].name) : 'zatiaľ nezískaný'} · ${n}×</span></div></div><p>${esc(a ? a.desc : '')}</p><ul>${ladder}</ul>`;
+			el.innerHTML = `<div class="mysn-achtip-h">${achIcon(k, t, 58)}<div><b>${esc(a ? a.name : k)}</b><span>${t ? esc(TIERS[t - 1].name) : _t('zatiaľ nezískaný')} · ${n}×</span></div></div><p>${esc(a ? a.desc : '')}</p><ul>${ladder}</ul>`;
 		}
 		const r = this.root.getBoundingClientRect();
 		const w = 300;
@@ -2713,8 +2726,8 @@ export class UI {
 				'div',
 				'mysn-ach-pop',
 				it.level
-					? `<div class="mysn-ach-lvbig">${it.level}</div><div><span>Nová úroveň skúseností</span><b>${it.level}. úroveň</b></div>`
-					: `${achIcon(it.k, it.tier, 64)}<div><span>Úspech: ${esc(TIERS[it.tier - 1].name)}</span><b>${esc(a ? a.name : it.k)}</b><small>${esc(a ? a.desc : '')}</small></div>`
+					? `<div class="mysn-ach-lvbig">${it.level}</div><div><span>${_t('Nová úroveň skúseností')}</span><b>${_t('{n}. úroveň', { n: it.level })}</b></div>`
+					: `${achIcon(it.k, it.tier, 64)}<div><span>${_t('Úspech:')} ${esc(TIERS[it.tier - 1].name)}</span><b>${esc(a ? a.name : it.k)}</b><small>${esc(a ? a.desc : '')}</small></div>`
 			);
 			this.root.appendChild(el);
 			requestAnimationFrame(() => el.classList.add('mysn-on'));
@@ -2737,67 +2750,67 @@ export class UI {
 		const time = (x) => `${Math.floor(x / 60)}:${String(x % 60).padStart(2, '0')}`;
 		let body = '';
 		if (!this.opts.accountUrl && !d) {
-			body = '<p class="mysn-ph-empty">Môj účet je len pre prihlásených.</p>';
+			body = _t('<p class="mysn-ph-empty">Môj účet je len pre prihlásených.</p>');
 		} else if (this._phoneErr) {
 			body = `<p class="mysn-ph-empty">${esc(this._phoneErr)}</p>`;
 		} else if (!d) {
-			body = '<p class="mysn-ph-empty">Načítavam účet…</p>';
+			body = _t('<p class="mysn-ph-empty">Načítavam účet…</p>');
 		} else if (tab === 'profile') {
 			body =
-				`<div class="mysn-ph-head">${d.avatar ? `<img src="${esc(d.avatar)}" alt="" width="72" height="72">` : `<i>${esc((d.name || '?').slice(0, 1))}</i>`}<b>${esc(d.name)}</b><span>${esc(d.email)}</span>${d.levelName ? `<em>Úroveň ${esc(String(d.level))}: ${esc(d.levelName)}</em>` : ''}</div>` +
-				`<div class="mysn-ph-card">${row('Meno', esc(d.name))}${row('E-mail', esc(d.email))}${row('Člen od', esc(d.registered))}</div>` +
+				`<div class="mysn-ph-head">${d.avatar ? `<img src="${esc(d.avatar)}" alt="" width="72" height="72">` : `<i>${esc((d.name || '?').slice(0, 1))}</i>`}<b>${esc(d.name)}</b><span>${esc(d.email)}</span>${d.levelName ? `<em>${_t('Úroveň')} ${esc(String(d.level))}: ${esc(d.levelName)}</em>` : ''}</div>` +
+				`<div class="mysn-ph-card">${row(_t('Meno'), esc(d.name))}${row(_t('E-mail'), esc(d.email))}${row(_t('Člen od'), esc(d.registered))}</div>` +
 				(d.nameNext
-					? `<div class="mysn-ph-card"><div class="mysn-ph-row"><span>Zmeniť meno</span><b>znova od ${esc(d.nameNext)}</b></div></div>`
-					: `<details class="mysn-ph-card"><summary>Zmeniť meno</summary><form data-f="name"><input name="name" maxlength="40" value="${esc(d.name)}" autocomplete="nickname"><button class="mysn-btn mysn-primary">Uložiť meno</button><small>Meno sa dá zmeniť len raz za 30 dní.</small></form></details>`) +
-				`<details class="mysn-ph-card"><summary>Zmeniť heslo</summary><form data-f="pass"><input type="password" name="old" placeholder="Súčasné heslo" autocomplete="current-password"><input type="password" name="new" placeholder="Nové heslo (aspoň 8 znakov)" autocomplete="new-password"><input type="password" name="new2" placeholder="Nové heslo znova" autocomplete="new-password"><button class="mysn-btn mysn-primary">Zmeniť heslo</button><small>Účet len cez Google nemá heslo: nastav ho na webe.</small></form></details>` +
+					? `<div class="mysn-ph-card"><div class="mysn-ph-row"><span>${_t('Zmeniť meno')}</span><b>${_t('znova od {d}', { d: esc(d.nameNext) })}</b></div></div>`
+					: `<details class="mysn-ph-card"><summary>${_t('Zmeniť meno')}</summary><form data-f="name"><input name="name" maxlength="40" value="${esc(d.name)}" autocomplete="nickname"><button class="mysn-btn mysn-primary">${_t('Uložiť meno')}</button><small>${_t('Meno sa dá zmeniť len raz za 30 dní.')}</small></form></details>`) +
+				`<details class="mysn-ph-card"><summary>${_t('Zmeniť heslo')}</summary><form data-f="pass"><input type="password" name="old" placeholder="${_t('Súčasné heslo')}" autocomplete="current-password"><input type="password" name="new" placeholder="${_t('Nové heslo (aspoň 8 znakov)')}" autocomplete="new-password"><input type="password" name="new2" placeholder="${_t('Nové heslo znova')}" autocomplete="new-password"><button class="mysn-btn mysn-primary">${_t('Zmeniť heslo')}</button><small>${_t('Účet len cez Google nemá heslo: nastav ho na webe.')}</small></form></details>` +
 				`<p class="mysn-ph-note"></p>` +
 				`<div class="mysn-ph-links">` +
-				(d.links.account ? `<a class="mysn-btn" href="${esc(d.links.account)}" target="_blank" rel="noopener">Môj účet na webe (súhlasy, údaje)</a>` : '') +
-				(d.links.shop ? `<a class="mysn-btn" href="${esc(d.links.shop)}" target="_blank" rel="noopener">Môj e-shop</a>` : '') +
-				`<a class="mysn-btn mysn-ph-out" href="${esc(d.links.logout)}">Odhlásiť sa</a></div>`;
+				(d.links.account ? `<a class="mysn-btn" href="${esc(d.links.account)}" target="_blank" rel="noopener">${_t('Môj účet na webe (súhlasy, údaje)')}</a>` : '') +
+				(d.links.shop ? `<a class="mysn-btn" href="${esc(d.links.shop)}" target="_blank" rel="noopener">${_t('Môj e-shop')}</a>` : '') +
+				`<a class="mysn-btn mysn-ph-out" href="${esc(d.links.logout)}">${_t('Odhlásiť sa')}</a></div>`;
 		} else if (tab === 'snooker') {
 			const lg = d.league;
 			body =
-				`<h4>Liga</h4><div class="mysn-ph-card">` +
+				`<h4>${_t('Liga')}</h4><div class="mysn-ph-card">` +
 				(lg
-					? row('Prezývka', esc(lg.nick || d.name)) +
-						row('Sezóna', esc(lg.season)) +
-						(lg.league ? row('Liga a miesto', `${lg.league}. liga, ${lg.rank}. miesto`) + row('Body', String(lg.points)) + row('Výhry : prehry', `${lg.wins} : ${lg.losses}`) : row('Stav', 'zatiaľ bez zápasu')) +
-						(d.elo ? row('ELO', d.elo.games ? `${d.elo.elo} (${d.elo.games} z.)` : `${d.elo.elo} (začiatočná)`) : '')
-					: '<p class="mysn-ph-empty">V lige nie si. Registrácia je v kancelárii (menu Liga).</p>') +
-				`</div><h4>Partie a skóre</h4><div class="mysn-ph-card">` +
-				row('Partie cez internet', `${d.matches.played} (výhry ${d.matches.won})`) +
-				row('Z toho ligové', String(d.matches.league)) +
-				row('Hrať: framy', String(d.solo.frames)) +
-				row('Najlepšie skóre', d.solo.frames ? `${d.solo.best} b. za ${time(d.solo.time)}` : '—') +
-				row('Najvyšší brejk', String(d.solo.brk)) +
-				row('Vlastné tágá', `${d.cues} z 10`) +
+					? row(_t('Prezývka'), esc(lg.nick || d.name)) +
+						row(_t('Sezóna'), esc(lg.season)) +
+						(lg.league ? row(_t('Liga a miesto'), _t('{l}. liga, {r}. miesto', { l: lg.league, r: lg.rank })) + row(_t('Body'), String(lg.points)) + row(_t('Výhry : prehry'), `${lg.wins} : ${lg.losses}`) : row(_t('Stav'), _t('zatiaľ bez zápasu'))) +
+						(d.elo ? row(_t('ELO'), d.elo.games ? `${d.elo.elo} (${d.elo.games} z.)` : `${d.elo.elo} ${_t('(začiatočná)')}`) : '')
+					: _t('<p class="mysn-ph-empty">V lige nie si. Registrácia je v kancelárii (menu Liga).</p>')) +
+				`</div><h4>${_t('Partie a skóre')}</h4><div class="mysn-ph-card">` +
+				row(_t('Partie cez internet'), _t('{n} (výhry {w})', { n: d.matches.played, w: d.matches.won })) +
+				row(_t('Z toho ligové'), String(d.matches.league)) +
+				row(_t('Hrať: framy'), String(d.solo.frames)) +
+				row(_t('Najlepšie skóre'), d.solo.frames ? _t('{p} b. za {t}', { p: d.solo.best, t: time(d.solo.time) }) : '—') +
+				row(_t('Najvyšší brejk'), String(d.solo.brk)) +
+				row(_t('Vlastné tágá'), `${d.cues} z 10`) +
 				`</div>`;
 		} else if (tab === 'cue') {
 			// moje tágo a príslušenstvo
 			const c = d.cue || {};
 			const bar = (v, col) => `<div class="mysn-ph-bar"><i style="width:${Math.round(Math.max(0, Math.min(1, v)) * 100)}%;background:${col}"></i></div>`;
 			const wear = c.tipWear || 0;
-			const kinds = { soft: 'mäkká', medium: 'stredná', hard: 'tvrdá' };
+			const kinds = { soft: _t('mäkká'), medium: _t('stredná'), hard: _t('tvrdá') };
 			body =
-				`<div class="mysn-ph-cue"><svg viewBox="0 0 300 26" aria-hidden="true"><rect x="2" y="9" width="90" height="10" rx="4" fill="#2b1a0e"/><path d="M90 9 L284 11 L284 17 L90 19 Z" fill="#d7b27a"/><rect x="284" y="11" width="6" height="6" fill="#f3efe4"/><rect x="290" y="11" width="6" height="6" fill="#2f6fd6"/></svg><b>${esc(c.name || 'Tágo')}</b></div>` +
+				`<div class="mysn-ph-cue"><svg viewBox="0 0 300 26" aria-hidden="true"><rect x="2" y="9" width="90" height="10" rx="4" fill="#2b1a0e"/><path d="M90 9 L284 11 L284 17 L90 19 Z" fill="#d7b27a"/><rect x="284" y="11" width="6" height="6" fill="#f3efe4"/><rect x="290" y="11" width="6" height="6" fill="#2f6fd6"/></svg><b>${esc(c.name || _t('Tágo'))}</b></div>` +
 				`<div class="mysn-ph-card">` +
-				row('Sila', `${Math.round((c.power || 1) * 100)} %`) +
-				row('Falše', `${Math.round((c.grip || 1) * 100)} %`) +
-				row('Dĺžka', `${Math.round((c.len || 1.45) * 100)} cm${c.ext ? ` + predĺženie ${Math.round(c.ext * 100)} cm` : ''}`) +
-				`</div><h4>Špica</h4><div class="mysn-ph-card">` +
-				row('Druh', `${kinds[c.tipKind] || 'stredná'} (${c.tipNo || 1}. špica)`) +
-				row('Opotrebovanie', `${Math.round(wear * 100)} %`) +
+				row(_t('Sila'), `${Math.round((c.power || 1) * 100)} %`) +
+				row(_t('Falše'), `${Math.round((c.grip || 1) * 100)} %`) +
+				row(_t('Dĺžka'), `${Math.round((c.len || 1.45) * 100)} cm${c.ext ? ` ${_t('+ predĺženie')} ${Math.round(c.ext * 100)} cm` : ''}`) +
+				`</div><h4>${_t('Špica')}</h4><div class="mysn-ph-card">` +
+				row(_t('Druh'), `${kinds[c.tipKind] || _t('stredná')} (${_t('{n}. špica', { n: c.tipNo || 1 })})`) +
+				row(_t('Opotrebovanie'), `${Math.round(wear * 100)} %`) +
 				bar(wear, wear >= 0.9 ? '#e5484d' : wear >= 0.7 ? '#f59e0b' : '#2a9d5a') +
-				`<p class="mysn-ph-hint">${wear >= 0.8 ? 'Špica je nepresná, vymeň ju na stojane.' : wear >= 0.7 ? 'Špica horšie drží falše.' : 'Špica je v poriadku.'}</p>` +
-				`</div><h4>Krieda</h4><div class="mysn-ph-card">` +
-				row('Nakriedované', c.chalk > 0 ? `ešte ${c.chalk} ${c.chalk === 1 ? 'úder' : c.chalk < 5 ? 'údery' : 'úderov'}` : 'nie (falše slabšie)') +
-				`</div><div class="mysn-ph-links"><button type="button" class="mysn-btn mysn-primary" data-a="rack">Vymeniť tágo (F2)</button></div>`;
+				`<p class="mysn-ph-hint">${wear >= 0.8 ? _t('Špica je nepresná, vymeň ju na stojane.') : wear >= 0.7 ? _t('Špica horšie drží falše.') : _t('Špica je v poriadku.')}</p>` +
+				`</div><h4>${_t('Krieda')}</h4><div class="mysn-ph-card">` +
+				row(_t('Nakriedované'), c.chalk > 0 ? _t('ešte {n} úderov', { n: c.chalk }) : _t('nie (falše slabšie)')) +
+				`</div><div class="mysn-ph-links"><button type="button" class="mysn-btn mysn-primary" data-a="rack">${_t('Vymeniť tágo (F2)')}</button></div>`;
 		} else if (tab === 'ach') {
 			// 0.32.0: Skúsenosti (XP, úroveň) a Úspechy so stupňami
 			const a = d.ach;
 			if (!a) {
-				body = '<p class="mysn-ph-empty">Úspechy sa nepodarilo načítať.</p>';
+				body = _t('<p class="mysn-ph-empty">Úspechy sa nepodarilo načítať.</p>');
 			} else {
 				const pct = Math.max(0, Math.min(1, (a.xp - a.from) / Math.max(1, a.next - a.from)));
 				const grid = (cat) =>
@@ -2807,46 +2820,46 @@ export class UI {
 							const t = (a.tier && a.tier[x.k]) || 0;
 							const th = (a.defs && a.defs[x.k]) || [];
 							const need = t < th.length ? th[t] : 0;
-							return `<div class="mysn-ach-cell" title="${esc(x.desc)}">${achIcon(x.k, t, 54)}<b>${esc(x.name)}</b><span>${t ? esc(TIERS[t - 1].name) : 'zatiaľ nie'}</span><small>${n}${need ? ' / ' + need : ' ✓'}</small></div>`;
+							return `<div class="mysn-ach-cell" title="${esc(x.desc)}">${achIcon(x.k, t, 54)}<b>${esc(x.name)}</b><span>${t ? esc(TIERS[t - 1].name) : _t('zatiaľ nie')}</span><small>${n}${need ? ' / ' + need : ' ✓'}</small></div>`;
 						})
 						.join('');
 				body =
-					`<div class="mysn-ach-lv"><div class="mysn-ach-lvn"><span>Úroveň</span><b>${a.level}</b></div><div class="mysn-ach-xp"><b>${a.xp.toLocaleString('sk-SK')} XP</b><div class="mysn-ph-bar"><i style="width:${Math.round(pct * 100)}%;background:#ffd34d"></i></div><small>do ${a.level + 1}. úrovne ešte ${(a.next - a.xp).toLocaleString('sk-SK')} XP</small></div></div>` +
-					`<p class="mysn-ph-hint">Skúsenosti (XP) = všetky nahrané body. Úspechy majú stupne bronz, striebro, zlato a platina.</p>` +
-					`<h4>Všeobecné</h4><div class="mysn-ach-grid">${grid('gen')}</div>` +
-					`<h4>Špeciálne údery</h4><div class="mysn-ach-grid">${grid('spec')}</div>`;
+					`<div class="mysn-ach-lv"><div class="mysn-ach-lvn"><span>${_t('Úroveň')}</span><b>${a.level}</b></div><div class="mysn-ach-xp"><b>${a.xp.toLocaleString(LANG === 'en' ? 'en-GB' : 'sk-SK')} XP</b><div class="mysn-ph-bar"><i style="width:${Math.round(pct * 100)}%;background:#ffd34d"></i></div><small>${_t('do {n}. úrovne ešte {x} XP', { n: a.level + 1, x: (a.next - a.xp).toLocaleString(LANG === 'en' ? 'en-GB' : 'sk-SK') })}</small></div></div>` +
+					`<p class="mysn-ph-hint">${_t('Skúsenosti (XP) = všetky nahrané body. Úspechy majú stupne bronz, striebro, zlato a platina.')}</p>` +
+					`<h4>${_t('Všeobecné')}</h4><div class="mysn-ach-grid">${grid('gen')}</div>` +
+					`<h4>${_t('Špeciálne údery')}</h4><div class="mysn-ach-grid">${grid('spec')}</div>`;
 			}
 		} else if (tab === 'games') {
 			// posledné zápasy (z Moje zápasy)
-			const lab = { win: ['Výhra', 1], loss: ['Prehra', 0], resign: ['Prehra, vzdal si', 0], resigned: ['Výhra, súper vzdal', 1], disconnect: ['Prehra, spojenie', 0], 'win-disconnect': ['Výhra, spojenie súpera', 1], disq: ['Prehra, diskvalifikácia', 0], 'win-disq': ['Výhra, súper diskv.', 1] };
+			const lab = { win: [_t('Výhra'), 1], loss: ['Prehra', 0], resign: ['Prehra, vzdal si', 0], resigned: [_t('Výhra, súper vzdal'), 1], disconnect: ['Prehra, spojenie', 0], 'win-disconnect': [_t('Výhra, spojenie súpera'), 1], disq: [_t('Prehra, diskvalifikácia'), 0], 'win-disq': [_t('Výhra, súper diskv.'), 1] };
 			const list = d.hist || [];
 			body = list.length
 				? list
 						.map((m) => {
 							const [t, ok] = lab[m.result] || [m.result, 0];
 							const dt = m.date ? new Date(m.date * 1000).toLocaleDateString('sk-SK', { day: 'numeric', month: 'numeric', year: 'numeric' }) : '';
-							return `<div class="mysn-ph-card mysn-ph-game"><div class="mysn-ph-g1"><b>${esc((m.opp && m.opp.name) || 'Súper')}${m.opp && m.opp.chk ? ' <span class="mysn-lb-nv" title="Hráč je pod kontrolou férovej hry">kontrola</span>' : ''}</b><span class="${ok ? 'mysn-ph-ok' : 'mysn-ph-err'}">${esc(t)}</span></div><div class="mysn-ph-g2"><span>${esc(dt)}</span><b>${m.my} : ${m.their}</b><span>${m.delta ? (m.delta > 0 ? '+' : '') + m.delta + ' b.' : ''}${m.edel ? ` · ELO ${m.edel > 0 ? '+' : ''}${m.edel}` : ''}</span></div></div>`;
+							return `<div class="mysn-ph-card mysn-ph-game"><div class="mysn-ph-g1"><b>${esc((m.opp && m.opp.name) || _t('Súper'))}${m.opp && m.opp.chk ? _t(' <span class="mysn-lb-nv" title="Hráč je pod kontrolou férovej hry">kontrola</span>') : ''}</b><span class="${ok ? 'mysn-ph-ok' : 'mysn-ph-err'}">${esc(t)}</span></div><div class="mysn-ph-g2"><span>${esc(dt)}</span><b>${m.my} : ${m.their}</b><span>${m.delta ? (m.delta > 0 ? '+' : '') + m.delta + ' b.' : ''}${m.edel ? ` · ELO ${m.edel > 0 ? '+' : ''}${m.edel}` : ''}</span></div></div>`;
 						})
-						.join('') + '<p class="mysn-ph-hint">Všetky zápasy a záznamy úderov: kancelária, F7 Moje zápasy.</p>'
-				: '<p class="mysn-ph-empty">Zatiaľ žiadny ligový zápas.</p>';
+						.join('') + _t('<p class="mysn-ph-hint">Všetky zápasy a záznamy úderov: kancelária, F7 Moje zápasy.</p>')
+				: _t('<p class="mysn-ph-empty">Zatiaľ žiadny ligový zápas.</p>');
 		} else {
 			body =
 				`<div class="mysn-ph-links">` +
-				`<button type="button" class="mysn-btn mysn-primary" data-a="settings">Nastavenia hry</button>` +
-				`<button type="button" class="mysn-btn" data-a="helper">Pomocník (F1)</button>` +
-				`<button type="button" class="mysn-btn" data-a="roomMap">Mapa miestností (M)</button>` +
+				`<button type="button" class="mysn-btn mysn-primary" data-a="settings">${_t('Nastavenia hry')}</button>` +
+				`<button type="button" class="mysn-btn" data-a="helper">${_t('Pomocník (F1)')}</button>` +
+				`<button type="button" class="mysn-btn" data-a="roomMap">${_t('Mapa miestností (M)')}</button>` +
 				`</div>`;
 		}
 		const tabs = [
 			['profile', '👤', 'Profil'],
 			['snooker', '🎱', 'Snooker'],
-			['cue', '🥢', 'Tágo'],
-			['ach', '🏅', 'Úspechy'],
-			['games', '🏆', 'Zápasy'],
+			['cue', '🥢', _t('Tágo')],
+			['ach', '🏅', _t('Úspechy')],
+			['games', '🏆', _t('Zápasy')],
 			['settings', '⚙️', 'Nastavenia'],
 		];
 		scr.innerHTML =
-			`<div class="mysn-phone-bar"><b>Môj účet</b><button type="button" class="mysn-btn" data-a="phoneClose">Zavrieť</button></div>` +
+			`<div class="mysn-phone-bar"><b>${_t('Môj účet')}</b><button type="button" class="mysn-btn" data-a="phoneClose">${_t('Zavrieť')}</button></div>` +
 			`<div class="mysn-ph-body">${body}</div>` +
 			`<div class="mysn-ph-tabs">${tabs.map(([k, ic, t]) => `<button type="button" data-tab="${k}" class="${k === tab ? 'mysn-on' : ''}"><span>${ic}</span>${t}</button>`).join('')}</div>`;
 		scr.querySelectorAll('[data-tab]').forEach((b) =>
@@ -2872,7 +2885,7 @@ export class UI {
 				if (f.dataset.f === 'name') {
 					this.opts.onAction('phoneName', v.name);
 				} else if (v.new !== v.new2) {
-					this.phoneNote('Nové heslá sa nezhodujú.', false);
+					this.phoneNote(_t('Nové heslá sa nezhodujú.'), false);
 				} else {
 					this.opts.onAction('phonePass', { old: v.old, new: v.new });
 					f.reset();
@@ -2893,10 +2906,10 @@ export class UI {
 			card.querySelector('b').textContent = c.name;
 			const sp = card.querySelectorAll('span');
 			if (sp[2]) {
-				sp[2].textContent = `Špička ${c.tip}, sila ${Math.round(c.power * 100)} %`;
+				sp[2].textContent = _t('Špička {t}, sila {p} %', { t: _t(c.tip), p: Math.round(c.power * 100) });
 			}
 			if (sp[3]) {
-				sp[3].textContent = `Dĺžka ${Math.round(c.len * 100)} cm, Shift ${c.fine > 0 ? 'áno' : 'nie'}`;
+				sp[3].textContent = _t('Dĺžka {l} cm, Shift {s}', { l: Math.round(c.len * 100), s: c.fine > 0 ? _t('áno') : _t('nie') });
 			}
 		}
 		const ttl = this.cuePanel && this.cuePanel.querySelector('h3');
@@ -3230,7 +3243,7 @@ export class UI {
 		this.cardBox.classList.toggle('mysn-hidden', !on);
 		this.cardBox.innerHTML = '';
 		if (on) {
-			this.cardBox.appendChild(h('div', 'mysn-card-brand', 'MY SNOOKER · LIGA'));
+			this.cardBox.appendChild(h('div', 'mysn-card-brand', _t('MY SNOOKER · LIGA')));
 		}
 		return this.cardBox;
 	}
@@ -3258,24 +3271,24 @@ export class UI {
 			return i;
 		};
 		if (!d) {
-			w.appendChild(h('div', 'mysn-news-head', '<b>Kancelária</b>'));
-			w.appendChild(h('p', 'mysn-mixer-status', 'Načítavam ligu…'));
+			w.appendChild(h('div', 'mysn-news-head', _t('<b>Kancelária</b>')));
+			w.appendChild(h('p', 'mysn-mixer-status', _t('Načítavam ligu…')));
 		} else if (!reg && o.mode !== 'card') {
 			// neregistrovaný: na stole leží červená vizitka, klik na ňu otvorí registráciu
-			w.appendChild(h('div', 'mysn-news-head', '<b>Registrácia do ligy</b>'));
-			w.appendChild(h('p', 'mysn-mixer-status', `Na stole leží červená vizitka. Drž Ctrl a klikni na ňu (alebo F8) a vyplň svoje údaje. ${esc(d.season.name)}, do konca ${d.season.daysLeft} dní. Ligu hrajú len registrovaní hráči.`));
-			const oc = this.button('Otvoriť vizitku', 'officeCard');
+			w.appendChild(h('div', 'mysn-news-head', _t('<b>Registrácia do ligy</b>')));
+			w.appendChild(h('p', 'mysn-mixer-status', `${_t('Na stole leží červená vizitka. Drž Ctrl a klikni na ňu (alebo F8) a vyplň svoje údaje.')} ${_t('{s}, do konca {n} dní. Ligu hrajú len registrovaní hráči.', { s: esc(d.season.name), n: d.season.daysLeft })}`));
+			const oc = this.button(_t('Otvoriť vizitku'), 'officeCard');
 			oc.classList.add('mysn-league-btn');
 			w.appendChild(oc);
 		} else if (o.mode === 'card' || o.mode === 'edit') {
 			// registrácia alebo úprava údajov ako veľká červená vizitka uprostred obrazovky
 			const cw = this.cardOverlay(true);
-			w.appendChild(h('div', 'mysn-news-head', `<b>${reg ? 'Moje údaje' : 'Registrácia do ligy'}</b>`));
-			w.appendChild(h('p', 'mysn-mixer-status', 'Vyplň vizitku uprostred obrazovky.'));
+			w.appendChild(h('div', 'mysn-news-head', `<b>${reg ? _t('Moje údaje') : _t('Registrácia do ligy')}</b>`));
+			w.appendChild(h('p', 'mysn-mixer-status', _t('Vyplň vizitku uprostred obrazovky.')));
 			// registrácia do ligy (alebo úprava údajov hráča)
-			cw.appendChild(h('div', 'mysn-news-head', `<b>${reg ? 'Údaje hráča' : 'Registrácia do ligy'}</b>`));
+			cw.appendChild(h('div', 'mysn-news-head', `<b>${reg ? _t('Údaje hráča') : _t('Registrácia do ligy')}</b>`));
 			if (!reg) {
-				cw.appendChild(h('p', 'mysn-mixer-status', `${esc(d.season.name)}, do konca ${d.season.daysLeft} dní. Po registrácii začínaš so 147 bodmi v 4. lige (alebo podľa poradia) a môžeš vyzývať hráčov.`));
+				cw.appendChild(h('p', 'mysn-mixer-status', _t('{s}, do konca {n} dní. Po registrácii začínaš so 147 bodmi v 4. lige (alebo podľa poradia) a môžeš vyzývať hráčov.', { s: esc(d.season.name), n: d.season.daysLeft })));
 			}
 			const f = document.createElement('form');
 			f.className = 'mysn-form';
@@ -3284,28 +3297,28 @@ export class UI {
 			sel.innerHTML = '<option value="">Vyber krajinu…</option>' + o.countries.map(([c, n]) => `<option value="${c}"${(p.country || '') === c ? ' selected' : ''}>${esc(n)}</option>`).join('');
 			f.append(
 				field('Krajina *', sel),
-				field('Mesto', input('city', p.city, 40, 'napríklad Ružomberok')),
-				field('Prezývka v lige', input('nick', p.nick, 24, (o.user && (o.user.account || o.user.name)) || '')),
+				field('Mesto', input('city', p.city, 40, _t('napríklad Ružomberok'))),
+				field(_t('Prezývka v lige'), input('nick', p.nick, 24, (o.user && (o.user.account || o.user.name)) || '')),
 				(() => {
 					const s2 = document.createElement('select');
 					s2.name = 'hand';
-					s2.innerHTML = `<option value="right"${p.hand !== 'left' ? ' selected' : ''}>pravák</option><option value="left"${p.hand === 'left' ? ' selected' : ''}>ľavák</option>`;
-					return field('Hrám rukou', s2);
+					s2.innerHTML = `<option value="right"${p.hand !== 'left' ? ' selected' : ''}>${_t('pravák')}</option><option value="left"${p.hand === 'left' ? ' selected' : ''}>${_t('ľavák')}</option>`;
+					return field(_t('Hrám rukou'), s2);
 				})(),
-				field('Obľúbené tágo', input('cue', p.cue, 30, 'napríklad Majstrovské')),
-				field('O mne', input('about', p.about, 160, 'krátko o sebe (najviac 160 znakov)'))
+				field(_t('Obľúbené tágo'), input('cue', p.cue, 30, _t('napríklad Majstrovské'))),
+				field('O mne', input('about', p.about, 160, _t('krátko o sebe (najviac 160 znakov)')))
 			);
 			const ok = document.createElement('button');
 			ok.type = 'submit';
 			ok.className = 'mysn-btn mysn-primary';
-			ok.textContent = reg ? 'Uložiť údaje' : 'Registrovať sa do ligy';
+			ok.textContent = reg ? _t('Uložiť údaje') : _t('Registrovať sa do ligy');
 			f.appendChild(ok);
 			f.addEventListener('submit', (e) => {
 				e.preventDefault();
 				const fd = new FormData(f);
 				const data = Object.fromEntries(fd.entries());
 				if (!data.country) {
-					this.toast('Vyber krajinu.');
+					this.toast(_t('Vyber krajinu.'));
 					return;
 				}
 				data.edit = reg ? 1 : 0;
@@ -3313,7 +3326,7 @@ export class UI {
 			});
 			f.addEventListener('keydown', (e) => e.stopPropagation());
 			cw.appendChild(f);
-			cw.appendChild(this.button(reg ? 'Zavrieť' : 'Zatiaľ nie', 'officeHome'));
+			cw.appendChild(this.button(reg ? _t('Zavrieť') : _t('Zatiaľ nie'), 'officeHome'));
 		} else if (o.mode === 'cues') {
 			// tágá do ligového zápasu: ako stojan v herni (F2), kamera je pri stojane; klik pridá alebo odoberie,
 			// jedno z vybratých je predvolené (s ním sa začína ligový zápas); nastavenia tág budú v herni
@@ -3361,21 +3374,21 @@ export class UI {
 			requestAnimationFrame(() => {
 				list.scrollLeft = this._officeCuesX || 0;
 			});
-			w.appendChild(h('p', 'mysn-mixer-status mysn-cue-hint', 'Klik na kartu tágo zoberie do ligového zápasu alebo odoberie. ★ predvolené: s ním začneš zápas, v zápase sa prepína len medzi týmito 4 tágami. F2 alebo Esc: späť za stôl.'));
+			w.appendChild(h('p', 'mysn-mixer-status mysn-cue-hint', _t('Klik na kartu tágo zoberie do ligového zápasu alebo odoberie. ★ predvolené: s ním začneš zápas, v zápase sa prepína len medzi týmito 4 tágami. F2 alebo Esc: späť za stôl.')));
 		} else {
 			// prehľad hráča v lige
 			const me = d.me;
-			w.appendChild(h('div', 'mysn-news-head', `<b>Kancelária: ${esc((p.nick || (o.user && o.user.name)) || '')}</b>`));
-			w.appendChild(h('div', 'mysn-menu-note', `<b>${me.rank}.</b> miesto v <b>${me.league}. lige</b>, <b>${me.points}</b> bodov<br>Výhry ${me.wins}, prehry ${me.losses}, najvyššia séria ${me.best}, ELO ${me.elo}`));
-			w.appendChild(h('p', 'mysn-mixer-status', `${esc(d.season.name)}: do konca sezóny ${d.season.daysLeft} dní. Hráčov v lige: ${d.players}.`));
+			w.appendChild(h('div', 'mysn-news-head', `<b>${_t('Kancelária:')} ${esc((p.nick || (o.user && o.user.name)) || '')}</b>`));
+			w.appendChild(h('div', 'mysn-menu-note', _t('{r}. miesto v {l}. lige, {p} bodov', { r: `<b>${me.rank}</b>`, l: `<b>${me.league}</b>`, p: `<b>${me.points}</b>` }) + '<br>' + _t('Výhry {w}, prehry {x}, najvyššia séria {b}, ELO {e}', { w: me.wins, x: me.losses, b: me.best, e: me.elo })));
+			w.appendChild(h('p', 'mysn-mixer-status', _t('{s}: do konca sezóny {n} dní. Hráčov v lige: {p}.', { s: esc(d.season.name), n: d.season.daysLeft, p: d.players })));
 			const btns = h('div', 'mysn-office-btns');
-			const t = this.button('Tabuľky líg a vyzvanie hráča', 'leagueTables');
+			const t = this.button(_t('Tabuľky líg a vyzvanie hráča'), 'leagueTables');
 			t.classList.add('mysn-primary');
-			btns.append(t, this.button('Moje tágá (4 do zápasu)', 'myCues'), this.button('Moje údaje', 'officeEdit'), this.button('Minulé sezóny', 'leagueArchive'));
+			btns.append(t, this.button(_t('Moje tágá (4 do zápasu)'), 'myCues'), this.button(_t('Moje údaje'), 'officeEdit'), this.button(_t('Minulé sezóny'), 'leagueArchive'));
 			w.appendChild(btns);
 		}
 		const foot = h('div', 'mysn-office-btns');
-		foot.appendChild(this.button('Späť do herne', 'officeLeave'));
+		foot.appendChild(this.button(_t('Späť do herne'), 'officeLeave'));
 		w.appendChild(foot);
 		box.appendChild(w);
 	}
@@ -3384,13 +3397,13 @@ export class UI {
 	renderMixer(box, r) {
 		const wrap = h('div', 'mysn-mixer');
 		const st = r.station;
-		const head = h('div', 'mysn-news-head', `<b>Rádio${st ? ': ' + esc(st.name) : ''}</b>`);
-		const tg = this.button(r.on ? 'Vypnúť (P)' : 'Zapnúť (P)', 'radioToggle');
+		const head = h('div', 'mysn-news-head', `<b>${_t('Rádio')}${st ? ': ' + esc(st.name) : ''}</b>`);
+		const tg = this.button(r.on ? _t('Vypnúť (P)') : _t('Zapnúť (P)'), 'radioToggle');
 		tg.classList.add('mysn-primary');
 		head.appendChild(tg);
 		wrap.appendChild(head);
-		wrap.appendChild(h('p', 'mysn-mixer-status', esc(r.status || (r.stations.length ? 'Vyber stanicu alebo stlač Zapnúť.' : 'V My Player nie sú žiadne rádiá.'))));
-		const names = { vol: 'Hlasitosť', bass: 'Basy', treble: 'Výšky', bal: 'Vyváženie' };
+		wrap.appendChild(h('p', 'mysn-mixer-status', esc(r.status || (r.stations.length ? _t('Vyber stanicu alebo stlač Zapnúť.') : _t('V My Player nie sú žiadne rádiá.')))));
+		const names = { vol: _t('Hlasitosť'), bass: 'Basy', treble: _t('Výšky'), bal: _t('Vyváženie') };
 		for (const k of ['vol', 'bass', 'treble', 'bal']) {
 			const lab = h('label', 'mysn-mixer-row', `<span>${names[k]}</span>`);
 			const inp = document.createElement('input');
@@ -3408,7 +3421,7 @@ export class UI {
 		}
 		const list = h('div', 'mysn-news mysn-stations');
 		r.stations.forEach((s, i) => {
-			const b = h('button', 'mysn-news-item' + (i === r.index && r.on ? ' mysn-on' : ''), `<span>${esc([s.city, s.genre].filter(Boolean).join(', ') || 'Rádio')}</span>${esc(s.name)}`);
+			const b = h('button', 'mysn-news-item' + (i === r.index && r.on ? ' mysn-on' : ''), `<span>${esc([s.city, s.genre].filter(Boolean).join(', ') || _t('Rádio'))}</span>${esc(s.name)}`);
 			b.type = 'button';
 			b.addEventListener('click', (e) => {
 				e.stopPropagation();
@@ -3584,13 +3597,13 @@ export class UI {
 				list.appendChild(head);
 				items.slice(0, 9).forEach((n) => list.appendChild(link(n)));
 			};
-			sec('HEDLAJNER', news.news, 'Celé (C)', 'reader');
-			sec('Správy z RSS', news.rss, 'Celé (V)', 'readerRss');
+			sec('HEDLAJNER', news.news, _t('Celé (C)'), 'reader');
+			sec(_t('Správy z RSS'), news.rss, _t('Celé (V)'), 'readerRss');
 			box.appendChild(list);
 		}
 		if ((name === 'news' || name === 'magazine') && news && news.length) {
 			// klikateľné titulky (otvoria článok na webe v novom okne) a čítanie na celú obrazovku
-			const full = this.button('Čítať na celú obrazovku (C)', 'reader');
+			const full = this.button(_t('Čítať na celú obrazovku (C)'), 'reader');
 			full.classList.add('mysn-primary');
 			box.appendChild(full);
 			const list = h('div', 'mysn-news');
@@ -3691,14 +3704,14 @@ export class UI {
 		const OTHER = new Set(['account', 'staff', 'home']);
 		const groups = [
 			{
-				name: 'Hra',
+				name: _t('Hra'),
 				color: '#6fb3ff',
 				// položky menu hry (podľa stavu: Tréning, Hrať, Liga, Poslať výzvu, Pozerať hru, Účet…); ťuknutie
 				// stlačí pôvodné tlačidlo, takže robí presne to isté ako na desktope
-				items: [['set', 'Nastavenia', { a: 'settings' }, '#ff6b6b'],
+				items: [['set', _t('Nastavenia'), { a: 'settings' }, '#ff6b6b'],
 					// príslušenstvo (krieda, nádstavce, predĺženie) len pri stole: inak sivé s textom len pri stole
 					...(ctx.office ? [] : [
-						['chalk', ctx.table ? 'Príslušenstvo' : 'Príslušenstvo · len pri stole', { a: 'tools', grey: !ctx.table }, ctx.table ? '#ffd34d' : '#8a8f98'],
+						['chalk', ctx.table ? _t('Príslušenstvo') : _t('Príslušenstvo · len pri stole'), { a: 'tools', grey: !ctx.table }, ctx.table ? '#ffd34d' : '#8a8f98'],
 					]),
 					...mirror.filter((it) => !OTHER.has(it[2].el.dataset.act)),
 					...mirror.filter((it) => OTHER.has(it[2].el.dataset.act)),
@@ -3709,57 +3722,57 @@ export class UI {
 			ctx.office
 				? {
 						// kancelária (ligy): klávesy kancelárie
-						name: 'Kancelária',
+						name: _t('Kancelária'),
 						color: '#c39bff',
 						items: [
-							['help', 'Nástenka', { k: 'F1' }],
-							['cue', 'Moje tágá', { k: 'F2' }],
-							['calendar', 'Kalendár', { k: 'F3' }],
-							['score', 'Výsledky', { k: 'F4' }],
-							['window', 'Okno', { k: 'F6' }],
-							['laptop', 'Moja liga', { k: 'F7' }],
-							['card', 'Vizitka', { k: 'F8' }],
-							['search', 'Hľadať zápas', { k: 'F9' }],
-							['pin', 'Hráči ligy', { k: 'F10' }],
-							['lamp', 'Lampa', { k: 'F12' }],
+							['help', _t('Nástenka'), { k: 'F1' }],
+							['cue', _t('Moje tágá'), { k: 'F2' }],
+							['calendar', _t('Kalendár'), { k: 'F3' }],
+							['score', _t('Výsledky'), { k: 'F4' }],
+							['window', _t('Okno'), { k: 'F6' }],
+							['laptop', _t('Moja liga'), { k: 'F7' }],
+							['card', _t('Vizitka'), { k: 'F8' }],
+							['search', _t('Hľadať zápas'), { k: 'F9' }],
+							['pin', _t('Hráči ligy'), { k: 'F10' }],
+							['lamp', _t('Lampa'), { k: 'F12' }],
 						],
 					}
 				: ctx.venue === 'league'
 					? {
 							// štadión (ligový zápas): klávesy štadióna
-							name: 'Štadión',
+							name: _t('Štadión'),
 							color: '#ff9f6b',
 							items: [
-								['book', 'Pravidlá', { k: 'F1' }],
-								['cue', 'Moje tágá', { k: 'F2' }],
-								['chalk', 'Krieda', { k: 'F3' }],
-								['score', 'Skóre', { k: 'F4' }],
-								['chair', 'Kreslo', { k: 'F7' }],
-								['lamp', 'Svetlá', { k: 'F12' }],
+								['book', _t('Pravidlá'), { k: 'F1' }],
+								['cue', _t('Moje tágá'), { k: 'F2' }],
+								['chalk', _t('Krieda'), { k: 'F3' }],
+								['score', _t('Skóre'), { k: 'F4' }],
+								['chair', _t('Kreslo'), { k: 'F7' }],
+								['lamp', _t('Svetlá'), { k: 'F12' }],
 							],
 						}
 					: {
-							name: 'Herňa',
+							name: _t('Herňa'),
 							color: '#ffd34d',
 							items: [
-								['help', 'Nápoveda', { k: 'F1' }],
-								['cue', 'Tágá', { k: 'F2' }],
-								['score', 'Skóre', { k: 'F4' }],
-								['trophy', 'Rebríček', { k: 'F8' }],
-								['radio', 'Rádio', { k: 'F9' }],
-								['door', 'Dvere', { k: 'F6' }],
-								['chair', 'Kreslo', { k: 'F7' }],
-								['bar', 'Bar', { k: 'F10' }],
-								['league', 'Liga', { k: 'F12' }],
+								['help', _t('Nápoveda'), { k: 'F1' }],
+								['cue', _t('Tágá'), { k: 'F2' }],
+								['score', _t('Skóre'), { k: 'F4' }],
+								['trophy', _t('Rebríček'), { k: 'F8' }],
+								['radio', _t('Rádio'), { k: 'F9' }],
+								['door', _t('Dvere'), { k: 'F6' }],
+								['chair', _t('Kreslo'), { k: 'F7' }],
+								['bar', _t('Bar'), { k: 'F10' }],
+								['league', _t('Liga'), { k: 'F12' }],
 							],
 						},
 			{
-				name: 'Tréning',
+				name: _t('Tréning'),
 				color: '#7CFC8A',
 				items: ctx.office || ctx.venue === 'league' ? [] : [
-					!this.btnUndo.disabled && ['undo', 'Späť', { a: 'undo' }],
-					!this.btnHand.disabled && ['hand', 'Biela do ruky', { a: 'hand' }],
-					!this.btnReset.disabled && ['reset', 'Nové rozostavenie', { a: 'reset' }],
+					!this.btnUndo.disabled && ['undo', _t('Späť'), { a: 'undo' }],
+					!this.btnHand.disabled && ['hand', _t('Biela do ruky'), { a: 'hand' }],
+					!this.btnReset.disabled && ['reset', _t('Nové rozostavenie'), { a: 'reset' }],
 					].filter(Boolean),
 			},
 		];
@@ -3773,7 +3786,7 @@ export class UI {
 		this.mmenu.textContent = '';
 		const close = h('button', 'mysn-mm-x', '✕');
 		close.type = 'button';
-		close.setAttribute('aria-label', 'Zavrieť menu');
+		close.setAttribute('aria-label', _t('Zavrieť menu'));
 		close.addEventListener('click', () => {
 			if (this._mmAsMenu) {
 				if (resumeBtn) {
@@ -3842,10 +3855,10 @@ export class UI {
 			this._backFree = free;
 			this.backBtn.classList.toggle('mysn-back-free', free === 'free');
 			this.backBtn.innerHTML = free === 'office'
-				? '← Späť za stôl'
+				? _t('← Späť za stôl')
 				: free
-				? '← <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="4.5" r="2"/><path d="M12 7.5v6M12 13.5l-3 7M12 13.5l3 7M7 10.5h10"/></svg> Voľný pohľad'
-				: '← Späť k stolu';
+				? _t('← <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="4.5" r="2"/><path d="M12 7.5v6M12 13.5l-3 7M12 13.5l3 7M7 10.5h10"/></svg> Voľný pohľad')
+				: _t('← Späť k stolu');
 		}
 	}
 
@@ -3863,7 +3876,7 @@ export class UI {
 	/** F1 blok na štadióne: listovanie strán (‹ Strana 1/3 ›) dole v strede; on = false skryje. */
 	padNav(on, page = 0, count = 1, label = '') {
 		if (!this.padEl) {
-			this.padEl = h('div', 'mysn-padnav mysn-hidden', '<button type="button" data-d="-1" aria-label="Predošlá strana">‹</button><span></span><button type="button" data-d="1" aria-label="Ďalšia strana">›</button>');
+			this.padEl = h('div', 'mysn-padnav mysn-hidden', _t('<button type="button" data-d="-1" aria-label="Predošlá strana">‹</button><span></span><button type="button" data-d="1" aria-label="Ďalšia strana">›</button>'));
 			for (const t of ['pointerdown', 'pointerup', 'mousedown', 'touchstart', 'touchend', 'wheel']) {
 				this.padEl.addEventListener(t, (e) => e.stopPropagation());
 			}
@@ -3878,7 +3891,7 @@ export class UI {
 		}
 		this.padEl.classList.toggle('mysn-hidden', !on);
 		if (on) {
-			this.padEl.querySelector('span').textContent = label ? (page >= 0 ? `${page + 1} / ${count}: ${label}` : label) : `Strana ${page + 1} / ${count}`;
+			this.padEl.querySelector('span').textContent = label ? (page >= 0 ? `${page + 1} / ${count}: ${label}` : label) : _t('Strana {a} / {b}', { a: page + 1, b: count });
 		}
 	}
 
@@ -4019,31 +4032,31 @@ export class UI {
 		if (game.spectating) {
 			// divák: kto hrá a stav partie
 			const sp = game.spectating;
-			this.modeLabel.textContent = `Sledujem: ${sp.title}`;
-			this.stats.innerHTML = `<span>${esc(sp.kind === 'league' ? 'Ligový zápas' : sp.kind === 'solo' ? 'O najlepšie skóre' : 'Tréning')}</span>${sp.info ? `<span><b>${esc(sp.info)}</b></span>` : ''}<span>Esc: menu, Prestať sledovať</span>`;
+			this.modeLabel.textContent = _t('Sledujem: {name}', { name: sp.title });
+			this.stats.innerHTML = `<span>${esc(sp.kind === 'league' ? _t('Ligový zápas') : sp.kind === 'solo' ? _t('O najlepšie skóre') : _t('Tréning'))}</span>${sp.info ? `<span><b>${esc(sp.info)}</b></span>` : ''}<span>${_t('Esc: menu, Prestať sledovať')}</span>`;
 			return;
 		}
-		this.modeLabel.textContent = this.root.classList.contains('mysn-in-office') ? 'Liga: kancelária' : mt ? (mt.league ? 'Ligová partia' : mt.training ? 'Tréning s priateľom' : 'Partia') : game.solo ? 'O najlepšie skóre' : 'Tréning';
+		this.modeLabel.textContent = this.root.classList.contains('mysn-in-office') ? _t('Liga: kancelária') : mt ? (mt.league ? _t('Ligová partia') : mt.training ? _t('Tréning s priateľom') : _t('Partia')) : game.solo ? _t('O najlepšie skóre') : _t('Tréning');
 		const so = game.solo;
 		if (so && !mt) {
 			const t = Math.max(0, Math.round(so.time));
-			this.stats.innerHTML = `<span>Body <b>${game.soloScore}</b></span><span>Séria <b>${so.rules.brk}</b></span><span>Najvyššia <b>${so.best}</b></span><span>Čas <b>${Math.floor(t / 60)}:${String(t % 60).padStart(2, '0')}</b></span><span>Hrá sa na <b>${esc(game.onText())}</b></span><span>Fauly <b>${so.fouls}</b></span><span class="${this._chalk > 0 ? 'mysn-chalk-on' : 'mysn-chalk-off'}">Krieda <b>${this._chalk > 0 ? this._chalk : this.touchUI ? 'nie' : 'F3'}</b></span>`;
+			this.stats.innerHTML = `<span>${_t('Body')} <b>${game.soloScore}</b></span><span>${_t('Séria')} <b>${so.rules.brk}</b></span><span>${_t('Najvyššia')} <b>${so.best}</b></span><span>${_t('Čas')} <b>${Math.floor(t / 60)}:${String(t % 60).padStart(2, '0')}</b></span><span>${_t('Hrá sa na')} <b>${esc(game.onText())}</b></span><span>${_t('Fauly')} <b>${so.fouls}</b></span><span class="${this._chalk > 0 ? 'mysn-chalk-on' : 'mysn-chalk-off'}">${_t('Krieda')} <b>${this._chalk > 0 ? this._chalk : this.touchUI ? _t('nie') : 'F3'}</b></span>`;
 		} else if (mt && mt.rules) {
 			const nm = (i) => esc(String(mt.players[i].name).slice(0, 16));
 			const r = mt.rules;
 			const turn = (i) => (r.turn === i && !r.over ? ' mysn-turn' : '');
-			this.stats.innerHTML = `<span class="mysn-sc${turn(mt.me)}">${nm(mt.me)} <b>${r.scores[mt.me]}</b></span><span class="mysn-sc${turn(1 - mt.me)}">${nm(1 - mt.me)} <b>${r.scores[1 - mt.me]}</b>${mt.players[1 - mt.me].online === false ? ' <i>mimo</i>' : ''}</span>${mt.frames ? `<span>Framy <b>${mt.frames.won[mt.me]} : ${mt.frames.won[1 - mt.me]}</b> (${mt.frames.n}. z ${mt.frames.of})</span>` : ''}<span>Na rade <b>${r.turn === mt.me ? 'ty' : nm(r.turn)}</b></span><span>Hrá sa na <b>${esc(game.onText())}</b></span><span>Séria <b>${r.brk}</b></span><span class="${this._chalk > 0 ? 'mysn-chalk-on' : 'mysn-chalk-off'}">Krieda <b>${this._chalk > 0 ? this._chalk : this.touchUI ? 'nie' : 'F3'}</b></span>`;
+			this.stats.innerHTML = `<span class="mysn-sc${turn(mt.me)}">${nm(mt.me)} <b>${r.scores[mt.me]}</b></span><span class="mysn-sc${turn(1 - mt.me)}">${nm(1 - mt.me)} <b>${r.scores[1 - mt.me]}</b>${mt.players[1 - mt.me].online === false ? ` <i>${_t('mimo')}</i>` : ''}</span>${mt.frames ? `<span>${_t('Framy')} <b>${mt.frames.won[mt.me]} : ${mt.frames.won[1 - mt.me]}</b> (${_t('{a}. z {b}', { a: mt.frames.n, b: mt.frames.of })})</span>` : ''}<span>${_t('Na rade')} <b>${r.turn === mt.me ? _t('ty') : nm(r.turn)}</b></span><span>${_t('Hrá sa na')} <b>${esc(game.onText())}</b></span><span>${_t('Séria')} <b>${r.brk}</b></span><span class="${this._chalk > 0 ? 'mysn-chalk-on' : 'mysn-chalk-off'}">${_t('Krieda')} <b>${this._chalk > 0 ? this._chalk : this.touchUI ? _t('nie') : 'F3'}</b></span>`;
 		} else {
 		this.stats.innerHTML = `<span>${_t('Údery')} <b>${s.shots}</b></span><span>${_t('Spadnuté')} <b>${s.points >= 0 ? s.potted : 0}</b></span><span>${_t('Body')} <b>${s.points}</b></span><span>${_t('Séria')} <b>${s.run}</b></span><span>${_t('Najlepšia')} <b>${s.best}</b></span><span class="${this._chalk > 0 ? 'mysn-chalk-on' : 'mysn-chalk-off'}">${_t('Krieda')} <b>${this._chalk > 0 ? this._chalk : this.touchUI ? _t('nie') : 'F3'}</b></span>`;
 		}
 		const st0 = game.state;
 		const base =
 			st0 === 'place'
-				? 'Posuň bielu guľu v D myšou a polož ju ľavým tlačidlom myši (alebo Enter, Hotovo).'
+				? _t('Posuň bielu guľu v D myšou a polož ju ľavým tlačidlom myši (alebo Enter, Hotovo).')
 				: st0 === 'watch' && !game.message
-					? 'Na rade je súper.'
+					? _t('Na rade je súper.')
 					: st0 === 'wait'
-						? 'Čakám na výsledok súperovho úderu…'
+						? _t('Čakám na výsledok súperovho úderu…')
 						: game.message;
 		this.msg.textContent = [this._net, base].filter(Boolean).join('  ');
 		this.msg.classList.toggle('mysn-hidden', !this.msg.textContent);

@@ -6,9 +6,11 @@
  * červených na stole po údere }. Vyhodnotenie vráti nový stav, body, faul, ktoré farby vrátiť na spoty,
  * či má ďalší hráč bielu do ruky a správu pre hráčov.
  */
+import { _t, _pts } from './i18n.js';
+
 export const VALUE = { red: 1, yellow: 2, green: 3, brown: 4, blue: 5, pink: 6, black: 7 };
 export const SEQUENCE = ['yellow', 'green', 'brown', 'blue', 'pink', 'black'];
-const NAME = { red: 'červená', yellow: 'žltá', green: 'zelená', brown: 'hnedá', blue: 'modrá', pink: 'ružová', black: 'čierna', white: 'biela', colour: 'farba' };
+const NAME = { red: _t('červená'), yellow: _t('žltá'), green: _t('zelená'), brown: _t('hnedá'), blue: _t('modrá'), pink: _t('ružová'), black: _t('čierna'), white: _t('biela'), colour: _t('farba') };
 
 export function newFrame(turn = 0) {
 	return { scores: [0, 0], turn, on: 'red', brk: 0, over: false, winner: null };
@@ -17,19 +19,19 @@ export function newFrame(turn = 0) {
 /** Text pre hráča: na akú guľu hrá (free = voľná guľa po súperovom faule). */
 export function onLabel(on, free = false) {
 	if (free && (on === 'red' || VALUE[on])) {
-		return `voľná guľa (ľubovoľná farba) alebo ${onLabel(on)}`;
+		return _t('voľná guľa (ľubovoľná farba) alebo {on}', { on: onLabel(on) });
 	}
 	if (on === 'red') {
-		return 'červená';
+		return _t('červená');
 	}
 	if (on === 'colour') {
-		return 'ľubovoľná farba';
+		return _t('ľubovoľná farba');
 	}
 	if (on === 'done') {
-		return 'koniec framu';
+		return _t('koniec framu');
 	}
 	if (on === 'any') {
-		return 'ľubovoľná guľa';
+		return _t('ľubovoľná guľa');
 	}
 	return NAME[on] || on;
 }
@@ -111,16 +113,16 @@ export function evaluate(state, shot) {
 
 	if (s.on === 'red') {
 		if (!hit) {
-			foul = 'Biela netrafila žiadnu guľu.';
+			foul = _t('Biela netrafila žiadnu guľu.');
 		} else if (hit !== 'red') {
-			foul = `Prvá trafená guľa musí byť červená (trafená ${NAME[hit]}).`;
+			foul = _t('Prvá trafená guľa musí byť červená (trafená {b}).', { b: NAME[hit] });
 			raise(hit);
 		}
 		for (const k of balls) {
 			if (k !== 'red') {
 				respot.push(k);
 				raise(k);
-				foul = foul || `Spadla ${NAME[k]}, hralo sa na červenú.`;
+				foul = foul || _t('Spadla {b}, hralo sa na červenú.', { b: NAME[k] });
 			}
 		}
 		if (!foul && !cuePotted) {
@@ -132,9 +134,9 @@ export function evaluate(state, shot) {
 		const potCols = balls.filter((k) => k !== 'red');
 		const nom = hit && hit !== 'red' ? (potCols.length === 1 ? potCols[0] : hit) : null;
 		if (!hit) {
-			foul = 'Biela netrafila žiadnu guľu.';
+			foul = _t('Biela netrafila žiadnu guľu.');
 		} else if (!nom) {
-			foul = 'Po červenej treba trafiť farbu (trafená červená).';
+			foul = _t('Po červenej treba trafiť farbu (trafená červená).');
 		}
 		raise(nom);
 		for (const k of balls) {
@@ -143,7 +145,7 @@ export function evaluate(state, shot) {
 			}
 			if (k !== nom) {
 				raise(k === 'red' ? null : k);
-				foul = foul || `Spadla ${NAME[k]}, nominovaná bola ${NAME[nom]}.`;
+				foul = foul || _t('Spadla {b}, nominovaná bola {n}.', { b: NAME[k], n: NAME[nom] });
 			}
 		}
 		if (!foul && !cuePotted && balls.includes(nom)) {
@@ -153,9 +155,9 @@ export function evaluate(state, shot) {
 		const on = s.on;
 		raise(on);
 		if (!hit) {
-			foul = 'Biela netrafila žiadnu guľu.';
+			foul = _t('Biela netrafila žiadnu guľu.');
 		} else if (hit !== on) {
-			foul = `Prvá trafená guľa musí byť ${NAME[on]} (trafená ${NAME[hit]}).`;
+			foul = _t('Prvá trafená guľa musí byť {on} (trafená {b}).', { on: NAME[on], b: NAME[hit] });
 			raise(hit);
 		}
 		for (const k of balls) {
@@ -183,7 +185,7 @@ export function evaluate(state, shot) {
 		s.scores[1 - me] += penalty;
 		s.turn = 1 - me;
 		s.brk = 0;
-		msg = `Faul: ${foul} Súper dostáva ${penalty} ${penalty < 5 ? 'body' : 'bodov'}.`;
+		msg = _t('Faul: {why} Súper dostáva {pts}.', { why: foul, pts: _pts(penalty) });
 		if (s.on === 'red' || s.on === 'colour') {
 			s.on = reds > 0 ? 'red' : 'yellow';
 		}
@@ -198,14 +200,14 @@ export function evaluate(state, shot) {
 			const i = SEQUENCE.indexOf(s.on);
 			s.on = i < SEQUENCE.length - 1 ? SEQUENCE[i + 1] : 'done';
 		}
-		msg = `+${points}, séria ${s.brk}.`;
+		msg = _t('+{p}, séria {b}.', { p: points, b: s.brk });
 	} else {
 		s.turn = 1 - me;
 		s.brk = 0;
 		if (s.on === 'red' || s.on === 'colour') {
 			s.on = reds > 0 ? 'red' : 'yellow';
 		}
-		msg = 'Bez bodov, na rade je súper.';
+		msg = _t('Bez bodov, na rade je súper.');
 	}
 
 	// koniec framu: potopená alebo faulom ukončená posledná čierna
@@ -218,8 +220,8 @@ export function evaluate(state, shot) {
 			if (!respot.includes('black')) {
 				respot.push('black');
 			}
-			msg += ' Remíza, čierna sa vracia na spot.';
-			return { state: s, points, foul: !!foul, penalty: foul ? penalty : 0, respot, inHand: true, msg, tie: true };
+			msg += _t(' Remíza, čierna sa vracia na spot.');
+			return { state: s, points, foul: !!foul, why: foul || '', penalty: foul ? penalty : 0, respot, inHand: true, msg, tie: true };
 		}
 		s.over = true;
 		s.on = 'done';
@@ -229,7 +231,7 @@ export function evaluate(state, shot) {
 			respot.splice(i, 1);
 		}
 	}
-	return { state: s, points, foul: !!foul, penalty: foul ? penalty : 0, respot, inHand: cuePotted, msg };
+	return { state: s, points, foul: !!foul, why: foul || '', penalty: foul ? penalty : 0, respot, inHand: cuePotted, msg };
 }
 
 /** Voľná guľa: prvá trafená farba (fb) zastupuje guľu na rade (červenú alebo farbu v poradí). */
@@ -254,7 +256,7 @@ function evaluateFree(state, shot) {
 		const legal = k === fb || (onRed ? k === 'red' : k === state.on);
 		if (!legal) {
 			penalty = Math.max(penalty, VALUE[k] || 4);
-			foul = foul || `Spadla ${NAME[k]}, voľná guľa bola ${NAME[fb]}.`;
+			foul = foul || _t('Spadla {b}, voľná guľa bola {fb}.', { b: NAME[k], fb: NAME[fb] });
 		}
 	}
 	if (!foul && !cuePotted && balls.length) {
@@ -270,18 +272,18 @@ function evaluateFree(state, shot) {
 		s.turn = 1 - me;
 		s.brk = 0;
 		s.on = onRed ? (reds > 0 ? 'red' : 'yellow') : state.on;
-		msg = `Faul: ${foul} Súper dostáva ${penalty} ${penalty < 5 ? 'body' : 'bodov'}.`;
+		msg = _t('Faul: {why} Súper dostáva {pts}.', { why: foul, pts: _pts(penalty) });
 	} else if (points > 0) {
 		s.scores[me] += points;
 		s.brk += points;
 		// po voľnej guli namiesto červenej sa hrá farba; namiesto farby v poradí ostáva tá istá farba na rade
 		s.on = onRed ? 'colour' : state.on;
-		msg = `Voľná guľa ${NAME[fb]} za ${points} ${points === 1 ? 'bod' : points < 5 ? 'body' : 'bodov'}, séria ${s.brk}.`;
+		msg = _t('Voľná guľa {fb} za {pts}, séria {b}.', { fb: NAME[fb], pts: _pts(points), b: s.brk });
 	} else {
 		s.turn = 1 - me;
 		s.brk = 0;
 		s.on = onRed ? (reds > 0 ? 'red' : 'yellow') : state.on;
-		msg = 'Bez bodov, na rade je súper.';
+		msg = _t('Bez bodov, na rade je súper.');
 	}
-	return { state: s, points, foul: !!foul, penalty: foul ? penalty : 0, respot, inHand: cuePotted, msg };
+	return { state: s, points, foul: !!foul, why: foul || '', penalty: foul ? penalty : 0, respot, inHand: cuePotted, msg };
 }
