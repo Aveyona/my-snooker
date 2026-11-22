@@ -5177,6 +5177,10 @@ export function start(root, config = {}) {
 					const n = m.players.map((p) => p.name);
 					const w = pre.win >= 0 ? n[pre.win] : '';
 					ui.toast((w ? _t('{w} vyhral žreb, rozbíja {b}.', { w, b: n[pre.brk] }) : _t('Rozbíja {b}.', { b: n[pre.brk] })) + (m.league && !m.rudo ? ' ' + _t('Komentátor Rudo je v tomto zápase vypnutý.') : ''));
+					if (m.league && refVoice.on() && m.players[pre.brk]) {
+						refVoice.say('ref-start', 600); // rozhodca ohlási začiatok a hráča, ktorý po žrebe rozbíja
+						refVoice.sayName(m.players[pre.brk].id, 600);
+					}
 				}
 			},
 			// tágá súpera na jeho stojane na štadióne
@@ -5367,8 +5371,9 @@ export function start(root, config = {}) {
 				if (m.league) {
 					setTimeout(() => rudo.start(), 500); // komentátor Rudo na štadióne
 				}
-				// rozhodca: začiatok zápasu a meno hráča, ktorý rozbíja
-				if (refVoice.on() && m.players[m.turn]) {
+				// rozhodca: začiatok zápasu a meno hráča, ktorý rozbíja – len v lige na štadióne (0.44.2: v herni ticho);
+				// pri žrebe pred zápasom až po žrebe (hook pre), keď je jasné, kto rozbíja
+				if (m.league && !(m.pre && !m.pre.done) && !(m.pre && m.pre.done) && refVoice.on() && m.players[m.turn]) {
 					refVoice.say('ref-start', 900);
 					refVoice.sayName(m.players[m.turn].id, 900);
 				}
