@@ -1761,6 +1761,19 @@ export class UI {
 			row.appendChild(this.button('Zrušiť', 'cancelInvite'));
 			L.appendChild(row);
 		}
+		// 0.42.0: pozvánka e-mailom – kamarát nemusí mať účet (hrá ako hosť)
+		if (this.opts.user && !this.opts.user.guest) {
+			const ei = h('div', 'mysn-einv', '<p class="mysn-lobby-sub">Pozvať kamaráta e-mailom (nemusí mať účet)</p><div style="display:flex;gap:6px"><input type="email" placeholder="e-mail kamaráta" style="flex:1;min-width:0"><button type="button" class="mysn-btn mysn-primary">Pozvať e-mailom</button></div>');
+			const inp = ei.querySelector('input');
+			inp.value = this._einvMail || '';
+			inp.addEventListener('input', () => (this._einvMail = inp.value));
+			inp.addEventListener('keydown', (e) => e.stopPropagation());
+			ei.querySelector('button').addEventListener('click', (e) => {
+				e.stopPropagation();
+				this.opts.onAction('einvite', inp.value.trim());
+			});
+			L.appendChild(ei);
+		}
 		L.appendChild(h('p', 'mysn-lobby-sub', 'Hráči práve v hre My Snooker'));
 		// výzva na partiu: počet framov (1, 3 alebo 5; vyhráva, kto prvý vyhrá väčšinu)
 		const fsel = h('label', 'mysn-frames', 'Partia na <select><option value="1">1 frame</option><option value="3">3 framy (2 víťazné)</option><option value="5">5 framov (3 víťazné)</option></select>');

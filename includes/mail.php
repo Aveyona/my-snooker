@@ -41,7 +41,8 @@ function mysn_mail_html( $subject, $text ) {
 		$h = preg_replace( '#(https?://[^\s<]+)#', '<a href="$1" style="color:#f2d48a;word-break:break-all">$1</a>', $h );
 		$paras[] = '<p style="margin:0 0 14px;font-size:15px;line-height:1.55;color:#e6eae2">' . nl2br( $h ) . '</p>';
 	}
-	$label = false !== stripos( $subject, 'heslo' ) || false !== stripos( $subject, 'password' ) ? 'Nastaviť nové heslo' : ( false !== stripos( $subject, 'potvr' ) ? 'Potvrdiť účet a hrať' : 'Otvoriť' );
+	$label = false !== stripos( $subject, 'pozýva' ) ? 'Prijať pozvánku a hrať' : ( false !== stripos( $subject, 'prijal' ) ? 'Ísť do hry' : null );
+	$label = $label ? $label : ( false !== stripos( $subject, 'heslo' ) || false !== stripos( $subject, 'password' ) ? 'Nastaviť nové heslo' : ( false !== stripos( $subject, 'potvr' ) ? 'Potvrdiť účet a hrať' : 'Otvoriť' ) );
 	$game  = esc_url( mysn_url() );
 	$ball  = function ( $c, $s = 18 ) {
 		return '<td style="padding:0 3px"><div style="width:' . $s . 'px;height:' . $s . 'px;border-radius:50%;background:' . $c . ';box-shadow:inset -3px -3px 5px rgba(0,0,0,.35),inset 2px 2px 3px rgba(255,255,255,.35)"></div></td>';

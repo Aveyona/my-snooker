@@ -188,6 +188,9 @@ function mysn_league_me( $uid, $ranked = null ) {
 /** Môžu spolu hrať ligovú partiu? Vráti text chyby alebo prázdny reťazec. */
 function mysn_league_can_play( $a, $b ) {
 	global $wpdb;
+	if ( function_exists( 'mysn_is_guest' ) && ( mysn_is_guest( $a ) || mysn_is_guest( $b ) ) ) {
+		return 'Hosť môže hrať len priateľské partie, nie ligu.'; // 0.42.0
+	}
 	mysn_league_join( $a );
 	mysn_league_join( $b );
 	$s      = mysn_season_current();

@@ -76,6 +76,7 @@ function mysn_render( $preview ) {
 		);
 		$pl           = function_exists( 'mysn_player' ) ? mysn_player( $u->ID ) : null;
 		$user['hand'] = $pl && ( $pl['hand'] ?? '' ) === 'left' ? 'left' : 'right'; // ruka z ligovej vizitky (strana kamery pri zostupe)
+		$user['guest'] = function_exists( 'mysn_is_guest' ) && mysn_is_guest( $u->ID ); // dočasný hosť z pozvánky e-mailom (0.42.0)
 	}
 	$cfg = array(
 		'homeUrl'  => $main,
@@ -87,6 +88,7 @@ function mysn_render( $preview ) {
 		'radio'    => mysn_radio_stations(),
 		// hrať môžu len prihlásení; neprihlásený vidí herňu a v menu tlačidlo Prihlásiť sa
 		'user'     => $user,
+		'einv'     => function_exists( 'mysn_einv_page_cfg' ) ? mysn_einv_page_cfg() : null, // pozvánka e-mailom (?pozvanka=…)
 		'loginUrl' => function_exists( 'my_users_login_page_url' ) ? my_users_login_page_url( array( 'redirect_to' => rawurlencode( $game ) ) ) : wp_login_url( $game ),
 		// prihlásenie v hre: formulár ide na stránku Prihlásenie z My Users (na tej istej adrese ako hra)
 		'auth'     => $user ? null : mysn_auth_config( $game ),

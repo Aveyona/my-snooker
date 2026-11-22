@@ -3311,6 +3311,22 @@ export function start(root, config = {}) {
 			}
 			ui.openLobby(false);
 		},
+		einvite: async (email) => {
+			if (!online || !email) {
+				ui.toast('Zadaj e-mail kamaráta.');
+				return;
+			}
+			try {
+				await online.net.call('einvite', { email, frames: ui.inviteFrames || 1 });
+				ui._einvMail = '';
+				ui.toast(`Pozvánka odoslaná na ${email}. Keď kamarát klikne na odkaz, príde ti výzva na partiu.`);
+				if (online.lastLobby) {
+					ui.renderLobby(online.lastLobby);
+				}
+			} catch (e) {
+				ui.toast(e.message || 'Pozvánku sa nepodarilo odoslať.');
+			}
+		},
 		invite: (id) => online && online.invite(id, false, false, ui.inviteFrames || 1),
 		inviteTraining: (id) => online && online.invite(id, false, true),
 		cancelInvite: () => online && online.cancelInvite(),
@@ -5045,6 +5061,47 @@ export function start(root, config = {}) {
 		ui.sync(game, rig.mode);
 		updateScore();
 	};
+	if (!user && config.einv && config.einv.valid && config.restUrl) {
+		// 0.42.0: pozvaný bez účtu – zadá meno a hrá ako dočasný hosť (alebo sa prihlási)
+		try {
+			localStorage.setItem('mysn_einv', config.einv.token);
+		} catch (e) {
+			/* bez úložiska */
+		}
+		const box = document.createElement('div');
+		box.className = 'mysn-choice mysn-einv-guest';
+		box.style.zIndex = '70';
+		box.innerHTML = '<div class="mysn-choice-t"></div><div class="mysn-choice-b" style="flex-wrap:wrap"><input type="text" maxlength="24" placeholder="Tvoje meno" style="min-width:180px;padding:8px 10px;border-radius:8px;border:1px solid #555;background:#111;color:#fff"><button type="button" data-a="g">Hrať ako hosť</button><button type="button" data-a="l">Mám účet – prihlásiť sa</button></div><div class="mysn-choice-n">Hosť hrá priateľské partie bez registrácie. Účet hosťa sa zmaže po 30 dňoch bez hrania.</div>';
+		box.querySelector('.mysn-choice-t').textContent = `${config.einv.from} ťa pozýva na partiu snookeru${config.einv.frames > 1 ? ` na ${config.einv.frames} framy` : ''}.`;
+		const inp = box.querySelector('input');
+		inp.addEventListener('keydown', (e) => e.stopPropagation());
+		box.addEventListener('click', async (e) => {
+			const b = e.target.closest('button');
+			if (!b) {
+				return;
+			}
+			if (b.dataset.a === 'l') {
+				box.remove();
+				if (config.loginUrl) {
+					location.href = config.loginUrl;
+				}
+				return;
+			}
+			b.disabled = true;
+			try {
+				const r = await fetch(config.restUrl + 'einvite/guest', { method: 'POST', credentials: 'same-origin', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ token: config.einv.token, name: inp.value }) });
+				const j = await r.json().catch(() => null);
+				if (!r.ok) {
+					throw new Error((j && j.message) || 'Hosťa sa nepodarilo vytvoriť.');
+				}
+				location.reload(); // prihlásený hosť: hra sa otvorí a pošle výzvu
+			} catch (err) {
+				b.disabled = false;
+				ui.toast(err.message);
+			}
+		});
+		ui.root.appendChild(box);
+	}
 	if (user && config.restUrl) {
 		online = new Online(config, game, {
 			lobby: async (d) => {
@@ -5343,6 +5400,36 @@ export function start(root, config = {}) {
 		snaps.refFn = () => (online.matchId ? 'm' + online.matchId : game.solo && game.solo.fid && !game.match ? 'f' + game.solo.fid : '');
 		if (game.solo && game.solo.fid && !game.match) {
 			snaps.ensure('f' + game.solo.fid);
+		}
+		// 0.42.0: pozvánka e-mailom – pozvaný (s účtom alebo hosť) pošle pozývajúcemu výzvu na partiu
+		{
+			let tok = config.einv && config.einv.valid ? config.einv.token : '';
+			try {
+				tok = tok || localStorage.getItem('mysn_einv') || '';
+				localStorage.removeItem('mysn_einv');
+			} catch (e) {
+				/* bez úložiska */
+			}
+			if (config.einv && !config.einv.valid) {
+				ui.toast('Pozvánka na partiu už neplatí (platí 7 dní).');
+			}
+			if (/[?&]pozvanka=/.test(location.search)) {
+				history.replaceState(null, '', location.pathname);
+			}
+			if (tok) {
+				setTimeout(async () => {
+					try {
+						const r = await online.net.call('einvite/accept', { token: tok });
+						if (r.status === 'sent') {
+							ui.toast(`Výzva odoslaná hráčovi ${r.from}. Keď ju prijme, partia sa začne.`);
+						} else {
+							ui.toast(`${r.from} teraz nie je v hre. Poslali sme mu e-mail, že si prišiel – kým príde, môžeš trénovať. V zozname hráčov (výzvy) ho potom vyzveš.`);
+						}
+					} catch (e) {
+						ui.toast(e.message || 'Pozvánku sa nepodarilo prijať.');
+					}
+				}, 1500);
+			}
 		}
 		online.seatCtx = seatCtxNow;
 		online.away = !lampOn; // zhasnutá lampa v kancelárii: nie som online
