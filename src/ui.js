@@ -87,7 +87,7 @@ function noKeys(t) {
 
 // mobil: ikonky položiek menu hry v hlavnom menu ☰ (podľa akcie tlačidla)
 const MM_ICON = {
-	resume: 'play', training: 'play', guestTraining: 'play', solo: 'trophy', league: 'league', lobby: 'swords', rooms: 'eye',
+	resume: 'play', training: 'play', guestTraining: 'play', solo: 'trophy', league: 'league', gameRooms: 'door', lobby: 'swords', rooms: 'eye',
 	staff: 'shield', account: 'user', home: 'web', resign: 'flag', pauseMatch: 'pause', leagueHome: 'door',
 	seatChange: 'chair', watchStop: 'x', accept: 'check', decline: 'x',
 };
@@ -910,7 +910,12 @@ export class UI {
 				(trainFirst ? tr : play).classList.add('mysn-primary');
 				this.btnResume = trainFirst ? tr : play;
 			}
-			box.append(tr, play, lg, fr(), enter); // rebríček je na F8
+			// 0.45.2 Rooms: osobitné miestnosti s vlastnými hrami (prvá Indická ulička), len pre prihlásených
+			const gr = user ? [this.button(_t('Rooms'), 'gameRooms', _t('Miestnosti s vlastnými hrami a prostredím: Indická ulička a ďalšie'))] : [];
+			for (const b of gr) {
+				b.classList.add('mysn-rooms-btn');
+			}
+			box.append(tr, play, lg, ...gr, fr(), enter); // rebríček je na F8
 			if (this.opts.venue && this.opts.venue() === 'league') {
 				box.appendChild(this.button(_t('Späť do herne'), 'leagueHome'));
 			}
@@ -2432,6 +2437,50 @@ export class UI {
 			}
 		};
 		draw();
+	}
+
+	/**
+	 * Rooms (0.45.2): zoznam miestností s vlastnými hrami. Karta = obrázok (farebný pás s ikonou), názov, popis,
+	 * čo sa tam dá hrať, tlačidlo Vstúpiť. Pripravované miestnosti sú zamknuté.
+	 */
+	openGameRooms(on, list = []) {
+		if (!this.grBox) {
+			this.grBox = h('div', 'mysn-panel mysn-grooms mysn-hidden');
+			for (const t of ['pointerdown', 'mousedown', 'click', 'wheel', 'keydown']) {
+				this.grBox.addEventListener(t, (e) => e.stopPropagation());
+			}
+			this.root.appendChild(this.grBox);
+		}
+		const B = this.grBox;
+		B.classList.toggle('mysn-hidden', !on);
+		this._grOpen = !!on;
+		if (!on) {
+			return;
+		}
+		B.innerHTML = `<h3>${_t('Rooms')}</h3><p class="mysn-note">${_t('Miestnosti s vlastným prostredím a hrami. Pribúdať budú postupne.')}</p><div class="mysn-gr-list"></div>`;
+		const L = B.querySelector('.mysn-gr-list');
+		for (const r of list) {
+			const card = h('div', `mysn-gr-card${r.soon ? ' soon' : ''}${r.here ? ' here' : ''}`);
+			card.innerHTML =
+				`<div class="mysn-gr-pic" style="background:${r.bg}"><span>${r.icon}</span></div>` +
+				`<div class="mysn-gr-body"><b>${esc(r.name)}</b>${r.here ? ` <em>${_t('si tu')}</em>` : ''}<p>${esc(r.desc)}</p>` +
+				(r.modes && r.modes.length ? `<ul>${r.modes.map((m) => `<li${m.soon ? ' class="soon"' : ''}>${esc(m.label)}${m.soon ? ` <i>${_t('čoskoro')}</i>` : ''}</li>`).join('')}</ul>` : '') +
+				`</div>`;
+			if (!r.soon) {
+				const go = this.button(r.here ? _t('Si tu') : _t('Vstúpiť'), 'roomGo', '', { id: r.id, mode: 'play' });
+				go.classList.add('mysn-primary');
+				go.disabled = !!r.here;
+				card.querySelector('.mysn-gr-body').appendChild(go);
+			}
+			L.appendChild(card);
+		}
+		const foot = h('div', 'mysn-lobby-foot');
+		foot.appendChild(this.button(_t('Zavrieť (Esc)'), 'gameRoomsClose'));
+		B.appendChild(foot);
+	}
+
+	gameRoomsOpen() {
+		return !!this._grOpen;
 	}
 
 	/** Telefón diváka (F1): pomocník s klávesmi a tlačidlá (konfety, miesto, skóre, odchod). */

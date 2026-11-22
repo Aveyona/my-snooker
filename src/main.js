@@ -3559,6 +3559,25 @@ export function start(root, config = {}) {
 			controls.uncapture();
 			ui.openRoomMap(true, mapRooms());
 		},
+		// 0.45.2 Rooms: miestnosti s vlastnými hrami (menu Rooms)
+		gameRooms: () => {
+			if (!user) {
+				return;
+			}
+			ui.showMenu(false);
+			controls.uncapture();
+			const here = view === 'office' ? 'office' : venue;
+			ui.openGameRooms(true, [
+				{ id: 'alley', name: _t('Indická ulička'), icon: '🛺', bg: 'linear-gradient(135deg,#1b1640 0%,#7a2d5a 55%,#e8913a 100%)', here: here === 'alley', desc: _t('Stôl vonku v blatistej uličke v Indii, v noci pod šnúrami žiaroviek. Súkno popísané fixkou a grafitmi, pri stole stánok s čajom.'), modes: [{ label: _t('Voľný tréning') }, { label: _t('Partia s priateľom'), soon: true }, { label: _t('21 kôl cez prekážky na čas'), soon: true }] },
+				{ id: 'soon', name: _t('Ďalšie miestnosti'), icon: '🚪', bg: 'linear-gradient(135deg,#1c2330,#3a4456)', soon: true, desc: _t('Pripravujeme ďalšie miestnosti s vlastnými hrami.') },
+			]);
+		},
+		gameRoomsClose: () => {
+			ui.openGameRooms(false);
+			if (!freeMouse) {
+				controls.capture();
+			}
+		},
 		roomMapClose: () => {
 			ui.openRoomMap(false);
 			if (!freeMouse) {
@@ -3575,6 +3594,7 @@ export function start(root, config = {}) {
 				return;
 			}
 			ui.openRoomMap(false);
+			ui.openGameRooms(false);
 			if (mode === 'tour') {
 				actions.adminTour(id);
 				return;
@@ -4293,7 +4313,7 @@ export function start(root, config = {}) {
 				freeMouse = false;
 				ui.setFree(false);
 				ui.showMenu(false);
-			} else if (finePointer && (!view || view === 'seat' || view === 'free') && !freeMouse && !ui.partyOpen() && !ui.toolsOpen() && !ui.roomMapOpen() && !ui.phoneOpen() && performance.now() > noMenuUntil && performance.now() - escClosedAt > 1500) {
+			} else if (finePointer && (!view || view === 'seat' || view === 'free') && !freeMouse && !ui.partyOpen() && !ui.toolsOpen() && !ui.roomMapOpen() && !ui.gameRoomsOpen() && !ui.phoneOpen() && performance.now() > noMenuUntil && performance.now() - escClosedAt > 1500) {
 				ui.showMenu(true, started);
 			}
 		},
@@ -4683,6 +4703,10 @@ export function start(root, config = {}) {
 			}
 			if (lk === 'm' && !typing && (!view || view === 'free' || (view === 'office' && !officeMode)) && !game.spectating && !ui.menuOpen()) {
 				actions.roomMap(); // mapa miestností
+				return true;
+			}
+			if (ui.gameRoomsOpen() && lk === 'escape') {
+				actions.gameRoomsClose();
 				return true;
 			}
 			if (ui.roomMapOpen() && lk === 'escape') {

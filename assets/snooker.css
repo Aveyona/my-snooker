@@ -256,6 +256,22 @@ body.mysn-page { font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans
 .mysn-in-office .mysn-stats { visibility: hidden; }
 .mysn-btn.mysn-league-btn { background: #7cc4f2; color: #0b2235; border-color: #a9dafa; font-weight: 600; }
 .mysn-btn.mysn-league-btn:hover { background: #95d1f7; }
+.mysn-btn.mysn-rooms-btn { background: linear-gradient(90deg,#7a2d5a,#e8913a); color: #fff; border-color: #f2b06a; font-weight: 600; }
+.mysn-btn.mysn-rooms-btn:hover { filter: brightness(1.1); }
+.mysn-grooms { position: absolute; left: 50%; top: 50%; transform: translate(-50%,-50%); width: min(640px, 94vw); max-height: 88vh; overflow: auto; z-index: 40; }
+.mysn-grooms h3 { margin: 0 0 4px; }
+.mysn-gr-list { display: flex; flex-direction: column; gap: 12px; margin: 12px 0; }
+.mysn-gr-card { display: flex; gap: 14px; background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.12); border-radius: 12px; overflow: hidden; }
+.mysn-gr-card.here { border-color: #f2b06a; }
+.mysn-gr-card.soon { opacity: 0.55; }
+.mysn-gr-pic { flex: 0 0 120px; display: flex; align-items: center; justify-content: center; font-size: 48px; }
+.mysn-gr-body { padding: 10px 12px 12px 0; flex: 1; }
+.mysn-gr-body p { margin: 4px 0 6px; font-size: 13px; opacity: 0.85; }
+.mysn-gr-body em { font-style: normal; font-size: 11px; color: #f2b06a; }
+.mysn-gr-body ul { margin: 0 0 8px; padding-left: 18px; font-size: 13px; }
+.mysn-gr-body li.soon { opacity: 0.6; }
+.mysn-gr-body li i { font-size: 11px; color: #f2b06a; font-style: normal; }
+@media (max-width: 520px) { .mysn-gr-pic { flex-basis: 70px; font-size: 32px; } }
 .mysn-card { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%) rotate(-1deg); width: min(560px, calc(100% - 32px)); max-height: calc(100vh - 80px); overflow: auto; z-index: 40; padding: 22px 26px 18px; border-radius: 10px; background: linear-gradient(135deg, #b3121f, #6e0912); border: 3px solid #e9c46a; box-shadow: 0 18px 50px #000a, inset 0 0 0 6px #6e0912, inset 0 0 0 8px #e9c46a66; color: #fff4e6; }
 .mysn-card.mysn-hidden { display: none; }
 .mysn-card-brand { text-align: center; font: 700 15px Georgia, serif; letter-spacing: 3px; color: #f4d98a; margin-bottom: 6px; }
