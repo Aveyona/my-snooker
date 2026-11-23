@@ -340,10 +340,12 @@ export function tutorial(parent, cfg, d) {
 			st.eyeL = now;
 			p = st.eyeT / Math.max(0.3, +S.param || 0);
 		} else if (S.type === 'eyeaim') {
-			if (d.rig.panActive) {
-				st.eyeA += Math.abs(dd);
+			const cp = d.rig.camera.position;
+			if (d.rig.panActive && st.camL) {
+				st.eyeA += Math.hypot(cp.x - st.camL.x, cp.y - st.camL.y, cp.z - st.camL.z) * 100;
 			}
-			p = st.eyeA / ((par * Math.PI) / 180);
+			st.camL = d.rig.panActive ? { x: cp.x, y: cp.y, z: cp.z } : null;
+			p = st.eyeA / Math.max(1, +S.param || 0);
 		} else if (S.type === 'pull') {
 			st.pull = Math.max(st.pull, d.controls.strokePull || 0, st.shot ? 1 : 0);
 			p = st.pull / (par / 100);

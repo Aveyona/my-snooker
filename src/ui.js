@@ -406,6 +406,9 @@ export class UI {
 				}
 			};
 			const fix = (node) => {
+				if (node.nodeType === 3 && node.parentElement && node.parentElement.closest('.mysn-tut, .mysn-tut-list')) {
+					return; // tutoriál: texty pre PC aj mobil sa nekrátia (0.50.1)
+				}
 				if (node.nodeType === 3) {
 					const v = noKeys(node.nodeValue);
 					if (v !== node.nodeValue) {
@@ -414,11 +417,14 @@ export class UI {
 					}
 					return;
 				}
-				if (node.nodeType !== 1 || node.closest('input, textarea')) {
+				if (node.nodeType !== 1 || node.closest('input, textarea, .mysn-tut, .mysn-tut-list')) {
 					return;
 				}
 				const w = document.createTreeWalker(node, 4);
 				for (let t = w.nextNode(); t; t = w.nextNode()) {
+					if (t.parentElement && t.parentElement.closest('.mysn-tut, .mysn-tut-list')) {
+						continue;
+					}
 					const v = noKeys(t.nodeValue);
 					if (v !== t.nodeValue) {
 						t.nodeValue = v;
