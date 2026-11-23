@@ -180,6 +180,7 @@ function mysn_roadmap() {
 /** Denník zmien (najnovšie hore). */
 function mysn_changelog() {
 	return array(
+		array( '0.50.2', '23. 11. 2026', 'Tutoriál, lekcia Prvý úder: nová scéna o citlivosti (mobil: šípka ▲ dole so zvýraznením – otáčanie prstom, ťahanie tága, oko, priblíženie; PC: Ctrl).' ),
 		array( '0.50.1', '23. 11. 2026', 'Tutoriál: na mobile sa texty scén už neskracujú (vety s PC ovládaním mobil predtým vyhadzoval). Lekcia 2, scéna 3: držanie pravého tlačidla / oka pohľad krúži okolo gule a približuje (netočí tágo) – úloha je teraz pohnúť pohľadom, s novým vysvetlením.' ),
 		array( '0.50.0', '23. 11. 2026', 'Tutoriál má 10 lekcií: otáčanie, presné mierenie, prvý úder, potopenie gule, pohľady, pravidlá, biela v ruke, falše a krieda, fauly a snooker, uhol tága a séria. Scény majú rozostavenie stola a cieľovú guľu, nevydarený pokus sa vráti a skúša sa znova (s vysvetlením, čo nevyšlo). Nové typy úloh: jemný a silný úder, potopenie, pohľad, biela v ruke, krieda, stop, spodná a horná falša, uhol tága, trafiť guľu, séria. Zvýraznenie oka, pohľadu zhora, miesta úderu, tága a kriedy.' ),
 		array( '0.49.2', '23. 11. 2026', 'SEO: nový titulok „My Snooker – Free realistic Snooker Game in Your Browser“ a popis bez „no download“ (vyhľadávače, Facebook, Twitter, Discord).' ),

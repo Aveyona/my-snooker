@@ -91,7 +91,7 @@ export function tutorial(parent, cfg, d) {
 	};
 
 	/** Zvýraznenie ovládacích prvkov (triedy na koreni hry, CSS rozhodne, čo pulzuje). */
-	const GLOW = { m_eye: 'eye', g_top: 'top', g_spin: 'spin', g_cue: 'cue', g_chalk: 'chalk' };
+	const GLOW = { m_eye: 'eye', g_top: 'top', g_spin: 'spin', g_cue: 'cue', g_chalk: 'chalk', g_tools: 'tools' };
 	const glow = (keys) => {
 		const root = d.root;
 		for (const [k, c] of Object.entries(GLOW)) {

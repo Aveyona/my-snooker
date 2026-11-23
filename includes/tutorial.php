@@ -53,6 +53,7 @@ function mysn_tut_hints() {
 		'g_spin'  => 'Zvýrazniť Miesto úderu (bod na bielej, falša)',
 		'g_cue'   => 'Zvýrazniť ikonku tága (uhol tága)',
 		'g_chalk' => 'Zvýrazniť Kriedu v hornom riadku',
+		'g_tools' => 'Mobil: zvýrazniť šípku ▲ dole (spodný panel s citlivosťou)',
 	);
 }
 
@@ -88,7 +89,8 @@ function mysn_tut_default() {
 				$sc( 's1', 'text', 0, 'Sila úderu závisí od toho, ako rýchlo tágo pohneš dopredu. Na PC drž ľavé tlačidlo, potiahni myš k sebe a potom ňou pohni dopredu. Na mobile vpravo dole ťahaj prstom dole a potom hore. Pomaly = jemne, rýchlo = silno.', 'The power depends on how fast you push the cue forward. On PC hold the left button, pull the mouse towards you and then push it forward. On mobile drag your finger down and then up in the bottom right. Slow = soft, fast = hard.', array( 'm_right', 'pc_v' ), '', 'white -100 0' ),
 				$sc( 's2', 'soft', 30, 'Jemný úder: pošli bielu aspoň 30 cm dopredu tak, aby sa zastavila skôr, ako sa dotkne mantinelu.', 'Soft shot: send the cue ball at least 30 cm forward so that it stops before it touches a cushion.', array( 'm_right', 'pc_v' ), '', 'white -100 0' ),
 				$sc( 's3', 'cushion', 1, 'Silný úder: udri silnejšie, nech sa biela odrazí od mantinelu.', 'Hard shot: hit harder so the cue ball bounces off a cushion.', array( 'm_right', 'pc_v' ), '', 'white -100 0' ),
-				$end( 's4', 'Výborne! Už vieš dávkovať silu. Ďalej: potopenie gule.', 'Well done! You can control the power now. Next: potting a ball.' ),
+				$sc( 's4', 'text', 0, 'Citlivosť si nastavíš sám. Na mobile ťukni na šípku ▲ dole v strede: Otáčanie prstom (mierenie a obzeranie sa), Ťahanie tága (ako rýchlo pribúda sila), Oko a Priblíženie. Na PC drž Ctrl: Otáčanie myšou, Ťahanie tága, Pravé tlačidlo a Priblíženie. Keď je sila príliš citlivá alebo tágo ide ťažko, uprav Ťahanie tága.', 'You can set the sensitivity yourself. On mobile tap the ▲ arrow at the bottom centre: Finger rotation (aiming and looking around), Cue stroke (how fast the power builds up), Oko (eye) and Zoom. On PC hold Ctrl: Mouse rotation, Cue stroke, Right button and Zoom. If the power is too sensitive or the cue moves too slowly, adjust Cue stroke.', array( 'g_tools' ) ),
+				$end( 's5', 'Výborne! Už vieš dávkovať silu. Ďalej: potopenie gule.', 'Well done! You can control the power now. Next: potting a ball.' ),
 			),
 		),
 		array(
