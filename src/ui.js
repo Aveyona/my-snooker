@@ -1484,15 +1484,15 @@ export class UI {
 		return (
 			{
 				win: [_t('Výhra'), 'win'],
-				loss: ['Prehra', 'loss'],
-				resign: ['Vzdal som', 'loss'],
+				loss: [_t('Prehra'), 'loss'],
+				resign: [_t('Vzdal som'), 'loss'],
 				resigned: [_t('Výhra, súper vzdal'), 'win'],
 				disconnect: [_t('Prehra, výpadok spojenia'), 'loss'],
 				'win-disconnect': [_t('Výhra, súperovi vypadlo spojenie'), 'win'],
 				disq: [_t('Prehra, diskvalifikácia'), 'loss'],
 				'win-disq': [_t('Výhra, súper diskvalifikovaný'), 'win'],
 				annulled: [_t('Zrušený, obom vypadlo spojenie'), 'void'],
-				live: ['Prebieha', 'void'],
+				live: [_t('Prebieha'), 'void'],
 			}[r] || [r, 'void']
 		);
 	}

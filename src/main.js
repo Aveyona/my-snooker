@@ -706,7 +706,7 @@ export function start(root, config = {}) {
 		rig.setView(v.pos, v.look);
 	};
 	window.addEventListener('resize', () => replay && officeFocusNow === 'notebook' && replayView());
-	const replayFree = () => !!replay && view === 'office' && officeFocusNow === 'notebook'; // myš voľná pri prehrávači
+	const replayFree = () => view === 'office' && officeFocusNow === 'notebook'; // 0.59.2: pri notebooku (zoznam zápasov aj prehrávač) myš voľná, pohľad sa za ňou neotáča
 	const OFFICE_KEYS = _t('Kancelária: F1 nástenka s klávesmi za tebou, F8 vizitka (registrácia), F9 alebo dvere ŠTADIÓN: vyhľadať zápas, F12 lampa (zhasnutá = nie si online). Ctrl a klik na predmet ho otvorí, Esc menu.');
 	let venue = 'home';
 	const fadeEl = document.createElement('div');

@@ -854,7 +854,7 @@ export function buildOffice(scene) {
 		g.font = 'bold 64px Arial, sans-serif';
 		g.fillText(d && d.me ? _t('{n}. liga', { n: d.me.league }) : _t('bez registrácie'), 256, 150);
 		g.font = '32px Arial, sans-serif';
-		g.fillText(d && d.me ? `${d.me.rank}. miesto · ${d.me.points} b.` : '', 256, 210);
+		g.fillText(d && d.me ? _t('{r}. miesto · {p} b.', { r: d.me.rank, p: d.me.points }) : '', 256, 210);
 		g.fillStyle = '#9fb3d9';
 		g.font = '26px Arial, sans-serif';
 		g.fillText(d && d.me ? _t('V {w} · P {l} · séria {b} · ELO {e}', { w: d.me.wins, l: d.me.losses, b: d.me.best, e: d.me.elo }) : '', 256, 260);
@@ -969,7 +969,7 @@ export function buildOffice(scene) {
 			g.fillText([country, p.city].filter(Boolean).join(', '), W / 2, 248);
 			g.fillStyle = '#f4d98a';
 			g.font = 'bold 34px Arial, sans-serif';
-			g.fillText(me.league ? `${me.league}. liga · ${me.rank}. miesto · ${me.points} b.` : '', W / 2, 320);
+			g.fillText(me.league ? _t('{l}. liga · {r}. miesto · {p} b.', { l: me.league, r: me.rank, p: me.points }) : '', W / 2, 320);
 		}
 		cardT.t.needsUpdate = true;
 	};
