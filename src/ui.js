@@ -845,7 +845,52 @@ export class UI {
 			(this.langBtns = this.langBtns || {})[l.id] = b;
 		}
 		this._menuKind = '';
+		// 0.58.0 PC: šípky hore a dole vyberajú položku menu (prvá šípka vyberie prvú alebo poslednú), Enter ju spustí
+		window.addEventListener(
+			'keydown',
+			(e) => {
+				if (this.touchUI || !this.menuOpen() || e.altKey || e.ctrlKey || e.metaKey) {
+					return;
+				}
+				if (e.target && /input|textarea|select/i.test(e.target.tagName)) {
+					return;
+				}
+				if (this.anyPanelOpen && this.anyPanelOpen()) {
+					return; // otvorené okno nad menu (Nastavenia, výzva…): šípky patria jemu
+				}
+				const list = [...this.menuBtns.querySelectorAll('button')].filter((b) => !b.disabled && b.offsetParent);
+				if (!list.length) {
+					return;
+				}
+				if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+					const i = list.indexOf(this._kbdBtn);
+					const n = i < 0 ? (e.key === 'ArrowDown' ? 0 : list.length - 1) : (i + (e.key === 'ArrowDown' ? 1 : list.length - 1)) % list.length;
+					this.menuKbd(list[n]);
+				} else if (e.key === 'Enter' && this._kbdBtn && list.includes(this._kbdBtn)) {
+					const b = this._kbdBtn;
+					this.menuKbd(-1);
+					b.click();
+				} else {
+					return;
+				}
+				e.preventDefault();
+				e.stopImmediatePropagation();
+			},
+			true
+		);
 		return m;
+	}
+
+	/** 0.58.0: položka menu vybraná klávesnicou (-1 = žiadna). */
+	menuKbd(b) {
+		if (this._kbdBtn) {
+			this._kbdBtn.classList.remove('mysn-kbd-sel');
+		}
+		this._kbdBtn = b && b !== -1 ? b : null;
+		if (this._kbdBtn) {
+			this._kbdBtn.classList.add('mysn-kbd-sel');
+			this._kbdBtn.scrollIntoView({ block: 'nearest' });
+		}
 	}
 
 	/** Obsah menu: 'guest' (neprihlásený), 'training' alebo 'match' (label = meno súpera). */
@@ -1051,6 +1096,7 @@ export class UI {
 		}
 		if (on && !this.menuOpen()) {
 			this._menuAt = performance.now(); // kedy sa menu otvorilo (Esc hneď potom ho nezavrie)
+			this.menuKbd(-1); // 0.58.0: po otvorení nie je vybraná žiadna položka (až po prvej šípke)
 		}
 		if (this.touchUI) {
 			// mobil: menu hry neexistuje, jeho položky sú v hlavnom menu ☰ (skupina Menu hry)

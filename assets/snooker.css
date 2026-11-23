@@ -119,6 +119,7 @@ body.mysn-page { font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans
 .mysn-menu-mode { margin: 4px 0 18px; opacity: .7; font-size: 13px; }
 .mysn-menu-btns { display: flex; flex-direction: column; gap: 8px; margin-bottom: 14px; }
 .mysn-menu-btns .mysn-btn { padding: 11px 14px; font-size: 15px; }
+.mysn-menu-btns .mysn-btn.mysn-kbd-sel { outline: 3px solid #f2d48a; outline-offset: 2px; box-shadow: 0 0 14px #f2d48a88; }
 .mysn-panel { z-index: 4; }
 
 /* Pohľad na nástenku a stojan s tágami */
