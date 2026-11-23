@@ -1275,7 +1275,6 @@ function buildPeople(root) {
 		[-8.75, -AZ + 1.55, Math.PI - 0.5, false, 0, 'm'],
 		// ovocie a náramky
 		[-5.9, AZ - 0.7, -Math.PI / 2, false, 0, 'm'],
-		[-10.4, AZ - 1.65, 0, false, 0, 'f'],
 		[-11.1, AZ - 1.5, 0.4, false, 0, 'f'],
 		// kvety
 		[8.6, -AZ + 0.2, 0, false, 0, 'f'],
@@ -1313,10 +1312,16 @@ function buildWalkers(root) {
 	const N = AZ - 1.5; // pred stánkami na strane +z
 	const routes = [
 		// žena: kvety → čajovňa → pani puri → ovocie → náramky → späť
-		{ model: 'ind8', path: [[8.3, S, 6, Math.PI, true], [3.6, -2.0, 0, null], [-3, -2.1, 0, null], [-8.1, S + 0.1, 7, Math.PI, true], [-7.2, N, 6, 0, true], [-10.8, N - 0.1, 8, 0, true], [-3, 2.2, 0, null], [3, 2.2, 0, null], [6.5, 0, 0, null]] },
+		{ model: 'ind8', path: [[8.3, S, 6, Math.PI, true], [3.6, -2.0, 0, null], [-3, -2.1, 0, null], [-7.55, S + 0.1, 7, Math.PI, true], [-7.2, N, 6, 0, true], [-10.1, N - 0.1, 8, 0, true], [-3, 2.2, 0, null], [3, 2.2, 0, null], [6.5, 0, 0, null]] },
 		// muž: prechádza sa celou uličkou, pri čajovni si kúpi čaj
 		{ model: 'ind7', path: [[-15.5, 0.6, 2, null], [-3, 2.3, 0, null], [3, 2.3, 0, null], [15, 0.4, 3, null], [3.7, -2.05, 5, Math.PI, true], [-3, -2.2, 0, null]] },
 		// žena: ide z bočnej ulice do križovatky a späť
+		// 0.46.2 druhá strana uličky (za zákrutou a pri cukrárni): muž z bočnej ulice ide na samosy a do paan shopu
+		{ model: 'ind9', path: [[-19.5, 17, 2, null], [-17.5, 0.2, 0, null], [-12.4, S, 7, Math.PI, true], [-5, 2.0, 0, null], [3.5, AZ - 1.45, 7, 0, true], [-5, 2.1, 0, null], [-18, 1.2, 0, null]] },
+		// žena: náramky → ovocie → cukráreň → za roh
+		{ model: 'ind4', path: [[-10.0, N, 9, 0, true], [-7.6, N + 0.05, 6, 0, true], [-12.0, S + 0.05, 6, Math.PI, true], [-19, 6, 3, null], [-14, 0.3, 0, null]] },
+		// muž v križovatke: prechádza sa po priečnej ulici
+		{ model: 'ind5', path: [[19.4, -16, 2, null], [19.4, 16, 2, null]] },
 		{ model: 'ind10', path: [[-19.5, 14, 1, null], [-18.5, 1.5, 0, null], [-3, -2.3, 0, null], [3, -2.3, 0, null], [19.5, -1, 0, null], [19.5, -14, 2, null], [19.5, -1, 0, null], [3, 2.25, 0, null], [-3, 2.25, 0, null], [-18.5, 1.5, 0, null]] },
 	];
 	return routes.map((r, i) => {
@@ -1328,7 +1333,98 @@ function buildWalkers(root) {
 	});
 }
 
-function updateWalkers(ws, dt) {
+/*
+ * 0.46.2 Prekážky pre chodcov: obdĺžniky [stred x, stred z, polovica šírky, polovica hĺbky] – stôl, vozíky,
+ * stolíky, lavička, stĺpy. K nim stojaci ľudia (kruhy) a ostatní chodci. Chodec ide k cieľu, pri prekážke sa
+ * odkloní nabok a obíde ju (vyhýbanie podľa vzdialenosti, smer obchádzania k cieľu), držia sa pravej strany.
+ */
+const OBST = [
+	[0, 0, 2.15, 1.2], // stôl s mantinelmi
+	[-8.15, -AZ + 0.75, 0.85, 0.45], // pani puri
+	[-7.2, AZ - 0.75, 1.0, 0.55], // ovocie
+	[-10.8, AZ - 0.75, 0.75, 0.45], // náramky
+	[8.3, -AZ + 0.75, 0.8, 0.4], // kvety
+	[-12.9, -AZ + 0.15, 0.6, 0.4], // cukráreň (stolík s kadhai)
+	[4.3, -AZ + 0.45, 0.65, 0.3], // lavička pri čajovni
+	[3.7, -AZ + 0.3, 1.5, 0.15], // stĺpy striešky čajovne
+	[-6.2, -AZ + 0.3, 0.2, 0.2], // stĺp elektriny
+	[10.5, AZ - 0.3, 0.2, 0.2],
+];
+const _ob = { x: 0, z: 0 };
+function steer(w, ws, people, gx, gz, dt) {
+	const p = w.rig.position;
+	let dx = gx - p.x;
+	let dz = gz - p.z;
+	const dist = Math.hypot(dx, dz) || 1;
+	dx /= dist;
+	dz /= dist;
+	let ax = 0;
+	let az = 0;
+	const push = (ox, oz, d, R) => {
+		// odpudzovanie + obchádzanie (bočný smer bližší k cieľu)
+		const k = (R - d) / R;
+		const nx = ox / (d || 1);
+		const nz = oz / (d || 1);
+		let tx = -nz;
+		let tz = nx;
+		if (tx * dx + tz * dz < 0) {
+			tx = -tx;
+			tz = -tz;
+		}
+		ax += (nx * 1.4 + tx * 1.1) * k;
+		az += (nz * 1.4 + tz * 1.1) * k;
+	};
+	for (const [cx, cz, hx, hz] of OBST) {
+		_ob.x = Math.max(cx - hx, Math.min(cx + hx, p.x));
+		_ob.z = Math.max(cz - hz, Math.min(cz + hz, p.z));
+		const ox = p.x - _ob.x;
+		const oz = p.z - _ob.z;
+		const d = Math.hypot(ox, oz);
+		const R = 0.75;
+		// cieľ pri pulte (nakupovanie) je tesne pri prekážke: v jeho blízkosti sa netlačí
+		if (d < R && !(dist < 0.9 && d > 0.12)) {
+			push(ox, oz, d, R);
+		}
+	}
+	for (const f of people) {
+		if (!f.f.visible) {
+			continue;
+		}
+		const ox = p.x - f.f.position.x;
+		const oz = p.z - f.f.position.z;
+		const d = Math.hypot(ox, oz);
+		if (d < 0.8) {
+			push(ox, oz, d, 0.8);
+		}
+	}
+	for (const o of ws) {
+		if (o === w) {
+			continue;
+		}
+		const ox = p.x - o.rig.position.x;
+		const oz = p.z - o.rig.position.z;
+		const d = Math.hypot(ox, oz);
+		if (d < 1.0) {
+			push(ox, oz, d, 1.0);
+			// oproti idúci: obaja uhnú doprava
+			ax += dz * 0.4 * (1 - d);
+			az += -dx * 0.4 * (1 - d);
+		}
+	}
+	let vx = dx + ax;
+	let vz = dz + az;
+	const vl = Math.hypot(vx, vz) || 1;
+	const step = Math.min(dist, WALK_V * dt);
+	p.x += (vx / vl) * step;
+	p.z += (vz / vl) * step;
+	// steny uličky (v hlavnej ulici)
+	if (p.x > -AX && p.x < AX) {
+		p.z = Math.max(-AZ + 0.35, Math.min(AZ - 0.35, p.z));
+	}
+	return Math.atan2(vx, vz);
+}
+
+function updateWalkers(ws, dt, people) {
 	for (const w of ws) {
 		const rig = w.rig;
 		const arm = (rig.userData.arms || [])[1]; // pravá ruka
@@ -1345,19 +1441,16 @@ function updateWalkers(ws, dt) {
 		} else {
 			w.buy = Math.max(0, w.buy - dt * 3);
 			const nxt = w.path[(w.i + 1) % w.path.length];
-			const dx = nxt[0] - rig.position.x;
-			const dz = nxt[1] - rig.position.z;
-			const dist = Math.hypot(dx, dz);
-			const step = WALK_V * dt;
-			if (dist <= step) {
-				rig.position.x = nxt[0];
-				rig.position.z = nxt[1];
+			const dist = Math.hypot(nxt[0] - rig.position.x, nxt[1] - rig.position.z);
+			w.stuck = (w.stuck || 0) + dt;
+			// v cieli (alebo blízko a dlho zablokovaný inými ľuďmi) – ďalší bod trasy
+			if (dist < 0.12 || (dist < 0.8 && w.stuck > 6)) {
 				w.i = (w.i + 1) % w.path.length;
 				w.wait = nxt[2];
+				w.stuck = 0;
 			} else {
-				rig.position.x += (dx / dist) * step;
-				rig.position.z += (dz / dist) * step;
-				let d = Math.atan2(dx, dz) - rig.rotation.y;
+				const head = steer(w, ws, people, nxt[0], nxt[1], dt);
+				let d = head - rig.rotation.y;
 				d = Math.atan2(Math.sin(d), Math.cos(d));
 				rig.rotation.y += d * Math.min(1, dt * 5);
 			}
@@ -1369,6 +1462,144 @@ function updateWalkers(ws, dt) {
 		if (w.real) {
 			w.real.sync(dt);
 		}
+	}
+}
+
+/*
+ * 0.46.2 Doprava v priečnej ulici za križovatkou: autorikše (tuk-tuk) a motorky jazdia tam a späť, za
+ * svetlami ulice zmiznú a po chvíli prídu znova. Vodiči sú jednoduché postavičky (z diaľky stačia).
+ */
+function wheelMesh(r, w) {
+	const g = new THREE.Group();
+	const tire = new THREE.Mesh(new THREE.CylinderGeometry(r, r, w, 18), new THREE.MeshStandardMaterial({ color: 0x151515, roughness: 0.8 }));
+	tire.rotation.z = Math.PI / 2;
+	g.add(tire);
+	const hub = new THREE.Mesh(new THREE.CylinderGeometry(r * 0.45, r * 0.45, w + 0.01, 10), new THREE.MeshStandardMaterial({ color: 0x9e9e9e, metalness: 0.7, roughness: 0.3 }));
+	hub.rotation.z = Math.PI / 2;
+	g.add(hub);
+	return g;
+}
+function lightBits(g, z, y, xs, col = 0xfff4d0) {
+	const m = new THREE.MeshBasicMaterial({ color: col });
+	for (const x of xs) {
+		const h = new THREE.Mesh(new THREE.SphereGeometry(0.06, 10, 8), m);
+		h.position.set(x, y, z);
+		g.add(h);
+	}
+	// slabý kužeľ svetla pred vozidlom (priesvitný, bez skutočného svetla – lacné)
+	const beam = new THREE.Mesh(new THREE.ConeGeometry(0.9, 3.2, 16, 1, true), new THREE.MeshBasicMaterial({ color: 0xfff1c0, transparent: true, opacity: 0.08, depthWrite: false, side: THREE.DoubleSide }));
+	beam.rotation.x = -Math.PI / 2;
+	beam.position.set(0, y - 0.15, z + 1.6);
+	g.add(beam);
+}
+function buildRickshaw(col) {
+	const g = new THREE.Group();
+	const { box } = kit(g);
+	const body = new THREE.MeshStandardMaterial({ color: col, roughness: 0.5, metalness: 0.2 });
+	const yellow = new THREE.MeshStandardMaterial({ color: 0xf2c200, roughness: 0.6 });
+	const black = new THREE.MeshStandardMaterial({ color: 0x1b1b1b, roughness: 0.7 });
+	// spodok a kabína (vpredu úzka pre vodiča, vzadu lavica pre pasažierov); predok smeruje k +z
+	box(1.25, 0.45, 1.6, body, 0, 0.55, -0.35);
+	box(0.7, 0.55, 0.8, body, 0, 0.62, 0.75);
+	box(1.25, 0.08, 2.4, yellow, 0, 1.72, 0); // strieška
+	box(1.2, 0.95, 0.05, black, 0, 1.25, -1.13); // zadná stena
+	for (const sx of [-1, 1]) {
+		box(0.05, 1.1, 0.05, black, sx * 0.6, 1.2, 1.0);
+		box(0.05, 1.1, 0.05, black, sx * 0.6, 1.2, -0.2);
+	}
+	const glass = new THREE.Mesh(new THREE.PlaneGeometry(1.1, 0.6), new THREE.MeshStandardMaterial({ color: 0x99bbcc, transparent: true, opacity: 0.35, roughness: 0.05 }));
+	glass.position.set(0, 1.35, 1.05);
+	g.add(glass);
+	box(1.15, 0.12, 0.4, black, 0, 0.88, -0.75); // lavica
+	box(0.5, 0.05, 0.05, black, 0, 1.0, 0.9); // riadidlá
+	const wheels = [];
+	for (const [x, z] of [[0, 1.0], [-0.6, -0.75], [0.6, -0.75]]) {
+		const w = wheelMesh(0.22, 0.14);
+		w.position.set(x, 0.22, z);
+		g.add(w);
+		wheels.push(w);
+	}
+	lightBits(g, 1.16, 0.75, [0]);
+	const tail = new THREE.MeshBasicMaterial({ color: 0xff2a1a });
+	for (const sx of [-0.5, 0.5]) {
+		const t = new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.07, 0.03), tail);
+		t.position.set(sx, 0.6, -1.17);
+		g.add(t);
+	}
+	const driver = buildFan({ skin: 0x8d5b3e, shirt: 0xd9c7a0, hair: 0x111111 }, false, Math.random() * 6);
+	driver.f.position.set(0, 0.72, 0.5);
+	driver.f.scale.setScalar(0.9); // hlava pod strieškou
+	g.add(driver.f);
+	return { g, wheels, r: 0.22 };
+}
+function buildBike(col, shirt) {
+	const g = new THREE.Group();
+	const { box, cyl } = kit(g);
+	const body = new THREE.MeshStandardMaterial({ color: col, roughness: 0.4, metalness: 0.3 });
+	const black = new THREE.MeshStandardMaterial({ color: 0x1b1b1b, roughness: 0.6 });
+	const wheels = [];
+	for (const z of [0.68, -0.62]) {
+		const w = wheelMesh(0.3, 0.09);
+		w.position.set(0, 0.3, z);
+		g.add(w);
+		wheels.push(w);
+	}
+	box(0.26, 0.28, 1.0, body, 0, 0.6, 0); // nádrž a telo
+	box(0.28, 0.1, 0.6, black, 0, 0.8, -0.25); // sedadlo
+	box(0.6, 0.04, 0.04, black, 0, 1.0, 0.55); // riadidlá
+	cyl(0.025, 0.025, 0.6, black, 0, 0.7, 0.62);
+	const ex = cyl(0.04, 0.04, 0.6, new THREE.MeshStandardMaterial({ color: 0xaaaaaa, metalness: 0.8, roughness: 0.3 }), 0.16, 0.35, -0.3);
+	ex.rotation.x = Math.PI / 2;
+	lightBits(g, 0.72, 0.9, [0]);
+	const t = new THREE.Mesh(new THREE.BoxGeometry(0.12, 0.06, 0.03), new THREE.MeshBasicMaterial({ color: 0xff2a1a }));
+	t.position.set(0, 0.78, -0.92);
+	g.add(t);
+	const rider = buildFan({ skin: 0x8d5b3e, shirt, hair: 0x111111 }, false, Math.random() * 6);
+	rider.f.position.set(0, 0.83, -0.2);
+	g.add(rider.f);
+	for (const a of rider.arms) {
+		a.sh.rotation.x = -1.1; // ruky na riadidlách
+		a.el.rotation.x = -0.3;
+	}
+	return { g, wheels, r: 0.3 };
+}
+function buildTraffic(root) {
+	const X = AX + CW / 2;
+	const vs = [
+		{ v: buildRickshaw(0x2e7d32), lane: X + 1.2, dir: -1, speed: 4.2, wait: 0 },
+		{ v: buildRickshaw(0x1b5e20), lane: X - 1.2, dir: 1, speed: 3.6, wait: 6 },
+		{ v: buildBike(0xb71c1c, 0x1565c0), lane: X - 0.9, dir: 1, speed: 6.5, wait: 2.5 },
+		{ v: buildBike(0x212121, 0xf2efe6), lane: X + 0.8, dir: -1, speed: 5.8, wait: 9 },
+	];
+	const END = AZ + CL + 1.2; // za svetlami ulice (rovina na AZ + CL)
+	for (const t of vs) {
+		t.z = -t.dir * END;
+		t.v.g.position.set(t.lane, FY, t.z);
+		t.v.g.rotation.y = t.dir > 0 ? 0 : Math.PI;
+		t.v.g.visible = false;
+		root.add(t.v.g);
+	}
+	return { vs, END };
+}
+function updateTraffic(tr, dt) {
+	for (const t of tr.vs) {
+		if (t.wait > 0) {
+			t.wait -= dt;
+			t.v.g.visible = false;
+			continue;
+		}
+		t.v.g.visible = true;
+		t.z += t.dir * t.speed * dt;
+		if (Math.abs(t.z) > tr.END) {
+			// odišlo za roh: po chvíli príde z druhej strany (alebo opačným smerom)
+			t.z = -t.dir * tr.END;
+			t.wait = 3 + rnd() * 10;
+		}
+		t.v.g.position.z = t.z;
+		for (const w of t.v.wheels) {
+			w.rotation.x += (t.speed * dt) / t.v.r;
+		}
+		t.v.g.position.y = FY + Math.sin(t.z * 3.1) * 0.012; // drncanie po blate
 	}
 }
 
@@ -1865,6 +2096,7 @@ export function buildAlley(scene, quality) {
 
 	const people = buildPeople(root);
 	const walkers = buildWalkers(root);
+	const traffic = buildTraffic(root);
 
 	// svetlo: noc (tmavomodré nebo zhora), teplé svetlo žiaroviek, oranžová žiara spoza zákruty
 	root.add(new THREE.HemisphereLight(0x3a4670, 0x2a1e12, 0.45));
@@ -1888,7 +2120,8 @@ export function buildAlley(scene, quality) {
 			return;
 		}
 		updateFans(people, dt, cueBall); // ľudia hlavou sledujú bielu guľu
-		updateWalkers(walkers, dt);
+		updateWalkers(walkers, dt, people);
+		updateTraffic(traffic, dt);
 		t0 += dt;
 		const f = 1 + Math.sin(t0 * 7.3) * 0.03 + Math.sin(t0 * 13.1) * 0.02;
 		warm1.intensity = (high ? 9 : 6) * f;
