@@ -5071,6 +5071,7 @@ export function start(root, config = {}) {
 				if (on) {
 					controls.capture();
 				} else {
+					noMenuUntil = performance.now() + 800; // 0.57.1: tutoriál uvoľní myš na tlačidlá – hlavné menu sa neotvára
 					controls.uncapture();
 				}
 			},
@@ -5237,7 +5238,7 @@ export function start(root, config = {}) {
 				}
 			}
 		},
-		needShift: () => !!ui.tutActive, // 0.55.4 tutoriál: Enter = Ďalej, chat Shift+Enter
+		needShift: () => !!(ui.tutActive && ui.tutActive()), // 0.55.4 tutoriál: Enter = Ďalej, chat Shift+Enter
 		canOpen: () => !!(user || guestPlay) && (game.spectating || game.state !== 'place') && (!view || ((game.spectating || specDemo) && view === 'seat')) && !ui.menuOpen() && !ui.foundOpen() && !ui.partyOpen() && !ui.cardOpen() && !ui.phoneOpen(),
 	});
 	if (chat.setMode) {

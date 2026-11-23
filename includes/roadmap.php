@@ -180,6 +180,7 @@ function mysn_roadmap() {
 /** Denník zmien (najnovšie hore). */
 function mysn_changelog() {
 	return array(
+		array( '0.57.1', '23. 11. 2026', 'Oprava tutoriálu: Enter (Ďalej) už neotvára hlavné menu – pri textovej scéne tutoriál uvoľní myš na tlačidlá a hra to brala ako Esc. Oprava chatu: Enter mimo tutoriálu znova otvára chat (od 0.55.4 chcel stále Shift+Enter).' ),
 		array( '0.57.0', '23. 11. 2026', 'Rádio: keď je otvorené hlavné menu (Esc), hrá tlmene ako v sude a tichšie; po zatvorení menu znova normálne. Tutoriál pri začatí zapne rádio (raz za návštevu) a ostane zapnuté aj po tutoriáli. Registrácia do ligy: pri hindčine je predvolená krajina India; popisy Krajina, Mesto a O mne sú preložené. Žlté tlačidlá (Lobby, Ďalej v tutoriáli, uvítanie) majú čitateľný text aj pod myšou.' ),
 		array( '0.56.0', '23. 11. 2026', 'Nový hráč: prvé 3 lekcie tutoriálu (mierenie, presné mierenie, prvý úder) sú povinné a začínajú hneď po uvítacom okne (tlačidlo Začať základy, bez Ukončiť a Preskočiť). Po základoch okno s výberom: Pokračovať v tutoriáli (odporúčané), Tréning, Hrať o skóre, Liga a priatelia. Kto základy nedokončí (zatvorí hru), pri ďalšom spustení tutoriál pokračuje sám. Platí pre hráčov registrovaných od zapnutia uvítania.' ),
 		array( '0.55.6', '23. 11. 2026', 'Tutoriál: okno so správou je vždy navrchu nad ostatnými prvkami hry a pozadie je nepriehľadné (nepresvitá scéna ani iné texty).' ),
