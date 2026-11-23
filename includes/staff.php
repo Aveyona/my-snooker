@@ -262,9 +262,10 @@ function mysn_admin_players() {
 	}
 	echo '<p>Správca hry pomáha dohliadať na ligu: v hre má v menu tlačidlo Správa hry (prehľad, neviditeľné sledovanie, zmena prezývky; ďalšie práva podľa dokumentácie). Admin (správca webu) môže všetko.</p>';
 	echo '<p class="description">Kliknutím na názov stĺpca sa hráči zoradia (znova kliknutie otočí poradie).</p>';
-	echo '<table class="widefat striped mysn-sort" style="max-width:1400px"><thead><tr><th data-t="s">Hráč</th><th data-t="s">Prezývka v lige</th><th data-t="n">ELO</th><th data-t="n">Body v sezóne</th><th data-t="n">Výhry : prehry</th><th data-t="n">Výhry %</th><th data-t="n">Najvyšší break</th><th data-t="n">Odohrané partie</th><th data-t="n">Úroveň (XP)</th><th data-t="n">Úspechy</th><th data-t="n">Naposledy v hre</th><th>Zákaz ligy</th><th>Rola</th></tr></thead><tbody>';
+	// 0.59.3: kompaktná tabuľka – všetko sa zmestí na šírku stránky, údaje sú v bunke na dvoch riadkoch
+	echo '<table class="widefat striped mysn-sort mysn-players"><thead><tr><th data-t="s">Hráč<br><small>e-mail · prezývka v lige</small></th><th data-t="n">ELO<br><small>ligové zápasy</small></th><th data-t="n">Liga<br><small>body · výhry : prehry</small></th><th data-t="n">Výhry %<br><small>odohrané partie</small></th><th data-t="n">Break</th><th data-t="n">Úroveň<br><small>XP</small></th><th data-t="n">Úspechy</th><th data-t="n">Naposledy<br><small>v hre</small></th><th>Rola<br><small>zákaz ligy</small></th></tr></thead><tbody>';
 	if ( ! $ids ) {
-		echo '<tr><td colspan="13">Zatiaľ žiadni hráči.</td></tr>';
+		echo '<tr><td colspan="9">Zatiaľ žiadni hráči.</td></tr>';
 	}
 	foreach ( $ids as $uid ) {
 		$u = get_userdata( $uid );
@@ -281,16 +282,14 @@ function mysn_admin_players() {
 		$brk   = max( $brk, $solo );
 		$seen  = (int) $wpdb->get_var( $wpdb->prepare( "SELECT seen FROM $pt WHERE user_id = %d", $uid ) ); // phpcs:ignore
 		$role  = mysn_role( $uid );
-		echo '<tr><td><b>' . esc_html( $u->display_name ) . '</b><br><span class="description">' . esc_html( $u->user_email ) . '</span></td>';
-		echo '<td>' . esc_html( $p && ! empty( $p['nick'] ) ? $p['nick'] : '' ) . '</td>';
+		$nick = $p && ! empty( $p['nick'] ) ? $p['nick'] : '';
+		echo '<tr><td data-v="' . esc_attr( $u->display_name ) . '"><b>' . esc_html( $u->display_name ) . '</b><br><span class="description">' . esc_html( $u->user_email ) . ( $nick && $nick !== $u->display_name ? ' · <i>' . esc_html( $nick ) . '</i>' : '' ) . '</span></td>';
 		$en = mysn_elo_n( $uid );
-		echo '<td data-v="' . ( $en ? mysn_elo( $uid ) : 0 ) . '">' . ( $en ? '<b>' . mysn_elo( $uid ) . '</b><br><span class="description">' . $en . ' lig. zápasov</span>' : '<span class="description">' . MYSN_ELO_START . ' (bez zápasu)</span>' ) . '</td>';
-		echo '<td data-v="' . ( $lg ? (int) $lg['points'] : -99999 ) . '">' . ( $lg ? (int) $lg['points'] : 'nie je v lige' ) . '</td>';
-		echo '<td data-v="' . ( $lg ? (int) $lg['wins'] : -1 ) . '">' . ( $lg ? (int) $lg['wins'] . ' : ' . (int) $lg['losses'] : '' ) . '</td>';
+		echo '<td data-v="' . ( $en ? mysn_elo( $uid ) : 0 ) . '">' . ( $en ? '<b>' . mysn_elo( $uid ) . '</b><br><span class="description">' . $en . ' zápasov</span>' : MYSN_ELO_START . '<br><span class="description">bez zápasu</span>' ) . '</td>';
+		echo '<td data-v="' . ( $lg ? (int) $lg['points'] : -99999 ) . '">' . ( $lg ? '<b>' . (int) $lg['points'] . '</b> b.<br><span class="description">' . (int) $lg['wins'] . ' : ' . (int) $lg['losses'] . '</span>' : '<span class="description">nie je v lige</span>' ) . '</td>';
 		$pct = $games ? (int) round( 100 * $wins / $games ) : -1;
-		echo '<td data-v="' . $pct . '">' . ( $games ? $pct . ' %<br><span class="description">' . $wins . ' z ' . $games . '</span>' : '' ) . '</td>';
+		echo '<td data-v="' . $pct . '">' . ( $games ? '<b>' . $pct . ' %</b><br><span class="description">' . $wins . ' z ' . $games . '</span>' : '<span class="description">0 partií</span>' ) . '</td>';
 		echo '<td data-v="' . $brk . '">' . ( $brk ? $brk : '' ) . '</td>';
-		echo '<td data-v="' . $games . '">' . (int) $games . '</td>';
 		// 0.42.1: skúsenosti a úspechy hráča (etapa 9)
 		$xp    = (int) get_user_meta( $uid, 'mysn_xp', true );
 		$cnt   = get_user_meta( $uid, 'mysn_ach', true );
@@ -333,21 +332,21 @@ function mysn_admin_players() {
 			echo '<span class="description">—</span>';
 		}
 		echo '</td>';
-		echo '<td data-v="' . $seen . '">' . ( $seen ? esc_html( wp_date( 'j. n. Y H:i', $seen ) ) : '' ) . '</td>';
-		echo '<td>' . ( mysn_league_banned( $uid ) ? '<b style="color:#b32d2e">áno</b>' : 'nie' ) . '</td><td>';
+		echo '<td data-v="' . $seen . '">' . ( $seen ? esc_html( wp_date( 'j. n. Y', $seen ) ) . '<br><span class="description">' . esc_html( wp_date( 'H:i', $seen ) ) . '</span>' : '' ) . '</td><td>';
 		if ( 'admin' === $role ) {
 			echo '<b>Admin</b>';
 		} else {
-			echo '<form method="post" action="' . esc_url( admin_url( 'admin-post.php' ) ) . '" style="display:flex;gap:6px;align-items:center">';
+			echo '<form method="post" action="' . esc_url( admin_url( 'admin-post.php' ) ) . '" style="display:flex;flex-wrap:wrap;gap:4px 6px;align-items:center">';
 			wp_nonce_field( 'mysn_players' );
 			echo '<input type="hidden" name="action" value="mysn_players"><input type="hidden" name="user" value="' . (int) $uid . '">';
-			echo '<label><input type="checkbox" name="mod" value="1"' . checked( 'mod' === $role, true, false ) . '> Správca hry</label> <button class="button button-small">Uložiť</button></form>';
+			echo '<label style="white-space:nowrap"><input type="checkbox" name="mod" value="1"' . checked( 'mod' === $role, true, false ) . '> Správca hry</label> <button class="button button-small">Uložiť</button></form>';
 		}
+		echo mysn_league_banned( $uid ) ? '<br><b style="color:#b32d2e">Zákaz ligy</b>' : '';
 		echo '</td></tr>';
 	}
 	echo '</tbody></table></div>';
 	?>
-	<style>.mysn-sort th[data-t]{cursor:pointer;white-space:nowrap}.mysn-sort th[data-t]:hover{color:#2271b1}.mysn-sort th.up::after{content:" ▲"}.mysn-sort th.down::after{content:" ▼"}</style>
+	<style>.mysn-players{width:100%;table-layout:auto}.mysn-players th,.mysn-players td{padding:7px 8px;font-size:13px;vertical-align:top}.mysn-players th small{font-weight:400;color:#646970}.mysn-players td:first-child{max-width:260px;word-break:break-word}.mysn-players details ul{font-size:12px}.mysn-sort th[data-t]{cursor:pointer}.mysn-sort th[data-t]:hover{color:#2271b1}.mysn-sort th.up::after{content:" ▲"}.mysn-sort th.down::after{content:" ▼"}</style>
 	<script>
 	document.querySelectorAll('table.mysn-sort').forEach(function (t) {
 		t.querySelectorAll('th[data-t]').forEach(function (th, i) {
