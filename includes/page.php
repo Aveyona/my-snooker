@@ -235,7 +235,7 @@ echo wp_json_encode(
 <div id="mysn-app"><noscript><div class="mysn-nogl"><h1>My Snooker – free 3D snooker in your browser</h1><p>Play realistic 3D snooker online on PC and mobile: real table dimensions, spin, cushion rebounds, practice, high-score mode, matches with friends and a year-round online league with a stadium and live spectators.</p><p>The game needs JavaScript turned on.</p></div></noscript></div>
 <script>window.MYSN_CONFIG = <?php echo wp_json_encode( $cfg ); ?>;</script>
 <?php if ( mysn_on() ) : ?><script>window.addEventListener('beforeinstallprompt', function (e) { e.preventDefault(); window.mysnInstall = e; });</script><script>if ('serviceWorker' in navigator) { window.addEventListener('load', function () { navigator.serviceWorker.register('/sw.js', { scope: '/' }).catch(function () {}); }); }</script><?php endif; ?>
-<script src="<?php echo esc_url( MYSN_URL . 'assets/snooker.js?ver=' . mysn_asset_ver( 'snooker.js' ) ); ?>"></script>
+<script src="<?php echo esc_url( wp_make_link_relative( MYSN_URL ) . 'assets/snooker.js?ver=' . mysn_asset_ver( 'snooker.js' ) ); ?>"></script>
 <?php do_action( 'my_stats_beacon', 'snooker' ); // My Stats 2.9.0: návštevnosť tejto časti webu ?>
 </body>
 </html>
