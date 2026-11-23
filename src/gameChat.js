@@ -41,6 +41,9 @@ export function gameChat(root, cfg, hooks = {}) {
 	const tabHint = document.createElement('small');
 	tabHint.textContent = _t('Tab prepína');
 	tabs.append(tabM, tabS, tabHint);
+	for (const b of [tabM, tabS]) {
+		b.addEventListener('pointerdown', (e) => e.preventDefault()); // prepnutie záložky nezoberie políčku fokus (mobil by chat zavrel)
+	}
 	// riadok na písanie: políčko a ✕ (zavrie písanie, ako Esc)
 	const row0 = document.createElement('div');
 	row0.className = 'mysn-gchat-row';
@@ -474,6 +477,25 @@ export function gameChat(root, cfg, hooks = {}) {
 		e.preventDefault();
 		e.stopPropagation();
 		close();
+	});
+	// 0.45.6 mobil: ✕ zatvára hneď pri dotyku (pri kliknutí sa po schovaní klávesnice posunie obrazovka a ťuk
+	// by trafil vedľa); preventDefault nechá políčku fokus, takže sa klávesnica neschová skôr než chat
+	xBtn.addEventListener('pointerdown', (e) => {
+		if (e.pointerType !== 'mouse') {
+			e.preventDefault();
+			e.stopPropagation();
+			close();
+		}
+	});
+	// mobil: klávesnica zavretá tlačidlom Späť alebo ťuk mimo chatu pri prázdnom políčku = chat sa zavrie
+	input.addEventListener('blur', () => {
+		if (isOpen && !input.value.trim() && matchMedia('(hover: none), (pointer: coarse)').matches) {
+			setTimeout(() => {
+				if (isOpen && document.activeElement !== input && !input.value.trim()) {
+					close();
+				}
+			}, 150);
+		}
 	});
 	form.addEventListener('submit', (e) => {
 		e.preventDefault();

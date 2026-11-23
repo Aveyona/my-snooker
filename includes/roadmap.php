@@ -180,6 +180,7 @@ function mysn_roadmap() {
 /** Denník zmien (najnovšie hore). */
 function mysn_changelog() {
 	return array(
+		array( '0.45.6', '23. 11. 2026', 'Pri mierení zmiznú texty hore (hlásenia, nápoveda, výzvy) aj správy chatu, aby nezakrývali stôl; vrátia sa asi sekundu po tom, čo prestaneš hýbať tágom. Mobil: chat sa dá zavrieť – ✕ reaguje hneď na dotyk, chat sa zavrie aj pri schovaní klávesnice (Späť) alebo ťuknutí mimo, ak je políčko prázdne.' ),
 		array( '0.45.5', '22. 11. 2026', 'Ulička: nad hlavou stovky káblov krížom aj pozdĺž domov, hrubšie zväzky nad stolom, betónové stĺpy s transformátorom, elektromerom a klbkami káblov; siete a vyblednuté plachty s dierami. Pribudli ľudia (predavači pri vozíkoch a v obchodoch, hostia na lavičke pri čajovni, zákazníci a okoloidúci), hlavou sledujú bielu guľu. Grafity a plagáty na domoch sa už neprekrývajú.' ),
 		array( '0.45.4', '22. 11. 2026', 'Ulička: vozíky majú osi a rámy medzi kolesami (ovocie, pani puri, náramky). Domy majú reálne indické farby – hnedá, piesková a sivý betón so stekajúcou vodou a špinou. Nápisy, plagáty a grafity na domoch sú vždy celé: neprekrývajú otvory ani hrany domu a písmo sa zmenší, aby sa zmestilo.' ),
 		array( '0.45.3', '22. 11. 2026', 'Ulička: na konci namiesto múru križovatka do T – ulica pokračuje vľavo aj vpravo, so šnúrami žiaroviek, domami a svetlami v diaľke; grafit MY SNOOKER GALI 147 je na dome oproti.' ),
