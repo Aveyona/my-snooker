@@ -62,6 +62,28 @@ export function gameChat(root, cfg, hooks = {}) {
 	tog.innerHTML = '<i>‹</i><em></em>';
 	el.append(tog, list, form);
 	root.appendChild(el);
+	// 0.46.4 mobil: chat je biela ikonka bubliny (s počtom nových správ); ťuk otvorí chat na celú obrazovku
+	// na priehľadnom čiernom pozadí, ✕ alebo Späť ho zavrie
+	const mob = typeof matchMedia === 'function' && matchMedia('(hover: none), (pointer: coarse)').matches;
+	let ico = null;
+	if (mob) {
+		el.classList.add('mysn-gchat-mob');
+		ico = document.createElement('button');
+		ico.type = 'button';
+		ico.className = 'mysn-gchat-ico';
+		ico.title = _t('Chat');
+		ico.setAttribute('aria-label', _t('Chat'));
+		ico.innerHTML = '<svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><path fill="#fff" d="M4 4h16a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H9l-4.5 3.6A.6.6 0 0 1 3.5 21v-3H4a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2z"/></svg><em></em>';
+		for (const t of ['pointerup', 'mousedown', 'touchstart', 'touchend', 'wheel']) {
+			ico.addEventListener(t, (e) => e.stopPropagation());
+		}
+		ico.addEventListener('pointerdown', (e) => {
+			e.preventDefault();
+			e.stopPropagation();
+			open();
+		});
+		root.appendChild(ico);
+	}
 	let mode = 'show'; // Nastavenia, Chat v hre: show = zobraziť, peek = nové správy na chvíľu, hide = skryť
 	let collapsed = false;
 	let unread = 0;
@@ -74,6 +96,9 @@ export function gameChat(root, cfg, hooks = {}) {
 		b.textContent = collapsed && unread ? String(Math.min(99, unread)) : '';
 		tog.title = collapsed ? (unread ? _t('Zobraziť chat ({n} nových správ)', { n: unread }) : _t('Zobraziť chat')) : _t('Schovať chat');
 		tog.setAttribute('aria-label', tog.title);
+		if (ico) {
+			ico.querySelector('em').textContent = unread ? String(Math.min(99, unread)) : '';
+		}
 	};
 	const setCollapsed = (c) => {
 		collapsed = !!c;
@@ -94,15 +119,21 @@ export function gameChat(root, cfg, hooks = {}) {
 		if (!mine && hooks.onNew) {
 			hooks.onNew(); // 0.44.1: zvuk novej správy
 		}
-		if (!collapsed || mine || isOpen) {
+		if ((!collapsed && !mob) || mine || isOpen) {
 			return;
 		}
 		unread++;
 		drawTog();
-		if (mode === 'peek') {
+		if (ico) {
+			ico.classList.remove('mysn-gchat-bump');
+			void ico.offsetWidth;
+			ico.classList.add('mysn-gchat-bump');
+		}
+		if (mode === 'peek' || (mob && mode === 'show')) {
+			// mobil: posledná správa sa na chvíľu ukáže vedľa ikonky
 			el.classList.add('mysn-gchat-peek');
 			clearTimeout(peekT);
-			peekT = setTimeout(() => el.classList.remove('mysn-gchat-peek'), 8000);
+			peekT = setTimeout(() => el.classList.remove('mysn-gchat-peek'), mob ? 5000 : 8000);
 		}
 	};
 
@@ -356,6 +387,11 @@ export function gameChat(root, cfg, hooks = {}) {
 			return true;
 		}
 		isOpen = true;
+		if (mob) {
+			unread = 0;
+			drawTog();
+			ico.style.display = 'none';
+		}
 		form.classList.remove('mysn-hidden');
 		el.classList.add('mysn-gchat-open'); // pri písaní viac správ a posuvník histórie
 		requestAnimationFrame(() => (list.scrollTop = list.scrollHeight));
@@ -380,6 +416,9 @@ export function gameChat(root, cfg, hooks = {}) {
 		input.blur();
 		form.classList.add('mysn-hidden');
 		el.classList.remove('mysn-gchat-open');
+		if (ico) {
+			ico.style.display = '';
+		}
 		list.scrollTop = list.scrollHeight;
 		hooks.onClose && hooks.onClose();
 		schedule();

@@ -180,6 +180,7 @@ function mysn_roadmap() {
 /** Denník zmien (najnovšie hore). */
 function mysn_changelog() {
 	return array(
+		array( '0.46.4', '23. 11. 2026', 'Mobil: chat je biela ikonka bubliny vľavo hore s počtom nových správ (pri novej správe poskočí a posledná správa sa na 5 s ukáže vedľa nej). Ťuk otvorí chat na celú obrazovku na priehľadnom čiernom pozadí s väčším písmom; zavrie ho ✕, Späť alebo ťuk mimo pri prázdnom políčku. Na telefóne (nie na tablete) je náhľad zásahu menší a čiastočne priehľadný.' ),
 		array( '0.46.3', '23. 11. 2026', 'Nové šúpatko Priblíženie v spodnom paneli (na PC pri Ctrl, na mobile pod šípkou): užší záber kamery pri hre, stôl a gule sú väčšie (1× až 1,6×). PC predvolene 1×, mobil predvolene 1,25×; ukladá sa zvlášť pre PC a mobil. Pevné pohľady (nástenka, rebríček…) sa nemenia.' ),
 		array( '0.46.2', '23. 11. 2026', 'Ulička: pohyb aj na druhej strane – muž z bočnej ulice si kúpi samosy v cukrárni a ide do paan shopu, žena nakupuje pri náramkoch, ovocí a v cukrárni, v križovatke sa prechádza ďalší muž (spolu šesť chodcov). Priečnou ulicou za križovatkou jazdia tam a späť autorikše a motorky so svetlami a vodičmi. Chodci sa obchádzajú (oproti idúci uhnú doprava), obchádzajú stôl, vozíky, stolíky, lavičku, stĺpy aj stojacich ľudí.' ),
 		array( '0.46.1', '23. 11. 2026', 'Ulička ožila: traja ľudia sa prechádzajú (chôdza ako rozhodca na štadióne) a nakupujú – zastavia sa pri stánku s kvetmi, pani puri, ovocím, náramkami či pri čajovni a natiahnu ruku k pultu; jedna žena chodí z bočnej ulice až do križovatky. Trasy obchádzajú stôl.' ),
