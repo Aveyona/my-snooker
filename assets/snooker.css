@@ -893,13 +893,15 @@ body.mysn-page { font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans
 	.mysn-contact-info { font-size: 10px; padding: 2px 7px; }
 }
 /* 0.46.4 mobil: chat ako biela ikonka, otvorený na celú obrazovku na priehľadnom čiernom pozadí */
-.mysn-gchat-ico { position: absolute; left: 10px; top: 50px; z-index: 3; width: 42px; height: 42px; border-radius: 50%; border: 1.5px solid #ffffff66; background: #0c0f14a6; display: flex; align-items: center; justify-content: center; padding: 0; cursor: pointer; -webkit-tap-highlight-color: transparent; }
+.mysn-gchat-ico { position: absolute; left: 8px; bottom: min(496px, calc(100% - 104px)); z-index: 3; width: 48px; height: 48px; border-radius: 50%; border: 1.5px solid #ffffffcc; background: #ffffff26; color: #fff; display: flex; align-items: center; justify-content: center; padding: 0; cursor: pointer; pointer-events: auto; -webkit-tap-highlight-color: transparent; } /* 0.46.5: rovnaký štýl ako ostatné tlačidlá vľavo, úplne hore nad nimi */
+.mysn-ui.mysn-tools-open .mysn-gchat-ico { bottom: min(668px, calc(100% - 104px)); }
+.mysn-ui.mysn-viewing .mysn-gchat-ico { display: none; }
 .mysn-gchat-ico em { position: absolute; right: -4px; top: -4px; min-width: 18px; height: 18px; padding: 0 4px; box-sizing: border-box; border-radius: 9px; background: #dc2626; color: #fff; font: 700 11px/18px system-ui, sans-serif; font-style: normal; text-align: center; }
 .mysn-gchat-ico em:empty { display: none; }
 .mysn-gchat-ico.mysn-gchat-bump { animation: mysn-bump .5s; }
 @keyframes mysn-bump { 30% { transform: scale(1.25); } 60% { transform: scale(.95); } }
 .mysn-gchat-mob .mysn-gchat-tog { display: none; }
-.mysn-gchat-mob:not(.mysn-gchat-open) { left: 60px; top: 50px; width: min(300px, 60vw); }
+.mysn-gchat-mob:not(.mysn-gchat-open) { left: 64px; top: auto; bottom: min(496px, calc(100% - 104px)); width: min(300px, 60vw); } /* náhľad novej správy vedľa ikonky */
 .mysn-gchat-mob:not(.mysn-gchat-open):not(.mysn-gchat-peek) .mysn-gchat-list { display: none; }
 .mysn-gchat-mob.mysn-gchat-peek:not(.mysn-gchat-open) .mysn-gchat-list > .mysn-gchat-msg:not(:last-child) { display: none; }
 .mysn-gchat-mob.mysn-gchat-open { position: fixed; inset: 0; width: auto; z-index: 60; padding: 12px 12px calc(10px + env(safe-area-inset-bottom)); background: #000000c7; font-size: 16px; }

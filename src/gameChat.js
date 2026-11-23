@@ -73,7 +73,7 @@ export function gameChat(root, cfg, hooks = {}) {
 		ico.className = 'mysn-gchat-ico';
 		ico.title = _t('Chat');
 		ico.setAttribute('aria-label', _t('Chat'));
-		ico.innerHTML = '<svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><path fill="#fff" d="M4 4h16a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H9l-4.5 3.6A.6.6 0 0 1 3.5 21v-3H4a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2z"/></svg><em></em>';
+		ico.innerHTML = '<svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 5h16a1.5 1.5 0 0 1 1.5 1.5v9A1.5 1.5 0 0 1 20 17H10l-5 4v-4H4a1.5 1.5 0 0 1-1.5-1.5v-9A1.5 1.5 0 0 1 4 5z"/><path d="M7.5 10h9M7.5 13h6"/></svg><em></em>';
 		for (const t of ['pointerup', 'mousedown', 'touchstart', 'touchend', 'wheel']) {
 			ico.addEventListener(t, (e) => e.stopPropagation());
 		}
