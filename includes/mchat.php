@@ -2,7 +2,9 @@
 /**
  * My Snooker: chat zápasu (0.10.0) – správy medzi hráčmi a divákmi jednej partie.
  * ctx m<id> = rozohraná partia (hráči a diváci na štadióne), r<id hráča> = otvorená herňa (hráč a diváci).
- * Správy sú len dočasné (transient, posledných 60, 6 hodín) – po konci partie zmiznú. Okamžitý signál ide
+ * Správy sú dočasné (transient, posledných 60, 6 hodín) – po konci partie zmiznú; ligová partia (0.47.0) má
+ * vlastnú miestnosť a jej chat sa ukladá natrvalo do tabuľky mclog (história partie a prehrávač, vidí každý prihlásený).
+ * Pôvodne: Okamžitý signál ide
  * cez live server do kanála snk:c<tajný kód partie>; prehliadač si potom správy dotiahne.
  */
 
@@ -49,6 +51,37 @@ function mysn_mc_role( $ctx, $uid ) {
 function mysn_mc_get( $ctx ) {
 	$l = get_transient( 'mysn_mc_' . $ctx );
 	return is_array( $l ) ? $l : array( 'n' => 0, 'm' => array() );
+}
+
+/** 0.47.0: uložený chat ligovej partie: [{name, side (0/1 hráč, -1 divák), text, t, seq}]. */
+function mysn_mc_log( $m ) {
+	global $wpdb;
+	$out = array();
+	$ids = array( (int) $m['p1'], (int) $m['p2'] );
+	foreach ( $wpdb->get_results( $wpdb->prepare( 'SELECT user_id, name, role, msg, seq, created FROM ' . mysn_table( 'mclog' ) . ' WHERE match_id = %d ORDER BY id ASC LIMIT 1000', (int) $m['id'] ), ARRAY_A ) as $r ) { // phpcs:ignore
+		$u     = (int) $r['user_id'];
+		$out[] = array(
+			'name' => (string) $r['name'],
+			'side' => $u === $ids[0] ? 0 : ( $u === $ids[1] ? 1 : -1 ),
+			'text' => (string) $r['msg'],
+			't'    => (int) $r['created'],
+			'seq'  => (int) $r['seq'],
+		);
+	}
+	return $out;
+}
+
+/** GET /history/chat?id=ID: chat ligovej partie pre každého prihláseného. */
+function mysn_rest_history_chat( $req ) {
+	$m = mysn_get_match( (int) $req->get_param( 'id' ) );
+	if ( ! $m || empty( $m['league'] ) ) {
+		return mysn_err( 'Zápas sa nenašiel.', 404 );
+	}
+	return array(
+		'id'      => (int) $m['id'],
+		'players' => array( mysn_name( (int) $m['p1'] ), mysn_name( (int) $m['p2'] ) ),
+		'chat'    => mysn_mc_log( $m ),
+	);
 }
 
 /** Správy partie (after = len novšie). */
@@ -109,6 +142,24 @@ function mysn_rest_mchat_post( $req ) {
 	);
 	$l['m'][] = $m;
 	$l['m']   = array_slice( $l['m'], -MYSN_MC_KEEP );
+	if ( 'm' === $ctx[0] ) {
+		$mt = mysn_get_match( (int) substr( $ctx, 1 ) );
+		if ( $mt && ! empty( $mt['league'] ) ) {
+			global $wpdb;
+			$wpdb->insert( // phpcs:ignore
+				mysn_table( 'mclog' ),
+				array(
+					'match_id' => (int) $mt['id'],
+					'user_id'  => $uid,
+					'name'     => mb_substr( (string) $m['name'], 0, 80 ),
+					'role'     => $role,
+					'msg'      => $text,
+					'seq'      => (int) ( $mt['seq'] ?? 0 ),
+					'created'  => time(),
+				)
+			);
+		}
+	}
 	set_transient( 'mysn_mc_' . $ctx, $l, 6 * HOUR_IN_SECONDS );
 	if ( function_exists( 'myc_live_send' ) ) {
 		myc_live_send( mysn_mc_chan( $ctx ), array( 't' => 'mc' ) );
@@ -120,6 +171,15 @@ function mysn_rest_mchat_post( $req ) {
 add_action(
 	'rest_api_init',
 	function () {
+		register_rest_route(
+			'my-snooker/v1',
+			'/history/chat',
+			array(
+				'methods'             => 'GET',
+				'callback'            => 'mysn_rest_history_chat',
+				'permission_callback' => 'is_user_logged_in',
+			)
+		);
 		foreach ( array( array( 'GET', 'mysn_rest_mchat_get' ), array( 'POST', 'mysn_rest_mchat_post' ) ) as $r ) {
 			register_rest_route(
 				'my-snooker/v1',

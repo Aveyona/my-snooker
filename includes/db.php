@@ -12,6 +12,7 @@
  * {prefix}my_snooker_cues      vlastné tágá hráčov: šablóna, názov, farby a herné úpravy v medziach ±10 %
  * {prefix}my_snooker_signals   krátke správy na nadviazanie priameho spojenia WebRTC medzi hráčmi (po prečítaní sa mažú)
  * {prefix}my_snooker_seats    miesta online divákov: stolička na štadióne alebo miesto na státie v herni (jedno miesto = jeden divák)
+ * {prefix}my_snooker_mclog    chat ligových partií natrvalo (0.47.0): správa, autor, hráč/divák, poradie úderu (pre prehrávač)
  * {prefix}my_snooker_scores    jeden hráč o najlepšie skóre: dohrané framy (body, čas, údery, fauly, najvyššia séria)
  *
  * Partia sa ukladá po každom údere, takže pri výpadku internetu sa dá pokračovať tam, kde sa skončila.
@@ -20,7 +21,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-const MYSN_DB_VERSION = '18';
+const MYSN_DB_VERSION = '19';
 
 function mysn_table( $name ) {
 	global $wpdb;
@@ -215,6 +216,21 @@ color varchar(8) NOT NULL DEFAULT 'blue',
 installed int(10) unsigned NOT NULL DEFAULT 0,
 updated int(10) unsigned NOT NULL DEFAULT 0,
 PRIMARY KEY  (user_id,cue_id)
+) $c;"
+	);
+	// 0.47.0: chat ligovej partie natrvalo (história a prehrávač); seq = počet úderov partie v čase správy
+	dbDelta(
+		'CREATE TABLE ' . mysn_table( 'mclog' ) . " (
+id bigint(20) unsigned NOT NULL AUTO_INCREMENT,
+match_id bigint(20) unsigned NOT NULL,
+user_id bigint(20) unsigned NOT NULL,
+name varchar(80) NOT NULL DEFAULT '',
+role char(1) NOT NULL DEFAULT 'p',
+msg text NOT NULL,
+seq int(10) unsigned NOT NULL DEFAULT 0,
+created int(10) unsigned NOT NULL DEFAULT 0,
+PRIMARY KEY  (id),
+KEY match_id (match_id)
 ) $c;"
 	);
 	update_option( 'mysn_db', MYSN_DB_VERSION, true );

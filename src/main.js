@@ -4964,6 +4964,7 @@ export function start(root, config = {}) {
 		// chat zápasu: partia, ktorú hrám (aj mimo ligy), sledujem alebo moja otvorená herňa
 		ctx: () => (!user ? '' : game.spectating ? watchCtx : game.match && online && online.matchId ? 'm' + online.matchId : roomOpen() ? 'r' + user.id : ''),
 		mrest: config.restUrl,
+		league: () => !!((game.match && game.match.league) || (game.spectating && venue === 'league')), // 0.47.0 ligová partia: chat sa ukladá
 		nonce: () => (online && online.net && online.net.nonce) || config.nonce,
 		// Enter inde: biela do ruky, pohľady (kreslo, noviny, stojan...), nájdený zápas, koniec partie; divák na svojom mieste píše normálne
 		// PC: pri písaní sa myš uvoľní (✕, posuvník histórie); po zatvorení sa znova zachytí do hry

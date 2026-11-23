@@ -185,6 +185,7 @@ function mysn_rest_history_match( $req ) {
 		'duration' => max( 0, $last - $first ),
 		'stats'    => $stat,
 		'timeline' => array_slice( $timeline, 0, 200 ),
+		'chat'     => function_exists( 'mysn_mc_log' ) ? mysn_mc_log( $m ) : array(), // 0.47.0 uložený chat partie
 		'chart'    => $chart,
 	);
 }
@@ -247,6 +248,7 @@ function mysn_rest_history_replay( $req ) {
 		'scores'  => array( (int) $m['score1'], (int) $m['score2'] ),
 		'date'    => (int) $m['created'],
 		'moves'   => $moves,
+		'chat'    => function_exists( 'mysn_mc_log' ) && $m['league'] ? mysn_mc_log( $m ) : array(), // 0.47.0 chat partie k prehrávaču
 	);
 }
 

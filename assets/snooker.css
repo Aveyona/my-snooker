@@ -477,6 +477,14 @@ body.mysn-page { font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans
 .mysn-hist-tl { margin: 0; padding-left: 22px; display: flex; flex-direction: column; gap: 3px; font-size: 13px; }
 .mysn-hist-foul { color: #ff8a8a; }
 .mysn-hist-brk.mysn-side0 b { color: #FACC15; }
+/* 0.47.0 chat ligovej partie v histórii */
+.mysn-hist-chat { display: flex; flex-direction: column; gap: 4px; max-height: 260px; overflow-y: auto; padding: 6px 8px; border-radius: 8px; background: #ffffff0d; font-size: 13px; }
+.mysn-hist-cmsg { overflow-wrap: anywhere; }
+.mysn-hist-cmsg small { color: #8f99a8; font-size: 11px; }
+.mysn-hist-cmsg.mysn-side0 b { color: #FACC15; }
+.mysn-hist-cmsg.mysn-side1 b { color: #5aa2ff; }
+.mysn-hist-cmsg.mysn-sidex b { color: #cfd3da; }
+.mysn-hist-cmsg i { font-style: normal; font-weight: 400; font-size: 11px; color: #8f99a8; }
 .mysn-hist-brk.mysn-side1 b { color: #5aa2ff; }
 .mysn-hist-foot { margin-top: 14px; color: #8a93a3; font-size: 12px; }
 

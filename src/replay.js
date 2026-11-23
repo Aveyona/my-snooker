@@ -139,6 +139,54 @@ export class Replay {
 		}
 	}
 
+	/** 0.47.0 chat ligovej partie: správy napísané do práve prehratého úderu (posledné 3) v rohu obrazovky. */
+	chatNow() {
+		const C = this.d.chat || [];
+		if (!C.length) {
+			return [];
+		}
+		const seq = this.i > 0 ? this.moves[this.i - 1].seq : 0;
+		return C.filter((c) => c.seq <= seq).slice(-3);
+	}
+
+	drawChat(g, w, h, head, u) {
+		this._chatY = head;
+		this._chatU = u;
+	}
+
+	/** Chat sa kreslí až nad stôl (volá draw na konci). */
+	drawChatOver(g, w, h) {
+		const L3 = this.chatNow();
+		if (!L3.length) {
+			return;
+		}
+		const u = this._chatU || h / 640;
+		const y0 = (this._chatY || 70 * u) + 8 * u;
+		g.save();
+		g.font = `${17 * u}px Arial, sans-serif`;
+		g.textBaseline = 'top';
+		g.textAlign = 'left';
+		const lines = L3.map((c) => {
+			const full = `${c.name}${c.side < 0 ? _t(' (divák)') : ''}: ${c.text}`;
+			let t = full;
+			while (g.measureText(t).width > w * 0.55 && t.length > 4) {
+				t = t.slice(0, -2);
+			}
+			return { t: t === full ? t : t + '…', side: c.side };
+		});
+		const lh = 24 * u;
+		const bw = Math.max(...lines.map((l) => g.measureText(l.t).width)) + 20 * u;
+		g.fillStyle = 'rgba(0,0,0,0.55)';
+		g.beginPath();
+		g.roundRect(12 * u, y0, bw, lines.length * lh + 10 * u, 8 * u);
+		g.fill();
+		lines.forEach((l, k) => {
+			g.fillStyle = l.side === 0 ? '#FACC15' : l.side === 1 ? '#7fb8ff' : '#e8eefc';
+			g.fillText(l.t, 22 * u, y0 + 6 * u + k * lh);
+		});
+		g.restore();
+	}
+
 	/** Nakreslí prehrávač do plátna g (w x h px). opts.hint = text ovládania v spodnom riadku. */
 	draw(g, w, h, opts = {}) {
 		const P = this.d.players || [{ name: '' }, { name: '' }];
@@ -181,6 +229,7 @@ export class Replay {
 		g.fillText(`${sc[0]} : ${sc[1]}`, w / 2, head / 2);
 		// stôl zhora
 		const foot = 92 * u;
+		this.drawChat(g, w, h, head, u);
 		const rail = 0.11;
 		const s = Math.min((w - 40 * u) / (L + 2 * rail), (h - head - foot - 20 * u) / (W + 2 * rail));
 		const cx = w / 2;
@@ -269,6 +318,7 @@ export class Replay {
 			g.fillText(_t('▶ prehráva sa'), w - 20 * u, h - foot + 26 * u);
 		}
 		g.restore();
+		this.drawChatOver(g, w, h); // 0.47.0 chat partie nad stolom
 	}
 }
 

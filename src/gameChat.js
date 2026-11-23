@@ -165,10 +165,14 @@ export function gameChat(root, cfg, hooks = {}) {
 		if (!(hooks.canWrite && hooks.canWrite())) {
 			return _t('Písať môžu prihlásení');
 		}
+		if (target === 'm' && mctx && hooks.league && hooks.league()) {
+			return _t('Chat ligovej partie – uloží sa k partii do histórie (Enter pošle, Tab Snooker, Esc zavrie)');
+		}
 		return target === 'm' && mctx ? _t('Správa hráčom a divákom tejto partie (Enter pošle, Tab Snooker, Esc zavrie)') : _t('Správa do miestnosti {r}', { r: esc(cfg.roomName || 'Snooker') }) + (mctx ? _t(' (Enter pošle, Tab Zápas, Esc zavrie)') : _t(' (Enter pošle, Esc zavrie)'));
 	};
 	const drawTabs = () => {
 		tabs.classList.toggle('mysn-hidden', !mctx);
+		tabM.textContent = mctx && hooks.league && hooks.league() ? _t('🏆 Ligová partia') : _t('🎱 Zápas'); // 0.47.0 vlastná miestnosť ligovej partie
 		tabM.classList.toggle('on', !!mctx && target === 'm');
 		tabS.classList.toggle('on', !mctx || target !== 'm');
 		input.placeholder = placeholder();

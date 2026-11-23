@@ -180,6 +180,7 @@ function mysn_roadmap() {
 /** Denník zmien (najnovšie hore). */
 function mysn_changelog() {
 	return array(
+		array( '0.47.0', '23. 11. 2026', 'Každá ligová partia má vlastnú miestnosť chatu (záložka 🏆 Ligová partia pre hráčov aj divákov) a jej chat sa ukladá natrvalo pri partii. V histórii zápasov je pri partii časť Chat partie (čas, úder, kto písal, divák označený) a v prehrávači partie naskakujú správy v rohu v čase, keď padli. Uložený chat ligovej partie môže čítať každý prihlásený (GET /history/chat). Priateľské partie ostávajú s dočasným chatom.' ),
 		array( '0.46.5', '23. 11. 2026', 'Mobil: ikonka chatu má rovnaký štýl ako ostatné okrúhle tlačidlá vľavo (biely obrys, priehľadné pozadie, obrysová bublina) a je úplne hore nad nimi; náhľad novej správy sa ukáže vedľa nej.' ),
 		array( '0.46.4', '23. 11. 2026', 'Mobil: chat je biela ikonka bubliny vľavo hore s počtom nových správ (pri novej správe poskočí a posledná správa sa na 5 s ukáže vedľa nej). Ťuk otvorí chat na celú obrazovku na priehľadnom čiernom pozadí s väčším písmom; zavrie ho ✕, Späť alebo ťuk mimo pri prázdnom políčku. Na telefóne (nie na tablete) je náhľad zásahu menší a čiastočne priehľadný.' ),
 		array( '0.46.3', '23. 11. 2026', 'Nové šúpatko Priblíženie v spodnom paneli (na PC pri Ctrl, na mobile pod šípkou): užší záber kamery pri hre, stôl a gule sú väčšie (1× až 1,6×). PC predvolene 1×, mobil predvolene 1,25×; ukladá sa zvlášť pre PC a mobil. Pevné pohľady (nástenka, rebríček…) sa nemenia.' ),

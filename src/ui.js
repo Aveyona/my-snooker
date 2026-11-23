@@ -1527,6 +1527,22 @@ export class UI {
 				)
 			);
 		}
+		// 0.47.0 chat ligovej partie (uložený pri partii)
+		const CH = d.chat || [];
+		el.appendChild(h('h4', '', _t('Chat partie')));
+		if (!CH.length) {
+			el.appendChild(h('p', 'mysn-hist-empty', _t('V tejto partii nikto nepísal do chatu.')));
+		} else {
+			const box = h('div', 'mysn-hist-chat');
+			for (const c of CH) {
+				const tm = new Date(c.t * 1000);
+				const hh = String(tm.getHours()).padStart(2, '0') + ':' + String(tm.getMinutes()).padStart(2, '0');
+				box.appendChild(
+					h('div', 'mysn-hist-cmsg mysn-side' + (c.side < 0 ? 'x' : c.side), `<small>${hh}${c.seq ? ' · ' + _t('úder {n}', { n: c.seq }) : ''}</small> <b>${esc(c.name)}${c.side < 0 ? ' <i>' + _t('divák') + '</i>' : ''}:</b> ${esc(c.text)}`)
+				);
+			}
+			el.appendChild(box);
+		}
 		// priebeh partie
 		const T = d.timeline || [];
 		el.appendChild(h('h4', '', _t('Priebeh partie')));
