@@ -106,7 +106,7 @@ function mysn_tut_default() {
 	$ob = function ( $id, $t, $obj, $sk, $en, $setup = '' ) use ( $sc ) {
 		return $sc( $id, $t, 0, $sk, $en, array(), '', $setup, 'tut-step', 'tut-ok', $obj );
 	};
-	$bk = function ( $id, $sk = 'Vráť sa: Esc alebo znova ten istý kláves.', $en = 'Go back: Esc or the same key again.' ) use ( $sc ) {
+	$bk = function ( $id, $sk = 'Vráť sa: Esc alebo znova ten istý kláves (mobil: tlačidlo ← Späť k stolu).', $en = 'Go back: Esc or the same key again (mobile: the ← Back to the table button).' ) use ( $sc ) {
 		return $sc( $id, 'back', 0, $sk, $en );
 	};
 	$end = function ( $id, $sk, $en ) use ( $sc ) {
@@ -210,14 +210,14 @@ function mysn_tut_default() {
 			'title_sk' => 'Herňa',
 			'title_en' => 'The hall',
 			'scenes'   => array(
-				$sc( 's1', 'text', 0, 'Herňa je tvoja miestnosť so stolom. Predmety v nej otvoríš klávesmi F1 až F10 alebo podržíš Ctrl a klikneš na predmet. Na mobile sú v menu ☰.', 'The hall is your room with the table. Open its objects with the keys F1 to F10, or hold Ctrl and click an object. On mobile they are in the ☰ menu.', array(), '', 'home' ),
-				$ob( 's2', 'open', 'board', 'Otvor nástenku s nápovedou: F1 (mobil: menu ☰ → Pravidlá). Na nástenke listuješ šípkami ← → alebo číslami 1 až 6.', 'Open the help board: F1 (mobile: ☰ menu → Rules). Turn the pages with ← → or the numbers 1 to 6.' ),
+				$sc( 's1', 'text', 0, 'Herňa je tvoja miestnosť so stolom. Predmety v nej otvoríš klávesmi F1 až F10 alebo podržíš Ctrl a klikneš na predmet. Na mobile sú v menu ☰ v časti Herňa.', 'The hall is your room with the table. Open its objects with the keys F1 to F10, or hold Ctrl and click an object. On mobile they are in the ☰ menu under Club room.', array(), '', 'home' ),
+				$ob( 's2', 'open', 'board', 'Otvor nástenku s nápovedou: F1 (mobil: ☰ → Herňa → Nápoveda). Na nástenke listuješ šípkami ← → alebo číslami 1 až 6.', 'Open the help board: F1 (mobile: ☰ → Club room → Help). Turn the pages with ← → or the numbers 1 to 6.' ),
 				$bk( 's3' ),
-				$ob( 's4', 'open', 'score', 'Tabuľa so skóre: F4. Ukazuje body, sériu a tvoj tréning.', 'The scoreboard: F4. It shows the points, the break and your practice.' ),
+				$ob( 's4', 'open', 'score', 'Tabuľa so skóre: F4 (mobil: ☰ → Herňa → Skóre). Ukazuje body, sériu a tvoj tréning.', 'The scoreboard: F4 (mobile: ☰ → Club room → Score). It shows the points, the break and your practice.' ),
 				$bk( 's5' ),
-				$ob( 's6', 'open', 'chair', 'Kreslo: F7. Sadneš si, čítaš noviny (C) a správy z RSS (V).', 'The armchair: F7. Sit down, read the newspaper (C) and the RSS news (V).' ),
+				$ob( 's6', 'open', 'chair', 'Kreslo: F7 (mobil: ☰ → Herňa → Kreslo). Sadneš si, čítaš noviny (C) a správy z RSS (V).', 'The armchair: F7 (mobile: ☰ → Club room → Armchair). Sit down, read the newspaper (C) and the RSS news (V).' ),
 				$bk( 's7' ),
-				$ob( 's8', 'open', 'mixer', 'Rádio: F9. Šípkami ← → meníš stanicu, P pauza.', 'The radio: F9. Change the station with ← →, P pauses.' ),
+				$ob( 's8', 'open', 'mixer', 'Rádio: F9 (mobil: ☰ → Herňa → Rádio). Šípkami ← → meníš stanicu, P pauza.', 'The radio: F9 (mobile: ☰ → Club room → Radio). Change the station with ← →, P pauses.' ),
 				$bk( 's8b' ),
 				$end( 's9', 'Ďalej v herni: F6 dvere (otvorené = tvoju partiu môžu sledovať iní), M mapa miestností, F8 rebríček a F10 bar s telefónom (T: účet, úspechy a skúsenosti).', 'More in the hall: F6 the door (open = others can watch your game), M the room map, F8 the leaderboard and F10 the bar with the phone (T: account, achievements and XP).' ),
 			),
@@ -227,10 +227,10 @@ function mysn_tut_default() {
 			'title_sk' => 'Tágo a výbava',
 			'title_en' => 'Cue and equipment',
 			'scenes'   => array(
-				$ob( 's1', 'open', 'rack', 'Stojan s tágami: F2 (alebo Ctrl a klik na stojan).', 'The cue rack: F2 (or Ctrl and click the rack).', 'home' ),
+				$ob( 's1', 'open', 'rack', 'Stojan s tágami: F2 alebo Ctrl a klik na stojan (mobil: ☰ → Herňa → Tágá).', 'The cue rack: F2 or Ctrl and click the rack (mobile: ☰ → Club room → Cues).', 'home' ),
 				$sc( 's2', 'text', 0, 'V stojane je 10 tág. Šípkami ← → vyberáš, pri každom vidíš silu, dĺžku, falše a či má jemné mierenie so Shift. Z ktoréhokoľvek si spravíš vlastné tágo. Vyberieš si aj kriedu a farbu podsvietenia stojana.', 'The rack holds 10 cues. Choose with ← →; each shows its power, length, spin and whether it has fine aiming with Shift. You can make your own cue from any of them. You also pick the chalk and the colour of the rack lights.' ),
 				$bk( 's3' ),
-				$ob( 's4', 'open', 'tools', 'Príslušenstvo: F3 (na mobile ikonka vľavo).', 'Accessories: F3 (on mobile the icon on the left).' ),
+				$ob( 's4', 'open', 'tools', 'Príslušenstvo: F3 (mobil: ☰ → Hra → Príslušenstvo).', 'Accessories: F3 (mobile: ☰ → Game → Accessories).' ),
 				$sc( 's5', 'text', 0, 'V príslušenstve: 1 krieda, 2 krížik, 3 a 4 pavúk na vzdialené gule, 5 nové postavenie, 6 a 7 predĺženie tága (dlhšie tágo je menej presné). Dole vľavo vidíš stav špice – opotrebuje sa a mení sa v stojane.', 'Accessories: 1 chalk, 2 cross rest, 3 and 4 spider for distant balls, 5 new rack, 6 and 7 cue extension (a longer cue is less accurate). Bottom left shows the tip condition – it wears out and is replaced in the rack.' ),
 				$bk( 's6', 'Zavri príslušenstvo: Esc alebo F3.', 'Close the accessories: Esc or F3.' ),
 				$end( 's7', 'Výborne! Ďalej: kancelária a registrácia do ligy.', 'Well done! Next: the office and league registration.' ),
@@ -242,13 +242,13 @@ function mysn_tut_default() {
 			'title_en' => 'The office and league registration',
 			'scenes'   => array(
 				$sc( 's1', 'text', 0, 'Toto je tvoja kancelária. Prídeš sem tlačidlom Liga v menu, cez mapu miestností (M) alebo dverami z chodby. Tu sa registruješ do ligy a odtiaľto ideš na zápas.', 'This is your office. You get here with League in the menu, the room map (M) or through the door from the corridor. Here you register for the league and go to a match from here.', array(), '', 'office' ),
-				$ob( 's2', 'open', 'o_card', 'Na stole leží červená vizitka – registrácia do ligy. Otvor ju: F8 alebo Ctrl a klik. Vyplniť ju môžeš hneď alebo neskôr.', 'A red card lies on the desk – the league registration. Open it: F8 or Ctrl and click. You can fill it in now or later.' ),
+				$ob( 's2', 'open', 'o_card', 'Na stole leží červená vizitka – registrácia do ligy. Otvor ju: F8 alebo Ctrl a klik (mobil: ☰ → Kancelária → Vizitka). Vyplniť ju môžeš hneď alebo neskôr.', 'A red card lies on the desk – the league registration. Open it: F8 or Ctrl and click (mobile: ☰ → Office → Business card). You can fill it in now or later.' ),
 				$bk( 's3', 'Zavri vizitku: Esc.', 'Close the card: Esc.' ),
-				$ob( 's4', 'open', 'o_results', 'Tabuľky líg: F4. Sú 4 ligy, každý začína so 147 bodmi, výhra pridáva, prehra uberá.', 'The league tables: F4. There are 4 leagues, everyone starts with 147 points, a win adds and a loss takes points away.' ),
+				$ob( 's4', 'open', 'o_results', 'Tabuľky líg: F4 (mobil: ☰ → Kancelária → Výsledky). Sú 4 ligy, každý začína so 147 bodmi, výhra pridáva, prehra uberá.', 'The league tables: F4 (mobile: ☰ → Office → Results). There are 4 leagues, everyone starts with 147 points, a win adds and a loss takes points away.' ),
 				$bk( 's5', 'Späť za stôl: Esc alebo znova F4.', 'Back to the desk: Esc or F4 again.' ),
-				$ob( 's6', 'open', 'o_map', 'Mapa hráčov: F10. Vidíš, odkiaľ sú hráči ligy.', 'The player map: F10. See where the league players come from.' ),
+				$ob( 's6', 'open', 'o_map', 'Mapa hráčov: F10 (mobil: ☰ → Kancelária → Hráči ligy). Vidíš, odkiaľ sú hráči ligy.', 'The player map: F10 (mobile: ☰ → Office → League players). See where the league players come from.' ),
 				$bk( 's7', 'Späť za stôl: Esc alebo znova F10.', 'Back to the desk: Esc or F10 again.' ),
-				$ob( 's8', 'open', 'o_cues', 'Moje tágá: F2. Vyberieš 4 tágá, ktoré si berieš na ligový zápas, a kriedu.', 'My cues: F2. Choose the 4 cues you take to a league match, and the chalk.' ),
+				$ob( 's8', 'open', 'o_cues', 'Moje tágá: F2 (mobil: ☰ → Kancelária → Moje tágá). Vyberieš 4 tágá, ktoré si berieš na ligový zápas, a kriedu.', 'My cues: F2 (mobile: ☰ → Office → My cues). Choose the 4 cues you take to a league match, and the chalk.' ),
 				$bk( 's9', 'Zavri tágá: Esc alebo znova F2.', 'Close the cues: Esc or F2 again.' ),
 				$ob( 's10', 'text', 'o_calendar', 'Kalendár (F3) ukazuje sezónu – trvá rok a na konci sa vyhlási víťaz. Lampa na stole (F12): zasvietená = si online a dá sa ťa vyzvať, zhasnutá = nie si k dispozícii.', 'The calendar (F3) shows the season – it lasts a year and ends with a champion. The desk lamp (F12): on = you are online and can be challenged, off = you are not available.' ),
 				$end( 's11', 'Výborne! Ďalej: ako sa hrá ligový zápas.', 'Well done! Next: how a league match is played.' ),
