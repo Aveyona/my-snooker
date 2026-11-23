@@ -180,6 +180,7 @@ function mysn_roadmap() {
 /** Denník zmien (najnovšie hore). */
 function mysn_changelog() {
 	return array(
+		array( '0.55.6', '23. 11. 2026', 'Tutoriál: okno so správou je vždy navrchu nad ostatnými prvkami hry a pozadie je nepriehľadné (nepresvitá scéna ani iné texty).' ),
 		array( '0.55.5', '23. 11. 2026', 'Oprava: Poslať výzvu sa neotváralo – nové Lobby (0.53.0) malo v štýloch rovnaký názov ako okno výzvy a skrývalo ho. Lobby má vlastný názov, obe okná fungujú.' ),
 		array( '0.55.4', '23. 11. 2026', 'Tutoriál na PC: Enter vždy posunie na ďalšiu scénu (Ďalej) a neotvára chat; chat sa počas celého tutoriálu otvára Shift+Enter (nápoveda pod textom scény).' ),
 		array( '0.55.3', '23. 11. 2026', 'Hlas tutoriálu: všetky vety jedným rovnakým hlasom – stabilita 75 % (predtým 50 %, každá veta mohla znieť ako iný človek), vyššia podobnosť s hlasom 90 % a pevný seed. Doterajšie nahrávky sa rátajú ako chýbajúce a vygenerujú sa znova.' ),
