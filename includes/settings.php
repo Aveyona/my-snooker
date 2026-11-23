@@ -28,11 +28,13 @@ function mysn_main_url() {
 /** Host hry bez schémy (snooker.hedlajner.sk). */
 function mysn_host() {
 	$h = trim( (string) mysn_settings()['host'] );
-	if ( '' === $h ) {
-		$p = wp_parse_url( mysn_main_url() );
-		$h = 'snooker.' . preg_replace( '/^www\./', '', $p['host'] ?? 'localhost' ) . ( isset( $p['port'] ) ? ':' . $p['port'] : '' );
-	}
-	return strtolower( $h );
+	return strtolower( '' === $h ? mysn_default_host() : $h );
+}
+
+/** Pôvodná subdoména hry (snooker.hedlajner.sk). Keď hra beží na vlastnej doméne (mysnooker.in), presmeruje na ňu. */
+function mysn_default_host() {
+	$p = wp_parse_url( mysn_main_url() );
+	return strtolower( 'snooker.' . preg_replace( '/^www\./', '', $p['host'] ?? 'localhost' ) . ( isset( $p['port'] ) ? ':' . $p['port'] : '' ) );
 }
 
 function mysn_url() {

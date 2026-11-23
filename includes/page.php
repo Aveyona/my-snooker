@@ -14,6 +14,12 @@ add_action( 'wp_loaded', function () {
 	$uri  = isset( $_SERVER['REQUEST_URI'] ) ? (string) $_SERVER['REQUEST_URI'] : '/';
 	$path = (string) wp_parse_url( $uri, PHP_URL_PATH );
 	if ( ! mysn_on() ) {
+		// stará subdoména (snooker.hedlajner.sk), keď hra beží na vlastnej doméne (mysnooker.in)
+		$req = isset( $_SERVER['HTTP_HOST'] ) ? strtolower( (string) $_SERVER['HTTP_HOST'] ) : '';
+		if ( $req === mysn_default_host() && mysn_default_host() !== mysn_host() && 0 !== strpos( $path, '/wp-json/' ) ) {
+			wp_redirect( untrailingslashit( mysn_url() ) . ( '' === $uri ? '/' : $uri ), 301 ); // phpcs:ignore WordPress.Security.SafeRedirect -- adresa hry
+			exit;
+		}
 		// náhľad na hlavnom webe
 		if ( untrailingslashit( $path ) === untrailingslashit( mysn_preview_path() ) ) {
 			mysn_render( true );
@@ -183,7 +189,8 @@ function mysn_auth_config( $game ) {
 	$email = (bool) my_users_opt( 'email_enabled' );
 	return array(
 		'page'     => $page,
-		'google'   => function_exists( 'my_users_google_ready' ) && my_users_google_ready() ? my_users_google_start_url( $game ) : '',
+		// na vlastnej doméne (mysnooker.in) sa Google prihlási na hlavnom webe a mostík prihlási hráča aj tu
+		'google'   => function_exists( 'my_users_google_ready' ) && my_users_google_ready() ? my_users_google_start_url( mysn_on() && function_exists( 'hl_alias_bridge_url' ) && defined( 'HL_ALIAS_HOST' ) ? hl_alias_bridge_url( $game ) : $game ) : '',
 		'email'    => $email,
 		'register' => $email && (bool) my_users_opt( 'email_register' ),
 		'terms'    => (string) my_users_opt( 'terms_url' ),
