@@ -3581,7 +3581,7 @@ export function start(root, config = {}) {
 			tut.openList(true);
 		},
 		gameLobby: () => {
-			if (!lobby) {
+			if (!makeLobby()) {
 				ui.toast(_t('Lobby je pre prihlásených hráčov.'));
 				return;
 			}
@@ -5130,7 +5130,11 @@ export function start(root, config = {}) {
 	);
 	// 0.53.0 vlastné lobby (zoznam, založenie, chat lobby, Pripravený, Začať hru)
 	let lobby = null;
-	if (user && online) {
+	// 0.53.1: vytvorí sa až pri prvom otvorení (online sa nastavuje nižšie – pri štarte hry by bol ešte neinicializovaný)
+	const makeLobby = () => {
+		if (lobby || !user || !online) {
+			return lobby;
+		}
 		lobby = lobbyUi(overlay, {
 			call: (p, b) => online.net.call(p, b),
 			toast: (t) => ui.toast(t),
@@ -5144,7 +5148,8 @@ export function start(root, config = {}) {
 			started: () => online.ping(),
 			closed: () => {},
 		});
-	}
+		return lobby;
+	};
 	// 0.52.0 uvítacie okno nového hráča (raz na účet)
 	if (user && config.welcome) {
 		setTimeout(() => {
