@@ -898,7 +898,7 @@ export class UI {
 			const trainFirst = kind === 'training' && this.trainingFirst; // po skončenom zápase je vybraný Tréning
 			const lg = this.button(_t('Liga'), 'league', _t('Kancelária ligy: registrácia, 4 ligy, body a sezóna na rok'));
 			lg.classList.add('mysn-league-btn');
-			const tr = this.button(_t('Tréning'), kind === 'solo' ? 'training' : 'resume', _t('Voľný tréning na stole s červeným súknom'));
+			const tr = this.button(_t('Tréning'), kind === 'solo' || (this.venue && this.venue !== 'home') ? 'training' : 'resume', _t('Voľný tréning na stole s červeným súknom'));
 			const enter = this.button(_t('Pozerať hru'), 'rooms', _t('Otvorené partie: tréningy a hry s otvorenými dverami a ligové zápasy, dá sa ich sledovať'));
 			if (!this.touchUI) {
 				// PC: prvá položka Pokračovať v hre (návrat k tomu, čo sa práve hrá: tréning alebo frame o skóre)

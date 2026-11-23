@@ -1295,6 +1295,8 @@ export function start(root, config = {}) {
 			return;
 		}
 		winHold.stop();
+		ui.venue = v; // menu: Tréning mimo herne vráti do herne
+		setTimeout(() => refreshMenu(), 0);
 		if (v === 'league') {
 			setTimeout(() => sound.fx('jingle-start'), 900); // znelka pri príchode na štadión
 		}
@@ -2805,8 +2807,8 @@ export function start(root, config = {}) {
 				return fromOffice(() => actions.training());
 			}
 			game.stopSolo();
-			if (venue === 'league' && !game.match) {
-				setVenue('home'); // 0.30.5: po ligovom zápase Tréning z menu vráti do herne (admin trénuje na štadióne cez mapu)
+			if (venue !== 'home' && !game.match) {
+				setVenue('home'); // 0.45.10: Tréning z menu vráti do herne k červenému stolu (aj z Uličky); 0.30.5: po ligovom zápase Tréning z menu vráti do herne (admin trénuje na štadióne cez mapu)
 			}
 			if (!restoreTraining()) {
 				game.aimAtNearest();

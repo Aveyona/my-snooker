@@ -180,6 +180,7 @@ function mysn_roadmap() {
 /** Denník zmien (najnovšie hore). */
 function mysn_changelog() {
 	return array(
+		array( '0.45.10', '23. 11. 2026', 'Tréning v menu ťa z Uličky (aj zo štadióna) vráti do herne k červenému stolu; Hrať o skóre sa hrá v herni ako doteraz.' ),
 		array( '0.45.9', '23. 11. 2026', 'Zmenšený náhľad zásahu pri mierení ostáva na svojom mieste (zmenšuje sa k svojmu rohu), vpravo hore už nezachádza pod tlačidlo Nastavenia.' ),
 		array( '0.45.8', '23. 11. 2026', 'Pri mierení (pravé tlačidlo myši, na tablete oko) je náhľad zásahu – kruh s guľami, uhol a hrúbka – o polovicu menší.' ),
 		array( '0.45.7', '23. 11. 2026', 'Texty hore a správy chatu sa skrývajú len pri mierení – kým držíš pravé tlačidlo myši (na tablete oko); po pustení sa hneď vrátia. Obyčajný pohyb myšou ich už neskrýva.' ),
