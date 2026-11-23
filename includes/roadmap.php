@@ -180,6 +180,7 @@ function mysn_roadmap() {
 /** Denník zmien (najnovšie hore). */
 function mysn_changelog() {
 	return array(
+		array( '0.45.11', '23. 11. 2026', 'Rooms: karta miestnosti má rad tlačidiel – ⚙ nastavenia miestnosti (ľudia v uličke, čmáranice a grafity na súkne), Tréning (voľný tréning v uličke, aj keď v nej už si) a Prekážky (pripravujeme).' ),
 		array( '0.45.10', '23. 11. 2026', 'Tréning v menu ťa z Uličky (aj zo štadióna) vráti do herne k červenému stolu; Hrať o skóre sa hrá v herni ako doteraz.' ),
 		array( '0.45.9', '23. 11. 2026', 'Zmenšený náhľad zásahu pri mierení ostáva na svojom mieste (zmenšuje sa k svojmu rohu), vpravo hore už nezachádza pod tlačidlo Nastavenia.' ),
 		array( '0.45.8', '23. 11. 2026', 'Pri mierení (pravé tlačidlo myši, na tablete oko) je náhľad zásahu – kruh s guľami, uhol a hrúbka – o polovicu menší.' ),

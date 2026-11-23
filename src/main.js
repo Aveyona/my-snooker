@@ -595,6 +595,7 @@ export function start(root, config = {}) {
 	const stadium = buildStadium(scene, settings.quality, config.clock || 45);
 	const office = buildOffice(scene);
 	const alley = buildAlley(scene, settings.quality); // 0.45.0 Ulička
+	alley.setPeople(settings.alleyPeople !== false);
 	office.root.add(new THREE.AmbientLight(0xffe6c8, settings.quality === 'high' ? 0.22 : 0.4)); // herňa je v kancelárii skrytá (aj jej svetlo)
 	/*
 	 * Všetky miestnosti sú v jednej scéne vedľa seba (herňa, kancelária za ňou, štadión). Kreslí sa len tá,
@@ -757,7 +758,7 @@ export function start(root, config = {}) {
 	let feltNow = '';
 	const updateFelt = () => {
 		const sp = game.spectating;
-		const want = venue === 'league' ? 'blue' : venue === 'alley' ? 'street' : sp ? (sp.kind === 'solo' ? 'green' : 'red') : (!game.match && !game.solo) || (game.match && game.match.training) ? 'red' : 'green';
+		const want = venue === 'league' ? 'blue' : venue === 'alley' ? (settings.alleyScribble === false ? 'green' : 'street') : sp ? (sp.kind === 'solo' ? 'green' : 'red') : (!game.match && !game.solo) || (game.match && game.match.training) ? 'red' : 'green';
 		if (want !== feltNow) {
 			feltNow = want;
 			table.setFelt(want);
@@ -3570,9 +3571,20 @@ export function start(root, config = {}) {
 			controls.uncapture();
 			const here = view === 'office' ? 'office' : venue;
 			ui.openGameRooms(true, [
-				{ id: 'alley', name: _t('Indická ulička'), icon: '🛺', bg: 'linear-gradient(135deg,#1b1640 0%,#7a2d5a 55%,#e8913a 100%)', here: here === 'alley', desc: _t('Stôl vonku v blatistej uličke v Indii, v noci pod šnúrami žiaroviek. Súkno popísané fixkou a grafitmi, pri stole stánok s čajom.'), modes: [{ label: _t('Voľný tréning') }, { label: _t('Partia s priateľom'), soon: true }, { label: _t('21 kôl cez prekážky na čas'), soon: true }] },
+				{ id: 'alley', name: _t('Indická ulička'), icon: '🛺', bg: 'linear-gradient(135deg,#1b1640 0%,#7a2d5a 55%,#e8913a 100%)', here: here === 'alley', desc: _t('Stôl vonku v blatistej uličke v Indii, v noci pod šnúrami žiaroviek. Súkno popísané fixkou a grafitmi, pri stole stánok s čajom.'), modes: [{ label: _t('Tréning'), mode: 'play', title: _t('Voľný tréning v uličke') }, { label: _t('Prekážky'), soon: true }], opts: [{ key: 'alleyPeople', label: _t('Ľudia v uličke'), on: settings.alleyPeople !== false }, { key: 'alleyScribble', label: _t('Čmáranice a grafity na súkne'), on: settings.alleyScribble !== false }] },
 				{ id: 'soon', name: _t('Ďalšie miestnosti'), icon: '🚪', bg: 'linear-gradient(135deg,#1c2330,#3a4456)', soon: true, desc: _t('Pripravujeme ďalšie miestnosti s vlastnými hrami.') },
 			]);
+		},
+		// ⚙ v karte miestnosti a jej voľby (0.45.11)
+		gameRoomOpts: ({ id }) => ui.toggleRoomOpts(id),
+		roomOpt: ({ key, on }) => {
+			if (!['alleyPeople', 'alleyScribble'].includes(key)) {
+				return;
+			}
+			settings[key] = !!on;
+			saveSettings(settings);
+			alley.setPeople(settings.alleyPeople !== false);
+			updateFelt();
 		},
 		gameRoomsClose: () => {
 			ui.openGameRooms(false);
@@ -3614,6 +3626,14 @@ export function start(root, config = {}) {
 			}
 			if (view) {
 				exitView();
+			}
+			if (id === 'alley' && mode === 'play') {
+				// Tréning v uličke: koniec hry o skóre, voľný tréning (aj keď tu hráč už je)
+				game.stopSolo();
+				if (!restoreTraining()) {
+					game.aimAtNearest();
+				}
+				refreshMenu();
 			}
 			if (venue !== id) {
 				setVenue(id);

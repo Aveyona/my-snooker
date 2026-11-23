@@ -1825,5 +1825,10 @@ export function buildAlley(scene, quality) {
 			bulbMats[i].emissiveIntensity = 2.2 + Math.sin(t0 * (1.3 + i * 0.7) + i) * 0.25;
 		}
 	};
-	return { root, update, bulbs, limits: { z: AZ - 0.05, solids: [shop] } };
+	const setPeople = (on) => {
+		for (const f of people) {
+			f.f.visible = on;
+		}
+	};
+	return { root, update, setPeople, bulbs, limits: { z: AZ - 0.05, solids: [shop] } };
 }

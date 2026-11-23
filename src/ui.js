@@ -2464,19 +2464,52 @@ export class UI {
 			card.innerHTML =
 				`<div class="mysn-gr-pic" style="background:${r.bg}"><span>${r.icon}</span></div>` +
 				`<div class="mysn-gr-body"><b>${esc(r.name)}</b>${r.here ? ` <em>${_t('si tu')}</em>` : ''}<p>${esc(r.desc)}</p>` +
-				(r.modes && r.modes.length ? `<ul>${r.modes.map((m) => `<li${m.soon ? ' class="soon"' : ''}>${esc(m.label)}${m.soon ? ` <i>${_t('čoskoro')}</i>` : ''}</li>`).join('')}</ul>` : '') +
 				`</div>`;
 			if (!r.soon) {
-				const go = this.button(r.here ? _t('Si tu') : _t('Vstúpiť'), 'roomGo', '', { id: r.id, mode: 'play' });
-				go.classList.add('mysn-primary');
-				go.disabled = !!r.here;
-				card.querySelector('.mysn-gr-body').appendChild(go);
+				// 0.45.11 rad tlačidiel: ⚙ nastavenia miestnosti (len ikonka), potom hry miestnosti (Tréning, Prekážky…)
+				const row = h('div', 'mysn-gr-btns');
+				if (r.opts && r.opts.length) {
+					const gear = this.button('⚙', 'gameRoomOpts', _t('Nastavenia miestnosti'), { id: r.id });
+					gear.classList.add('mysn-gr-gear');
+					gear.setAttribute('aria-label', _t('Nastavenia miestnosti'));
+					row.appendChild(gear);
+				}
+				for (const m of r.modes || []) {
+					const b = this.button(m.label, 'roomGo', m.soon ? _t('Pripravujeme') : m.title || '', { id: r.id, mode: m.mode || 'play' });
+					if (m.soon) {
+						b.disabled = true;
+						b.innerHTML += ` <i>${_t('čoskoro')}</i>`;
+					} else {
+						b.classList.add('mysn-primary');
+					}
+					row.appendChild(b);
+				}
+				const body = card.querySelector('.mysn-gr-body');
+				body.appendChild(row);
+				if (r.opts && r.opts.length) {
+					const op = h('div', 'mysn-gr-opts mysn-hidden');
+					op.dataset.room = r.id;
+					for (const o of r.opts) {
+						const l = h('label', 'mysn-gr-opt', `<input type="checkbox"${o.on ? ' checked' : ''}> ${esc(o.label)}`);
+						l.querySelector('input').addEventListener('change', (e) => this.opts.onAction('roomOpt', { id: r.id, key: o.key, on: e.target.checked }));
+						op.appendChild(l);
+					}
+					body.appendChild(op);
+				}
 			}
 			L.appendChild(card);
 		}
 		const foot = h('div', 'mysn-lobby-foot');
 		foot.appendChild(this.button(_t('Zavrieť (Esc)'), 'gameRoomsClose'));
 		B.appendChild(foot);
+	}
+
+	/** ⚙ v karte miestnosti: rozbalí / zbalí jej nastavenia. */
+	toggleRoomOpts(id) {
+		const op = this.grBox && this.grBox.querySelector(`.mysn-gr-opts[data-room="${id}"]`);
+		if (op) {
+			op.classList.toggle('mysn-hidden');
+		}
 	}
 
 	gameRoomsOpen() {
