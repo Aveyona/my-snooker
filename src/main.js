@@ -4284,8 +4284,6 @@ export function start(root, config = {}) {
 		onElev: (deg) => setLift(deg),
 	});
 
-	let quietDir = 0; // 0.45.6: posledný smer mierenia (skrývanie textov pri mierení)
-	let quietT = 0; // do kedy (performance.now) sú texty skryté
 	const controls = new Controls(renderer.domElement, rig, game, {
 		unlock: () => sound.unlock(),
 		shoot: doShoot,
@@ -6571,14 +6569,9 @@ export function start(root, config = {}) {
 			crowdHome.update(dt, game.cue);
 		}
 		const aiming = game.state === 'aim' && !view;
-		// 0.45.6: pri mierení (myš zachytená, nie voľná s Ctrl) sa skryjú hlásenia hore, nápovedy, výzvy a chat
-		// (len kým hráč naozaj mieri: smer alebo pohľad sa menil v poslednej sekunde, alebo drží tágo na úder)
-		const qNow = performance.now();
-		if (aiming && (Math.abs(game.dir - quietDir) > 1e-4 || ui._stroke)) {
-			quietT = qNow + 1200; // texty sa vrátia 1,2 s po poslednom pohybe tága
-		}
-		quietDir = game.dir;
-		const quiet = aiming && !game.spectating && !ui._free && qNow < quietT;
+		// 0.45.7: pri mierení (drží sa pravé tlačidlo myši, na tablete oko) sa skryjú hlásenia hore, nápovedy,
+		// výzvy a správy chatu; po pustení sa hneď vrátia
+		const quiet = aiming && !game.spectating && !!rig.panActive;
 		if (quiet !== ui._quiet) {
 			ui._quiet = quiet;
 			ui.root.classList.toggle('mysn-aiming', quiet);
