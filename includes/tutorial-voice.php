@@ -191,6 +191,12 @@ function mysn_rest_tutv_gen( $req ) {
 	$lid  = sanitize_key( (string) $req->get_param( 'lesson' ) );
 	$sid  = sanitize_key( (string) $req->get_param( 'scene' ) );
 	$lang = 'sk' === $req->get_param( 'lang' ) ? 'sk' : 'en';
+	if ( null !== $req->get_param( 'text' ) ) {
+		mysn_tutv_set_text( $lid, $sid, $lang, sanitize_text_field( (string) $req->get_param( 'text' ) ) );
+		if ( $req->get_param( 'only' ) ) {
+			return array( 'saved' => 1 );
+		}
+	}
 	$text = '';
 	foreach ( mysn_tutorial() as $l ) {
 		foreach ( $l['id'] === $lid ? $l['scenes'] : array() as $s ) {
@@ -300,6 +306,21 @@ function mysn_tutv_admin_box( $T ) {
 		const b = document.querySelector('.tutv-all'), st = document.querySelector('.tutv-st'), vs = document.querySelector('.tutv-voice');
 		vs.addEventListener('change', () => { document.querySelector('.tutv-name').value = vs.selectedOptions[0].textContent.replace(/ \(.*$/, ''); });
 		document.querySelector('.tutv-prev').addEventListener('click', () => { const u = vs.selectedOptions[0].dataset.prev; if (u) new Audio(u).play(); });
+		const post = (body) => fetch(<?php echo wp_json_encode( esc_url_raw( rest_url( 'my-snooker/v1/tutorial/voice' ) ) ); ?>, { method: 'POST', credentials: 'same-origin', headers: { 'Content-Type': 'application/json', 'X-WP-Nonce': <?php echo wp_json_encode( wp_create_nonce( 'wp_rest' ) ); ?> }, body: JSON.stringify(body) });
+		for (const t of document.querySelectorAll('.tutv-txt')) {
+			t.addEventListener('change', () => { const [lesson, scene, lang] = t.dataset.k.split('|'); post({ lesson, scene, lang, text: t.value, only: 1 }); });
+		}
+		const gen = async (lesson, scene, lang) => {
+			const t = document.querySelector('.tutv-txt[data-k="' + lesson + '|' + scene + '|' + lang + '"]');
+			const r0 = t ? await post({ lesson, scene, lang, text: t.value }) : null;
+			if (r0) { const j0 = await r0.json(); if (!r0.ok) throw new Error(j0.message || r0.status); const a0 = document.querySelector('.tutv-play[data-k="' + lesson + '|' + scene + '|' + lang + '"]'); if (a0) { a0.href = j0.url; a0.hidden = false; } return j0.url; }
+			const r = await fetch(<?php echo wp_json_encode( esc_url_raw( rest_url( 'my-snooker/v1/tutorial/voice' ) ) ); ?>, { method: 'POST', credentials: 'same-origin', headers: { 'Content-Type': 'application/json', 'X-WP-Nonce': <?php echo wp_json_encode( wp_create_nonce( 'wp_rest' ) ); ?> }, body: JSON.stringify({ lesson, scene, lang }) });
+			const j = await r.json();
+			if (!r.ok) throw new Error(j.message || r.status);
+			const a = document.querySelector('.tutv-play[data-k="' + lesson + '|' + scene + '|' + lang + '"]');
+			if (a) { a.href = j.url; a.hidden = false; }
+			return j.url;
+		};
 		b.addEventListener('click', async () => {
 			const miss = JSON.parse(b.dataset.miss || '[]');
 			b.disabled = true;
@@ -307,17 +328,72 @@ function mysn_tutv_admin_box( $T ) {
 			try {
 				for (const [lesson, scene, lang] of miss) {
 					st.textContent = 'Generujem ' + (++i) + ' / ' + miss.length + '…';
-					const r = await fetch(<?php echo wp_json_encode( esc_url_raw( rest_url( 'my-snooker/v1/tutorial/voice' ) ) ); ?>, { method: 'POST', credentials: 'same-origin', headers: { 'Content-Type': 'application/json', 'X-WP-Nonce': <?php echo wp_json_encode( wp_create_nonce( 'wp_rest' ) ); ?> }, body: JSON.stringify({ lesson, scene, lang }) });
-					const j = await r.json();
-					if (!r.ok) throw new Error(j.message || r.status);
+					await gen(lesson, scene, lang);
 				}
-				st.textContent = 'Hotovo (' + miss.length + '). Obnov stránku.';
+				st.textContent = 'Hotovo (' + miss.length + ').';
+				b.dataset.miss = '[]';
 			} catch (er) {
 				st.textContent = 'Zastavené pri ' + i + ': ' + er.message;
 			}
 			b.disabled = false;
 		});
+		for (const x of document.querySelectorAll('.tutv-one')) {
+			x.addEventListener('click', async () => {
+				x.disabled = true;
+				x.textContent = '…';
+				try {
+					new Audio(await gen(x.dataset.l, x.dataset.s, x.dataset.lang)).play();
+					x.textContent = 'Generovať';
+				} catch (er) {
+					x.textContent = 'Chyba';
+					window.alert(er.message);
+				}
+				x.disabled = false;
+			});
+		}
+		for (const a of document.querySelectorAll('.tutv-play')) {
+			a.addEventListener('click', (e) => { e.preventDefault(); new Audio(a.href).play(); });
+		}
 	})();
 	</script>
 	<?php
+}
+
+/** Zvuky → Tutoriál – hlas scén: box s hlasom a tabuľka viet všetkých scén (upraviť, prehrať, generovať). */
+function mysn_tutv_sounds_section() {
+	$T = mysn_tut_voice_urls( mysn_tutorial() );
+	echo '<h2>Tutoriál – hlas scén</h2>';
+	mysn_tutv_admin_box( $T );
+	echo '<table class="widefat striped tutv-tab"><thead><tr><th style="width:190px">Lekcia, scéna</th><th>Veta SK</th><th>Veta EN</th></tr></thead><tbody>';
+	foreach ( $T as $li => $l ) {
+		foreach ( $l['scenes'] as $si => $s ) {
+			echo '<tr><td><b>' . (int) ( $li + 1 ) . '. ' . esc_html( $l['title_sk'] ) . '</b><br><span class="description">scéna ' . (int) ( $si + 1 ) . ': ' . esc_html( wp_trim_words( $s['text_sk'], 10 ) ) . '</span></td>';
+			foreach ( array( 'sk', 'en' ) as $lang ) {
+				$k  = $l['id'] . '|' . $s['id'] . '|' . $lang;
+				$vu = $s['vo'][ $lang ] ?? '';
+				echo '<td><input type="text" class="large-text tutv-txt" data-k="' . esc_attr( $k ) . '" value="' . esc_attr( $s[ 'voice_' . $lang ] ?? '' ) . '">';
+				echo '<a href="' . esc_url( $vu ) . '" class="button button-small tutv-play" data-k="' . esc_attr( $k ) . '"' . ( $vu ? '' : ' hidden' ) . '>▶ Prehrať</a> ';
+				echo '<button type="button" class="button button-small tutv-one" data-l="' . esc_attr( $l['id'] ) . '" data-s="' . esc_attr( $s['id'] ) . '" data-lang="' . $lang . '">Generovať</button>';
+				echo $vu ? '' : ' <span class="description">bez nahrávky</span>';
+				echo '</td>';
+			}
+			echo '</tr>';
+		}
+	}
+	echo '</tbody></table>';
+}
+
+/** Uloží vetu hlasu jednej scény do tutoriálu. */
+function mysn_tutv_set_text( $lid, $sid, $lang, $text ) {
+	$T = mysn_tutorial();
+	foreach ( $T as &$l ) {
+		foreach ( $l['id'] === $lid ? $l['scenes'] : array() as $si => $s ) {
+			if ( $s['id'] === $sid ) {
+				$l['scenes'][ $si ][ 'voice_' . $lang ] = $text;
+			}
+		}
+	}
+	unset( $l );
+	update_option( 'mysn_tutorial', $T, false );
+	update_option( 'mysn_tut_known', wp_list_pluck( mysn_tut_default(), 'id' ), false );
 }

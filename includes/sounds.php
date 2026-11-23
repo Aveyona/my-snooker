@@ -642,6 +642,9 @@ add_action( 'admin_post_mysn_sounds', function () {
 		wp_die( 'Nemáš oprávnenie.' );
 	}
 	check_admin_referer( 'mysn_sounds' );
+	if ( function_exists( 'mysn_tutv_save_post' ) ) {
+		mysn_tutv_save_post();
+	}
 	$in  = isset( $_POST['snd'] ) && is_array( $_POST['snd'] ) ? wp_unslash( $_POST['snd'] ) : array(); // phpcs:ignore WordPress.Security.ValidatedSanitizedInput
 	$out = array();
 	$lim = array(
@@ -888,6 +891,11 @@ function mysn_admin_sounds_page() {
 				</tr>
 			<?php endforeach; ?>
 			</tbody></table><?php echo 'Rozhodca: čísla série' === $group ? '</details>' : ''; ?>
+			<?php
+			if ( function_exists( 'mysn_tutv_sounds_section' ) ) {
+				mysn_tutv_sounds_section(); // 0.55.1 vety hlasu tutoriálu
+			}
+			?>
 			<h2>Rádio Hedlajner - Free Music</h2>
 			<table><tbody><tr data-music="1">
 				<td class="n"><b>Skladby rádia</b><small>Vlastná stanica Hedlajner - Free Music v rádiu hry (F9, mixpult v herni, reproduktory v kancelárii). Koľko skladieb pridáš, toľko je v nej; hrajú sa zamiešane jedna za druhou, po poslednej sa poradie znova zamieša. Stanica je v rádiu prvá. Názov skladby v hre je názov súboru (pomlčky a podčiarkovníky sa zmenia na medzery, napríklad Hedlajner-Leto.mp3 je Hedlajner Leto). <b>Hviezdička ☆/★</b> pri skladbe ju označí ako víťaznú: na konci zápasu na štadióne zahrá jedna náhodná označená skladba (všetkým, s prelínaním, pri odchode zo štadióna stíchne).</small><small class="rec"><b>Súbory:</b> MP3 (192 až 320 kbps) alebo OGG, stereo, hudba s licenciou na voľné použitie.</small><small class="spec"><b>Hlasitosť:</b> priemer okolo −14 LUFS (bežná hudba), všetky skladby podobne hlasné.</small></td>

@@ -180,6 +180,7 @@ function mysn_roadmap() {
 /** Denník zmien (najnovšie hore). */
 function mysn_changelog() {
 	return array(
+		array( '0.55.1', '23. 11. 2026', 'Zvuky: nová časť Tutoriál – hlas scén pod skupinou Tutoriál – vety hlasu všetkých 79 scén (SK a EN) priamo na stránke Zvuky: úprava vety (uloží sa hneď), Prehrať, Generovať pri každej vete, výber hlasu a Vygenerovať chýbajúce hlasy.' ),
 		array( '0.55.0', '23. 11. 2026', 'Tutoriál hovorí: ku každej scéne krátka veta, ktorú povie mužský hlas s prirodzeným prednesom – po slovensky pri slovenčine, inak po anglicky (ElevenLabs, predvolený hlas Chris, multilingual v2). Admin Tutoriál: box Hlas tutoriálu (výber hlasu, ukážka, model, stabilita, rýchlosť, tlačidlo Vygenerovať chýbajúce hlasy) a pri každej scéne polia Hlas SK / EN s prehrávaním. Texty scén sú dlhšie a podrobnejšie (26 scén, aj po anglicky a v hindčine); uložený tutoriál s pôvodným textom dostane nový text sám.' ),
 		array( '0.54.0', '23. 11. 2026', 'Hindčina (हिन्दी): celá hra preložená (1668 textov rozhrania, 96 hlásení servera, 14 lekcií tutoriálu, uvítanie), voľba v menu Jazyk. Jazyk sa pri prvej návšteve vyberie podľa krajiny (India hindčina, Slovensko a Česko slovenčina, inak angličtina); potom platí voľba hráča. Chýbajúci hindský text sa ukáže po anglicky. Admin: polia HI v Tutoriáli a Uvítaní.' ),
 		array( '0.53.7', '23. 11. 2026', 'Lobby: pod tlačidlom ligového zápasu je čas ligy v miestnom čase hráča (a v UTC) a či liga práve beží, alebo o koľko začína. Napr. v Indii 20:30 – 0:30.' ),
