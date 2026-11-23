@@ -893,12 +893,16 @@ body.mysn-page { font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans
 .mysn-gchat-col:not(.mysn-gchat-open):not(.mysn-gchat-peek) .mysn-gchat-list { display: none; }
 @media (pointer: coarse) { .mysn-gchat-tog { height: 40px; width: 20px; } .mysn-gchat-col .mysn-gchat-tog { width: 32px; } }
 .mysn-gchat-empty:not(.mysn-gchat-open) .mysn-gchat-tog { display: none; }
-/* 0.46.4 telefón (nie tablet): náhľad zásahu menší a čiastočne priehľadný, aby nezakrýval stôl */
-@media (pointer: coarse) and (max-height: 500px), (pointer: coarse) and (max-width: 500px) {
+/* 0.47.4 telefón (nie tablet): náhľad zásahu vždy plne viditeľný, veľkosť podľa otočenia (na výšku menší); PC bez zmeny */
+@media (pointer: coarse) and (max-height: 500px) and (orientation: landscape) {
 	.mysn-contact canvas, .mysn-contact.mysn-contact-topright canvas { width: 92px !important; height: 92px !important; }
-	.mysn-contact { opacity: .68; }
-	.mysn-ui.mysn-aiming .mysn-contact { transform: none !important; } /* už je malý, pri mierení sa ďalej nezmenšuje */
 	.mysn-contact-info { font-size: 10px; padding: 2px 7px; }
+	.mysn-ui.mysn-aiming .mysn-contact { transform: none !important; } /* už je malý, pri mierení sa ďalej nezmenšuje */
+}
+@media (pointer: coarse) and (max-width: 500px) and (orientation: portrait) {
+	.mysn-contact canvas, .mysn-contact.mysn-contact-topright canvas { width: 70px !important; height: 70px !important; }
+	.mysn-contact-info { font-size: 9px; padding: 1px 6px; }
+	.mysn-ui.mysn-aiming .mysn-contact { transform: none !important; }
 }
 /* 0.46.4 mobil: chat ako biela ikonka, otvorený na celú obrazovku na priehľadnom čiernom pozadí */
 .mysn-gchat-ico { position: absolute; left: 8px; bottom: min(496px, calc(100% - 104px)); z-index: 3; width: 48px; height: 48px; border-radius: 50%; border: 1.5px solid #ffffffcc; background: #ffffff26; color: #fff; display: flex; align-items: center; justify-content: center; padding: 0; cursor: pointer; pointer-events: auto; -webkit-tap-highlight-color: transparent; } /* 0.46.5: rovnaký štýl ako ostatné tlačidlá vľavo, úplne hore nad nimi */

@@ -180,6 +180,7 @@ function mysn_roadmap() {
 /** Denník zmien (najnovšie hore). */
 function mysn_changelog() {
 	return array(
+		array( '0.47.4', '23. 11. 2026', 'Telefón: náhľad zásahu je vždy plne viditeľný (bez priehľadnosti) a jeho veľkosť sa mení podľa otočenia – na šírku 92 px, na výšku menší 70 px. Tablet a PC bez zmeny.' ),
 		array( '0.47.3', '23. 11. 2026', 'Mobil: mierenie sa nerozbije pri priložení ani zdvihnutí prsta – smer sa pohne až po posune prsta o 7 px (bez skoku pri dotyku), pri zdvihnutí sa vráti na smer spred 90 ms (odvalenie prsta) a pri priložení druhého prsta (priblíženie) na smer spred 150 ms.' ),
 		array( '0.47.2', '23. 11. 2026', 'Mobil: zapnuté jemné mierenie (zameriavač) spomalí len mierenie vľavo dole; horná polovica ostáva vždy rýchle obzeranie sa.' ),
 		array( '0.47.1', '23. 11. 2026', 'Mobil: horná polovica obrazovky slúži na rýchle obzeranie sa – ťahanie prstom otáča trikrát rýchlejšie ako vľavo dole, kde sa presne mieri; vpravo dole ostáva úder. Chat sa na mobile otvára len ikonkou (ťuknutie vľavo hore ho už neotvára). Nápoveda, tabuľa a krátky návod upravené.' ),
