@@ -389,13 +389,16 @@ function headHolder(t) {
 	return g;
 }
 
+/** 0.46.1: chodec v Uličke = rovnaká chôdza ako rozhodca, iný model (indN). rig = buildReferee(). */
+export const realWalker = (rig, dir) => realReferee(rig, dir, 'model');
+
 /**
  * Rozhodca: model v čiernej veste, bielej košeli a bielych rukaviciach. rig = jednoduchá postava z buildReferee
  * (userData.legs, arms, head). Vráti { sync(dt) } – volať každý snímok po animácii jednoduchej postavy.
  */
-export function realReferee(rig) {
+export function realReferee(rig, dir = 'rozhodca', name = 'rozhodca') {
 	let ready = null;
-	loadModel('rozhodca', 'rozhodca', (fbx, url) => {
+	loadModel(dir, name, (fbx, url) => {
 		rig.add(fbx);
 		rig.updateMatrixWorld(true);
 		const t = rigTools(rig, fbx);
@@ -410,7 +413,7 @@ export function realReferee(rig) {
 		const keep = new Set();
 		fbx.traverse((o) => keep.add(o));
 		// motýlik pod bradou (pri krku)
-		const neck = t.bone('Neck');
+		const neck = dir === 'rozhodca' ? t.bone('Neck') : null; // 0.46.1: chodci v Uličke sú bez motýlika
 		if (neck) {
 			const bm = new THREE.MeshStandardMaterial({ color: 0x0b0b0d, roughness: 0.45 });
 			const tie = new THREE.Group();
@@ -431,7 +434,8 @@ export function realReferee(rig) {
 		// podľa jednoduchej postavy (ruky zopäté, hlava sleduje bielu). Rýchlosť animácie podľa skutočného pohybu.
 		const walk = { mixer: null, bones: [], clipQ: [], root: null, root0: null, rootY0: 0, clipY0: 0, w: 0, last: null };
 		const WALK_SPEED = 1.01; // m/s pri rýchlosti 1 (1,21 m za 1,2 s)
-		fetch(url('chodza.json'))
+		const ab = assetsBase();
+		fetch(ab.path + 'models/rozhodca/chodza.json' + ab.q) // 0.46.1: ten istý pohyb aj pre chodcov v Uličke
 			.then((res) => res.json())
 			.then((j) => {
 				const clip = THREE.AnimationClip.parse(j); // len nohy, panva, chrbát a koreň (pripravené z FBX)

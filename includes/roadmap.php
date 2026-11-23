@@ -180,6 +180,7 @@ function mysn_roadmap() {
 /** Denník zmien (najnovšie hore). */
 function mysn_changelog() {
 	return array(
+		array( '0.46.1', '23. 11. 2026', 'Ulička ožila: traja ľudia sa prechádzajú (chôdza ako rozhodca na štadióne) a nakupujú – zastavia sa pri stánku s kvetmi, pani puri, ovocím, náramkami či pri čajovni a natiahnu ruku k pultu; jedna žena chodí z bočnej ulice až do križovatky. Trasy obchádzajú stôl.' ),
 		array( '0.46.0', '23. 11. 2026', 'Ulička: ľudia vyzerajú ako Indovia – hnedá pleť, čierne vlasy, ženy s bindi a v pestrých kameez so salwar (s potlačou), muži v kurtách (biela, šafránová, bordová) s pajamou alebo v rifliach, niektorí s fúzami. Nové postavy ind1 až ind10 (textúry prefarbené nástrojom tools/indianize.py z divákov Rocketbox).' ),
 		array( '0.45.11', '23. 11. 2026', 'Rooms: karta miestnosti má rad tlačidiel – ⚙ nastavenia miestnosti (ľudia v uličke, čmáranice a grafity na súkne), Tréning (voľný tréning v uličke, aj keď v nej už si) a Prekážky (pripravujeme).' ),
 		array( '0.45.10', '23. 11. 2026', 'Tréning v menu ťa z Uličky (aj zo štadióna) vráti do herne k červenému stolu; Hrať o skóre sa hrá v herni ako doteraz.' ),

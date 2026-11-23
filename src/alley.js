@@ -6,8 +6,8 @@
  * súkno so čmáranicami nastaví main.js (felt street).
  */
 import * as THREE from 'three';
-import { buildFan, updateFans } from './fans.js';
-import { realFan } from './realPerson.js';
+import { buildFan, updateFans, buildReferee } from './fans.js';
+import { realFan, realWalker } from './realPerson.js';
 
 const FY = -0.815; // zem (rovnako ako podlaha v herni)
 const AZ = 3.3; // polovica šírky uličky (fasády domov)
@@ -1282,7 +1282,6 @@ function buildPeople(root) {
 		// okoloidúci a čumiliaci, čo sa pozerajú na hru
 		[-5.6, 1.6, toTable(-5.6, 1.6), false, 0, 'm'],
 		[6.2, 2.3, toTable(6.2, 2.3), false, 0, 'm'],
-		[6.6, -1.4, toTable(6.6, -1.4), false, 0, 'f'],
 		[14.2, 1.0, -2.2, false, 0, 'm'],
 		[14.8, 0.3, 1.0, false, 0, 'f'],
 		[19, 8, Math.PI, false, 0, 'm'],
@@ -1301,6 +1300,76 @@ function buildPeople(root) {
 		fans.push(fan);
 	});
 	return fans;
+}
+
+/*
+ * 0.46.1 Chodci: postavy, ktoré sa prechádzajú uličkou a nakupujú pri stánkoch (zastavia sa, natiahnu ruku
+ * k pultu). Trasy obchádzajú stôl (|x| < 2,4 a |z| < 1,4). Bod trasy: [x, z, čakanie s, smer pohľadu pri čakaní
+ * (null = smer chôdze), nakupuje].
+ */
+const WALK_V = 1.05; // m/s
+function buildWalkers(root) {
+	const S = -AZ + 1.45; // pred stánkami na strane −z
+	const N = AZ - 1.5; // pred stánkami na strane +z
+	const routes = [
+		// žena: kvety → čajovňa → pani puri → ovocie → náramky → späť
+		{ model: 'ind8', path: [[8.3, S, 6, Math.PI, true], [3.6, -2.0, 0, null], [-3, -2.1, 0, null], [-8.1, S + 0.1, 7, Math.PI, true], [-7.2, N, 6, 0, true], [-10.8, N - 0.1, 8, 0, true], [-3, 2.2, 0, null], [3, 2.2, 0, null], [6.5, 0, 0, null]] },
+		// muž: prechádza sa celou uličkou, pri čajovni si kúpi čaj
+		{ model: 'ind7', path: [[-15.5, 0.6, 2, null], [-3, 2.3, 0, null], [3, 2.3, 0, null], [15, 0.4, 3, null], [3.7, -2.05, 5, Math.PI, true], [-3, -2.2, 0, null]] },
+		// žena: ide z bočnej ulice do križovatky a späť
+		{ model: 'ind10', path: [[-19.5, 14, 1, null], [-18.5, 1.5, 0, null], [-3, -2.3, 0, null], [3, -2.3, 0, null], [19.5, -1, 0, null], [19.5, -14, 2, null], [19.5, -1, 0, null], [3, 2.25, 0, null], [-3, 2.25, 0, null], [-18.5, 1.5, 0, null]] },
+	];
+	return routes.map((r, i) => {
+		const rig = buildReferee();
+		const [x, z] = r.path[0];
+		rig.position.set(x, FY, z);
+		root.add(rig);
+		return { rig, real: realWalker(rig, r.model), path: r.path, i: 0, wait: r.path[0][2] * (0.3 + i * 0.25), buy: 0 };
+	});
+}
+
+function updateWalkers(ws, dt) {
+	for (const w of ws) {
+		const rig = w.rig;
+		const arm = (rig.userData.arms || [])[1]; // pravá ruka
+		const cur = w.path[w.i];
+		if (w.wait > 0) {
+			w.wait -= dt;
+			if (cur[3] !== null && cur[3] !== undefined) {
+				let d = cur[3] - rig.rotation.y;
+				d = Math.atan2(Math.sin(d), Math.cos(d));
+				rig.rotation.y += d * Math.min(1, dt * 4);
+			}
+			// nakupuje: pravú ruku natiahne k pultu a zas stiahne
+			w.buy = cur[4] ? Math.min(1, w.buy + dt * 2) : Math.max(0, w.buy - dt * 3);
+		} else {
+			w.buy = Math.max(0, w.buy - dt * 3);
+			const nxt = w.path[(w.i + 1) % w.path.length];
+			const dx = nxt[0] - rig.position.x;
+			const dz = nxt[1] - rig.position.z;
+			const dist = Math.hypot(dx, dz);
+			const step = WALK_V * dt;
+			if (dist <= step) {
+				rig.position.x = nxt[0];
+				rig.position.z = nxt[1];
+				w.i = (w.i + 1) % w.path.length;
+				w.wait = nxt[2];
+			} else {
+				rig.position.x += (dx / dist) * step;
+				rig.position.z += (dz / dist) * step;
+				let d = Math.atan2(dx, dz) - rig.rotation.y;
+				d = Math.atan2(Math.sin(d), Math.cos(d));
+				rig.rotation.y += d * Math.min(1, dt * 5);
+			}
+		}
+		if (arm) {
+			const reach = w.buy * (0.75 + Math.sin(performance.now() / 400) * 0.12 * w.buy);
+			arm.rotation.x = -reach * 1.3;
+		}
+		if (w.real) {
+			w.real.sync(dt);
+		}
+	}
 }
 
 export function buildAlley(scene, quality) {
@@ -1795,6 +1864,7 @@ export function buildAlley(scene, quality) {
 	const shop = { x0: 2.25, x1: 5.15, z0: -AZ - 2, z1: -AZ + 0.72, y: FY + 2.6 };
 
 	const people = buildPeople(root);
+	const walkers = buildWalkers(root);
 
 	// svetlo: noc (tmavomodré nebo zhora), teplé svetlo žiaroviek, oranžová žiara spoza zákruty
 	root.add(new THREE.HemisphereLight(0x3a4670, 0x2a1e12, 0.45));
@@ -1818,6 +1888,7 @@ export function buildAlley(scene, quality) {
 			return;
 		}
 		updateFans(people, dt, cueBall); // ľudia hlavou sledujú bielu guľu
+		updateWalkers(walkers, dt);
 		t0 += dt;
 		const f = 1 + Math.sin(t0 * 7.3) * 0.03 + Math.sin(t0 * 13.1) * 0.02;
 		warm1.intensity = (high ? 9 : 6) * f;
@@ -1831,6 +1902,9 @@ export function buildAlley(scene, quality) {
 	const setPeople = (on) => {
 		for (const f of people) {
 			f.f.visible = on;
+		}
+		for (const w of walkers) {
+			w.rig.visible = on;
 		}
 	};
 	return { root, update, setPeople, bulbs, limits: { z: AZ - 0.05, solids: [shop] } };
