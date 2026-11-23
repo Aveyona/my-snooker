@@ -56,9 +56,12 @@ add_action( 'wp_loaded', function () {
 				'name'             => 'My Snooker',
 				'short_name'       => 'My Snooker',
 				'description'      => 'Free 3D snooker in your browser – practice, high scores, matches with friends and an online league.',
-				'start_url'        => '/',
+				'id'               => '/',
+				'start_url'        => '/?source=pwa',
 				'scope'            => '/',
 				'display'          => 'fullscreen',
+				'display_override' => array( 'fullscreen', 'standalone' ),
+				'categories'       => array( 'games', 'sports' ),
 				'orientation'      => 'any',
 				'background_color' => '#0c0f14',
 				'theme_color'      => '#0c0f14',
@@ -66,10 +69,23 @@ add_action( 'wp_loaded', function () {
 				'icons'            => array(
 					array( 'src' => mysn_url() . ltrim( wp_make_link_relative( MYSN_URL . 'assets/icon-192.png' ), '/' ), 'sizes' => '192x192', 'type' => 'image/png' ), // 0.53.3 vlastné ikony hry v správnych rozmeroch
 					array( 'src' => mysn_url() . ltrim( wp_make_link_relative( MYSN_URL . 'assets/icon-512.png' ), '/' ), 'sizes' => '512x512', 'type' => 'image/png', 'purpose' => 'any' ),
+					array( 'src' => mysn_url() . ltrim( wp_make_link_relative( MYSN_URL . 'assets/icon-maskable-512.png' ), '/' ), 'sizes' => '512x512', 'type' => 'image/png', 'purpose' => 'maskable' ), // 0.59.0 aplikácia (PWA): ikona pre Android
+				),
+				'screenshots'      => array(
+					array( 'src' => mysn_url() . ltrim( wp_make_link_relative( MYSN_URL . 'assets/og-image.jpg' ), '/' ), 'sizes' => '1200x630', 'type' => 'image/jpeg', 'form_factor' => 'wide', 'label' => 'My Snooker – 3D snooker table in the club room' ),
 				),
 			),
 			JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE
 		);
+		exit;
+	}
+	if ( '/sw.js' === $path ) {
+		// 0.59.0 aplikácia (PWA): service worker – hra sa dá nainštalovať, súbory hry sa držia v pamäti zariadenia
+		status_header( 200 );
+		header( 'Content-Type: application/javascript; charset=utf-8' );
+		header( 'Cache-Control: no-cache' );
+		header( 'Service-Worker-Allowed: /' );
+		echo mysn_sw_js(); // phpcs:ignore WordPress.Security.EscapeOutput
 		exit;
 	}
 	if ( '/sitemap.xml' === $path ) {
@@ -218,6 +234,7 @@ echo wp_json_encode(
 <body class="mysn-page">
 <div id="mysn-app"><noscript><div class="mysn-nogl"><h1>My Snooker – free 3D snooker in your browser</h1><p>Play realistic 3D snooker online on PC and mobile: real table dimensions, spin, cushion rebounds, practice, high-score mode, matches with friends and a year-round online league with a stadium and live spectators.</p><p>The game needs JavaScript turned on.</p></div></noscript></div>
 <script>window.MYSN_CONFIG = <?php echo wp_json_encode( $cfg ); ?>;</script>
+<?php if ( mysn_on() ) : ?><script>window.addEventListener('beforeinstallprompt', function (e) { e.preventDefault(); window.mysnInstall = e; });</script><script>if ('serviceWorker' in navigator) { window.addEventListener('load', function () { navigator.serviceWorker.register('/sw.js', { scope: '/' }).catch(function () {}); }); }</script><?php endif; ?>
 <script src="<?php echo esc_url( MYSN_URL . 'assets/snooker.js?ver=' . mysn_asset_ver( 'snooker.js' ) ); ?>"></script>
 <?php do_action( 'my_stats_beacon', 'snooker' ); // My Stats 2.9.0: návštevnosť tejto časti webu ?>
 </body>
@@ -324,3 +341,54 @@ add_action( 'init', function () {
 		Cache_Enabler::clear_page_cache_by_url( mysn_main_url() . mysn_preview_path() );
 	}
 } );
+
+/**
+ * 0.59.0 aplikácia (PWA): service worker. Stránka hry ide vždy zo siete (bez internetu ukáže hlásenie),
+ * súbory hry (skripty, modely, zvuky, obrázky z wp-content) sa po prvom načítaní hrajú z pamäte zariadenia
+ * a v pozadí sa obnovia. REST, prihlásenie, rádio a zvuk s rozsahom (Range) idú vždy zo siete.
+ */
+function mysn_sw_js() {
+	$v       = MYSN_VERSION;
+	$offline = '<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>My Snooker</title></head>'
+		. '<body style="margin:0;height:100vh;display:flex;align-items:center;justify-content:center;background:#0c0f14;color:#f3f3f3;font-family:Segoe UI,Roboto,Arial,sans-serif;text-align:center">'
+		. '<div><div style="font-size:34px;font-weight:800;color:#f2d48a">My Snooker</div><p style="opacity:.8">No internet connection. / Nie si pripojený na internet.</p>'
+		. '<button onclick="location.reload()" style="margin-top:10px;padding:12px 26px;border:0;border-radius:10px;background:#f2d48a;color:#14161a;font-weight:700;font-size:15px">Try again / Skúsiť znova</button></div></body></html>';
+	return "const V = 'mysn-" . $v . "';\n"
+		. 'const OFFLINE = ' . wp_json_encode( $offline ) . ";\n"
+		. <<<'JS'
+self.addEventListener('install', () => self.skipWaiting());
+self.addEventListener('activate', (e) => {
+	e.waitUntil(caches.keys().then((ks) => Promise.all(ks.filter((k) => k.startsWith('mysn-') && k !== V).map((k) => caches.delete(k)))).then(() => self.clients.claim()));
+});
+self.addEventListener('fetch', (e) => {
+	const r = e.request;
+	if (r.method !== 'GET') {
+		return;
+	}
+	const u = new URL(r.url);
+	if (r.mode === 'navigate') {
+		e.respondWith(fetch(r).catch(() => new Response(OFFLINE, { headers: { 'Content-Type': 'text/html; charset=utf-8' } })));
+		return;
+	}
+	// súbory hry: len wp-content, bez rozsahu (zvuk, rádio) a bez REST
+	if (!/\/wp-content\//.test(u.pathname) || r.headers.has('range') || r.destination === 'audio' || r.destination === 'video') {
+		return;
+	}
+	e.respondWith(
+		caches.open(V).then((c) =>
+			c.match(r).then((hit) => {
+				const net = fetch(r)
+					.then((res) => {
+						if (res && res.ok && (res.type === 'basic' || res.type === 'cors')) {
+							c.put(r, res.clone());
+						}
+						return res;
+					})
+					.catch(() => hit);
+				return hit || net;
+			})
+		)
+	);
+});
+JS;
+}

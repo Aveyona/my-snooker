@@ -3366,6 +3366,24 @@ export function start(root, config = {}) {
 				online.ping();
 			}
 		},
+		install: async () => {
+			const ev = window.mysnInstall;
+			if (ev) {
+				ev.prompt();
+				const r = await ev.userChoice.catch(() => null);
+				if (r && r.outcome === 'accepted') {
+					window.mysnInstall = null;
+					ui.installable = false;
+					refreshMenu();
+				}
+				return;
+			}
+			ui.toast(
+				isIOS
+					? _t('iPhone a iPad: v Safari ťukni na Zdieľať (štvorček so šípkou) a potom na Pridať na plochu. My Snooker sa potom spúšťa z ikony na celú obrazovku.')
+					: _t('V menu prehliadača (⋮) vyber Nainštalovať aplikáciu alebo Pridať na plochu.')
+			);
+		},
 		lobbyClose: () => {
 			if (online) {
 				online.lobbyOpen = false;
@@ -5190,6 +5208,27 @@ export function start(root, config = {}) {
 		return lobby;
 	};
 	controls.noCapture = replayFree; // 0.58.1 prehrávač partie: myš sa nezachytáva
+	// 0.59.0 aplikácia (PWA): tlačidlo Nainštalovať aplikáciu v menu (Chrome, Edge, Android; na iPhone návod)
+	const pwaRunning = () => window.matchMedia('(display-mode: fullscreen), (display-mode: standalone)').matches || window.navigator.standalone === true;
+	const isIOS = /iPhone|iPad|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+	const pwaSync = () => {
+		const on = !pwaRunning() && !!(window.mysnInstall || (isIOS && /mysnooker\./i.test(location.host)));
+		if (ui.installable !== on) {
+			ui.installable = on;
+			refreshMenu();
+		}
+	};
+	window.addEventListener('beforeinstallprompt', (e) => {
+		e.preventDefault();
+		window.mysnInstall = e;
+		pwaSync();
+	});
+	window.addEventListener('appinstalled', () => {
+		window.mysnInstall = null;
+		pwaSync();
+		ui.toast(_t('My Snooker je nainštalovaný. Nájdeš ho medzi aplikáciami a na ploche.'));
+	});
+	setTimeout(pwaSync, 0);
 	// 0.57.0 rádio pri otvorenom hlavnom menu (Esc) hrá tlmene ako v sude a tichšie
 	setInterval(() => radio.muffle(ui.menuOpen()), 150);
 	// 0.52.0 uvítacie okno nového hráča (raz na účet)

@@ -90,7 +90,7 @@ function noKeys(t) {
 const MM_ICON = {
 	resume: 'play', training: 'play', guestTraining: 'play', solo: 'trophy', league: 'league', gameRooms: 'door', lobby: 'swords', rooms: 'eye',
 	staff: 'shield', account: 'user', home: 'web', resign: 'flag', pauseMatch: 'pause', leagueHome: 'door',
-	seatChange: 'chair', watchStop: 'x', tutorial: 'cap', helper: 'help', gameLobby: 'lobby', accept: 'check', decline: 'x',
+	seatChange: 'chair', watchStop: 'x', tutorial: 'cap', helper: 'help', gameLobby: 'lobby', install: 'install', accept: 'check', decline: 'x',
 };
 
 /** Farby LED podsvietenia stojana s tágami: kľúč, názov, farba tlačidla (farba svetla je v main.js RACK_LED_HEX). */
@@ -896,7 +896,7 @@ export class UI {
 
 	/** Obsah menu: 'guest' (neprihlásený), 'training' alebo 'match' (label = meno súpera). */
 	setMenu(kind, label) {
-		const key = kind + '|' + (label || '') + '|' + (this.opts.venue ? this.opts.venue() : '') + '|' + (this.trainingFirst ? 1 : 0) + '|' + (this.tutActive ? (this.tutActive() ? 2 : 1) : 0);
+		const key = kind + '|' + (label || '') + '|' + (this.opts.venue ? this.opts.venue() : '') + '|' + (this.trainingFirst ? 1 : 0) + '|' + (this.tutActive ? (this.tutActive() ? 2 : 1) : 0) + '|' + (this.installable ? 1 : 0);
 		if (this._menuKind === key) {
 			return;
 		}
@@ -930,13 +930,19 @@ export class UI {
 			b.classList.add('mysn-friend');
 			return b;
 		};
+		// 0.59.0 aplikácia (PWA): nainštalovať My Snooker na plochu (len kým nie je nainštalovaná)
+		const installBtn = () => {
+			const b = this.button('📲 ' + _t('Nainštalovať aplikáciu'), 'install', _t('My Snooker ako aplikácia: ikona na ploche, spúšťa sa na celú obrazovku bez prehliadača'));
+			b.classList.add('mysn-install-btn');
+			return b;
+		};
 		// tágá, nápoveda a skóre sú na klávesoch F2, F1 a F4 (v menu nie sú)
 		const staffBtn = () => {
 			const b = this.button(_t('Správa hry'), 'staff', _t('Admin a správca hry: hráči online, bežiace zápasy, neviditeľné sledovanie a zásahy podľa práv'));
 			b.classList.add('mysn-staff-btn');
 			return b;
 		};
-		const common = () => [...(user ? [this.button(_t('Mapa miestností'), 'roomMap', _t('M: herňa, kancelária, štadión, ulička'))] : []), ...(this.opts.role ? [staffBtn()] : []), this.button(_t('Účet'), 'account', _t('Môj účet v My Snooker: údaje, liga, partie a skóre')), this.button(_t('Nastavenia'), 'settings')];
+		const common = () => [...(user ? [this.button(_t('Mapa miestností'), 'roomMap', _t('M: herňa, kancelária, štadión, ulička'))] : []), ...(this.opts.role ? [staffBtn()] : []), this.button(_t('Účet'), 'account', _t('Môj účet v My Snooker: údaje, liga, partie a skóre')), this.button(_t('Nastavenia'), 'settings'), ...(this.installable ? [installBtn()] : [])];
 		if (kind === 'watch') {
 			// divák sleduje cudziu partiu
 			this.menuMode.textContent = _t('Sledujem: {name}', { name: label });
@@ -3941,6 +3947,7 @@ export class UI {
 			lamp: '<path d="M8 3h8l3 7H5zM12 10v8M8 21h8"/>',
 			book: '<path d="M4 5a2 2 0 0 1 2-2h13v16H6a2 2 0 0 0-2 2zM4 19V5M9 7h6"/>',
 			set: '<circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9 7 7M17 17l2.1 2.1M4.9 19.1 7 17M17 7l2.1-2.1"/>',
+			install: '<path d="M12 3v12M7 10l5 5 5-5"/><rect x="4" y="17" width="16" height="4" rx="1"/>',
 			cap: '<path d="M2 9l10-5 10 5-10 5z"/><path d="M6 11v5c3 2.5 9 2.5 12 0v-5M22 9v6"/>',
 			help: '<circle cx="12" cy="12" r="9"/><path d="M9.5 9a2.5 2.5 0 1 1 3.5 2.3c-.6.3-1 .8-1 1.5V14M12 17h.01"/>',
 			cue: '<path d="M3 21 16 8"/><path d="m15 6 3 3 2-2-3-3z"/>',
