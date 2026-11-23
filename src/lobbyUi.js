@@ -18,7 +18,7 @@ export function lobbyDesc(o) {
 
 export function lobbyUi(parent, d) {
 	const box = document.createElement('div');
-	box.className = 'mysn-lobby';
+	box.className = 'mysn-glob';
 	parent.appendChild(box);
 	for (const ev of ['pointerdown', 'pointerup', 'mousedown', 'touchstart', 'touchend', 'wheel', 'keydown', 'keyup']) {
 		box.addEventListener(ev, (e) => e.stopPropagation());
