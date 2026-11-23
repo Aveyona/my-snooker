@@ -21,9 +21,10 @@ const wrapAng = (a) => Math.atan2(Math.sin(a), Math.cos(a));
 // šípky nápovedy (SVG, farba z CSS currentColor)
 const ARROW_H = '<svg viewBox="0 0 120 40"><path d="M8 20h104M8 20l14-12M8 20l14 12M112 20l-14-12M112 20l-14 12" fill="none" stroke="currentColor" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/></svg>';
 const ARROW_V = '<svg viewBox="0 0 40 120"><path d="M20 8v104M20 8L8 22M20 8l12 14M20 112L8 98M20 112l12-14" fill="none" stroke="currentColor" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/></svg>';
-const MOUSE = (btn) =>
+const MOUSE = (btn, rmb) =>
 	'<svg viewBox="0 0 60 90"><rect x="6" y="4" width="48" height="82" rx="24" fill="none" stroke="currentColor" stroke-width="5"/><path d="M30 4v30M6 34h48" stroke="currentColor" stroke-width="4"/>' +
 	(btn ? '<path d="M8 32V28A22 22 0 0 1 30 6V32Z" fill="currentColor" opacity=".85"/>' : '') +
+	(rmb ? '<path d="M52 32V28A22 22 0 0 0 30 6V32Z" fill="currentColor" opacity=".85"/>' : '') +
 	'</svg>';
 
 export function tutorial(parent, cfg, d) {
@@ -76,10 +77,22 @@ export function tutorial(parent, cfg, d) {
 			e.innerHTML = ARROW_V;
 		} else if (k === 'pc_h') {
 			e.innerHTML = '<span class="mysn-tut-ar">' + ARROW_H + '</span>' + MOUSE(false);
+		} else if (k === 'm_eye') {
+			return null; // oko sa zvýrazní priamo (glow)
+		} else if (k === 'pc_rmb') {
+			e.innerHTML = MOUSE(false, true);
 		} else if (k === 'pc_v') {
 			e.innerHTML = MOUSE(true) + '<span class="mysn-tut-ar">' + ARROW_V + '</span>';
 		}
 		return e;
+	};
+
+	/** Mobil: zvýraznenie tlačidla oko (pulzujúci krúžok). */
+	const glow = (keys) => {
+		const eye = document.querySelector('.mysn-eye');
+		if (eye) {
+			eye.classList.toggle('mysn-tut-glow', api.active && keys.includes('m_eye') && d.touchUI());
+		}
 	};
 
 	const show = () => {
@@ -96,13 +109,14 @@ export function tutorial(parent, cfg, d) {
 		box.classList.remove('mysn-tut-ok');
 		foot.textContent = d.touchUI() ? '' : isText ? _t('Enter = Ďalej') : _t('Esc uvoľní myš a otvorí menu');
 		hints.textContent = '';
+		glow(S.hints || []);
 		for (const k of S.hints || []) {
 			const e = hintEl(k);
 			if (e) {
 				hints.appendChild(e);
 			}
 		}
-		st = { d0: d.game.dir, prev: d.game.dir, acc: 0, lo: 0, hi: 0, pull: 0, shot: false };
+		st = { eyeT: 0, eyeA: 0, d0: d.game.dir, prev: d.game.dir, acc: 0, lo: 0, hi: 0, pull: 0, shot: false };
 		doneT = 0;
 		if (S.snd_in) {
 			d.sound(S.snd_in);
@@ -128,6 +142,7 @@ export function tutorial(parent, cfg, d) {
 		fill.style.width = '100%';
 		box.classList.add('mysn-tut-ok');
 		hints.textContent = '';
+		glow([]);
 		doneT = performance.now();
 		if (S.snd_ok) {
 			d.sound(S.snd_ok);
@@ -155,6 +170,7 @@ export function tutorial(parent, cfg, d) {
 		box.classList.remove('mysn-on');
 		hints.classList.remove('mysn-on');
 		hints.textContent = '';
+		glow([]);
 		if (L && si > 0 && si < L.scenes.length) {
 			save(false);
 		}
@@ -197,6 +213,18 @@ export function tutorial(parent, cfg, d) {
 				st.acc += Math.abs(dd);
 			}
 			p = st.acc / ((par * Math.PI) / 180);
+		} else if (S.type === 'eye') {
+			const now = performance.now();
+			if (d.rig.panActive && st.eyeL) {
+				st.eyeT += Math.min(now - st.eyeL, 1000) / 1000;
+			}
+			st.eyeL = now;
+			p = st.eyeT / Math.max(0.3, +S.param || 0);
+		} else if (S.type === 'eyeaim') {
+			if (d.rig.panActive) {
+				st.eyeA += Math.abs(dd);
+			}
+			p = st.eyeA / ((par * Math.PI) / 180);
 		} else if (S.type === 'pull') {
 			st.pull = Math.max(st.pull, d.controls.strokePull || 0, st.shot ? 1 : 0);
 			p = st.pull / (par / 100);

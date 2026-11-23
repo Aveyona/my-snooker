@@ -4984,6 +4984,7 @@ export function start(root, config = {}) {
 	if (user && config.tutorial) {
 		tut = tutorial(overlay, config.tutorial, {
 			game,
+			rig,
 			controls,
 			touchUI: () => !!ui.touchUI,
 			sound: (slot) => sound.tutor(slot),

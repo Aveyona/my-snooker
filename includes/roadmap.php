@@ -180,6 +180,7 @@ function mysn_roadmap() {
 /** Denník zmien (najnovšie hore). */
 function mysn_changelog() {
 	return array(
+		array( '0.49.1', '23. 11. 2026', 'Tutoriál: lekcia 2 Presné mierenie (na PC pravé tlačidlo myši, na mobile pulzujúce tlačidlo oko). Nové typy úloh: držať pravé tlačidlo / oko a mieriť počas držania. Nové predvolené lekcie sa pridajú aj k už uloženému tutoriálu.' ),
 		array( '0.49.0', '23. 11. 2026', 'Tutoriál: nové tlačidlo v hlavnom menu (vedľa Pomocníka, len prihlásení). Hrá sa v herni na zelenom stole, scény idú postupne podľa splnených úloh. Lekcie a scény (úloha, text SK/EN, šípky nápovedy, zvuky) sa nastavujú v administrácii My Snooker → Tutoriál. Prvá lekcia: otáčanie a mierenie (na mobile šípky hore, vľavo dole a zvislá vpravo; na PC ikonka myši).' ),
 		array( '0.48.1', '23. 11. 2026', 'SEO: obrázok pre Facebook, Twitter a vyhľadávače je na doméne hry (mysnooker.in), nie na hedlajner.sk.' ),
 		array( '0.48.0', '23. 11. 2026', 'SEO pre novú doménu mysnooker.in po anglicky: titulok a popis stránky, Open Graph a Twitter karta s novým obrázkom (assets/og-image.jpg, 1200×630), štruktúrované údaje VideoGame (JSON-LD), text pre prehliadače bez JavaScriptu, manifest na pridanie hry na plochu mobilu (/manifest.webmanifest, celá obrazovka). robots.txt a sitemap.xml idú na novú doménu.' ),

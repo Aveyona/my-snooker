@@ -20,6 +20,8 @@ function mysn_tut_types() {
 		'text'  => array( 'Len text (tlačidlo Ďalej)', '', 0 ),
 		'aim'   => array( 'Otočiť mierenie doľava aj doprava', 'uhol v stupňoch na každú stranu', 20 ),
 		'look'  => array( 'Rýchle obzeranie sa (spolu otočiť o uhol)', 'uhol v stupňoch spolu', 120 ),
+		'eye'    => array( 'Presné mierenie: držať pravé tlačidlo / oko', 'sekúnd držania spolu', 2 ),
+		'eyeaim' => array( 'Presné mierenie: otočiť sa počas držania', 'uhol v stupňoch spolu', 10 ),
 		'pull'  => array( 'Odtiahnuť tágo', 'najmenej % odtiahnutia', 40 ),
 		'shoot' => array( 'Urobiť úder', 'najmenšia sila v %', 10 ),
 	);
@@ -31,7 +33,9 @@ function mysn_tut_hints() {
 		'm_top'   => 'Mobil: šípka ↔ v hornej polovici (rýchle obzeranie)',
 		'm_bl'    => 'Mobil: šípka ↔ vľavo dole (mierenie)',
 		'm_right' => 'Mobil: zvislá šípka ↕ vpravo v smere mierenia (tágo)',
+		'm_eye'   => 'Mobil: zvýrazniť tlačidlo oko (presné mierenie)',
 		'pc_h'    => 'PC: myš so šípkou ↔ (mierenie)',
+		'pc_rmb'  => 'PC: myš so zvýrazneným pravým tlačidlom (presné mierenie)',
 		'pc_v'    => 'PC: myš, drž ľavé tlačidlo a ťahaj ↕ (tágo)',
 	);
 }
@@ -88,8 +92,55 @@ function mysn_tut_default() {
 					'id'      => 's5',
 					'type'    => 'text',
 					'param'   => 0,
-					'text_sk' => 'Výborne, prvá lekcia je hotová! Pokračovanie pribudne čoskoro.',
-					'text_en' => 'Well done, the first lesson is complete! More lessons are coming soon.',
+					'text_sk' => 'Výborne, prvá lekcia je hotová! Ďalej: presné mierenie.',
+					'text_en' => 'Well done, the first lesson is complete! Next: precise aiming.',
+					'hints'   => array(),
+					'snd_in'  => 'tut-done',
+					'snd_ok'  => '',
+				),
+			),
+		),
+		array(
+			'id'       => 'l2',
+			'title_sk' => 'Presné mierenie',
+			'title_en' => 'Precise aiming',
+			'scenes'   => array(
+				array(
+					'id'      => 's1',
+					'type'    => 'text',
+					'param'   => 0,
+					'text_sk' => 'Na presné mierenie sa pohľad priblíži ku guli, ktorú chceš trafiť. Na PC na to slúži pravé tlačidlo myši, na mobile tlačidlo oko.',
+					'text_en' => 'For precise aiming the view zooms in on the ball you want to hit. On PC use the right mouse button, on mobile the eye button.',
+					'hints'   => array( 'm_eye', 'pc_rmb' ),
+					'snd_in'  => 'tut-step',
+					'snd_ok'  => '',
+				),
+				array(
+					'id'      => 's2',
+					'type'    => 'eye',
+					'param'   => 2,
+					'text_sk' => 'Drž pravé tlačidlo myši (na mobile drž prst na oku). Pohľad sa priblíži ku guli. Pusti a pohľad sa vráti za tágo.',
+					'text_en' => 'Hold the right mouse button (on mobile hold your finger on the eye). The view zooms in on the ball. Release and the view returns behind the cue.',
+					'hints'   => array( 'm_eye', 'pc_rmb' ),
+					'snd_in'  => 'tut-step',
+					'snd_ok'  => 'tut-ok',
+				),
+				array(
+					'id'      => 's3',
+					'type'    => 'eyeaim',
+					'param'   => 10,
+					'text_sk' => 'Teraz počas držania mier: na PC drž pravé tlačidlo a pohni myšou, na mobile drž oko a ťahaj prstom. Tágo sa otáča jemne, presne na guľu.',
+					'text_en' => 'Now aim while holding: on PC hold the right button and move the mouse, on mobile hold the eye and drag your finger. The cue turns finely, right onto the ball.',
+					'hints'   => array( 'm_eye', 'pc_rmb' ),
+					'snd_in'  => 'tut-step',
+					'snd_ok'  => 'tut-ok',
+				),
+				array(
+					'id'      => 's4',
+					'type'    => 'text',
+					'param'   => 0,
+					'text_sk' => 'Výborne! Pri mierení sa skryjú hlásenia, aby ťa nerušili. Druhá lekcia je hotová.',
+					'text_en' => 'Well done! Messages hide while you aim so they do not distract you. The second lesson is complete.',
 					'hints'   => array(),
 					'snd_in'  => 'tut-done',
 					'snd_ok'  => '',
@@ -102,7 +153,18 @@ function mysn_tut_default() {
 /** Uložený tutoriál (alebo predvolený). */
 function mysn_tutorial() {
 	$t = get_option( 'mysn_tutorial', null );
-	return is_array( $t ) && $t ? $t : mysn_tut_default();
+	if ( ! is_array( $t ) || ! $t ) {
+		return mysn_tut_default();
+	}
+	// nové predvolené lekcie z novších verzií sa pridajú aj k uloženému tutoriálu (zmazané v administrácii ostanú zmazané)
+	$known = (array) get_option( 'mysn_tut_known', array() );
+	$have  = wp_list_pluck( $t, 'id' );
+	foreach ( mysn_tut_default() as $l ) {
+		if ( ! in_array( $l['id'], $have, true ) && ! in_array( $l['id'], $known, true ) ) {
+			$t[] = $l;
+		}
+	}
+	return $t;
 }
 
 /** Konfigurácia pre hru (len prihlásený): lekcie, scény a postup hráča. */
@@ -237,6 +299,7 @@ function mysn_tut_save_post() {
 		);
 	}
 	update_option( 'mysn_tutorial', $out, false );
+	update_option( 'mysn_tut_known', wp_list_pluck( mysn_tut_default(), 'id' ), false );
 }
 
 function mysn_admin_tutorial() {
