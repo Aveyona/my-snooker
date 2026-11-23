@@ -180,6 +180,7 @@ function mysn_roadmap() {
 /** Denník zmien (najnovšie hore). */
 function mysn_changelog() {
 	return array(
+		array( '0.61.1', '23. 11. 2026', 'Hlavné menu na PC: Nainštalovať aplikáciu je úplne dole pod voľbou jazyka (nie medzi položkami hry), len kým hra nie je nainštalovaná.' ),
 		array( '0.61.0', '23. 11. 2026', 'Komentátor Rudo po anglicky: hráči s angličtinou alebo hindčinou počujú Ruda po anglicky (98 replík pre všetkých 19 situácií, rovnaký hlas, preložený humor – chai, samosa namiesto piva a párku), slovenskí hráči ako doteraz. Živé komentáre (stovka, koniec framu a zápasu, fauly) píše AI v jazyku hráča a ElevenLabs ich namluví po anglicky. Zvuky → Komentátor Rudo: box Rudo po anglicky s tlačidlom Vygenerovať anglické repliky.' ),
 		array( '0.60.2', '23. 11. 2026', 'Mobil, menu ☰: položka Príslušenstvo odstránená (otvára sa modrým štvorčekom vľavo pri stole); text tutoriálu (lekcia Tágo a výbava) upravený.' ),
 		array( '0.60.1', '23. 11. 2026', 'Mobil, menu ☰: horný panel je pevne hore aj pri posúvaní (✕ vždy po ruke), vľavo v ňom zlaté tlačidlo Nainštalovať aplikáciu – len kým hra nie je nainštalovaná (z mriežky položiek zmizlo).' ),

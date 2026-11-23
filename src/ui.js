@@ -823,6 +823,7 @@ export class UI {
 			<div class="mysn-menu-inv"></div>
 			<div class="mysn-menu-btns"></div>
 			<div class="mysn-menu-lang"><span>${_t('Jazyk / Language')}</span></div>
+			<div class="mysn-menu-inst mysn-hidden"></div>
 			<p class="mysn-note"></p>
 		</div>`;
 		this.menuMode = m.querySelector('.mysn-menu-mode');
@@ -830,6 +831,8 @@ export class UI {
 		this.menuInv = m.querySelector('.mysn-menu-inv');
 		this.menuBtns = m.querySelector('.mysn-menu-btns');
 		this.menuFoot = m.querySelector('.mysn-note');
+		// 0.61.1: Nainštalovať aplikáciu úplne dole pod jazykmi (len kým hra nie je nainštalovaná)
+		this.menuInst = m.querySelector('.mysn-menu-inst');
 		// 0.43.0: jazyk hry (zmena uloží voľbu a znova načíta stránku)
 		const ml = m.querySelector('.mysn-menu-lang');
 		for (const l of LANGS) {
@@ -897,7 +900,15 @@ export class UI {
 	/** Obsah menu: 'guest' (neprihlásený), 'training' alebo 'match' (label = meno súpera). */
 	setMenu(kind, label) {
 		const key = kind + '|' + (label || '') + '|' + (this.opts.venue ? this.opts.venue() : '') + '|' + (this.trainingFirst ? 1 : 0) + '|' + (this.tutActive ? (this.tutActive() ? 2 : 1) : 0) + '|' + (this.installable ? 1 : 0);
-		if (this._menuKind === key) {
+		if (this.menuInst) {
+			this.menuInst.classList.toggle('mysn-hidden', !this.installable);
+			if (this.installable && !this.menuInst.firstChild) {
+				const b = this.button('⬇ ' + _t('Nainštalovať aplikáciu'), 'install', _t('My Snooker ako aplikácia: ikona na ploche, spúšťa sa na celú obrazovku bez prehliadača'));
+				b.classList.add('mysn-install-btn');
+				this.menuInst.appendChild(b);
+			}
+		}
+				if (this._menuKind === key) {
 			return;
 		}
 		this._menuKind = key;
@@ -930,19 +941,13 @@ export class UI {
 			b.classList.add('mysn-friend');
 			return b;
 		};
-		// 0.59.0 aplikácia (PWA): nainštalovať My Snooker na plochu (len kým nie je nainštalovaná)
-		const installBtn = () => {
-			const b = this.button('📲 ' + _t('Nainštalovať aplikáciu'), 'install', _t('My Snooker ako aplikácia: ikona na ploche, spúšťa sa na celú obrazovku bez prehliadača'));
-			b.classList.add('mysn-install-btn');
-			return b;
-		};
 		// tágá, nápoveda a skóre sú na klávesoch F2, F1 a F4 (v menu nie sú)
 		const staffBtn = () => {
 			const b = this.button(_t('Správa hry'), 'staff', _t('Admin a správca hry: hráči online, bežiace zápasy, neviditeľné sledovanie a zásahy podľa práv'));
 			b.classList.add('mysn-staff-btn');
 			return b;
 		};
-		const common = () => [...(user ? [this.button(_t('Mapa miestností'), 'roomMap', _t('M: herňa, kancelária, štadión, ulička'))] : []), ...(this.opts.role ? [staffBtn()] : []), this.button(_t('Účet'), 'account', _t('Môj účet v My Snooker: údaje, liga, partie a skóre')), this.button(_t('Nastavenia'), 'settings'), ...(this.installable ? [installBtn()] : [])];
+		const common = () => [...(user ? [this.button(_t('Mapa miestností'), 'roomMap', _t('M: herňa, kancelária, štadión, ulička'))] : []), ...(this.opts.role ? [staffBtn()] : []), this.button(_t('Účet'), 'account', _t('Môj účet v My Snooker: údaje, liga, partie a skóre')), this.button(_t('Nastavenia'), 'settings')];
 		if (kind === 'watch') {
 			// divák sleduje cudziu partiu
 			this.menuMode.textContent = _t('Sledujem: {name}', { name: label });
