@@ -1671,4 +1671,9 @@ export default {
 	'Odísť z lobby': 'लॉबी छोड़ें',
 	'Hľadať ligový zápas': 'लीग मैच खोजें',
 	'Načítava sa…': 'लोड हो रहा है…',
+	'Čas ligy denne: {local} (tvoj čas) · {utc} UTC': 'लीग का समय रोज़: {local} (आपका समय) · {utc} UTC',
+	'Liga sa práve hrá – ešte {t}': 'लीग अभी चल रही है – {t} बाकी',
+	'Liga začína o {t}': 'लीग {t} में शुरू होगी',
+	'{h} h {m} min': '{h} घं {m} मिनट',
+	'{m} min': '{m} मिनट',
 };
