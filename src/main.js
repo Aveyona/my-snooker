@@ -42,6 +42,7 @@ import { takeShotData } from './integrity.js';
 import { Net } from './online.js';
 import { rememberLang, _t, _pts, LANG } from './i18n.js';
 import { tutorial } from './tutorial.js';
+import { welcome } from './welcome.js';
 
 // 0.40.1: odtlačky dôležitých funkcií pre výzvu zo servera (ešte pred spustením hry)
 fpRegister({
@@ -5097,6 +5098,30 @@ export function start(root, config = {}) {
 			onListClose: () => ui.showMenu(true),
 		});
 		ui.tutActive = () => tut.active;
+	}
+	// 0.52.0 uvítacie okno nového hráča (raz na účet)
+	if (user && config.welcome) {
+		setTimeout(() => {
+			controls.uncapture();
+			welcome(overlay, config.welcome, {
+				name: user.name,
+				online: !!online,
+				touchUI: () => !!ui.touchUI,
+				sound: (slot) => sound.tutor(slot),
+				seen: () =>
+					fetch(config.restUrl + 'welcome/seen', { method: 'POST', credentials: 'same-origin', headers: { 'X-WP-Nonce': (online && online.net && online.net.nonce) || config.nonce } }).catch(() => {}),
+				go: (a) => {
+					if (a === 'tutorial' && tut) {
+						ui.showMenu(false);
+						tut.start(tut.lessons[0].id);
+					} else if (a === 'training' || a === 'solo' || a === 'league') {
+						actions[a]();
+					} else {
+						ui.showMenu(false); // Rovno hrať: k stolu v herni
+					}
+				},
+			});
+		}, 1200);
 		setTimeout(() => refreshMenu(), 0);
 	}
 	// chat v hre (miestnosť Snooker z My Chat): Enter píše, správy vľavo

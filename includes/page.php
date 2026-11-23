@@ -147,6 +147,7 @@ function mysn_render( $preview ) {
 		'roomsUrl' => (string) apply_filters( 'mysn_rooms_url', '' ), // obývačka: samostatná hra My Rooms (doplnok my-rooms)
 		'camZoom'  => mysn_cam_zoom(), // graf priblíženia na guľu pravým tlačidlom (My Snooker → Kamera)
 		'camLow'   => mysn_cam_low(), // zostup kamery popri tágu (My Snooker → Kamera)
+		'welcome'  => $user && function_exists( 'mysn_welcome_cfg' ) ? mysn_welcome_cfg( (int) $user['id'] ) : null, // 0.52.0 uvítacie okno (raz na účet)
 		'tutorial' => $user && function_exists( 'mysn_tutorial_cfg' ) ? mysn_tutorial_cfg( (int) $user['id'] ) : null, // 0.49.0 tutoriál (lekcie, scény, postup)
 		'clock'    => mysn_shot_clock(), // čas na ťah v ligovom zápase (sekundy) podľa sezóny
 		'admins'   => array_map( 'intval', (array) get_users( array( 'fields' => 'ID', 'capability' => 'manage_options', 'number' => 50 ) ) ),
