@@ -58,9 +58,13 @@ export class Sound {
 		}
 		let idx = c.urls.map((u, i) => i);
 		if (c.lang) {
-			const m = idx.filter((i) => !c.lang[i] || c.lang[i] === this.lang);
+			const rudo = /^rudo-/.test(slot); // 0.61.0: Rudo podľa jazyka hry (sk / en), bez nahrávky v jazyku mlčí
+			const lg = rudo ? this.rudoLang || 'sk' : this.lang;
+			const m = idx.filter((i) => (!c.lang[i] && !rudo) || c.lang[i] === lg);
 			if (m.length) {
 				idx = m;
+			} else if (rudo) {
+				return null;
 			}
 		}
 		return { urls: idx.map((i) => c.urls[i]), w: idx.map((i) => (c.w || [])[i]) };
@@ -69,7 +73,7 @@ export class Sound {
 	/** Načíta slot (raz pre jazyk); vráti sľub, true = má nahrávku. */
 	ensure(slot, gap = 0) {
 		const c = this.cfg[slot];
-		const l = c && c.lang ? this.lang : '';
+		const l = c && c.lang ? (/^rudo-/.test(slot) ? this.rudoLang || 'sk' : this.lang) : '';
 		if (this._gl[slot] !== l || !this._gp[slot]) {
 			this._gl[slot] = l;
 			const p = this._pick(slot);

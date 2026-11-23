@@ -6318,6 +6318,7 @@ export function start(root, config = {}) {
 		let busy = 0;
 		const lang = () => (settings.refLang === 'off' ? 'off' : 'en'); // rozhodca a diváci len po anglicky (medzinárodný zápas)
 		sound.lang = 'en';
+		sound.rudoLang = LANG === 'sk' ? 'sk' : 'en'; // 0.61.0 Rudo po anglicky pre angličtinu a hindčinu
 		const dur = (slot) => {
 			const b = sound.bufs && sound.bufs[slot] && sound.bufs[slot][0];
 			return b ? b.duration : 0.8;
@@ -6462,6 +6463,7 @@ export function start(root, config = {}) {
 			const fd = new FormData();
 			fd.append('m', mid);
 			fd.append('ev', ev);
+			fd.append('lang', LANG === 'sk' ? 'sk' : 'en');
 			for (const [k, v] of Object.entries(data)) {
 				fd.append(k, v);
 			}

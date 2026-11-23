@@ -465,11 +465,13 @@ function mysn_sounds_config() {
 		$urls = array();
 		$w    = array();
 		$lang = array();
+		$rudo = 0 === strpos( $id, 'rudo-' ); // 0.61.0: Rudo slovensky aj anglicky (repliky bez jazyka v názve sú slovenské)
 		foreach ( mysn_sound_files( $id, (array) $s['fm'] ) as $f ) {
-			if ( $f['on'] && 'sk' !== $f['lang'] ) { // slovenské hlasy sa v hre nehrajú (rozhodca a diváci po anglicky)
+			$fl = $rudo && '' === $f['lang'] && 'own' === $f['src'] ? 'sk' : $f['lang'];
+			if ( $f['on'] && ( 'sk' !== $fl || $rudo ) ) { // slovenské hlasy sa v hre nehrajú (rozhodca a diváci po anglicky), okrem Ruda
 				$urls[] = $f['url'];
 				$w[]    = max( 1, min( 5, (int) $f['w'] ) );
-				$lang[] = $f['lang'];
+				$lang[] = $fl;
 			}
 		}
 		$c    = array(
@@ -856,6 +858,9 @@ function mysn_admin_sounds_page() {
 						if ( in_array( $group, array( 'Rozhodca', 'Diváci', 'Komentátor Rudo' ), true ) && empty( $vdone[ $group ] ) ) {
 							$vdone[ $group ] = 1; // Diváci sú na stránke dvakrát: výber hlasu len pri prvej
 							mysn_sound_voice_box( $group, $voices, $models );
+							if ( 'Komentátor Rudo' === $group && function_exists( 'mysn_rudo_en_box' ) ) {
+								mysn_rudo_en_box();
+							}
 						}
 						echo '<table><tbody>';
 					}

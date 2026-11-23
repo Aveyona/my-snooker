@@ -180,6 +180,7 @@ function mysn_roadmap() {
 /** Denník zmien (najnovšie hore). */
 function mysn_changelog() {
 	return array(
+		array( '0.61.0', '23. 11. 2026', 'Komentátor Rudo po anglicky: hráči s angličtinou alebo hindčinou počujú Ruda po anglicky (98 replík pre všetkých 19 situácií, rovnaký hlas, preložený humor – chai, samosa namiesto piva a párku), slovenskí hráči ako doteraz. Živé komentáre (stovka, koniec framu a zápasu, fauly) píše AI v jazyku hráča a ElevenLabs ich namluví po anglicky. Zvuky → Komentátor Rudo: box Rudo po anglicky s tlačidlom Vygenerovať anglické repliky.' ),
 		array( '0.60.2', '23. 11. 2026', 'Mobil, menu ☰: položka Príslušenstvo odstránená (otvára sa modrým štvorčekom vľavo pri stole); text tutoriálu (lekcia Tágo a výbava) upravený.' ),
 		array( '0.60.1', '23. 11. 2026', 'Mobil, menu ☰: horný panel je pevne hore aj pri posúvaní (✕ vždy po ruke), vľavo v ňom zlaté tlačidlo Nainštalovať aplikáciu – len kým hra nie je nainštalovaná (z mriežky položiek zmizlo).' ),
 		array( '0.60.0', '23. 11. 2026', 'Noviny (C) a správy RSS (V) v herni podľa krajiny hráča (poloha z IP, nie jazyk): Slovensko a Česko titulka Hedlajner a slovenské RSS, India indické správy (The Hindu, Times of India, NDTV, Indian Express, Hindustan Times, India Today, ET, Mint, BBC Hindi, Amar Ujala, cricket z ESPNcricinfo), ostatné krajiny svetové správy po anglicky (BBC World a Sport, BBC Snooker, SnookerHQ, Al Jazeera, DW, France 24, NPR, Sky News). Správy idú z My RSS 1.4.0 (skupiny India a World), hlavička novín je pri zahraničí MY SNOOKER NEWS.' ),

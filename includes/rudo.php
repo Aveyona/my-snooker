@@ -38,6 +38,108 @@ function mysn_rudo_lines() {
 	);
 }
 
+/** 0.61.0 Rudo po anglicky: repliky pre hráčov, ktorí nehrajú po slovensky (rovnaké situácie, iný humor). */
+function mysn_rudo_lines_en() {
+	$l = get_option( 'mysn_rudo_en' );
+	$d = array(
+		'rudo-start' => array( 'Finally! I\'ve been sitting here like a cat on hot bricks.', 'Right, lads, show us what you\'ve got!', 'It\'s going to be a massacre today, mark my words.', 'Whoever loses buys the tea. I\'m rooting for both.', 'Sit down, everyone, here we go!' ),
+		'rudo-foul' => array( 'Oh come on, not that!', 'That was a foul, clear as day.', 'Good heavens, what was that?', 'My mother-in-law hits better than that.', 'Well, that didn\'t work out.', 'Foul! And I thought he could play.', 'Who lent him that cue?', 'I think I\'ll go out for a smoke.', 'I can\'t watch this any more, I\'m off for a cup of chai.', 'I\'m going home, this is too much for me.', 'Wake me up when the snooker starts.', 'I\'d rather go and get a samosa.', 'I\'ll have a smoke till they sort this out.', 'I need a drink after that.' ),
+		'rudo-white' => array( 'The white in the pocket? Masterful!', 'The white went for a walk into the pocket.', 'It\'s snooker, my friend, not pool!', 'And the white has vanished. What a magician!', 'Somebody mixed up the balls here.', 'I\'ll go for a smoke while he finds the white.', 'The white\'s gone and so am I, off for a tea.', 'I could have stayed at home with the telly.' ),
+		'rudo-miss' => array( 'Missed it by a mile.', 'That was close. Close, but no.', 'Almost. But almost doesn\'t count.', 'Well, that didn\'t come off.', 'Shame, it could have been lovely.', 'I\'d have missed it too. But I\'m just a spectator.', 'I\'ll go for a smoke, this is going to take a while.' ),
+		'rudo-edge' => array( 'Ohh, on the edge! Somebody blow on it!', 'No way, it\'s hanging there!', 'One centimetre short!', 'Go on, drop in, you little rascal!' ),
+		'rudo-pot' => array( 'Here we go, here we go!', 'And in it goes!', 'See, when you want to, you can.', 'Slow but steady, like my pension.', 'I\'d have potted that too. Maybe.', 'There it is. Next!', 'Clean work, I didn\'t even see the hand.' ),
+		'rudo-in' => array( 'Yes!', 'It\'s in!', 'Boom!', 'There it goes!', 'Pop!', 'That\'s it!' ),
+		'rudo-lastred' => array( 'Last red, now we\'ll see who has the nerves.', 'Only one red left, lads, don\'t mess it up.', 'Last red. I\'d be sweating by now.' ),
+		'rudo-black' => array( 'Only the black left. Everything is at stake!', 'The black decides it. Quiet, don\'t breathe!', 'Last ball. Even I\'m nervous, and I\'m just sitting here.' ),
+		'rudo-hang' => array( 'That one\'s hanging, even my granny would pot it.', 'That ball is begging to go in!', 'That\'s a penalty with no goalkeeper.' ),
+		'rudo-cushion' => array( 'White on the cushion, that\'s going to hurt.', 'Off the cushion? I don\'t envy him.', 'The white is stuck to the cushion like me to my tea.' ),
+		'rudo-cluster' => array( 'Look at that pack, it needs breaking up.', 'Those reds are standing there like people at a bus stop.', 'Nothing happens until that pack is split.' ),
+		'rudo-nice' => array( 'Brilliant! That was beautiful!', 'Well I never! Just like on television!', 'Now that\'s what I like!', 'Precise, just like me in my younger days.', 'Bravo, bravo!', 'What a shot, my friend!' ),
+		'rudo-50' => array( 'Fifty! It\'s going like a knife through butter!', 'Fifty already, and he\'s not stopping!', 'This lad is on fire today!', 'Half a century! Who\'s going to stop him?' ),
+		'rudo-century' => array( 'A century! That\'s what I came to see!', 'A hundred points! Hats off!', 'Century! You don\'t see that every day!' ),
+		'rudo-won' => array( 'That\'s it, game over. The rest is a formality.', 'Now the opponent can only hope for a miracle.', 'He won\'t catch that even on a motorbike.', 'The opponent can start packing his cue.', 'It\'s all over. I\'m off for a tea while they finish.' ),
+		'rudo-gross' => array( 'Ugh! Not that! This is a stadium, not a pub!', 'Disgusting! You don\'t do that here!', 'What was that?! Somebody give him a mint!', 'Good grief, I can\'t breathe! Open the windows!', 'Shameful! In my day they\'d have thrown him out!', 'Ugh! Even my mother-in-law has better manners!' ),
+		'rudo-frame' => array( 'The frame is his! On we go.', 'That frame was a real nail-biter.', 'One frame down, we\'re not done yet.', 'Who would have thought it!' ),
+		'rudo-match' => array( 'That\'s it! Congratulations to the winner!', 'It\'s over! Tea\'s on me!', 'What a match, you don\'t see that every day!', 'Right, home time now. But it was lovely.' ),
+	);
+	return is_array( $l ) ? array_merge( $d, array_intersect_key( $l, $d ) ) : $d;
+}
+
+/** Súbor anglickej repliky v galérii zvuku (gen-en-…, podpis z textu repliky). */
+function mysn_rudo_en_file( $slot, $line ) {
+	return 'gen-en-' . mysn_sound_filename( $slot ) . '-' . substr( md5( 'rudo-en|' . $line ), 0, 6 ) . '.mp3';
+}
+
+/** Chýbajúce anglické repliky: [ [ slot, index ], … ]. */
+function mysn_rudo_en_missing() {
+	$out = array();
+	foreach ( mysn_rudo_lines_en() as $slot => $lines ) {
+		list( $dir ) = mysn_sound_store( $slot );
+		foreach ( array_values( (array) $lines ) as $i => $line ) {
+			if ( ! is_file( $dir . '/' . mysn_rudo_en_file( $slot, $line ) ) ) {
+				$out[] = array( $slot, $i );
+			}
+		}
+	}
+	return $out;
+}
+
+/** POST /rudo/gen-en {slot, i} (admin): namluví jednu anglickú repliku hlasom Ruda. */
+function mysn_rest_rudo_gen_en( $req ) {
+	$slot  = sanitize_key( (string) $req->get_param( 'slot' ) );
+	$i     = (int) $req->get_param( 'i' );
+	$lines = mysn_rudo_lines_en();
+	$line  = isset( $lines[ $slot ] ) ? ( array_values( (array) $lines[ $slot ] )[ $i ] ?? '' ) : '';
+	if ( '' === $line || ! function_exists( 'mysn_rv_tts_mp3' ) ) {
+		return new WP_Error( 'mysn', 'Neznáma replika.', array( 'status' => 400 ) );
+	}
+	$mp3 = mysn_rv_tts_mp3( $line, 'en', 'Komentátor Rudo', null, mysn_rudo_mood( $slot ) );
+	if ( is_wp_error( $mp3 ) ) {
+		return new WP_Error( 'mysn', $mp3->get_error_message(), array( 'status' => 502 ) );
+	}
+	list( $dir ) = mysn_sound_store( $slot );
+	wp_mkdir_p( $dir );
+	file_put_contents( $dir . '/' . mysn_rudo_en_file( $slot, $line ), $mp3 ); // phpcs:ignore WordPress.WP.AlternativeFunctions
+	return array( 'ok' => 1 );
+}
+
+/** Box v Zvukoch (skupina Komentátor Rudo): anglické repliky a tlačidlo na vygenerovanie chýbajúcich. */
+function mysn_rudo_en_box() {
+	$miss = mysn_rudo_en_missing();
+	$all  = 0;
+	foreach ( mysn_rudo_lines_en() as $l ) {
+		$all += count( (array) $l );
+	}
+	echo '<div class="vbox" style="flex-wrap:wrap"><b style="flex-basis:100%">Rudo po anglicky</b><span class="description" style="flex-basis:100%">Hráči, ktorí nehrajú po slovensky (angličtina, hindčina), počujú Ruda po anglicky – tým istým hlasom. Anglických replík je ' . (int) $all . ' (v galérii každého zvuku ako gen-en-…). Živé komentáre (stovka, koniec zápasu) píše AI v jazyku hráča.</span>';
+	echo '<button type="button" class="button button-primary rudo-en-all" data-miss="' . esc_attr( wp_json_encode( $miss ) ) . '">Vygenerovať anglické repliky (chýba ' . count( $miss ) . ')</button> <span class="rudo-en-st description"></span></div>';
+	?>
+	<script>
+	document.addEventListener('DOMContentLoaded', function () {
+		const b = document.querySelector('.rudo-en-all'), st = document.querySelector('.rudo-en-st');
+		if (!b) { return; }
+		b.addEventListener('click', async function () {
+			const miss = JSON.parse(b.dataset.miss || '[]');
+			b.disabled = true;
+			let n = 0;
+			try {
+				for (const [slot, i] of miss) {
+					st.textContent = 'Generujem ' + (++n) + ' / ' + miss.length + '…';
+					const r = await fetch(<?php echo wp_json_encode( esc_url_raw( rest_url( 'my-snooker/v1/rudo/gen-en' ) ) ); ?>, { method: 'POST', credentials: 'same-origin', headers: { 'Content-Type': 'application/json', 'X-WP-Nonce': <?php echo wp_json_encode( wp_create_nonce( 'wp_rest' ) ); ?> }, body: JSON.stringify({ slot, i }) });
+					const j = await r.json();
+					if (!r.ok) { throw new Error(j.message || r.status); }
+				}
+				st.textContent = 'Hotovo (' + miss.length + '). Obnov stránku.';
+				b.dataset.miss = '[]';
+			} catch (er) {
+				st.textContent = 'Zastavené pri ' + n + ': ' + er.message;
+			}
+			b.disabled = false;
+		});
+	});
+	</script>
+	<?php
+}
+
 /** Popis Ruda (administrácia Zvuky, skupina Komentátor Rudo): vidí ho hráč v Nastaveniach a riadi sa ním AI. */
 function mysn_rudo_desc() {
 	$d = (string) get_option( 'mysn_rudo_desc', '' );
@@ -84,6 +186,7 @@ function mysn_rest_rudo_live( $req ) {
 	$mid = (int) $req->get_param( 'm' );
 	$ev  = sanitize_key( (string) $req->get_param( 'ev' ) );
 	$k   = sanitize_key( (string) $req->get_param( 'k' ) );
+	$en  = 'en' === (string) $req->get_param( 'lang' ); // 0.61.0: Rudo po anglicky pre hráčov, ktorí nehrajú po slovensky
 	if ( ! isset( mysn_rudo_events()[ $ev ] ) || ! $mid || ! mysn_get_match( $mid ) ) {
 		return new WP_Error( 'mysn', 'Neznáma udalosť.', array( 'status' => 400 ) );
 	}
@@ -98,7 +201,7 @@ function mysn_rest_rudo_live( $req ) {
 	if ( ! $dd ) {
 		return new WP_Error( 'mysn', 'Server tento komentár nepripravil.', array( 'status' => 404 ) );
 	}
-	$key = 'mysn_rudo_' . md5( $mid . '|' . $ev . '|' . $k );
+	$key = 'mysn_rudo_' . md5( $mid . '|' . $ev . '|' . $k . ( $en ? '|en' : '' ) );
 	$c   = get_transient( $key );
 	if ( is_array( $c ) ) {
 		return $c;
@@ -142,6 +245,10 @@ function mysn_rest_rudo_live( $req ) {
 		mysn_rudo_events()[ $ev ],
 		array( '{who}' => $who, '{other}' => $other, '{brk}' => $brk, '{pts}' => $pts, '{score}' => $score, '{frames}' => $fr )
 	) . ( $score && false === strpos( mysn_rudo_events()[ $ev ], '{score}' ) ? ' Skóre framu je ' . $score . '.' : '' );
+	if ( $en ) {
+		$sys  = 'You are Rudo, an elderly snooker fan dressed all in black, sitting in the stands and loudly commenting on a league match. You always try to be funny: witty comparisons, irony, folk wisdom, exaggeration, jokes about yourself. Speak simple, warm English, no swearing, no insults, no politics. Answer with exactly one sentence of at most 18 words, no quotation marks, no emoji.' . ( $v3 ? ' Start the sentence with one emotion tag in square brackets, for example [laughs], [excited], [shouting], [sighs], [annoyed], [sarcastic].' : ' No brackets.' );
+		$user = 'Situation (in Slovak, answer in English): ' . $user;
+	}
 	$text  = ai_writer_call_ai_chat( $sys, $user );
 	if ( is_wp_error( $text ) ) {
 		delete_option( $lock );
@@ -149,7 +256,7 @@ function mysn_rest_rudo_live( $req ) {
 	}
 	$text = trim( preg_replace( '/\s+/u', ' ', str_replace( array( '"', '„', '“', '*' ), '', (string) $text ) ) );
 	$text = mb_substr( $text, 0, 200 );
-	$mp3  = mysn_rv_tts_mp3( $text, 'sk', 'Komentátor Rudo', null, mysn_rudo_mood( $ev ) );
+	$mp3  = mysn_rv_tts_mp3( $text, $en ? 'en' : 'sk', 'Komentátor Rudo', null, mysn_rudo_mood( $ev ) );
 	if ( is_wp_error( $mp3 ) ) {
 		delete_option( $lock );
 		return new WP_Error( 'mysn', $mp3->get_error_message(), array( 'status' => 502 ) );
@@ -176,6 +283,23 @@ function mysn_rest_rudo_live( $req ) {
 	delete_option( $lock );
 	return $out;
 }
+
+add_action(
+	'rest_api_init',
+	function () {
+		register_rest_route(
+			'my-snooker/v1',
+			'/rudo/gen-en',
+			array(
+				'methods'             => 'POST',
+				'callback'            => 'mysn_rest_rudo_gen_en',
+				'permission_callback' => function () {
+					return current_user_can( 'manage_options' );
+				},
+			)
+		);
+	}
+);
 
 add_action(
 	'rest_api_init',
