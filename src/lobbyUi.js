@@ -4,6 +4,7 @@
  * ready, say, start). Hru po štarte prinesie bežný signál (ping) – partia sa načíta sama.
  */
 import { _t } from './i18n.js';
+import { leagueStatus } from './leagueTime.js';
 
 const esc = (s) => String(s == null ? '' : s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
 
@@ -54,11 +55,20 @@ export function lobbyUi(parent, d) {
 		return h + '</div>';
 	};
 
+	/** 0.53.7: čas ligy v miestnom čase hráča a či liga práve beží (hráči z reklamy vidia, kedy hrať). */
+	const leagueLine = () => {
+		const st = leagueStatus();
+		const hm = (m) => (m >= 60 ? _t('{h} h {m} min', { h: Math.floor(m / 60), m: m % 60 }) : _t('{m} min', { m }));
+		const when = st.live ? `<b class="mysn-lb-live">● ${_t('Liga sa práve hrá – ešte {t}', { t: hm(st.mins) })}</b>` : _t('Liga začína o {t}', { t: hm(st.mins) });
+		return `<p class="mysn-lb-sub mysn-lb-ltime">${_t('Čas ligy denne: {local} (tvoj čas) · {utc} UTC', { local: esc(st.local), utc: esc(st.utc) })}<br>${when}</p>`;
+	};
+
 	const renderList = () => {
 		const list = (data && data.lobbies) || [];
 		let h = header() + `<div class="mysn-lb-body">`;
 		h += `<button type="button" class="mysn-btn mysn-lb-new" data-a="new">${_t('+ Založiť vlastné lobby')}</button>`;
 		h += `<button type="button" class="mysn-btn" data-a="league">${_t('Ligový zápas: hľadať súpera')}</button>`;
+		h += leagueLine();
 		if (!list.length) {
 			h += `<p class="mysn-lb-empty">${_t('Zatiaľ žiadne otvorené lobby. Založ si vlastné a počkaj na súpera.')}</p>`;
 		}

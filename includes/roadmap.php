@@ -180,6 +180,7 @@ function mysn_roadmap() {
 /** Denník zmien (najnovšie hore). */
 function mysn_changelog() {
 	return array(
+		array( '0.53.7', '23. 11. 2026', 'Lobby: pod tlačidlom ligového zápasu je čas ligy v miestnom čase hráča (a v UTC) a či liga práve beží, alebo o koľko začína. Napr. v Indii 20:30 – 0:30.' ),
 		array( '0.53.6', '23. 11. 2026', 'Tutoriál lekcie 11 až 13: presné cesty v mobilnom menu (☰ → Herňa → Nápoveda, Skóre, Kreslo, Rádio, Tágá; ☰ → Hra → Príslušenstvo; ☰ → Kancelária → Vizitka, Výsledky, Hráči ligy, Moje tágá) a návrat tlačidlom ← Späť k stolu.' ),
 		array( '0.53.5', '23. 11. 2026', 'SEO popis: aplikácia pre všetky zariadenia (PC, tablet, mobil), ochrana proti podvádzaniu (anti-cheat), liga denne 15:00–19:00 UTC (20:30–0:30 indického času).' ),
 		array( '0.53.4', '23. 11. 2026', 'Menu: Rooms pred Lobby, na mobile Rooms zelenou ako ostatné herné režimy.' ),

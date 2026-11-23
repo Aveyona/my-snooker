@@ -19,3 +19,21 @@ export function leagueTimes() {
 	}
 	return { utc: `${p2(LEAGUE_UTC.from)} – ${p2(LEAGUE_UTC.from + LEAGUE_UTC.hours)}`, local: `${hm(from)} – ${hm(to)}`, tz: tz.replace(/_/g, ' ') };
 }
+
+/**
+ * 0.53.7: stav ligy pre lobby – { live: true } počas času ligy, inak { live: false, mins } do začiatku
+ * a miestny čas ligy hráča (podľa časového pásma prehliadača).
+ */
+export function leagueStatus(now = Date.now()) {
+	const d = new Date(now);
+	let from = Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate(), LEAGUE_UTC.from, 0);
+	const len = LEAGUE_UTC.hours * 3600000;
+	if (now >= from + len) {
+		from += 86400000; // dnešná liga už skončila, ďalšia je zajtra
+	}
+	const lt = leagueTimes();
+	if (now >= from && now < from + len) {
+		return { live: true, mins: Math.ceil((from + len - now) / 60000), local: lt.local, utc: lt.utc };
+	}
+	return { live: false, mins: Math.ceil((from - now) / 60000), local: lt.local, utc: lt.utc };
+}
