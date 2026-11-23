@@ -376,7 +376,9 @@ export class Controls {
 			}
 			if (d.lock === 'aim') {
 				const fast = d.zone === 1 || d.zone === 2 ? 3 : 1; // horná polovica: rýchle obzeranie sa
-				g.dir = d.dir + (e.clientX - d.x) * (this.touchFineOn() ? 0.0004 : 0.0016 * fast) * (this.touchAimSens || 1); // šúpatko Otáčanie prstom
+				// 0.47.2: jemné mierenie (zameriavač) platí len vľavo dole; horná polovica je vždy rýchle obzeranie
+				const k = fast > 1 ? 0.0016 * fast : this.touchFineOn() ? 0.0004 : 0.0016;
+				g.dir = d.dir + (e.clientX - d.x) * k * (this.touchAimSens || 1); // šúpatko Otáčanie prstom
 			} else if (d.lock === 'stroke' && this.stroking) {
 				// na mobile je menej miesta a prst je pomalší než myš: plné odtiahnutie asi na pätine výšky obrazovky,
 				// plná sila pri švihnutí asi 2 000 px za sekundu
