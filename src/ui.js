@@ -938,7 +938,7 @@ export class UI {
 			}
 			// 0.53.0 vlastné lobby: zoznam lobby a založenie vlastného (len prihlásení)
 			const lb = user ? [this.button(_t('Lobby'), 'gameLobby', _t('Vlastné lobby: založ hru s vlastnými pravidlami alebo sa pripoj k inému hráčovi'))] : [];
-			box.append(tr, play, lg, ...lb, ...gr, fr(), enter); // rebríček je na F8
+			box.append(tr, play, lg, ...gr, ...lb, fr(), enter); // rebríček je na F8
 			if (this.opts.venue && this.opts.venue() === 'league') {
 				box.appendChild(this.button(_t('Späť do herne'), 'leagueHome'));
 			}
@@ -3902,7 +3902,7 @@ export class UI {
 		// účet, správa hry a návrat na web do skupiny Hra na konci
 		const mirror = [...this.menuInv.querySelectorAll('button'), ...this.menuBtns.querySelectorAll('.mysn-btn')]
 			.filter((b) => b.dataset.act !== 'settings' && b.dataset.act !== 'roomMap' && b.style.display !== 'none')
-			.map((b) => [MM_ICON[b.dataset.act] || (b.classList.contains('mysn-login') ? 'user' : 'menu'), b.textContent, { el: b }, /^(guestTraining|training|solo|league)$/.test(b.dataset.act) || (b.dataset.act === 'resume' && /^(Tréning|Hrať|Practice|Play)$/.test(b.textContent.trim())) ? '#7CFC8A' : '']);
+			.map((b) => [MM_ICON[b.dataset.act] || (b.classList.contains('mysn-login') ? 'user' : 'menu'), b.textContent, { el: b }, /^(guestTraining|training|solo|league|gameRooms)$/.test(b.dataset.act) || (b.dataset.act === 'resume' && /^(Tréning|Hrať|Practice|Play)$/.test(b.textContent.trim())) ? '#7CFC8A' : '']);
 		const OTHER = new Set(['account', 'staff', 'home']);
 		const groups = [
 			{

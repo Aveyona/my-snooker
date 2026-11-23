@@ -180,6 +180,7 @@ function mysn_roadmap() {
 /** Denník zmien (najnovšie hore). */
 function mysn_changelog() {
 	return array(
+		array( '0.53.4', '23. 11. 2026', 'Menu: Rooms pred Lobby, na mobile Rooms zelenou ako ostatné herné režimy.' ),
 		array( '0.53.3', '23. 11. 2026', 'Oprava: tlačidlo Tutoriál v menu sa po 0.52.0 neukazovalo (menu sa po načítaní tutoriálu neobnovilo). Vlastné ikony hry 192 a 512 px (favicon, plocha mobilu) – manifest bez chyby.' ),
 		array( '0.53.2', '23. 11. 2026', 'Konzola bez chýb: štýly hry sa načítajú z domény hry (písma Caveat a Kaushan už neblokuje CORS na mysnooker.in), ikona v manifeste bez nesprávnych rozmerov, bez varovaní FBXLoader o textúrach TGA (modely ľudí používajú vlastné textúry).' ),
 		array( '0.53.1', '23. 11. 2026', 'Oprava: hra sa po 0.53.0 nespustila (čierna obrazovka) – lobby sa vytváralo skôr, ako bolo pripravené spojenie so serverom. Lobby sa teraz vytvorí pri prvom otvorení.' ),
