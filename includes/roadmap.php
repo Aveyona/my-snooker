@@ -180,6 +180,7 @@ function mysn_roadmap() {
 /** Denník zmien (najnovšie hore). */
 function mysn_changelog() {
 	return array(
+		array( '0.53.2', '23. 11. 2026', 'Konzola bez chýb: štýly hry sa načítajú z domény hry (písma Caveat a Kaushan už neblokuje CORS na mysnooker.in), ikona v manifeste bez nesprávnych rozmerov, bez varovaní FBXLoader o textúrach TGA (modely ľudí používajú vlastné textúry).' ),
 		array( '0.53.1', '23. 11. 2026', 'Oprava: hra sa po 0.53.0 nespustila (čierna obrazovka) – lobby sa vytváralo skôr, ako bolo pripravené spojenie so serverom. Lobby sa teraz vytvorí pri prvom otvorení.' ),
 		array( '0.53.0', '23. 11. 2026', 'Vlastné lobby: tlačidlo Lobby v menu (a klik na počet hráčov online). Každý registrovaný hráč založí jedno lobby: názov, heslo (nepovinné), spoločný tréning alebo priateľská partia na 1, 3 alebo 5 framov, čas na úder (bez času, 30 až 90 s) a miestnosť (herňa; Indická ulička čoskoro). Zoznam lobby s počtom hráčov online, náhľad nastavení zakladateľa, pripojenie s heslom, chat lobby, Pripravený, Začať hru, Vyhodiť hosťa, Zavrieť lobby; po hre sa obaja vrátia do lobby. Ligový zápas sa v lobby nezakladá – spustí hľadanie súpera ako F9 v kancelárii. Čas na úder z lobby overuje aj server (faul za čas). Admin My Snooker → Lobby.' ),
 		array( '0.52.2', '23. 11. 2026', 'Počet hráčov online vpravo hore (PC aj mobil, zelená bodka); klik otvorí zoznam hráčov na výzvu.' ),

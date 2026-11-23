@@ -64,8 +64,7 @@ add_action( 'wp_loaded', function () {
 				'theme_color'      => '#0c0f14',
 				'lang'             => 'en',
 				'icons'            => $ic ? array(
-					array( 'src' => get_site_icon_url( 192 ), 'sizes' => '192x192', 'type' => 'image/png' ),
-					array( 'src' => $ic, 'sizes' => '512x512', 'type' => 'image/png' ),
+					array( 'src' => $ic, 'sizes' => 'any', 'type' => 'image/png' ), // 0.53.2: ikona webu nemá presné rozmery 192/512 (prehliadač hlásil chybu)
 				) : array(),
 			),
 			JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE
@@ -209,7 +208,7 @@ echo wp_json_encode(
 <?php if ( $icon ) : ?>
 <link rel="icon" href="<?php echo esc_url( $icon ); ?>">
 <?php endif; ?>
-<link rel="stylesheet" href="<?php echo esc_url( MYSN_URL . 'assets/snooker.css?ver=' . mysn_asset_ver( 'snooker.css' ) ); ?>">
+<link rel="stylesheet" href="<?php echo esc_url( wp_make_link_relative( MYSN_URL ) . 'assets/snooker.css?ver=' . mysn_asset_ver( 'snooker.css' ) ); // 0.53.2: štýly z domény hry – písma (fonts) bez blokovania CORS ?>">
 </head>
 <body class="mysn-page">
 <div id="mysn-app"><noscript><div class="mysn-nogl"><h1>My Snooker – free 3D snooker in your browser</h1><p>Play realistic 3D snooker online on PC and mobile: real table dimensions, spin, cushion rebounds, practice, high-score mode, matches with friends and a year-round online league with a stadium and live spectators.</p><p>The game needs JavaScript turned on.</p></div></noscript></div>

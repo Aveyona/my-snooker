@@ -122,6 +122,9 @@ function loadModel(dir, name, done) {
 					return T[n];
 				};
 				const mgr = new THREE.LoadingManager();
+				// 0.53.2: textúry TGA z FBX sa nepoužívajú (vlastné textúry nižšie) – prázdna textúra bez varovaní v konzole
+				const noTex = { path: 'x', setPath() { return this; }, load: () => new THREE.Texture() };
+				mgr.addHandler(/\.(tga|tif|tiff|dds)$/i, noTex);
 				mgr.setURLModifier((u) => (/\.(tga|png|jpg)$/i.test(u) && !u.startsWith(pre) && !u.startsWith(mpre) ? 'data:,' : u)); // textúry z FBX (cesty z 3ds Max) nie
 				new FBXLoader(mgr).load(
 					murl(name + '.fbx'),
