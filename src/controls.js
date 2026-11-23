@@ -148,6 +148,8 @@ export class Controls {
 			this._tp.set(e.pointerId, { x: e.clientX, y: e.clientY });
 			if (this._tp.size >= 2) {
 				// druhý prst: priblíženie, rozrobené mierenie alebo ťahanie tága sa zruší
+				// (0.47.3: mierenie sa vráti tam, kde bolo tesne pred dotykom druhého prsta)
+				this.aimRestore(this._drag, 150);
 				this._drag = null;
 				this._tap = null;
 				if (this.stroking) {
@@ -270,7 +272,7 @@ export class Controls {
 			// časť 4 (vpravo dole) = úder, vľavo dole (3) = mierenie, horná polovica (1, 2) = rýchle obzeranie sa
 			// (0.47.1: otáčanie trikrát rýchlejšie; chat sa na mobile otvára len ikonkou)
 			const zone = this.touchZone(e);
-			this._drag = { kind: 'touchCue', id: e.pointerId, x: e.clientX, y: e.clientY, dir: g.dir, zone, lock: zone === 4 ? '' : 'aim' };
+			this._drag = { kind: 'touchCue', id: e.pointerId, x: e.clientX, y: e.clientY, x0: e.clientX, dir: g.dir, zone, lock: zone === 4 ? '' : 'aim', live: false, hist: [[performance.now(), g.dir]] };
 			if (this.hooks.touchHint) {
 				this.hooks.touchHint();
 			}
@@ -374,11 +376,26 @@ export class Controls {
 					return;
 				}
 			}
+			if (d.lock === 'aim' && !d.live) {
+				// 0.47.3: priloženie prsta sa trochu „rozmaže“ – mierenie sa pohne až po posune o 7 px a od tohto bodu
+				// (bez skoku smeru pri dotyku)
+				if (Math.abs(e.clientX - d.x0) < 7) {
+					return;
+				}
+				d.live = true;
+				d.x = e.clientX;
+				d.dir = g.dir;
+			}
 			if (d.lock === 'aim') {
 				const fast = d.zone === 1 || d.zone === 2 ? 3 : 1; // horná polovica: rýchle obzeranie sa
 				// 0.47.2: jemné mierenie (zameriavač) platí len vľavo dole; horná polovica je vždy rýchle obzeranie
 				const k = fast > 1 ? 0.0016 * fast : this.touchFineOn() ? 0.0004 : 0.0016;
 				g.dir = d.dir + (e.clientX - d.x) * k * (this.touchAimSens || 1); // šúpatko Otáčanie prstom
+				const now = performance.now();
+				d.hist.push([now, g.dir]);
+				while (d.hist.length > 2 && now - d.hist[0][0] > 400) {
+					d.hist.shift();
+				}
 			} else if (d.lock === 'stroke' && this.stroking) {
 				// na mobile je menej miesta a prst je pomalší než myš: plné odtiahnutie asi na pätine výšky obrazovky,
 				// plná sila pri švihnutí asi 2 000 px za sekundu
@@ -469,7 +486,34 @@ export class Controls {
 			this.hooks.viewTap(e); // mobil: krátke ťuknutie bez ťahania (vo voľnom pohľade otvorí predmet)
 		}
 		if (this._drag && this._drag.id === e.pointerId) {
+			if (e.pointerType === 'touch') {
+				this.aimRestore(this._drag, 90); // 0.47.3: odvalenie prsta pri zdvihnutí nepokazí mierenie
+			}
 			this._drag = null;
+		}
+	}
+
+	/**
+	 * 0.47.3 Mobil: pri zdvihnutí prsta sa prst odvalí a posledné pohyby by mierenie pokazili. Smer sa vráti
+	 * na hodnotu spred ms milisekúnd (prst vtedy už stál na mieste).
+	 */
+	aimRestore(d, ms) {
+		if (!d || d.kind !== 'touchCue' || d.lock !== 'aim' || !d.live || !d.hist || this.game.state !== 'aim') {
+			return;
+		}
+		const t = performance.now() - ms;
+		let v = null;
+		for (const [ht, dir] of d.hist) {
+			if (ht <= t) {
+				v = dir;
+			}
+		}
+		if (v === null) {
+			v = d.hist[0][1]; // celý ťah bol kratší: vráť sa na začiatok
+		}
+		// len malé odchýlky (odvalenie prsta); veľký úmyselný pohyb na konci ostane
+		if (Math.abs(this.game.dir - v) < 0.05) {
+			this.game.dir = v;
 		}
 	}
 
