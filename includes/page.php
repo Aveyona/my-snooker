@@ -46,6 +46,32 @@ add_action( 'wp_loaded', function () {
 		echo "User-agent: *\nAllow: /\n\nSitemap: " . esc_url_raw( mysn_url() . 'sitemap.xml' ) . "\n"; // phpcs:ignore
 		exit;
 	}
+	if ( '/manifest.webmanifest' === $path ) {
+		// 0.48.0: hra sa dá pridať na plochu mobilu (celá obrazovka)
+		status_header( 200 );
+		header( 'Content-Type: application/manifest+json; charset=utf-8' );
+		$ic = get_site_icon_url( 512 );
+		echo wp_json_encode( // phpcs:ignore
+			array(
+				'name'             => 'My Snooker',
+				'short_name'       => 'My Snooker',
+				'description'      => 'Free 3D snooker in your browser – practice, high scores, matches with friends and an online league.',
+				'start_url'        => '/',
+				'scope'            => '/',
+				'display'          => 'fullscreen',
+				'orientation'      => 'any',
+				'background_color' => '#0c0f14',
+				'theme_color'      => '#0c0f14',
+				'lang'             => 'en',
+				'icons'            => $ic ? array(
+					array( 'src' => get_site_icon_url( 192 ), 'sizes' => '192x192', 'type' => 'image/png' ),
+					array( 'src' => $ic, 'sizes' => '512x512', 'type' => 'image/png' ),
+				) : array(),
+			),
+			JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE
+		);
+		exit;
+	}
 	if ( '/sitemap.xml' === $path ) {
 		status_header( 200 );
 		header( 'Content-Type: application/xml; charset=utf-8' );
@@ -66,8 +92,9 @@ function mysn_render( $preview ) {
 	nocache_headers();
 	status_header( 200 );
 	header( 'Content-Type: text/html; charset=utf-8' );
-	$title = 'My Snooker: 3D snooker v prehliadači';
-	$desc  = 'Zahraj si snooker v 3D priamo v prehliadači, na počítači aj na mobile. Skutočné rozmery stola, falše, odrazy od mantinelov a tréning úderov.';
+	// 0.48.0 SEO na vlastnej doméne (mysnooker.in) po anglicky
+	$title = 'My Snooker – Free 3D Online Snooker Game in Your Browser';
+	$desc  = 'Play realistic 3D snooker online for free, right in your browser on PC and mobile. Practise, chase the high score, challenge friends and compete in the online league – no download.';
 	$icon  = get_site_icon_url( 192 );
 	$main  = mysn_main_url() . '/';
 	$game  = $preview ? $main . ltrim( mysn_preview_path(), '/' ) : mysn_url();
@@ -135,17 +162,54 @@ function mysn_render( $preview ) {
 <meta name="robots" content="noindex">
 <?php endif; ?>
 <meta property="og:type" content="website">
+<meta property="og:site_name" content="My Snooker">
+<meta property="og:locale" content="en_US">
+<meta property="og:locale:alternate" content="sk_SK">
 <meta property="og:title" content="<?php echo esc_attr( $title ); ?>">
 <meta property="og:description" content="<?php echo esc_attr( $desc ); ?>">
 <meta property="og:url" content="<?php echo esc_url( mysn_url() ); ?>">
+<meta property="og:image" content="<?php echo esc_url( MYSN_URL . 'assets/og-image.jpg' ); ?>">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="My Snooker – 3D snooker table in the club room">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="<?php echo esc_attr( $title ); ?>">
+<meta name="twitter:description" content="<?php echo esc_attr( $desc ); ?>">
+<meta name="twitter:image" content="<?php echo esc_url( MYSN_URL . 'assets/og-image.jpg' ); ?>">
+<meta name="application-name" content="My Snooker">
+<meta name="apple-mobile-web-app-title" content="My Snooker">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<link rel="manifest" href="<?php echo esc_url( mysn_url() . 'manifest.webmanifest' ); ?>">
 <meta name="theme-color" content="#0c0f14">
+<script type="application/ld+json"><?php
+echo wp_json_encode(
+	array(
+		'@context'            => 'https://schema.org',
+		'@type'               => 'VideoGame',
+		'name'                => 'My Snooker',
+		'url'                 => mysn_url(),
+		'description'         => $desc,
+		'image'               => MYSN_URL . 'assets/og-image.jpg',
+		'genre'               => array( 'Sports', 'Snooker', 'Billiards' ),
+		'gamePlatform'        => array( 'Web browser', 'PC', 'Mobile' ),
+		'applicationCategory' => 'Game',
+		'operatingSystem'     => 'Any (web browser)',
+		'playMode'            => array( 'SinglePlayer', 'MultiPlayer' ),
+		'inLanguage'          => array( 'en', 'sk' ),
+		'isAccessibleForFree' => true,
+		'author'              => array( '@type' => 'Organization', 'name' => 'Aveyona', 'url' => mysn_main_url() ),
+	),
+	JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE
+);
+?></script>
 <?php if ( $icon ) : ?>
 <link rel="icon" href="<?php echo esc_url( $icon ); ?>">
 <?php endif; ?>
 <link rel="stylesheet" href="<?php echo esc_url( MYSN_URL . 'assets/snooker.css?ver=' . mysn_asset_ver( 'snooker.css' ) ); ?>">
 </head>
 <body class="mysn-page">
-<div id="mysn-app"><noscript><div class="mysn-nogl">Hra potrebuje zapnutý JavaScript.</div></noscript></div>
+<div id="mysn-app"><noscript><div class="mysn-nogl"><h1>My Snooker – free 3D snooker in your browser</h1><p>Play realistic 3D snooker online on PC and mobile: real table dimensions, spin, cushion rebounds, practice, high-score mode, matches with friends and a year-round online league with a stadium and live spectators.</p><p>The game needs JavaScript turned on.</p></div></noscript></div>
 <script>window.MYSN_CONFIG = <?php echo wp_json_encode( $cfg ); ?>;</script>
 <script src="<?php echo esc_url( MYSN_URL . 'assets/snooker.js?ver=' . mysn_asset_ver( 'snooker.js' ) ); ?>"></script>
 <?php do_action( 'my_stats_beacon', 'snooker' ); // My Stats 2.9.0: návštevnosť tejto časti webu ?>
