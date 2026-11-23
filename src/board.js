@@ -197,7 +197,7 @@ function drawPhone(g, w) {
 	g.textAlign = 'left';
 	const tx = x0 + pw + 50;
 	const rows = [
-		['1', _t('vľavo hore: ťuk = chat')],
+		['1', _t('hore: rýchle obzeranie')],
 		['2, 3', _t('ťahaj do strán: mierenie')],
 		['4', _t('vpravo dole: úder')],
 		['', _t('prst dole = odtiahni,')],

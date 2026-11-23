@@ -4362,7 +4362,7 @@ export function start(root, config = {}) {
 			} catch (e) {
 				return;
 			}
-			ui.toast(_t('Obrazovka má 4 časti: vľavo hore ťukni = chat, vpravo hore a vľavo dole ťahaj = mierenie, vpravo dole prst dole = odtiahneš tágo, rýchlo hore = úder. Dvoma prstami priblížiš.'));
+			ui.toast(_t('Horná polovica obrazovky: ťahaj = rýchle obzeranie sa, vľavo dole ťahaj = presné mierenie, vpravo dole prst dole = odtiahneš tágo, rýchlo hore = úder. Chat je na ikonke vľavo. Dvoma prstami priblížiš.'));
 		},
 		look: (dx, dy) => {
 			if (ui.touchUI && view && !LOOK.has(view)) {

@@ -180,6 +180,7 @@ function mysn_roadmap() {
 /** Denník zmien (najnovšie hore). */
 function mysn_changelog() {
 	return array(
+		array( '0.47.1', '23. 11. 2026', 'Mobil: horná polovica obrazovky slúži na rýchle obzeranie sa – ťahanie prstom otáča trikrát rýchlejšie ako vľavo dole, kde sa presne mieri; vpravo dole ostáva úder. Chat sa na mobile otvára len ikonkou (ťuknutie vľavo hore ho už neotvára). Nápoveda, tabuľa a krátky návod upravené.' ),
 		array( '0.47.0', '23. 11. 2026', 'Každá ligová partia má vlastnú miestnosť chatu (záložka 🏆 Ligová partia pre hráčov aj divákov) a jej chat sa ukladá natrvalo pri partii. V histórii zápasov je pri partii časť Chat partie (čas, úder, kto písal, divák označený) a v prehrávači partie naskakujú správy v rohu v čase, keď padli. Uložený chat ligovej partie môže čítať každý prihlásený (GET /history/chat). Priateľské partie ostávajú s dočasným chatom.' ),
 		array( '0.46.5', '23. 11. 2026', 'Mobil: ikonka chatu má rovnaký štýl ako ostatné okrúhle tlačidlá vľavo (biely obrys, priehľadné pozadie, obrysová bublina) a je úplne hore nad nimi; náhľad novej správy sa ukáže vedľa nej.' ),
 		array( '0.46.4', '23. 11. 2026', 'Mobil: chat je biela ikonka bubliny vľavo hore s počtom nových správ (pri novej správe poskočí a posledná správa sa na 5 s ukáže vedľa nej). Ťuk otvorí chat na celú obrazovku na priehľadnom čiernom pozadí s väčším písmom; zavrie ho ✕, Späť alebo ťuk mimo pri prázdnom políčku. Na telefóne (nie na tablete) je náhľad zásahu menší a čiastočne priehľadný.' ),

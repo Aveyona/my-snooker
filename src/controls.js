@@ -90,7 +90,7 @@ export class Controls {
 
 	/**
 	 * Mobil za tágom: obrazovka je rozdelená na 4 časti podľa miesta dotyku (16. 11. 2026):
-	 * 1 vľavo hore = chat (ťuknutie), 2 vpravo hore a 3 vľavo dole = otáčanie pohľadu (mierenie),
+	 * 1 a 2 horná polovica = rýchle otáčanie (obzeranie sa), 3 vľavo dole = mierenie (0.47.1; chat len ikonkou),
 	 * 4 vpravo dole = úder (prst dole odtiahne tágo, rýchlo hore = výstrel, sila podľa rýchlosti).
 	 */
 	touchZone(e) {
@@ -164,21 +164,13 @@ export class Controls {
 		const g = this.game;
 		if (e.pointerType === 'touch' && !this.blocked && this.rig.mode === 'cue' && g.state === 'moving') {
 			// mobil po výstrele (gule sa kotúľajú): prst kdekoľvek na obrazovke otáča kameru okolo bielej ako myš na
-			// desktope; krátke ťuknutie vľavo hore bez posunu stále otvorí chat
+			// desktope (0.47.1: chat sa na mobile otvára len ikonkou)
 			this._drag = { kind: 'touchTurn', id: e.pointerId, x: e.clientX, y: e.clientY };
-			if (this.touchZone(e) === 1) {
-				this._chatTap = { id: e.pointerId, x: e.clientX, y: e.clientY, t: performance.now() };
-			}
 			try {
 				this.dom.setPointerCapture(e.pointerId);
 			} catch (err) {
 				/* nie je podstatné */
 			}
-			return;
-		}
-		if (e.pointerType === 'touch' && !this.blocked && this.rig.mode === 'cue' && g.state !== 'place' && this.touchZone(e) === 1) {
-			// časť 1 (vľavo hore): ťuknutie otvorí chat, ťahanie tu nerobí nič
-			this._chatTap = { id: e.pointerId, x: e.clientX, y: e.clientY, t: performance.now() };
 			return;
 		}
 		if (this.blocked) {
@@ -275,7 +267,8 @@ export class Controls {
 			}
 			this._drag = { kind: 'aimTop', id: e.pointerId };
 		} else if (e.pointerType === 'touch') {
-			// časť 4 (vpravo dole) = úder, časti 2 a 3 = otáčanie pohľadu (mierenie)
+			// časť 4 (vpravo dole) = úder, vľavo dole (3) = mierenie, horná polovica (1, 2) = rýchle obzeranie sa
+			// (0.47.1: otáčanie trikrát rýchlejšie; chat sa na mobile otvára len ikonkou)
 			const zone = this.touchZone(e);
 			this._drag = { kind: 'touchCue', id: e.pointerId, x: e.clientX, y: e.clientY, dir: g.dir, zone, lock: zone === 4 ? '' : 'aim' };
 			if (this.hooks.touchHint) {
@@ -382,7 +375,8 @@ export class Controls {
 				}
 			}
 			if (d.lock === 'aim') {
-				g.dir = d.dir + (e.clientX - d.x) * (this.touchFineOn() ? 0.0004 : 0.0016) * (this.touchAimSens || 1); // šúpatko Otáčanie prstom
+				const fast = d.zone === 1 || d.zone === 2 ? 3 : 1; // horná polovica: rýchle obzeranie sa
+				g.dir = d.dir + (e.clientX - d.x) * (this.touchFineOn() ? 0.0004 : 0.0016 * fast) * (this.touchAimSens || 1); // šúpatko Otáčanie prstom
 			} else if (d.lock === 'stroke' && this.stroking) {
 				// na mobile je menej miesta a prst je pomalší než myš: plné odtiahnutie asi na pätine výšky obrazovky,
 				// plná sila pri švihnutí asi 2 000 px za sekundu
