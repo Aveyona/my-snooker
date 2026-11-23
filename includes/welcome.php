@@ -25,6 +25,8 @@ function mysn_welcome_texts() {
 		'title_en' => 'Welcome, {name}!',
 		'lead_sk'  => 'Realistický 3D snooker v prehliadači. Začni tréningom v herni, zdokonaľ sa a vyzvi hráčov z celého sveta.',
 		'lead_en'  => 'Realistic 3D snooker in your browser. Start practising in the hall, get better and challenge players from all over the world.',
+		'title_hi' => 'स्वागत है, {name}!',
+		'lead_hi'  => 'आपके ब्राउज़र में असली जैसा 3D स्नूकर। क्लब रूम में प्रैक्टिस से शुरू करें, बेहतर बनें और दुनिया भर के खिलाड़ियों को चुनौती दें।',
 	);
 	$o = get_option( 'mysn_welcome', array() );
 	return array_merge( $d, is_array( $o ) ? $o : array() );
@@ -90,6 +92,8 @@ function mysn_admin_welcome() {
 					'title_en' => sanitize_text_field( $in['title_en'] ?? '' ),
 					'lead_sk'  => sanitize_textarea_field( $in['lead_sk'] ?? '' ),
 					'lead_en'  => sanitize_textarea_field( $in['lead_en'] ?? '' ),
+					'title_hi' => sanitize_text_field( $in['title_hi'] ?? '' ),
+					'lead_hi'  => sanitize_textarea_field( $in['lead_hi'] ?? '' ),
 				),
 				false
 			);
@@ -108,6 +112,7 @@ function mysn_admin_welcome() {
 				<tr><th>Nadpis SK / EN</th><td><input type="text" name="title_sk" value="<?php echo esc_attr( $w['title_sk'] ); ?>" class="regular-text"> <input type="text" name="title_en" value="<?php echo esc_attr( $w['title_en'] ); ?>" class="regular-text"></td></tr>
 				<tr><th>Úvodná veta SK</th><td><textarea name="lead_sk" rows="2" class="large-text"><?php echo esc_textarea( $w['lead_sk'] ); ?></textarea></td></tr>
 				<tr><th>Úvodná veta EN</th><td><textarea name="lead_en" rows="2" class="large-text"><?php echo esc_textarea( $w['lead_en'] ); ?></textarea></td></tr>
+				<tr><th>Nadpis a veta HI (hindčina)</th><td><input type="text" name="title_hi" value="<?php echo esc_attr( $w['title_hi'] ); ?>" class="regular-text"><textarea name="lead_hi" rows="2" class="large-text"><?php echo esc_textarea( $w['lead_hi'] ); ?></textarea></td></tr>
 			</table>
 			<p><button class="button button-primary">Uložiť</button> <button class="button" name="test" value="1">Ukázať mne pri ďalšom spustení (test)</button></p>
 		</form>

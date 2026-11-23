@@ -9,7 +9,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-const MYSN_LANGS = array( 'sk', 'en' );
+const MYSN_LANGS = array( 'sk', 'en', 'hi' ); // 0.54.0 hindčina
 
 /** Jazyk aktuálnej požiadavky: cookie z hry → účet → slovenčina. */
 function mysn_lang( $uid = 0 ) {
@@ -30,15 +30,17 @@ function mysn_user_lang( $uid ) {
 
 /** Preklad hlásenia pre hru. $p = parametre {meno}. $lang = jazyk príjemcu (inak jazyk požiadavky). */
 function mysn_t( $s, $p = array(), $lang = '' ) {
-	static $en = null;
+	static $dict = array();
 	$lang = $lang ? $lang : mysn_lang();
-	if ( 'en' === $lang ) {
-		if ( null === $en ) {
-			$f  = MYSN_DIR . 'includes/lang-en.php';
-			$en = file_exists( $f ) ? (array) include $f : array();
+	// hindčina: vlastný slovník, chýbajúci text po anglicky (0.54.0)
+	foreach ( 'hi' === $lang ? array( 'hi', 'en' ) : ( 'en' === $lang ? array( 'en' ) : array() ) as $l ) {
+		if ( ! isset( $dict[ $l ] ) ) {
+			$f          = MYSN_DIR . 'includes/lang-' . $l . '.php';
+			$dict[ $l ] = file_exists( $f ) ? (array) include $f : array();
 		}
-		if ( isset( $en[ $s ] ) && '' !== $en[ $s ] ) {
-			$s = $en[ $s ];
+		if ( isset( $dict[ $l ][ $s ] ) && '' !== $dict[ $l ][ $s ] ) {
+			$s = $dict[ $l ][ $s ];
+			break;
 		}
 	}
 	foreach ( (array) $p as $k => $v ) {

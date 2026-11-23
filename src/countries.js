@@ -77,16 +77,16 @@ export const COUNTRIES = [
 ];
 
 // 0.43.5: v angličtine názvy krajín z prehliadača (Intl.DisplayNames), zoradené podľa abecedy
-if (LANG === 'en' && typeof Intl !== 'undefined' && Intl.DisplayNames) {
+if (LANG !== 'sk' && typeof Intl !== 'undefined' && Intl.DisplayNames) {
 	try {
-		const dn = new Intl.DisplayNames(['en'], { type: 'region' });
+		const dn = new Intl.DisplayNames([LANG], { type: 'region' });
 		for (const c of COUNTRIES) {
 			const n = dn.of(c[0]);
 			if (n && n !== c[0]) {
 				c[1] = n;
 			}
 		}
-		COUNTRIES.sort((a, b) => a[1].localeCompare(b[1], 'en'));
+		COUNTRIES.sort((a, b) => a[1].localeCompare(b[1], LANG));
 	} catch (e) {
 		/* bez prekladu ostanú slovenské názvy */
 	}

@@ -501,7 +501,7 @@ export function buildOffice(scene) {
 		g.font = '30px Georgia, serif';
 		g.fillStyle = 'rgba(242,212,138,0.8)';
 		const n = mapArgs[0].length;
-		g.fillText(n ? (LANG === 'en' ? `${n} ${n === 1 ? 'player' : 'players'} · ${by.size} ${by.size === 1 ? 'country' : 'countries'}` : `${n} ${n === 1 ? 'hráč' : n < 5 ? 'hráči' : 'hráčov'} · ${by.size} ${by.size === 1 ? 'krajina' : by.size < 5 ? 'krajiny' : 'krajín'}`) : _t('Zatiaľ žiadni hráči'), 58, MH - 52);
+		g.fillText(n ? (LANG === 'hi' ? `${n} खिलाड़ी · ${by.size} देश` : LANG === 'en' ? `${n} ${n === 1 ? 'player' : 'players'} · ${by.size} ${by.size === 1 ? 'country' : 'countries'}` : `${n} ${n === 1 ? 'hráč' : n < 5 ? 'hráči' : 'hráčov'} · ${by.size} ${by.size === 1 ? 'krajina' : by.size < 5 ? 'krajiny' : 'krajín'}`) : _t('Zatiaľ žiadni hráči'), 58, MH - 52);
 		// špendlík za každú krajinu s počtom hráčov; moja krajina zlatá, ostatné strieborné
 		for (const [code, list] of by) {
 			const c = countryByCode(code);

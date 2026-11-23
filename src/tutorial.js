@@ -34,7 +34,7 @@ export function tutorial(parent, cfg, d) {
 	}
 	const lessons = cfg.lessons;
 	const progress = cfg.progress || {};
-	const txt = (o, k) => (LANG === 'en' && o[k + '_en'] ? o[k + '_en'] : o[k + '_sk'] || o[k + '_en'] || '');
+	const txt = (o, k) => o[k + '_' + LANG] || (LANG !== 'sk' && o[k + '_en']) || o[k + '_sk'] || o[k + '_en'] || ''; // hindčina bez textu: po anglicky
 
 	const box = h('div', 'mysn-tut');
 	const head = h('div', 'mysn-tut-head');

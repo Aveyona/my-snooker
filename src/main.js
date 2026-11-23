@@ -2566,7 +2566,7 @@ export function start(root, config = {}) {
 	};
 	const reachMsg = (r) =>
 		r.stretch
-			? _t('Natiahnutý úder: s nádstavcom{ext} je ruka {d} cm od mantinelu (najviac {m} cm). Úder sa dá, ale biela náhodne uhne až o {deg}°{tip}.', { ext: r.ext ? _t(' a predĺžením {n} cm', { n: Math.round(r.ext * 100) }) : _t(' bez predĺženia'), d: Math.round(r.d * 100), m: Math.round(r.max * 100), deg: LANG === 'en' ? String(r.deg) : String(r.deg).replace('.', ','), tip: r.ext >= 0.44 ? '' : _t(' (dlhšie predĺženie F3 6 pomôže)') })
+			? _t('Natiahnutý úder: s nádstavcom{ext} je ruka {d} cm od mantinelu (najviac {m} cm). Úder sa dá, ale biela náhodne uhne až o {deg}°{tip}.', { ext: r.ext ? _t(' a predĺžením {n} cm', { n: Math.round(r.ext * 100) }) : _t(' bez predĺženia'), d: Math.round(r.d * 100), m: Math.round(r.max * 100), deg: LANG !== 'sk' ? String(r.deg) : String(r.deg).replace('.', ','), tip: r.ext >= 0.44 ? '' : _t(' (dlhšie predĺženie F3 6 pomôže)') })
 			: r.part === 'bridge'
 			? _t('Nedosiahneš: ruka na mostíku by bola {d} cm od mantinelu (najviac {m} cm). Použi nádstavec (F3).', { d: Math.round(r.d * 100), m: Math.round(r.max * 100) })
 			: _t('Nedosiahneš: ruka na rukoväti by bola {d} cm od mantinelu (najviac {m} cm). Použi nádstavec alebo predĺženie (F3).', { d: Math.round(r.d * 100), m: Math.round(r.max * 100) });
@@ -3100,7 +3100,7 @@ export function start(root, config = {}) {
 				replay.toggle();
 			} else if (k === 'speed') {
 				replay.speed = replay.speed >= 2 ? 0.5 : replay.speed * 2;
-				ui.toast(_t('Rýchlosť prehrávania {s}×', { s: LANG === 'en' ? String(replay.speed) : String(replay.speed).replace('.', ',') }));
+				ui.toast(_t('Rýchlosť prehrávania {s}×', { s: LANG !== 'sk' ? String(replay.speed) : String(replay.speed).replace('.', ',') }));
 			}
 			ui.replayBar(true, replay.playing, replay.speed);
 			return true;

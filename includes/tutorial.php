@@ -383,7 +383,7 @@ function mysn_tut_default() {
 function mysn_tutorial() {
 	$t = get_option( 'mysn_tutorial', null );
 	if ( ! is_array( $t ) || ! $t ) {
-		return mysn_tut_default();
+		return mysn_tut_fill_hi( mysn_tut_default() );
 	}
 	// nové predvolené lekcie z novších verzií sa pridajú aj k uloženému tutoriálu (zmazané v administrácii ostanú zmazané)
 	$known = (array) get_option( 'mysn_tut_known', array() );
@@ -393,7 +393,7 @@ function mysn_tutorial() {
 			$t[] = $l;
 		}
 	}
-	return $t;
+	return mysn_tut_fill_hi( $t ); // 0.54.0 hindské texty
 }
 
 /** Konfigurácia pre hru (len prihlásený): lekcie, scény a postup hráča. */
@@ -474,6 +474,7 @@ function mysn_tut_save_post() {
 				'param'   => (float) ( $S['param'] ?? 0 ),
 				'text_sk' => sanitize_textarea_field( $S['text_sk'] ?? '' ),
 				'text_en' => sanitize_textarea_field( $S['text_en'] ?? '' ),
+				'text_hi' => sanitize_textarea_field( $S['text_hi'] ?? '' ),
 				'hints'   => array_values( array_intersect( $hintsK, array_map( 'sanitize_key', (array) ( $S['hints'] ?? array() ) ) ) ),
 				'snd_in'  => sanitize_key( $S['snd_in'] ?? '' ),
 				'snd_ok'  => sanitize_key( $S['snd_ok'] ?? '' ),
@@ -509,6 +510,7 @@ function mysn_tut_save_post() {
 			'order'    => (float) ( $L['order'] ?? 0 ),
 			'title_sk' => sanitize_text_field( $L['title_sk'] ?? '' ),
 			'title_en' => sanitize_text_field( $L['title_en'] ?? '' ),
+			'title_hi' => sanitize_text_field( $L['title_hi'] ?? '' ),
 			'scenes'   => $scenes,
 		);
 	}
@@ -583,10 +585,11 @@ function mysn_admin_tutorial() {
 						<label>Poradie <input type="number" step="1" name="<?php echo esc_attr( $pre ); ?>[order]" value="<?php echo (int) $li + 1; ?>" style="width:60px"></label>
 						<label>Názov SK <input type="text" name="<?php echo esc_attr( $pre ); ?>[title_sk]" value="<?php echo esc_attr( $L['title_sk'] ); ?>" class="regular-text"></label>
 						<label>Názov EN <input type="text" name="<?php echo esc_attr( $pre ); ?>[title_en]" value="<?php echo esc_attr( $L['title_en'] ); ?>" class="regular-text"></label>
+						<label>Názov HI <input type="text" name="<?php echo esc_attr( $pre ); ?>[title_hi]" value="<?php echo esc_attr( $L['title_hi'] ?? '' ); ?>" class="regular-text"></label>
 						<label style="color:#b32d2e"><input type="checkbox" name="<?php echo esc_attr( $pre ); ?>[del]" value="1"> zmazať lekciu</label>
 					</p>
 					<table class="widefat striped">
-						<thead><tr><th style="width:60px">Poradie</th><th style="width:250px">Úloha, hodnota, guľa, rozostavenie</th><th>Text SK / EN</th><th style="width:250px">Šípky</th><th style="width:230px">Zvuky</th><th style="width:60px">Zmazať</th></tr></thead>
+						<thead><tr><th style="width:60px">Poradie</th><th style="width:250px">Úloha, hodnota, guľa, rozostavenie</th><th>Text SK / EN / HI</th><th style="width:250px">Šípky</th><th style="width:230px">Zvuky</th><th style="width:60px">Zmazať</th></tr></thead>
 						<tbody>
 						<?php foreach ( (array) $L['scenes'] as $si => $S ) : ?>
 							<?php $sp = $pre . '[scenes][' . $si . ']'; ?>
@@ -606,6 +609,7 @@ function mysn_admin_tutorial() {
 								<td>
 									<textarea name="<?php echo esc_attr( $sp ); ?>[text_sk]" rows="3" class="large-text" placeholder="Text po slovensky"><?php echo esc_textarea( $S['text_sk'] ); ?></textarea>
 									<textarea name="<?php echo esc_attr( $sp ); ?>[text_en]" rows="3" class="large-text" placeholder="Text in English"><?php echo esc_textarea( $S['text_en'] ); ?></textarea>
+									<textarea name="<?php echo esc_attr( $sp ); ?>[text_hi]" rows="3" class="large-text" placeholder="हिन्दी (Hindi)"><?php echo esc_textarea( $S['text_hi'] ?? '' ); ?></textarea>
 								</td>
 								<td>
 									<?php foreach ( $hints as $hk => $hn ) : ?>

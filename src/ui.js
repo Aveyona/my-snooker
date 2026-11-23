@@ -25,7 +25,7 @@ import { countryByCode } from './countries.js';
 import { _t, _pts, LANG, LANGS } from './i18n.js';
 
 /** Desatinné číslo podľa jazyka (sk čiarka, en bodka). */
-const dec = (v) => (LANG === 'en' ? String(v) : String(v).replace('.', ','));
+const dec = (v) => (LANG !== 'sk' ? String(v) : String(v).replace('.', ','));
 const cueNameOf = (id) => cueById(id).name;
 const cueStateId = (c) => c.id;
 
@@ -69,7 +69,7 @@ function noKeys(t) {
 		return t;
 	}
 	let s = t;
-	for (const [re, to] of LANG === 'en' ? TOUCH_WORDS_EN : TOUCH_WORDS) {
+	for (const [re, to] of LANG !== 'sk' ? TOUCH_WORDS_EN : TOUCH_WORDS) {
 		s = s.replace(re, to);
 	}
 	const bad = (x) => KEY_RE.test(x) || MOUSE_RE.test(x);
@@ -3024,7 +3024,7 @@ export class UI {
 						})
 						.join('');
 				body =
-					`<div class="mysn-ach-lv"><div class="mysn-ach-lvn"><span>${_t('Úroveň')}</span><b>${a.level}</b></div><div class="mysn-ach-xp"><b>${a.xp.toLocaleString(LANG === 'en' ? 'en-GB' : 'sk-SK')} XP</b><div class="mysn-ph-bar"><i style="width:${Math.round(pct * 100)}%;background:#ffd34d"></i></div><small>${_t('do {n}. úrovne ešte {x} XP', { n: a.level + 1, x: (a.next - a.xp).toLocaleString(LANG === 'en' ? 'en-GB' : 'sk-SK') })}</small></div></div>` +
+					`<div class="mysn-ach-lv"><div class="mysn-ach-lvn"><span>${_t('Úroveň')}</span><b>${a.level}</b></div><div class="mysn-ach-xp"><b>${a.xp.toLocaleString(LANG === 'en' ? 'en-GB' : LANG === 'hi' ? 'en-IN' : 'sk-SK')} XP</b><div class="mysn-ph-bar"><i style="width:${Math.round(pct * 100)}%;background:#ffd34d"></i></div><small>${_t('do {n}. úrovne ešte {x} XP', { n: a.level + 1, x: (a.next - a.xp).toLocaleString(LANG === 'en' ? 'en-GB' : LANG === 'hi' ? 'en-IN' : 'sk-SK') })}</small></div></div>` +
 					`<p class="mysn-ph-hint">${_t('Skúsenosti (XP) = všetky nahrané body. Úspechy majú stupne bronz, striebro, zlato a platina.')}</p>` +
 					`<h4>${_t('Všeobecné')}</h4><div class="mysn-ach-grid">${grid('gen')}</div>` +
 					`<h4>${_t('Špeciálne údery')}</h4><div class="mysn-ach-grid">${grid('spec')}</div>`;
@@ -3918,7 +3918,7 @@ export class UI {
 					...mirror.filter((it) => !OTHER.has(it[2].el.dataset.act)),
 					...mirror.filter((it) => OTHER.has(it[2].el.dataset.act)),
 					// 0.43.0: jazyk hry (ťuknutie stlačí tlačidlo jazyka v menu)
-					...LANGS.filter((l) => l.id !== LANG && this.langBtns && this.langBtns[l.id]).map((l) => ['web', l.id === 'en' ? 'Language: English' : 'Jazyk: Slovenčina', { el: this.langBtns[l.id] }, '']),
+					...LANGS.filter((l) => l.id !== LANG && this.langBtns && this.langBtns[l.id]).map((l) => ['web', l.id === 'en' ? 'Language: English' : l.id === 'hi' ? 'भाषा: हिन्दी' : 'Jazyk: Slovenčina', { el: this.langBtns[l.id] }, '']),
 				],
 			},
 			ctx.office

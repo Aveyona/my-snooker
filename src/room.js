@@ -1036,7 +1036,7 @@ export function buildRoomShell(scene, quality, opts = {}) {
 		g.textAlign = 'left';
 		g.fillText(_t('Úroveň {n}', { n: d.level }), 90, 225);
 		g.textAlign = 'right';
-		g.fillText(`${Number(d.xp).toLocaleString(LANG === 'en' ? 'en-GB' : 'sk-SK')} XP`, W - 90, 225);
+		g.fillText(`${Number(d.xp).toLocaleString(LANG === 'en' ? 'en-GB' : LANG === 'hi' ? 'en-IN' : 'sk-SK')} XP`, W - 90, 225);
 		const pct = Math.max(0, Math.min(1, (d.xp - d.from) / Math.max(1, d.next - d.from)));
 		g.lineWidth = 4;
 		g.strokeRect(90, 248, W - 180, 26);
@@ -1470,7 +1470,7 @@ export function buildRoomShell(scene, quality, opts = {}) {
 						txt(g, `${m.s1} : ${m.s2}`, 640, y, 46, '#ffd34d', 800);
 					} else {
 						const d = m.t ? new Date(m.t * 1000) : null;
-						txt(g, d ? d.toLocaleTimeString(LANG === 'en' ? 'en-GB' : 'sk-SK', { hour: '2-digit', minute: '2-digit' }) : '–', 640, y, 40, '#ffd34d', 700);
+						txt(g, d ? d.toLocaleTimeString(LANG === 'en' ? 'en-GB' : LANG === 'hi' ? 'en-IN' : 'sk-SK', { hour: '2-digit', minute: '2-digit' }) : '–', 640, y, 40, '#ffd34d', 700);
 					}
 				});
 				txt(g, _t('Zdroj: snooker.org'), 1240, 700, 26, '#8fa3bd', 500, 'right');

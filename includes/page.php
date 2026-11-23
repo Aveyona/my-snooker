@@ -147,6 +147,8 @@ function mysn_render( $preview ) {
 		'roomsUrl' => (string) apply_filters( 'mysn_rooms_url', '' ), // obývačka: samostatná hra My Rooms (doplnok my-rooms)
 		'camZoom'  => mysn_cam_zoom(), // graf priblíženia na guľu pravým tlačidlom (My Snooker → Kamera)
 		'camLow'   => mysn_cam_low(), // zostup kamery popri tágu (My Snooker → Kamera)
+		// 0.54.0 krajina podľa IP (My Stats): jazyk hry pri prvej návšteve – India hindčina, SK a CZ slovenčina, inak angličtina
+		'country'  => function_exists( 'my_stats_ip_to_country' ) ? (string) my_stats_ip_to_country( isset( $_SERVER['REMOTE_ADDR'] ) ? $_SERVER['REMOTE_ADDR'] : '' ) : '', // phpcs:ignore
 		'welcome'  => $user && function_exists( 'mysn_welcome_cfg' ) ? mysn_welcome_cfg( (int) $user['id'] ) : null, // 0.52.0 uvítacie okno (raz na účet)
 		'tutorial' => $user && function_exists( 'mysn_tutorial_cfg' ) ? mysn_tutorial_cfg( (int) $user['id'] ) : null, // 0.49.0 tutoriál (lekcie, scény, postup)
 		'clock'    => mysn_shot_clock(), // čas na ťah v ligovom zápase (sekundy) podľa sezóny

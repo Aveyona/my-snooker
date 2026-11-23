@@ -50,7 +50,7 @@ function mysn_league_of_rank( $rank, $total = 0 ) {
 /** Názov sezóny podľa rokov začiatku a konca (Sezóna 2026/27). */
 /** Názov sezóny pre hru v jazyku hráča (uložený je po slovensky: Sezóna 2026/27). */
 function mysn_season_out( $name ) {
-	return function_exists( 'mysn_lang' ) && 'en' === mysn_lang() ? preg_replace( '/^Sezóna /u', 'Season ', (string) $name ) : $name;
+	return function_exists( 'mysn_lang' ) && 'sk' !== mysn_lang() ? preg_replace( '/^Sezóna /u', 'hi' === mysn_lang() ? 'सीज़न ' : 'Season ', (string) $name ) : $name;
 }
 
 function mysn_season_name( $start, $end ) {

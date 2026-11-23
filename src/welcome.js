@@ -10,7 +10,7 @@ export function welcome(parent, cfg, d) {
 	if (!cfg) {
 		return null;
 	}
-	const t = (k) => (LANG === 'en' && cfg[k + '_en'] ? cfg[k + '_en'] : cfg[k + '_sk'] || '');
+	const t = (k) => cfg[k + '_' + LANG] || (LANG !== 'sk' && cfg[k + '_en']) || cfg[k + '_sk'] || '';
 	const box = document.createElement('div');
 	box.className = 'mysn-welcome';
 	const card = (act, icon, tag, title, sub, best) =>
