@@ -5706,7 +5706,10 @@ export function start(root, config = {}) {
 					online.wsend({ k: 'w-cond', c });
 				}
 			},
-			stats: (st) => office.setNotes(st),
+			stats: (st) => {
+				office.setNotes(st);
+				ui.setOnline(st && st.online != null ? st.online : null); // 0.52.2 vpravo hore
+			},
 			// obsadené miesta divákov partie, ktorú hrám alebo sledujem
 			seats: (ctx, list) => {
 				if (ctx !== seatCtxNow()) {

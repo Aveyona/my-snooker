@@ -125,6 +125,18 @@ export class UI {
 			}
 		});
 		bar.appendChild(this.stats);
+		// 0.52.2 počet hráčov online (vpravo hore, PC aj mobil); klik otvorí zoznam hráčov na výzvu
+		this.onlineEl = h('button', 'mysn-online mysn-hidden', '');
+		this.onlineEl.type = 'button';
+		this.onlineEl.title = _t('Hráči práve v hre');
+		this.onlineEl.addEventListener('click', (e) => {
+			e.stopPropagation();
+			this.opts.onAction('lobby');
+		});
+		for (const t of ['pointerdown', 'mousedown', 'touchstart']) {
+			this.onlineEl.addEventListener(t, (e) => e.stopPropagation());
+		}
+		bar.appendChild(this.onlineEl);
 		const right = h('div', 'mysn-barbtns');
 		this.btnHelp = this.button('?', 'help', _t('Ovládanie'));
 		this.btnSet = this.button(_t('Nastavenia'), 'settings');
@@ -936,6 +948,17 @@ export class UI {
 		box.appendChild(this.button(_t('Pomocník'), 'helper', _t('Nástenka s nápovedou v miestnosti, kde práve si (ako F1)')));
 		this.menuFoot.textContent = _t('V hre sa myš zachytí v okne. Esc ju uvoľní a otvorí toto menu. F1 nápoveda na nástenke, F2 stojan s tágami.');
 		this.mmRefresh();
+	}
+
+	/** Počet prihlásených hráčov v hre (null = skryť). */
+	setOnline(n) {
+		if (!this.onlineEl) {
+			return;
+		}
+		this.onlineEl.classList.toggle('mysn-hidden', n == null);
+		if (n != null) {
+			this.onlineEl.innerHTML = `<i></i>${_t('{n} online', { n })}`;
+		}
 	}
 
 	/** Mobil: obsah menu hry sa zmenil – otvorené hlavné menu ☰ sa prekreslí. */

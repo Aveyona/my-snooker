@@ -1633,4 +1633,6 @@ export default {
 	'myš mieri, ľavé drž a ťahaj = úder, pravé drž = pohľad na guľu, F1 nápoveda': 'the mouse aims, hold left and drag = shot, hold right = view the ball, F1 help',
 	'Začať tutoriál': 'Start tutorial',
 	'Rovno hrať': 'Just play',
+	'{n} online': '{n} online',
+	'Hráči práve v hre': 'Players in the game right now',
 };

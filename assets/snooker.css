@@ -1063,3 +1063,9 @@ body.mysn-page { font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans
 .mysn-wc-btns .mysn-btn { flex: 1; margin: 0; }
 .mysn-wc-go { background: #f2d48a; color: #1a1a1a; font-weight: 700; }
 @media (max-width: 520px) { .mysn-wc-grid { grid-template-columns: 1fr; } .mysn-wc-box { padding: 18px 14px; } }
+
+/* 0.52.2 počet hráčov online vpravo hore */
+.mysn-online { display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px; border-radius: 999px; border: 1px solid #ffffff2e; background: #0c0f14b3; color: #e8eefc; font-size: 13px; font-weight: 600; white-space: nowrap; cursor: pointer; pointer-events: auto; }
+.mysn-online i { width: 8px; height: 8px; border-radius: 50%; background: #3ddc6f; box-shadow: 0 0 6px #3ddc6f; }
+.mysn-online:hover { border-color: #f2d48a99; }
+@media (hover: none), (pointer: coarse) { .mysn-online { position: absolute; top: 12px; right: 12px; z-index: 5; } }
