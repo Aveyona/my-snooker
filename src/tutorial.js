@@ -34,6 +34,7 @@ export function tutorial(parent, cfg, d) {
 	}
 	const lessons = cfg.lessons;
 	const progress = cfg.progress || {};
+	const MUST = Math.max(0, Math.min(lessons.length, +cfg.must || 0)); // 0.56.0 povinné lekcie nového hráča
 	const txt = (o, k) => o[k + '_' + LANG] || (LANG !== 'sk' && o[k + '_en']) || o[k + '_sk'] || o[k + '_en'] || ''; // hindčina bez textu: po anglicky
 
 	const box = h('div', 'mysn-tut');
@@ -218,7 +219,8 @@ export function tutorial(parent, cfg, d) {
 		const lastLesson = lessons.indexOf(L) === lessons.length - 1;
 		bNext.textContent = last ? (lastLesson ? _t('Dokončiť') : _t('Pokračovať')) : _t('Ďalej');
 		bNext.hidden = !isText;
-		bSkip.hidden = isText || last;
+		bSkip.hidden = isText || last || api.must;
+		bEnd.hidden = api.must; // 0.56.0 povinné základy: bez Ukončiť a Preskočiť
 		bar.hidden = isText;
 		fill.style.width = '0%';
 		box.classList.remove('mysn-tut-ok');
@@ -266,6 +268,15 @@ export function tutorial(parent, cfg, d) {
 		if (si >= L.scenes.length) {
 			progress[L.id] = Object.assign({}, progress[L.id], { done: 1 });
 			save(true);
+			if (api.must && lessons.indexOf(L) >= MUST - 1) {
+				api.must = false; // 0.56.0: základy hotové, hráč si vyberie, čo ďalej
+				d.sound('tut-done');
+				api.stop();
+				if (d.onMust) {
+					d.onMust(lessons[MUST] ? lessons[MUST].id : '');
+				}
+				return;
+			}
 			const next = lessons[lessons.indexOf(L) + 1];
 			if (next && next.scenes && next.scenes.length) {
 				// 0.50.4: po lekcii hneď ďalšia (Dokončiť je až na poslednej)
@@ -293,7 +304,18 @@ export function tutorial(parent, cfg, d) {
 		}
 	};
 
-	api.start = (id) => {
+	/** 0.56.0: prvá nedokončená povinná lekcia nového hráča (alebo ''). */
+	api.mustNext = () => {
+		for (const l of lessons.slice(0, MUST)) {
+			if (!(progress[l.id] && progress[l.id].done)) {
+				return l.id;
+			}
+		}
+		return '';
+	};
+
+	api.start = (id, must = false) => {
+		api.must = !!must && MUST > 0;
 		const l = lessons.find((x) => x.id === id) || lessons[0];
 		if (!l || !l.scenes || !l.scenes.length) {
 			return;

@@ -1050,6 +1050,7 @@ body.mysn-page { font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans
 .mysn-wc-logo { color: #f2d48a; font-size: 26px; font-weight: 800; }
 .mysn-wc-box h2 { margin: 6px 0 4px; font-size: 19px; color: #fff; }
 .mysn-wc-lead { margin: 0 0 16px; font-size: 14px; color: #c9ccd2; line-height: 1.5; }
+.mysn-wc-must { margin: 0 0 16px; padding: 12px 14px; border-radius: 10px; background: #f2d48a1a; border: 1px solid #f2d48a55; font-size: 15px; line-height: 1.5; color: #f3f3f3; }
 .mysn-wc-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
 .mysn-wc-card { display: flex; flex-direction: column; align-items: flex-start; gap: 2px; text-align: left; padding: 10px 12px; border-radius: 10px; border: 1px solid #ffffff2e; background: #ffffff08; color: #f3f3f3; cursor: pointer; font: inherit; }
 .mysn-wc-card:hover { border-color: #f2d48a99; background: #ffffff12; }

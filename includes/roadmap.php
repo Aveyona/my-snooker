@@ -180,6 +180,7 @@ function mysn_roadmap() {
 /** Denník zmien (najnovšie hore). */
 function mysn_changelog() {
 	return array(
+		array( '0.56.0', '23. 11. 2026', 'Nový hráč: prvé 3 lekcie tutoriálu (mierenie, presné mierenie, prvý úder) sú povinné a začínajú hneď po uvítacom okne (tlačidlo Začať základy, bez Ukončiť a Preskočiť). Po základoch okno s výberom: Pokračovať v tutoriáli (odporúčané), Tréning, Hrať o skóre, Liga a priatelia. Kto základy nedokončí (zatvorí hru), pri ďalšom spustení tutoriál pokračuje sám. Platí pre hráčov registrovaných od zapnutia uvítania.' ),
 		array( '0.55.6', '23. 11. 2026', 'Tutoriál: okno so správou je vždy navrchu nad ostatnými prvkami hry a pozadie je nepriehľadné (nepresvitá scéna ani iné texty).' ),
 		array( '0.55.5', '23. 11. 2026', 'Oprava: Poslať výzvu sa neotváralo – nové Lobby (0.53.0) malo v štýloch rovnaký názov ako okno výzvy a skrývalo ho. Lobby má vlastný názov, obe okná fungujú.' ),
 		array( '0.55.4', '23. 11. 2026', 'Tutoriál na PC: Enter vždy posunie na ďalšiu scénu (Ďalej) a neotvára chat; chat sa počas celého tutoriálu otvára Shift+Enter (nápoveda pod textom scény).' ),

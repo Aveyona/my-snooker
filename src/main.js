@@ -42,7 +42,7 @@ import { takeShotData } from './integrity.js';
 import { Net } from './online.js';
 import { rememberLang, _t, _pts, LANG } from './i18n.js';
 import { tutorial } from './tutorial.js';
-import { welcome } from './welcome.js';
+import { welcome, afterBasics } from './welcome.js';
 import { lobbyUi } from './lobbyUi.js';
 
 // 0.40.1: odtlačky dôležitých funkcií pre výzvu zo servera (ešte pred spustením hry)
@@ -5111,6 +5111,20 @@ export function start(root, config = {}) {
 				ui.showMenu(true);
 			},
 			onListClose: () => ui.showMenu(true),
+			onMust: (next) =>
+				afterBasics(overlay, {
+					next,
+					online: !!online,
+					sound: (slot) => sound.tutor(slot),
+					go: (a) => {
+						if (a === 'tutorial' && next) {
+							ui.showMenu(false);
+							tut.start(next);
+						} else if (a === 'training' || a === 'solo' || a === 'league') {
+							actions[a]();
+						}
+					},
+				}),
 		});
 		ui.tutActive = () => tut.active;
 		setTimeout(() => refreshMenu(), 0); // menu s tlačidlom Tutoriál (0.53.3: patrí k tutoriálu, nie k uvítaniu)
@@ -5163,10 +5177,12 @@ export function start(root, config = {}) {
 				sound: (slot) => sound.tutor(slot),
 				seen: () =>
 					fetch(config.restUrl + 'welcome/seen', { method: 'POST', credentials: 'same-origin', headers: { 'X-WP-Nonce': (online && online.net && online.net.nonce) || config.nonce } }).catch(() => {}),
+				must: !!(tut && tut.mustNext()),
 				go: (a) => {
 					if (a === 'tutorial' && tut) {
 						ui.showMenu(false);
-						tut.start(tut.lessons[0].id);
+						const m = tut.mustNext();
+						tut.start(m || tut.lessons[0].id, !!m); // 0.56.0 novému hráčovi najprv 3 povinné lekcie
 					} else if (a === 'training' || a === 'solo' || a === 'league') {
 						actions[a]();
 					} else {
@@ -5175,6 +5191,15 @@ export function start(root, config = {}) {
 				},
 			});
 		}, 1200);
+	}
+	// 0.56.0 nový hráč, ktorý nedokončil povinné základy (napr. obnovil stránku): tutoriál pokračuje sám
+	if (user && !config.welcome && tut && tut.mustNext()) {
+		setTimeout(() => {
+			if (!tut.active && !game.match && !game.spectating) {
+				ui.showMenu(false);
+				tut.start(tut.mustNext(), true);
+			}
+		}, 1500);
 	}
 	// chat v hre (miestnosť Snooker z My Chat): Enter píše, správy vľavo
 	const chat = gameChat(overlay, config.chat ? Object.assign({ nonce: config.nonce }, config.chat) : null, {

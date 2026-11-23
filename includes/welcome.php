@@ -33,6 +33,12 @@ function mysn_welcome_texts() {
 }
 
 /** Konfigurácia pre hru: null = neukazovať. */
+/** 0.56.0: nový hráč (registrovaný od zapnutia uvítania, alebo admin v teste) – prvé lekcie tutoriálu sú povinné. */
+function mysn_welcome_is_new( $uid ) {
+	$u = $uid ? get_userdata( $uid ) : null;
+	return $u && ( (int) get_option( 'mysn_welcome_test', 0 ) === (int) $uid || strtotime( $u->user_registered . ' UTC' ) >= mysn_welcome_since() );
+}
+
 function mysn_welcome_cfg( $uid ) {
 	$w = mysn_welcome_texts();
 	if ( ! $uid || empty( $w['on'] ) || get_user_meta( $uid, 'mysn_welcomed', true ) ) {

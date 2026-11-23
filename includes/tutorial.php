@@ -402,9 +402,21 @@ function mysn_tutorial_cfg( $uid ) {
 		return null;
 	}
 	$prog = get_user_meta( $uid, 'mysn_tut', true );
+	$prog = is_array( $prog ) ? $prog : array();
+	$les  = mysn_tut_voice_urls( mysn_tutorial() );
+	// 0.56.0: novému hráčovi sú prvé 3 lekcie povinné (hneď po uvítaní), potom si vyberie
+	$must = 0;
+	if ( function_exists( 'mysn_welcome_is_new' ) && mysn_welcome_is_new( $uid ) ) {
+		foreach ( array_slice( $les, 0, 3 ) as $l ) {
+			if ( empty( $prog[ $l['id'] ]['done'] ) ) {
+				$must = min( 3, count( $les ) );
+			}
+		}
+	}
 	return array(
-		'lessons'  => mysn_tut_voice_urls( mysn_tutorial() ),
-		'progress' => is_array( $prog ) ? $prog : array(),
+		'lessons'  => $les,
+		'progress' => $prog,
+		'must'     => $must,
 	);
 }
 
