@@ -5078,6 +5078,26 @@ export function start(root, config = {}) {
 					actions[k]();
 				}
 			},
+			// 0.59.4 tlačidlo v tutoriáli: späť z predmetu (ako Esc)
+			objBack: () => {
+				if (ui.toolsOpen()) {
+					actions.tools();
+				} else if (ui.roomMapOpen()) {
+					actions.roomMap();
+				} else if (view === 'office') {
+					if (officeMode === 'cues') {
+						actions.myCues();
+					} else if (officeMode) {
+						officeMode = '';
+						officeRefresh();
+						actions.officeLook();
+					} else if (officeFocusNow) {
+						actions.officeFocus(officeFocusNow);
+					}
+				} else if (view) {
+					leaveView();
+				}
+			},
 			goOffice: () => {
 				if (view !== 'office') {
 					actions.league();

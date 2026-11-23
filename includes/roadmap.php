@@ -180,6 +180,7 @@ function mysn_roadmap() {
 /** Denník zmien (najnovšie hore). */
 function mysn_changelog() {
 	return array(
+		array( '0.59.4', '23. 11. 2026', 'Tutoriál: v scénach, ktoré spomínajú predmet, je tlačidlo skoku – ➜ Otvoriť: stojan s tágami, príslušenstvo, rádio, tabuľky líg, vizitka… (otvorí predmet ako jeho kláves) a pri návrate ↩ Späť (ako Esc). Platí pre všetky lekcie herne a kancelárie; preložené do angličtiny a hindčiny.' ),
 		array( '0.59.3', '23. 11. 2026', 'Admin My Snooker → Hráči: tabuľka sa zmestí celá na šírku stránky – 9 stĺpcov namiesto 13, údaje v bunke na dvoch riadkoch (meno a e-mail s prezývkou, ELO a počet zápasov, body a výhry : prehry, výhry % a partie, úroveň a XP, dátum a čas, rola a zákaz ligy); zoraďovanie podľa stĺpcov ostáva.' ),
 		array( '0.59.2', '23. 11. 2026', 'Notebook v kancelárii (F7): pri zozname zápasov je myš stále voľná, dá sa klikať na zápasy a pohľad sa za myšou neotáča (aj klik do scény ju nezachytí). Preklad: na obrazovke notebooku a vizitke miesto a body, v zozname zápasov Prehra, Vzdal som a Prebieha.' ),
 		array( '0.59.1', '23. 11. 2026', 'Po prihlásení z hry (e-mail, Google, Facebook) sa hráč vráti rovno do hry k stolu na tréning (menu sa zavrie); nový hráč pri prvom prihlásení dostane uvítanie a povinné základy tutoriálu. Spolu s My Users 1.8.1: návrat do hry má prednosť pred nastavením Po prihlásení (predtým mohol skončiť na stránke Môj e-shop).' ),

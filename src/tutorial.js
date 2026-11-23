@@ -47,10 +47,11 @@ export function tutorial(parent, cfg, d) {
 	const bNext = h('button', 'mysn-btn mysn-tut-next', _t('Ďalej'));
 	const bSkip = h('button', 'mysn-btn', _t('Preskočiť'));
 	const bEnd = h('button', 'mysn-btn', _t('Ukončiť'));
-	for (const b of [bNext, bSkip, bEnd]) {
+	const bGo = h('button', 'mysn-btn mysn-tut-go', ''); // 0.59.4: skok na predmet zo scény (Otvoriť …) alebo späť k stolu
+	for (const b of [bNext, bSkip, bEnd, bGo]) {
 		b.type = 'button';
 	}
-	btns.append(bNext, bSkip, bEnd);
+	btns.append(bGo, bNext, bSkip, bEnd);
 	const foot = h('div', 'mysn-tut-foot');
 	const msg = h('div', 'mysn-tut-msg');
 	msg.hidden = true;
@@ -218,6 +219,13 @@ export function tutorial(parent, cfg, d) {
 		const last = si === L.scenes.length - 1;
 		const lastLesson = lessons.indexOf(L) === lessons.length - 1;
 		bNext.textContent = last ? (lastLesson ? _t('Dokončiť') : _t('Pokračovať')) : _t('Ďalej');
+		// 0.59.4: tlačidlo skoku – úloha otvoriť predmet (Otvoriť: stojan…), vrátiť sa (Späť k stolu), text s predmetom (Ukázať)
+		const OBJ = {
+			board: _t('nástenka'), rack: _t('stojan s tágami'), tools: _t('príslušenstvo'), score: _t('tabuľa so skóre'), chair: _t('kreslo'), trophies: _t('rebríček'), mixer: _t('rádio'), bar: _t('bar'), roommap: _t('mapa miestností'),
+			o_help: _t('nástenka'), o_cues: _t('moje tágá'), o_calendar: _t('kalendár'), o_results: _t('tabuľky líg'), o_notebook: _t('notebook'), o_card: _t('vizitka'), o_map: _t('mapa hráčov'),
+		};
+		bGo.hidden = !(S.type === 'back' || (S.type === 'open' && S.obj && OBJ[S.obj]) || (isText && S.obj && OBJ[S.obj]));
+		bGo.textContent = S.type === 'back' ? '↩ ' + _t('Späť') : '➜ ' + _t('Otvoriť: {o}', { o: OBJ[S.obj] || '' });
 		bNext.hidden = !isText;
 		bSkip.hidden = isText || last || api.must;
 		bEnd.hidden = api.must; // 0.56.0 povinné základy: bez Ukončiť a Preskočiť
@@ -551,6 +559,18 @@ export function tutorial(parent, cfg, d) {
 	bNext.addEventListener('click', (e) => {
 		e.stopPropagation();
 		go(si + 1);
+	});
+	bGo.addEventListener('click', (e) => {
+		e.stopPropagation();
+		const S = L && L.scenes[si];
+		if (!S) {
+			return;
+		}
+		if (S.type === 'back') {
+			d.objBack();
+		} else if (S.obj) {
+			d.objShow(S.obj);
+		}
 	});
 	bSkip.addEventListener('click', (e) => {
 		e.stopPropagation();
