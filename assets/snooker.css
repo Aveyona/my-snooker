@@ -1035,6 +1035,7 @@ body.mysn-page { font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans
 .mysn-tut-g-tools .mysn-tools-toggle { outline: 3px solid #f2d48a; outline-offset: 3px; animation: mysn-tut-ring 1.2s ease-out infinite; }
 .mysn-tut-g-cue .mysn-spin-cue { animation: mysn-tut-glowf 1.2s ease-in-out infinite; }
 @keyframes mysn-tut-glowf { 0%, 100% { filter: drop-shadow(0 0 0 #f2d48a); } 50% { filter: drop-shadow(0 0 8px #f2d48a) drop-shadow(0 0 3px #f2d48a); } }
+.mysn-tut-tip { margin-top: 6px; font-size: 13px; color: #9fe3ff; }
 .mysn-tut-msg { margin-top: 6px; font-size: 14px; color: #ffcf6a; font-weight: 600; }
 @keyframes mysn-tut-ring { 0% { box-shadow: 0 0 0 0 #f2d48acc; } 100% { box-shadow: 0 0 0 18px #f2d48a00; } }
 @keyframes mysn-tut-pulse { 0%, 100% { scale: 1; } 50% { scale: 1.12; } }

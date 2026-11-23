@@ -53,7 +53,9 @@ export function tutorial(parent, cfg, d) {
 	const foot = h('div', 'mysn-tut-foot');
 	const msg = h('div', 'mysn-tut-msg');
 	msg.hidden = true;
-	box.append(head, body, msg, bar, btns, foot);
+	const tip = h('div', 'mysn-tut-tip');
+	tip.hidden = true;
+	box.append(head, body, msg, tip, bar, btns, foot);
 	const hints = h('div', 'mysn-tut-hints');
 	parent.append(hints, box);
 
@@ -223,11 +225,12 @@ export function tutorial(parent, cfg, d) {
 		}
 		setup(S);
 		msg.hidden = true;
+		tip.hidden = true;
 		if (S.type === 'chalk') {
 			d.chalkZero();
 		}
 		snap = { balls: snapshot(d.game.balls), dir: d.game.dir, state: d.game.state };
-		st = { run: 0, cush: 0, hit: null, from: null, placed: false, failT: 0, eyeT: 0, eyeA: 0, d0: d.game.dir, prev: d.game.dir, acc: 0, lo: 0, hi: 0, pull: 0, shot: false };
+		st = { strong: 0, run: 0, cush: 0, hit: null, from: null, placed: false, failT: 0, eyeT: 0, eyeA: 0, d0: d.game.dir, prev: d.game.dir, acc: 0, lo: 0, hi: 0, pull: 0, shot: false };
 		doneT = 0;
 		if (S.snd_in) {
 			d.sound(S.snd_in);
@@ -399,6 +402,14 @@ export function tutorial(parent, cfg, d) {
 				const dist = Math.hypot(c.x - st.from.x, c.z - st.from.z) * 100;
 				ok = st.cush === 0 && dist >= par;
 				why = st.cush ? _t('Biela sa dotkla mantinelu.') : _t('Biela prešla len {n} cm.', { n: Math.round(dist) });
+				if (st.cush && ++st.strong >= 2) {
+					// 0.50.3: slabý úder viackrát nevyšiel (príliš silno) – tip na citlivosť ťahania tága
+					tip.textContent = d.touchUI()
+						? _t('Tip: sila pribúda príliš rýchlo? Ťukni na šípku ▲ dole a zníž Ťahanie tága.')
+						: _t('Tip: sila pribúda príliš rýchlo? Drž Ctrl a zníž Ťahanie tága.');
+					tip.hidden = false;
+					glow([...(S.hints || []), 'g_tools']);
+				}
 			} else if (S.type === 'cushion') {
 				ok = st.cush >= Math.max(1, par);
 				why = _t('Biela netrafila mantinel.');
