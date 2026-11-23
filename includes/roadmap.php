@@ -180,6 +180,7 @@ function mysn_roadmap() {
 /** Denník zmien (najnovšie hore). */
 function mysn_changelog() {
 	return array(
+		array( '0.48.1', '23. 11. 2026', 'SEO: obrázok pre Facebook, Twitter a vyhľadávače je na doméne hry (mysnooker.in), nie na hedlajner.sk.' ),
 		array( '0.48.0', '23. 11. 2026', 'SEO pre novú doménu mysnooker.in po anglicky: titulok a popis stránky, Open Graph a Twitter karta s novým obrázkom (assets/og-image.jpg, 1200×630), štruktúrované údaje VideoGame (JSON-LD), text pre prehliadače bez JavaScriptu, manifest na pridanie hry na plochu mobilu (/manifest.webmanifest, celá obrazovka). robots.txt a sitemap.xml idú na novú doménu.' ),
 		array( '0.47.7', '23. 11. 2026', 'Nápisy v hre (tabuľa a obrazovka v herni) ukazujú novú adresu mysnooker.in namiesto snooker.hedlajner.sk.' ),
 		array( '0.47.6', '23. 11. 2026', 'Náhľad zásahu sa už neposúva, keď sa mení dĺžka textu s uhlom a hrúbkou (text je pod kruhom mimo jeho rozloženia, čísla rovnako široké; vpravo zarovnaný doprava). Telefón na výšku: tlačidlo oka je kúsok vyššie a viac vľavo.' ),

@@ -96,6 +96,7 @@ function mysn_render( $preview ) {
 	$title = 'My Snooker – Free 3D Online Snooker Game in Your Browser';
 	$desc  = 'Play realistic 3D snooker online for free, right in your browser on PC and mobile. Practise, chase the high score, challenge friends and compete in the online league – no download.';
 	$icon  = get_site_icon_url( 192 );
+	$og    = mysn_url() . ltrim( wp_make_link_relative( MYSN_URL . 'assets/og-image.jpg' ), '/' ); // obrázok na doméne hry (mysnooker.in)
 	$main  = mysn_main_url() . '/';
 	$game  = $preview ? $main . ltrim( mysn_preview_path(), '/' ) : mysn_url();
 	$user  = null;
@@ -168,14 +169,14 @@ function mysn_render( $preview ) {
 <meta property="og:title" content="<?php echo esc_attr( $title ); ?>">
 <meta property="og:description" content="<?php echo esc_attr( $desc ); ?>">
 <meta property="og:url" content="<?php echo esc_url( mysn_url() ); ?>">
-<meta property="og:image" content="<?php echo esc_url( MYSN_URL . 'assets/og-image.jpg' ); ?>">
+<meta property="og:image" content="<?php echo esc_url( $og ); ?>">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
 <meta property="og:image:alt" content="My Snooker – 3D snooker table in the club room">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="<?php echo esc_attr( $title ); ?>">
 <meta name="twitter:description" content="<?php echo esc_attr( $desc ); ?>">
-<meta name="twitter:image" content="<?php echo esc_url( MYSN_URL . 'assets/og-image.jpg' ); ?>">
+<meta name="twitter:image" content="<?php echo esc_url( $og ); ?>">
 <meta name="application-name" content="My Snooker">
 <meta name="apple-mobile-web-app-title" content="My Snooker">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -190,7 +191,7 @@ echo wp_json_encode(
 		'name'                => 'My Snooker',
 		'url'                 => mysn_url(),
 		'description'         => $desc,
-		'image'               => MYSN_URL . 'assets/og-image.jpg',
+		'image'               => $og,
 		'genre'               => array( 'Sports', 'Snooker', 'Billiards' ),
 		'gamePlatform'        => array( 'Web browser', 'PC', 'Mobile' ),
 		'applicationCategory' => 'Game',
