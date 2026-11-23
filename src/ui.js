@@ -3980,10 +3980,7 @@ export class UI {
 				// položky menu hry (podľa stavu: Tréning, Hrať, Liga, Poslať výzvu, Pozerať hru, Účet…); ťuknutie
 				// stlačí pôvodné tlačidlo, takže robí presne to isté ako na desktope
 				items: [['set', _t('Nastavenia'), { a: 'settings' }, '#ff6b6b'],
-					// príslušenstvo (krieda, nádstavce, predĺženie) len pri stole: inak sivé s textom len pri stole
-					...(ctx.office ? [] : [
-						['chalk', ctx.table ? _t('Príslušenstvo') : _t('Príslušenstvo · len pri stole'), { a: 'tools', grey: !ctx.table }, ctx.table ? '#ffd34d' : '#8a8f98'],
-					]),
+					// 0.60.2: Príslušenstvo v menu nie je – otvára sa modrým štvorčekom vľavo pri stole
 					...mirror.filter((it) => !OTHER.has(it[2].el.dataset.act)),
 					...mirror.filter((it) => OTHER.has(it[2].el.dataset.act)),
 					// 0.43.0: jazyk hry (ťuknutie stlačí tlačidlo jazyka v menu)

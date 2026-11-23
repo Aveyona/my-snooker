@@ -56,7 +56,7 @@ function mysn_tutv_old_md5() {
 		'l11|s6' => 'c4eb64fa13',
 		'l11|s8' => '40fbf18a15',
 		'l12|s1' => 'e014a9c46c',
-		'l12|s4' => 'add8102955',
+		'l12|s4' => array( 'add8102955', 'f8f50d023d' ),
 		'l12|s7' => '3f16dea936',
 		'l13|s6' => 'b36f956e70',
 		'l13|s11' => '6e49ab26fe',
@@ -77,7 +77,7 @@ function mysn_tut_fill_voice( $lessons, $def = null ) {
 	foreach ( $lessons as &$l ) {
 		foreach ( $l['scenes'] as &$s ) {
 			$k = $l['id'] . '|' . $s['id'];
-			if ( isset( $old[ $k ], $new[ $k ] ) && substr( md5( (string) $s['text_sk'] ), 0, 10 ) === $old[ $k ] ) {
+			if ( isset( $old[ $k ], $new[ $k ] ) && in_array( substr( md5( (string) $s['text_sk'] ), 0, 10 ), (array) $old[ $k ], true ) ) {
 				$s['text_sk'] = $new[ $k ]['text_sk'];
 				$s['text_en'] = $new[ $k ]['text_en'];
 				$s['text_hi'] = '';
