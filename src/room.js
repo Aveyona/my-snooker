@@ -1417,7 +1417,7 @@ export function buildRoomShell(scene, quality, opts = {}) {
 				BALLS.forEach((col, i) => ball(g, 220 + i * 140, 520, 46, col));
 				txt(g, 'My Snooker', 640, 260, 150, '#ffd34d', 800);
 				txt(g, _t('3D snooker v prehliadači · PC aj mobil'), 640, 345, 46, '#e8eefc', 500);
-				txt(g, 'snooker.hedlajner.sk', 640, 660, 44, '#7fb6ff', 600);
+				txt(g, 'mysnooker.in', 640, 660, 44, '#7fb6ff', 600);
 			},
 			(g) => {
 				// liga: denne od 15:00 UTC 4 hodiny (src/leagueTime.js), prepočet na miestny čas hráča

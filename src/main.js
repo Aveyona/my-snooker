@@ -1957,7 +1957,7 @@ export function start(root, config = {}) {
 			g.fillText(o.text, W / 2, H / 2 - 20, W - 60);
 			g.fillStyle = '#0a1a44';
 			g.font = '700 26px Arial, sans-serif';
-			g.fillText(o.text === 'HEDLAJNER' ? 'hedlajner.sk' : 'snooker.hedlajner.sk', W / 2, H - 20);
+			g.fillText(o.text === 'HEDLAJNER' ? 'hedlajner.sk' : 'mysnooker.in', W / 2, H - 20);
 		} else {
 			const { names, scores, turn } = o.sc;
 			g.fillStyle = '#FACC15';
