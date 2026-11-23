@@ -208,7 +208,8 @@ export function tutorial(parent, cfg, d) {
 		body.textContent = txt(S, 'text');
 		const isText = S.type === 'text';
 		const last = si === L.scenes.length - 1;
-		bNext.textContent = last ? _t('Dokončiť') : _t('Ďalej');
+		const lastLesson = lessons.indexOf(L) === lessons.length - 1;
+		bNext.textContent = last ? (lastLesson ? _t('Dokončiť') : _t('Pokračovať')) : _t('Ďalej');
 		bNext.hidden = !isText;
 		bSkip.hidden = isText || last;
 		bar.hidden = isText;
@@ -245,6 +246,14 @@ export function tutorial(parent, cfg, d) {
 		if (si >= L.scenes.length) {
 			progress[L.id] = Object.assign({}, progress[L.id], { done: 1 });
 			save(true);
+			const next = lessons[lessons.indexOf(L) + 1];
+			if (next && next.scenes && next.scenes.length) {
+				// 0.50.4: po lekcii hneď ďalšia (Dokončiť je až na poslednej)
+				L = next;
+				d.onStart();
+				go(0);
+				return;
+			}
 			api.stop();
 			return;
 		}
@@ -377,6 +386,9 @@ export function tutorial(parent, cfg, d) {
 
 	/** Udalosti hry: úder, položenie bielej, vyhodnotenie úderu. */
 	d.game.on((type, data) => {
+		if (api.active && type === 'settle') {
+			d.game.message = ''; // hlásenia tréningu (napr. „Stôl je čistý“) sa v tutoriáli neukazujú
+		}
 		if (!api.active || !L || !st || doneT > 0) {
 			return;
 		}
@@ -384,7 +396,8 @@ export function tutorial(parent, cfg, d) {
 		const g = d.game;
 		if (type === 'placed') {
 			st.placed = true;
-		} else if (type === 'shot') {
+		}
+		if (type === 'shot') {
 			st.cush = 0;
 			st.hit = null;
 			st.from = { x: g.cue.p.x, z: g.cue.p.z, dir: g.dir };
