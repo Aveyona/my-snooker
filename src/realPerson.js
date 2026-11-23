@@ -90,6 +90,10 @@ function loadModel(dir, name, done) {
 	}
 	const pre = base.path + 'models/' + dir + '/';
 	const url = (n) => pre + n + base.q;
+	// 0.46.0: indické postavy (indN) majú vlastné farebné textúry, model a normálové mapy berú z divakN
+	const mdir = MODEL_OF[dir] || dir;
+	const mpre = base.path + 'models/' + mdir + '/';
+	const murl = (n) => mpre + n + base.q;
 	if (!cache.has(dir)) {
 		cache.set(
 			dir,
@@ -113,14 +117,14 @@ function loadModel(dir, name, done) {
 				};
 				const getN = (n) => {
 					if (!T[n]) {
-						T[n] = texLoader.load(url(n)); // normálová mapa (lineárne farby)
+						T[n] = texLoader.load(murl(n)); // normálová mapa (lineárne farby)
 					}
 					return T[n];
 				};
 				const mgr = new THREE.LoadingManager();
-				mgr.setURLModifier((u) => (/\.(tga|png|jpg)$/i.test(u) && !u.startsWith(pre) ? 'data:,' : u)); // textúry z FBX (cesty z 3ds Max) nie
+				mgr.setURLModifier((u) => (/\.(tga|png|jpg)$/i.test(u) && !u.startsWith(pre) && !u.startsWith(mpre) ? 'data:,' : u)); // textúry z FBX (cesty z 3ds Max) nie
 				new FBXLoader(mgr).load(
-					url(name + '.fbx'),
+					murl(name + '.fbx'),
 					(fbx) => {
 						// 0.38.8: model z 3ds Max má v sebe okolité svetlo (AmbientLight) – každá postava by presvetlila celú scénu
 						const lights = [];
@@ -858,4 +862,7 @@ export function rudoExtras(holder, t, fbx) {
 }
 
 /** Modely divákov (assets/models/divak1 – divak10: päť mužov, päť žien). */
+/** 0.46.0 Indické postavy pre Uličku (tools/indianize.py): textúry v indN, model z divakN. */
+export const MODEL_OF = { ind1: 'divak1', ind2: 'divak2', ind3: 'divak3', ind4: 'divak4', ind5: 'divak5', ind6: 'divak6', ind7: 'divak7', ind8: 'divak8', ind9: 'divak9', ind10: 'divak10' };
+export const INDIANS = Object.keys(MODEL_OF);
 export const SPECTATORS = ['divak1', 'divak2', 'divak3', 'divak4', 'divak5', 'divak6', 'divak7', 'divak8', 'divak9', 'divak10'];

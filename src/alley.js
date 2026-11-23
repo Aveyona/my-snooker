@@ -7,7 +7,7 @@
  */
 import * as THREE from 'three';
 import { buildFan, updateFans } from './fans.js';
-import { realFan, SPECTATORS } from './realPerson.js';
+import { realFan } from './realPerson.js';
 
 const FY = -0.815; // zem (rovnako ako podlaha v herni)
 const AZ = 3.3; // polovica šírky uličky (fasády domov)
@@ -1256,42 +1256,45 @@ function buildStars(root) {
  * a okoloidúci. Postavy sú tie isté ako diváci v herni (realistické modely, ak sú zapnuté), hlavou sledujú
  * bielu guľu. [x, z, otočenie, sedí, výška podlahy nad zemou]
  */
-const IN_SKINS = [0x8d5b3e, 0xa8714f, 0xc78e66, 0x7a4a2e, 0xb07a52];
+const IN_SKINS = [0x8d5b3e, 0xa8714f, 0x96644a, 0x7a4a2e, 0xb07a52];
 const IN_CLOTH = [0xf2efe6, 0xd9c7a0, 0x8b2c2c, 0x2f5d8a, 0xc9a227, 0x6b8e4e, 0xa0522d, 0x5c4b8a, 0xd2691e, 0x4a4a4a];
 function buildPeople(root) {
 	const toTable = (x, z) => Math.atan2(-x, -z); // tvárou k stolu
 	const P = [
 		// pri čajovni: dvaja na lavičke, predavač za pultom
-		[4.05, -AZ + 0.4, 0, true, 0.475],
-		[4.6, -AZ + 0.4, 0, true, 0.475],
-		[2.9, -AZ - 0.75, 0, false, 0.04],
+		[4.05, -AZ + 0.4, 0, true, 0.475, 'f'],
+		[4.6, -AZ + 0.4, 0, true, 0.475, 'm'],
+		[2.9, -AZ - 0.75, 0, false, 0.04, 'm'],
 		// paan shop: predavač na vyvýšenej podlahe
-		[3.5, AZ + 0.6, Math.PI, false, 0.5],
+		[3.5, AZ + 0.6, Math.PI, false, 0.5, 'm'],
 		// cukráreň: kuchár pri kadhai
-		[-12.6, -AZ - 0.35, 0, false, 0.04],
+		[-12.6, -AZ - 0.35, 0, false, 0.04, 'm'],
 		// pani puri: predavač a dvaja zákazníci
-		[-7.05, -AZ + 0.75, -Math.PI / 2, false, 0],
-		[-8.1, -AZ + 1.65, Math.PI, false, 0],
-		[-8.75, -AZ + 1.55, Math.PI - 0.5, false, 0],
+		[-7.05, -AZ + 0.75, -Math.PI / 2, false, 0, 'm'],
+		[-8.1, -AZ + 1.65, Math.PI, false, 0, 'f'],
+		[-8.75, -AZ + 1.55, Math.PI - 0.5, false, 0, 'm'],
 		// ovocie a náramky
-		[-5.9, AZ - 0.7, -Math.PI / 2, false, 0],
-		[-10.4, AZ - 1.65, 0, false, 0],
-		[-11.1, AZ - 1.5, 0.4, false, 0],
+		[-5.9, AZ - 0.7, -Math.PI / 2, false, 0, 'm'],
+		[-10.4, AZ - 1.65, 0, false, 0, 'f'],
+		[-11.1, AZ - 1.5, 0.4, false, 0, 'f'],
 		// kvety
-		[8.6, -AZ + 0.2, 0, false, 0],
+		[8.6, -AZ + 0.2, 0, false, 0, 'f'],
 		// okoloidúci a čumiliaci, čo sa pozerajú na hru
-		[-5.6, 1.6, toTable(-5.6, 1.6), false, 0],
-		[6.2, 2.3, toTable(6.2, 2.3), false, 0],
-		[6.6, -1.4, toTable(6.6, -1.4), false, 0],
-		[14.2, 1.0, -2.2, false, 0],
-		[14.8, 0.3, 1.0, false, 0],
-		[19, 8, Math.PI, false, 0],
-		[-19.5, 7, 0.3, false, 0],
+		[-5.6, 1.6, toTable(-5.6, 1.6), false, 0, 'm'],
+		[6.2, 2.3, toTable(6.2, 2.3), false, 0, 'm'],
+		[6.6, -1.4, toTable(6.6, -1.4), false, 0, 'f'],
+		[14.2, 1.0, -2.2, false, 0, 'm'],
+		[14.8, 0.3, 1.0, false, 0, 'f'],
+		[19, 8, Math.PI, false, 0, 'm'],
+		[-19.5, 7, 0.3, false, 0, 'f'],
 	];
 	const fans = [];
-	P.forEach(([x, z, rot, sit, y], i) => {
+	// indické postavy (0.46.0): muži ind1, 3, 5, 7, 9, ženy ind2, 4, 6, 8, 10, striedajú sa
+	const nx = { m: 0, f: 0 };
+	P.forEach(([x, z, rot, sit, y, sex], i) => {
 		const fan = buildFan({ skin: IN_SKINS[i % IN_SKINS.length], shirt: IN_CLOTH[(i * 3) % IN_CLOTH.length], hair: 0x111111 }, !sit, i * 0.83);
-		fan.real = realFan(fan, SPECTATORS[(i * 7 + 3) % SPECTATORS.length]);
+		const k = nx[sex]++ % 5;
+		fan.real = realFan(fan, 'ind' + (sex === 'f' ? 2 + k * 2 : 1 + k * 2));
 		fan.f.position.set(x, FY + y, z);
 		fan.f.rotation.y = rot;
 		root.add(fan.f);
