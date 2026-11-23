@@ -244,6 +244,9 @@ export function tutorial(parent, cfg, d) {
 
 	const go = (i) => {
 		si = i;
+		if (i === 0 && L) {
+			save(false); // 0.50.7: začatá lekcia (štatistika tutoriálu v My Stats)
+		}
 		if (si >= L.scenes.length) {
 			progress[L.id] = Object.assign({}, progress[L.id], { done: 1 });
 			save(true);
