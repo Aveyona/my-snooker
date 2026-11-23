@@ -4987,6 +4987,61 @@ export function start(root, config = {}) {
 			rig,
 			root,
 			state: () => ({ chalk, lift: liftDeg }),
+			// 0.51.0: predmety herne a kancelárie (lekcie 11 až 14): je otvorený? a otvorenie (scéna s textom)
+			objOpen: (k) => {
+				if (k === 'tools') {
+					return ui.toolsOpen();
+				}
+				if (k === 'roommap') {
+					return ui.roomMapOpen();
+				}
+				if (k === 'back') {
+					return view === 'office' ? !officeFocusNow && !officeMode : !view && !ui.toolsOpen() && !ui.roomMapOpen();
+				}
+				if (k === 'o_cues') {
+					return view === 'office' && officeMode === 'cues';
+				}
+				if (k === 'o_card') {
+					return view === 'office' && (officeMode === 'card' || officeMode === 'edit');
+				}
+				if (k.startsWith('o_')) {
+					return view === 'office' && officeFocusNow === k.slice(2);
+				}
+				return view === k;
+			},
+			objShow: (k) => {
+				if (k === 'o_cues') {
+					if (officeMode !== 'cues') {
+						actions.myCues();
+					}
+				} else if (k === 'o_card') {
+					actions.officeCard();
+				} else if (k.startsWith('o_')) {
+					if (view === 'office' && officeFocusNow !== k.slice(2)) {
+						actions.officeFocus(k.slice(2));
+					}
+				} else if (k === 'tools' || k === 'roommap') {
+					if (!(k === 'tools' ? ui.toolsOpen() : ui.roomMapOpen())) {
+						actions[k === 'tools' ? 'tools' : 'roomMap']();
+					}
+				} else if (view !== k && actions[k]) {
+					actions[k]();
+				}
+			},
+			goOffice: () => {
+				if (view !== 'office') {
+					actions.league();
+				}
+			},
+			goHome: () => {
+				if (view === 'office') {
+					officeMode = '';
+					officeFocusNow = '';
+					exitView();
+				} else if (view && view !== 'office') {
+					leaveView();
+				}
+			},
 			chalkZero: () => {
 				chalk = 0;
 				ui.setChalk(0);
@@ -5007,6 +5062,11 @@ export function start(root, config = {}) {
 					.then((r) => r.json())
 					.then((r) => r && r.progress),
 			onStart: () => {
+				if (view === 'office') {
+					officeMode = '';
+					officeFocusNow = '';
+					exitView();
+				}
 				game.stopSolo();
 				if (venue !== 'home') {
 					setVenue('home');
@@ -5020,6 +5080,11 @@ export function start(root, config = {}) {
 				controls.blocked = false;
 			},
 			onEnd: () => {
+				if (view === 'office') {
+					officeMode = '';
+					officeFocusNow = '';
+					exitView();
+				}
 				updateFelt();
 				if (!restoreTraining()) {
 					game.reset();

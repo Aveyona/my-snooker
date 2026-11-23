@@ -1617,4 +1617,6 @@ export default {
 	'Séria je prerušená.': 'The break is over.',
 	'Tip: sila pribúda príliš rýchlo? Ťukni na šípku ▲ dole a zníž Ťahanie tága.': 'Tip: does the power build up too fast? Tap the ▲ arrow at the bottom and lower Cue stroke.',
 	'Tip: sila pribúda príliš rýchlo? Drž Ctrl a zníž Ťahanie tága.': 'Tip: does the power build up too fast? Hold Ctrl and lower Cue stroke.',
+	'Herňa a liga': 'Hall and league',
+	'Základy hry': 'Game basics',
 };

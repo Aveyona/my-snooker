@@ -884,7 +884,7 @@ export class UI {
 			this.menuMode.textContent = _t('Sledujem: {name}', { name: label });
 			const back = this.button(_t('Pokračovať v sledovaní'), 'resume');
 			back.classList.add('mysn-primary');
-			box.append(back, this.button(_t('Zmeniť miesto'), 'seatChange', _t('F6: výber miesta zhora')), this.button(_t('Prestať sledovať'), 'watchStop'), this.button(_t('Iná otvorená partia'), 'rooms'), ...(this.opts.role ? [staffBtn()] : []), this.button(_t('Nastavenia'), 'settings'), this.button(_t('Späť na web'), 'home'));
+			box.append(back, this.button(_t('Zmeniť miesto'), 'seatChange', _t('F6: výber miesta zhora')), this.button(_t('Prestať sledovať'), 'watchStop'), this.button(_t('Iná otvorená partia'), 'rooms'), ...(this.opts.role ? [staffBtn()] : []), this.button(_t('Nastavenia'), 'settings'));
 			this.menuFoot.textContent = _t('Divák pozerá zo svojho miesta: myšou sa rozhliadaš, kolieskom približuješ. F4 skóre, F6 zmena miesta.');
 			this.mmRefresh();
 			return;
@@ -934,7 +934,6 @@ export class UI {
 			box.appendChild(this.button(this.tutActive() ? _t('Ukončiť tutoriál') : _t('Tutoriál'), 'tutorial', _t('Lekcie: ako mieriť, obzerať sa a hrať (v herni na zelenom stole)')));
 		}
 		box.appendChild(this.button(_t('Pomocník'), 'helper', _t('Nástenka s nápovedou v miestnosti, kde práve si (ako F1)')));
-		box.appendChild(this.button(_t('Späť na web'), 'home'));
 		this.menuFoot.textContent = _t('V hre sa myš zachytí v okne. Esc ju uvoľní a otvorí toto menu. F1 nápoveda na nástenke, F2 stojan s tágami.');
 		this.mmRefresh();
 	}
@@ -988,8 +987,6 @@ export class UI {
 				row(_t('Najvyšší brejk'), String(d.solo.brk)) +
 				row(_t('Vlastné tágá'), `${d.cues} z 10`) +
 				`<div class="mysn-acc-links">` +
-				(d.links.account ? `<a class="mysn-btn" href="${esc(d.links.account)}" target="_blank" rel="noopener">${_t('Môj účet na webe')}</a>` : '') +
-				(d.links.shop ? `<a class="mysn-btn" href="${esc(d.links.shop)}" target="_blank" rel="noopener">${_t('Môj e-shop')}</a>` : '') +
 				`<a class="mysn-btn" href="${esc(d.links.logout)}" data-logout>${_t('Odhlásiť sa')}</a>` +
 				`</div>`;
 		}
@@ -2945,8 +2942,6 @@ export class UI {
 				`<details class="mysn-ph-card"><summary>${_t('Zmeniť heslo')}</summary><form data-f="pass"><input type="password" name="old" placeholder="${_t('Súčasné heslo')}" autocomplete="current-password"><input type="password" name="new" placeholder="${_t('Nové heslo (aspoň 8 znakov)')}" autocomplete="new-password"><input type="password" name="new2" placeholder="${_t('Nové heslo znova')}" autocomplete="new-password"><button class="mysn-btn mysn-primary">${_t('Zmeniť heslo')}</button><small>${_t('Účet len cez Google nemá heslo: nastav ho na webe.')}</small></form></details>` +
 				`<p class="mysn-ph-note"></p>` +
 				`<div class="mysn-ph-links">` +
-				(d.links.account ? `<a class="mysn-btn" href="${esc(d.links.account)}" target="_blank" rel="noopener">${_t('Môj účet na webe (súhlasy, údaje)')}</a>` : '') +
-				(d.links.shop ? `<a class="mysn-btn" href="${esc(d.links.shop)}" target="_blank" rel="noopener">${_t('Môj e-shop')}</a>` : '') +
 				`<a class="mysn-btn mysn-ph-out" href="${esc(d.links.logout)}">${_t('Odhlásiť sa')}</a></div>`;
 		} else if (tab === 'snooker') {
 			const lg = d.league;

@@ -106,11 +106,17 @@ export function tutorial(parent, cfg, d) {
 	/** Rozostavenie scény: „white -100 0; red 0 60; colours; reds; rack; white D“ (cm od stredu stola). */
 	const setup = (S) => {
 		const g = d.game;
-		const txt0 = (S.setup || '').trim();
-		if (!txt0) {
+		let items = (S.setup || '').split(/[;\n]+/).map((x) => x.trim().toLowerCase()).filter(Boolean);
+		// 0.51.0: miestnosť scény – office = kancelária, home = späť k stolu v herni
+		if (items.includes('office')) {
+			d.goOffice();
+		} else if (items.includes('home')) {
+			d.goHome();
+		}
+		items = items.filter((x) => x !== 'office' && x !== 'home');
+		if (!items.length) {
 			return;
 		}
-		const items = txt0.split(/[;\n]+/).map((x) => x.trim().toLowerCase()).filter(Boolean);
 		const fresh = createRack();
 		let inHand = false;
 		if (items.includes('rack')) {
@@ -236,6 +242,9 @@ export function tutorial(parent, cfg, d) {
 		doneT = 0;
 		if (S.snd_in) {
 			d.sound(S.snd_in);
+		}
+		if (isText && S.obj) {
+			setTimeout(() => api.active && d.objShow(S.obj), S.setup && /office/i.test(S.setup) ? 900 : 50); // ukáž predmet
 		}
 		d.capture(!isText); // PC: pri texte voľná myš na tlačidlá, pri úlohe zachytená
 	};
@@ -372,6 +381,8 @@ export function tutorial(parent, cfg, d) {
 			p = st.pull / (par / 100);
 		} else if (S.type === 'shoot') {
 			p = st.shot ? 1 : 0;
+		} else if (S.type === 'open' || S.type === 'back') {
+			p = d.objOpen(S.type === 'back' ? 'back' : S.obj || '') ? 1 : 0;
 		} else if (S.type === 'view') {
 			const m = d.rig.mode;
 			const want = +S.param || 0;
@@ -537,6 +548,9 @@ export function tutorial(parent, cfg, d) {
 		card.appendChild(h('h3', '', _t('Tutoriál')));
 		card.appendChild(h('p', '', _t('Vyber lekciu. Hrá sa v herni na zelenom stole, úlohy idú postupne.')));
 		lessons.forEach((l, i) => {
+			if (lessons.length > 10 && (i === 0 || i === 10)) {
+				card.appendChild(h('h4', 'mysn-tut-grp', i ? _t('Herňa a liga') : _t('Základy hry')));
+			}
 			const done = progress[l.id] && progress[l.id].done;
 			const b = h('button', 'mysn-btn mysn-tut-lesson', (done ? '✓ ' : '') + (i + 1) + '. ' + txt(l, 'title'));
 			b.type = 'button';

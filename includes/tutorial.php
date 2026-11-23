@@ -36,6 +36,8 @@ function mysn_tut_types() {
 		'lift'   => array( 'Zdvihnúť tágo (uhol tága)', 'najmenší uhol v °', 30 ),
 		'hit'    => array( 'Trafiť ako prvú Guľu (napríklad zo snookra, cez mantinel alebo falšou)', '', 0 ),
 		'break'  => array( 'Séria: potápať bez chyby', 'body série', 10 ),
+		'open'   => array( 'Otvoriť predmet (Predmet) – hráč ho otvorí sám', '', 0 ),
+		'back'   => array( 'Zavrieť predmet a vrátiť sa (k stolu, v kancelárii za stôl)', '', 0 ),
 	);
 }
 
@@ -57,6 +59,29 @@ function mysn_tut_hints() {
 	);
 }
 
+/** Predmety herne a kancelárie: úloha Otvoriť predmet, pri scéne Len text sa predmet ukáže sám. */
+function mysn_tut_objs() {
+	return array(
+		''           => '—',
+		'board'      => 'Herňa: nástenka s nápovedou (F1)',
+		'rack'       => 'Herňa: stojan s tágami (F2)',
+		'tools'      => 'Herňa: príslušenstvo (F3)',
+		'score'      => 'Herňa: tabuľa so skóre (F4)',
+		'chair'      => 'Herňa: kreslo s novinami (F7)',
+		'trophies'   => 'Herňa: rebríček (F8)',
+		'mixer'      => 'Herňa: rádio (F9)',
+		'bar'        => 'Herňa: bar s telefónom (F10)',
+		'roommap'    => 'Mapa miestností (M)',
+		'o_help'     => 'Kancelária: nástenka s klávesmi (F1)',
+		'o_cues'     => 'Kancelária: moje tágá do zápasu (F2)',
+		'o_calendar' => 'Kancelária: kalendár sezóny (F3)',
+		'o_results'  => 'Kancelária: tabuľky líg (F4)',
+		'o_notebook' => 'Kancelária: notebook – moje zápasy (F7)',
+		'o_card'     => 'Kancelária: červená vizitka – registrácia (F8)',
+		'o_map'      => 'Kancelária: mapa hráčov (F10)',
+	);
+}
+
 /** Guľa pre úlohy pot, stun, draw, follow, hit. */
 function mysn_tut_balls() {
 	return array(
@@ -74,8 +99,15 @@ function mysn_tut_balls() {
 
 /** Predvolený tutoriál: lekcie 1 až 10. */
 function mysn_tut_default() {
-	$sc = function ( $id, $type, $param, $sk, $en, $hints = array(), $ball = '', $setup = '', $in = 'tut-step', $ok = 'tut-ok' ) {
-		return array( 'id' => $id, 'type' => $type, 'param' => $param, 'text_sk' => $sk, 'text_en' => $en, 'hints' => $hints, 'snd_in' => $in, 'snd_ok' => 'text' === $type ? '' : $ok, 'ball' => $ball, 'setup' => $setup );
+	$sc = function ( $id, $type, $param, $sk, $en, $hints = array(), $ball = '', $setup = '', $in = 'tut-step', $ok = 'tut-ok', $obj = '' ) {
+		return array( 'id' => $id, 'type' => $type, 'param' => $param, 'text_sk' => $sk, 'text_en' => $en, 'hints' => $hints, 'snd_in' => $in, 'snd_ok' => 'text' === $type ? '' : $ok, 'ball' => $ball, 'setup' => $setup, 'obj' => $obj );
+	};
+	// prehliadka: otvoriť predmet ($t = open) alebo ho ukázať pri texte ($t = text)
+	$ob = function ( $id, $t, $obj, $sk, $en, $setup = '' ) use ( $sc ) {
+		return $sc( $id, $t, 0, $sk, $en, array(), '', $setup, 'tut-step', 'tut-ok', $obj );
+	};
+	$bk = function ( $id, $sk = 'Vráť sa: Esc alebo znova ten istý kláves.', $en = 'Go back: Esc or the same key again.' ) use ( $sc ) {
+		return $sc( $id, 'back', 0, $sk, $en );
 	};
 	$end = function ( $id, $sk, $en ) use ( $sc ) {
 		return $sc( $id, 'text', 0, $sk, $en, array(), '', '', 'tut-done' );
@@ -170,7 +202,69 @@ function mysn_tut_default() {
 				$sc( 's1', 'lift', 30, 'Uhol tága: na PC Shift a koliesko myši, na mobile ťahaj ikonku tága. Zdvihni tágo aspoň na 30°.', 'Cue elevation: on PC Shift and the mouse wheel, on mobile drag the cue icon. Raise the cue to at least 30°.', array( 'g_cue' ), '', 'white -40 0; blue -31 0; red 40 0' ),
 				$sc( 's2', 'hit', 0, 'Zdvihnuté tágo s bočnou falšou zatočí bielu (swerve, od 45° massé), silný úder zhora ju preskočí. Obíď alebo preskoč modrú a traf červenú.', 'A raised cue with side spin curves the cue ball (swerve, massé from 45°), a hard downward shot makes it jump. Go round or over the blue and hit the red.', array( 'g_cue', 'g_spin' ), 'red', 'white -40 0; blue -31 0; red 40 0' ),
 				$sc( 's3', 'break', 3, 'Séria: potop 3 gule po sebe bez chyby. Šesť červených leží blízko jamiek – vyber si ľahkú, zamier podľa šípky na guli a udri stredne silno. Keď sa netrafíš, séria začne znova.', 'Break: pot 3 balls in a row without a miss. Six reds lie close to the pockets – pick an easy one, aim by the arrow on the ball and hit with medium power. If you miss, the break starts again.', array(), '', 'white 40 0; red 0 70; red 0 -70; red 150 70; red 150 -65; red -120 65; red -120 -65' ),
-				$end( 's4', 'V skutočnej sérii striedaš červenú a farbu a falšou si pripravuješ bielu na ďalšiu guľu. Gratulujeme, tutoriál je hotový! Teraz skús Hrať o skóre, zahraj si s priateľom alebo sa prihlás do Ligy.', 'In a real break you alternate red and colour and use spin to set up the cue ball for the next ball. Congratulations, the tutorial is complete! Now try Play for score, play a friend or join the League.' ),
+				$end( 's4', 'V skutočnej sérii striedaš červenú a farbu a falšou si pripravuješ bielu na ďalšiu guľu. Základy máš hotové! Ďalej: herňa, výbava a liga.', 'In a real break you alternate red and colour and use spin to set up the cue ball for the next ball. You have the basics! Next: the hall, equipment and the league.' ),
+			),
+		),
+		array(
+			'id'       => 'l11',
+			'title_sk' => 'Herňa',
+			'title_en' => 'The hall',
+			'scenes'   => array(
+				$sc( 's1', 'text', 0, 'Herňa je tvoja miestnosť so stolom. Predmety v nej otvoríš klávesmi F1 až F10 alebo podržíš Ctrl a klikneš na predmet. Na mobile sú v menu ☰.', 'The hall is your room with the table. Open its objects with the keys F1 to F10, or hold Ctrl and click an object. On mobile they are in the ☰ menu.', array(), '', 'home' ),
+				$ob( 's2', 'open', 'board', 'Otvor nástenku s nápovedou: F1 (mobil: menu ☰ → Pravidlá). Na nástenke listuješ šípkami ← → alebo číslami 1 až 6.', 'Open the help board: F1 (mobile: ☰ menu → Rules). Turn the pages with ← → or the numbers 1 to 6.' ),
+				$bk( 's3' ),
+				$ob( 's4', 'open', 'score', 'Tabuľa so skóre: F4. Ukazuje body, sériu a tvoj tréning.', 'The scoreboard: F4. It shows the points, the break and your practice.' ),
+				$bk( 's5' ),
+				$ob( 's6', 'open', 'chair', 'Kreslo: F7. Sadneš si, čítaš noviny (C) a správy z RSS (V).', 'The armchair: F7. Sit down, read the newspaper (C) and the RSS news (V).' ),
+				$bk( 's7' ),
+				$ob( 's8', 'open', 'mixer', 'Rádio: F9. Šípkami ← → meníš stanicu, P pauza.', 'The radio: F9. Change the station with ← →, P pauses.' ),
+				$bk( 's8b' ),
+				$end( 's9', 'Ďalej v herni: F6 dvere (otvorené = tvoju partiu môžu sledovať iní), M mapa miestností, F8 rebríček a F10 bar s telefónom (T: účet, úspechy a skúsenosti).', 'More in the hall: F6 the door (open = others can watch your game), M the room map, F8 the leaderboard and F10 the bar with the phone (T: account, achievements and XP).' ),
+			),
+		),
+		array(
+			'id'       => 'l12',
+			'title_sk' => 'Tágo a výbava',
+			'title_en' => 'Cue and equipment',
+			'scenes'   => array(
+				$ob( 's1', 'open', 'rack', 'Stojan s tágami: F2 (alebo Ctrl a klik na stojan).', 'The cue rack: F2 (or Ctrl and click the rack).', 'home' ),
+				$sc( 's2', 'text', 0, 'V stojane je 10 tág. Šípkami ← → vyberáš, pri každom vidíš silu, dĺžku, falše a či má jemné mierenie so Shift. Z ktoréhokoľvek si spravíš vlastné tágo. Vyberieš si aj kriedu a farbu podsvietenia stojana.', 'The rack holds 10 cues. Choose with ← →; each shows its power, length, spin and whether it has fine aiming with Shift. You can make your own cue from any of them. You also pick the chalk and the colour of the rack lights.' ),
+				$bk( 's3' ),
+				$ob( 's4', 'open', 'tools', 'Príslušenstvo: F3 (na mobile ikonka vľavo).', 'Accessories: F3 (on mobile the icon on the left).' ),
+				$sc( 's5', 'text', 0, 'V príslušenstve: 1 krieda, 2 krížik, 3 a 4 pavúk na vzdialené gule, 5 nové postavenie, 6 a 7 predĺženie tága (dlhšie tágo je menej presné). Dole vľavo vidíš stav špice – opotrebuje sa a mení sa v stojane.', 'Accessories: 1 chalk, 2 cross rest, 3 and 4 spider for distant balls, 5 new rack, 6 and 7 cue extension (a longer cue is less accurate). Bottom left shows the tip condition – it wears out and is replaced in the rack.' ),
+				$bk( 's6', 'Zavri príslušenstvo: Esc alebo F3.', 'Close the accessories: Esc or F3.' ),
+				$end( 's7', 'Výborne! Ďalej: kancelária a registrácia do ligy.', 'Well done! Next: the office and league registration.' ),
+			),
+		),
+		array(
+			'id'       => 'l13',
+			'title_sk' => 'Kancelária a registrácia do ligy',
+			'title_en' => 'The office and league registration',
+			'scenes'   => array(
+				$sc( 's1', 'text', 0, 'Toto je tvoja kancelária. Prídeš sem tlačidlom Liga v menu, cez mapu miestností (M) alebo dverami z chodby. Tu sa registruješ do ligy a odtiaľto ideš na zápas.', 'This is your office. You get here with League in the menu, the room map (M) or through the door from the corridor. Here you register for the league and go to a match from here.', array(), '', 'office' ),
+				$ob( 's2', 'open', 'o_card', 'Na stole leží červená vizitka – registrácia do ligy. Otvor ju: F8 alebo Ctrl a klik. Vyplniť ju môžeš hneď alebo neskôr.', 'A red card lies on the desk – the league registration. Open it: F8 or Ctrl and click. You can fill it in now or later.' ),
+				$bk( 's3', 'Zavri vizitku: Esc.', 'Close the card: Esc.' ),
+				$ob( 's4', 'open', 'o_results', 'Tabuľky líg: F4. Sú 4 ligy, každý začína so 147 bodmi, výhra pridáva, prehra uberá.', 'The league tables: F4. There are 4 leagues, everyone starts with 147 points, a win adds and a loss takes points away.' ),
+				$bk( 's5', 'Späť za stôl: Esc alebo znova F4.', 'Back to the desk: Esc or F4 again.' ),
+				$ob( 's6', 'open', 'o_map', 'Mapa hráčov: F10. Vidíš, odkiaľ sú hráči ligy.', 'The player map: F10. See where the league players come from.' ),
+				$bk( 's7', 'Späť za stôl: Esc alebo znova F10.', 'Back to the desk: Esc or F10 again.' ),
+				$ob( 's8', 'open', 'o_cues', 'Moje tágá: F2. Vyberieš 4 tágá, ktoré si berieš na ligový zápas, a kriedu.', 'My cues: F2. Choose the 4 cues you take to a league match, and the chalk.' ),
+				$bk( 's9', 'Zavri tágá: Esc alebo znova F2.', 'Close the cues: Esc or F2 again.' ),
+				$ob( 's10', 'text', 'o_calendar', 'Kalendár (F3) ukazuje sezónu – trvá rok a na konci sa vyhlási víťaz. Lampa na stole (F12): zasvietená = si online a dá sa ťa vyzvať, zhasnutá = nie si k dispozícii.', 'The calendar (F3) shows the season – it lasts a year and ends with a champion. The desk lamp (F12): on = you are online and can be challenged, off = you are not available.' ),
+				$end( 's11', 'Výborne! Ďalej: ako sa hrá ligový zápas.', 'Well done! Next: how a league match is played.' ),
+			),
+		),
+		array(
+			'id'       => 'l14',
+			'title_sk' => 'Hranie ligy',
+			'title_en' => 'Playing the league',
+			'scenes'   => array(
+				$sc( 's1', 'text', 0, 'Zápas začneš dverami kancelárie (F9) – hra ti nájde súpera z ligy. S priateľom hráš cez Hrať s priateľom v menu alebo pozvánkou. Keď sa súper nájde, prijmeš zápas Enterom a ideš na štadión.', 'Start a match through the office door (F9) – the game finds you a league opponent. Play a friend with Play a friend in the menu or an invitation. When an opponent is found, accept with Enter and go to the stadium.', array(), '', 'office' ),
+				$sc( 's2', 'text', 0, 'Na štadióne najprv žreb kameň, papier, nožnice (1 až 3) – víťaz si vyberie, kto rozbíja. Potom sa hrá podľa pravidiel: na úder máš časový limit, hodiny vidíš hore.', 'At the stadium there is first a rock, paper, scissors draw (1 to 3) – the winner chooses who breaks. Then you play by the rules: each shot has a time limit, the clock is at the top.' ),
+				$sc( 's3', 'text', 0, 'Po súperovom fauli si vyberieš: 1 hrám ja, 2 nech hrá súper. V zápase môžeš písať do chatu partie (ikonka chatu) – chat sa uloží k zápasu. Zápas môžeš prerušiť alebo vzdať v menu.', 'After the opponent\'s foul you choose: 1 I play, 2 the opponent plays. During the match you can write in the match chat (chat icon) – it is saved with the match. You can pause or concede in the menu.' ),
+				$ob( 's4', 'text', 'o_results', 'Po zápase sa body prepíšu do tabuľky ligy. Víťaz získa body od porazeného – čím silnejší súper, tým viac.', 'After the match the points go into the league table. The winner takes points from the loser – the stronger the opponent, the more.' ),
+				$ob( 's5', 'text', 'o_notebook', 'Na notebooku (F7) sú tvoje zápasy: výsledky, prehratie partie úder po údere a chat partie.', 'The notebook (F7) holds your matches: results, a shot-by-shot replay and the match chat.' ),
+				$end( 's6', 'Gratulujeme, poznáš celú hru! Veľa šťastia v lige.', 'Congratulations, you know the whole game! Good luck in the league.' ),
 			),
 		),
 	);
@@ -385,6 +479,7 @@ function mysn_tut_save_post() {
 				'snd_ok'  => sanitize_key( $S['snd_ok'] ?? '' ),
 				'ball'    => array_key_exists( $S['ball'] ?? '', mysn_tut_balls() ) ? $S['ball'] : '',
 				'setup'   => sanitize_textarea_field( $S['setup'] ?? '' ),
+				'obj'     => array_key_exists( $S['obj'] ?? '', mysn_tut_objs() ) ? $S['obj'] : '',
 			);
 		}
 		usort(
@@ -474,8 +569,8 @@ function mysn_admin_tutorial() {
 			</tbody></table>
 			<p><b>Rozostavenie</b> sa nastaví na začiatku scény. Prázdne = stôl ostane ako je. Položky oddelené bodkočiarkou alebo novým riadkom:<br>
 			<code>white -100 0</code> guľa a poloha v cm od stredu stola (x: −178 baulk až 178 pri čiernej, z: −89 až 89); farby <code>red yellow green brown blue pink black</code>, červených môže byť viac;<br>
-			<code>white D</code> biela v ruke v D; <code>colours</code> všetky farby na spotoch; <code>reds</code> 15 červených v trojuholníku; <code>rack</code> celé nové rozostavenie (biela v D).<br>
-			Gule, ktoré v rozostavení nie sú, idú zo stola. Úlohy so strelou (jemný a silný úder, potopiť, stop, falše, trafiť) sa pri nevydarenom pokuse vrátia do rozostavenia scény a hráč skúša znova.</p>
+			<code>office</code> prejsť do kancelárie, <code>home</code> späť k stolu v herni; <code>white D</code> biela v ruke v D; <code>colours</code> všetky farby na spotoch; <code>reds</code> 15 červených v trojuholníku; <code>rack</code> celé nové rozostavenie (biela v D).<br>
+			Gule, ktoré v rozostavení nie sú, idú zo stola (len keď rozostavenie obsahuje nejakú guľu). Scéna Len text s vybraným Predmetom ho sama otvorí (prehliadka). Úlohy so strelou (jemný a silný úder, potopiť, stop, falše, trafiť) sa pri nevydarenom pokuse vrátia do rozostavenia scény a hráč skúša znova.</p>
 		</details>
 		<form method="post">
 			<?php wp_nonce_field( 'mysn_tut' ); ?>
@@ -505,6 +600,7 @@ function mysn_admin_tutorial() {
 									</select>
 									<p><label>Hodnota <input type="number" step="1" min="0" name="<?php echo esc_attr( $sp ); ?>[param]" value="<?php echo esc_attr( $S['param'] ); ?>" style="width:70px"></label></p>
 									<p><label>Guľa <select name="<?php echo esc_attr( $sp ); ?>[ball]"><?php foreach ( mysn_tut_balls() as $bk => $bn ) : ?><option value="<?php echo esc_attr( $bk ); ?>" <?php selected( $S['ball'] ?? '', $bk ); ?>><?php echo esc_html( $bn ); ?></option><?php endforeach; ?></select></label></p>
+									<p><label>Predmet <select name="<?php echo esc_attr( $sp ); ?>[obj]" style="max-width:230px"><?php foreach ( mysn_tut_objs() as $ok => $on ) : ?><option value="<?php echo esc_attr( $ok ); ?>" <?php selected( $S['obj'] ?? '', $ok ); ?>><?php echo esc_html( $on ); ?></option><?php endforeach; ?></select></label></p>
 									<p><label>Rozostavenie<br><textarea name="<?php echo esc_attr( $sp ); ?>[setup]" rows="2" style="width:100%;font-family:monospace;font-size:11px" placeholder="prázdne = stôl ostane"><?php echo esc_textarea( $S['setup'] ?? '' ); ?></textarea></label></p>
 								</td>
 								<td>
