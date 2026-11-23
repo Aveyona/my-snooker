@@ -1085,6 +1085,8 @@ body.mysn-page { font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans
 .mysn-lb-body .mysn-btn { margin: 0; width: 100%; }
 .mysn-lb-new { background: #f2d48a; color: #1a1a1a; font-weight: 700; }
 .mysn-lb-go { background: #f2d48a; color: #1a1a1a !important; font-weight: 700; }
+.mysn-lb-new:hover, .mysn-lb-go:hover, .mysn-tut-btns .mysn-tut-next:hover, .mysn-wc-go:hover { background: #ffe3a3; border-color: #fff0c8; color: #1a1a1a !important; }
+.mysn-lb-go:disabled:hover { background: #f2d48a; }
 .mysn-lb-go:disabled { opacity: .45; cursor: default; }
 .mysn-lb-item { display: grid; grid-template-columns: 1fr auto; gap: 2px 10px; text-align: left; padding: 10px 12px; border-radius: 10px; border: 1px solid #ffffff2e; background: #ffffff08; color: #f3f3f3; cursor: pointer; font: inherit; }
 .mysn-lb-item:hover { border-color: #f2d48a99; }

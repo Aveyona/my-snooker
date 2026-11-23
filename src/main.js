@@ -1797,6 +1797,7 @@ export function start(root, config = {}) {
 		}
 	};
 	radio.onChange = radioSync;
+	let tutRadio = false; // 0.57.0 tutoriál zapol rádio
 	if (settings.radio && settings.radio.on && radio.stations.length) {
 		// rádio hralo pred obnovením stránky: zapne sa pri prvom kliknutí alebo klávese (prehliadač nedovolí zvuk skôr)
 		const resume = () => {
@@ -5094,6 +5095,11 @@ export function start(root, config = {}) {
 				refreshMenu();
 				ui.showMenu(false);
 				controls.blocked = false;
+				// 0.57.0 tutoriál zapne rádio (raz za návštevu; ostane zapnuté aj po tutoriáli)
+				if (!tutRadio && !radio.on && radio.stations.length) {
+					tutRadio = true;
+					radio.play();
+				}
 			},
 			onEnd: () => {
 				if (view === 'office') {
@@ -5166,6 +5172,8 @@ export function start(root, config = {}) {
 		});
 		return lobby;
 	};
+	// 0.57.0 rádio pri otvorenom hlavnom menu (Esc) hrá tlmene ako v sude a tichšie
+	setInterval(() => radio.muffle(ui.menuOpen()), 150);
 	// 0.52.0 uvítacie okno nového hráča (raz na účet)
 	if (user && config.welcome) {
 		setTimeout(() => {

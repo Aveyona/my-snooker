@@ -3494,10 +3494,11 @@ export class UI {
 			f.className = 'mysn-form';
 			const sel = document.createElement('select');
 			sel.name = 'country';
-			sel.innerHTML = '<option value="">Vyber krajinu…</option>' + o.countries.map(([c, n]) => `<option value="${c}"${(p.country || '') === c ? ' selected' : ''}>${esc(n)}</option>`).join('');
+			const defC = p.country || (LANG === 'hi' ? 'IN' : ''); // 0.57.0 hindčina: predvolená krajina India
+			sel.innerHTML = `<option value="">${_t('Vyber krajinu…')}</option>` + o.countries.map(([c, n]) => `<option value="${c}"${defC === c ? ' selected' : ''}>${esc(n)}</option>`).join('');
 			f.append(
-				field('Krajina *', sel),
-				field('Mesto', input('city', p.city, 40, _t('napríklad Ružomberok'))),
+				field(_t('Krajina *'), sel),
+				field(_t('Mesto'), input('city', p.city, 40, _t('napríklad Ružomberok'))),
 				field(_t('Prezývka v lige'), input('nick', p.nick, 24, (o.user && (o.user.account || o.user.name)) || '')),
 				(() => {
 					const s2 = document.createElement('select');
@@ -3506,7 +3507,7 @@ export class UI {
 					return field(_t('Hrám rukou'), s2);
 				})(),
 				field(_t('Obľúbené tágo'), input('cue', p.cue, 30, _t('napríklad Majstrovské'))),
-				field('O mne', input('about', p.about, 160, _t('krátko o sebe (najviac 160 znakov)')))
+				field(_t('O mne'), input('about', p.about, 160, _t('krátko o sebe (najviac 160 znakov)')))
 			);
 			const ok = document.createElement('button');
 			ok.type = 'submit';

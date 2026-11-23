@@ -291,7 +291,17 @@ export class RadioPlayer {
 		treble.type = 'highshelf';
 		treble.frequency.value = 3200;
 		const gain = ctx.createGain();
-		src.connect(bass).connect(treble).connect(gain);
+		// 0.57.0 tlmenie pri otvorenom hlavnom menu: „ako v sude“ (bez výšok a basov) a tichšie
+		const mlp = ctx.createBiquadFilter();
+		mlp.type = 'lowpass';
+		mlp.frequency.value = this._muf ? 1100 : 22000;
+		mlp.Q.value = this._muf ? 1.4 : 0.7;
+		const mhp = ctx.createBiquadFilter();
+		mhp.type = 'highpass';
+		mhp.frequency.value = this._muf ? 170 : 10;
+		const mg = ctx.createGain();
+		mg.gain.value = this._muf ? 0.4 : 1;
+		src.connect(bass).connect(treble).connect(mlp).connect(mhp).connect(mg).connect(gain);
 		const split = ctx.createChannelSplitter(2);
 		gain.connect(split);
 		const out = ctx.createGain();
@@ -315,7 +325,7 @@ export class RadioPlayer {
 			p.connect(out);
 			return { g, an, p };
 		});
-		this._graph = { el, src, bass, treble, gain, sides, out };
+		this._graph = { ctx, el, src, bass, treble, gain, sides, out, mlp, mhp, mg };
 		this._data = new Uint8Array(256);
 		return this._graph;
 	}
@@ -331,7 +341,32 @@ export class RadioPlayer {
 			gr.sides[1].g.gain.value = Math.min(1, p.bal * 2);
 		}
 		if (this._plain) {
-			this._plain.volume = Math.min(1, p.vol * p.vol);
+			this._plain.volume = Math.min(1, p.vol * p.vol) * (this._muf ? 0.4 : 1);
+		}
+	}
+
+	/** 0.57.0: tlmene a tichšie, kým je otvorené hlavné menu (Esc); po zatvorení menu normálne. */
+	muffle(on) {
+		on = !!on;
+		if (this._muf === on) {
+			return;
+		}
+		this._muf = on;
+		const gr = this._graph;
+		if (gr) {
+			const t = gr.ctx.currentTime;
+			const to = (prm, v) => {
+				prm.cancelScheduledValues(t);
+				prm.setValueAtTime(prm.value, t);
+				prm.linearRampToValueAtTime(v, t + 0.4);
+			};
+			to(gr.mlp.frequency, on ? 1100 : 22000);
+			to(gr.mlp.Q, on ? 1.4 : 0.7);
+			to(gr.mhp.frequency, on ? 170 : 10);
+			to(gr.mg.gain, on ? 0.4 : 1);
+		}
+		if (this._plain) {
+			this._apply();
 		}
 	}
 
