@@ -180,6 +180,7 @@ function mysn_roadmap() {
 /** Denník zmien (najnovšie hore). */
 function mysn_changelog() {
 	return array(
+		array( '0.58.2', '23. 11. 2026', 'Môj účet: tlačidlo Ochrana osobných údajov – zásady pre hru My Snooker po slovensky, anglicky a v hindčine podľa jazyka hry (prevádzkovateľ, účet, čo hra ukladá, hra cez internet a WebRTC, ochrana proti podvádzaniu a snímky obrazovky, hlas rozhodcu a Rudo cez ElevenLabs a AI, krajina z IP bez ukladania, pozvánky, pamäť prehliadača, kde sú údaje, práva) a odkaz na úplné zásady webu.' ),
 		array( '0.58.1', '23. 11. 2026', 'Prehrávač partie na notebooku (F7): celá obrazovka notebooku je vidno v strede voľnej časti vľavo od panela zápasu (pohľad sa prispôsobí veľkosti okna), myš ostáva voľná a pohľad sa za ňou neotáča.' ),
 		array( '0.58.0', '23. 11. 2026', 'Hlavné menu na PC: šípky hore a dole vyberajú položku (zvýraznená zlatým rámom), Enter ju spustí. Po otvorení menu nie je vybrané nič – prvá šípka dole vyberie prvú položku, šípka hore poslednú.' ),
 		array( '0.57.3', '23. 11. 2026', 'Tutoriál: Enter počas tutoriálu len posúva scény (Ďalej) – v kancelárii (lekcie 13 a 14) a pri otvorených predmetoch už nevracia do herne.' ),

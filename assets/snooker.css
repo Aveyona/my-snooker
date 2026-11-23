@@ -1119,3 +1119,9 @@ body.mysn-page { font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans
 .mysn-lb-say .mysn-btn { width: auto !important; }
 .mysn-lb-btns { display: flex; flex-wrap: wrap; gap: 6px; }
 .mysn-lb-btns .mysn-btn { flex: 1 1 45%; }
+/* 0.58.2 ochrana osobných údajov v okne Môj účet */
+.mysn-privacy h3 { margin: 0 0 10px; font-size: 18px; color: #f2d48a; }
+.mysn-privacy h4 { margin: 14px 0 4px; }
+.mysn-privacy p, .mysn-privacy li { font-size: 13px; line-height: 1.55; color: #dfe2e7; margin: 0 0 6px; }
+.mysn-privacy ul { margin: 0 0 6px; padding-left: 18px; }
+.mysn-account { max-height: calc(100% - 32px); overflow-y: auto; }

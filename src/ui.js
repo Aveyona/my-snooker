@@ -22,6 +22,7 @@ const h = (tag, cls, html) => {
 import { cueById } from './cues.js';
 import { LoginBox } from './login.js';
 import { countryByCode } from './countries.js';
+import { PRIVACY } from './privacy.js';
 import { _t, _pts, LANG, LANGS } from './i18n.js';
 
 /** Desatinné číslo podľa jazyka (sk čiarka, en bodka). */
@@ -1057,11 +1058,25 @@ export class UI {
 				row(_t('Najvyšší brejk'), String(d.solo.brk)) +
 				row(_t('Vlastné tágá'), `${d.cues} z 10`) +
 				`<div class="mysn-acc-links">` +
+				`<button type="button" class="mysn-btn" data-privacy>${_t('Ochrana osobných údajov')}</button>` +
 				`<a class="mysn-btn" href="${esc(d.links.logout)}" data-logout>${_t('Odhlásiť sa')}</a>` +
 				`</div>`;
 		}
 		p.innerHTML = `<h3>${_t('Môj účet')}</h3>${body}<button type="button" class="mysn-btn mysn-primary" data-close>${_t('Zavrieť')}</button>`;
 		p.querySelector('[data-close]').addEventListener('click', () => p.classList.add('mysn-hidden'));
+		// 0.58.2 ochrana osobných údajov v jazyku hry (hindčina, angličtina, slovenčina)
+		const pv = p.querySelector('[data-privacy]');
+		if (pv) {
+			pv.addEventListener('click', () => {
+				const full = this.opts.privacyUrl || (this.opts.auth && this.opts.auth.privacy);
+				p.innerHTML =
+					`<div class="mysn-privacy">${PRIVACY[LANG] || PRIVACY.en}</div>` +
+					(full ? `<p class="mysn-note"><a href="${esc(full)}" target="_blank" rel="noopener">${_t('Úplné zásady ochrany osobných údajov webu Hedlajner (po slovensky)')}</a></p>` : '') +
+					`<button type="button" class="mysn-btn mysn-primary" data-back>${_t('Späť na účet')}</button>`;
+				p.scrollTop = 0;
+				p.querySelector('[data-back]').addEventListener('click', () => this.showAccount(d));
+			});
+		}
 		const out = p.querySelector('[data-logout]');
 		if (out) {
 			// odhlásenie: WordPress zmaže prihlásenie a hneď vráti späť do hry (redirect_to), stránka wp-login.php sa neukáže

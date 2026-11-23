@@ -127,6 +127,7 @@ function mysn_render( $preview ) {
 		'loginUrl' => function_exists( 'my_users_login_page_url' ) ? my_users_login_page_url( array( 'redirect_to' => rawurlencode( $game ) ) ) : wp_login_url( $game ),
 		// prihlásenie v hre: formulár ide na stránku Prihlásenie z My Users (na tej istej adrese ako hra)
 		'auth'     => $user ? null : mysn_auth_config( $game ),
+		'privacy'  => function_exists( 'my_users_opt' ) && my_users_opt( 'privacy_url' ) ? (string) my_users_opt( 'privacy_url' ) : (string) get_privacy_policy_url(), // 0.58.2 úplné zásady na webe
 		// Môj účet (telefón na bare, F10): stránka doplnku My Users, inak profil WordPressu
 		'accountUrl' => $user ? ( function_exists( 'my_users_account_url' ) ? my_users_account_url() : admin_url( 'profile.php' ) ) : '',
 		// REST na tej istej adrese, z ktorej sa hra načítala (hlavný web alebo subdoména)

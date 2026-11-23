@@ -4347,6 +4347,7 @@ export function start(root, config = {}) {
 		role: user ? config.role || '' : '', // admin alebo mod (správca hry): v menu tlačidlo Správa hry
 		loginUrl: config.loginUrl,
 		auth: config.auth || null,
+		privacyUrl: config.privacy || '',
 		accountUrl: config.accountUrl,
 		venue: () => venue,
 		settings,
