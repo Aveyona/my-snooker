@@ -4,6 +4,7 @@
  * Keď hráč splní úlohu, zahrá zvuk splnenia a po chvíli ide ďalšia scéna.
  */
 import { _t, LANG } from './i18n.js';
+import { createRack, snapshot, restore, SPOTS, R } from './physics.js';
 
 const h = (tag, cls, txt) => {
 	const e = document.createElement(tag);
@@ -50,7 +51,9 @@ export function tutorial(parent, cfg, d) {
 	}
 	btns.append(bNext, bSkip, bEnd);
 	const foot = h('div', 'mysn-tut-foot');
-	box.append(head, body, bar, btns, foot);
+	const msg = h('div', 'mysn-tut-msg');
+	msg.hidden = true;
+	box.append(head, body, msg, bar, btns, foot);
 	const hints = h('div', 'mysn-tut-hints');
 	parent.append(hints, box);
 
@@ -87,12 +90,114 @@ export function tutorial(parent, cfg, d) {
 		return e;
 	};
 
-	/** Mobil: zvýraznenie tlačidla oko (pulzujúci krúžok). */
+	/** Zvýraznenie ovládacích prvkov (triedy na koreni hry, CSS rozhodne, čo pulzuje). */
+	const GLOW = { m_eye: 'eye', g_top: 'top', g_spin: 'spin', g_cue: 'cue', g_chalk: 'chalk' };
 	const glow = (keys) => {
-		const eye = document.querySelector('.mysn-eye');
-		if (eye) {
-			eye.classList.toggle('mysn-tut-glow', api.active && keys.includes('m_eye') && d.touchUI());
+		const root = d.root;
+		for (const [k, c] of Object.entries(GLOW)) {
+			root.classList.toggle('mysn-tut-g-' + c, api.active && keys.includes(k));
 		}
+	};
+
+	const SHOTS = ['soft', 'cushion', 'pot', 'stun', 'draw', 'follow', 'hit', 'break'];
+	const COLS = ['yellow', 'green', 'brown', 'blue', 'pink', 'black'];
+	/** Rozostavenie scény: „white -100 0; red 0 60; colours; reds; rack; white D“ (cm od stredu stola). */
+	const setup = (S) => {
+		const g = d.game;
+		const txt0 = (S.setup || '').trim();
+		if (!txt0) {
+			return;
+		}
+		const items = txt0.split(/[;\n]+/).map((x) => x.trim().toLowerCase()).filter(Boolean);
+		const fresh = createRack();
+		let inHand = false;
+		if (items.includes('rack')) {
+			g.reset();
+			g.confirmPlace();
+		} else {
+			for (const b of g.balls) {
+				b.on = false;
+				b.potted = null;
+				b.moving = false;
+				b.v.x = b.v.z = 0;
+				b.w.x = b.w.y = b.w.z = 0;
+				b.h = 0;
+				b.vy = 0;
+			}
+			let red = 7;
+			const put = (b, x, z) => {
+				b.p.x = x;
+				b.p.z = z;
+				b.on = true;
+			};
+			for (const it of items) {
+				const [k, a, c] = it.split(/[\s,]+/);
+				if (k === 'colours' || k === 'colors') {
+					COLS.forEach((ck, i) => put(g.balls[i + 1], SPOTS[ck].x, SPOTS[ck].z));
+				} else if (k === 'reds') {
+					for (let i = 7; i < fresh.length; i++) {
+						put(g.balls[i], fresh[i].p.x, fresh[i].p.z);
+					}
+					red = fresh.length;
+				} else if (k === 'white' && a === 'd') {
+					inHand = true;
+				} else {
+					const x = parseFloat(a) / 100;
+					const z = parseFloat(c) / 100;
+					if (!isFinite(x) || !isFinite(z)) {
+						continue;
+					}
+					const b = k === 'white' ? g.balls[0] : k === 'red' ? g.balls[red++] : g.balls[COLS.indexOf(k) + 1];
+					if (b && (k !== 'red' || red <= g.balls.length)) {
+						put(b, x, z);
+					}
+				}
+			}
+			g.history = [];
+			g.lastPots = [];
+			g.message = '';
+			if (inHand) {
+				g.startPlace();
+			} else {
+				g.balls[0].on = true;
+				g.state = 'aim';
+			}
+		}
+		aimTarget(S);
+		g.emit('change');
+	};
+	const kindOk = (S, b) => !!b && b.kind !== 'white' && (!S.ball || b.kind === S.ball || (S.ball === 'colour' && b.kind !== 'red'));
+	/** Mierenie na cieľovú guľu scény (inak na najbližšiu). */
+	const aimTarget = (S) => {
+		const g = d.game;
+		const c = g.cue;
+		const t = S.ball && g.balls.find((b) => b.on && kindOk(S, b));
+		if (t && Math.hypot(t.p.x - c.p.x, t.p.z - c.p.z) > 2 * R) {
+			g.dir = Math.atan2(t.p.z - c.p.z, t.p.x - c.p.x);
+		} else {
+			g.aimAtNearest();
+		}
+	};
+	let snap = null; // stav stola na začiatku scény (opakovanie pokusu)
+	const retry = () => {
+		const g = d.game;
+		if (!snap || g.state === 'moving') {
+			return;
+		}
+		restore(g.balls, snap.balls);
+		g.dir = snap.dir;
+		g.lastPots = [];
+		if (snap.state === 'place') {
+			g.state = 'place';
+		} else {
+			g.state = 'aim';
+		}
+		g.emit('change');
+	};
+	const fail = (why) => {
+		msg.textContent = why + ' ' + _t('Skús ešte raz.');
+		msg.hidden = false;
+		st.failT = performance.now();
 	};
 
 	const show = () => {
@@ -116,7 +221,13 @@ export function tutorial(parent, cfg, d) {
 				hints.appendChild(e);
 			}
 		}
-		st = { eyeT: 0, eyeA: 0, d0: d.game.dir, prev: d.game.dir, acc: 0, lo: 0, hi: 0, pull: 0, shot: false };
+		setup(S);
+		msg.hidden = true;
+		if (S.type === 'chalk') {
+			d.chalkZero();
+		}
+		snap = { balls: snapshot(d.game.balls), dir: d.game.dir, state: d.game.state };
+		st = { run: 0, cush: 0, hit: null, from: null, placed: false, failT: 0, eyeT: 0, eyeA: 0, d0: d.game.dir, prev: d.game.dir, acc: 0, lo: 0, hi: 0, pull: 0, shot: false };
 		doneT = 0;
 		if (S.snd_in) {
 			d.sound(S.snd_in);
@@ -192,6 +303,14 @@ export function tutorial(parent, cfg, d) {
 		if (S.type === 'text') {
 			return;
 		}
+		if (st.failT) {
+			if (performance.now() - st.failT > 1400 && d.game.state !== 'moving') {
+				st.failT = 0;
+				msg.hidden = true;
+				retry();
+			}
+			return;
+		}
 		const g = d.game;
 		const dd = wrapAng(g.dir - st.prev);
 		st.prev = g.dir;
@@ -230,10 +349,110 @@ export function tutorial(parent, cfg, d) {
 			p = st.pull / (par / 100);
 		} else if (S.type === 'shoot') {
 			p = st.shot ? 1 : 0;
+		} else if (S.type === 'view') {
+			const m = d.rig.mode;
+			const want = +S.param || 0;
+			p = want === 1 ? +(m === 'top') : want === 2 ? +(m === 'free' || touch) : +(m === 'cue');
+		} else if (S.type === 'place') {
+			p = st.placed ? 1 : 0;
+		} else if (S.type === 'chalk') {
+			p = d.state().chalk > 0 ? 1 : 0;
+		} else if (S.type === 'lift') {
+			p = d.state().lift / Math.max(1, +S.param || 0);
+		} else if (S.type === 'break') {
+			p = st.run / Math.max(1, +S.param || 0);
+		} else if (SHOTS.includes(S.type)) {
+			p = st.ok ? 1 : 0;
 		}
 		fill.style.width = Math.min(100, p * 100).toFixed(0) + '%';
 		if (p >= 1) {
 			complete();
+		}
+	};
+
+	/** Udalosti hry: úder, položenie bielej, vyhodnotenie úderu. */
+	d.game.on((type, data) => {
+		if (!api.active || !L || !st || doneT > 0) {
+			return;
+		}
+		const S = L.scenes[si];
+		const g = d.game;
+		if (type === 'placed') {
+			st.placed = true;
+		} else if (type === 'shot') {
+			st.cush = 0;
+			st.hit = null;
+			st.from = { x: g.cue.p.x, z: g.cue.p.z, dir: g.dir };
+		} else if (type === 'settle' && SHOTS.includes(S.type) && st.from) {
+			const pots = (data && data.pots) || [];
+			const wp = pots.some((b) => b.kind === 'white');
+			const first = g.physics.firstContact;
+			const c = g.cue.p;
+			const par = +S.param || 0;
+			let ok = false;
+			let why = '';
+			if (wp) {
+				why = _t('Biela spadla.');
+			} else if (S.type === 'soft') {
+				const dist = Math.hypot(c.x - st.from.x, c.z - st.from.z) * 100;
+				ok = st.cush === 0 && dist >= par;
+				why = st.cush ? _t('Biela sa dotkla mantinelu.') : _t('Biela prešla len {n} cm.', { n: Math.round(dist) });
+			} else if (S.type === 'cushion') {
+				ok = st.cush >= Math.max(1, par);
+				why = _t('Biela netrafila mantinel.');
+			} else if (S.type === 'pot' || S.type === 'break') {
+				ok = pots.some((b) => kindOk(S, b));
+				why = _t('Guľa nespadla.');
+			} else if (!kindOk(S, first)) {
+				why = first ? _t('Ako prvú si trafil inú guľu.') : _t('Biela netrafila žiadnu guľu.');
+			} else if (S.type === 'hit') {
+				ok = true;
+			} else if (st.hit || g.physics.firstAt) {
+				const hp = g.physics.firstAt || st.hit;
+				const dx = c.x - hp.x;
+				const dz = c.z - hp.z;
+				const along = (dx * Math.cos(st.from.dir) + dz * Math.sin(st.from.dir)) * 100;
+				if (S.type === 'stun') {
+					ok = Math.hypot(dx, dz) * 100 <= Math.max(1, par);
+					why = _t('Biela sa nezastavila (prešla {n} cm).', { n: Math.round(Math.hypot(dx, dz) * 100) });
+				} else if (S.type === 'draw') {
+					ok = along <= -par;
+					why = along < 0 ? _t('Biela sa vrátila len {n} cm.', { n: Math.round(-along) }) : _t('Biela sa nevrátila – posuň bod nižšie.');
+				} else {
+					ok = along >= par;
+					why = along > 0 ? _t('Biela išla ďalej len {n} cm.', { n: Math.round(along) }) : _t('Biela nešla ďalej – posuň bod vyššie.');
+				}
+			}
+			st.from = null;
+			if (S.type === 'break') {
+				if (ok) {
+					st.run += (data && data.points) || 0;
+					fill.style.width = Math.min(100, (st.run / Math.max(1, par)) * 100).toFixed(0) + '%';
+					msg.textContent = _t('Séria: {n}', { n: st.run });
+					msg.hidden = false;
+					return;
+				}
+				st.run = 0;
+				fail(why + ' ' + _t('Séria je prerušená.'));
+				return;
+			}
+			if (ok) {
+				st.ok = true;
+			} else {
+				fail(why);
+			}
+		}
+	});
+
+	/** Udalosti fyziky počas úderu: odrazy a prvý zásah bielej. */
+	api.onEvent = (e) => {
+		if (!api.active || !st || !st.from) {
+			return;
+		}
+		if (e.type === 'cushion' && e.a === 0) {
+			st.cush++;
+		} else if (e.type === 'ball' && !st.hit && (e.a === 0 || e.b === 0)) {
+			st.hit = { x: d.game.cue.p.x, z: d.game.cue.p.z };
 		}
 	};
 

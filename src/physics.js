@@ -306,6 +306,8 @@ export class Physics {
 				a.ck = b.ck = 0;
 				if (this.firstContact === null && (a.kind === 'white' || b.kind === 'white')) {
 					this.firstContact = a.kind === 'white' ? b : a;
+					const wb = a.kind === 'white' ? a : b;
+					this.firstAt = { x: wb.p.x, z: wb.p.z }; // poloha bielej pri prvom zásahu (tutoriál: stop, falše)
 				}
 				this.events.push({ type: 'ball', a: a.id, b: b.id, speed: rel });
 			}

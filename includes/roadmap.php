@@ -180,6 +180,7 @@ function mysn_roadmap() {
 /** Denník zmien (najnovšie hore). */
 function mysn_changelog() {
 	return array(
+		array( '0.50.0', '23. 11. 2026', 'Tutoriál má 10 lekcií: otáčanie, presné mierenie, prvý úder, potopenie gule, pohľady, pravidlá, biela v ruke, falše a krieda, fauly a snooker, uhol tága a séria. Scény majú rozostavenie stola a cieľovú guľu, nevydarený pokus sa vráti a skúša sa znova (s vysvetlením, čo nevyšlo). Nové typy úloh: jemný a silný úder, potopenie, pohľad, biela v ruke, krieda, stop, spodná a horná falša, uhol tága, trafiť guľu, séria. Zvýraznenie oka, pohľadu zhora, miesta úderu, tága a kriedy.' ),
 		array( '0.49.2', '23. 11. 2026', 'SEO: nový titulok „My Snooker – Free realistic Snooker Game in Your Browser“ a popis bez „no download“ (vyhľadávače, Facebook, Twitter, Discord).' ),
 		array( '0.49.1', '23. 11. 2026', 'Tutoriál: lekcia 2 Presné mierenie (na PC pravé tlačidlo myši, na mobile pulzujúce tlačidlo oko). Nové typy úloh: držať pravé tlačidlo / oko a mieriť počas držania. Nové predvolené lekcie sa pridajú aj k už uloženému tutoriálu.' ),
 		array( '0.49.0', '23. 11. 2026', 'Tutoriál: nové tlačidlo v hlavnom menu (vedľa Pomocníka, len prihlásení). Hrá sa v herni na zelenom stole, scény idú postupne podľa splnených úloh. Lekcie a scény (úloha, text SK/EN, šípky nápovedy, zvuky) sa nastavujú v administrácii My Snooker → Tutoriál. Prvá lekcia: otáčanie a mierenie (na mobile šípky hore, vľavo dole a zvislá vpravo; na PC ikonka myši).' ),

@@ -4985,6 +4985,13 @@ export function start(root, config = {}) {
 		tut = tutorial(overlay, config.tutorial, {
 			game,
 			rig,
+			root,
+			state: () => ({ chalk, lift: liftDeg }),
+			chalkZero: () => {
+				chalk = 0;
+				ui.setChalk(0);
+				updateScore();
+			},
 			controls,
 			touchUI: () => !!ui.touchUI,
 			sound: (slot) => sound.tutor(slot),
@@ -5005,6 +5012,7 @@ export function start(root, config = {}) {
 					setVenue('home');
 				}
 				game.reset();
+				game.confirmPlace(); // biela je položená, lekcia môže hneď mieriť
 				game.aimAtNearest();
 				updateFelt();
 				refreshMenu();
@@ -6594,6 +6602,9 @@ export function start(root, config = {}) {
 		sound.roll(game.state === 'moving' ? game.balls.filter((b) => b.on && b.moving) : []); // šuchot gúľajúcich sa gúľ
 		if (game.state === 'moving') {
 			for (const e of game.tick(dt)) {
+				if (tut) {
+					tut.onEvent(e);
+				}
 				if (e.type === 'cushion') {
 					shotTrack.cush.add(e.a);
 				} else if (e.type === 'pot') {
