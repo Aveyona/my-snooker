@@ -129,13 +129,17 @@ function mysn_render( $preview ) {
 		$user['guest'] = function_exists( 'mysn_is_guest' ) && mysn_is_guest( $u->ID ); // dočasný hosť z pozvánky e-mailom (0.42.0)
 		$user['lang']  = mysn_user_lang( $u->ID ); // 0.43.0: jazyk hry uložený pri účte
 	}
+	// 0.60.0: noviny a správy v herni podľa krajiny hráča (Slovensko a Česko slovenské, India indické, inak svetové po anglicky)
+	$geo  = function_exists( 'my_stats_ip_to_country' ) ? strtoupper( (string) my_stats_ip_to_country( isset( $_SERVER['REMOTE_ADDR'] ) ? $_SERVER['REMOTE_ADDR'] : '' ) ) : ''; // phpcs:ignore
+	$feed = mysn_news_region( $geo );
 	$cfg = array(
 		'homeUrl'  => $main,
 		'version'  => MYSN_VERSION,
 		'mode'     => 'training',
-		'news'     => mysn_news(),
-		'rss'      => mysn_rss(),
-		'site'     => 'HEDLAJNER',
+		'news'     => 'sk' === $feed ? mysn_news() : mysn_rss_group( $feed, 0, 9 ),
+		'rss'      => 'sk' === $feed ? mysn_rss() : mysn_rss_group( $feed, 9, 12 ),
+		'newsFrom' => $feed,
+		'site'     => 'sk' === $feed ? 'HEDLAJNER' : 'MY SNOOKER NEWS', // 0.60.0 hlavička novín pri zahraničných správach
 		'radio'    => mysn_radio_stations(),
 		// hrať môžu len prihlásení; neprihlásený vidí herňu a v menu tlačidlo Prihlásiť sa
 		'user'     => $user,
@@ -165,7 +169,7 @@ function mysn_render( $preview ) {
 		'camZoom'  => mysn_cam_zoom(), // graf priblíženia na guľu pravým tlačidlom (My Snooker → Kamera)
 		'camLow'   => mysn_cam_low(), // zostup kamery popri tágu (My Snooker → Kamera)
 		// 0.54.0 krajina podľa IP (My Stats): jazyk hry pri prvej návšteve – India hindčina, SK a CZ slovenčina, inak angličtina
-		'country'  => function_exists( 'my_stats_ip_to_country' ) ? (string) my_stats_ip_to_country( isset( $_SERVER['REMOTE_ADDR'] ) ? $_SERVER['REMOTE_ADDR'] : '' ) : '', // phpcs:ignore
+		'country'  => $geo,
 		'welcome'  => $user && function_exists( 'mysn_welcome_cfg' ) ? mysn_welcome_cfg( (int) $user['id'] ) : null, // 0.52.0 uvítacie okno (raz na účet)
 		'tutorial' => $user && function_exists( 'mysn_tutorial_cfg' ) ? mysn_tutorial_cfg( (int) $user['id'] ) : null, // 0.49.0 tutoriál (lekcie, scény, postup)
 		'clock'    => mysn_shot_clock(), // čas na ťah v ligovom zápase (sekundy) podľa sezóny

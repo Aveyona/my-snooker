@@ -98,3 +98,42 @@ function mysn_rss() {
 	set_transient( 'mysn_rss2', $out, 10 * MINUTE_IN_SECONDS );
 	return $out;
 }
+
+/** 0.60.0: ktoré správy dostane hráč podľa krajiny: sk (Slovensko, Česko, neznáma krajina), india, world. */
+function mysn_news_region( $country ) {
+	$c = strtoupper( (string) $country );
+	if ( 'IN' === $c ) {
+		return 'india';
+	}
+	return '' === $c || 'SK' === $c || 'CZ' === $c ? 'sk' : 'world';
+}
+
+/** 0.60.0: správy zo skupiny My RSS (india, world) pre noviny ($from 0, 9 kusov) aj časopis ($from 9, 12 kusov). */
+function mysn_rss_group( $cat, $from, $count ) {
+	if ( ! function_exists( 'myrss_query' ) ) {
+		return array();
+	}
+	$key = 'mysn_rssg_' . sanitize_key( $cat );
+	$all = get_transient( $key );
+	if ( ! is_array( $all ) ) {
+		$all = array();
+		$res = myrss_query( array( 'cat' => $cat, 'feed' => 0, 'kraj' => '', 'q' => '', 'page' => 1 ) );
+		$grp = function_exists( 'myrss_categories' ) ? myrss_categories() : array();
+		foreach ( (array) $res['groups'] as $g ) {
+			$m     = $g['main'];
+			$all[] = array(
+				't' => html_entity_decode( wp_strip_all_tags( (string) $m['title'] ), ENT_QUOTES, 'UTF-8' ),
+				'u' => (string) $m['url'],
+				'd' => wp_date( 'j. n. Y H:i', strtotime( $m['published'] . ' UTC' ) ),
+				'c' => function_exists( 'myrss_short_name' ) ? myrss_short_name( $m['feed_name'] ) : (string) ( $grp[ $cat ] ?? '' ),
+				's' => function_exists( 'myrss_short_name' ) ? myrss_short_name( $m['feed_name'] ) : (string) $m['feed_name'],
+				'e' => html_entity_decode( wp_trim_words( wp_strip_all_tags( (string) $m['summary'] ), 30, '…' ), ENT_QUOTES, 'UTF-8' ),
+				'i' => (string) $m['image'],
+				'n' => count( $g['others'] ),
+			);
+		}
+		set_transient( $key, $all, 10 * MINUTE_IN_SECONDS );
+	}
+	$out = array_slice( $all, $from, $count );
+	return $out ? $out : array_slice( $all, 0, $count );
+}

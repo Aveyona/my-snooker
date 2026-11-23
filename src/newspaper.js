@@ -73,7 +73,7 @@ export function buildNewspaper(news, site) {
 			g.fillStyle = '#a69c87';
 			g.font = `bold 40px ${serif}`;
 			g.textAlign = 'center';
-			g.fillText('HEDLAJNER', x + w / 2, y + h / 2 + 14);
+			g.fillText(site || 'HEDLAJNER', x + w / 2, y + h / 2 + 14);
 			g.textAlign = 'left';
 		}
 	};
@@ -206,7 +206,7 @@ export function buildNewspaper(news, site) {
  * pod ňou zoznam ďalších správ so zdrojom. Obrázky z cudzích webov sa do 3D kresliť nedajú (bezpečnosť
  * prehliadača), preto má obálka farebné pozadie; fotky sú v čítaní na celú obrazovku.
  */
-export function buildMagazine(rss) {
+export function buildMagazine(rss, site) {
 	const MW = 1024;
 	const MH = 1400;
 	const c = document.createElement('canvas');
@@ -239,7 +239,7 @@ export function buildMagazine(rss) {
 	g.fillText('RSS', 560, 150);
 	g.fillStyle = '#d6e6f5';
 	g.font = `30px ${sans}`;
-	g.fillText(_t('Hedlajner  |  správy z médií doma aj vo svete'), 54, 200);
+	g.fillText(site && site !== 'HEDLAJNER' ? _t('My Snooker  |  správy z médií') : _t('Hedlajner  |  správy z médií doma aj vo svete'), 54, 200);
 	const today = new Date();
 	g.textAlign = 'right';
 	g.fillText(`${today.getDate()}. ${today.getMonth() + 1}. ${today.getFullYear()}`, MW - 50, 70);

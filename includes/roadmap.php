@@ -180,6 +180,7 @@ function mysn_roadmap() {
 /** Denník zmien (najnovšie hore). */
 function mysn_changelog() {
 	return array(
+		array( '0.60.0', '23. 11. 2026', 'Noviny (C) a správy RSS (V) v herni podľa krajiny hráča (poloha z IP, nie jazyk): Slovensko a Česko titulka Hedlajner a slovenské RSS, India indické správy (The Hindu, Times of India, NDTV, Indian Express, Hindustan Times, India Today, ET, Mint, BBC Hindi, Amar Ujala, cricket z ESPNcricinfo), ostatné krajiny svetové správy po anglicky (BBC World a Sport, BBC Snooker, SnookerHQ, Al Jazeera, DW, France 24, NPR, Sky News). Správy idú z My RSS 1.4.0 (skupiny India a World), hlavička novín je pri zahraničí MY SNOOKER NEWS.' ),
 		array( '0.59.6', '23. 11. 2026', 'Mobil: panel rádia (mixpult F9), kresla a správ je cez celú šírku obrazovky bez orezania vľavo, nevyjde nad hornú lištu – ovládanie rádia ostáva hore a zoznam staníc sa posúva prstom.' ),
 		array( '0.59.5', '23. 11. 2026', 'Hra sa načíta aj vtedy, keď WebSupport zapne na hedlajner.sk kontrolu prehliadača (Kontrolujeme váš prehliadač…): skript hry sa berie z domény hry (mysnooker.in) ako štýly, nie z hedlajner.sk (predtým ostala obrazovka prázdna).' ),
 		array( '0.59.4', '23. 11. 2026', 'Tutoriál: v scénach, ktoré spomínajú predmet, je tlačidlo skoku – ➜ Otvoriť: stojan s tágami, príslušenstvo, rádio, tabuľky líg, vizitka… (otvorí predmet ako jeho kláves) a pri návrate ↩ Späť (ako Esc). Platí pre všetky lekcie herne a kancelárie; preložené do angličtiny a hindčiny.' ),

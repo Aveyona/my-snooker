@@ -1,10 +1,10 @@
 <?php
-/** Rotácia kontrol pre verziu 0.59.6 – generuje tools/rotate.mjs pri npm run build, needitovať ručne. */
+/** Rotácia kontrol pre verziu 0.60.0 – generuje tools/rotate.mjs pri npm run build, needitovať ručne. */
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
 function mysn_rot() {
-	return array( 'v' => '0.59.6', 'k' => 'ts', 'h' => 'X-Mysn-R', 'j' => ':', 'nf' => 0, 'rv' => 1, 'ns' => 6 );
+	return array( 'v' => '0.60.0', 'k' => 'tk', 'h' => 'X-Mysn-N', 'j' => '|', 'nf' => 0, 'rv' => 1, 'ns' => 4 );
 }

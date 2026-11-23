@@ -1267,7 +1267,7 @@ export function buildRoomShell(scene, quality, opts = {}) {
 	npMesh.receiveShadow = true;
 	scene.add(npMesh);
 	// vedľa novín časopis so správami z RSS (F9)
-	const mag = buildMagazine(opts.rss);
+	const mag = buildMagazine(opts.rss, opts.site);
 	const MG = { x: CT.x - 0.36, z: CT.z - 0.02, w: 0.3, h: 0.41 };
 	const magMesh = new THREE.Mesh(new THREE.PlaneGeometry(MG.w, MG.h), new THREE.MeshStandardMaterial({ map: mag.texture, roughness: 0.35, metalness: 0.05 }));
 	magMesh.rotation.order = 'YXZ';
