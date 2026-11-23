@@ -893,6 +893,19 @@ body.mysn-page { font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans
 .mysn-gchat-col:not(.mysn-gchat-open):not(.mysn-gchat-peek) .mysn-gchat-list { display: none; }
 @media (pointer: coarse) { .mysn-gchat-tog { height: 40px; width: 20px; } .mysn-gchat-col .mysn-gchat-tog { width: 32px; } }
 .mysn-gchat-empty:not(.mysn-gchat-open) .mysn-gchat-tog { display: none; }
+/* 0.47.5 náhľad zásahu: riadok s uhlom a hrúbkou leží pod kruhom mimo toku, takže zmena dĺžky textu kruh neposúva;
+   čísla majú rovnakú šírku; pri polohe vpravo je text zarovnaný doprava, vľavo doľava */
+.mysn-contact { gap: 0; }
+.mysn-contact-info { position: absolute; top: calc(100% + 4px); left: 50%; transform: translateX(-50%); width: max-content; max-width: 260px; font-variant-numeric: tabular-nums; }
+.mysn-contact.mysn-contact-topright .mysn-contact-info, .mysn-contact.mysn-contact-right .mysn-contact-info { left: auto; right: 0; transform: none; justify-content: flex-end; }
+.mysn-contact.mysn-contact-left .mysn-contact-info { left: 0; transform: none; justify-content: flex-start; }
+.mysn-contact:not(.mysn-contact-topright) { margin-bottom: 30px; } /* miesto pre text pod kruhom pri polohách dole */
+@media (max-width: 720px) { .mysn-contact:not(.mysn-contact-left):not(.mysn-contact-topright) .mysn-contact-info { left: auto; right: 0; transform: none; justify-content: flex-end; } }
+/* 0.47.5 telefón na výšku: oko kúsok vyššie a viac vľavo (na šírku bez zmeny) */
+@media (pointer: coarse) and (max-width: 500px) and (orientation: portrait) {
+	.mysn-eye { left: 150px; bottom: 84px; }
+	.mysn-ui.mysn-tools-open .mysn-eye { bottom: 256px; }
+}
 /* 0.47.4 telefón (nie tablet): náhľad zásahu vždy plne viditeľný, veľkosť podľa otočenia (na výšku menší); PC bez zmeny */
 @media (pointer: coarse) and (max-height: 500px) and (orientation: landscape) {
 	.mysn-contact canvas, .mysn-contact.mysn-contact-topright canvas { width: 92px !important; height: 92px !important; }
