@@ -99,7 +99,12 @@ body.mysn-page { font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans
 .mysn-hint.mysn-hint-on { opacity: 1; color: #f2d48a; }
 /* 0.45.7: pri mierení (pravé tlačidlo myši, na tablete oko) zmiznú texty hore a správy chatu */
 /* 0.45.8: pri mierení je náhľad zásahu (kruh s guľami, uhol a hrúbka) o polovicu menší */
-.mysn-ui.mysn-aiming .mysn-contact { zoom: .5; }
+.mysn-contact { transition: transform .15s; }
+.mysn-ui.mysn-aiming .mysn-contact { transform: translateX(-50%) scale(.5); transform-origin: 50% 100%; }
+.mysn-ui.mysn-aiming .mysn-contact.mysn-contact-left { transform: scale(.5); transform-origin: 0 100%; }
+.mysn-ui.mysn-aiming .mysn-contact.mysn-contact-right { transform: scale(.5); transform-origin: 100% 100%; }
+.mysn-ui.mysn-aiming .mysn-contact.mysn-contact-topright { transform: scale(.5); transform-origin: 100% 0; } /* zmenšuje sa k rohu, poloha ostáva (neschová sa pod Nastavenia) */
+@media (max-width: 720px) { .mysn-ui.mysn-aiming .mysn-contact:not(.mysn-contact-left):not(.mysn-contact-topright) { transform: scale(.5); transform-origin: 100% 100%; } }
 .mysn-msg, .mysn-hint, .mysn-toast, .mysn-gchat-list { transition: opacity .25s; }
 .mysn-ui.mysn-aiming .mysn-msg, .mysn-ui.mysn-aiming .mysn-hint, .mysn-ui.mysn-aiming .mysn-toast, .mysn-ui.mysn-aiming .mysn-gchat:not(.mysn-gchat-open) .mysn-gchat-list { opacity: 0 !important; pointer-events: none; }
 @media (hover: none) { .mysn-hint { display: none; } }

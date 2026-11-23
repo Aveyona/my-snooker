@@ -180,6 +180,7 @@ function mysn_roadmap() {
 /** Denník zmien (najnovšie hore). */
 function mysn_changelog() {
 	return array(
+		array( '0.45.9', '23. 11. 2026', 'Zmenšený náhľad zásahu pri mierení ostáva na svojom mieste (zmenšuje sa k svojmu rohu), vpravo hore už nezachádza pod tlačidlo Nastavenia.' ),
 		array( '0.45.8', '23. 11. 2026', 'Pri mierení (pravé tlačidlo myši, na tablete oko) je náhľad zásahu – kruh s guľami, uhol a hrúbka – o polovicu menší.' ),
 		array( '0.45.7', '23. 11. 2026', 'Texty hore a správy chatu sa skrývajú len pri mierení – kým držíš pravé tlačidlo myši (na tablete oko); po pustení sa hneď vrátia. Obyčajný pohyb myšou ich už neskrýva.' ),
 		array( '0.45.6', '23. 11. 2026', 'Pri mierení zmiznú texty hore (hlásenia, nápoveda, výzvy) aj správy chatu, aby nezakrývali stôl; vrátia sa asi sekundu po tom, čo prestaneš hýbať tágom. Mobil: chat sa dá zavrieť – ✕ reaguje hneď na dotyk, chat sa zavrie aj pri schovaní klávesnice (Späť) alebo ťuknutí mimo, ak je políčko prázdne.' ),
