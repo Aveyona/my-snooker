@@ -5229,6 +5229,21 @@ export function start(root, config = {}) {
 		ui.toast(_t('My Snooker je nainštalovaný. Nájdeš ho medzi aplikáciami a na ploche.'));
 	});
 	setTimeout(pwaSync, 0);
+	// 0.59.1 po prihlásení z hry: rovno tréning (nový hráč má uvítanie a povinné základy tutoriálu)
+	let loginGo = 0;
+	try {
+		loginGo = +localStorage.getItem('mysn_login_go') || 0;
+		localStorage.removeItem('mysn_login_go');
+	} catch (e) {
+		loginGo = 0;
+	}
+	if (user && loginGo && Date.now() - loginGo < 30 * 60000 && !config.welcome && !(tut && tut.mustNext())) {
+		setTimeout(() => {
+			if (!game.match && !game.spectating && !(tut && tut.active)) {
+				actions.training();
+			}
+		}, 1300);
+	}
 	// 0.57.0 rádio pri otvorenom hlavnom menu (Esc) hrá tlmene ako v sude a tichšie
 	setInterval(() => radio.muffle(ui.menuOpen()), 150);
 	// 0.52.0 uvítacie okno nového hráča (raz na účet)

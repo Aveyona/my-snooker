@@ -133,10 +133,22 @@ export class LoginBox {
 				this.render();
 			});
 		}
+		// 0.59.1: po prihlásení z hry sa hráč vráti rovno k stolu (tréning), nový hráč do uvítania a tutoriálu
+		const mark = () => {
+			try {
+				localStorage.setItem('mysn_login_go', String(Date.now()));
+			} catch (e) {
+				/* úložisko nemusí byť dostupné */
+			}
+		};
+		for (const a of this.el.querySelectorAll('.mysn-lg-google')) {
+			a.addEventListener('click', mark);
+		}
 		const f = this.el.querySelector('form');
 		if (f) {
 			f.addEventListener('submit', (e) => {
 				e.preventDefault();
+				mark();
 				this.submit(f);
 			});
 		}
