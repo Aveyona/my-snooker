@@ -4068,10 +4068,18 @@ export class UI {
 			this.openMainMenu(false);
 		});
 		close.classList.toggle('mysn-hidden', !!(this._mmAsMenu && !resumeBtn));
-		this.mmenu.appendChild(close);
-		if (this._mmAsMenu && this.menuMode.textContent) {
-			this.mmenu.appendChild(h('div', 'mysn-mm-mode', esc(this.menuMode.textContent)));
+		// 0.60.1: horný panel menu je pevne hore aj pri posúvaní – vľavo Nainštalovať aplikáciu (kým nie je nainštalovaná), režim, vpravo ✕
+		const top = h('div', 'mysn-mm-top');
+		if (this.installable) {
+			const inst = h('button', 'mysn-mm-inst', `<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${P.install}</svg><span></span>`);
+			inst.type = 'button';
+			inst.querySelector('span').textContent = _t('Nainštalovať aplikáciu');
+			inst.addEventListener('click', () => this.opts.onAction('install'));
+			top.appendChild(inst);
 		}
+		top.appendChild(h('div', 'mysn-mm-mode', this._mmAsMenu && this.menuMode.textContent ? esc(this.menuMode.textContent) : ''));
+		top.appendChild(close);
+		this.mmenu.appendChild(top);
 		for (const g of groups) {
 			if (!g.items.length) {
 				continue;
@@ -4081,6 +4089,9 @@ export class UI {
 			sec.appendChild(h('div', 'mysn-mm-h', g.name));
 			const grid = h('div', 'mysn-mm-grid');
 			for (const [ic, label, act, col] of g.items) {
+				if (act.el && act.el.dataset.act === 'install') {
+					continue; // inštalácia je v hornom paneli
+				}
 				const b = h('button', 'mysn-mm-it', `<span class="mysn-mm-ic"><svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${P[ic]}</svg></span><span class="mysn-mm-l"></span>`);
 				b.type = 'button';
 				if (col) {
