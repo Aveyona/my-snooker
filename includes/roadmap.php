@@ -180,6 +180,7 @@ function mysn_roadmap() {
 /** Denník zmien (najnovšie hore). */
 function mysn_changelog() {
 	return array(
+		array( '0.53.5', '23. 11. 2026', 'SEO popis: aplikácia pre všetky zariadenia (PC, tablet, mobil), ochrana proti podvádzaniu (anti-cheat), liga denne 15:00–19:00 UTC (20:30–0:30 indického času).' ),
 		array( '0.53.4', '23. 11. 2026', 'Menu: Rooms pred Lobby, na mobile Rooms zelenou ako ostatné herné režimy.' ),
 		array( '0.53.3', '23. 11. 2026', 'Oprava: tlačidlo Tutoriál v menu sa po 0.52.0 neukazovalo (menu sa po načítaní tutoriálu neobnovilo). Vlastné ikony hry 192 a 512 px (favicon, plocha mobilu) – manifest bez chyby.' ),
 		array( '0.53.2', '23. 11. 2026', 'Konzola bez chýb: štýly hry sa načítajú z domény hry (písma Caveat a Kaushan už neblokuje CORS na mysnooker.in), ikona v manifeste bez nesprávnych rozmerov, bez varovaní FBXLoader o textúrach TGA (modely ľudí používajú vlastné textúry).' ),
