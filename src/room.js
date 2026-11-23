@@ -1475,30 +1475,8 @@ export function buildRoomShell(scene, quality, opts = {}) {
 				});
 				txt(g, _t('Zdroj: snooker.org'), 1240, 700, 26, '#8fa3bd', 500, 'right');
 			},
-			(g) => {
-				// chat Hedlajner
-				bg(g, '#0b2f3a', '#03121a');
-				g.fillStyle = '#2fb4ff';
-				g.beginPath();
-				g.roundRect(170, 380, 330, 130, 40);
-				g.fill();
-				g.beginPath();
-				g.moveTo(230, 500);
-				g.lineTo(200, 560);
-				g.lineTo(290, 505);
-				g.fill();
-				g.fillStyle = '#7CFC8A';
-				g.beginPath();
-				g.roundRect(780, 430, 330, 110, 40);
-				g.fill();
-				txt(g, _t('Ahoj, ideme ligu?'), 335, 460, 38, '#04202c', 700);
-				txt(g, _t('Jasné, o 16:00!'), 945, 498, 38, '#0b2a12', 700);
-				txt(g, 'Chat Hedlajner', 640, 190, 110, '#fff', 800);
-				txt(g, _t('Píš si s hráčmi a komunitou, aj priamo z hry (Enter)'), 640, 280, 40, '#bfe8f7', 500);
-				txt(g, 'chat.hedlajner.sk', 640, 660, 48, '#ffd34d', 700);
-			},
 		];
-		const WORLD = SLIDES.length - 3; // snímka Svetový snooker (pred chatom a Hedlajnerom)
+		const WORLD = SLIDES.length - 1; // snímka Svetový snooker (posledná; 0.51.1: bez reklamy na chat, oprava indexu)
 		const off = document.createElement('canvas');
 		off.width = 1280;
 		off.height = 720;

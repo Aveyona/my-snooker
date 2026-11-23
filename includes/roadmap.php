@@ -180,6 +180,7 @@ function mysn_roadmap() {
 /** Denník zmien (najnovšie hore). */
 function mysn_changelog() {
 	return array(
+		array( '0.51.1', '23. 11. 2026', 'Televízor v herni: bez reklamy na chat Hedlajner. Oprava: snímka Svetový snooker sa bez údajov preskakuje správne (predtým sa preskakovala snímka Hedlajner a svetový snooker sa kreslil prázdny s chybou).' ),
 		array( '0.51.0', '23. 11. 2026', 'Tutoriál: 4 nové lekcie Herňa a liga – 11 Herňa (nástenka, tabuľa, kreslo, rádio), 12 Tágo a výbava (stojan, príslušenstvo), 13 Kancelária a registrácia do ligy (vizitka, tabuľky, mapa, moje tágá, kalendár, lampa), 14 Hranie ligy. Tutoriál vie prejsť do kancelárie a späť. Nové typy úloh Otvoriť predmet a Zavrieť predmet, pole Predmet v administrácii (scéna Len text s predmetom ho ukáže sama). Zoznam lekcií v dvoch skupinách. Hlavné menu bez tlačidla Späť na web, Môj účet bez odkazov Môj účet na webe a Môj e-shop.' ),
 		array( '0.50.7', '23. 11. 2026', 'Tutoriál: začatie lekcie sa uloží pri účte – My Stats (záložka Snooker) ukazuje, koľko hráčov lekciu začalo, dokončilo a kde skončili.' ),
 		array( '0.50.6', '23. 11. 2026', 'Tutoriál: zvuky majú vlastnú kategóriu Tutoriál na konci Zvukov (predtým boli vložené medzi Atmosféru). Nové zvuky: Pokus nevyšiel, Tip a Celý tutoriál dokončený (bez nahrávky generované tóny). Lekcia 10: séria zjednodušená na 3 gule, šesť červených blízko jamiek (overené simuláciou, biela nepadá).' ),
