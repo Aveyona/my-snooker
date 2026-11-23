@@ -302,7 +302,7 @@ function mysn_tutv_admin_box( $T ) {
 	echo '<p><button type="button" class="button button-primary tutv-all" data-miss="' . esc_attr( wp_json_encode( $miss ) ) . '">Vygenerovať chýbajúce hlasy (' . count( $miss ) . ' z ' . (int) $all . ')</button> <span class="tutv-st description"></span></p></div>';
 	?>
 	<script>
-	(function () {
+	document.addEventListener('DOMContentLoaded', function () { // 0.55.2: tabuľka viet je až za boxom
 		const b = document.querySelector('.tutv-all'), st = document.querySelector('.tutv-st'), vs = document.querySelector('.tutv-voice');
 		vs.addEventListener('change', () => { document.querySelector('.tutv-name').value = vs.selectedOptions[0].textContent.replace(/ \(.*$/, ''); });
 		document.querySelector('.tutv-prev').addEventListener('click', () => { const u = vs.selectedOptions[0].dataset.prev; if (u) new Audio(u).play(); });
@@ -313,12 +313,12 @@ function mysn_tutv_admin_box( $T ) {
 		const gen = async (lesson, scene, lang) => {
 			const t = document.querySelector('.tutv-txt[data-k="' + lesson + '|' + scene + '|' + lang + '"]');
 			const r0 = t ? await post({ lesson, scene, lang, text: t.value }) : null;
-			if (r0) { const j0 = await r0.json(); if (!r0.ok) throw new Error(j0.message || r0.status); const a0 = document.querySelector('.tutv-play[data-k="' + lesson + '|' + scene + '|' + lang + '"]'); if (a0) { a0.href = j0.url; a0.hidden = false; } return j0.url; }
+			if (r0) { const j0 = await r0.json(); if (!r0.ok) throw new Error(j0.message || r0.status); const a0 = document.querySelector('.tutv-play[data-k="' + lesson + '|' + scene + '|' + lang + '"]'); if (a0) { a0.href = j0.url; a0.style.display = ''; } return j0.url; }
 			const r = await fetch(<?php echo wp_json_encode( esc_url_raw( rest_url( 'my-snooker/v1/tutorial/voice' ) ) ); ?>, { method: 'POST', credentials: 'same-origin', headers: { 'Content-Type': 'application/json', 'X-WP-Nonce': <?php echo wp_json_encode( wp_create_nonce( 'wp_rest' ) ); ?> }, body: JSON.stringify({ lesson, scene, lang }) });
 			const j = await r.json();
 			if (!r.ok) throw new Error(j.message || r.status);
 			const a = document.querySelector('.tutv-play[data-k="' + lesson + '|' + scene + '|' + lang + '"]');
-			if (a) { a.href = j.url; a.hidden = false; }
+			if (a) { a.href = j.url; a.style.display = ''; }
 			return j.url;
 		};
 		b.addEventListener('click', async () => {
@@ -354,7 +354,7 @@ function mysn_tutv_admin_box( $T ) {
 		for (const a of document.querySelectorAll('.tutv-play')) {
 			a.addEventListener('click', (e) => { e.preventDefault(); new Audio(a.href).play(); });
 		}
-	})();
+	});
 	</script>
 	<?php
 }
@@ -372,7 +372,7 @@ function mysn_tutv_sounds_section() {
 				$k  = $l['id'] . '|' . $s['id'] . '|' . $lang;
 				$vu = $s['vo'][ $lang ] ?? '';
 				echo '<td><input type="text" class="large-text tutv-txt" data-k="' . esc_attr( $k ) . '" value="' . esc_attr( $s[ 'voice_' . $lang ] ?? '' ) . '">';
-				echo '<a href="' . esc_url( $vu ) . '" class="button button-small tutv-play" data-k="' . esc_attr( $k ) . '"' . ( $vu ? '' : ' hidden' ) . '>▶ Prehrať</a> ';
+				echo '<a href="' . esc_url( $vu ) . '" class="button button-small tutv-play" data-k="' . esc_attr( $k ) . '"' . ( $vu ? '' : ' style="display:none"' ) . '>▶ Prehrať</a> ';
 				echo '<button type="button" class="button button-small tutv-one" data-l="' . esc_attr( $l['id'] ) . '" data-s="' . esc_attr( $s['id'] ) . '" data-lang="' . $lang . '">Generovať</button>';
 				echo $vu ? '' : ' <span class="description">bez nahrávky</span>';
 				echo '</td>';
