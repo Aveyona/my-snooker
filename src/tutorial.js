@@ -222,7 +222,7 @@ export function tutorial(parent, cfg, d) {
 		bar.hidden = isText;
 		fill.style.width = '0%';
 		box.classList.remove('mysn-tut-ok');
-		foot.textContent = d.touchUI() ? '' : isText ? _t('Enter = Ďalej') : _t('Esc uvoľní myš a otvorí menu');
+		foot.textContent = d.touchUI() ? '' : (isText ? _t('Enter = Ďalej') : _t('Esc uvoľní myš a otvorí menu')) + ' · ' + _t('Shift+Enter = chat');
 		hints.textContent = '';
 		glow(S.hints || []);
 		for (const k of S.hints || []) {
@@ -539,7 +539,7 @@ export function tutorial(parent, cfg, d) {
 		api.stop();
 	});
 	window.addEventListener('keydown', (e) => {
-		if (api.active && e.key === 'Enter' && L && (L.scenes[si].type === 'text' || doneT > 0)) {
+		if (api.active && e.key === 'Enter' && !e.shiftKey && !e.repeat && L && (L.scenes[si].type === 'text' || doneT > 0) && !(e.target && /input|textarea|select/i.test(e.target.tagName))) {
 			e.preventDefault();
 			go(si + 1);
 		}

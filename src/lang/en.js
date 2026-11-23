@@ -1599,6 +1599,7 @@ export default {
 	'Ďalej': 'Next',
 	'Dokončiť': 'Finish',
 	'Ukončiť': 'End',
+	'Shift+Enter = chat': 'Shift+Enter = chat',
 	'Enter = Ďalej': 'Enter = Next',
 	'Esc uvoľní myš a otvorí menu': 'Esc releases the mouse and opens the menu',
 	'Skús ešte raz.': 'Try again.',

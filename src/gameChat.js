@@ -567,6 +567,9 @@ export function gameChat(root, cfg, hooks = {}) {
 			if (e.target && /input|textarea|select/i.test(e.target.tagName)) {
 				return;
 			}
+			if (hooks.needShift && hooks.needShift() && !e.shiftKey) {
+				return; // tutoriál: Enter patrí tlačidlu Ďalej
+			}
 			if (hooks.canOpen && !hooks.canOpen()) {
 				return;
 			}

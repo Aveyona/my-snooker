@@ -180,6 +180,7 @@ function mysn_roadmap() {
 /** Denník zmien (najnovšie hore). */
 function mysn_changelog() {
 	return array(
+		array( '0.55.4', '23. 11. 2026', 'Tutoriál na PC: Enter vždy posunie na ďalšiu scénu (Ďalej) a neotvára chat; chat sa počas celého tutoriálu otvára Shift+Enter (nápoveda pod textom scény).' ),
 		array( '0.55.3', '23. 11. 2026', 'Hlas tutoriálu: všetky vety jedným rovnakým hlasom – stabilita 75 % (predtým 50 %, každá veta mohla znieť ako iný človek), vyššia podobnosť s hlasom 90 % a pevný seed. Doterajšie nahrávky sa rátajú ako chýbajúce a vygenerujú sa znova.' ),
 		array( '0.55.2', '23. 11. 2026', 'Zvuky, Tutoriál – hlas scén: tlačidlá Generovať a Vygenerovať chýbajúce hlasy fungujú (skript sa spúšťal skôr, ako bola tabuľka viet na stránke); Prehrať sa ukáže až pri vete s nahrávkou.' ),
 		array( '0.55.1', '23. 11. 2026', 'Zvuky: nová časť Tutoriál – hlas scén pod skupinou Tutoriál – vety hlasu všetkých 79 scén (SK a EN) priamo na stránke Zvuky: úprava vety (uloží sa hneď), Prehrať, Generovať pri každej vete, výber hlasu a Vygenerovať chýbajúce hlasy.' ),

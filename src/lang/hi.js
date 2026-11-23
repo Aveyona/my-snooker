@@ -1585,6 +1585,7 @@ export default {
 	'Ďalej': 'आगे',
 	'Dokončiť': 'पूरा करें',
 	'Ukončiť': 'खत्म करें',
+	'Shift+Enter = chat': 'Shift+Enter = चैट',
 	'Enter = Ďalej': 'Enter = आगे',
 	'Esc uvoľní myš a otvorí menu': 'Esc माउस छोड़ता है और मेन्यू खोलता है',
 	'Skús ešte raz.': 'फिर कोशिश करें।',
