@@ -180,6 +180,7 @@ function mysn_roadmap() {
 /** Denník zmien (najnovšie hore). */
 function mysn_changelog() {
 	return array(
+		array( '0.59.6', '23. 11. 2026', 'Mobil: panel rádia (mixpult F9), kresla a správ je cez celú šírku obrazovky bez orezania vľavo, nevyjde nad hornú lištu – ovládanie rádia ostáva hore a zoznam staníc sa posúva prstom.' ),
 		array( '0.59.5', '23. 11. 2026', 'Hra sa načíta aj vtedy, keď WebSupport zapne na hedlajner.sk kontrolu prehliadača (Kontrolujeme váš prehliadač…): skript hry sa berie z domény hry (mysnooker.in) ako štýly, nie z hedlajner.sk (predtým ostala obrazovka prázdna).' ),
 		array( '0.59.4', '23. 11. 2026', 'Tutoriál: v scénach, ktoré spomínajú predmet, je tlačidlo skoku – ➜ Otvoriť: stojan s tágami, príslušenstvo, rádio, tabuľky líg, vizitka… (otvorí predmet ako jeho kláves) a pri návrate ↩ Späť (ako Esc). Platí pre všetky lekcie herne a kancelárie; preložené do angličtiny a hindčiny.' ),
 		array( '0.59.3', '23. 11. 2026', 'Admin My Snooker → Hráči: tabuľka sa zmestí celá na šírku stránky – 9 stĺpcov namiesto 13, údaje v bunke na dvoch riadkoch (meno a e-mail s prezývkou, ELO a počet zápasov, body a výhry : prehry, výhry % a partie, úroveň a XP, dátum a čas, rola a zákaz ligy); zoraďovanie podľa stĺpcov ostáva.' ),

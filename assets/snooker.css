@@ -1131,3 +1131,9 @@ body.mysn-page { font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans
 /* 0.59.4 tutoriál: tlačidlo skoku na predmet */
 .mysn-tut-btns .mysn-tut-go { margin-right: auto; border-color: #f2d48a88; color: #f2d48a; }
 .mysn-tut-btns .mysn-tut-go:hover { background: #f2d48a22; color: #ffe3a3; }
+/* 0.59.6 mobil: panel rádia, kresla a správ cez celú šírku bez orezania vľavo, ovládanie hore a zoznam staníc sa posúva */
+@media (max-width: 720px) {
+	.mysn-view.mysn-view-news { left: 0; right: 0; width: auto; top: 56px; box-sizing: border-box; padding: 10px 12px calc(10px + env(safe-area-inset-bottom)); }
+	.mysn-view-news .mysn-news { max-height: none; }
+	.mysn-view-news .mysn-mixer-row span { width: 70px; }
+}
