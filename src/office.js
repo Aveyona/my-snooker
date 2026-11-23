@@ -1088,6 +1088,25 @@ export function buildOffice(scene) {
 			// prehrávač partie: bližšie k obrazovke, notebook vľavo od panela histórie
 			notebookPlay: { pos: new THREE.Vector3(OX - 0.03, DT + 0.3, DZ + 0.12), look: new THREE.Vector3(OX - 0.03, DT + 0.1, DZ - 0.22) },
 		},
+		/**
+		 * 0.58.1 prehrávač partie: pohľad, v ktorom je celá obrazovka notebooku vidno a stojí v strede voľnej časti
+		 * obrazovky vľavo od panela (panelFrac = podiel šírky okna, ktorý zaberá panel vpravo).
+		 */
+		notebookPlayView(aspect, fovDeg, panelFrac = 0) {
+			const C = nbScreen.getWorldPosition(new THREE.Vector3());
+			const q = nbScreen.getWorldQuaternion(new THREE.Quaternion());
+			const n = new THREE.Vector3(0, 0, 1).applyQuaternion(q);
+			const up = new THREE.Vector3(0, 1, 0).applyQuaternion(q);
+			const r = new THREE.Vector3(1, 0, 0).applyQuaternion(q);
+			C.addScaledVector(up, -0.03); // trochu aj klávesnica so šípkami
+			const tv = Math.tan(THREE.MathUtils.degToRad(fovDeg) / 2);
+			const f = Math.max(0.3, 1 - panelFrac);
+			const d = Math.max(0.42 / (2 * tv * aspect * f), 0.36 / (2 * tv));
+			const shift = panelFrac * d * tv * aspect;
+			const pos = C.clone().addScaledVector(n, d).addScaledVector(r, shift);
+			const look = C.clone().addScaledVector(r, shift);
+			return { pos, look };
+		},
 		results: resMesh,
 		setBoards: drawBoards,
 		/** Obrazovka notebooku pre prehrávač partie: draw(g, w, h) kreslí do plátna 1024 x 640, null vráti Moju ligu. */

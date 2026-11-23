@@ -697,6 +697,16 @@ export function start(root, config = {}) {
 	let officeFocusNow = '';
 	const away = () => view === 'office'; // som mimo herne (kancelária)
 	let replay = null; // prehrávač partie na notebooku (F7, detail zápasu)
+	/** 0.58.1 pohľad prehrávača partie podľa veľkosti okna a panela vpravo. */
+	const replayView = () => {
+		const el = ui.histEl;
+		const pf = !ui.touchUI && el && el.offsetWidth && window.innerWidth > 700 ? Math.min(0.6, (el.offsetWidth + 16) / window.innerWidth) : 0;
+		rig.setViewZoom(1);
+		const v = office.notebookPlayView(rig.camera.aspect || window.innerWidth / window.innerHeight, rig.baseFov || 45, pf);
+		rig.setView(v.pos, v.look);
+	};
+	window.addEventListener('resize', () => replay && officeFocusNow === 'notebook' && replayView());
+	const replayFree = () => !!replay && view === 'office' && officeFocusNow === 'notebook'; // myš voľná pri prehrávači
 	const OFFICE_KEYS = _t('Kancelária: F1 nástenka s klávesmi za tebou, F8 vizitka (registrácia), F9 alebo dvere ŠTADIÓN: vyhľadať zápas, F12 lampa (zhasnutá = nie si online). Ctrl a klik na predmet ho otvorí, Esc menu.');
 	let venue = 'home';
 	const fadeEl = document.createElement('div');
@@ -3063,9 +3073,11 @@ export function start(root, config = {}) {
 			}
 			replay = new Replay(d);
 			office.notebookKeys(true);
-			// bližší pohľad na obrazovku notebooku
-			const v = office.views.notebookPlay;
-			rig.setView(v.pos.clone(), v.look.clone());
+			// 0.58.1: celá obrazovka notebooku v strede voľnej časti vľavo od panela; myš ostáva voľná, pohľad sa za ňou neotáča
+			replayView();
+			controls.uncapture();
+			freeMouse = true;
+			ui.setFree(true);
 			ui.replayBar(true, false);
 			replay.toggle();
 			ui.replayBar(true, replay.playing);
@@ -4409,7 +4421,7 @@ export function start(root, config = {}) {
 				rig.panView(dx, dy); // mobil: pevné pohľady (nástenka, stojan, skóre…) sa prstom posúvajú ako mapa
 				return;
 			}
-			if (!LOOK.has(view) || freeMouse || (view === 'seat' && seatScore)) {
+			if (!LOOK.has(view) || freeMouse || replayFree() || (view === 'seat' && seatScore)) {
 				return;
 			}
 			const k = (0.0025 * (settings.mouseSens || 1)) / (rig.viewZoom || 1); // pri priblížení jemnejšie; šúpatko Otáčanie myšou
@@ -5176,6 +5188,7 @@ export function start(root, config = {}) {
 		});
 		return lobby;
 	};
+	controls.noCapture = replayFree; // 0.58.1 prehrávač partie: myš sa nezachytáva
 	// 0.57.0 rádio pri otvorenom hlavnom menu (Esc) hrá tlmene ako v sude a tichšie
 	setInterval(() => radio.muffle(ui.menuOpen()), 150);
 	// 0.52.0 uvítacie okno nového hráča (raz na účet)

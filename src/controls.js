@@ -547,7 +547,7 @@ export class Controls {
 	capture() {
 		// dotyková obrazovka: myš sa nezachytáva – so zachytením prehliadač posiela polohu prsta stále 0, 0
 		// a mierenie ani úder prstom by nefungovali (0.10.6)
-		if (this.captured || !this.dom.requestPointerLock || this.touchMode()) {
+		if (this.captured || (this.noCapture && this.noCapture()) || !this.dom.requestPointerLock || this.touchMode()) { // noCapture: prehrávač partie (myš voľná)
 			return;
 		}
 		try {
