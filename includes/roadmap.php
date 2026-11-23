@@ -180,6 +180,7 @@ function mysn_roadmap() {
 /** Denník zmien (najnovšie hore). */
 function mysn_changelog() {
 	return array(
+		array( '0.50.6', '23. 11. 2026', 'Tutoriál: zvuky majú vlastnú kategóriu Tutoriál na konci Zvukov (predtým boli vložené medzi Atmosféru). Nové zvuky: Pokus nevyšiel, Tip a Celý tutoriál dokončený (bez nahrávky generované tóny). Lekcia 10: séria zjednodušená na 3 gule, šesť červených blízko jamiek (overené simuláciou, biela nepadá).' ),
 		array( '0.50.5', '23. 11. 2026', 'Tutoriál: pri mierení okom alebo pravým tlačidlom myši text tutoriálu a šípky zmiznú, po pustení sa vrátia.' ),
 		array( '0.50.4', '23. 11. 2026', 'Tutoriál: na konci lekcie je tlačidlo Pokračovať a hneď sa spustí ďalšia lekcia, Dokončiť je až na poslednej. Hlásenia tréningu (napr. „Stôl je čistý“) sa počas tutoriálu neukazujú.' ),
 		array( '0.50.3', '23. 11. 2026', 'Tutoriál: keď jemný úder dvakrát nevyjde, lebo biela dôjde k mantinelu, ukáže sa tip na zníženie citlivosti Ťahanie tága (mobil: šípka ▲ sa rozbliká, PC: Ctrl).' ),

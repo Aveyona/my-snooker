@@ -10,7 +10,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 function mysn_fp_expected() {
 	return array(
-		'0.50.5' => array(
+		'0.50.6' => array(
 			'ps' => '397a4d4c',
 			'pa' => '6e0bdfe3',
 			'st' => 'b12e572c',

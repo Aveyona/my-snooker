@@ -76,6 +76,9 @@ function mysn_sound_slots() {
 		'tut-step'       => array( 'Tutoriál', 'Nová scéna', 'Hrá na začiatku scény tutoriálu (podľa nastavenia scény v Tutoriáli). Bez nahrávky generovaný jemný tón.', 'Jemný krátky tón alebo „bling“, do 0,5 s.' ),
 		'tut-ok'         => array( 'Tutoriál', 'Úloha splnená', 'Hrá, keď hráč splní úlohu scény. Bez nahrávky generované dva stúpajúce tóny.', 'Pozitívny krátky zvuk úspechu, do 0,8 s.' ),
 		'tut-done'       => array( 'Tutoriál', 'Lekcia dokončená', 'Hrá na poslednej scéne lekcie. Bez nahrávky generovaný krátky akord.', 'Krátka znelka úspechu, 1 až 2 s.' ),
+		'tut-fail'       => array( 'Tutoriál', 'Pokus nevyšiel', 'Hrá, keď úder v tutoriáli nesplní úlohu (napr. guľa nespadla) a stôl sa vráti na nový pokus. Bez nahrávky generovaný klesajúci tón.', 'Krátky jemný „ou“ zvuk, nie trestajúci, do 0,6 s.' ),
+		'tut-tip'        => array( 'Tutoriál', 'Tip', 'Hrá, keď sa v tutoriáli ukáže tip (napr. na zníženie citlivosti ťahania tága). Bez nahrávky generované dva jemné tóny.', 'Jemné upozornenie „ding“, do 0,5 s.' ),
+		'tut-all'        => array( 'Tutoriál', 'Celý tutoriál dokončený', 'Hrá na konci poslednej lekcie. Bez nahrávky generovaná dlhšia znelka.', 'Slávnostná krátka znelka, 2 až 4 s.' ),
 		'notify-info'    => array( 'Atmosféra', 'Upozornenie: iné', 'Súper prijal alebo odmietol výzvu, kamarát z e-mailovej pozvánky prišiel do hry. Bez nahrávky generovaný krátky signál.', 'Krátky nenápadný signál, do 0,7 s.' ),
 		'player-drink'   => array( 'Hráč', 'Napitie sa vody', 'Hráč v partii klávesom N (aj v lige). Hrá z miesta hráča (3D), počujú ho súper aj diváci.', 'Dúšok vody a položenie pohára na stolík.' ),
 		'player-burp'    => array( 'Hráč', 'Grgnutie', 'Hráč v partii klávesom G. Hrá z jeho miesta (3D), počujú ho všetci. V lige je to nešportové: druhý raz v zápase napomenutie rozhodcu, od tretieho súper +4 body (spolu s prdnutím).', 'Grgnutie, krátke.' ),
@@ -117,7 +120,12 @@ function mysn_sound_slots() {
 	$l = $l2;
 	// čísla série 1 až 147 (rozhodca ich hlási po každej potopenej guli): vlastná zbalená skupina hneď za rozhodcom
 	$out = array();
+	$tut = array();
 	foreach ( $l as $id => $x ) {
+		if ( 'Tutoriál' === $x[0] ) {
+			$tut[ $id ] = $x; // 0.50.6: tutoriál je samostatná kategória na konci zoznamu
+			continue;
+		}
 		$out[ $id ] = $x;
 		if ( 'ref-gloves' === $id ) {
 			for ( $i = 1; $i <= 147; $i++ ) {
@@ -125,7 +133,7 @@ function mysn_sound_slots() {
 			}
 		}
 	}
-	return $out;
+	return $out + $tut;
 }
 
 /** Čísla série: zjednodušený riadok v administrácii (bez doladenia), v hre sa načítajú až pri hlásení. */
@@ -227,6 +235,9 @@ function mysn_sound_spec( $id ) {
 		'tut-step'       => array( '0,2 až 0,5 s', 'priemer okolo −22 LUFS' ),
 		'tut-ok'         => array( '0,3 až 0,8 s', 'priemer okolo −20 LUFS' ),
 		'tut-done'       => array( '1 až 2 s', 'priemer okolo −18 LUFS' ),
+		'tut-fail'       => array( '0,3 až 0,6 s', 'priemer okolo −22 LUFS' ),
+		'tut-tip'        => array( '0,2 až 0,5 s', 'priemer okolo −22 LUFS' ),
+		'tut-all'        => array( '2 až 4 s', 'priemer okolo −16 LUFS' ),
 		'score'          => array( '0,2 až 0,5 s', 'špička okolo −10 dBFS' ),
 	);
 	if ( 0 === strpos( $id, 'streak-' ) ) {
@@ -380,6 +391,9 @@ function mysn_sound_filename( $id ) {
 		'tut-step' => 'tutorial-step',
 		'tut-ok' => 'tutorial-ok',
 		'tut-done' => 'tutorial-done',
+		'tut-fail' => 'tutorial-fail',
+		'tut-tip' => 'tutorial-tip',
+		'tut-all' => 'tutorial-complete',
 		'player-drink' => 'player-drink-water',
 		'player-burp' => 'player-burp',
 		'player-fart' => 'player-fart',

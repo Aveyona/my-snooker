@@ -200,6 +200,7 @@ export function tutorial(parent, cfg, d) {
 		msg.textContent = why + ' ' + _t('Skús ešte raz.');
 		msg.hidden = false;
 		st.failT = performance.now();
+		d.sound('tut-fail');
 	};
 
 	const show = () => {
@@ -254,6 +255,7 @@ export function tutorial(parent, cfg, d) {
 				go(0);
 				return;
 			}
+			d.sound('tut-all'); // celý tutoriál dokončený
 			api.stop();
 			return;
 		}
@@ -424,6 +426,9 @@ export function tutorial(parent, cfg, d) {
 					tip.textContent = d.touchUI()
 						? _t('Tip: sila pribúda príliš rýchlo? Ťukni na šípku ▲ dole a zníž Ťahanie tága.')
 						: _t('Tip: sila pribúda príliš rýchlo? Drž Ctrl a zníž Ťahanie tága.');
+					if (tip.hidden) {
+						d.sound('tut-tip');
+					}
 					tip.hidden = false;
 					glow([...(S.hints || []), 'g_tools']);
 				}
