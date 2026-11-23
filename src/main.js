@@ -5065,6 +5065,7 @@ export function start(root, config = {}) {
 			controls,
 			touchUI: () => !!ui.touchUI,
 			sound: (slot) => sound.tutor(slot),
+			voice: (url) => (url ? sound.tutVoice(url) : sound.tutVoiceStop()),
 			capture: (on) => {
 				if (on) {
 					controls.capture();

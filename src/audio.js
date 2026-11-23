@@ -526,6 +526,54 @@ export class Sound {
 		this._tone(1900 * k, 0.03, 0.035, 'sine', 0.7, out);
 	}
 
+	/** 0.55.0 hlas tutoriálu: jedna veta zo súboru (predošlá sa zastaví); hrá v skupine Tutoriál bez priestoru. */
+	tutVoice(url) {
+		this.tutVoiceStop();
+		if (!url || !this._ok()) {
+			return;
+		}
+		const id = (this._tvId = (this._tvId || 0) + 1);
+		this._tvBuf = this._tvBuf || {};
+		const go = (buf) => {
+			if (id !== this._tvId || !buf || !this._ok()) {
+				return;
+			}
+			const src = this.ctx.createBufferSource();
+			src.buffer = buf;
+			const out = this._out(null, soundGroup('tut-step'), 0);
+			out.gain.value = 1.1;
+			src.connect(out);
+			src.start();
+			this._tvSrc = src;
+		};
+		if (this._tvBuf[url]) {
+			go(this._tvBuf[url]);
+			return;
+		}
+		fetch(url, { credentials: 'same-origin' })
+			.then((r) => (r.ok ? r.arrayBuffer() : null))
+			.then((data) => data && new Promise((ok, no) => this.ctx.decodeAudioData(data, ok, no)))
+			.then((buf) => {
+				if (buf) {
+					this._tvBuf[url] = buf;
+				}
+				go(buf);
+			})
+			.catch(() => {});
+	}
+
+	tutVoiceStop() {
+		this._tvId = (this._tvId || 0) + 1;
+		if (this._tvSrc) {
+			try {
+				this._tvSrc.stop();
+			} catch (e) {
+				/* už dohral */
+			}
+			this._tvSrc = null;
+		}
+	}
+
 	/** 0.49.0 tutoriál: zvuk scény (slot z nastavení); sloty tut-* bez nahrávky zahrajú generovaný tón. */
 	tutor(slot) {
 		if (!slot || !this._ok() || this.fx(slot) || !/^tut-/.test(slot)) {

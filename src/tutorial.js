@@ -240,8 +240,15 @@ export function tutorial(parent, cfg, d) {
 		snap = { balls: snapshot(d.game.balls), dir: d.game.dir, state: d.game.state };
 		st = { strong: 0, run: 0, cush: 0, hit: null, from: null, placed: false, failT: 0, eyeT: 0, eyeA: 0, d0: d.game.dir, prev: d.game.dir, acc: 0, lo: 0, hi: 0, pull: 0, shot: false };
 		doneT = 0;
-		if (S.snd_in) {
-			d.sound(S.snd_in);
+		const vu = S.vo && S.vo[LANG === 'sk' ? 'sk' : 'en']; // 0.55.0 hlas: slovensky pri slovenčine, inak po anglicky
+		if (S.snd_in && (!vu || S.snd_in !== 'tut-step')) {
+			d.sound(S.snd_in); // znelka (koniec lekcie) zaznie aj pred hlasom
+		}
+		if (d.voice) {
+			d.voice(''); // zastav predošlú vetu
+			if (vu) {
+				setTimeout(() => api.active && L && L.scenes[si] === S && d.voice(vu), S.snd_in && S.snd_in !== 'tut-step' ? 900 : 250);
+			}
 		}
 		if (isText && S.obj) {
 			setTimeout(() => api.active && d.objShow(S.obj), S.setup && /office/i.test(S.setup) ? 900 : 50); // ukáž predmet
@@ -304,6 +311,9 @@ export function tutorial(parent, cfg, d) {
 			return;
 		}
 		api.active = false;
+		if (d.voice) {
+			d.voice('');
+		}
 		box.classList.remove('mysn-on');
 		hints.classList.remove('mysn-on');
 		hints.textContent = '';
