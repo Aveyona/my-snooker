@@ -1039,3 +1039,5 @@ body.mysn-page { font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans
 .mysn-tut-msg { margin-top: 6px; font-size: 14px; color: #ffcf6a; font-weight: 600; }
 @keyframes mysn-tut-ring { 0% { box-shadow: 0 0 0 0 #f2d48acc; } 100% { box-shadow: 0 0 0 18px #f2d48a00; } }
 @keyframes mysn-tut-pulse { 0%, 100% { scale: 1; } 50% { scale: 1.12; } }
+.mysn-tut.mysn-tut-hide, .mysn-tut-hints.mysn-tut-hide { opacity: 0; transition: opacity .15s; }
+.mysn-tut, .mysn-tut-hints { transition: opacity .2s; }

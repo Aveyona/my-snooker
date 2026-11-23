@@ -305,6 +305,10 @@ export function tutorial(parent, cfg, d) {
 		if (!api.active || !L) {
 			return;
 		}
+		// 0.50.5: pri mierení okom alebo pravým tlačidlom text a šípky zmiznú
+		const hide = !!d.rig.panActive;
+		box.classList.toggle('mysn-tut-hide', hide);
+		hints.classList.toggle('mysn-tut-hide', hide);
 		const S = L.scenes[si];
 		if (doneT > 0) {
 			if (performance.now() - doneT > 1300) {
