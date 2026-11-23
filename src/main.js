@@ -4591,6 +4591,9 @@ export function start(root, config = {}) {
 		},
 		key: (k) => {
 			const lk = k.toLowerCase();
+			if (lk === 'enter' && ui.tutActive && ui.tutActive()) {
+				return true; // 0.57.3 tutoriál: Enter patrí tlačidlu Ďalej (v kancelárii neodchádza do herne)
+			}
 			if (ui.phoneOpen() && lk === 't') {
 				actions.phoneClose(); // T znova: telefón sa zavrie
 				return true;

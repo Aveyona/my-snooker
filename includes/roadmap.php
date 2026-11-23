@@ -180,6 +180,7 @@ function mysn_roadmap() {
 /** Denník zmien (najnovšie hore). */
 function mysn_changelog() {
 	return array(
+		array( '0.57.3', '23. 11. 2026', 'Tutoriál: Enter počas tutoriálu len posúva scény (Ďalej) – v kancelárii (lekcie 13 a 14) a pri otvorených predmetoch už nevracia do herne.' ),
 		array( '0.57.2', '23. 11. 2026', 'PC: náhľad zásahu (kruh s guľami, uhol a plnosť) sa pri mierení už nezmenšuje; zmenšuje sa len pri malom rozlíšení (šírka do 1000 px alebo výška do 640 px).' ),
 		array( '0.57.1', '23. 11. 2026', 'Oprava tutoriálu: Enter (Ďalej) už neotvára hlavné menu – pri textovej scéne tutoriál uvoľní myš na tlačidlá a hra to brala ako Esc. Oprava chatu: Enter mimo tutoriálu znova otvára chat (od 0.55.4 chcel stále Shift+Enter).' ),
 		array( '0.57.0', '23. 11. 2026', 'Rádio: keď je otvorené hlavné menu (Esc), hrá tlmene ako v sude a tichšie; po zatvorení menu znova normálne. Tutoriál pri začatí zapne rádio (raz za návštevu) a ostane zapnuté aj po tutoriáli. Registrácia do ligy: pri hindčine je predvolená krajina India; popisy Krajina, Mesto a O mne sú preložené. Žlté tlačidlá (Lobby, Ďalej v tutoriáli, uvítanie) majú čitateľný text aj pod myšou.' ),
