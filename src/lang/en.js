@@ -1591,4 +1591,14 @@ export default {
 	'Zostáva {n} s, potom rozbíjaš ty.': '{n} s left, then you break.',
 	// zvuky upozornení (0.44.1)
 	'Zvuky upozornení (pozvánka, chat, výzva)': 'Notification sounds (invitation, chat, challenge)',
+	// tutoriál (0.49.0)
+	'Tutoriál': 'Tutorial',
+	'Ukončiť tutoriál': 'End tutorial',
+	'Lekcie: ako mieriť, obzerať sa a hrať (v herni na zelenom stole)': 'Lessons: how to aim, look around and play (in the hall on the green table)',
+	'Vyber lekciu. Hrá sa v herni na zelenom stole, úlohy idú postupne.': 'Choose a lesson. It is played in the hall on the green table, tasks come one by one.',
+	'Ďalej': 'Next',
+	'Dokončiť': 'Finish',
+	'Ukončiť': 'End',
+	'Enter = Ďalej': 'Enter = Next',
+	'Esc uvoľní myš a otvorí menu': 'Esc releases the mouse and opens the menu',
 };

@@ -61,6 +61,7 @@ return array(
 	'Partia nie je rozohraná.' => 'The match is not in progress.',
 	'Nie si na rade.' => 'It is not your turn.',
 	'Chýba úder.' => 'The shot is missing.',
+	'Chýba lekcia.' => 'The lesson is missing.',
 	'Nesprávne poradie úderu.' => 'Wrong shot order.',
 	'Partia bola zrušená: chýbajú snímky obrazovky (overenie férovej hry).' => 'The match was cancelled: screenshots are missing (fair play check).',
 	'Partia bola zrušená: systém zistil, že údery nehrá človek.' => 'The match was cancelled: the system detected shots not played by a human.',

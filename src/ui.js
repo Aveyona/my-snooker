@@ -89,7 +89,7 @@ function noKeys(t) {
 const MM_ICON = {
 	resume: 'play', training: 'play', guestTraining: 'play', solo: 'trophy', league: 'league', gameRooms: 'door', lobby: 'swords', rooms: 'eye',
 	staff: 'shield', account: 'user', home: 'web', resign: 'flag', pauseMatch: 'pause', leagueHome: 'door',
-	seatChange: 'chair', watchStop: 'x', accept: 'check', decline: 'x',
+	seatChange: 'chair', watchStop: 'x', tutorial: 'cap', helper: 'help', accept: 'check', decline: 'x',
 };
 
 /** Farby LED podsvietenia stojana s tágami: kľúč, názov, farba tlačidla (farba svetla je v main.js RACK_LED_HEX). */
@@ -832,7 +832,7 @@ export class UI {
 
 	/** Obsah menu: 'guest' (neprihlásený), 'training' alebo 'match' (label = meno súpera). */
 	setMenu(kind, label) {
-		const key = kind + '|' + (label || '') + '|' + (this.opts.venue ? this.opts.venue() : '') + '|' + (this.trainingFirst ? 1 : 0);
+		const key = kind + '|' + (label || '') + '|' + (this.opts.venue ? this.opts.venue() : '') + '|' + (this.trainingFirst ? 1 : 0) + '|' + (this.tutActive ? (this.tutActive() ? 2 : 1) : 0);
 		if (this._menuKind === key) {
 			return;
 		}
@@ -923,6 +923,9 @@ export class UI {
 				box.appendChild(this.button(_t('Späť do herne'), 'leagueHome'));
 			}
 			box.append(...common());
+		}
+		if (this.tutActive) {
+			box.appendChild(this.button(this.tutActive() ? _t('Ukončiť tutoriál') : _t('Tutoriál'), 'tutorial', _t('Lekcie: ako mieriť, obzerať sa a hrať (v herni na zelenom stole)')));
 		}
 		box.appendChild(this.button(_t('Pomocník'), 'helper', _t('Nástenka s nápovedou v miestnosti, kde práve si (ako F1)')));
 		box.appendChild(this.button(_t('Späť na web'), 'home'));
@@ -3849,6 +3852,7 @@ export class UI {
 			lamp: '<path d="M8 3h8l3 7H5zM12 10v8M8 21h8"/>',
 			book: '<path d="M4 5a2 2 0 0 1 2-2h13v16H6a2 2 0 0 0-2 2zM4 19V5M9 7h6"/>',
 			set: '<circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9 7 7M17 17l2.1 2.1M4.9 19.1 7 17M17 7l2.1-2.1"/>',
+			cap: '<path d="M2 9l10-5 10 5-10 5z"/><path d="M6 11v5c3 2.5 9 2.5 12 0v-5M22 9v6"/>',
 			help: '<circle cx="12" cy="12" r="9"/><path d="M9.5 9a2.5 2.5 0 1 1 3.5 2.3c-.6.3-1 .8-1 1.5V14M12 17h.01"/>',
 			cue: '<path d="M3 21 16 8"/><path d="m15 6 3 3 2-2-3-3z"/>',
 			chalk: '<path d="m12 3 8 4.5v9L12 21l-8-4.5v-9z"/><path d="m4 7.5 8 4.5 8-4.5M12 12v9"/>',

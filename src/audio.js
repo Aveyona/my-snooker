@@ -8,7 +8,7 @@
 
 /** Skupina slotu: stôl, miestnosť, diváci (hlasitosti v Nastaveniach). */
 export function soundGroup(slot) {
-	if (/^(amb-|door-|beep|tension|jingle-|clock-tick|notify|score)/.test(slot)) {
+	if (/^(amb-|door-|beep|tension|jingle-|clock-tick|notify|score|tut-)/.test(slot)) {
 		return 'room';
 	}
 	if (/^(applause|ovation|crowd-|laugh|whistle|cough|shush|player-|rudo-)/.test(slot)) {
@@ -513,6 +513,23 @@ export class Sound {
 					this._tone(f * k * 2, d * 0.6, g * 0.25, 'sine', 0.98, out);
 				}
 			}, i * (kind === 'invite' ? 260 : 110))
+		);
+	}
+
+	/** 0.49.0 tutoriál: zvuk scény (slot z nastavení); sloty tut-* bez nahrávky zahrajú generovaný tón. */
+	tutor(slot) {
+		if (!slot || !this._ok() || this.fx(slot) || !/^tut-/.test(slot)) {
+			return;
+		}
+		const { out, k } = this._synthOut(slot, null);
+		const seq = slot === 'tut-ok' ? [[784, 0.14, 0.1], [1175, 0.3, 0.1]] : slot === 'tut-done' ? [[523, 0.25, 0.09], [659, 0.25, 0.09], [784, 0.25, 0.09], [1047, 0.7, 0.1]] : [[988, 0.16, 0.07]];
+		seq.forEach(([f, d, g], i) =>
+			setTimeout(() => {
+				if (this._ok()) {
+					this._tone(f * k, d, g, 'sine', 0.98, out);
+					this._tone(f * k * 2, d * 0.6, g * 0.2, 'sine', 0.98, out);
+				}
+			}, i * 130)
 		);
 	}
 

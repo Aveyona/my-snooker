@@ -41,6 +41,7 @@ import { Physics, strike } from './physics.js';
 import { takeShotData } from './integrity.js';
 import { Net } from './online.js';
 import { rememberLang, _t, _pts, LANG } from './i18n.js';
+import { tutorial } from './tutorial.js';
 
 // 0.40.1: odtlačky dôležitých funkcií pre výzvu zo servera (ešte pred spustením hry)
 fpRegister({
@@ -182,7 +183,7 @@ export function start(root, config = {}) {
 	const saveTraining = () => {
 		clearTimeout(trainSaveT);
 		trainSaveT = setTimeout(() => {
-			if (game.solo || game.match || game.spectating || game.state === 'moving') {
+			if (game.solo || game.match || game.spectating || game.state === 'moving' || (tut && tut.active)) {
 				return;
 			}
 			try {
@@ -756,9 +757,10 @@ export function start(root, config = {}) {
 	};
 	// farba súkna podľa režimu: liga modrá, tréning červená, Hrať a partia zelená
 	let feltNow = '';
+	let tut = null; // 0.49.0 tutoriál (zelený stôl v herni)
 	const updateFelt = () => {
 		const sp = game.spectating;
-		const want = venue === 'league' ? 'blue' : venue === 'alley' ? (settings.alleyScribble === false ? 'green' : 'street') : sp ? (sp.kind === 'solo' ? 'green' : 'red') : (!game.match && !game.solo) || (game.match && game.match.training) ? 'red' : 'green';
+		const want = tut && tut.active ? 'green' : venue === 'league' ? 'blue' : venue === 'alley' ? (settings.alleyScribble === false ? 'green' : 'street') : sp ? (sp.kind === 'solo' ? 'green' : 'red') : (!game.match && !game.solo) || (game.match && game.match.training) ? 'red' : 'green';
 		if (want !== feltNow) {
 			feltNow = want;
 			table.setFelt(want);
@@ -2567,6 +2569,9 @@ export function start(root, config = {}) {
 			? _t('Nedosiahneš: ruka na mostíku by bola {d} cm od mantinelu (najviac {m} cm). Použi nádstavec (F3).', { d: Math.round(r.d * 100), m: Math.round(r.max * 100) })
 			: _t('Nedosiahneš: ruka na rukoväti by bola {d} cm od mantinelu (najviac {m} cm). Použi nádstavec alebo predĺženie (F3).', { d: Math.round(r.d * 100), m: Math.round(r.max * 100) });
 	const doShoot = (rawPower) => {
+		if (tut) {
+			tut.onShot(rawPower);
+		}
 		if (rackShow && rackShow.t < RS_IN + RS_GRIP + RS_LIFT + RS_HANG) {
 			ui.toast(_t('Rozhodca ešte odkladá trojuholník.'));
 			return;
@@ -2806,6 +2811,9 @@ export function start(root, config = {}) {
 		training: () => {
 			if (away()) {
 				return fromOffice(() => actions.training());
+			}
+			if (tut && tut.active) {
+				tut.stop();
 			}
 			game.stopSolo();
 			if (venue !== 'home' && !game.match) {
@@ -3554,6 +3562,22 @@ export function start(root, config = {}) {
 		},
 		// Mapa miestností (M alebo menu): výber miestnosti; štadión len počas ligy, admin kedykoľvek
 		/** Menu Pomocník: nástenka s nápovedou v aktuálnej miestnosti (herňa, kancelária, štadión), ako F1. */
+		// 0.49.0 tutoriál: zoznam lekcií, počas tutoriálu tlačidlo v menu tutoriál ukončí
+		tutorial: () => {
+			if (!tut) {
+				return;
+			}
+			if (tut.active) {
+				tut.stop();
+				return;
+			}
+			if (away()) {
+				return fromOffice(() => actions.tutorial());
+			}
+			ui.showMenu(false);
+			controls.uncapture();
+			tut.openList(true);
+		},
 		helper: () => {
 			ui.showMenu(false);
 			controls.hooks.key('f1');
@@ -4956,6 +4980,51 @@ export function start(root, config = {}) {
 			return false;
 		},
 	});
+	// 0.49.0 tutoriál: len prihlásený, hrá sa v herni na zelenom stole, postup sa ukladá pri účte
+	if (user && config.tutorial) {
+		tut = tutorial(overlay, config.tutorial, {
+			game,
+			controls,
+			touchUI: () => !!ui.touchUI,
+			sound: (slot) => sound.tutor(slot),
+			capture: (on) => {
+				if (on) {
+					controls.capture();
+				} else {
+					controls.uncapture();
+				}
+			},
+			post: (b) =>
+				fetch(config.restUrl + 'tutorial/progress', { method: 'POST', credentials: 'same-origin', headers: { 'Content-Type': 'application/json', 'X-WP-Nonce': (online && online.net && online.net.nonce) || config.nonce }, body: JSON.stringify(b) })
+					.then((r) => r.json())
+					.then((r) => r && r.progress),
+			onStart: () => {
+				game.stopSolo();
+				if (venue !== 'home') {
+					setVenue('home');
+				}
+				game.reset();
+				game.aimAtNearest();
+				updateFelt();
+				refreshMenu();
+				ui.showMenu(false);
+				controls.blocked = false;
+			},
+			onEnd: () => {
+				updateFelt();
+				if (!restoreTraining()) {
+					game.reset();
+					game.aimAtNearest();
+				}
+				refreshMenu();
+				controls.uncapture();
+				ui.showMenu(true);
+			},
+			onListClose: () => ui.showMenu(true),
+		});
+		ui.tutActive = () => tut.active;
+		setTimeout(() => refreshMenu(), 0);
+	}
 	// chat v hre (miestnosť Snooker z My Chat): Enter píše, správy vľavo
 	const chat = gameChat(overlay, config.chat ? Object.assign({ nonce: config.nonce }, config.chat) : null, {
 		onNew: () => notice('chat'), // 0.44.1: zvuk novej správy v chate
@@ -7056,6 +7125,9 @@ export function start(root, config = {}) {
 		}
 		if (fiesta && venue === 'league' && !view) {
 			fiestaCam(); // koniec zápasu: vždy len pevná kamera
+		}
+		if (tut) {
+			tut.update(dt);
 		}
 		rig.update(dt, game.cue, game.dir, game.state === 'moving');
 		if (online && game.match && !game.spectating) {

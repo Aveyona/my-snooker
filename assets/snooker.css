@@ -991,3 +991,41 @@ body.mysn-page { font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans
 .mysn-pre-wait { margin: 12px 0 8px; color: #facc15; font-size: 14px; }
 .mysn-pre-rudo { display: inline-flex; align-items: center; gap: 6px; margin-top: 6px; font-size: 13px; color: #e6eae2; cursor: pointer; }
 .mysn-pre-rudo input { accent-color: #facc15; }
+
+/* 0.49.0 tutoriál: panel scény hore v strede, šípky nápovedy, zoznam lekcií */
+.mysn-tut { position: absolute; top: 64px; left: 50%; transform: translateX(-50%); width: min(560px, calc(100% - 24px)); box-sizing: border-box; padding: 12px 16px; border-radius: 12px; background: #0c0f14e0; border: 1px solid #f2d48a66; color: #f3f3f3; z-index: 2; display: none; pointer-events: none; box-shadow: 0 6px 24px #0008; }
+.mysn-tut.mysn-on { display: block; }
+.mysn-tut-head { font-size: 12px; letter-spacing: .04em; text-transform: uppercase; color: #f2d48a; margin-bottom: 4px; }
+.mysn-tut-text { font-size: 16px; line-height: 1.4; }
+.mysn-tut-bar { height: 6px; border-radius: 3px; background: #ffffff22; margin: 10px 0 2px; overflow: hidden; }
+.mysn-tut-bar i { display: block; height: 100%; width: 0; background: #f2d48a; transition: width .15s; }
+.mysn-tut-ok { border-color: #7CFC8A; }
+.mysn-tut-ok .mysn-tut-bar i { background: #7CFC8A; }
+.mysn-tut-btns { display: flex; gap: 8px; justify-content: flex-end; margin-top: 8px; }
+.mysn-tut-btns .mysn-btn { pointer-events: auto; padding: 6px 14px; min-width: 0; width: auto; }
+.mysn-tut-btns .mysn-tut-next { background: #f2d48a; color: #1a1a1a; font-weight: 700; }
+.mysn-tut-foot { font-size: 11px; opacity: .6; text-align: right; margin-top: 4px; }
+.mysn-tut-foot:empty { display: none; }
+.mysn-tut-hints { position: absolute; inset: 0; pointer-events: none; z-index: 2; display: none; }
+.mysn-tut-hints.mysn-on { display: block; }
+.mysn-tut-hint { position: absolute; color: #f2d48a; filter: drop-shadow(0 2px 6px #000c); opacity: .9; }
+.mysn-tut-hint svg { display: block; width: 100%; height: 100%; }
+.mysn-tut-m-top { left: 50%; top: 34%; width: 150px; height: 50px; margin-left: -75px; animation: mysn-tut-sx 1.6s ease-in-out infinite; }
+.mysn-tut-m-bl { left: 25%; top: 75%; width: 120px; height: 40px; margin: -20px 0 0 -60px; animation: mysn-tut-sx 1.6s ease-in-out infinite; }
+.mysn-tut-m-right { left: 75%; top: 75%; width: 40px; height: 120px; margin: -60px 0 0 -20px; animation: mysn-tut-sy 1.6s ease-in-out infinite; }
+.mysn-tut-pc-h, .mysn-tut-pc-v { left: 50%; top: 62%; transform: translateX(-50%); display: flex; flex-direction: column; align-items: center; gap: 6px; }
+.mysn-tut-pc-h svg[viewBox="0 0 60 90"], .mysn-tut-pc-v svg[viewBox="0 0 60 90"] { width: 46px; height: 69px; }
+.mysn-tut-pc-v { flex-direction: row; gap: 10px; }
+.mysn-tut-pc-h .mysn-tut-ar { width: 130px; height: 44px; animation: mysn-tut-sx 1.6s ease-in-out infinite; }
+.mysn-tut-pc-v .mysn-tut-ar { width: 40px; height: 110px; animation: mysn-tut-sy 1.6s ease-in-out infinite; }
+@keyframes mysn-tut-sx { 0%, 100% { translate: -14px 0; } 50% { translate: 14px 0; } }
+@keyframes mysn-tut-sy { 0%, 100% { translate: 0 -14px; } 50% { translate: 0 14px; } }
+.mysn-tut-list { position: absolute; inset: 0; display: none; align-items: center; justify-content: center; background: #000a; z-index: 60; }
+.mysn-tut-list.mysn-on { display: flex; }
+.mysn-tut-card { width: min(420px, calc(100% - 32px)); padding: 18px 20px; border-radius: 14px; background: #12161dee; border: 1px solid #f2d48a55; color: #f3f3f3; display: flex; flex-direction: column; gap: 8px; }
+.mysn-tut-card h3 { margin: 0; color: #f2d48a; }
+.mysn-tut-card p { margin: 0 0 6px; font-size: 14px; opacity: .85; }
+@media (max-width: 700px), (max-height: 500px) {
+	.mysn-tut { top: 44px; padding: 8px 12px; }
+	.mysn-tut-text { font-size: 14px; }
+}
