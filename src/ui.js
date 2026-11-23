@@ -315,17 +315,18 @@ export class UI {
 		const touchUI = typeof matchMedia === 'function' && matchMedia('(hover: none), (pointer: coarse)').matches;
 		this.touchUI = touchUI;
 		const st = opts.settings || {};
-		const slider = (label, action, key) => {
-			const box = h('label', 'mysn-group mysn-sens', '<span></span><input type="range" min="0.3" max="3" step="0.1"><b></b>');
+		const slider = (label, action, key, min = 0.3, max = 3, step = 0.1, dflt = 1) => {
+			const box = h('label', 'mysn-group mysn-sens', `<span></span><input type="range" min="${min}" max="${max}" step="${step}"><b></b>`);
 			box.querySelector('span').textContent = label;
 			const inp = box.querySelector('input');
 			const out = box.querySelector('b');
-			const v0 = Number(st[key] || 1);
+			const v0 = Number(st[key] || dflt);
 			inp.value = String(v0);
-			out.textContent = v0.toFixed(1) + '×';
+			const fmt = (v) => (step < 0.1 ? v.toFixed(2) : v.toFixed(1)) + '×';
+			out.textContent = fmt(v0);
 			inp.addEventListener('input', () => {
 				const v = Number(inp.value);
-				out.textContent = v.toFixed(1) + '×';
+				out.textContent = fmt(v);
 				this.opts.onAction(action, v);
 			});
 			for (const t of ['pointerdown', 'mousedown', 'touchstart', 'click', 'wheel', 'keydown']) {
@@ -338,10 +339,12 @@ export class UI {
 			slider(_t('Otáčanie prstom'), 'touchAimSens', 'touchAimSens'); // mierenie ťahaním v častiach 2 a 3
 			slider(_t('Ťahanie tága'), 'touchStrokeSens', 'touchStrokeSens'); // úder v časti 4
 			slider('Oko', 'touchPanSens', 'touchPanSens'); // pohľad na zameranú guľu
+			slider(_t('Priblíženie'), 'touchPlayZoom', 'touchPlayZoom', 1, 1.6, 0.05, 1.25); // 0.46.3: väčší stôl a gule
 		} else {
 			slider(_t('Otáčanie myšou'), 'mouseSens', 'mouseSens'); // otáčanie kamery a mierenie myšou
 			slider(_t('Ťahanie tága'), 'strokeSens', 'strokeSens'); // ťahanie tága myšou hore a dole
 			slider(_t('Pravé tlačidlo'), 'panSens', 'panSens'); // pohľad pravým tlačidlom vo všetkých smeroch
+			slider(_t('Priblíženie'), 'playZoom', 'playZoom', 1, 1.6, 0.05, 1); // 0.46.3: užší záber – väčší stôl a gule
 		}
 		root.appendChild(tools);
 		// na mobile: šípka dole v strede zobrazí alebo schová spodný panel (predvolene schovaný; Hotovo pri kladení

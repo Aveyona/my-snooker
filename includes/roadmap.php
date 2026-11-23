@@ -180,6 +180,7 @@ function mysn_roadmap() {
 /** Denník zmien (najnovšie hore). */
 function mysn_changelog() {
 	return array(
+		array( '0.46.3', '23. 11. 2026', 'Nové šúpatko Priblíženie v spodnom paneli (na PC pri Ctrl, na mobile pod šípkou): užší záber kamery pri hre, stôl a gule sú väčšie (1× až 1,6×). PC predvolene 1×, mobil predvolene 1,25×; ukladá sa zvlášť pre PC a mobil. Pevné pohľady (nástenka, rebríček…) sa nemenia.' ),
 		array( '0.46.2', '23. 11. 2026', 'Ulička: pohyb aj na druhej strane – muž z bočnej ulice si kúpi samosy v cukrárni a ide do paan shopu, žena nakupuje pri náramkoch, ovocí a v cukrárni, v križovatke sa prechádza ďalší muž (spolu šesť chodcov). Priečnou ulicou za križovatkou jazdia tam a späť autorikše a motorky so svetlami a vodičmi. Chodci sa obchádzajú (oproti idúci uhnú doprava), obchádzajú stôl, vozíky, stolíky, lavičku, stĺpy aj stojacich ľudí.' ),
 		array( '0.46.1', '23. 11. 2026', 'Ulička ožila: traja ľudia sa prechádzajú (chôdza ako rozhodca na štadióne) a nakupujú – zastavia sa pri stánku s kvetmi, pani puri, ovocím, náramkami či pri čajovni a natiahnu ruku k pultu; jedna žena chodí z bočnej ulice až do križovatky. Trasy obchádzajú stôl.' ),
 		array( '0.46.0', '23. 11. 2026', 'Ulička: ľudia vyzerajú ako Indovia – hnedá pleť, čierne vlasy, ženy s bindi a v pestrých kameez so salwar (s potlačou), muži v kurtách (biela, šafránová, bordová) s pajamou alebo v rifliach, niektorí s fúzami. Nové postavy ind1 až ind10 (textúry prefarbené nástrojom tools/indianize.py z divákov Rocketbox).' ),

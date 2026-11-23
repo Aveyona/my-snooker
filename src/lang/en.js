@@ -15,6 +15,7 @@ export default {
 	'M: herňa, kancelária, štadión, ulička': 'M: club room, office, stadium, alley',
 	'Ulička': 'Alley',
 	'Rooms': 'Rooms',
+	'Priblíženie': 'Zoom',
 	'Miestnosti s vlastnými hrami a prostredím: Indická ulička a ďalšie': 'Rooms with their own games and setting: the Indian alley and more',
 	'Miestnosti s vlastným prostredím a hrami. Pribúdať budú postupne.': 'Rooms with their own setting and games. More are on the way.',
 	'čoskoro': 'soon',

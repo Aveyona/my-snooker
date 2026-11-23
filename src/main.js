@@ -3536,6 +3536,17 @@ export function start(root, config = {}) {
 			saveSettings(settings);
 		},
 		// šúpatko Pravé tlačidlo (Ctrl): citlivosť pohľadu pravým tlačidlom vo všetkých smeroch
+		// 0.46.3 šúpatko Priblíženie (užší záber kamery pri hre); mobil a PC sa ukladajú zvlášť
+		playZoom: (v) => {
+			settings.playZoom = Math.min(1.6, Math.max(1, Number(v) || 1));
+			rig.playZoom = settings.playZoom;
+			saveSettings(settings);
+		},
+		touchPlayZoom: (v) => {
+			settings.touchPlayZoom = Math.min(1.6, Math.max(1, Number(v) || 1));
+			rig.playZoom = settings.touchPlayZoom;
+			saveSettings(settings);
+		},
 		panSens: (v) => {
 			settings.panSens = Math.min(3, Math.max(0.3, Number(v) || 1));
 			controls.panSens = settings.panSens;
@@ -4981,6 +4992,7 @@ export function start(root, config = {}) {
 	controls.sens = settings.mouseSens || 1; // šúpatko Otáčanie myšou
 	controls.strokeSens = settings.strokeSens || 1; // šúpatko Ťahanie tága
 	controls.panSens = settings.panSens || 1; // šúpatko Pravé tlačidlo
+	rig.playZoom = ui.touchUI ? settings.touchPlayZoom || 1.25 : settings.playZoom || 1; // šúpatko Priblíženie (0.46.3)
 	ui.menuCtx = () => ({ venue, office: view === 'office', table: !tableNo() }); // mobil: hlavné menu ☰ vie, kde hráč je (herňa, kancelária, štadión)
 	controls.touchAimSens = settings.touchAimSens || 1; // mobil: Otáčanie prstom
 	controls.touchStrokeSens = settings.touchStrokeSens || 1; // mobil: Ťahanie tága prstom

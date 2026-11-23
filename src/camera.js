@@ -225,7 +225,7 @@ export class CameraRig {
 			const want = THREE.MathUtils.radToDeg(2 * Math.atan(Math.tan(THREE.MathUtils.degToRad(36)) / a));
 			f = Math.max(f, Math.min(88, want));
 		}
-		return f / (this.viewZoom || 1);
+		return f / (this.viewZoom || 1) / (this.mode === 'view' ? 1 : this.playZoom || 1); // 0.46.3 šúpatko Priblíženie pri hre
 	}
 
 	/** Okamžitý presun kamery do pohľadu (prechod do inej miestnosti, bez letu cez steny). */
