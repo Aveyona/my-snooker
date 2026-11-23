@@ -78,6 +78,7 @@ function mysn_sound_slots() {
 		'tut-done'       => array( 'Tutoriál', 'Lekcia dokončená', 'Hrá na poslednej scéne lekcie. Bez nahrávky generovaný krátky akord.', 'Krátka znelka úspechu, 1 až 2 s.' ),
 		'tut-fail'       => array( 'Tutoriál', 'Pokus nevyšiel', 'Hrá, keď úder v tutoriáli nesplní úlohu (napr. guľa nespadla) a stôl sa vráti na nový pokus. Bez nahrávky generovaný klesajúci tón.', 'Krátky jemný „ou“ zvuk, nie trestajúci, do 0,6 s.' ),
 		'tut-tip'        => array( 'Tutoriál', 'Tip', 'Hrá, keď sa v tutoriáli ukáže tip (napr. na zníženie citlivosti ťahania tága). Bez nahrávky generované dva jemné tóny.', 'Jemné upozornenie „ding“, do 0,5 s.' ),
+		'ui-click'       => array( 'Rozhranie', 'Klik na tlačidlo', 'Hrá pri kliknutí alebo ťuknutí na každé tlačidlo v hre (menu, okná, tutoriál, mobil). Bez nahrávky generovaný jemný krátky klik.', 'Jemný, tichý a krátky „tik“ (do 0,1 s), príjemný aj pri častom klikaní.' ),
 		'tut-welcome'    => array( 'Tutoriál', 'Uvítanie', 'Hrá pri otvorení uvítacieho okna nového hráča. Bez nahrávky generovaná krátka znelka.', 'Priateľská krátka znelka, 1 až 2 s.' ),
 		'tut-all'        => array( 'Tutoriál', 'Celý tutoriál dokončený', 'Hrá na konci poslednej lekcie. Bez nahrávky generovaná dlhšia znelka.', 'Slávnostná krátka znelka, 2 až 4 s.' ),
 		'notify-info'    => array( 'Atmosféra', 'Upozornenie: iné', 'Súper prijal alebo odmietol výzvu, kamarát z e-mailovej pozvánky prišiel do hry. Bez nahrávky generovaný krátky signál.', 'Krátky nenápadný signál, do 0,7 s.' ),
@@ -123,8 +124,8 @@ function mysn_sound_slots() {
 	$out = array();
 	$tut = array();
 	foreach ( $l as $id => $x ) {
-		if ( 'Tutoriál' === $x[0] ) {
-			$tut[ $id ] = $x; // 0.50.6: tutoriál je samostatná kategória na konci zoznamu
+		if ( 'Tutoriál' === $x[0] || 'Rozhranie' === $x[0] ) {
+			$tut[ $id ] = $x; // 0.50.6: tutoriál (0.52.1 aj rozhranie) je samostatná kategória na konci zoznamu
 			continue;
 		}
 		$out[ $id ] = $x;
@@ -238,6 +239,7 @@ function mysn_sound_spec( $id ) {
 		'tut-done'       => array( '1 až 2 s', 'priemer okolo −18 LUFS' ),
 		'tut-fail'       => array( '0,3 až 0,6 s', 'priemer okolo −22 LUFS' ),
 		'tut-tip'        => array( '0,2 až 0,5 s', 'priemer okolo −22 LUFS' ),
+		'ui-click'       => array( '0,03 až 0,1 s', 'priemer okolo −26 LUFS' ),
 		'tut-welcome'    => array( '1 až 2 s', 'priemer okolo −18 LUFS' ),
 		'tut-all'        => array( '2 až 4 s', 'priemer okolo −16 LUFS' ),
 		'score'          => array( '0,2 až 0,5 s', 'špička okolo −10 dBFS' ),
@@ -397,6 +399,7 @@ function mysn_sound_filename( $id ) {
 		'tut-tip' => 'tutorial-tip',
 		'tut-all' => 'tutorial-complete',
 		'tut-welcome' => 'welcome',
+		'ui-click' => 'ui-click',
 		'player-drink' => 'player-drink-water',
 		'player-burp' => 'player-burp',
 		'player-fart' => 'player-fart',

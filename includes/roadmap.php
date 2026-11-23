@@ -180,6 +180,7 @@ function mysn_roadmap() {
 /** Denník zmien (najnovšie hore). */
 function mysn_changelog() {
 	return array(
+		array( '0.52.1', '23. 11. 2026', 'Jemný klik pri každom tlačidle v hre (menu, okná, tutoriál, uvítanie, mobilné menu a ikonky). Nastavuje sa v Zvukoch, nová kategória Rozhranie → Klik na tlačidlo (bez nahrávky generovaný tichý „tik“).' ),
 		array( '0.52.0', '23. 11. 2026', 'Uvítacie okno pre nového hráča: raz na účet po registrácii (hráčom registrovaným od nasadenia). Pozdrav s menom, karty Tutoriál (odporúčané), Tréning, Hrať o skóre a Liga a priatelia, základné ovládanie pre PC alebo mobil, tlačidlá Začať tutoriál a Rovno hrať, znelka Uvítanie. Texty SK/EN a test v administrácii My Snooker → Uvítanie.' ),
 		array( '0.51.1', '23. 11. 2026', 'Televízor v herni: bez reklamy na chat Hedlajner. Oprava: snímka Svetový snooker sa bez údajov preskakuje správne (predtým sa preskakovala snímka Hedlajner a svetový snooker sa kreslil prázdny s chybou).' ),
 		array( '0.51.0', '23. 11. 2026', 'Tutoriál: 4 nové lekcie Herňa a liga – 11 Herňa (nástenka, tabuľa, kreslo, rádio), 12 Tágo a výbava (stojan, príslušenstvo), 13 Kancelária a registrácia do ligy (vizitka, tabuľky, mapa, moje tágá, kalendár, lampa), 14 Hranie ligy. Tutoriál vie prejsť do kancelárie a späť. Nové typy úloh Otvoriť predmet a Zavrieť predmet, pole Predmet v administrácii (scéna Len text s predmetom ho ukáže sama). Zoznam lekcií v dvoch skupinách. Hlavné menu bez tlačidla Späť na web, Môj účet bez odkazov Môj účet na webe a Môj e-shop.' ),

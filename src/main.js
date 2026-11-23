@@ -5099,6 +5099,21 @@ export function start(root, config = {}) {
 		});
 		ui.tutActive = () => tut.active;
 	}
+	// 0.52.1 jemný klik pri každom tlačidle (menu, okná, tutoriál, mobil); zvuk Rozhranie → Klik na tlačidlo
+	let uiClickAt = 0;
+	root.addEventListener(
+		'click',
+		(e) => {
+			const b = e.target && e.target.closest && e.target.closest('button, a.mysn-btn, [role="button"], summary, .mysn-news-item');
+			if (!b || b.disabled || performance.now() - uiClickAt < 90) {
+				return; // mobilné menu ☰ kliká na pôvodné tlačidlo – zvuk len raz
+			}
+			uiClickAt = performance.now();
+			sound.unlock();
+			sound.uiClick();
+		},
+		true
+	);
 	// 0.52.0 uvítacie okno nového hráča (raz na účet)
 	if (user && config.welcome) {
 		setTimeout(() => {

@@ -8,7 +8,7 @@
 
 /** Skupina slotu: stôl, miestnosť, diváci (hlasitosti v Nastaveniach). */
 export function soundGroup(slot) {
-	if (/^(amb-|door-|beep|tension|jingle-|clock-tick|notify|score|tut-)/.test(slot)) {
+	if (/^(amb-|door-|beep|tension|jingle-|clock-tick|notify|score|tut-|ui-)/.test(slot)) {
 		return 'room';
 	}
 	if (/^(applause|ovation|crowd-|laugh|whistle|cough|shush|player-|rudo-)/.test(slot)) {
@@ -514,6 +514,16 @@ export class Sound {
 				}
 			}, i * (kind === 'invite' ? 260 : 110))
 		);
+	}
+
+	/** 0.52.1 klik na tlačidlo: nahrávka slotu ui-click, inak jemný generovaný „tik“. */
+	uiClick() {
+		if (!this._ok() || this.fx('ui-click')) {
+			return;
+		}
+		const { out, k } = this._synthOut('ui-click', null);
+		this._click(4200 * k, 1.4, 0.22, 1.8, out);
+		this._tone(1900 * k, 0.03, 0.035, 'sine', 0.7, out);
 	}
 
 	/** 0.49.0 tutoriál: zvuk scény (slot z nastavení); sloty tut-* bez nahrávky zahrajú generovaný tón. */
