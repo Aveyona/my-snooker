@@ -180,6 +180,7 @@ function mysn_roadmap() {
 /** Denník zmien (najnovšie hore). */
 function mysn_changelog() {
 	return array(
+		array( '0.55.3', '23. 11. 2026', 'Hlas tutoriálu: všetky vety jedným rovnakým hlasom – stabilita 75 % (predtým 50 %, každá veta mohla znieť ako iný človek), vyššia podobnosť s hlasom 90 % a pevný seed. Doterajšie nahrávky sa rátajú ako chýbajúce a vygenerujú sa znova.' ),
 		array( '0.55.2', '23. 11. 2026', 'Zvuky, Tutoriál – hlas scén: tlačidlá Generovať a Vygenerovať chýbajúce hlasy fungujú (skript sa spúšťal skôr, ako bola tabuľka viet na stránke); Prehrať sa ukáže až pri vete s nahrávkou.' ),
 		array( '0.55.1', '23. 11. 2026', 'Zvuky: nová časť Tutoriál – hlas scén pod skupinou Tutoriál – vety hlasu všetkých 79 scén (SK a EN) priamo na stránke Zvuky: úprava vety (uloží sa hneď), Prehrať, Generovať pri každej vete, výber hlasu a Vygenerovať chýbajúce hlasy.' ),
 		array( '0.55.0', '23. 11. 2026', 'Tutoriál hovorí: ku každej scéne krátka veta, ktorú povie mužský hlas s prirodzeným prednesom – po slovensky pri slovenčine, inak po anglicky (ElevenLabs, predvolený hlas Chris, multilingual v2). Admin Tutoriál: box Hlas tutoriálu (výber hlasu, ukážka, model, stabilita, rýchlosť, tlačidlo Vygenerovať chýbajúce hlasy) a pri každej scéne polia Hlas SK / EN s prehrávaním. Texty scén sú dlhšie a podrobnejšie (26 scén, aj po anglicky a v hindčine); uložený tutoriál s pôvodným textom dostane nový text sám.' ),

@@ -102,7 +102,7 @@ function mysn_tutv_cfg() {
 		'voice' => (string) ( $c['voice'] ?? MYSN_TUTV_VOICE ),
 		'name'  => (string) ( $c['name'] ?? 'Chris' ),
 		'model' => (string) ( $c['model'] ?? 'eleven_multilingual_v2' ),
-		'stab'  => (int) ( $c['stab'] ?? 50 ),
+		'stab'  => ! empty( $c['v2'] ) ? (int) ( $c['stab'] ?? 75 ) : 75, // 0.55.3: stály hlas (predtým 50 = každá veta trochu iný hlas)
 		'speed' => (int) ( $c['speed'] ?? 100 ),
 	);
 }
@@ -115,7 +115,7 @@ function mysn_tutv_dir() {
 /** Podpis súboru: text + hlas + model + doladenie (zmena čohokoľvek = nový súbor). */
 function mysn_tutv_sig( $text, $c = null ) {
 	$c = $c ?: mysn_tutv_cfg();
-	return substr( md5( $text . '|' . $c['voice'] . '|' . $c['model'] . '|' . $c['stab'] . '|' . $c['speed'] ), 0, 8 );
+	return substr( md5( $text . '|' . $c['voice'] . '|' . $c['model'] . '|' . $c['stab'] . '|' . $c['speed'] . '|s2' ), 0, 8 );
 }
 
 /** Názov súboru scény v jazyku (alebo '' bez textu). */
@@ -155,13 +155,13 @@ function mysn_tutv_tts( $text, $lang ) {
 	}
 	$vs = array(
 		'stability'         => max( 0, min( 100, $c['stab'] ) ) / 100,
-		'similarity_boost'  => 0.75,
+		'similarity_boost'  => 0.9,
 		'style'             => 0,
 		'use_speaker_boost' => true,
 		'speed'             => max( 70, min( 120, $c['speed'] ) ) / 100,
 	);
 	if ( 'eleven_v3' === $v['model'] ) {
-		$vs = array( 'stability' => 0.5, 'similarity_boost' => 0.75 ); // v3: Prirodzený
+		$vs = array( 'stability' => 1.0, 'similarity_boost' => 0.9 ); // v3: Stabilný
 	}
 	return mysn_el_mp3(
 		wp_remote_post(
@@ -179,6 +179,7 @@ function mysn_tutv_tts( $text, $lang ) {
 						'model_id'       => $v['model'],
 						'language_code'  => $lang,
 						'voice_settings' => $vs,
+						'seed'           => 147, // rovnaký seed: všetky vety rovnakým hlasom
 					)
 				),
 			)
@@ -251,7 +252,8 @@ function mysn_tutv_save_post() {
 			'voice' => preg_replace( '/[^A-Za-z0-9]/', '', (string) ( $c['voice'] ?? '' ) ) ?: MYSN_TUTV_VOICE,
 			'name'  => sanitize_text_field( (string) ( $c['name'] ?? '' ) ),
 			'model' => sanitize_key( (string) ( $c['model'] ?? '' ) ) ?: 'eleven_multilingual_v2',
-			'stab'  => max( 0, min( 100, (int) ( $c['stab'] ?? 50 ) ) ),
+			'stab'  => max( 0, min( 100, (int) ( $c['stab'] ?? 75 ) ) ),
+			'v2'    => 1,
 			'speed' => max( 70, min( 120, (int) ( $c['speed'] ?? 100 ) ) ),
 		),
 		false
@@ -297,7 +299,7 @@ function mysn_tutv_admin_box( $T ) {
 	foreach ( (array) $models as $k => $lbl ) {
 		echo '<option value="' . esc_attr( $k ) . '"' . selected( $c['model'], $k, false ) . '>' . esc_html( $lbl ) . '</option>';
 	}
-	echo '</select></label> <label title="Nižšia = živší, menej stály prednes; vyššia = pokojnejší">Stabilita <input type="number" name="tutv[stab]" min="0" max="100" value="' . (int) $c['stab'] . '" style="width:64px"> %</label> ';
+	echo '</select></label> <label title="Vyššia = všetky vety rovnaký hlas (odporúčané 75 až 90); nižšia = živší, ale každá veta môže znieť ako iný človek">Stabilita <input type="number" name="tutv[stab]" min="0" max="100" value="' . (int) $c['stab'] . '" style="width:64px"> %</label> ';
 	echo '<label>Rýchlosť <input type="number" name="tutv[speed]" min="70" max="120" value="' . (int) $c['speed'] . '" style="width:64px"> %</label></p>';
 	echo '<p><button type="button" class="button button-primary tutv-all" data-miss="' . esc_attr( wp_json_encode( $miss ) ) . '">Vygenerovať chýbajúce hlasy (' . count( $miss ) . ' z ' . (int) $all . ')</button> <span class="tutv-st description"></span></p></div>';
 	?>
