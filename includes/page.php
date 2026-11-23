@@ -262,6 +262,8 @@ function mysn_auth_config( $game ) {
 		'page'     => $page,
 		// na vlastnej doméne (mysnooker.in) sa Google prihlási na hlavnom webe a mostík prihlási hráča aj tu
 		'google'   => function_exists( 'my_users_google_ready' ) && my_users_google_ready() ? my_users_google_start_url( mysn_on() && function_exists( 'hl_alias_bridge_url' ) && defined( 'HL_ALIAS_HOST' ) ? hl_alias_bridge_url( $game ) : $game ) : '',
+		// 0.53.x: Facebook (My Users 1.7.6) – na vlastnej doméne cez mostík na hlavnom webe ako Google
+		'facebook' => function_exists( 'my_users_fb_ready' ) && my_users_fb_ready() ? my_users_fb_start_url( mysn_on() && function_exists( 'hl_alias_bridge_url' ) && defined( 'HL_ALIAS_HOST' ) ? hl_alias_bridge_url( $game ) : $game ) : '',
 		'email'    => $email,
 		'register' => $email && (bool) my_users_opt( 'email_register' ),
 		'terms'    => (string) my_users_opt( 'terms_url' ),

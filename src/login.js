@@ -8,6 +8,8 @@ import { _t } from './i18n.js';
 
 const esc = (t) => String(t || '').replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
 
+const FB_SVG =
+	'<svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="12" fill="#1877F2"/><path d="M15.1 12.9l.4-2.8h-2.7V8.3c0-.8.4-1.5 1.6-1.5h1.2V4.4s-1.1-.2-2.2-.2c-2.2 0-3.7 1.4-3.7 3.9v2h-2.5v2.8h2.5V20h3.1v-7.1h2.3z" fill="#fff"/></svg>';
 const GOOGLE_SVG =
 	'<svg width="20" height="20" viewBox="0 0 48 48" aria-hidden="true"><path fill="#FFC107" d="M43.6 20.5H42V20H24v8h11.3C33.7 32.7 29.2 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20 20-8.9 20-20c0-1.3-.1-2.4-.4-3.5z"/><path fill="#FF3D00" d="M6.3 14.7l6.6 4.8C14.7 15.1 19 12 24 12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 16.3 4 9.7 8.3 6.3 14.7z"/><path fill="#4CAF50" d="M24 44c5.2 0 9.9-2 13.4-5.2l-6.2-5.2C29.2 35.1 26.7 36 24 36c-5.2 0-9.6-3.3-11.3-8l-6.5 5C9.5 39.6 16.2 44 24 44z"/><path fill="#1976D2" d="M43.6 20.5H42V20H24v8h11.3c-.8 2.2-2.2 4.2-4.1 5.6l6.2 5.2C37 39.2 44 34 44 24c0-1.3-.1-2.4-.4-3.5z"/></svg>';
 
@@ -81,10 +83,11 @@ export class LoginBox {
 			const privacy = a.privacy ? `<a href="${esc(a.privacy)}" target="_blank" rel="noopener">${_t('spracovaním osobných údajov')}</a>` : _t('spracovaním osobných údajov');
 			body = `<div class="mysn-lg-body">
 				<h3>${reg ? _t('Vytvor si účet') : _t('Vitaj späť')}</h3>
-				<p class="mysn-lg-sub">${reg ? _t('Zaregistruješ sa cez Google alebo e-mailom.') : _t('Prihlás sa cez Google alebo e-mailom a heslom.')}</p>
+				<p class="mysn-lg-sub">${a.facebook ? (reg ? _t('Zaregistruješ sa cez Google, Facebook alebo e-mailom.') : _t('Prihlás sa cez Google, Facebook alebo e-mailom a heslom.')) : reg ? _t('Zaregistruješ sa cez Google alebo e-mailom.') : _t('Prihlás sa cez Google alebo e-mailom a heslom.')}</p>
 				${msg}
 				${a.google ? `<a class="mysn-lg-google" href="${esc(a.google)}">${GOOGLE_SVG}<span>${_t('Pokračovať cez Google')}</span></a>` : ''}
-				${a.google && a.email ? '<div class="mysn-lg-or"><span>alebo e-mailom</span></div>' : ''}
+				${a.facebook ? `<a class="mysn-lg-google mysn-lg-fb" href="${esc(a.facebook)}">${FB_SVG}<span>${_t('Pokračovať cez Facebook')}</span></a>` : ''}
+				${(a.google || a.facebook) && a.email ? `<div class="mysn-lg-or"><span>${_t('alebo e-mailom')}</span></div>` : ''}
 				${
 					a.email
 						? `<form class="mysn-lg-form" data-action="${reg ? 'register' : 'login'}" novalidate>
@@ -105,7 +108,7 @@ export class LoginBox {
 				${a.register ? `<p class="mysn-lg-switch">${reg ? _t('Už máš účet? <a href="#" data-tab="login">Prihlás sa</a>') : _t('Ešte nemáš účet? <a href="#" data-tab="register">Zaregistruj sa</a>')}</p>` : ''}`
 						: ''
 				}
-				${!a.google && !a.email ? _t('<p class="mysn-lg-sub">Prihlásenie je momentálne vypnuté.</p>') : ''}
+				${!a.google && !a.facebook && !a.email ? _t('<p class="mysn-lg-sub">Prihlásenie je momentálne vypnuté.</p>') : ''}
 			</div>`;
 		}
 		const tabs =
