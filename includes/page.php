@@ -63,9 +63,10 @@ add_action( 'wp_loaded', function () {
 				'background_color' => '#0c0f14',
 				'theme_color'      => '#0c0f14',
 				'lang'             => 'en',
-				'icons'            => $ic ? array(
-					array( 'src' => $ic, 'sizes' => 'any', 'type' => 'image/png' ), // 0.53.2: ikona webu nemá presné rozmery 192/512 (prehliadač hlásil chybu)
-				) : array(),
+				'icons'            => array(
+					array( 'src' => mysn_url() . ltrim( wp_make_link_relative( MYSN_URL . 'assets/icon-192.png' ), '/' ), 'sizes' => '192x192', 'type' => 'image/png' ), // 0.53.3 vlastné ikony hry v správnych rozmeroch
+					array( 'src' => mysn_url() . ltrim( wp_make_link_relative( MYSN_URL . 'assets/icon-512.png' ), '/' ), 'sizes' => '512x512', 'type' => 'image/png', 'purpose' => 'any' ),
+				),
 			),
 			JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE
 		);
@@ -206,7 +207,8 @@ echo wp_json_encode(
 );
 ?></script>
 <?php if ( $icon ) : ?>
-<link rel="icon" href="<?php echo esc_url( $icon ); ?>">
+<link rel="icon" type="image/png" sizes="192x192" href="<?php echo esc_url( wp_make_link_relative( MYSN_URL ) . 'assets/icon-192.png' ); ?>">
+<link rel="apple-touch-icon" href="<?php echo esc_url( wp_make_link_relative( MYSN_URL ) . 'assets/icon-192.png' ); ?>">
 <?php endif; ?>
 <link rel="stylesheet" href="<?php echo esc_url( wp_make_link_relative( MYSN_URL ) . 'assets/snooker.css?ver=' . mysn_asset_ver( 'snooker.css' ) ); // 0.53.2: štýly z domény hry – písma (fonts) bez blokovania CORS ?>">
 </head>

@@ -5112,6 +5112,7 @@ export function start(root, config = {}) {
 			onListClose: () => ui.showMenu(true),
 		});
 		ui.tutActive = () => tut.active;
+		setTimeout(() => refreshMenu(), 0); // menu s tlačidlom Tutoriál (0.53.3: patrí k tutoriálu, nie k uvítaniu)
 	}
 	// 0.52.1 jemný klik pri každom tlačidle (menu, okná, tutoriál, mobil); zvuk Rozhranie → Klik na tlačidlo
 	let uiClickAt = 0;
@@ -5173,7 +5174,6 @@ export function start(root, config = {}) {
 				},
 			});
 		}, 1200);
-		setTimeout(() => refreshMenu(), 0);
 	}
 	// chat v hre (miestnosť Snooker z My Chat): Enter píše, správy vľavo
 	const chat = gameChat(overlay, config.chat ? Object.assign({ nonce: config.nonce }, config.chat) : null, {
