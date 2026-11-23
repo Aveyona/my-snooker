@@ -43,6 +43,7 @@ import { Net } from './online.js';
 import { rememberLang, _t, _pts, LANG } from './i18n.js';
 import { tutorial } from './tutorial.js';
 import { welcome } from './welcome.js';
+import { lobbyUi } from './lobbyUi.js';
 
 // 0.40.1: odtlačky dôležitých funkcií pre výzvu zo servera (ešte pred spustením hry)
 fpRegister({
@@ -1357,7 +1358,7 @@ export function start(root, config = {}) {
 		if (m && m.pre && !m.pre.done) {
 			return null; // 0.44.0: počas žrebu čas na ťah nebeží
 		}
-		if (m && m.league && m.rules && !m.rules.over && m.turnAt && !game.spectating) {
+		if (m && (m.league || m.clock > 0) && m.rules && !m.rules.over && m.turnAt && !game.spectating) {
 			return { left: clockOf(m.clock) - (Date.now() - m.turnAt) / 1000, mine: m.turn === m.me };
 		}
 		if (game.spectating && watchScreen && watchTurnAt && watchScreen.turn >= 0 && game.spectating.kind === 'league') {
@@ -3579,6 +3580,19 @@ export function start(root, config = {}) {
 			controls.uncapture();
 			tut.openList(true);
 		},
+		gameLobby: () => {
+			if (!lobby) {
+				ui.toast(_t('Lobby je pre prihlásených hráčov.'));
+				return;
+			}
+			if (game.match || game.spectating) {
+				ui.toast(_t('Počas partie alebo sledovania sa lobby otvoriť nedá.'));
+				return;
+			}
+			ui.showMenu(false);
+			controls.uncapture();
+			lobby.show(true);
+		},
 		helper: () => {
 			ui.showMenu(false);
 			controls.hooks.key('f1');
@@ -5114,6 +5128,23 @@ export function start(root, config = {}) {
 		},
 		true
 	);
+	// 0.53.0 vlastné lobby (zoznam, založenie, chat lobby, Pripravený, Začať hru)
+	let lobby = null;
+	if (user && online) {
+		lobby = lobbyUi(overlay, {
+			call: (p, b) => online.net.call(p, b),
+			toast: (t) => ui.toast(t),
+			sound: () => sound.notice('chat'),
+			name: () => user.name,
+			uid: () => user.id,
+			league: () => {
+				actions.league();
+				setTimeout(() => actions.officeDoor(), 1600); // ako F9 v kancelárii: hľadanie ligového súpera
+			},
+			started: () => online.ping(),
+			closed: () => {},
+		});
+	}
 	// 0.52.0 uvítacie okno nového hráča (raz na účet)
 	if (user && config.welcome) {
 		setTimeout(() => {

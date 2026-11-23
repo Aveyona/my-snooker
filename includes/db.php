@@ -13,6 +13,7 @@
  * {prefix}my_snooker_signals   krátke správy na nadviazanie priameho spojenia WebRTC medzi hráčmi (po prečítaní sa mažú)
  * {prefix}my_snooker_seats    miesta online divákov: stolička na štadióne alebo miesto na státie v herni (jedno miesto = jeden divák)
  * {prefix}my_snooker_mclog    chat ligových partií natrvalo (0.47.0): správa, autor, hráč/divák, poradie úderu (pre prehrávač)
+ * {prefix}my_snooker_lobbies  vlastné lobby hráčov (0.53.0): názov, heslo, nastavenia hry, hosť, pripravený, chat lobby
  * {prefix}my_snooker_scores    jeden hráč o najlepšie skóre: dohrané framy (body, čas, údery, fauly, najvyššia séria)
  *
  * Partia sa ukladá po každom údere, takže pri výpadku internetu sa dá pokračovať tam, kde sa skončila.
@@ -21,7 +22,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-const MYSN_DB_VERSION = '19';
+const MYSN_DB_VERSION = '20';
 
 function mysn_table( $name ) {
 	global $wpdb;
@@ -73,6 +74,7 @@ elo1 int(10) NOT NULL DEFAULT 0,
 elo2 int(10) NOT NULL DEFAULT 0,
 edel1 int(10) NOT NULL DEFAULT 0,
 edel2 int(10) NOT NULL DEFAULT 0,
+opts text NULL,
 PRIMARY KEY  (id),
 KEY p1 (p1,status),
 KEY p2 (p2,status),
@@ -231,6 +233,28 @@ seq int(10) unsigned NOT NULL DEFAULT 0,
 created int(10) unsigned NOT NULL DEFAULT 0,
 PRIMARY KEY  (id),
 KEY match_id (match_id)
+) $c;"
+	);
+	// 0.53.0: vlastné lobby hráčov (jedno na zakladateľa), nastavenia hry v JSON, chat lobby (posledných 40 správ)
+	dbDelta(
+		'CREATE TABLE ' . mysn_table( 'lobbies' ) . " (
+id bigint(20) unsigned NOT NULL AUTO_INCREMENT,
+owner bigint(20) unsigned NOT NULL,
+name varchar(80) NOT NULL DEFAULT '',
+pass varchar(255) NOT NULL DEFAULT '',
+opts text NULL,
+guest bigint(20) unsigned NOT NULL DEFAULT 0,
+ready tinyint(1) unsigned NOT NULL DEFAULT 0,
+status varchar(10) NOT NULL DEFAULT 'open',
+match_id bigint(20) unsigned NOT NULL DEFAULT 0,
+chat text NULL,
+seen_owner int(10) unsigned NOT NULL DEFAULT 0,
+seen_guest int(10) unsigned NOT NULL DEFAULT 0,
+created int(10) unsigned NOT NULL DEFAULT 0,
+updated int(10) unsigned NOT NULL DEFAULT 0,
+PRIMARY KEY  (id),
+UNIQUE KEY owner (owner),
+KEY status (status)
 ) $c;"
 	);
 	update_option( 'mysn_db', MYSN_DB_VERSION, true );

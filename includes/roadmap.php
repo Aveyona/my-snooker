@@ -180,6 +180,7 @@ function mysn_roadmap() {
 /** Denník zmien (najnovšie hore). */
 function mysn_changelog() {
 	return array(
+		array( '0.53.0', '23. 11. 2026', 'Vlastné lobby: tlačidlo Lobby v menu (a klik na počet hráčov online). Každý registrovaný hráč založí jedno lobby: názov, heslo (nepovinné), spoločný tréning alebo priateľská partia na 1, 3 alebo 5 framov, čas na úder (bez času, 30 až 90 s) a miestnosť (herňa; Indická ulička čoskoro). Zoznam lobby s počtom hráčov online, náhľad nastavení zakladateľa, pripojenie s heslom, chat lobby, Pripravený, Začať hru, Vyhodiť hosťa, Zavrieť lobby; po hre sa obaja vrátia do lobby. Ligový zápas sa v lobby nezakladá – spustí hľadanie súpera ako F9 v kancelárii. Čas na úder z lobby overuje aj server (faul za čas). Admin My Snooker → Lobby.' ),
 		array( '0.52.2', '23. 11. 2026', 'Počet hráčov online vpravo hore (PC aj mobil, zelená bodka); klik otvorí zoznam hráčov na výzvu.' ),
 		array( '0.52.1', '23. 11. 2026', 'Jemný klik pri každom tlačidle v hre (menu, okná, tutoriál, uvítanie, mobilné menu a ikonky). Nastavuje sa v Zvukoch, nová kategória Rozhranie → Klik na tlačidlo (bez nahrávky generovaný tichý „tik“).' ),
 		array( '0.52.0', '23. 11. 2026', 'Uvítacie okno pre nového hráča: raz na účet po registrácii (hráčom registrovaným od nasadenia). Pozdrav s menom, karty Tutoriál (odporúčané), Tréning, Hrať o skóre a Liga a priatelia, základné ovládanie pre PC alebo mobil, tlačidlá Začať tutoriál a Rovno hrať, znelka Uvítanie. Texty SK/EN a test v administrácii My Snooker → Uvítanie.' ),

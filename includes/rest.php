@@ -243,7 +243,8 @@ function mysn_match_out( $m, $uid ) {
 		'updated' => (int) $m['updated'],
 		'league'  => (int) ( $m['league'] ?? 0 ),
 		'tier'    => ! empty( $m['league'] ) ? mysn_match_tier( $m ) : 0, // číslo ligy (1 až 4) pre mantinel na štadióne
-		'clock'   => ! empty( $m['league'] ) ? mysn_shot_clock( $m ) : 0, // čas na ťah (sekundy) podľa sezóny
+		'clock'   => ! empty( $m['league'] ) ? mysn_shot_clock( $m ) : ( function_exists( 'mysn_match_opt_clock' ) ? mysn_match_opt_clock( $m ) : 0 ), // čas na ťah (sekundy): liga podľa sezóny, lobby podľa nastavenia
+		'opts'    => ! empty( $m['opts'] ) ? json_decode( (string) $m['opts'], true ) : null, // 0.53.0 nastavenia lobby (miestnosť)
 		// časomiera podľa servera: skutočný začiatok ťahu (s), ťah, ku ktorému patrí, a čas servera (ms) na prepočet hodín
 		'turnat'  => (int) ( $m['turnat'] ?? 0 ),
 		'tseq'    => (int) $m['seq'],
@@ -953,11 +954,12 @@ function mysn_rest_timeout( $req ) {
 	if ( (int) $m['seq'] >= $seq ) {
 		return array( 'ok' => true, 'match' => mysn_match_out( $m, get_current_user_id() ) ); // už zapísané
 	}
-	if ( 'active' !== $m['status'] || empty( $m['league'] ) || (int) $m['seq'] + 1 !== $seq || $m['shot'] || ( function_exists( 'mysn_pre_active' ) && mysn_pre_active( $m ) ) ) {
+	$oclk = empty( $m['league'] ) && function_exists( 'mysn_match_opt_clock' ) ? mysn_match_opt_clock( $m ) : 0; // 0.53.0 čas na úder z lobby
+	if ( 'active' !== $m['status'] || ( empty( $m['league'] ) && ! $oclk ) || (int) $m['seq'] + 1 !== $seq || $m['shot'] || ( function_exists( 'mysn_pre_active' ) && mysn_pre_active( $m ) ) ) {
 		return mysn_err( 'Faul za čas sa nedá zapísať.', 409 );
 	}
 	$off  = (int) $m['turn']; // kto nestihol
-	$clk  = mysn_shot_clock( $m );
+	$clk  = $oclk ? $oclk : mysn_shot_clock( $m );
 	$need = $off === $me ? $clk - 1 : $clk + 2;
 	if ( ! (int) $m['turnat'] || time() - (int) $m['turnat'] < $need ) {
 		return mysn_err( 'Čas na úder ešte nevypršal.', 409 );

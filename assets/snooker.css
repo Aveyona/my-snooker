@@ -1069,3 +1069,44 @@ body.mysn-page { font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans
 .mysn-online i { width: 8px; height: 8px; border-radius: 50%; background: #3ddc6f; box-shadow: 0 0 6px #3ddc6f; }
 .mysn-online:hover { border-color: #f2d48a99; }
 @media (hover: none), (pointer: coarse) { .mysn-online { position: absolute; top: 12px; right: 12px; z-index: 5; } }
+
+/* 0.53.0 vlastné lobby */
+.mysn-lobby { position: absolute; inset: 0; z-index: 65; display: none; align-items: center; justify-content: center; background: #05070acc; backdrop-filter: blur(3px); padding: 12px; box-sizing: border-box; }
+.mysn-lobby.mysn-on { display: flex; }
+.mysn-lb-card { width: min(520px, 100%); max-height: 100%; overflow-y: auto; box-sizing: border-box; background: #141a24f5; border: 1px solid #ffffff2e; border-radius: 16px; padding: 16px 18px; color: #f3f3f3; box-shadow: 0 10px 40px #000c; }
+.mysn-lb-head { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 10px; }
+.mysn-lb-head h3 { margin: 0; color: #f2d48a; font-size: 20px; }
+.mysn-lb-stats { display: inline-flex; align-items: center; gap: 6px; font-size: 12.5px; color: #c9ccd2; flex: 1; }
+.mysn-lb-stats i { width: 8px; height: 8px; border-radius: 50%; background: #3ddc6f; box-shadow: 0 0 6px #3ddc6f; }
+.mysn-lb-x { background: none; border: none; color: #c9ccd2; font-size: 24px; cursor: pointer; line-height: 1; padding: 0 4px; margin-left: auto; }
+.mysn-lb-body { display: flex; flex-direction: column; gap: 8px; }
+.mysn-lb-body h4 { margin: 4px 0 0; font-size: 17px; }
+.mysn-lb-body .mysn-btn { margin: 0; width: 100%; }
+.mysn-lb-new { background: #f2d48a; color: #1a1a1a; font-weight: 700; }
+.mysn-lb-go { background: #f2d48a; color: #1a1a1a !important; font-weight: 700; }
+.mysn-lb-go:disabled { opacity: .45; cursor: default; }
+.mysn-lb-item { display: grid; grid-template-columns: 1fr auto; gap: 2px 10px; text-align: left; padding: 10px 12px; border-radius: 10px; border: 1px solid #ffffff2e; background: #ffffff08; color: #f3f3f3; cursor: pointer; font: inherit; }
+.mysn-lb-item:hover { border-color: #f2d48a99; }
+.mysn-lb-item span { grid-column: 1; font-size: 12px; color: #c9ccd2; }
+.mysn-lb-item em { grid-column: 2; grid-row: 1 / 3; align-self: center; font-style: normal; font-size: 13px; color: #9fe3ff; }
+.mysn-lb-full { opacity: .55; }
+.mysn-lb-empty, .mysn-lb-sub { font-size: 13px; color: #c9ccd2; margin: 2px 0; }
+.mysn-lb-back { align-self: flex-start; background: none; border: none; color: #9fe3ff; cursor: pointer; padding: 0; font: inherit; font-size: 13px; }
+.mysn-lb-opts { display: grid; gap: 4px; background: #ffffff08; border-radius: 10px; padding: 8px 12px; }
+.mysn-lb-opts div { display: flex; justify-content: space-between; gap: 10px; font-size: 13px; }
+.mysn-lb-opts span { color: #c9ccd2; }
+.mysn-lb-form { display: flex; flex-direction: column; gap: 8px; }
+.mysn-lb-form label { display: flex; flex-direction: column; gap: 3px; font-size: 13px; color: #c9ccd2; }
+.mysn-lb-form label[hidden], .mysn-lb-sub[hidden] { display: none; }
+.mysn-lb-form input, .mysn-lb-form select, .mysn-lb-pass, .mysn-lb-say input { background: #0c0f14; color: #f3f3f3; border: 1px solid #ffffff3a; border-radius: 8px; padding: 8px 10px; font: inherit; font-size: 14px; }
+.mysn-lb-chk { flex-direction: row !important; align-items: center; }
+.mysn-lb-ppl { display: grid; gap: 4px; font-size: 14px; }
+.mysn-lb-ppl span { font-size: 12px; color: #c9ccd2; }
+.mysn-lb-ppl .mysn-lb-ok { color: #7CFC8A; }
+.mysn-lb-chat { max-height: 160px; min-height: 60px; overflow-y: auto; background: #0c0f14; border-radius: 8px; padding: 6px 10px; }
+.mysn-lb-chat p { margin: 2px 0; font-size: 13px; }
+.mysn-lb-say { display: flex; gap: 6px; }
+.mysn-lb-say input { flex: 1; min-width: 0; }
+.mysn-lb-say .mysn-btn { width: auto !important; }
+.mysn-lb-btns { display: flex; flex-wrap: wrap; gap: 6px; }
+.mysn-lb-btns .mysn-btn { flex: 1 1 45%; }

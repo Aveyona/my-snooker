@@ -89,7 +89,7 @@ function noKeys(t) {
 const MM_ICON = {
 	resume: 'play', training: 'play', guestTraining: 'play', solo: 'trophy', league: 'league', gameRooms: 'door', lobby: 'swords', rooms: 'eye',
 	staff: 'shield', account: 'user', home: 'web', resign: 'flag', pauseMatch: 'pause', leagueHome: 'door',
-	seatChange: 'chair', watchStop: 'x', tutorial: 'cap', helper: 'help', accept: 'check', decline: 'x',
+	seatChange: 'chair', watchStop: 'x', tutorial: 'cap', helper: 'help', gameLobby: 'lobby', accept: 'check', decline: 'x',
 };
 
 /** Farby LED podsvietenia stojana s tágami: kľúč, názov, farba tlačidla (farba svetla je v main.js RACK_LED_HEX). */
@@ -131,7 +131,7 @@ export class UI {
 		this.onlineEl.title = _t('Hráči práve v hre');
 		this.onlineEl.addEventListener('click', (e) => {
 			e.stopPropagation();
-			this.opts.onAction('lobby');
+			this.opts.onAction('gameLobby');
 		});
 		for (const t of ['pointerdown', 'mousedown', 'touchstart']) {
 			this.onlineEl.addEventListener(t, (e) => e.stopPropagation());
@@ -936,7 +936,9 @@ export class UI {
 			for (const b of gr) {
 				b.classList.add('mysn-rooms-btn');
 			}
-			box.append(tr, play, lg, ...gr, fr(), enter); // rebríček je na F8
+			// 0.53.0 vlastné lobby: zoznam lobby a založenie vlastného (len prihlásení)
+			const lb = user ? [this.button(_t('Lobby'), 'gameLobby', _t('Vlastné lobby: založ hru s vlastnými pravidlami alebo sa pripoj k inému hráčovi'))] : [];
+			box.append(tr, play, lg, ...lb, ...gr, fr(), enter); // rebríček je na F8
 			if (this.opts.venue && this.opts.venue() === 'league') {
 				box.appendChild(this.button(_t('Späť do herne'), 'leagueHome'));
 			}
@@ -3859,6 +3861,7 @@ export class UI {
 		const ctx = (this.menuCtx && this.menuCtx()) || {};
 		const P = {
 			play: '<path d="M7 4v16l13-8z"/>',
+			lobby: '<circle cx="9" cy="8" r="3"/><circle cx="17" cy="9" r="2.5"/><path d="M3 20a6 6 0 0 1 12 0M14.5 20a4.5 4.5 0 0 1 7-3.6"/>',
 			swords: '<path d="M14.5 17.5 3 6V3h3l11.5 11.5M13 19l6-6M16 16l4 4M19 21l2-2"/>',
 			eye: '<path d="M2 12s3.6-6.5 10-6.5S22 12 22 12s-3.6 6.5-10 6.5S2 12 2 12z"/><circle cx="12" cy="12" r="3"/>',
 			user: '<circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/>',
