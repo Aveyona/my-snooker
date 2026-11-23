@@ -93,8 +93,8 @@ function mysn_render( $preview ) {
 	status_header( 200 );
 	header( 'Content-Type: text/html; charset=utf-8' );
 	// 0.48.0 SEO na vlastnej doméne (mysnooker.in) po anglicky
-	$title = 'My Snooker – Free 3D Online Snooker Game in Your Browser';
-	$desc  = 'Play realistic 3D snooker online for free, right in your browser on PC and mobile. Practise, chase the high score, challenge friends and compete in the online league – no download.';
+	$title = 'My Snooker – Free realistic Snooker Game in Your Browser';
+	$desc  = 'Play realistic 3D snooker online for free, right in your browser on PC and mobile. Practise, chase the high score, challenge friends and compete in the online league.';
 	$icon  = get_site_icon_url( 192 );
 	$og    = mysn_url() . ltrim( wp_make_link_relative( MYSN_URL . 'assets/og-image.jpg' ), '/' ); // obrázok na doméne hry (mysnooker.in)
 	$main  = mysn_main_url() . '/';
