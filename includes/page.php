@@ -236,6 +236,37 @@ echo wp_json_encode(
 <link rel="stylesheet" href="<?php echo esc_url( wp_make_link_relative( MYSN_URL ) . 'assets/snooker.css?ver=' . mysn_asset_ver( 'snooker.css' ) ); // 0.53.2: štýly z domény hry – písma (fonts) bez blokovania CORS ?>">
 </head>
 <body class="mysn-page">
+<?php
+// 0.63.1: načítavacia obrazovka – zobrazí sa hneď, kým sa stiahne a spustí hra (hlavne pri prvej návšteve)
+$mysn_ld = array(
+	'sk' => array( 'Načítavam hru…', 'Pripravujem stôl a herňu', 'Prvé spustenie môže chvíľu trvať.' ),
+	'en' => array( 'Loading the game…', 'Setting up the table and the club room', 'The first start may take a moment.' ),
+	'hi' => array( 'गेम लोड हो रहा है…', 'टेबल और क्लब रूम तैयार हो रहे हैं', 'पहली बार शुरू होने में थोड़ा समय लग सकता है।' ),
+);
+$mysn_lt = isset( $mysn_ld[ mysn_lang() ] ) ? $mysn_ld[ mysn_lang() ] : $mysn_ld['en'];
+?>
+<style>
+#mysn-loading{position:fixed;inset:0;z-index:100000;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;background:radial-gradient(ellipse at 50% 40%,#123a24 0%,#0b2116 45%,#0c0f14 100%);color:#f3f3f3;font-family:Segoe UI,Roboto,Arial,sans-serif;text-align:center;transition:opacity .6s ease;padding:20px}
+#mysn-loading.mysn-ld-off{opacity:0;pointer-events:none}
+#mysn-loading h1{margin:0;font-size:clamp(28px,6vw,52px);letter-spacing:.06em;font-weight:800;color:#f5d36b;text-shadow:0 2px 12px rgba(0,0,0,.6)}
+#mysn-loading .ld-balls{display:flex;gap:10px;height:28px;align-items:flex-end}
+#mysn-loading .ld-balls i{width:20px;height:20px;border-radius:50%;box-shadow:inset -4px -4px 7px rgba(0,0,0,.45),inset 3px 3px 5px rgba(255,255,255,.35);animation:mysn-ld-hop 1.2s ease-in-out infinite}
+#mysn-loading .ld-balls i:nth-child(1){background:#c8102e}#mysn-loading .ld-balls i:nth-child(2){background:#f2c500;animation-delay:.1s}#mysn-loading .ld-balls i:nth-child(3){background:#1d8a3c;animation-delay:.2s}#mysn-loading .ld-balls i:nth-child(4){background:#7a4a24;animation-delay:.3s}#mysn-loading .ld-balls i:nth-child(5){background:#1c4fd0;animation-delay:.4s}#mysn-loading .ld-balls i:nth-child(6){background:#e86aa0;animation-delay:.5s}#mysn-loading .ld-balls i:nth-child(7){background:#111;animation-delay:.6s}
+@keyframes mysn-ld-hop{0%,60%,100%{transform:translateY(0)}30%{transform:translateY(-10px)}}
+#mysn-loading .ld-bar{width:min(320px,70vw);height:6px;border-radius:3px;background:rgba(255,255,255,.12);overflow:hidden}
+#mysn-loading .ld-bar b{display:block;height:100%;width:8%;background:linear-gradient(90deg,#f5d36b,#ffe9a6);border-radius:3px;transition:width .4s ease}
+#mysn-loading .ld-t{font-size:16px;font-weight:600}
+#mysn-loading .ld-s{font-size:13px;opacity:.7}
+@media (prefers-reduced-motion:reduce){#mysn-loading .ld-balls i{animation:none}}
+</style>
+<div id="mysn-loading" role="status" aria-live="polite">
+<h1>MY SNOOKER</h1>
+<div class="ld-balls" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
+<div class="ld-bar"><b></b></div>
+<div class="ld-t"><?php echo esc_html( $mysn_lt[0] ); ?></div>
+<div class="ld-s" data-step="<?php echo esc_attr( $mysn_lt[1] ); ?>"><?php echo esc_html( $mysn_lt[2] ); ?></div>
+</div>
+<script>(function(){var b=document.querySelector('#mysn-loading .ld-bar b'),p=8;window.mysnLdP=function(v){p=Math.max(p,Math.min(100,v));if(b)b.style.width=p+'%';};var t=setInterval(function(){if(p<35)window.mysnLdP(p+3);else clearInterval(t);},400);window.mysnLdDone=function(){var e=document.getElementById('mysn-loading');if(!e||e.classList.contains('mysn-ld-off'))return;window.mysnLdP(100);setTimeout(function(){e.classList.add('mysn-ld-off');setTimeout(function(){e.remove();},700);},150);};setTimeout(function(){window.mysnLdDone();},45000);})();</script>
 <div id="mysn-app"><noscript><div class="mysn-nogl"><h1>My Snooker – free 3D snooker in your browser</h1><p>Play realistic 3D snooker online on PC and mobile: real table dimensions, spin, cushion rebounds, practice, high-score mode, matches with friends and a year-round online league with a stadium and live spectators.</p><p>The game needs JavaScript turned on.</p></div></noscript></div>
 <script>window.MYSN_CONFIG = <?php echo wp_json_encode( $cfg ); ?>;</script>
 <?php if ( mysn_on() ) : ?><script>window.addEventListener('beforeinstallprompt', function (e) { e.preventDefault(); window.mysnInstall = e; });</script><script>if ('serviceWorker' in navigator) { window.addEventListener('load', function () { navigator.serviceWorker.register('/sw.js', { scope: '/' }).catch(function () {}); }); }</script><?php endif; ?>

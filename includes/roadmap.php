@@ -180,6 +180,7 @@ function mysn_roadmap() {
 /** Denník zmien (najnovšie hore). */
 function mysn_changelog() {
 	return array(
+		array( '0.63.1', '24. 11. 2026', 'Načítavacia obrazovka: hneď po otvorení stránky (hlavne pri prvej návšteve) sa ukáže tmavozelená obrazovka MY SNOOKER so skáčucimi guľami, ukazovateľom priebehu a textom (SK/EN/HI); zmizne, keď sa vykreslí herňa a dotiahnu textúry a modely (najviac 12 s).' ),
 		array( '0.63.0', '24. 11. 2026', 'Mobil, pohľad zhora (Tab): skryjú sa všetky prvky obrazovky, ostane len žlté pomaly blikajúce tlačidlo ↩ Späť za tágo dole (tutoriál, menu a okná ostávajú). Text tutoriálu (Pohľady a kamera) upravený.' ),
 		array( '0.62.9', '24. 11. 2026', 'Tutoriál: biela na začiatku (a pri rozostavení „rack“) stojí v D medzi hnedou a žltou a mieri na najbližšiu červenú – nie tesne za hnedou s mierením na hnedú.' ),
 		array( '0.62.8', '24. 11. 2026', 'Tutoriál pri spustení (aj každej lekcie) vráti hráča k stolu v herni: zavrie rádio, kreslo, nástenku a iné predmety, voľný pohľad, kanceláriu, pohľad zhora, príslušenstvo, mapu miestností aj telefón – hráč neostane zaseknutý pri predmete.' ),

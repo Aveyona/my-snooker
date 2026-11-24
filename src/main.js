@@ -4,6 +4,12 @@
  */
 import { gameChat } from './gameChat.js';
 import * as THREE from 'three';
+// 0.63.1: priebeh sťahovania textúr/modelov pre načítavaciu obrazovku
+const ldItems = { done: 0, total: 0 };
+THREE.DefaultLoadingManager.onProgress = (u, d, t) => {
+	ldItems.done = d;
+	ldItems.total = t;
+};
 import { RoomEnvironment } from 'three/examples/jsm/environments/RoomEnvironment.js';
 import { buildTable, buildRoom } from './table.js';
 import { buildRoomShell, ROOM, ROOM_EXTRA } from './room.js';
@@ -6881,6 +6887,30 @@ export function start(root, config = {}) {
 	let oppTop = false; // pohľad zhora počas súperovho ťahu
 	let followSeen = false; // po údere kamera sledovala bielu (pozri frame)
 	let shotTop = false; // po údere je pohľad zhora (Nastavenia, Kamera po údere)
+	// 0.63.1: načítavacia obrazovka – zmizne po prvých snímkach, keď sa dotiahnu textúry a modely (najviac 12 s)
+	let ldWait = typeof window.mysnLdDone === 'function';
+	let ldFrames = 0;
+	const ldT0 = performance.now();
+	let ldStep = false;
+	const ldTick = () => {
+		ldFrames++;
+		const tot = ldItems.total;
+		const part = tot ? ldItems.done / tot : 1;
+		if (window.mysnLdP) {
+			window.mysnLdP(40 + 55 * part);
+		}
+		if (!ldStep) {
+			ldStep = true;
+			const s = document.querySelector('#mysn-loading .ld-s');
+			if (s && s.dataset.step) {
+				s.textContent = s.dataset.step;
+			}
+		}
+		if (ldFrames > 3 && ((ldItems.done >= tot && performance.now() - ldT0 > 400) || performance.now() - ldT0 > 12000)) {
+			ldWait = false;
+			window.mysnLdDone();
+		}
+	};
 	const frame = (now) => {
 		const dt = Math.min(0.05, (now - last) / 1000);
 		last = now;
@@ -7477,6 +7507,9 @@ export function start(root, config = {}) {
 		lcdRender();
 		Cue.fadeFrom(rig.camera.position, cue.pivot.position); // tágo blízko kamery sa stratí (massé)
 		renderer.render(scene, rig.camera);
+		if (ldWait) {
+			ldTick();
+		}
 		if (snaps) {
 			snaps.afterRender(renderer.domElement);
 		}
@@ -7497,7 +7530,20 @@ const boot = () => {
 	if (root && !root.dataset.started) {
 		root.dataset.started = '1';
 		const cfg = window.MYSN_CONFIG || {};
-		const app = start(root, cfg);
+		if (window.mysnLdP) {
+			window.mysnLdP(40);
+		}
+		// bez WebGL alebo pri chybe sa prvá snímka nevykreslí – obrazovku aj tak schovať
+		setTimeout(() => window.mysnLdDone && window.mysnLdDone(), 15000);
+		let app;
+		try {
+			app = start(root, cfg);
+		} catch (e) {
+			if (window.mysnLdDone) {
+				window.mysnLdDone();
+			}
+			throw e;
+		}
 		// 0.34.0: hra nie je verejne dostupná z konzoly (ochrana proti AI hráčom); len admin na ladenie
 		if (cfg.role === 'admin') {
 			window.MySnooker = app;
