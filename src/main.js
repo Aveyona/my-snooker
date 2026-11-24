@@ -1807,7 +1807,6 @@ export function start(root, config = {}) {
 		}
 	};
 	radio.onChange = radioSync;
-	let tutRadio = false; // 0.57.0 tutoriál zapol rádio
 	if (settings.radio && settings.radio.on && radio.stations.length) {
 		// rádio hralo pred obnovením stránky: zapne sa pri prvom kliknutí alebo klávese (prehliadač nedovolí zvuk skôr)
 		const resume = () => {
@@ -5150,11 +5149,6 @@ export function start(root, config = {}) {
 				refreshMenu();
 				ui.showMenu(false);
 				controls.blocked = false;
-				// 0.57.0 tutoriál zapne rádio (raz za návštevu; ostane zapnuté aj po tutoriáli)
-				if (!tutRadio && !radio.on && radio.stations.length) {
-					tutRadio = true;
-					radio.play();
-				}
 			},
 			onEnd: () => {
 				if (view === 'office') {
