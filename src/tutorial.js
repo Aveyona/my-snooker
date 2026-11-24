@@ -290,7 +290,8 @@ export function tutorial(parent, cfg, d) {
 		foot.textContent = d.touchUI() ? '' : (isText ? _t('Enter = Ďalej') : _t('Esc uvoľní myš a otvorí menu')) + ' · ' + _t('Shift+Enter = chat');
 		hints.textContent = '';
 		glow(S.hints || []);
-		for (const k of S.hints || []) {
+		// 0.64.8: pri texte (Ďalej) sa šípky ovládania neukazujú – ešte sa nimi nedá nič robiť, ukážu sa pri úlohe
+		for (const k of isText ? [] : S.hints || []) {
 			const e = hintEl(k);
 			if (e) {
 				hints.appendChild(e);
@@ -321,7 +322,8 @@ export function tutorial(parent, cfg, d) {
 		d.capture(!isText); // PC: pri texte voľná myš na tlačidlá, pri úlohe zachytená
 		if (d.tour) {
 			// 0.64.7: text bez predmetu a mimo kancelárie – na stole sa nič nerobí, kamera krúži okolo stola
-			d.tour(isText && !S.obj && !(S.setup && /office/i.test(S.setup)));
+			// pri texte so zvýraznením prvku na obrazovke (napr. šípka ▲ nastavení) ostáva ovládanie viditeľné
+			d.tour(isText && !S.obj && !(S.setup && /office/i.test(S.setup)) && !(S.hints || []).some((k) => /^g_/.test(k)));
 		}
 	};
 
