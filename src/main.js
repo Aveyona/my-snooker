@@ -6720,6 +6720,9 @@ export function start(root, config = {}) {
 				rudo.fetchCall(game.match.id, game.match.seq); // komentátor Rudo (rozhodol server)
 			}
 		}
+		if (type === 'settle') {
+			ui.msgShow(); // 0.61.5: hlásenie skryté ťuknutím sa vráti po dohraní úderu
+		}
 		if (type === 'shot') {
 			if (d && d.remote) {
 				trickShot = false; // úder súpera

@@ -162,15 +162,13 @@ export class UI {
 		root.appendChild(bar);
 
 		this.msg = h('div', 'mysn-msg');
-		// 0.61.4: ťuknutím (kliknutím) na hlásenie zmizne na 5 s
+		// 0.61.4: ťuknutím (kliknutím) na hlásenie zmizne, kým sa nedohrá úder
 		for (const ev of ['pointerdown', 'mousedown', 'touchstart']) {
 			this.msg.addEventListener(ev, (e) => e.stopPropagation());
 		}
 		this.msg.addEventListener('click', (e) => {
 			e.stopPropagation();
-			this.msg.classList.add('mysn-msg-off');
-			clearTimeout(this._msgOff);
-			this._msgOff = setTimeout(() => this.msg.classList.remove('mysn-msg-off'), 5000);
+			this.msg.classList.add('mysn-msg-off'); // 0.61.5: skryté, kým sa nedohrá úder (msgShow)
 		});
 		root.appendChild(this.msg);
 		this.hint = h('div', 'mysn-hint', '');
@@ -908,6 +906,11 @@ export class UI {
 	}
 
 	/** Obsah menu: 'guest' (neprihlásený), 'training' alebo 'match' (label = meno súpera). */
+	/** 0.61.5: vráti hlásenie skryté ťuknutím (po dohraní úderu). */
+	msgShow() {
+		this.msg.classList.remove('mysn-msg-off');
+	}
+
 	setMenu(kind, label) {
 		const key = kind + '|' + (label || '') + '|' + (this.opts.venue ? this.opts.venue() : '') + '|' + (this.trainingFirst ? 1 : 0) + '|' + (this.tutActive ? (this.tutActive() ? 2 : 1) : 0) + '|' + (this.installable ? 1 : 0);
 		if (this.menuInst) {
