@@ -1178,3 +1178,4 @@ body.mysn-page { font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans
 	.mysn-gchat-mob:not(.mysn-gchat-open) { left: 150px; bottom: 192px; }
 }
 .mysn-ui.mysn-tools-open .mysn-tools { z-index: 7; } /* 0.62.2 otvorené príslušenstvo je nad hláseniami (napr. Nedosiahneš…) */
+.mysn-toast { z-index: 3; } /* 0.62.3 okná (príslušenstvo, nastavenia…) sú nad hláseniami */
