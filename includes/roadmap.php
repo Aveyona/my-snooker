@@ -180,6 +180,7 @@ function mysn_roadmap() {
 /** Denník zmien (najnovšie hore). */
 function mysn_changelog() {
 	return array(
+		array( '0.64.7', '24. 11. 2026', 'Tutoriál – scény s tlačidlom Ďalej (text): na stole sa nedá mieriť ani strieľať, ovládanie stola je skryté a kamera pomaly krúži okolo stola; klávesy okrem Enter (Ďalej) a Esc nič nerobia. Pri úlohe sa kamera vráti za tágo (v kancelárii a pri ukázaní predmetu bez krúženia).' ),
 		array( '0.64.6', '24. 11. 2026', 'Hlásenie Je dostupná nová verzia hry: text v jednom riadku cez celú šírku (na mobile bol stlačený pod seba).' ),
 		array( '0.64.5', '24. 11. 2026', 'Tutoriál: Ďalej jemne bliká od začiatku scény; po 20 s bez odozvy zaznie hlasová pripomienka a blikanie sa zvýrazní.' ),
 		array( '0.64.4', '24. 11. 2026', 'Tutoriál: tlačidlo Ďalej bliká vždy, keď ho treba stlačiť (nie až po 20 s); po 20 s bez odozvy ostáva hlasová pripomienka a blikanie bubliny.' ),

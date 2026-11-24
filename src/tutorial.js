@@ -319,6 +319,10 @@ export function tutorial(parent, cfg, d) {
 			setTimeout(() => api.active && d.objShow(S.obj), S.setup && /office/i.test(S.setup) ? 900 : 50); // ukáž predmet
 		}
 		d.capture(!isText); // PC: pri texte voľná myš na tlačidlá, pri úlohe zachytená
+		if (d.tour) {
+			// 0.64.7: text bez predmetu a mimo kancelárie – na stole sa nič nerobí, kamera krúži okolo stola
+			d.tour(isText && !S.obj && !(S.setup && /office/i.test(S.setup)));
+		}
 	};
 
 	const save = (done) => d.post({ lesson: L.id, scene: si, done: done ? 1 : 0 }).then((p) => p && Object.assign(progress, p)).catch(() => {});
@@ -401,6 +405,9 @@ export function tutorial(parent, cfg, d) {
 		}
 		box.classList.remove('mysn-on');
 		setMin(false);
+		if (d.tour) {
+			d.tour(false);
+		}
 		hints.classList.remove('mysn-on');
 		hints.textContent = '';
 		glow([]);

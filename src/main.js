@@ -1855,6 +1855,7 @@ export function start(root, config = {}) {
 
 	// pohľad na nástenku (F1), stojan s tágami (F2), kriedovanie tága (F3) alebo tabuľu so skóre (F4)
 	let view = null;
+	let tourSet = () => {}; // 0.64.7 prehliadka stola pri texte tutoriálu (nastaví sa nižšie)
 	const chairLook = { yaw: 0, pitch: 0 };
 	let topView = false; // Tab: pohľad na stôl zhora
 	let specDemo = false; // admin: ukážka od diváka (sedí na tribúne bez zápasu)
@@ -4630,6 +4631,9 @@ export function start(root, config = {}) {
 			if (lk === 'enter' && ui.tutActive && ui.tutActive()) {
 				return true; // 0.57.3 tutoriál: Enter patrí tlačidlu Ďalej (v kancelárii neodchádza do herne)
 			}
+			if (ui.root.classList.contains('mysn-tut-tour') && lk !== 'escape') {
+				return true; // 0.64.7 text tutoriálu: na stole sa nič nerobí, len Ďalej (Esc ostáva pre menu)
+			}
 			if (ui.phoneOpen() && lk === 't') {
 				actions.phoneClose(); // T znova: telefón sa zavrie
 				return true;
@@ -5126,6 +5130,7 @@ export function start(root, config = {}) {
 			touchUI: () => !!ui.touchUI,
 			sound: (slot) => sound.tutor(slot),
 			voice: (url) => (url ? sound.tutVoice(url) : sound.tutVoiceStop()),
+			tour: (on) => tourSet(on),
 			capture: (on) => {
 				if (on) {
 					controls.capture();
@@ -6919,10 +6924,45 @@ export function start(root, config = {}) {
 			window.mysnLdDone();
 		}
 	};
+	// 0.64.7 tutoriál: pri texte s tlačidlom Ďalej sa na stole nedá nič robiť a kamera pomaly krúži okolo stola
+	let tourOn = false;
+	let tourA = 0;
+	const tourC = new THREE.Vector3();
+	const tourAt = (a, out) => out.set(tourC.x + Math.cos(a) * 3.1, tourC.y + 1.25, tourC.z + Math.sin(a) * 2.3);
+	tourSet = (on) => {
+		on = !!on && !view && venue === 'home' && !game.spectating;
+		if (on === tourOn) {
+			return;
+		}
+		tourOn = on;
+		ui.root.classList.toggle('mysn-tut-tour', on);
+		if (on) {
+			if (controls.stroking) {
+				controls.endStroke();
+			}
+			controls.blocked = true;
+			table.group.getWorldPosition(tourC);
+			const cp = rig.camera.position;
+			tourA = Math.atan2((cp.z - tourC.z) / 2.3, (cp.x - tourC.x) / 3.1);
+			rig.setView(tourAt(tourA, new THREE.Vector3()), tourC.clone().add(new THREE.Vector3(0, -0.15, 0)));
+		} else if (!view) {
+			controls.blocked = false;
+			rig.setMode('cue');
+		}
+	};
 	const frame = (now) => {
 		const dt = Math.min(0.05, (now - last) / 1000);
 		last = now;
 		controls.update(dt);
+		if (tourOn) {
+			if (view) {
+				tourOn = false; // otvoril sa iný pohľad (predmet, kancelária) – prehliadka končí
+				ui.root.classList.remove('mysn-tut-tour');
+			} else if (rig.viewPos) {
+				tourA += dt * 0.07;
+				tourAt(tourA, rig.viewPos);
+			}
+		}
 		integrity.frame(game.dir, game.state === 'aim' && !game.spectating);
 		sound.setListener(rig.camera); // poslucháč = kamera (3D zvuk)
 		sound.setRoom(view === 'office' ? 'office' : venue === 'league' ? 'stadium' : venue === 'alley' ? 'alley' : 'herna');

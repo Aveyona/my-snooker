@@ -1208,3 +1208,5 @@ body.mysn-page { font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans
 .mysn-tut-btns .mysn-tut-next.mysn-tut-blink2, .mysn-tut-bub.mysn-tut-blink { animation: mysn-tut-nblink 1s ease-in-out infinite; }
 @keyframes mysn-tut-nsoft { 0%, 100% { box-shadow: 0 0 0 0 #f2d48a00; } 50% { box-shadow: 0 0 0 3px #f2d48a55; filter: brightness(1.1); } }
 @keyframes mysn-tut-nblink { 0%, 100% { box-shadow: 0 0 0 0 #f2d48a00; filter: brightness(1); } 50% { box-shadow: 0 0 0 6px #f2d48a88; filter: brightness(1.25); } }
+/* 0.64.7 tutoriál – text s Ďalej: ovládanie stola skryté, kamera krúži okolo stola */
+.mysn-ui.mysn-tut-tour .mysn-spin, .mysn-ui.mysn-tut-tour .mysn-power, .mysn-ui.mysn-tut-tour .mysn-tpower, .mysn-ui.mysn-tut-tour .mysn-eye, .mysn-ui.mysn-tut-tour .mysn-topbtn, .mysn-ui.mysn-tut-tour .mysn-freebtn, .mysn-ui.mysn-tut-tour .mysn-chalkbtn, .mysn-ui.mysn-tut-tour .mysn-finebtn, .mysn-ui.mysn-tut-tour .mysn-tools-toggle, .mysn-ui.mysn-tut-tour .mysn-contact, .mysn-ui.mysn-tut-tour .mysn-tools { display: none !important; }
