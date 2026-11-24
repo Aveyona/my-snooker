@@ -180,6 +180,7 @@ function mysn_roadmap() {
 /** Denník zmien (najnovšie hore). */
 function mysn_changelog() {
 	return array(
+		array( '0.64.2', '24. 11. 2026', 'Mobil: spodný panel (šípka v strede dole) sa dá znova zavrieť – šípka ▼ je nad otvoreným panelom (od 0.62.2 ju panel prekrýval).' ),
 		array( '0.64.1', '24. 11. 2026', 'Tutoriál – kontrola textov lekcií 3 až 14 a oprava pre mobil: voľný pohľad (lekcia 5) spomína panáčika vľavo, návrat za tágo aj na mobile, biela znova do ruky (lekcia 7) cez ☰ → Biela do ruky, krieda (lekcia 8) cez modrý štvorček príslušenstva vľavo (horný riadok s Kriedou sa na telefóne nezmestí) a tlačidlo príslušenstva sa pri tejto úlohe zvýrazní (SK/EN/HI).' ),
 		array( '0.64.0', '24. 11. 2026', 'Tutoriál, lekcia 2 Presné mierenie: veta hlasu v prvej scéne hneď povie, čím sa pohľad priblíži ku guli – na PC pravým tlačidlom myši, na mobile tlačidlom oko (SK/EN, nové nahrávky).' ),
 		array( '0.63.9', '24. 11. 2026', 'Aplikácia (PWA): kontrola aktualizácií bez vyrovnávacej pamäte; keď je hra dlho otvorená na pozadí a po návrate je na webe nová verzia, hore sa ukáže Je dostupná nová verzia hry – Aktualizovať (SK/EN/HI), s ✕ na zavretie.' ),
