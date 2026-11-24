@@ -294,11 +294,12 @@ export class RadioPlayer {
 		// 0.57.0 tlmenie pri otvorenom hlavnom menu: „ako v sude“ (bez výšok a basov) a tichšie
 		const mlp = ctx.createBiquadFilter();
 		mlp.type = 'lowpass';
-		mlp.frequency.value = this._muf ? 1100 : 22000;
-		mlp.Q.value = this._muf ? 1.4 : 0.7;
+		const lite = window.matchMedia && window.matchMedia('(pointer: coarse)').matches;
+		mlp.frequency.value = this._muf && !lite ? 1100 : 22000;
+		mlp.Q.value = this._muf && !lite ? 1.4 : 0.7;
 		const mhp = ctx.createBiquadFilter();
 		mhp.type = 'highpass';
-		mhp.frequency.value = this._muf ? 170 : 10;
+		mhp.frequency.value = this._muf && !lite ? 170 : 10;
 		const mg = ctx.createGain();
 		mg.gain.value = this._muf ? 0.4 : 1;
 		src.connect(bass).connect(treble).connect(mlp).connect(mhp).connect(mg).connect(gain);
@@ -360,9 +361,13 @@ export class RadioPlayer {
 				prm.setValueAtTime(prm.value, t);
 				prm.linearRampToValueAtTime(v, t + 0.4);
 			};
-			to(gr.mlp.frequency, on ? 1100 : 22000);
-			to(gr.mlp.Q, on ? 1.4 : 0.7);
-			to(gr.mhp.frequency, on ? 170 : 10);
+			// 0.62.7: na mobile (slabší telefón chrčal) len tichšie, bez filtrov „ako v sude“
+			const lite = window.matchMedia && window.matchMedia('(pointer: coarse)').matches;
+			if (!lite) {
+				to(gr.mlp.frequency, on ? 1100 : 22000);
+				to(gr.mlp.Q, on ? 1.4 : 0.7);
+				to(gr.mhp.frequency, on ? 170 : 10);
+			}
 			to(gr.mg.gain, on ? 0.4 : 1);
 		}
 		if (this._plain) {
