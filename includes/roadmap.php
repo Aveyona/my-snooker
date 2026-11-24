@@ -180,6 +180,7 @@ function mysn_roadmap() {
 /** Denník zmien (najnovšie hore). */
 function mysn_changelog() {
 	return array(
+		array( '0.62.2', '24. 11. 2026', 'Otvorené príslušenstvo (krížik, pavúk, predĺženie…) je nad informačnými hláseniami, napr. Nedosiahneš… – hlásenie ho už neprekrýva.' ),
 		array( '0.62.1', '24. 11. 2026', 'Malý telefón na šírku (výška do 380 px): náhľad zásahu (uhol, plnosť) je menší – 64 px namiesto 92 px – a neprekrýva šúpatko sily.' ),
 		array( '0.62.0', '24. 11. 2026', 'Kamera po údere: najprv sleduje bielu, po prvom zásahu guľu, ktorú biela trafila; keď tá zastane alebo spadne, sleduje znova bielu, ak sa ešte hýbe (inak ostane pri poslednej guli). Prechod je plynulý, otáčanie pohľadu myšou ostáva. PC: tágo bez jemného mierenia (Shift) mieri myšou aj šípkami predvolene dvakrát jemnejšie (rýchly pohyb myšou ďalej zrýchľuje).' ),
 		array( '0.61.8', '24. 11. 2026', 'Mobil: mierenie prstom vľavo dole je s tágami bez jemného mierenia (Shift) predvolene dvakrát jemnejšie; horná polovica (rýchle obzeranie) a zameriavač bez zmeny.' ),
