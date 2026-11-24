@@ -4,7 +4,7 @@
  * Keď hráč splní úlohu, zahrá zvuk splnenia a po chvíli ide ďalšia scéna.
  */
 import { _t, LANG } from './i18n.js';
-import { createRack, snapshot, restore, SPOTS, R } from './physics.js';
+import { createRack, snapshot, restore, SPOTS, R, BAULK_X } from './physics.js';
 
 const h = (tag, cls, txt) => {
 	const e = document.createElement(tag);
@@ -124,6 +124,9 @@ export function tutorial(parent, cfg, d) {
 		if (items.includes('rack')) {
 			g.reset();
 			g.confirmPlace();
+			// 0.62.9: biela v D medzi hnedou a žltou (nie za hnedou) – voľný pohľad a mierenie na červené
+			g.balls[0].p.x = BAULK_X - 0.1;
+			g.balls[0].p.z = 0.2;
 		} else {
 			for (const b of g.balls) {
 				b.on = false;
@@ -181,7 +184,9 @@ export function tutorial(parent, cfg, d) {
 	const aimTarget = (S) => {
 		const g = d.game;
 		const c = g.cue;
-		const t = S.ball && g.balls.find((b) => b.on && kindOk(S, b));
+		// bez cieľovej gule pri rozostavení „rack“ mieri na najbližšiu červenú (nie na hnedú pred bielou)
+		const rack = !S.ball && /\brack\b/i.test(S.setup || '');
+		const t = rack ? g.balls.filter((b) => b.on && b.kind === 'red').sort((a, b) => Math.hypot(a.p.x - c.p.x, a.p.z - c.p.z) - Math.hypot(b.p.x - c.p.x, b.p.z - c.p.z))[0] : S.ball && g.balls.find((b) => b.on && kindOk(S, b));
 		if (t && Math.hypot(t.p.x - c.p.x, t.p.z - c.p.z) > 2 * R) {
 			g.dir = Math.atan2(t.p.z - c.p.z, t.p.x - c.p.x);
 		} else {

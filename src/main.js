@@ -29,7 +29,7 @@ import { Online } from './online.js';
 import { rtcSelfTest } from './rtc.js';
 import { snookered } from './rules.js';
 import { remaining } from './rules.js';
-import { aimTrace, R, L, W, snapshot, restore, createRack, POCKETS, COLOURS, isJump, JUMP_TOP, JUMP_POWER, ELEV_MAX } from './physics.js';
+import { aimTrace, R, L, W, snapshot, restore, createRack, POCKETS, COLOURS, isJump, JUMP_TOP, JUMP_POWER, ELEV_MAX, BAULK_X } from './physics.js';
 import { buildRackTriangle, rackLayout } from './rackTriangle.js';
 import { Replay } from './replay.js';
 import { CHALKS, chalkById } from './chalks.js';
@@ -5159,7 +5159,18 @@ export function start(root, config = {}) {
 				}
 				game.reset();
 				game.confirmPlace(); // biela je položená, lekcia môže hneď mieriť
-				game.aimAtNearest();
+				// 0.62.9: biela v D medzi hnedou a žltou, mieri na najbližšiu červenú (nie na hnedú tesne pred ňou)
+				game.cue.p.x = BAULK_X - 0.1;
+				game.cue.p.z = 0.2;
+				{
+					const c = game.cue.p;
+					const red = game.balls.filter((b) => b.on && b.kind === 'red').sort((a, b) => Math.hypot(a.p.x - c.x, a.p.z - c.z) - Math.hypot(b.p.x - c.x, b.p.z - c.z))[0];
+					if (red) {
+						game.dir = Math.atan2(red.p.z - c.z, red.p.x - c.x);
+					} else {
+						game.aimAtNearest();
+					}
+				}
 				updateFelt();
 				refreshMenu();
 				ui.showMenu(false);
