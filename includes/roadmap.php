@@ -180,6 +180,7 @@ function mysn_roadmap() {
 /** Denník zmien (najnovšie hore). */
 function mysn_changelog() {
 	return array(
+		array( '0.63.6', '24. 11. 2026', 'Tutoriál, lekcia 1, scéna Rýchle obzeranie: podrobnejší popis – na mobile ťahanie prstom hore otáča trikrát rýchlejšie (len na mobile), na PC treba rýchlo pohnúť myšou; nová veta hlasu (SK/EN/HI).' ),
 		array( '0.63.5', '24. 11. 2026', 'Tutoriál, otáčanie tága na obe strany: stačí 8° na každú stranu (pri jemnejšom predvolenom mierení bolo 20° na mobile niekoľko ťahov prstom a progres takmer nepribúdal).' ),
 		array( '0.63.4', '24. 11. 2026', 'Tutoriál, úloha otáčania tága na obe strany: každý smer sa počíta samostatne – po otočení doľava sa otáčanie doprava počíta hneď, netreba sa najskôr vrátiť za pôvodnú polohu.' ),
 		array( '0.63.3', '24. 11. 2026', 'Mobil, pohľad zhora: namiesto veľkého žltého tlačidla Späť za tágo ostane na svojom mieste to isté tlačidlo pohľadu zhora – biele a bliká na žlto; ťuknutím späť za tágo. Text tutoriálu (Pohľady a kamera) upravený (SK/EN/HI).' ),
