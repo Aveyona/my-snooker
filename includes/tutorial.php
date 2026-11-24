@@ -288,7 +288,7 @@ function mysn_tut_default() {
 				array(
 					'id'      => 's2',
 					'type'    => 'aim',
-					'param'   => 20,
+					'param'   => 8,
 					'text_sk' => 'Mierenie: ťahaj prstom vľavo dole doľava a doprava (na PC pohni myšou). Otoč tágo na obe strany.',
 					'text_en' => 'Aiming: drag your finger left and right in the bottom left (on PC move the mouse). Turn the cue both ways.',
 					'hints'   => array( 'm_bl', 'pc_h' ),

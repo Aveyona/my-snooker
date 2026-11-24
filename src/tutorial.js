@@ -400,7 +400,8 @@ export function tutorial(parent, cfg, d) {
 				st.lo = Math.min(st.lo, 0) + Math.min(dd, 0);
 				st.hi = Math.max(st.hi, 0) + Math.max(dd, 0);
 			}
-			const r = (par * Math.PI) / 180;
+			// 0.63.5: pri jemnejšom predvolenom mierení stačí 8° na každú stranu (20° bolo na mobile niekoľko ťahov prstom)
+			const r = (Math.min(par, 8) * Math.PI) / 180;
 			p = (Math.min(-st.lo, r) + Math.min(st.hi, r)) / (2 * r);
 		} else if (S.type === 'look') {
 			if (!touch || zone === 1 || zone === 2) {
