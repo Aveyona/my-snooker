@@ -75,6 +75,7 @@ export function tutorial(parent, cfg, d) {
 		if (idleDone) {
 			idleDone = false;
 			bub.classList.remove('mysn-tut-blink');
+			bNext.classList.remove('mysn-tut-blink2');
 		}
 	};
 	for (const t of ['pointerdown', 'keydown', 'wheel']) {
@@ -432,6 +433,7 @@ export function tutorial(parent, cfg, d) {
 			if (!idleDone && !bNext.hidden && idleT0 && performance.now() - idleT0 > IDLE_MS) {
 				idleDone = true;
 				bub.classList.add('mysn-tut-blink');
+				bNext.classList.add('mysn-tut-blink2'); // po pripomienke výraznejšie blikanie
 				const iv = cfg.idle && cfg.idle[LANG === 'sk' ? 'sk' : 'en'];
 				if (iv && d.voice) {
 					d.voice(iv);

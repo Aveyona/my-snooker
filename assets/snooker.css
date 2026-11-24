@@ -1203,5 +1203,8 @@ body.mysn-page { font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans
 .mysn-tut-bub:hover { background: #1a1f28f0; }
 @media (max-width: 700px), (max-height: 500px) { .mysn-tut-bub { top: 40px; padding: 7px 13px; font-size: 13px; } }
 /* 0.64.3 tutoriál: Ďalej bliká, keď sa dlho nič nedeje */
-.mysn-tut-btns .mysn-tut-next.mysn-tut-blink, .mysn-tut-bub.mysn-tut-blink { animation: mysn-tut-nblink 1s ease-in-out infinite; }
+/* 0.64.5: od začiatku jemné blikanie, po hlasovej pripomienke výrazné */
+.mysn-tut-btns .mysn-tut-next.mysn-tut-blink { animation: mysn-tut-nsoft 1.6s ease-in-out infinite; }
+.mysn-tut-btns .mysn-tut-next.mysn-tut-blink2, .mysn-tut-bub.mysn-tut-blink { animation: mysn-tut-nblink 1s ease-in-out infinite; }
+@keyframes mysn-tut-nsoft { 0%, 100% { box-shadow: 0 0 0 0 #f2d48a00; } 50% { box-shadow: 0 0 0 3px #f2d48a55; filter: brightness(1.1); } }
 @keyframes mysn-tut-nblink { 0%, 100% { box-shadow: 0 0 0 0 #f2d48a00; filter: brightness(1); } 50% { box-shadow: 0 0 0 6px #f2d48a88; filter: brightness(1.25); } }
