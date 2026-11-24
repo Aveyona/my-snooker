@@ -180,6 +180,7 @@ function mysn_roadmap() {
 /** Denník zmien (najnovšie hore). */
 function mysn_changelog() {
 	return array(
+		array( '0.61.3', '24. 11. 2026', 'Hlásenia hore (napr. Pokračuješ v tréningu…), nápovedy a správy chatu sa skryjú aj pri otáčaní tága myšou, prstom alebo šípkami – nielen pri držaní pravého tlačidla; vrátia sa 0,8 s po poslednom pohybe.' ),
 		array( '0.61.2', '24. 11. 2026', 'Telefón na šírku (nízka obrazovka, nie tablet): ikonky vľavo (presné mierenie, príslušenstvo, voľný pohľad, pohľad zhora, bar, chat) sú v dvoch stĺpcoch po troch nad miestom úderu a zmestia sa; na výšku a na tablete bez zmeny.' ),
 		array( '0.61.1', '23. 11. 2026', 'Hlavné menu na PC: Nainštalovať aplikáciu je úplne dole pod voľbou jazyka (nie medzi položkami hry), len kým hra nie je nainštalovaná.' ),
 		array( '0.61.0', '23. 11. 2026', 'Komentátor Rudo po anglicky: hráči s angličtinou alebo hindčinou počujú Ruda po anglicky (98 replík pre všetkých 19 situácií, rovnaký hlas, preložený humor – chai, samosa namiesto piva a párku), slovenskí hráči ako doteraz. Živé komentáre (stovka, koniec framu a zápasu, fauly) píše AI v jazyku hráča a ElevenLabs ich namluví po anglicky. Zvuky → Komentátor Rudo: box Rudo po anglicky s tlačidlom Vygenerovať anglické repliky.' ),

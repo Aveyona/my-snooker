@@ -6395,6 +6395,7 @@ export function start(root, config = {}) {
 	 */
 	/** Do kedy ešte tlieska publikum (Rudo počká, kým potlesk dozneje). */
 	const crowdBusy = { until: 0 };
+	const quietDir = { dir: null, until: 0 }; // 0.61.3 posledný smer tága (hlásenia sa pri otáčaní skryjú)
 	const crowdMark = (slot, pick) => {
 		const list = sound.bufs && sound.bufs[slot];
 		if (!list || !list.length) {
@@ -6960,7 +6961,16 @@ export function start(root, config = {}) {
 		const aiming = game.state === 'aim' && !view;
 		// 0.45.7: pri mierení (drží sa pravé tlačidlo myši, na tablete oko) sa skryjú hlásenia hore, nápovedy,
 		// výzvy a správy chatu; po pustení sa hneď vrátia
-		const quiet = aiming && !game.spectating && !!rig.panActive;
+		// 0.61.3: aj pri otáčaní tága (myš, prst, šípky) – hlásenia sa vrátia 0,8 s po poslednom pohybe
+		if (aiming && game.dir !== quietDir.dir) {
+			if (quietDir.dir !== null) {
+				quietDir.until = performance.now() + 800;
+			}
+			quietDir.dir = game.dir;
+		} else if (!aiming) {
+			quietDir.dir = null;
+		}
+		const quiet = aiming && !game.spectating && (!!rig.panActive || performance.now() < quietDir.until);
 		if (quiet !== ui._quiet) {
 			ui._quiet = quiet;
 			ui.root.classList.toggle('mysn-aiming', quiet);
