@@ -180,6 +180,7 @@ function mysn_roadmap() {
 /** Denník zmien (najnovšie hore). */
 function mysn_changelog() {
 	return array(
+		array( '0.63.3', '24. 11. 2026', 'Mobil, pohľad zhora: namiesto veľkého žltého tlačidla Späť za tágo ostane na svojom mieste to isté tlačidlo pohľadu zhora – biele a bliká na žlto; ťuknutím späť za tágo. Text tutoriálu (Pohľady a kamera) upravený (SK/EN/HI).' ),
 		array( '0.63.2', '24. 11. 2026', 'Malý telefón na šírku (Samsung A33 aj na celú obrazovku a v aplikácii, výška do 430 px): menšia guľa miesta úderu vľavo dole a ikonky vľavo nižšie (3 stĺpce po 2 tesne nad guľou).' ),
 		array( '0.63.1', '24. 11. 2026', 'Načítavacia obrazovka: hneď po otvorení stránky (hlavne pri prvej návšteve) sa ukáže tmavozelená obrazovka MY SNOOKER so skáčucimi guľami, ukazovateľom priebehu a textom (SK/EN/HI); zmizne, keď sa vykreslí herňa a dotiahnu textúry a modely (najviac 12 s).' ),
 		array( '0.63.0', '24. 11. 2026', 'Mobil, pohľad zhora (Tab): skryjú sa všetky prvky obrazovky, ostane len žlté pomaly blikajúce tlačidlo ↩ Späť za tágo dole (tutoriál, menu a okná ostávajú). Text tutoriálu (Pohľady a kamera) upravený.' ),

@@ -1184,10 +1184,10 @@ body.mysn-page { font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans
 /* 0.62.5 ✕ na zatvorenie okna (Príslušenstvo) */
 .mysn-panel-x { position: sticky; top: 0; float: right; margin: -6px -6px 0 8px; width: 36px; height: 36px; border-radius: 50%; border: 1px solid #ffffff33; background: #ffffff14; color: #fff; font-size: 16px; line-height: 1; cursor: pointer; z-index: 1; }
 .mysn-panel-x:hover { background: #ffffff2a; }
-/* 0.62.9 mobil: pohľad zhora – skryté všetky prvky, len blikajúce tlačidlo Späť za tágo (tutoriál a okná ostávajú) */
-.mysn-topback { display: none; }
+/* 0.63.3 mobil: pohľad zhora – skryté všetky prvky, ostane len tlačidlo pohľadu zhora (to isté, na svojom mieste), biele a bliká na žlto */
+.mysn-topback { display: none !important; }
 @media (pointer: coarse) {
-	.mysn-ui.mysn-topmode > :not(.mysn-topback):not(.mysn-mmenu):not(.mysn-menu):not(.mysn-panel):not([class*="mysn-tut"]):not(.mysn-welcome) { visibility: hidden !important; }
-	.mysn-ui.mysn-topmode .mysn-topback { display: inline-flex; align-items: center; gap: 6px; position: absolute; left: 50%; bottom: calc(18px + env(safe-area-inset-bottom)); transform: translateX(-50%); z-index: 8; padding: 13px 24px; border-radius: 26px; border: 0; background: #ffd34d; color: #111; font: 700 15px/1 system-ui, -apple-system, "Segoe UI", sans-serif; pointer-events: auto; box-shadow: 0 4px 18px #0008; animation: mysn-topblink 1.6s ease-in-out infinite; -webkit-tap-highlight-color: transparent; }
+	.mysn-ui.mysn-topmode > :not(.mysn-topbtn):not(.mysn-mmenu):not(.mysn-menu):not(.mysn-panel):not([class*="mysn-tut"]):not(.mysn-welcome) { visibility: hidden !important; }
+	.mysn-ui.mysn-topmode .mysn-topbtn { visibility: visible !important; display: flex !important; z-index: 8; background: #ffffff26; animation: mysn-topblink 1.6s ease-in-out infinite; }
 }
-@keyframes mysn-topblink { 0%, 100% { opacity: 1; } 50% { opacity: .45; } }
+@keyframes mysn-topblink { 0%, 100% { color: #fff; border-color: #fff; box-shadow: 0 0 0 #ffd34d00; } 50% { color: #ffd34d; border-color: #ffd34d; box-shadow: 0 0 16px #ffd34dcc; } }
