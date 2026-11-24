@@ -111,10 +111,24 @@ export class Sound {
 			this.enabled = false;
 			return;
 		}
-		const c = (this.ctx = new AC());
+		// 0.62.6: na mobile väčšia zvuková vyrovnávacia pamäť (slabší telefón nestíha = praskanie)
+		const touch = window.matchMedia && window.matchMedia('(pointer: coarse)').matches;
+		let c;
+		try {
+			c = this.ctx = touch ? new AC({ latencyHint: 'playback' }) : new AC();
+		} catch (e) {
+			c = this.ctx = new AC();
+		}
 		this.master = c.createGain();
 		this.master.gain.value = this.volume;
-		this.master.connect(c.destination);
+		// obmedzovač na konci: keď hrá naraz veľa zvukov (gule, publikum, Rudo), výstup nepretečie (chrčanie)
+		this.limiter = c.createDynamicsCompressor();
+		this.limiter.threshold.value = -3;
+		this.limiter.knee.value = 2;
+		this.limiter.ratio.value = 20;
+		this.limiter.attack.value = 0.003;
+		this.limiter.release.value = 0.25;
+		this.master.connect(this.limiter).connect(c.destination);
 		this.bus = {};
 		for (const k of Object.keys(this.gvol)) {
 			this.bus[k] = c.createGain();
