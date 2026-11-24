@@ -180,6 +180,7 @@ function mysn_roadmap() {
 /** Denník zmien (najnovšie hore). */
 function mysn_changelog() {
 	return array(
+		array( '0.62.8', '24. 11. 2026', 'Tutoriál pri spustení (aj každej lekcie) vráti hráča k stolu v herni: zavrie rádio, kreslo, nástenku a iné predmety, voľný pohľad, kanceláriu, pohľad zhora, príslušenstvo, mapu miestností aj telefón – hráč neostane zaseknutý pri predmete.' ),
 		array( '0.62.7', '24. 11. 2026', 'Zvuk: na mobile je rádio pri otvorenom menu len tichšie, bez tlmenia ako v sude (na slabších telefónoch chrčalo); obmedzovač na výstupe (pri veľa zvukoch naraz nepretečie a nechrčí) a na mobile väčšia zvuková vyrovnávacia pamäť proti praskaniu na slabších telefónoch.' ),
 		array( '0.62.6', '24. 11. 2026', 'Tutoriál už nezapína rádio.' ),
 		array( '0.62.5', '24. 11. 2026', 'Okno Príslušenstvo má vpravo hore ✕ na zatvorenie (okrem F3 a modrého štvorčeka).' ),

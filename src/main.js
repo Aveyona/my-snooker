@@ -5133,10 +5133,25 @@ export function start(root, config = {}) {
 					.then((r) => r.json())
 					.then((r) => r && r.progress),
 			onStart: () => {
-				if (view === 'office') {
+				// 0.62.8: tutoriál vždy začína pri stole v herni – zavrie každý pohľad (rádio, kreslo, nástenka, voľný
+				// pohľad, kancelária), okná a pohľad zhora, aby hráč neostal zaseknutý pri predmete
+				if (view) {
 					officeMode = '';
 					officeFocusNow = '';
+					topView = false;
 					exitView();
+				}
+				if (ui.toolsOpen()) {
+					actions.tools();
+				}
+				if (ui.roomMapOpen()) {
+					actions.roomMap();
+				}
+				ui.toggleReader(null);
+				ui.openPhone(false);
+				if (rig.mode === 'top' || rig.mode === 'free') {
+					topView = false;
+					rig.setMode('cue');
 				}
 				game.stopSolo();
 				if (venue !== 'home') {
