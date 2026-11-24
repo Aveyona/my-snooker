@@ -6395,6 +6395,7 @@ export function start(root, config = {}) {
 	 */
 	/** Do kedy ešte tlieska publikum (Rudo počká, kým potlesk dozneje). */
 	const crowdBusy = { until: 0 };
+	let camFollow = null; // 0.62.0 guľa, ktorú kamera sleduje po údere
 	const quietDir = { dir: null, until: 0 }; // 0.61.3 posledný smer tága (hlásenia sa pri otáčaní skryjú)
 	const crowdMark = (slot, pick) => {
 		const list = sound.bufs && sound.bufs[slot];
@@ -7427,7 +7428,24 @@ export function start(root, config = {}) {
 		if (tut) {
 			tut.update(dt);
 		}
-		rig.update(dt, game.cue, game.dir, game.state === 'moving');
+		// 0.62.0 kamera po údere: biela, po prvom zásahu zasiahnutá guľa; keď zastane (alebo spadne), znova biela, ak sa ešte hýbe
+		let camBall = game.cue;
+		if (game.state === 'moving') {
+			const fc = game.physics && game.physics.firstContact;
+			if (fc) {
+				if (fc.on && fc.moving) {
+					camFollow = fc;
+				} else if (game.cue.on && game.cue.moving) {
+					camFollow = game.cue;
+				}
+				camBall = camFollow && camFollow.p ? camFollow : game.cue;
+			} else {
+				camFollow = game.cue;
+			}
+		} else {
+			camFollow = null;
+		}
+		rig.update(dt, camBall, game.dir, game.state === 'moving');
 		if (online && game.match && !game.spectating) {
 			// diváci vidia (F8) presne to, čo ja: kamera voči stolu
 			table.group.getWorldPosition(miniPos);
