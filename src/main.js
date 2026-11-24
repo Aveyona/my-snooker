@@ -5381,7 +5381,14 @@ export function start(root, config = {}) {
 		eye.addEventListener('pointerdown', (e) => {
 			e.stopPropagation();
 			e.preventDefault();
-			if (ep || !controls.eyePanStart()) {
+			if (ep) {
+				// 0.63.7: predošlé držanie neskončilo (stratené pustenie prsta) – uvoľniť, inak sa oko zasekne
+				ep = null;
+				ui._eyeHeld = false;
+				eye.classList.remove('mysn-eye-held');
+				controls.eyePanEnd();
+			}
+			if (!controls.eyePanStart()) {
 				return;
 			}
 			ep = { id: e.pointerId, x: e.clientX, y: e.clientY };
@@ -5414,6 +5421,7 @@ export function start(root, config = {}) {
 		};
 		eye.addEventListener('pointerup', end);
 		eye.addEventListener('pointercancel', end);
+		eye.addEventListener('lostpointercapture', end); // 0.63.7: aj keď prehliadač stratí prst (zmena scény tutoriálu)
 	}
 	if (settings.fineVer !== 2) {
 		settings.fineCues = {}; // 8. 11. 2026: nové predvolené (presné mierenie len Citlivé tágo), staré voľby všetkým zrušené
