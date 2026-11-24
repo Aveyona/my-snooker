@@ -1160,3 +1160,4 @@ body.mysn-page { font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans
 /* 0.61.4 hlásenie hore: ťuknutím zmizne na 5 s */
 .mysn-msg { pointer-events: auto; cursor: pointer; }
 .mysn-msg.mysn-msg-off { opacity: 0 !important; pointer-events: none; }
+.mysn-bar > .mysn-mmbtn { flex: none; margin-right: -6px; } /* 0.61.6 ☰ vľavo pred názvom */

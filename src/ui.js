@@ -141,7 +141,7 @@ export class UI {
 		const right = h('div', 'mysn-barbtns');
 		this.btnHelp = this.button('?', 'help', _t('Ovládanie'));
 		this.btnSet = this.button(_t('Nastavenia'), 'settings');
-		// mobil: hlavné menu ☰ úplne vpravo (Nastavenia a ? sú v ňom; na desktope sa nezobrazuje)
+		// mobil: hlavné menu ☰ úplne vľavo (Nastavenia a ? sú v ňom; na desktope sa nezobrazuje)
 		this.btnMain = h('button', 'mysn-btn mysn-mmbtn', '☰');
 		this.btnMain.type = 'button';
 		this.btnMain.title = _t('Hlavné menu');
@@ -157,8 +157,9 @@ export class UI {
 			}
 			this.openMainMenu(true);
 		});
-		right.append(this.btnSet, this.btnHelp, this.btnMain);
+		right.append(this.btnSet, this.btnHelp);
 		bar.appendChild(right);
+		bar.insertBefore(this.btnMain, bar.firstChild); // 0.61.6 mobil: ☰ úplne vľavo pred My Snooker (vpravo ho zakrýval počet hráčov online)
 		root.appendChild(bar);
 
 		this.msg = h('div', 'mysn-msg');

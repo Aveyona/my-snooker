@@ -180,6 +180,7 @@ function mysn_roadmap() {
 /** Denník zmien (najnovšie hore). */
 function mysn_changelog() {
 	return array(
+		array( '0.61.6', '24. 11. 2026', 'Mobil: tlačidlo hlavného menu ☰ je úplne vľavo v hornom paneli pred My Snooker (vpravo ho zakrýval počet hráčov online).' ),
 		array( '0.61.5', '24. 11. 2026', 'Hlásenie hore: po ťuknutí alebo kliknutí zmizne, kým sa nedohrá úder (gule sa zastavia), nie len na 5 s.' ),
 		array( '0.61.4', '24. 11. 2026', 'Hlásenia hore: pri otáčaní tága zmiznú na 5 s po poslednom pohybe (predtým 0,8 s); ťuknutím alebo kliknutím na hlásenie zmizne na 5 s.' ),
 		array( '0.61.3', '24. 11. 2026', 'Hlásenia hore (napr. Pokračuješ v tréningu…), nápovedy a správy chatu sa skryjú aj pri otáčaní tága myšou, prstom alebo šípkami – nielen pri držaní pravého tlačidla; vrátia sa 0,8 s po poslednom pohybe.' ),
