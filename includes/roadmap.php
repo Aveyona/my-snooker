@@ -180,6 +180,7 @@ function mysn_roadmap() {
 /** Denník zmien (najnovšie hore). */
 function mysn_changelog() {
 	return array(
+		array( '0.64.9', '24. 11. 2026', 'Mobil: hra už nezachytáva kurzor (systémové hlásenie, že kurzor používa aplikácia) – rozhoduje posledný vstup kdekoľvek na stránke (prst ostáva prstom, kým sa nepohne skutočná myš); predtým si hra pamätala dotyk len 5 s a len na stole, takže telefóny s „presným ukazovateľom“ (Samsung) dostali zachytenie napr. pri prechode na úlohu tutoriálu.' ),
 		array( '0.64.8', '24. 11. 2026', 'Tutoriál: pri scéne s Ďalej (text) sa neukazujú šípky ovládania (myš, prst) – ukážu sa až pri úlohe, keď sa nimi dá niečo robiť; text so zvýraznením prvku (napr. šípka ▲ nastavení v lekcii 3) nechá ovládanie viditeľné bez krúženia kamery.' ),
 		array( '0.64.7', '24. 11. 2026', 'Tutoriál – scény s tlačidlom Ďalej (text): na stole sa nedá mieriť ani strieľať, ovládanie stola je skryté a kamera pomaly krúži okolo stola; klávesy okrem Enter (Ďalej) a Esc nič nerobia. Pri úlohe sa kamera vráti za tágo (v kancelárii a pri ukázaní predmetu bez krúženia).' ),
 		array( '0.64.6', '24. 11. 2026', 'Hlásenie Je dostupná nová verzia hry: text v jednom riadku cez celú šírku (na mobile bol stlačený pod seba).' ),

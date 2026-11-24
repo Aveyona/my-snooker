@@ -22,6 +22,7 @@ export class Controls {
 		this.dom = dom;
 		this.rig = rig;
 		this.game = game;
+		this.touchMode(); // 0.64.9: sledovanie posledného vstupu (prst / myš) od začiatku
 		this.hooks = hooks;
 		this.sens = 1; // rýchlosť otáčania myšou (šúpatko pri Ctrl) // { shoot(power), changed() }
 		this.power = 0; // aktuálne nabitie (0..1)
@@ -534,6 +535,24 @@ export class Controls {
 
 	/** Ovláda sa prstom? (posledný dotyk pred menej ako 5 s, alebo zariadenie bez myši) */
 	touchMode() {
+		// 0.64.9: posledný vstup kdekoľvek na stránke (aj tlačidlá) – prst ostáva prstom, kým sa nepohne myš;
+		// inak Samsung s „presným ukazovateľom“ po 5 s bez dotyku stola dostal zachytenie myši a hlásenie systému
+		if (!this._ptrHook) {
+			this._ptrHook = true;
+			const mark = (e) => {
+				if (e.pointerType) {
+					this._lastPtr = e.pointerType;
+				}
+			};
+			window.addEventListener('pointerdown', mark, { capture: true, passive: true });
+			window.addEventListener('pointermove', (e) => e.pointerType === 'mouse' && (e.movementX || e.movementY) && mark(e), { capture: true, passive: true });
+		}
+		if (this._lastPtr === 'touch' || this._lastPtr === 'pen') {
+			return true;
+		}
+		if (this._lastPtr === 'mouse') {
+			return false;
+		}
 		if (performance.now() - (this._touchAt || -1e9) < 5000) {
 			return true;
 		}
