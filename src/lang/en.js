@@ -1645,6 +1645,7 @@ export default {
 	'mapa hráčov': 'player map',
 	'Otvoriť: {o}': 'Open: {o}',
 	'My Snooker  |  správy z médií': 'My Snooker  |  news from the media',
+	'Späť za tágo': 'Back to the cue',
 	'Enter = Ďalej': 'Enter = Next',
 	'Esc uvoľní myš a otvorí menu': 'Esc releases the mouse and opens the menu',
 	'Skús ešte raz.': 'Try again.',

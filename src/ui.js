@@ -291,6 +291,18 @@ export class UI {
 			this.opts.onAction('menuKey', 'Tab');
 		});
 		root.appendChild(this.topBtn);
+		// 0.62.9 mobil: v pohľade zhora sú skryté všetky prvky okrem tohto blikajúceho tlačidla na návrat
+		this.topBack = h('button', 'mysn-topback', '');
+		this.topBack.type = 'button';
+		this.topBack.textContent = '↩ ' + _t('Späť za tágo');
+		for (const t of ['pointerdown', 'pointerup', 'mousedown', 'touchstart', 'touchend', 'wheel']) {
+			this.topBack.addEventListener(t, (e) => e.stopPropagation());
+		}
+		this.topBack.addEventListener('click', (e) => {
+			e.stopPropagation();
+			this.opts.onAction('menuKey', 'Tab');
+		});
+		root.appendChild(this.topBack);
 		// mobil: vo voľnom pohľade ovládač na chodenie vpravo dole (ako W A S D) a vedľa neho hore a dole (ako E a Q)
 		this.joy = h('div', 'mysn-joy', '<i></i>');
 		root.appendChild(this.joy);
@@ -4177,6 +4189,7 @@ export class UI {
 			this._topK = k;
 			this.topBtn.classList.toggle('mysn-free-can', !!on);
 			this.topBtn.classList.toggle('mysn-free-on', !!active);
+			this.root.classList.toggle('mysn-topmode', !!active);
 		}
 	}
 

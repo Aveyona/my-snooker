@@ -1627,6 +1627,7 @@ export default {
 	'mapa hráčov': 'खिलाड़ियों का नक्शा',
 	'Otvoriť: {o}': 'खोलें: {o}',
 	'My Snooker  |  správy z médií': 'My Snooker  |  मीडिया से ख़बरें',
+	'Späť za tágo': 'क्यू पर वापस',
 	'Enter = Ďalej': 'Enter = आगे',
 	'Esc uvoľní myš a otvorí menu': 'Esc माउस छोड़ता है और मेन्यू खोलता है',
 	'Skús ešte raz.': 'फिर कोशिश करें।',
