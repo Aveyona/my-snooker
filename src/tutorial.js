@@ -74,7 +74,6 @@ export function tutorial(parent, cfg, d) {
 		idleT0 = performance.now();
 		if (idleDone) {
 			idleDone = false;
-			bNext.classList.remove('mysn-tut-blink');
 			bub.classList.remove('mysn-tut-blink');
 		}
 	};
@@ -277,6 +276,7 @@ export function tutorial(parent, cfg, d) {
 		bGo.hidden = !(S.type === 'back' || (S.type === 'open' && S.obj && OBJ[S.obj]) || (isText && S.obj && OBJ[S.obj]));
 		bGo.textContent = S.type === 'back' ? '↩ ' + _t('Späť') : '➜ ' + _t('Otvoriť: {o}', { o: OBJ[S.obj] || '' });
 		bNext.hidden = !isText;
+		bNext.classList.add('mysn-tut-blink'); // 0.64.4: Ďalej bliká vždy, keď ho treba stlačiť
 		bSkip.hidden = isText || last || api.must;
 		bEnd.hidden = api.must; // 0.56.0 povinné základy: bez Ukončiť a Preskočiť
 		bar.hidden = isText;
@@ -431,7 +431,6 @@ export function tutorial(parent, cfg, d) {
 		if (S.type === 'text') {
 			if (!idleDone && !bNext.hidden && idleT0 && performance.now() - idleT0 > IDLE_MS) {
 				idleDone = true;
-				bNext.classList.add('mysn-tut-blink');
 				bub.classList.add('mysn-tut-blink');
 				const iv = cfg.idle && cfg.idle[LANG === 'sk' ? 'sk' : 'en'];
 				if (iv && d.voice) {
