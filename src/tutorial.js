@@ -504,7 +504,9 @@ export function tutorial(parent, cfg, d) {
 		} else if (S.type === 'view') {
 			const m = d.rig.mode;
 			const want = +S.param || 0;
-			p = want === 1 ? +(m === 'top') : want === 2 ? +(m === 'free' || touch) : +(m === 'cue');
+			// 0.65.0: na mobile voľný pohľad = panáčik (pohľad „free“ v herni), úloha sa už nesplní sama
+			const fv = !!(d.viewFree && d.viewFree());
+			p = want === 1 ? +(m === 'top') : want === 2 ? +(m === 'free' || fv) : +(m === 'cue' && !fv);
 		} else if (S.type === 'place') {
 			p = st.placed ? 1 : 0;
 		} else if (S.type === 'chalk') {

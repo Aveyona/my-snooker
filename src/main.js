@@ -5131,6 +5131,7 @@ export function start(root, config = {}) {
 			sound: (slot) => sound.tutor(slot),
 			voice: (url) => (url ? sound.tutVoice(url) : sound.tutVoiceStop()),
 			tour: (on) => tourSet(on),
+			viewFree: () => view === 'free', // 0.65.0 mobil: voľný pohľad panáčikom
 			capture: (on) => {
 				if (on) {
 					controls.capture();
