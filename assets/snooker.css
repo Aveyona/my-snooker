@@ -1210,3 +1210,4 @@ body.mysn-page { font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans
 @keyframes mysn-tut-nblink { 0%, 100% { box-shadow: 0 0 0 0 #f2d48a00; filter: brightness(1); } 50% { box-shadow: 0 0 0 6px #f2d48a88; filter: brightness(1.25); } }
 /* 0.64.7 tutoriál – text s Ďalej: ovládanie stola skryté, kamera krúži okolo stola */
 .mysn-ui.mysn-tut-tour .mysn-spin, .mysn-ui.mysn-tut-tour .mysn-power, .mysn-ui.mysn-tut-tour .mysn-tpower, .mysn-ui.mysn-tut-tour .mysn-eye, .mysn-ui.mysn-tut-tour .mysn-topbtn, .mysn-ui.mysn-tut-tour .mysn-freebtn, .mysn-ui.mysn-tut-tour .mysn-chalkbtn, .mysn-ui.mysn-tut-tour .mysn-finebtn, .mysn-ui.mysn-tut-tour .mysn-tools-toggle, .mysn-ui.mysn-tut-tour .mysn-contact, .mysn-ui.mysn-tut-tour .mysn-tools { display: none !important; }
+.mysn-tut-g-free .mysn-freebtn { outline: 3px solid #f2d48a; outline-offset: 3px; animation: mysn-tut-ring 1.2s ease-out infinite; } /* 0.65.3 tutoriál: panáčik (voľný pohľad) bliká */

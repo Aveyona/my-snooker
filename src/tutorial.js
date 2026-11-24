@@ -140,7 +140,7 @@ export function tutorial(parent, cfg, d) {
 	};
 
 	/** Zvýraznenie ovládacích prvkov (triedy na koreni hry, CSS rozhodne, čo pulzuje). */
-	const GLOW = { m_eye: 'eye', g_top: 'top', g_spin: 'spin', g_cue: 'cue', g_chalk: 'chalk', g_tools: 'tools' };
+	const GLOW = { m_eye: 'eye', g_top: 'top', g_spin: 'spin', g_cue: 'cue', g_chalk: 'chalk', g_tools: 'tools', g_free: 'free' };
 	const glow = (keys) => {
 		const root = d.root;
 		for (const [k, c] of Object.entries(GLOW)) {
@@ -291,7 +291,9 @@ export function tutorial(parent, cfg, d) {
 		idleReset();
 		foot.textContent = d.touchUI() ? '' : (isText ? _t('Enter = Ďalej') : _t('Esc uvoľní myš a otvorí menu')) + ' · ' + _t('Shift+Enter = chat');
 		hints.textContent = '';
-		glow(S.hints || []);
+		// 0.65.3: voľný pohľad (lekcia 5) – na mobile bliká panáčik žltým podsvietením (krok 3 aj návrat v kroku 4)
+		const freeGlow = S.type === 'view' && (+S.param === 2 || (!+S.param && d.viewFree && d.viewFree()));
+		glow((S.hints || []).concat(freeGlow ? ['g_free'] : []));
 		// 0.64.8: pri texte (Ďalej) sa šípky ovládania neukazujú – ešte sa nimi nedá nič robiť, ukážu sa pri úlohe
 		for (const k of isText ? [] : S.hints || []) {
 			const e = hintEl(k);

@@ -180,6 +180,7 @@ function mysn_roadmap() {
 /** Denník zmien (najnovšie hore). */
 function mysn_changelog() {
 	return array(
+		array( '0.65.3', '24. 11. 2026', 'Tutoriál, lekcia 5 (kroky 3 a 4): tlačidlo panáčik (voľný pohľad) na mobile bliká žltým podsvietením ako ostatné zvýraznené tlačidlá.' ),
 		array( '0.65.2', '24. 11. 2026', 'Tutoriál, lekcia 3 Prvý úder: namiesto jemne/silno sa hovorí pomaly/rýchlo (sila závisí od rýchlosti pohybu tága) – Pomalý úder, Rýchly úder, texty aj hlas (SK/EN/HI).' ),
 		array( '0.65.1', '24. 11. 2026', 'Tutoriál: na začiatku úlohy sa mieri na najbližšiu vyhovujúcu guľu – v lekcii 6 (krok 3) na ružovú pred bielou, nie na prvú farbu (žltú) za chrbtom.' ),
 		array( '0.65.0', '24. 11. 2026', 'Tutoriál, lekcia 5 Pohľady a kamera: na mobile sa kroky 3 a 4 už nepreskočia samy – krok 3 sa splní ťuknutím na panáčika (voľný pohľad), krok 4 návratom za tágo; upravený text aj hlas (SK/EN/HI).' ),
