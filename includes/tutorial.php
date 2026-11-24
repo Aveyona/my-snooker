@@ -417,6 +417,7 @@ function mysn_tutorial_cfg( $uid ) {
 		'lessons'  => $les,
 		'progress' => $prog,
 		'must'     => $must,
+		'idle'     => function_exists( 'mysn_tutv_idle_urls' ) ? mysn_tutv_idle_urls() : array(), // 0.64.3 hlas „stlač Ďalej“
 	);
 }
 

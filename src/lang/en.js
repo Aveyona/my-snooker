@@ -1646,6 +1646,8 @@ export default {
 	'Otvoriť: {o}': 'Open: {o}',
 	'My Snooker  |  správy z médií': 'My Snooker  |  news from the media',
 	'Späť za tágo': 'Back to the cue',
+	'Schovať do bubliny': 'Hide into a bubble',
+	'Zobraziť tutoriál': 'Show the tutorial',
 	'Enter = Ďalej': 'Enter = Next',
 	'Esc uvoľní myš a otvorí menu': 'Esc releases the mouse and opens the menu',
 	'Skús ešte raz.': 'Try again.',

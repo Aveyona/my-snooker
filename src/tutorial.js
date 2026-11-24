@@ -57,9 +57,54 @@ export function tutorial(parent, cfg, d) {
 	msg.hidden = true;
 	const tip = h('div', 'mysn-tut-tip');
 	tip.hidden = true;
-	box.append(head, body, msg, tip, bar, btns, foot);
+	// 0.64.3: okno sa dá schovať do bubliny (– vpravo hore), ťuknutím na bublinu sa vráti; nová scéna ho otvorí
+	const bMin = h('button', 'mysn-tut-min-btn', '–');
+	bMin.type = 'button';
+	bMin.title = _t('Schovať do bubliny');
+	bMin.setAttribute('aria-label', bMin.title);
+	const bub = h('button', 'mysn-tut-bub', '');
+	bub.type = 'button';
+	bub.title = _t('Zobraziť tutoriál');
+	bub.setAttribute('aria-label', bub.title);
+	// 0.64.3: textová scéna bez odozvy – Ďalej začne blikať a raz zaznie „Pre pokračovanie stlač tlačidlo Ďalej“
+	let idleT0 = 0;
+	let idleDone = false;
+	const IDLE_MS = 20000;
+	const idleReset = () => {
+		idleT0 = performance.now();
+		if (idleDone) {
+			idleDone = false;
+			bNext.classList.remove('mysn-tut-blink');
+			bub.classList.remove('mysn-tut-blink');
+		}
+	};
+	for (const t of ['pointerdown', 'keydown', 'wheel']) {
+		window.addEventListener(t, () => idleT0 && idleReset(), { passive: true, capture: true });
+	}
+	const setMin = (on) => {
+		box.classList.toggle('mysn-tut-min', !!on);
+		bub.classList.toggle('mysn-on', !!on && api.active);
+		bubText();
+	};
+	const bubText = () => {
+		const w = parseInt(fill.style.width, 10) || 0;
+		bub.textContent = '💬 ' + _t('Tutoriál') + (bar.hidden ? '' : ' · ' + w + ' %');
+	};
+	for (const t of ['pointerdown', 'pointerup', 'mousedown', 'touchstart', 'touchend']) {
+		bMin.addEventListener(t, (e) => e.stopPropagation());
+		bub.addEventListener(t, (e) => e.stopPropagation());
+	}
+	bMin.addEventListener('click', (e) => {
+		e.stopPropagation();
+		setMin(true);
+	});
+	bub.addEventListener('click', (e) => {
+		e.stopPropagation();
+		setMin(false);
+	});
+	box.append(bMin, head, body, msg, tip, bar, btns, foot);
 	const hints = h('div', 'mysn-tut-hints');
-	parent.append(hints, box);
+	parent.append(hints, box, bub);
 
 	let L = null; // lekcia
 	let si = 0; // index scény
@@ -237,6 +282,10 @@ export function tutorial(parent, cfg, d) {
 		bar.hidden = isText;
 		fill.style.width = '0%';
 		box.classList.remove('mysn-tut-ok');
+		setMin(false); // nová scéna: okno sa znova ukáže
+		idleT0 = performance.now();
+		idleDone = true;
+		idleReset();
 		foot.textContent = d.touchUI() ? '' : (isText ? _t('Enter = Ďalej') : _t('Esc uvoľní myš a otvorí menu')) + ' · ' + _t('Shift+Enter = chat');
 		hints.textContent = '';
 		glow(S.hints || []);
@@ -350,6 +399,7 @@ export function tutorial(parent, cfg, d) {
 			d.voice('');
 		}
 		box.classList.remove('mysn-on');
+		setMin(false);
 		hints.classList.remove('mysn-on');
 		hints.textContent = '';
 		glow([]);
@@ -367,6 +417,9 @@ export function tutorial(parent, cfg, d) {
 		// 0.50.5: pri mierení okom alebo pravým tlačidlom text a šípky zmiznú
 		const hide = !!d.rig.panActive;
 		box.classList.toggle('mysn-tut-hide', hide);
+		if (bub.classList.contains('mysn-on')) {
+			bubText();
+		}
 		hints.classList.toggle('mysn-tut-hide', hide);
 		const S = L.scenes[si];
 		if (doneT > 0) {
@@ -376,6 +429,15 @@ export function tutorial(parent, cfg, d) {
 			return;
 		}
 		if (S.type === 'text') {
+			if (!idleDone && !bNext.hidden && idleT0 && performance.now() - idleT0 > IDLE_MS) {
+				idleDone = true;
+				bNext.classList.add('mysn-tut-blink');
+				bub.classList.add('mysn-tut-blink');
+				const iv = cfg.idle && cfg.idle[LANG === 'sk' ? 'sk' : 'en'];
+				if (iv && d.voice) {
+					d.voice(iv);
+				}
+			}
 			return;
 		}
 		if (st.failT) {

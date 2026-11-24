@@ -1628,6 +1628,8 @@ export default {
 	'Otvoriť: {o}': 'खोलें: {o}',
 	'My Snooker  |  správy z médií': 'My Snooker  |  मीडिया से ख़बरें',
 	'Späť za tágo': 'क्यू पर वापस',
+	'Schovať do bubliny': 'बबल में छिपाएँ',
+	'Zobraziť tutoriál': 'ट्यूटोरियल दिखाएँ',
 	'Enter = Ďalej': 'Enter = आगे',
 	'Esc uvoľní myš a otvorí menu': 'Esc माउस छोड़ता है और मेन्यू खोलता है',
 	'Skús ešte raz.': 'फिर कोशिश करें।',

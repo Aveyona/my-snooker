@@ -128,6 +128,24 @@ function mysn_tutv_file( $lid, $sid, $lang, $text ) {
 	return '' === $text ? '' : sanitize_key( $lid ) . '-' . sanitize_key( $sid ) . '-' . $lang . '-' . mysn_tutv_sig( $text ) . '.mp3';
 }
 
+/** 0.64.3: pripomienka na textovej scéne, keď sa dlho nič nedeje (tlačidlo Ďalej bliká). */
+function mysn_tutv_idle_text( $lang ) {
+	return 'sk' === $lang ? 'Pre pokračovanie stlač tlačidlo Ďalej.' : 'To continue, press the Next button.';
+}
+
+/** Adresy hotových nahrávok pripomienky { sk: url, en: url }. */
+function mysn_tutv_idle_urls() {
+	list( $dir, $url ) = mysn_tutv_dir();
+	$o = array();
+	foreach ( array( 'sk', 'en' ) as $lang ) {
+		$f = mysn_tutv_file( 'idle', 'next', $lang, mysn_tutv_idle_text( $lang ) );
+		if ( is_file( $dir . '/' . $f ) ) {
+			$o[ $lang ] = $url . '/' . $f;
+		}
+	}
+	return $o;
+}
+
 /** Adresy hotových hlasov pre hru: scéna dostane vo = { sk: url, en: url }. */
 function mysn_tut_voice_urls( $lessons ) {
 	list( $dir, $url ) = mysn_tutv_dir();
@@ -202,8 +220,8 @@ function mysn_rest_tutv_gen( $req ) {
 			return array( 'saved' => 1 );
 		}
 	}
-	$text = '';
-	foreach ( mysn_tutorial() as $l ) {
+	$text = 'idle' === $lid ? mysn_tutv_idle_text( $lang ) : '';
+	foreach ( 'idle' === $lid ? array() : mysn_tutorial() as $l ) {
 		foreach ( $l['id'] === $lid ? $l['scenes'] : array() as $s ) {
 			if ( $s['id'] === $sid ) {
 				$text = trim( (string) ( $s[ 'voice_' . $lang ] ?? '' ) );
