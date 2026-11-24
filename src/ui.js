@@ -162,6 +162,16 @@ export class UI {
 		root.appendChild(bar);
 
 		this.msg = h('div', 'mysn-msg');
+		// 0.61.4: ťuknutím (kliknutím) na hlásenie zmizne na 5 s
+		for (const ev of ['pointerdown', 'mousedown', 'touchstart']) {
+			this.msg.addEventListener(ev, (e) => e.stopPropagation());
+		}
+		this.msg.addEventListener('click', (e) => {
+			e.stopPropagation();
+			this.msg.classList.add('mysn-msg-off');
+			clearTimeout(this._msgOff);
+			this._msgOff = setTimeout(() => this.msg.classList.remove('mysn-msg-off'), 5000);
+		});
 		root.appendChild(this.msg);
 		this.hint = h('div', 'mysn-hint', '');
 		root.appendChild(this.hint);

@@ -6964,7 +6964,7 @@ export function start(root, config = {}) {
 		// 0.61.3: aj pri otáčaní tága (myš, prst, šípky) – hlásenia sa vrátia 0,8 s po poslednom pohybe
 		if (aiming && game.dir !== quietDir.dir) {
 			if (quietDir.dir !== null) {
-				quietDir.until = performance.now() + 800;
+				quietDir.until = performance.now() + 5000; // 0.61.4: hlásenia sa vrátia 5 s po poslednom pohybe tága
 			}
 			quietDir.dir = game.dir;
 		} else if (!aiming) {
