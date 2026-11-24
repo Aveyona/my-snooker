@@ -396,9 +396,9 @@ export function tutorial(parent, cfg, d) {
 		let p = 0;
 		if (S.type === 'aim') {
 			if (!touch || zone === 3 || !zone) {
-				st.acc += dd;
-				st.lo = Math.min(st.lo, st.acc);
-				st.hi = Math.max(st.hi, st.acc);
+				// 0.63.4: každý smer sa počíta samostatne – po otočení doľava sa doprava počíta hneď (nie až za pôvodnou polohou)
+				st.lo = Math.min(st.lo, 0) + Math.min(dd, 0);
+				st.hi = Math.max(st.hi, 0) + Math.max(dd, 0);
 			}
 			const r = (par * Math.PI) / 180;
 			p = (Math.min(-st.lo, r) + Math.min(st.hi, r)) / (2 * r);
