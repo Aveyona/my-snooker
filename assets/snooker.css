@@ -1161,3 +1161,17 @@ body.mysn-page { font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans
 .mysn-msg { pointer-events: auto; cursor: pointer; }
 .mysn-msg.mysn-msg-off { opacity: 0 !important; pointer-events: none; }
 .mysn-bar > .mysn-mmbtn { flex: none; margin-right: -6px; } /* 0.61.6 ☰ vľavo pred názvom */
+/* 0.61.7 malý telefón na šírku (Samsung A33 a pod., nízka výška s lištou prehliadača): menšie miesto úderu a ikonky vľavo v 3 stĺpcoch po 2, nižšie */
+@media (pointer: coarse) and (max-height: 380px) and (orientation: landscape) {
+	.mysn-ui .mysn-spin { transform: scale(.78); transform-origin: 0 100%; }
+	.mysn-ui .mysn-finebtn, .mysn-ui .mysn-chalkbtn, .mysn-ui .mysn-freebtn, .mysn-ui .mysn-topbtn, .mysn-ui .mysn-sndbtn, .mysn-gchat-ico { width: 40px !important; height: 40px !important; }
+	.mysn-ui .mysn-finebtn svg, .mysn-ui .mysn-freebtn svg, .mysn-gchat-ico svg { width: 22px; height: 22px; }
+	.mysn-ui .mysn-finebtn, .mysn-ui.mysn-tools-open .mysn-finebtn { left: 8px; bottom: 146px; }
+	.mysn-ui .mysn-chalkbtn, .mysn-ui.mysn-tools-open .mysn-chalkbtn { left: 54px; bottom: 146px; }
+	.mysn-ui .mysn-freebtn, .mysn-ui.mysn-tools-open .mysn-freebtn { left: 100px; bottom: 146px; }
+	.mysn-ui .mysn-topbtn, .mysn-ui.mysn-tools-open .mysn-topbtn { left: 8px; bottom: 192px; }
+	.mysn-ui .mysn-sndbtn, .mysn-ui.mysn-tools-open .mysn-sndbtn { left: 54px; bottom: 192px; }
+	.mysn-gchat-ico, .mysn-ui.mysn-tools-open .mysn-gchat-ico { left: 100px; bottom: 192px; }
+	.mysn-sndpop { left: 150px; bottom: 186px; }
+	.mysn-gchat-mob:not(.mysn-gchat-open) { left: 150px; bottom: 192px; }
+}
