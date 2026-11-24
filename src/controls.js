@@ -389,7 +389,8 @@ export class Controls {
 			if (d.lock === 'aim') {
 				const fast = d.zone === 1 || d.zone === 2 ? 3 : 1; // horná polovica: rýchle obzeranie sa
 				// 0.47.2: jemné mierenie (zameriavač) platí len vľavo dole; horná polovica je vždy rýchle obzeranie
-				const k = fast > 1 ? 0.0016 * fast : this.touchFineOn() ? 0.0004 : 0.0016;
+				// 0.61.8: vľavo dole s tágom bez jemného mierenia (Shift) je mierenie predvolene dvakrát jemnejšie
+				const k = fast > 1 ? 0.0016 * fast : this.touchFineOn() ? 0.0004 : this.cueSpec && this.cueSpec.fine > 0 ? 0.0016 : 0.0008;
 				g.dir = d.dir + (e.clientX - d.x) * k * (this.touchAimSens || 1); // šúpatko Otáčanie prstom
 				const now = performance.now();
 				d.hist.push([now, g.dir]);

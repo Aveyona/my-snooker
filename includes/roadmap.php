@@ -180,6 +180,7 @@ function mysn_roadmap() {
 /** Denník zmien (najnovšie hore). */
 function mysn_changelog() {
 	return array(
+		array( '0.61.8', '24. 11. 2026', 'Mobil: mierenie prstom vľavo dole je s tágami bez jemného mierenia (Shift) predvolene dvakrát jemnejšie; horná polovica (rýchle obzeranie) a zameriavač bez zmeny.' ),
 		array( '0.61.7', '24. 11. 2026', 'Malý telefón na šírku (napr. Samsung A33, výška do 380 px aj s lištou prehliadača): miesto úderu je o pätinu menšie a ikonky vľavo sú menšie, v troch stĺpcoch po dvoch nižšie nad miestom úderu – nezasahujú do horného panela.' ),
 		array( '0.61.6', '24. 11. 2026', 'Mobil: tlačidlo hlavného menu ☰ je úplne vľavo v hornom paneli pred My Snooker (vpravo ho zakrýval počet hráčov online).' ),
 		array( '0.61.5', '24. 11. 2026', 'Hlásenie hore: po ťuknutí alebo kliknutí zmizne, kým sa nedohrá úder (gule sa zastavia), nie len na 5 s.' ),
