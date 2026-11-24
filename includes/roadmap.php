@@ -180,6 +180,7 @@ function mysn_roadmap() {
 /** Denník zmien (najnovšie hore). */
 function mysn_changelog() {
 	return array(
+		array( '0.65.1', '24. 11. 2026', 'Tutoriál: na začiatku úlohy sa mieri na najbližšiu vyhovujúcu guľu – v lekcii 6 (krok 3) na ružovú pred bielou, nie na prvú farbu (žltú) za chrbtom.' ),
 		array( '0.65.0', '24. 11. 2026', 'Tutoriál, lekcia 5 Pohľady a kamera: na mobile sa kroky 3 a 4 už nepreskočia samy – krok 3 sa splní ťuknutím na panáčika (voľný pohľad), krok 4 návratom za tágo; upravený text aj hlas (SK/EN/HI).' ),
 		array( '0.64.9', '24. 11. 2026', 'Mobil: hra už nezachytáva kurzor (systémové hlásenie, že kurzor používa aplikácia) – rozhoduje posledný vstup kdekoľvek na stránke (prst ostáva prstom, kým sa nepohne skutočná myš); predtým si hra pamätala dotyk len 5 s a len na stole, takže telefóny s „presným ukazovateľom“ (Samsung) dostali zachytenie napr. pri prechode na úlohu tutoriálu.' ),
 		array( '0.64.8', '24. 11. 2026', 'Tutoriál: pri scéne s Ďalej (text) sa neukazujú šípky ovládania (myš, prst) – ukážu sa až pri úlohe, keď sa nimi dá niečo robiť; text so zvýraznením prvku (napr. šípka ▲ nastavení v lekcii 3) nechá ovládanie viditeľné bez krúženia kamery.' ),
