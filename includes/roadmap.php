@@ -180,6 +180,7 @@ function mysn_roadmap() {
 /** Denník zmien (najnovšie hore). */
 function mysn_changelog() {
 	return array(
+		array( '0.62.5', '24. 11. 2026', 'Okno Príslušenstvo má vpravo hore ✕ na zatvorenie (okrem F3 a modrého štvorčeka).' ),
 		array( '0.62.4', '24. 11. 2026', 'Oprava: hlásenie Nedosiahneš… (dosah ruky) je pod oknom Príslušenstvo a ostatnými oknami.' ),
 		array( '0.62.3', '24. 11. 2026', 'Okná hry (Príslušenstvo F3, nastavenia, výzvy…) sú nad krátkymi hláseniami, napr. Nedosiahneš… – hlásenie ostane za oknom.' ),
 		array( '0.62.2', '24. 11. 2026', 'Otvorené príslušenstvo (krížik, pavúk, predĺženie…) je nad informačnými hláseniami, napr. Nedosiahneš… – hlásenie ho už neprekrýva.' ),

@@ -2496,6 +2496,15 @@ export class UI {
 		}
 		this._tools = { toolChalk: !!o.chalk, rackNew: !!o.rack, cueExt: true, cueExtOff: !!o.ext };
 		B.innerHTML = _t('<h3>Príslušenstvo (F3)</h3><p class="mysn-note">Krieda, nádstavce a predĺženie tága</p>');
+		// 0.62.5: ✕ na zatvorenie okna (ako F3 alebo modrý štvorček)
+		const x = h('button', 'mysn-panel-x', '✕');
+		x.type = 'button';
+		x.setAttribute('aria-label', _t('Zavrieť'));
+		x.addEventListener('click', (e) => {
+			e.stopPropagation();
+			this.opts.onAction('tools');
+		});
+		B.prepend(x);
 		const row = (n, label, act, ok, value) => {
 			const b = this.button(`<b>${n}</b> ${label}`, act, '', value);
 			b.disabled = !ok;
