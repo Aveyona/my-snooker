@@ -108,7 +108,33 @@ export class Online {
 		game.onNet = (type, d) => this.send(type, d);
 		this.liveConnect();
 		this.ping();
-		this._pingTimer = setInterval(() => this.ping(), PING_MS);
+		// 0.63.7: každých 5 s sa rozhodne, či už treba ping (tempo podľa situácie, pozri pingMs)
+		this._pingTimer = setInterval(() => {
+			if (Date.now() - (this._pingAt || 0) >= this.pingMs() - 500) {
+				this.ping();
+			}
+		}, PING_MS);
+		// návrat na kartu = hneď ping (signály a stav bez čakania)
+		document.addEventListener('visibilitychange', () => {
+			if (!document.hidden && Date.now() - (this._pingAt || 0) > PING_MS) {
+				this.ping();
+			}
+		});
+	}
+
+	/*
+	 * 0.63.7: tempo pingu podľa situácie (šetrí hosting – ping bol najväčšia záťaž webu):
+	 * partia, rad, sledovanie, lobby alebo bez živého spojenia = 5 s; inak so živým spojením (Centrifugo
+	 * oznámi signály a pozvánky hneď) 15 s – hráč ostáva „online“ (MYSN_LIVE 20 s); skrytá karta mimo partie 60 s.
+	 */
+	pingMs() {
+		if (this.inMatch || this.queueing || this.watching || this.lobbyOpen) {
+			return PING_MS;
+		}
+		if (document.hidden) {
+			return 60000;
+		}
+		return this._live && this._live.readyState === 1 ? 15000 : PING_MS;
 	}
 
 	/*
@@ -185,6 +211,7 @@ export class Online {
 	}
 
 	async ping() {
+		this._pingAt = Date.now();
 		try {
 			const seats = this.seatCtx ? this.seatCtx() : ''; // diváci partie, ktorú hrám alebo sledujem
 			const d = await this.net.call('ping', { state: this.inMatch ? 'match' : this.queueing ? 'queue' : this.watching ? 'watch' : this.away ? 'away' : this.lobbyOpen ? 'lobby' : 'training', seats }); // away = zhasnutá lampa v kancelárii (nie som online)

@@ -180,6 +180,7 @@ function mysn_roadmap() {
 /** Denník zmien (najnovšie hore). */
 function mysn_changelog() {
 	return array(
+		array( '0.63.7', '24. 11. 2026', 'Menej záťaže hostingu: ping hry podľa situácie – partia, rad, sledovanie, lobby alebo bez živého spojenia každých 5 s, inak so živým spojením 15 s (hráč ostáva online), skrytá karta mimo partie 60 s; po návrate na kartu hneď. Zoznam cudzích lobby v skrytej karte raz za 30 s. Ping bol najväčšia záťaž webu (pri otvorenej hre celú noc tisíce požiadaviek).' ),
 		array( '0.63.6', '24. 11. 2026', 'Tutoriál, lekcia 1, scéna Rýchle obzeranie: podrobnejší popis – na mobile ťahanie prstom hore otáča trikrát rýchlejšie (len na mobile), na PC treba rýchlo pohnúť myšou; nová veta hlasu (SK/EN/HI).' ),
 		array( '0.63.5', '24. 11. 2026', 'Tutoriál, otáčanie tága na obe strany: stačí 8° na každú stranu (pri jemnejšom predvolenom mierení bolo 20° na mobile niekoľko ťahov prstom a progres takmer nepribúdal).' ),
 		array( '0.63.4', '24. 11. 2026', 'Tutoriál, úloha otáčania tága na obe strany: každý smer sa počíta samostatne – po otočení doľava sa otáčanie doprava počíta hneď, netreba sa najskôr vrátiť za pôvodnú polohu.' ),

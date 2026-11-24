@@ -210,7 +210,8 @@ export function lobbyUi(parent, d) {
 		if (!busy) {
 			take(mine && !(open && view === 'list') ? await call('lobby/state') : open ? await call('lobby/list') : null);
 		}
-		timer = setTimeout(poll, open ? (mine ? 2000 : 5000) : 6000); // aj so zatvoreným oknom: som v lobby (signál a štart hry)
+		// 0.63.7: skrytá karta a cudzí zoznam lobby = 30 s (šetrí hosting); vlastné lobby ostáva rýchle
+		timer = setTimeout(poll, !mine && document.hidden ? 30000 : open ? (mine ? 2000 : 5000) : 6000); // aj so zatvoreným oknom: som v lobby (signál a štart hry)
 	};
 
 	const act = async (a, el) => {
