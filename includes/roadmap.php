@@ -180,6 +180,7 @@ function mysn_roadmap() {
 /** Denník zmien (najnovšie hore). */
 function mysn_changelog() {
 	return array(
+		array( '0.65.6', '25. 11. 2026', 'Mobil, biela v ruke z pohľadu zhora (v celej hre aj v tutoriáli): pohľad zhora pri kladení bielej neskrýva ovládanie, takže bielu potiahneš prstom a ťukneš Hotovo (od 0.63.0 sa Hotovo v pohľade zhora skrývalo).' ),
 		array( '0.65.5', '25. 11. 2026', 'Tutoriál, lekcia 5 krok 4: vysvetlenie voľného pohľadu – na PC W A S D/šípky, myš, E/Q a tlačidlá myši hore/dole, Shift rýchlejšie, klik otvorí predmet; na mobile ovládač, prst, ▲ ▼, ťuknutie na predmet; potom návrat za tágo. Nový text aj hlas (SK/EN/HI).' ),
 		array( '0.65.4', '24. 11. 2026', 'Tutoriál, lekcia 5: bliká len panáčik, nie aj tlačidlá pohľad zhora a zvuky (spoločná trieda tlačidiel).' ),
 		array( '0.65.3', '24. 11. 2026', 'Tutoriál, lekcia 5 (kroky 3 a 4): tlačidlo panáčik (voľný pohľad) na mobile bliká žltým podsvietením ako ostatné zvýraznené tlačidlá.' ),

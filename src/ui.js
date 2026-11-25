@@ -4183,13 +4183,14 @@ export class UI {
 
 	/** Mobil: panák (voľný pohľad) – on = zobraziť, active = práve som vo voľnom pohľade (žltý + ovládač chôdze). */
 	/** Mobil: tlačidlo pohľad zhora – on = zobraziť, active = práve som v pohľade zhora (žlté). */
-	showTop(on, active) {
-		const k = (on ? 1 : 0) + (active ? 2 : 0);
+	showTop(on, active, place) {
+		const k = (on ? 1 : 0) + (active ? 2 : 0) + (place ? 4 : 0);
 		if (k !== this._topK) {
 			this._topK = k;
 			this.topBtn.classList.toggle('mysn-free-can', !!on);
 			this.topBtn.classList.toggle('mysn-free-on', !!active);
-			this.root.classList.toggle('mysn-topmode', !!active);
+			// 0.65.6: pri bielej v ruke sa zhora nič neskrýva – treba ťahať bielu a ťuknúť Hotovo
+			this.root.classList.toggle('mysn-topmode', !!active && !place);
 		}
 	}
 

@@ -7307,7 +7307,7 @@ export function start(root, config = {}) {
 		ui.showFine(cueSpec.fine > 0, controls.touchFineOn());
 		ui.showFree(ui.touchUI && (!view || view === 'free') && venue !== 'office' && !game.spectating && !ui.mainMenuOpen(), view === 'free');
 		ui.showSnd(ui.touchUI && !game.spectating && !view && venue !== 'office' && !ui.mainMenuOpen());
-		ui.showTop(ui.touchUI && !view && venue !== 'office' && !game.spectating && !ui.mainMenuOpen() && (rig.mode === 'cue' || rig.mode === 'top'), rig.mode === 'top');
+		ui.showTop(ui.touchUI && !view && venue !== 'office' && !game.spectating && !ui.mainMenuOpen() && (rig.mode === 'cue' || rig.mode === 'top'), rig.mode === 'top', game.state === 'place');
 		// pohľady (nástenka, stojan, rebríček…) majú vlastné Späť do hry; mobil potrebuje tlačidlo len pri stole zhora (Tab)
 		// biela v ruke (moja): kamera sa raz presunie zhora na stôl; po položení sa vráti za tágo (udalosť change)
 		const myPlace = game.state === 'place' && !game.spectating && !specView() && (!game.match || game.match.turn === game.match.me) && game.cue.on;
