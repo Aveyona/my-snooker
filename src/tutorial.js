@@ -326,8 +326,8 @@ export function tutorial(parent, cfg, d) {
 		d.capture(!isText); // PC: pri texte voľná myš na tlačidlá, pri úlohe zachytená
 		if (d.tour) {
 			// 0.64.7: text bez predmetu a mimo kancelárie – na stole sa nič nerobí, kamera krúži okolo stola
-			// pri texte so zvýraznením prvku na obrazovke (napr. šípka ▲ nastavení) ostáva ovládanie viditeľné
-			d.tour(isText && !S.obj && !(S.setup && /office/i.test(S.setup)) && !(S.hints || []).some((k) => /^g_/.test(k)));
+			// 0.65.8: aj pri texte so zvýraznením prvku – stôl zablokovaný, viditeľný ostane len zvýraznený prvok
+			d.tour(isText && !S.obj && !(S.setup && /office/i.test(S.setup)));
 		}
 	};
 
