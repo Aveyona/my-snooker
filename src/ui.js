@@ -558,6 +558,14 @@ export class UI {
 			// kliknutie blízko stredu = presne stred
 			this.setSpin(Math.abs(x) < 0.06 ? 0 : x, Math.abs(y) < 0.06 ? 0 : y);
 		};
+		// 0.66.1 mobil: pri dotyku sa guľa na chvíľu zväčší a bod sa posúva ťahaním (relatívne, jemnejšie);
+		// ťuknutie bez pohybu bod nemení
+		let rel = null;
+		let bigT = 0;
+		const bigOff = () => {
+			clearTimeout(bigT);
+			bigT = setTimeout(() => this.spinBox.classList.remove('mysn-spin-big'), 350);
+		};
 		this.spinBall.addEventListener('pointerdown', (e) => {
 			e.preventDefault();
 			drag = e.pointerId;
@@ -566,10 +574,43 @@ export class UI {
 			} catch (err) {
 				/* nie je podstatné */
 			}
+			if (e.pointerType === 'touch') {
+				clearTimeout(bigT);
+				this.spinBox.classList.add('mysn-spin-big');
+				rel = { x: e.clientX, y: e.clientY, s: this.side || 0, t: this.top || 0 };
+				return;
+			}
+			rel = null;
 			set(e);
 		});
-		this.spinBall.addEventListener('pointermove', (e) => drag === e.pointerId && set(e));
-		this.spinBall.addEventListener('pointerup', () => (drag = null));
+		this.spinBall.addEventListener('pointermove', (e) => {
+			if (drag !== e.pointerId) {
+				return;
+			}
+			if (rel) {
+				const r = this.spinBall.getBoundingClientRect();
+				const k = 0.4 * Math.max(40, r.width); // bod sa kreslí 40 % polomeru na jednotku
+				let x = rel.s + (e.clientX - rel.x) / k;
+				let y = rel.t - (e.clientY - rel.y) / k;
+				const l = Math.hypot(x, y);
+				if (l > 1) {
+					x /= l;
+					y /= l;
+				}
+				this.setSpin(Math.abs(x) < 0.04 ? 0 : x, Math.abs(y) < 0.04 ? 0 : y);
+				return;
+			}
+			set(e);
+		});
+		const up = () => {
+			drag = null;
+			if (rel) {
+				rel = null;
+				bigOff();
+			}
+		};
+		this.spinBall.addEventListener('pointerup', up);
+		this.spinBall.addEventListener('pointercancel', up);
 		this.spinBall.addEventListener('dblclick', () => this.setSpin(0, 0));
 		// 0.30.0: uhol tága ťahaním ikony tága (špica je ukotvená, tágo sa otáča okolo nej)
 		const cueSvg = this.spinBox.querySelector('.mysn-spin-cue');

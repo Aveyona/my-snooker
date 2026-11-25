@@ -1213,3 +1213,8 @@ body.mysn-page { font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans
 /* 0.65.8: pri texte ostane viditeľný len zvýraznený prvok, o ktorom sa hovorí (stôl je aj tak zablokovaný) */
 .mysn-tut-g-spin .mysn-ui.mysn-tut-tour .mysn-spin, .mysn-tut-g-cue .mysn-ui.mysn-tut-tour .mysn-spin, .mysn-tut-g-eye .mysn-ui.mysn-tut-tour .mysn-eye, .mysn-tut-g-top .mysn-ui.mysn-tut-tour .mysn-topbtn, .mysn-tut-g-chalk .mysn-ui.mysn-tut-tour .mysn-chalkbtn, .mysn-tut-g-tools .mysn-ui.mysn-tut-tour .mysn-tools-toggle, .mysn-tut-g-free .mysn-ui.mysn-tut-tour .mysn-freebtn:not(.mysn-topbtn):not(.mysn-sndbtn) { visibility: visible !important; }
 .mysn-tut-g-free .mysn-freebtn:not(.mysn-topbtn):not(.mysn-sndbtn) { outline: 3px solid #f2d48a; outline-offset: 3px; animation: mysn-tut-ring 1.2s ease-out infinite; } /* 0.65.3 tutoriál: panáčik (voľný pohľad) bliká */
+/* 0.66.1 mobil: miesto úderu sa pri dotyku zväčší (presnejšie nastavenie bodu) */
+.mysn-spin-ball { transition: transform .15s ease-out; }
+.mysn-spin.mysn-spin-big { z-index: 30; }
+.mysn-spin.mysn-spin-big .mysn-spin-ball { transform: scale(2.4); transform-origin: 20% 80%; box-shadow: 0 6px 30px #000c; }
+@media (max-height: 430px) { .mysn-spin.mysn-spin-big .mysn-spin-ball { transform: scale(2.8); } }
