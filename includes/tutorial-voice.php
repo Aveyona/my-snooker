@@ -50,7 +50,7 @@ function mysn_tutv_old_md5() {
 		'l5|s3' => array( '4ebfdf648c', '9e77f02168' ),
 		'l5|s4' => array( '2cb9454d9e', 'd9d61a7404', '35d265eb40' ),
 		'l7|s3' => 'c31195c261',
-		'l8|s3' => '741f36e9af',
+		'l8|s3' => array( '741f36e9af', '12d04ae63b' ),
 		'l8|s2' => 'f0a9afd667',
 		'l6|s2' => '660075982b',
 		'l6|s3' => '6da5af6c14',

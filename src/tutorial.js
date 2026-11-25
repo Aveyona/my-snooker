@@ -161,6 +161,10 @@ export function tutorial(parent, cfg, d) {
 			d.goHome();
 		}
 		items = items.filter((x) => x !== 'office' && x !== 'home');
+		if (S.type === 'stun') {
+			// 0.65.9: stop – biela bližšie k červenej (25 cm namiesto 40), inak sa stihne roztočiť a úloha sa takmer nedá splniť
+			items = items.map((x) => (x === 'white -40 0' ? 'white -25 0' : x));
+		}
 		if (!items.length) {
 			return;
 		}
@@ -587,7 +591,7 @@ export function tutorial(parent, cfg, d) {
 				const dz = c.z - hp.z;
 				const along = (dx * Math.cos(st.from.dir) + dz * Math.sin(st.from.dir)) * 100;
 				if (S.type === 'stun') {
-					ok = Math.hypot(dx, dz) * 100 <= Math.max(1, par);
+					ok = Math.hypot(dx, dz) * 100 <= Math.max(12, par); // 0.65.9: tolerancia aspoň 12 cm
 					why = _t('Biela sa nezastavila (prešla {n} cm).', { n: Math.round(Math.hypot(dx, dz) * 100) });
 				} else if (S.type === 'draw') {
 					ok = along <= -par;
