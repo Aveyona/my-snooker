@@ -1072,10 +1072,11 @@ body.mysn-page { font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans
 @media (max-width: 520px) { .mysn-wc-grid { grid-template-columns: 1fr; } .mysn-wc-box { padding: 18px 14px; } }
 
 /* 0.52.2 počet hráčov online vpravo hore */
-.mysn-online { display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px; border-radius: 999px; border: 1px solid #ffffff2e; background: #0c0f14b3; color: #e8eefc; font-size: 13px; font-weight: 600; white-space: nowrap; cursor: pointer; pointer-events: auto; }
-.mysn-online i { width: 8px; height: 8px; border-radius: 50%; background: #3ddc6f; box-shadow: 0 0 6px #3ddc6f; }
-.mysn-online:hover { border-color: #f2d48a99; }
-@media (hover: none), (pointer: coarse) { .mysn-online { position: absolute; top: 12px; right: 12px; z-index: 5; } }
+/* 0.66.7: bublina „N online“ – nie koreň rozhrania (ten má počas online zápasu triedu mysn-online a bol z neho tmavý ovál) */
+.mysn-online:not(.mysn-ui) { display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px; border-radius: 999px; border: 1px solid #ffffff2e; background: #0c0f14b3; color: #e8eefc; font-size: 13px; font-weight: 600; white-space: nowrap; cursor: pointer; pointer-events: auto; }
+.mysn-online:not(.mysn-ui) i { width: 8px; height: 8px; border-radius: 50%; background: #3ddc6f; box-shadow: 0 0 6px #3ddc6f; }
+.mysn-online:not(.mysn-ui):hover { border-color: #f2d48a99; }
+@media (hover: none), (pointer: coarse) { .mysn-online:not(.mysn-ui) { position: absolute; top: 12px; right: 12px; z-index: 5; } }
 
 /* 0.53.0 vlastné lobby */
 .mysn-glob { position: absolute; inset: 0; z-index: 65; display: none; align-items: center; justify-content: center; background: #05070acc; backdrop-filter: blur(3px); padding: 12px; box-sizing: border-box; }

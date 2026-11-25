@@ -180,6 +180,7 @@ function mysn_roadmap() {
 /** Denník zmien (najnovšie hore). */
 function mysn_changelog() {
 	return array(
+		array( '0.66.7', '25. 11. 2026', 'Online zápas (liga): zmizol tmavý ovál so zlatým okrajom cez celú obrazovku – koreň rozhrania má počas online zápasu triedu mysn-online, rovnakú ako bublina N online, a dostával jej vzhľad (tmavé pozadie, úplne zaoblené rohy, zlatý okraj); štýl bubliny už platí len pre bublinu.' ),
 		array( '0.66.6', '25. 11. 2026', 'Štadión: keď je kamera vo vnútri lúča reflektora, lúč sa skryje (obraz bol zosvetlený s tmavým kruhom a zlatým okrajom v strede).' ),
 		array( '0.66.5', '25. 11. 2026', 'Postava (divák, hráč s menovkou, rozhodca), do ktorej vojde kamera, sa skryje – obraz sa už nepozerá zvnútra jej tela (šedý ovál v strede a svetlé okraje).' ),
 		array( '0.66.4', '25. 11. 2026', 'Rudo hovorí jazykom krajiny, kde sa zápas hrá (krajina hostiteľa – hráča 1, inak hráča 2): Slovensko a Česko po slovensky, inde (Anglicko, India…) po anglicky – rovnako pre hráčov aj divákov, nezávisle od jazyka hry poslucháča (nahrané repliky aj živý komentár).' ),
