@@ -180,6 +180,7 @@ function mysn_roadmap() {
 /** Denník zmien (najnovšie hore). */
 function mysn_changelog() {
 	return array(
+		array( '0.66.3', '25. 11. 2026', 'Tutoriál, lekcia 10 krok 2: namiesto preskoku len massé – tágo na 55°, bod úplne vľavo, zamieriť asi 30° vpravo od modrej, asi 50 % sily (overené simuláciou); text aj hlas (SK/EN/HI).' ),
 		array( '0.66.2', '25. 11. 2026', 'Mobil: pri zväčšenej guli miesta úderu sa ikonka tága vedľa nej skryje.' ),
 		array( '0.66.1', '25. 11. 2026', 'Mobil, miesto úderu: pri dotyku sa guľa na chvíľu zväčší (2,4×, na malom telefóne 2,8×) a bod sa posúva ťahaním prsta jemnejšie (relatívne, bez skoku na miesto dotyku); po pustení sa guľa zmenší.' ),
 		array( '0.66.0', '25. 11. 2026', 'Tutoriál, lekcia 10 krok 2 (preskoč alebo obíď modrú): modrá 35 cm od bielej namiesto 9 (tak blízko sa nedala ani preskočiť, ani obísť – overené simuláciou); presný návod – skok: bod úplne dole a aspoň 80 % sily; swerve: tágo 20 až 45°, bod úplne vpravo, zamieriť asi 20° vľavo od modrej, stredne rýchlo; text aj hlas (SK/EN/HI).' ),
