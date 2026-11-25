@@ -1218,3 +1218,4 @@ body.mysn-page { font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans
 .mysn-spin.mysn-spin-big { z-index: 30; }
 .mysn-spin.mysn-spin-big .mysn-spin-ball { transform: scale(2.4); transform-origin: 20% 80%; box-shadow: 0 6px 30px #000c; }
 @media (max-height: 430px) { .mysn-spin.mysn-spin-big .mysn-spin-ball { transform: scale(2.8); } }
+.mysn-spin.mysn-spin-big .mysn-spin-cue { visibility: hidden; } /* 0.66.2: pri zväčšenej guli sa ikonka tága vedľa nej skryje */
