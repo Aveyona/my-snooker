@@ -180,6 +180,7 @@ function mysn_roadmap() {
 /** Denník zmien (najnovšie hore). */
 function mysn_changelog() {
 	return array(
+		array( '0.65.7', '25. 11. 2026', 'Tutoriál, lekcia 8 krok 3 (Stop) sa dá splniť: hodnotí sa, kde biela zastala pred ďalším nárazom (červená odrazená od mantinelu ju predtým odtlačila preč); text radí bod mierne pod stred a rýchly úder (úder stredom sa na 40 cm stihne roztočiť). Platí aj pre spodnú a hornú falšu. Text aj hlas (SK/EN/HI).' ),
 		array( '0.65.6', '25. 11. 2026', 'Mobil, biela v ruke z pohľadu zhora (v celej hre aj v tutoriáli): pohľad zhora pri kladení bielej neskrýva ovládanie, takže bielu potiahneš prstom a ťukneš Hotovo (od 0.63.0 sa Hotovo v pohľade zhora skrývalo).' ),
 		array( '0.65.5', '25. 11. 2026', 'Tutoriál, lekcia 5 krok 4: vysvetlenie voľného pohľadu – na PC W A S D/šípky, myš, E/Q a tlačidlá myši hore/dole, Shift rýchlejšie, klik otvorí predmet; na mobile ovládač, prst, ▲ ▼, ťuknutie na predmet; potom návrat za tágo. Nový text aj hlas (SK/EN/HI).' ),
 		array( '0.65.4', '24. 11. 2026', 'Tutoriál, lekcia 5: bliká len panáčik, nie aj tlačidlá pohľad zhora a zvuky (spoločná trieda tlačidiel).' ),

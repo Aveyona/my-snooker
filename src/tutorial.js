@@ -544,12 +544,13 @@ export function tutorial(parent, cfg, d) {
 		if (type === 'shot') {
 			st.cush = 0;
 			st.hit = null;
+			st.hit2 = null;
 			st.from = { x: g.cue.p.x, z: g.cue.p.z, dir: g.dir };
 		} else if (type === 'settle' && SHOTS.includes(S.type) && st.from) {
 			const pots = (data && data.pots) || [];
 			const wp = pots.some((b) => b.kind === 'white');
 			const first = g.physics.firstContact;
-			const c = g.cue.p;
+			const c = st.hit2 && (S.type === 'stun' || S.type === 'draw' || S.type === 'follow') ? st.hit2 : g.cue.p;
 			const par = +S.param || 0;
 			let ok = false;
 			let why = '';
@@ -626,6 +627,9 @@ export function tutorial(parent, cfg, d) {
 			st.cush++;
 		} else if (e.type === 'ball' && !st.hit && (e.a === 0 || e.b === 0)) {
 			st.hit = { x: d.game.cue.p.x, z: d.game.cue.p.z };
+		} else if (e.type === 'ball' && st.hit && !st.hit2 && (e.a === 0 || e.b === 0)) {
+			// 0.65.7: druhý náraz do bielej (napr. červená sa vrátila od mantinelu) – hodnotí sa, kde biela bola predtým
+			st.hit2 = { x: d.game.cue.p.x, z: d.game.cue.p.z };
 		}
 	};
 
