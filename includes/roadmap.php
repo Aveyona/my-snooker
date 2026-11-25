@@ -180,6 +180,7 @@ function mysn_roadmap() {
 /** Denník zmien (najnovšie hore). */
 function mysn_changelog() {
 	return array(
+		array( '0.66.0', '25. 11. 2026', 'Tutoriál, lekcia 10 krok 2 (preskoč alebo obíď modrú): modrá 35 cm od bielej namiesto 9 (tak blízko sa nedala ani preskočiť, ani obísť – overené simuláciou); presný návod – skok: bod úplne dole a aspoň 80 % sily; swerve: tágo 20 až 45°, bod úplne vpravo, zamieriť asi 20° vľavo od modrej, stredne rýchlo; text aj hlas (SK/EN/HI).' ),
 		array( '0.65.9', '25. 11. 2026', 'Tutoriál, lekcia 8 krok 3 (Stop) ľahší: biela 25 cm od červenej (namiesto 40) a tolerancia 12 cm (namiesto 8) – podľa simulácie stačí stredne rýchly úder stredom alebo mierne pod stred.' ),
 		array( '0.65.8', '25. 11. 2026', 'Tutoriál: každá scéna s tlačidlom Ďalej (len čítanie) má krúžiacu kameru a zablokovaný stôl – aj keď text zvýrazňuje prvok obrazovky (napr. lekcia 8 krok 1 miesto úderu); viditeľný ostane len zvýraznený prvok.' ),
 		array( '0.65.7', '25. 11. 2026', 'Tutoriál, lekcia 8 krok 3 (Stop) sa dá splniť: hodnotí sa, kde biela zastala pred ďalším nárazom (červená odrazená od mantinelu ju predtým odtlačila preč); text radí bod mierne pod stred a rýchly úder (úder stredom sa na 40 cm stihne roztočiť). Platí aj pre spodnú a hornú falšu. Text aj hlas (SK/EN/HI).' ),

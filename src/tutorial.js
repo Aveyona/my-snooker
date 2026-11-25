@@ -161,6 +161,8 @@ export function tutorial(parent, cfg, d) {
 			d.goHome();
 		}
 		items = items.filter((x) => x !== 'office' && x !== 'home');
+		// 0.66.0: uhol tága – modrá ďalej od bielej (35 cm namiesto 9), inak sa nedá preskočiť ani obísť
+		items = items.map((x) => (x === 'blue -31 0' ? 'blue -5 0' : x));
 		if (S.type === 'stun') {
 			// 0.65.9: stop – biela bližšie k červenej (25 cm namiesto 40), inak sa stihne roztočiť a úloha sa takmer nedá splniť
 			items = items.map((x) => (x === 'white -40 0' ? 'white -25 0' : x));
