@@ -182,14 +182,32 @@ function mysn_rudo_events() {
  * Živý komentár Ruda: AI napíše jednu vetu k udalosti a ElevenLabs ju namluví. Pre jednu udalosť zápasu
  * jedna nahrávka (ostatní v zápase dostanú tú istú), najviac 30 nových za hodinu.
  */
+/**
+ * 0.66.4: jazyk Ruda podľa krajiny, kde sa zápas hrá (krajina hostiteľa – hráč 1, inak hráč 2):
+ * Slovensko a Česko = slovenčina, inde (Anglicko, India, …) angličtina. Rovnaký pre hráčov aj divákov.
+ */
+function mysn_rudo_match_lang( $m ) {
+	if ( ! is_array( $m ) ) {
+		return 'en';
+	}
+	foreach ( array( 'p1', 'p2' ) as $k ) {
+		$p = ! empty( $m[ $k ] ) && function_exists( 'mysn_player' ) ? mysn_player( (int) $m[ $k ] ) : null;
+		$c = $p && ! empty( $p['country'] ) ? strtoupper( (string) $p['country'] ) : '';
+		if ( $c ) {
+			return in_array( $c, array( 'SK', 'CZ' ), true ) ? 'sk' : 'en';
+		}
+	}
+	return 'en';
+}
+
 function mysn_rest_rudo_live( $req ) {
 	$mid = (int) $req->get_param( 'm' );
 	$ev  = sanitize_key( (string) $req->get_param( 'ev' ) );
 	$k   = sanitize_key( (string) $req->get_param( 'k' ) );
-	$en  = 'en' === (string) $req->get_param( 'lang' ); // 0.61.0: Rudo po anglicky pre hráčov, ktorí nehrajú po slovensky
 	if ( ! isset( mysn_rudo_events()[ $ev ] ) || ! $mid || ! mysn_get_match( $mid ) ) {
 		return new WP_Error( 'mysn', 'Neznáma udalosť.', array( 'status' => 400 ) );
 	}
+	$en = 'en' === mysn_rudo_match_lang( mysn_get_match( $mid ) ); // 0.66.4: podľa krajiny zápasu, nie jazyka poslucháča
 	if ( ! function_exists( 'ai_writer_call_ai_chat' ) || ! function_exists( 'mysn_rv_tts_mp3' ) ) {
 		return new WP_Error( 'mysn', 'Živý komentár nie je dostupný.', array( 'status' => 404 ) );
 	}

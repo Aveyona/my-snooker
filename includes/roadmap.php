@@ -180,6 +180,7 @@ function mysn_roadmap() {
 /** Denník zmien (najnovšie hore). */
 function mysn_changelog() {
 	return array(
+		array( '0.66.4', '25. 11. 2026', 'Rudo hovorí jazykom krajiny, kde sa zápas hrá (krajina hostiteľa – hráča 1, inak hráča 2): Slovensko a Česko po slovensky, inde (Anglicko, India…) po anglicky – rovnako pre hráčov aj divákov, nezávisle od jazyka hry poslucháča (nahrané repliky aj živý komentár).' ),
 		array( '0.66.3', '25. 11. 2026', 'Tutoriál, lekcia 10 krok 2: namiesto preskoku len massé – tágo na 55°, bod úplne vľavo, zamieriť asi 30° vpravo od modrej, asi 50 % sily (overené simuláciou); text aj hlas (SK/EN/HI).' ),
 		array( '0.66.2', '25. 11. 2026', 'Mobil: pri zväčšenej guli miesta úderu sa ikonka tága vedľa nej skryje.' ),
 		array( '0.66.1', '25. 11. 2026', 'Mobil, miesto úderu: pri dotyku sa guľa na chvíľu zväčší (2,4×, na malom telefóne 2,8×) a bod sa posúva ťahaním prsta jemnejšie (relatívne, bez skoku na miesto dotyku); po pustení sa guľa zmenší.' ),

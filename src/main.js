@@ -6505,7 +6505,7 @@ export function start(root, config = {}) {
 			const fd = new FormData();
 			fd.append('m', mid);
 			fd.append('ev', ev);
-			fd.append('lang', LANG === 'sk' ? 'sk' : 'en');
+			fd.append('lang', sound.rudoLang || 'sk'); // server aj tak rozhodne podľa krajiny zápasu
 			for (const [k, v] of Object.entries(data)) {
 				fd.append(k, v);
 			}
@@ -6532,6 +6532,9 @@ export function start(root, config = {}) {
 		const exec = (r, mid, seq) => {
 			if (!on() || !mid) {
 				return;
+			}
+			if (r && (r.lg === 'sk' || r.lg === 'en')) {
+				sound.rudoLang = r.lg; // 0.66.4: Rudo hovorí jazykom krajiny, kde sa zápas hrá (rovnako pre všetkých)
 			}
 			if (r && r.p) {
 				play(r.p, r.t || 1800, false, r.v);

@@ -629,6 +629,9 @@ function mysn_rest_settle( $req ) {
 	if ( function_exists( 'mysn_rudo_decide' ) ) {
 		list( $rr, $nx, $seen ) = mysn_rudo_decide( $m, $me, $prev, $st, $v );
 		if ( $rr ) {
+			if ( is_array( $rr ) && function_exists( 'mysn_rudo_match_lang' ) ) {
+				$rr['lg'] = mysn_rudo_match_lang( $m ); // 0.66.4 jazyk Ruda podľa krajiny zápasu
+			}
 			$st['call']         = isset( $st['call'] ) && is_array( $st['call'] ) ? $st['call'] : array();
 			$st['call']['rudo'] = $rr;
 		}
