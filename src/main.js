@@ -1855,6 +1855,7 @@ export function start(root, config = {}) {
 
 	// pohľad na nástenku (F1), stojan s tágami (F2), kriedovanie tága (F3) alebo tabuľu so skóre (F4)
 	let view = null;
+	const camHideV = new THREE.Vector3(); // 0.66.5 skrývanie postáv pri kamere
 	let tourSet = () => {}; // 0.64.7 prehliadka stola pri texte tutoriálu (nastaví sa nižšie)
 	const chairLook = { yaw: 0, pitch: 0 };
 	let topView = false; // Tab: pohľad na stôl zhora
@@ -7063,6 +7064,30 @@ export function start(root, config = {}) {
 		} else {
 			alley.update(dt, game.cue);
 			crowdHome.update(dt, game.cue);
+		}
+		// 0.66.5: postava (divák, hráč, rozhodca), do ktorej vojde kamera, sa skryje – inak sa obraz pozerá zvnútra
+		// jej tela (šedý ovál v strede, svetlé okraje)
+		{
+			const cp = rig.camera.position;
+			const hideNear = (o) => {
+				if (!o) {
+					return;
+				}
+				o.getWorldPosition(camHideV);
+				const inside = Math.hypot(cp.x - camHideV.x, cp.z - camHideV.z) < 0.5 && cp.y > camHideV.y - 0.2 && cp.y < camHideV.y + 2.1;
+				if (o.visible === inside) {
+					o.visible = !inside;
+				}
+			};
+			for (const f of crowdHome.fans) {
+				hideNear(f.f);
+			}
+			for (const f of crowdLg.fans) {
+				hideNear(f.f);
+			}
+			if (stadium.refObj) {
+				hideNear(stadium.refObj);
+			}
 		}
 		const aiming = game.state === 'aim' && !view;
 		// 0.45.7: pri mierení (drží sa pravé tlačidlo myši, na tablete oko) sa skryjú hlásenia hore, nápovedy,

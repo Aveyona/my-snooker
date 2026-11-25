@@ -1235,6 +1235,7 @@ export function buildStadium(scene, quality, clock = 45) {
 			refSc = o || null;
 		},
 		/** Kde rozhodca práve stojí a kam sa pozerá. */
+		refObj: referee, // 0.66.5 skrytie rozhodcu, keď do neho vojde kamera
 		refHome: () => ({ x: referee.position.x, z: referee.position.z, yaw: referee.rotation.y }),
 		refPos: () => ({ x: referee.position.x, y: FY + 1.6, z: referee.position.z }),
 		/** Pohľady na štadióne: F4 skóre = veľká obrazovka nad tribúnou za kratšou stranou. */
