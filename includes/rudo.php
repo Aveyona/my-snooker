@@ -188,7 +188,7 @@ function mysn_rudo_events() {
  */
 function mysn_rudo_match_lang( $m ) {
 	if ( ! is_array( $m ) ) {
-		return 'en';
+		return 'sk';
 	}
 	foreach ( array( 'p1', 'p2' ) as $k ) {
 		$p = ! empty( $m[ $k ] ) && function_exists( 'mysn_player' ) ? mysn_player( (int) $m[ $k ] ) : null;
@@ -197,7 +197,7 @@ function mysn_rudo_match_lang( $m ) {
 			return in_array( $c, array( 'SK', 'CZ' ), true ) ? 'sk' : 'en';
 		}
 	}
-	return 'en';
+	return 'sk'; // 0.66.8: krajina neznáma – domovská liga je slovenská
 }
 
 function mysn_rest_rudo_live( $req ) {

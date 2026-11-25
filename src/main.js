@@ -6567,11 +6567,18 @@ export function start(root, config = {}) {
 			callKey = key;
 			const t0 = Date.now();
 			const get = (n) => {
-				fetch(config.restUrl + 'rudo/call?m=' + mid + '&k=' + seq, { cache: 'no-store', credentials: 'omit' })
-					.then((r) => (r.ok ? r.json() : null))
+				// 0.66.8: s cookies (kontrola prehliadača hostingu inak požiadavku odmietne a Rudo mlčí) a pri chybe znova
+				fetch(config.restUrl + 'rudo/call?m=' + mid + '&k=' + seq, { cache: 'no-store', credentials: 'same-origin' })
+					.then((r) => (r.ok ? r.json() : { retry: true }))
 					.then((d) => {
 						if (callKey !== key) {
 							return; // medzitým prišiel ďalší úder
+						}
+						if (d && d.retry) {
+							if (n < 8) {
+								setTimeout(() => get(n + 1), 1200);
+							}
+							return;
 						}
 						if (d && d.pending && n < 18) {
 							setTimeout(() => get(n + 1), 700);
