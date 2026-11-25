@@ -7088,6 +7088,9 @@ export function start(root, config = {}) {
 			if (stadium.refObj) {
 				hideNear(stadium.refObj);
 			}
+			if (stadium.camInBeams && stadium.root.visible) {
+				stadium.camInBeams(cp);
+			}
 		}
 		const aiming = game.state === 'aim' && !view;
 		// 0.45.7: pri mierení (drží sa pravé tlačidlo myši, na tablete oko) sa skryjú hlásenia hore, nápovedy,

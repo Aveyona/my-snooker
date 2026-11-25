@@ -180,6 +180,7 @@ function mysn_roadmap() {
 /** Denník zmien (najnovšie hore). */
 function mysn_changelog() {
 	return array(
+		array( '0.66.6', '25. 11. 2026', 'Štadión: keď je kamera vo vnútri lúča reflektora, lúč sa skryje (obraz bol zosvetlený s tmavým kruhom a zlatým okrajom v strede).' ),
 		array( '0.66.5', '25. 11. 2026', 'Postava (divák, hráč s menovkou, rozhodca), do ktorej vojde kamera, sa skryje – obraz sa už nepozerá zvnútra jej tela (šedý ovál v strede a svetlé okraje).' ),
 		array( '0.66.4', '25. 11. 2026', 'Rudo hovorí jazykom krajiny, kde sa zápas hrá (krajina hostiteľa – hráča 1, inak hráča 2): Slovensko a Česko po slovensky, inde (Anglicko, India…) po anglicky – rovnako pre hráčov aj divákov, nezávisle od jazyka hry poslucháča (nahrané repliky aj živý komentár).' ),
 		array( '0.66.3', '25. 11. 2026', 'Tutoriál, lekcia 10 krok 2: namiesto preskoku len massé – tágo na 55°, bod úplne vľavo, zamieriť asi 30° vpravo od modrej, asi 50 % sily (overené simuláciou); text aj hlas (SK/EN/HI).' ),

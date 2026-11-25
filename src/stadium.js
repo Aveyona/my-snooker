@@ -207,6 +207,7 @@ export function buildStadium(scene, quality, clock = 45) {
 			beam.renderOrder = 2;
 			root.add(beam);
 			beams.push(beam);
+			beam.userData.cone = { len, r0: 1.0, r1: 0.13 }; // 0.66.6: skrytie lúča, keď je v ňom kamera
 			// svetlá škvrna na podlahe
 			const pool = add(new THREE.PlaneGeometry(2.2, 2.2), poolMat, E.x, FY + 0.012, E.z);
 			pool.rotation.x = -Math.PI / 2;
@@ -719,6 +720,8 @@ export function buildStadium(scene, quality, clock = 45) {
 	 * Zavadzia rozhodca na mieste (x, z) hráčovi? Pás za bielou v smere tága (tágo, hráč, nástavec a kamera,
 	 * 0.25.3: širší), pri kladení bielej aj celý koniec stola pri D.
 	 */
+	let beamsOn = false; // 0.66.6
+	const camBeamV = new THREE.Vector3();
 	const refBlocked = (x, z, cb, dir) => {
 		if (refPlacing && x < -1.2 && Math.abs(z) < 1.4) {
 			return true;
@@ -1294,8 +1297,26 @@ export function buildStadium(scene, quality, clock = 45) {
 			}
 		},
 		rackLightTick,
+		/**
+		 * 0.66.6: kamera vo vnútri lúča reflektora – lúč sa skryje (inak je obraz zosvetlený s tmavým kruhom
+		 * a zlatým okrajom v strede).
+		 */
+		camInBeams(cp) {
+			for (const b of beams) {
+				const c = b.userData.cone;
+				if (!c || !beamsOn) {
+					continue;
+				}
+				const lp = b.worldToLocal(camBeamV.copy(cp));
+				const t = lp.y / c.len + 0.5; // 0 dole (široký), 1 hore pri reflektore
+				const r = c.r0 + (c.r1 - c.r0) * Math.min(1, Math.max(0, t));
+				const inside = t > -0.05 && t < 1.05 && Math.hypot(lp.x, lp.z) < r + 0.08;
+				b.visible = !inside;
+			}
+		},
 		/** Bodové svetlá (lúče reflektorov a škvrny): svietia pred partiou, F12 na ťahu. */
 		setBeams(on) {
+			beamsOn = !!on;
 			for (const b of beams) {
 				b.visible = !!on;
 			}
