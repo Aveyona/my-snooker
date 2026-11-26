@@ -99,6 +99,7 @@ export class Online {
 		setIce(cfg.ice);
 		this.rtc = new Rtc(this.net, {
 			accept: (from, tag) => this.rtcAccept(from, tag),
+			inMatch: () => !!this.matchId, // 0.67.2: rýchle čítanie signálov – signály zápasu len v zápase
 			open: (p) => this.rtcOpen(p),
 			message: (p, m) => this.rtcMessage(p, m),
 			close: (p) => this.rtcClose(p),

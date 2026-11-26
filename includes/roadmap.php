@@ -180,6 +180,7 @@ function mysn_roadmap() {
 /** Denník zmien (najnovšie hore). */
 function mysn_changelog() {
 	return array(
+		array( '0.67.2', '26. 11. 2026', 'Priame spojenie so súperom: signály zápasu si vezme len okno hry, ktoré je v zápase – keď mal hráč hru otvorenú aj inde (iná karta, mobil), druhé okno signály zobralo a odmietlo (bye) a priame spojenie sa nikdy neotvorilo (večné Nadväzujem priame spojenie).' ),
 		array( '0.67.1', '26. 11. 2026', 'Rooms a Indická ulička zatiaľ len pre admina: ostatní hráči tlačidlo Rooms v menu nevidia a ulička nie je ani na mape miestností (M).' ),
 		array( '0.67.0', '26. 11. 2026', 'Tutoriál: tlačidlo skoku na predmet má krátky text ➜ Otvoriť (na mobile sa ➜ Otvoriť: nástenka nezmestil), názov predmetu je v bublinke.' ),
 		array( '0.66.9', '26. 11. 2026', 'Sila úderu pri nízkom FPS: rýchly ťah myšou sa už nestratí – prehliadač pri 30 FPS posiela pohyb myši raz za snímok vo veľkých kusoch a hra pohyby nad 200 px zahadzovala (úder vyšiel slabý); pri ťahu tága sa berú aj veľké pohyby a rýchlosť sa počíta podľa času udalosti; hranica zjavného skoku myši pri mierení 800 px.' ),

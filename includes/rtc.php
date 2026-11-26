@@ -130,10 +130,13 @@ function mysn_rest_rtc_send( $req ) {
 }
 
 /** Prečíta a zmaže signály pre prihláseného hráča. */
-function mysn_rtc_take( $uid ) {
+function mysn_rtc_take( $uid, $match = true ) {
 	global $wpdb;
-	$st   = mysn_table( 'signals' );
-	$rows = $wpdb->get_results( $wpdb->prepare( "SELECT id, from_user, tag, data FROM $st WHERE to_user = %d AND created >= %d ORDER BY id LIMIT 20", $uid, time() - MYSN_RTC_TTL ), ARRAY_A ); // phpcs:ignore
+	$st = mysn_table( 'signals' );
+	// 0.67.2: signály zápasu (tag match) si vezme len okno hry, ktoré je v zápase – druhé okno toho istého hráča
+	// (iná karta, mobil) ich inak „zjedlo“, odmietlo (bye) a priame spojenie so súperom sa nikdy neotvorilo
+	$only = $match ? '' : " AND tag <> 'match'";
+	$rows = $wpdb->get_results( $wpdb->prepare( "SELECT id, from_user, tag, data FROM $st WHERE to_user = %d AND created >= %d$only ORDER BY id LIMIT 20", $uid, time() - MYSN_RTC_TTL ), ARRAY_A ); // phpcs:ignore
 	$out  = array();
 	$ids  = array();
 	foreach ( $rows as $r ) {
@@ -213,8 +216,9 @@ function mysn_rest_rtc_diag( $req ) {
 	return array( 'ok' => true );
 }
 
-function mysn_rest_rtc_inbox() {
-	return array( 'signals' => mysn_rtc_take( get_current_user_id() ) );
+function mysn_rest_rtc_inbox( $req = null ) {
+	$m = $req ? $req->get_param( 'm' ) : null; // 0.67.2: m=0 okno mimo zápasu (staršia hra parameter neposiela)
+	return array( 'signals' => mysn_rtc_take( get_current_user_id(), null === $m || '' === $m || '1' === (string) $m ) );
 }
 
 add_action(

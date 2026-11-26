@@ -337,7 +337,7 @@ function mysn_rest_ping( $req ) {
 		'seats'    => '' !== $seat_ctx ? mysn_seats( $seat_ctx ) : null,
 		// nájdený ligový zápas čaká na potvrdenie (okno Prijať alebo Zrušiť)
 		'found'    => function_exists( 'mysn_found_match' ) && ! $active && mysn_found_match( $uid ) ? mysn_found_out( mysn_found_match( $uid ), $uid ) : null,
-		'signals'  => mysn_rtc_take( $uid ),
+		'signals'  => mysn_rtc_take( $uid, 'match' === sanitize_key( (string) $req->get_param( 'state' ) ) || '' === (string) $req->get_param( 'state' ) ), // 0.67.2 signály zápasu len oknu v zápase
 		'nonce'    => wp_create_nonce( 'wp_rest' ),
 	);
 }
