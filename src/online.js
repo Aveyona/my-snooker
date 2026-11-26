@@ -13,6 +13,9 @@ import { _t } from './i18n.js';
 let zxAns = ''; // odpoveď na výzvu servera pre najbližšiu požiadavku
 
 const PING_MS = 5000;
+// 0.67.3: identifikácia okna hry (viac okien toho istého hráča v zápase – spojenie riadi posledne otvorené)
+const CL_ID = Math.random().toString(36).slice(2, 12);
+const CL_ST = Date.now();
 const AIM_MS = 50; // mierenie cez priame spojenie asi 20-krát za sekundu (len keď sa zmenilo)
 const RETRY_MS = 3000;
 const FLAGS = new Set(['w-spot', 'w-lcd']); // prepínače štadióna, ktoré mení divák
@@ -100,6 +103,7 @@ export class Online {
 		this.rtc = new Rtc(this.net, {
 			accept: (from, tag) => this.rtcAccept(from, tag),
 			inMatch: () => !!this.matchId, // 0.67.2: rýchle čítanie signálov – signály zápasu len v zápase
+			clId: () => CL_ID,
 			open: (p) => this.rtcOpen(p),
 			message: (p, m) => this.rtcMessage(p, m),
 			close: (p) => this.rtcClose(p),
@@ -215,9 +219,20 @@ export class Online {
 		this._pingAt = Date.now();
 		try {
 			const seats = this.seatCtx ? this.seatCtx() : ''; // diváci partie, ktorú hrám alebo sledujem
-			const d = await this.net.call('ping', { state: this.inMatch ? 'match' : this.queueing ? 'queue' : this.watching ? 'watch' : this.away ? 'away' : this.lobbyOpen ? 'lobby' : 'training', seats }); // away = zhasnutá lampa v kancelárii (nie som online)
+			const d = await this.net.call('ping', { state: this.inMatch ? 'match' : this.queueing ? 'queue' : this.watching ? 'watch' : this.away ? 'away' : this.lobbyOpen ? 'lobby' : 'training', seats, cl: CL_ID, st: CL_ST }); // away = zhasnutá lampa v kancelárii (nie som online)
 			if (d.nonce) {
 				this.net.nonce = d.nonce;
+			}
+			// 0.67.3: zápas otvorený aj v inom (novšom) okne – priame spojenie riadi to okno, toto nechá súpera na pokoji
+			const own = d.rtcown !== 0;
+			if (own !== !this.rtcNotOwner) {
+				this.rtcNotOwner = !own;
+				if (!own && this.opp) {
+					this.rtc.close && this.rtc.close(this.opp, 'match');
+				} else if (own) {
+					this.matchPeer();
+				}
+				this.hooks.status();
 			}
 			if (d.signals && d.signals.length) {
 				this.rtc.handle(d.signals);
@@ -695,7 +710,7 @@ export class Online {
 
 	/** Spojenie so súperom v partii. */
 	matchPeer() {
-		if (!this.matchId || !this.opp) {
+		if (!this.matchId || !this.opp || this.rtcNotOwner) {
 			return;
 		}
 		if (this.rtc.isOpen(this.opp, 'match')) {
@@ -1348,6 +1363,9 @@ export class Online {
 		}
 		if (this.inMatch && !this.rtc.supported) {
 			return _t('Prehliadač nepodporuje priame spojenie WebRTC, partia so súperom nemôže pokračovať.');
+		}
+		if (this.inMatch && this.rtcNotOwner) {
+			return _t('Zápas máš otvorený aj v inom okne (karta, aplikácia alebo iné zariadenie) – priame spojenie so súperom beží tam. Hrať sa dá aj tu, ale zavri ostatné okná.');
 		}
 		if (this.inMatch && this.opp && (!this.oppOnline || !this.rtc.isOpen(this.opp, 'match'))) {
 			// 0.30.1: priame spojenie vypadlo, ale server súpera vidí: partia ide ďalej cez server (záložné spojenie)

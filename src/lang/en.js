@@ -1643,6 +1643,7 @@ export default {
 	'notebook': 'laptop',
 	'vizitka': 'business card',
 	'mapa hráčov': 'player map',
+	'Zápas máš otvorený aj v inom okne (karta, aplikácia alebo iné zariadenie) – priame spojenie so súperom beží tam. Hrať sa dá aj tu, ale zavri ostatné okná.': 'The match is also open in another window (tab, app or another device) – the direct connection with the opponent runs there. You can play here too, but close the other windows.',
 	'Otvoriť': 'Open',
 	'Otvoriť: {o}': 'Open: {o}',
 	'My Snooker  |  správy z médií': 'My Snooker  |  news from the media',

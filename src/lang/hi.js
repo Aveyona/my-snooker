@@ -1625,6 +1625,7 @@ export default {
 	'notebook': 'लैपटॉप',
 	'vizitka': 'विज़िटिंग कार्ड',
 	'mapa hráčov': 'खिलाड़ियों का नक्शा',
+	'Zápas máš otvorený aj v inom okne (karta, aplikácia alebo iné zariadenie) – priame spojenie so súperom beží tam. Hrať sa dá aj tu, ale zavri ostatné okná.': 'मैच किसी दूसरी विंडो में भी खुला है (टैब, ऐप या दूसरा डिवाइस) – विरोधी से सीधा कनेक्शन वहीं चल रहा है। आप यहाँ भी खेल सकते हैं, लेकिन बाकी विंडो बंद कर दें।',
 	'Otvoriť': 'खोलें',
 	'Otvoriť: {o}': 'खोलें: {o}',
 	'My Snooker  |  správy z médií': 'My Snooker  |  मीडिया से ख़बरें',

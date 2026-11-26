@@ -130,6 +130,41 @@ function mysn_rest_rtc_send( $req ) {
 }
 
 /** Prečíta a zmaže signály pre prihláseného hráča. */
+/**
+ * 0.67.3: viac okien toho istého hráča v zápase (aplikácia aj karta, dve karty, mobil aj PC): priame spojenie
+ * so súperom riadi len posledne otvorené okno (najväčší čas spustenia st). Ostatné okná signály zápasu
+ * neberú a neponúkajú spojenie – inak si okná navzájom prepisovali ponuky a spojenie sa nikdy neotvorilo.
+ * Vráti true, ak je okno $cl vlastníkom (alebo okno neposlalo cl – staršia hra).
+ */
+function mysn_rtc_owner( $uid, $cl, $st, $touch = true ) {
+	$cl = substr( preg_replace( '/[^a-z0-9]/', '', strtolower( (string) $cl ) ), 0, 16 );
+	if ( '' === $cl ) {
+		return true;
+	}
+	$k    = 'mysn_cl_' . (int) $uid;
+	$now  = time();
+	$list = get_transient( $k );
+	$list = is_array( $list ) ? $list : array();
+	foreach ( $list as $c => $v ) {
+		if ( $now - (int) $v['seen'] > 20 ) {
+			unset( $list[ $c ] );
+		}
+	}
+	if ( $touch ) {
+		$list[ $cl ] = array( 'st' => (float) $st, 'seen' => $now );
+		set_transient( $k, $list, 120 );
+	} elseif ( ! isset( $list[ $cl ] ) ) {
+		return true;
+	}
+	$best = $cl;
+	foreach ( $list as $c => $v ) {
+		if ( (float) $v['st'] > (float) $list[ $best ]['st'] ) {
+			$best = $c;
+		}
+	}
+	return $best === $cl;
+}
+
 function mysn_rtc_take( $uid, $match = true ) {
 	global $wpdb;
 	$st = mysn_table( 'signals' );
@@ -217,8 +252,10 @@ function mysn_rest_rtc_diag( $req ) {
 }
 
 function mysn_rest_rtc_inbox( $req = null ) {
-	$m = $req ? $req->get_param( 'm' ) : null; // 0.67.2: m=0 okno mimo zápasu (staršia hra parameter neposiela)
-	return array( 'signals' => mysn_rtc_take( get_current_user_id(), null === $m || '' === $m || '1' === (string) $m ) );
+	$m   = $req ? $req->get_param( 'm' ) : null; // 0.67.2: m=0 okno mimo zápasu (staršia hra parameter neposiela)
+	$uid = get_current_user_id();
+	$own = $req ? mysn_rtc_owner( $uid, $req->get_param( 'cl' ), 0, false ) : true; // 0.67.3 len vlastník
+	return array( 'signals' => mysn_rtc_take( $uid, $own && ( null === $m || '' === $m || '1' === (string) $m ) ) );
 }
 
 add_action(

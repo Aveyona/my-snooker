@@ -180,6 +180,7 @@ function mysn_roadmap() {
 /** Denník zmien (najnovšie hore). */
 function mysn_changelog() {
 	return array(
+		array( '0.67.3', '26. 11. 2026', 'Zápas otvorený vo viacerých oknách toho istého hráča (aplikácia aj karta, dve karty, mobil aj PC): priame spojenie so súperom riadi len posledne otvorené okno, ostatné neposielajú ponuky ani neberú signály a ukážu upozornenie – okná si predtým navzájom prepisovali ponuky a spojenie sa nikdy neotvorilo.' ),
 		array( '0.67.2', '26. 11. 2026', 'Priame spojenie so súperom: signály zápasu si vezme len okno hry, ktoré je v zápase – keď mal hráč hru otvorenú aj inde (iná karta, mobil), druhé okno signály zobralo a odmietlo (bye) a priame spojenie sa nikdy neotvorilo (večné Nadväzujem priame spojenie).' ),
 		array( '0.67.1', '26. 11. 2026', 'Rooms a Indická ulička zatiaľ len pre admina: ostatní hráči tlačidlo Rooms v menu nevidia a ulička nie je ani na mape miestností (M).' ),
 		array( '0.67.0', '26. 11. 2026', 'Tutoriál: tlačidlo skoku na predmet má krátky text ➜ Otvoriť (na mobile sa ➜ Otvoriť: nástenka nezmestil), názov predmetu je v bublinke.' ),

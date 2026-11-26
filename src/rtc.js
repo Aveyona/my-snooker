@@ -503,7 +503,7 @@ export class Rtc {
 	/** Okamžité prečítanie signálov (live server oznámil nový signál). */
 	async pull() {
 		try {
-			const r = await this.net.call('rtc?m=' + (this.hooks.inMatch && this.hooks.inMatch() ? 1 : 0), null, 'GET');
+			const r = await this.net.call('rtc?m=' + (this.hooks.inMatch && this.hooks.inMatch() ? 1 : 0) + (this.hooks.clId ? '&cl=' + this.hooks.clId() : ''), null, 'GET');
 			await this.handle(r.signals);
 		} catch (e) {
 			// výpadok: signály prečíta pravidelný dopyt
@@ -531,7 +531,7 @@ export class Rtc {
 			// prvých 8 s po začatí čítam signály často, potom pomalšie (menej požiadaviek na server)
 			const young = act.some((p) => now - (p.restarting || p.t0) < 8000) || [...this.expecting.values()].some((t) => t - now > 22000);
 			try {
-				const r = await this.net.call('rtc?m=' + (this.hooks.inMatch && this.hooks.inMatch() ? 1 : 0), null, 'GET');
+				const r = await this.net.call('rtc?m=' + (this.hooks.inMatch && this.hooks.inMatch() ? 1 : 0) + (this.hooks.clId ? '&cl=' + this.hooks.clId() : ''), null, 'GET');
 				await this.handle(r.signals);
 			} catch (e) {
 				// výpadok: skúsi sa znova

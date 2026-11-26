@@ -278,6 +278,8 @@ function mysn_rest_ping( $req ) {
 	$active = mysn_active_match( $uid );
 	$state  = $active ? 'match' : sanitize_key( (string) $req->get_param( 'state' ) );
 	mysn_touch( $uid, $state ? $state : 'lobby', $active ? $active['id'] : 0 );
+	// 0.67.3: ktoré okno hráča riadi priame spojenie v zápase (posledne otvorené)
+	$rtc_own = ! $active || 'match' !== sanitize_key( (string) $req->get_param( 'state' ) ) || ! function_exists( 'mysn_rtc_owner' ) ? true : mysn_rtc_owner( $uid, $req->get_param( 'cl' ), (float) $req->get_param( 'st' ) );
 	$now  = time();
 	if ( $active ) {
 		// signál hráča v partii (partia ide priamo medzi prehliadačmi, server ju len ukladá)
@@ -337,7 +339,8 @@ function mysn_rest_ping( $req ) {
 		'seats'    => '' !== $seat_ctx ? mysn_seats( $seat_ctx ) : null,
 		// nájdený ligový zápas čaká na potvrdenie (okno Prijať alebo Zrušiť)
 		'found'    => function_exists( 'mysn_found_match' ) && ! $active && mysn_found_match( $uid ) ? mysn_found_out( mysn_found_match( $uid ), $uid ) : null,
-		'signals'  => mysn_rtc_take( $uid, 'match' === sanitize_key( (string) $req->get_param( 'state' ) ) || '' === (string) $req->get_param( 'state' ) ), // 0.67.2 signály zápasu len oknu v zápase
+		'signals'  => mysn_rtc_take( $uid, $rtc_own && ( 'match' === sanitize_key( (string) $req->get_param( 'state' ) ) || '' === (string) $req->get_param( 'state' ) ) ), // 0.67.2/0.67.3 signály zápasu len oknu v zápase, ktoré spojenie riadi
+		'rtcown'   => $rtc_own ? 1 : 0,
 		'nonce'    => wp_create_nonce( 'wp_rest' ),
 	);
 }
