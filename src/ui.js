@@ -1056,7 +1056,7 @@ export class UI {
 				this.btnResume = trainFirst ? tr : play;
 			}
 			// 0.45.2 Rooms: osobitné miestnosti s vlastnými hrami (prvá Indická ulička), len pre prihlásených
-			const gr = user ? [this.button(_t('Rooms'), 'gameRooms', _t('Miestnosti s vlastnými hrami a prostredím: Indická ulička a ďalšie'))] : [];
+			const gr = user && this.opts.role === 'admin' ? [this.button(_t('Rooms'), 'gameRooms', _t('Miestnosti s vlastnými hrami a prostredím: Indická ulička a ďalšie'))] : [];
 			for (const b of gr) {
 				b.classList.add('mysn-rooms-btn');
 			}

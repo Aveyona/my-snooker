@@ -2737,7 +2737,9 @@ export function start(root, config = {}) {
 			{ id: 'living', name: _t('Obývačka'), desc: _t('Samostatná hra My Rooms: oddych pri krbe, televízor so zápasmi a YouTube, knižnica. Otvorí sa jej stránka, späť dverami obývačky.'), map: [4, 27, 46, 20], here: here === 'living', locked: !user, lockNote: _t('Obývačka je pre prihlásených hráčov.'), play: _t('Vstúpiť'), notour: true },
 			{ id: 'league', name: _t('Štadión'), desc: _t('Ligové zápasy pred divákmi, modré súkno, svetlá na stôl.'), map: [56, 4, 40, 58], here: here === 'league', locked: !admin, lockNote: _t('Štadión sa otvorí, keď nájdeš ligový zápas (Kancelária, Vyhľadať zápas). Hrá sa tu len liga.'), play: admin ? _t('Vstúpiť a trénovať (admin)') : _t('Vstúpiť'), extra: admin ? [{ label: _t('Rozhodca odkladá trojuholník (admin)'), act: 'rackDemo', title: _t('Ukážka: rozhodca zoberie trojuholník zo stola a zavesí ho pod stôl') }, { label: _t('Ukážka konca zápasu (admin)'), act: 'fiestaDemo', title: _t('Tabuľa s víťazom a konfety na kontrolu') }, { label: _t('Ukážka od diváka (admin)'), act: 'spectDemo', title: _t('Sedíš na tribúne ako divák: LCD, malý stôl, konfety') }] : [] },
 			{ id: 'alley', name: _t('Ulička'), desc: _t('Stôl vonku v indickej uličke, večer pod lampami. Súkno popísané fixkou a grafitmi. Voľný tréning, neskôr partie s priateľmi a 21 kôl cez prekážky na čas.'), map: [56, 66, 40, 28], here: here === 'alley', locked: !user, lockNote: _t('Ulička je pre prihlásených hráčov.'), play: _t('Vstúpiť a trénovať'), notour: true },
-		].map((r) => ({ ...r, tour: admin && !r.notour }));
+		]
+			.filter((r) => admin || r.id !== 'alley') // 0.67.1: ulička (India) zatiaľ len pre admina
+			.map((r) => ({ ...r, tour: admin && !r.notour }));
 	};
 
 	/** Zásah zo Správy hry: pošle na server a prehľad sa obnoví. */
@@ -3652,8 +3654,8 @@ export function start(root, config = {}) {
 		},
 		// 0.45.2 Rooms: miestnosti s vlastnými hrami (menu Rooms)
 		gameRooms: () => {
-			if (!user) {
-				return;
+			if (!user || config.role !== 'admin') {
+				return; // 0.67.1: Rooms zatiaľ len pre admina
 			}
 			ui.showMenu(false);
 			controls.uncapture();
