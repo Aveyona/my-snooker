@@ -283,7 +283,9 @@ export function tutorial(parent, cfg, d) {
 			o_help: _t('nástenka'), o_cues: _t('moje tágá'), o_calendar: _t('kalendár'), o_results: _t('tabuľky líg'), o_notebook: _t('notebook'), o_card: _t('vizitka'), o_map: _t('mapa hráčov'),
 		};
 		bGo.hidden = !(S.type === 'back' || (S.type === 'open' && S.obj && OBJ[S.obj]) || (isText && S.obj && OBJ[S.obj]));
-		bGo.textContent = S.type === 'back' ? '↩ ' + _t('Späť') : '➜ ' + _t('Otvoriť: {o}', { o: OBJ[S.obj] || '' });
+		// 0.67.0: krátky text tlačidla (na mobile sa nezmestil), názov predmetu v bublinke
+		bGo.textContent = S.type === 'back' ? '↩ ' + _t('Späť') : '➜ ' + _t('Otvoriť');
+		bGo.title = S.type === 'back' ? '' : _t('Otvoriť: {o}', { o: OBJ[S.obj] || '' });
 		bNext.hidden = !isText;
 		bNext.classList.add('mysn-tut-blink'); // 0.64.4: Ďalej bliká vždy, keď ho treba stlačiť
 		bSkip.hidden = isText || last || api.must;

@@ -1625,6 +1625,7 @@ export default {
 	'notebook': 'लैपटॉप',
 	'vizitka': 'विज़िटिंग कार्ड',
 	'mapa hráčov': 'खिलाड़ियों का नक्शा',
+	'Otvoriť': 'खोलें',
 	'Otvoriť: {o}': 'खोलें: {o}',
 	'My Snooker  |  správy z médií': 'My Snooker  |  मीडिया से ख़बरें',
 	'Späť za tágo': 'क्यू पर वापस',

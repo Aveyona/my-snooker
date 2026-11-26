@@ -180,6 +180,7 @@ function mysn_roadmap() {
 /** Denník zmien (najnovšie hore). */
 function mysn_changelog() {
 	return array(
+		array( '0.67.0', '26. 11. 2026', 'Tutoriál: tlačidlo skoku na predmet má krátky text ➜ Otvoriť (na mobile sa ➜ Otvoriť: nástenka nezmestil), názov predmetu je v bublinke.' ),
 		array( '0.66.9', '26. 11. 2026', 'Sila úderu pri nízkom FPS: rýchly ťah myšou sa už nestratí – prehliadač pri 30 FPS posiela pohyb myši raz za snímok vo veľkých kusoch a hra pohyby nad 200 px zahadzovala (úder vyšiel slabý); pri ťahu tága sa berú aj veľké pohyby a rýchlosť sa počíta podľa času udalosti; hranica zjavného skoku myši pri mierení 800 px.' ),
 		array( '0.66.8', '25. 11. 2026', 'Rudo: rozhodnutie k úderu sa sťahuje s cookies prehliadača a pri chybe znova (kontrola prehliadača hostingu požiadavky bez cookies odmietala a Rudo mlčal); keď krajina zápasu nie je známa, hovorí po slovensky.' ),
 		array( '0.66.7', '25. 11. 2026', 'Online zápas (liga): zmizol tmavý ovál so zlatým okrajom cez celú obrazovku – koreň rozhrania má počas online zápasu triedu mysn-online, rovnakú ako bublina N online, a dostával jej vzhľad (tmavé pozadie, úplne zaoblené rohy, zlatý okraj); štýl bubliny už platí len pre bublinu.' ),

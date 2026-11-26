@@ -1643,6 +1643,7 @@ export default {
 	'notebook': 'laptop',
 	'vizitka': 'business card',
 	'mapa hráčov': 'player map',
+	'Otvoriť': 'Open',
 	'Otvoriť: {o}': 'Open: {o}',
 	'My Snooker  |  správy z médií': 'My Snooker  |  news from the media',
 	'Späť za tágo': 'Back to the cue',
