@@ -404,7 +404,7 @@ export class Controls {
 				const ss = this.touchStrokeSens || 1; // šúpatko Ťahanie tága prstom (mobil)
 				const k = Math.max(1, (this.strokePx * ss) / Math.max(120, window.innerHeight * 0.22)) / ss;
 				this._evOk = e.isTrusted;
-				this.strokeMove((e.clientY - d.ly) * k);
+				this.strokeMove((e.clientY - d.ly) * k, e.timeStamp);
 				d.ly = e.clientY;
 			}
 		} else if (d.kind === 'aimCue') {
@@ -596,12 +596,19 @@ export class Controls {
 			}
 			return;
 		}
-		if (performance.now() < this._ignoreUntil || Math.abs(e.movementX || 0) > 200 || Math.abs(e.movementY || 0) > 200) {
+		if (this.stroking) {
+			// 0.66.9: pri ťahu tága sa veľké pohyby nezahadzujú – pri nízkom FPS (30) posiela prehliadač myš raz za
+			// snímok vo veľkých kusoch (rýchly ťah 300+ px); predtým sa nad 200 px zahodili a úder vyšiel slabý.
+			// Zahodí sa len skok hneď po zachytení myši a zjavný nezmysel.
+			if (performance.now() < this._ignoreUntil || Math.abs(e.movementY || 0) > 2500) {
+				return;
+			}
+			this._evOk = e.isTrusted;
+			this.strokeMove(e.movementY || 0, e.timeStamp);
 			return;
 		}
-		if (this.stroking) {
-			this._evOk = e.isTrusted;
-			this.strokeMove(e.movementY || 0);
+		// pri nízkom FPS chodia pohyby myši vo väčších kusoch – hranica pre zjavný skok 800 px (predtým 200)
+		if (performance.now() < this._ignoreUntil || Math.abs(e.movementX || 0) > 800 || Math.abs(e.movementY || 0) > 800) {
 			return;
 		}
 		if (this.panning) {
@@ -706,11 +713,14 @@ export class Controls {
 	}
 
 	/** Pohyb ruky s tágom: dy > 0 (myš k sebe) odťahuje, dy < 0 (dopredu) posúva k bielej. */
-	strokeMove(dy) {
+	strokeMove(dy, ts) {
 		if (!this.stroking || !this.game.canShoot()) {
 			return;
 		}
-		const now = performance.now();
+		// 0.66.9: čas udalosti (nie spracovania) – pri nízkom FPS sa udalosti spracujú oneskorene a naraz
+		const pn = performance.now();
+		const now = ts > 0 && ts <= pn + 5 && pn - ts < 250 ? Math.max(ts, this._lastTs || 0) : pn;
+		this._lastTs = now;
 		const prev = this.strokePull;
 		this._nmv = (this._nmv || 0) + 1;
 		const ss = this.touchStroke ? this.touchStrokeSens || 1 : this.strokeSens || 1; // šúpatko Ťahanie tága (myš) alebo Ťahanie tága prstom
